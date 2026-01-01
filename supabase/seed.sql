@@ -641,6 +641,14 @@ INSERT INTO public.members (id, labels, birthday, lastname, firstname, mobile, i
 	(193, '["new"]', NULL, 'Figueroa', 'Mackenzie', NULL, NULL, NULL);
 
 
+  -- Set the next generated id to 200+1 (or 1 if table empty)
+DO $$
+DECLARE next_id bigint;
+BEGIN
+  SELECT COALESCE(200, 0) + 1 INTO next_id FROM public.members;
+  EXECUTE format('ALTER TABLE public.members ALTER COLUMN id RESTART WITH %s', next_id);
+END$$;
+
 --
 -- Data for Name: trainings; Type: TABLE DATA; Schema: public; Owner: postgres
 --

@@ -7,6 +7,7 @@
     "dashboard": {
       "today": "Today",
       "trainings": "Trainings",
+      "events": "Events",
       "members": "Members",
       "stats": "Stats",
       "noTrainingsToday": "There are no trainings happening today!"
@@ -59,7 +60,14 @@
         "## Notes",
         "- ",
         ""
-      ]
+      ],
+      "uploadFile": "Upload File",
+      "selectFile": "Select File",
+      "supportedFormats": "Supported formats",
+      "or": "or",
+      "writeContent": "Write Content",
+      "textDisabledWhenFileSelected": "Text content is disabled when a file is selected",
+      "uploading": "Uploading..."
     },
     "members": {
       "title": "Members",
@@ -97,7 +105,73 @@
       "all": "All",
       "topAthletes": "Top Athletes",
       "topTrainers": "Top Trainers",
-      "topParticipants": "Top Participants per training"
+      "topParticipants": "Top Participants per training",
+      "topEventParticipants": "Top Event Participants",
+      "topEventCoaches": "Top Event Coaches",
+      "loading": "Loading...",
+      "no_event_data": "No event data available"
+    },
+    "events": {
+      "title": "Events",
+      "today": "Today's Events",
+      "upcoming": "Upcoming Events",
+      "past": "Past Events",
+      "no_events": "No events found",
+      "no_events_found": "No events match your search",
+      "search_placeholder": "Search events...",
+      "create_event": "Create Event",
+      "create_first_event": "Create First Event",
+      "edit_event": "Edit Event",
+      "add_participant": "Add Participant",
+      "select_member": "Select Member",
+      "choose_member": "Choose a member...",
+      "search_members_placeholder": "Search members...",
+      "participants": "Participants",
+      "no_participants": "No participants registered yet",
+      "description": "Description",
+      "registration_info": "Registration Information",
+      "registration_deadline": "Registration Deadline",
+      "registration_closed": "Registration Closed",
+      "max_participants": "Max Participants",
+      "event_full": "Event Full",
+      "attended_at": "Attended at",
+      "stats": {
+        "registered": "Registered",
+        "attended": "Attended",
+        "attendance_rate": "Attendance Rate"
+      },
+      "status": {
+        "registered": "Registered",
+        "attended": "Attended",
+        "absent": "Absent",
+        "cancelled": "Cancelled"
+      },
+      "form": {
+        "title": "Event Title",
+        "title_placeholder": "e.g. Tournament, Seminar, Grading...",
+        "description": "Description",
+        "description_placeholder": "Describe what this event is about...",
+        "date": "Date",
+        "time_from": "Start Time",
+        "time_to": "End Time",
+        "location": "Location",
+        "location_placeholder": "e.g. Main Hall, External Venue...",
+        "section": "Section",
+        "select_section": "Select a section...",
+        "max_participants": "Max Participants",
+        "max_participants_placeholder": "Leave empty for unlimited",
+        "registration_deadline": "Registration Deadline"
+      },
+      "validation": {
+        "required_fields": "Please fill in all required fields"
+      },
+      "deleteConfirmTitle": "Delete Event",
+      "deleteConfirmMessage": "Are you sure you want to delete the event",
+      "deleteSuccess": "Event successfully deleted",
+      "deleteError": "Error deleting event",
+      "coach": "Coach",
+      "make_coach": "Mark as Coach",
+      "remove_coach": "Remove Coach"
     }
   },
   "components": {
@@ -120,11 +194,16 @@
     "remove": "Remove",
     "add": "Add",
     "save": "Save",
+    "saving": "Saving...",
     "edit": "Edit",
     "createNew": "Create New",
     "cancel": "Cancel",
     "confirm": "Confirm",
-    "delete": "Delete"
+    "delete": "Delete",
+    "deleting": "Deleting...",
+    "create": "Create",
+    "creating": "Creating...",
+    "download": "Download"
   },
   "dialog": {
     "newMember": {

@@ -8,7 +8,8 @@
     faCalendarCheck,
     faChartSimple,
     faList,
-    faUser
+    faUser,
+    faCalendarDays
   } from '@fortawesome/free-solid-svg-icons';
   import { Modal, Toast } from '@skeletonlabs/skeleton';
   import type { SubmitFunction } from '@sveltejs/kit';
@@ -32,10 +33,12 @@
     tabSet = 0;
   } else if ($page.route.id?.startsWith('/dashboard/trainings')) {
     tabSet = 1;
-  } else if ($page.route.id?.startsWith('/dashboard/members')) {
+  } else if ($page.route.id?.startsWith('/dashboard/events')) {
     tabSet = 2;
-  } else if ($page.route.id?.startsWith('/dashboard/stats')) {
+  } else if ($page.route.id?.startsWith('/dashboard/members')) {
     tabSet = 3;
+  } else if ($page.route.id?.startsWith('/dashboard/stats')) {
+    tabSet = 4;
   }
 
   function getInitials(): string {
@@ -55,19 +58,23 @@
 <AppShell>
   <svelte:fragment slot="header">
     <TabGroup>
-      <Tab bind:group={tabSet} name="tab1" value={0} on:click={() => goto('/dashboard')}>
+      <Tab bind:group={tabSet} name="tab0" value={0} on:click={() => goto('/dashboard')}>
         <Fa icon={faCalendarCheck} class="mx-auto" />
         <div>{$_('page.dashboard.today')}</div>
       </Tab>
-      <Tab bind:group={tabSet} name="tab2" value={1} on:click={() => goto('/dashboard/trainings')}>
+      <Tab bind:group={tabSet} name="tab1" value={1} on:click={() => goto('/dashboard/trainings')}>
         <Fa icon={faList} class="mx-auto" />
         <div>{$_('page.dashboard.trainings')}</div>
       </Tab>
-      <Tab bind:group={tabSet} name="tab3" value={2} on:click={() => goto('/dashboard/members')}>
+      <Tab bind:group={tabSet} name="tab2" value={2} on:click={() => goto('/dashboard/events')}>
+        <Fa icon={faCalendarDays} class="mx-auto" />
+        <div>{$_('page.dashboard.events')}</div>
+      </Tab>
+      <Tab bind:group={tabSet} name="tab3" value={3} on:click={() => goto('/dashboard/members')}>
         <Fa icon={faUser} class="mx-auto" />
         <div>{$_('page.dashboard.members')}</div>
       </Tab>
-      <Tab bind:group={tabSet} name="tab4" value={3} on:click={() => goto('/dashboard/stats')}>
+      <Tab bind:group={tabSet} name="tab4" value={4} on:click={() => goto('/dashboard/stats')}>
         <Fa icon={faChartSimple} class="mx-auto" />
         <div>{$_('page.dashboard.stats')}</div>
       </Tab>

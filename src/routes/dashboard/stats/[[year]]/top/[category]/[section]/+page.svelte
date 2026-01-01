@@ -42,6 +42,10 @@
   <h1>
     {#if data.category?.toLowerCase() == 'athletes'}
       {$_('page.stats.topAthletes')}
+    {:else if data.category?.toLowerCase() == 'events'}
+      {$_('page.stats.topEventParticipants')}
+    {:else if data.category?.toLowerCase() == 'coaches'}
+      {$_('page.stats.topEventCoaches')}
     {:else}
       {$_('page.stats.topTrainers')}
     {/if}

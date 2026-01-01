@@ -52,6 +52,46 @@ export async function load({ params }) {
       };
     }
 
+    case 'events': {
+      const { error: eventsError, data: eventsData } = await supabaseClient
+        .rpc('get_top_event_participants', {
+          year_param: year || null,
+          section_param: params.section
+        })
+        .returns<Athletes[]>();
+
+      if (eventsError) {
+        throw err(404, eventsError);
+      }
+
+      return {
+        year: params.year,
+        section: params.section,
+        category: params.category,
+        athletes: eventsData
+      };
+    }
+
+    case 'coaches': {
+      const { error: coachesError, data: coachesData } = await supabaseClient
+        .rpc('get_top_event_coaches_from_section', {
+          sect: params.section,
+          year: year
+        })
+        .returns<Athletes[]>();
+
+      if (coachesError) {
+        throw err(404, coachesError);
+      }
+
+      return {
+        year: params.year,
+        section: params.section,
+        category: params.category,
+        athletes: coachesData
+      };
+    }
+
     default:
       throw err(404, 'No valid Category');
   }

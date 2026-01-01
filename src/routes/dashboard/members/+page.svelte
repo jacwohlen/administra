@@ -40,18 +40,32 @@
   }
 
   async function addMember(
-    result: { firstname: string; lastname: string; labels: string[] } | undefined
+    result:
+      | {
+          id?: string;
+          firstname: string;
+          lastname: string;
+          birthday?: string;
+          mobile?: string;
+          labels: string[];
+        }
+      | undefined
   ) {
     if (!result) return;
 
     isSubmitting = true;
 
     try {
-      const { error } = await supabaseClient
-        .from('members')
-        .insert({ ...result, labels: result.labels || ['new'] })
-        .select()
-        .single();
+      // Filter out empty id field for new members
+      const { id, ...memberData } = result;
+      const dataToInsert = {
+        ...memberData,
+        labels: result.labels || ['new'],
+        // Only include id if it's not empty (for editing existing members)
+        ...(id && id.trim() !== '' && { id: parseInt(id) })
+      };
+
+      const { error } = await supabaseClient.from('members').insert(dataToInsert).select().single();
 
       if (error) {
         throw error;

@@ -8,6 +8,8 @@
   import { RadioGroup, RadioItem } from '@skeletonlabs/skeleton';
   import { _ } from 'svelte-i18n';
   import TopTrainers from './TopTrainers.svelte';
+  import TopEventParticipants from './TopEventParticipants.svelte';
+  import TopEventCoaches from './TopEventCoaches.svelte';
 
   export let data: PageData;
 
@@ -69,5 +71,12 @@
   <div class="card p-4">
     <h3>{$_('page.stats.topParticipants')}</h3>
     <TopParticipantsStats {yearmode} {year} />
+  </div>
+
+  <div class="card p-4">
+    <TopEventParticipants {yearmode} {year} />
+  </div>
+  <div class="card p-4">
+    <TopEventCoaches {yearmode} {year} />
   </div>
 </div>

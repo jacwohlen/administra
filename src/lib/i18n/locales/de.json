@@ -7,6 +7,7 @@
     "dashboard": {
       "today": "Aktuell",
       "trainings": "Trainings",
+      "events": "Events",
       "members": "Mitglieder",
       "stats": "Statistik",
       "noTrainingsToday": "Heute findet kein Training statt!"
@@ -59,7 +60,14 @@
         "## Notizen",
         "- ",
         ""
-      ]
+      ],
+      "uploadFile": "Datei Hochladen",
+      "selectFile": "Datei Auswählen",
+      "supportedFormats": "Unterstützte Formate",
+      "or": "oder",
+      "writeContent": "Inhalt Schreiben",
+      "textDisabledWhenFileSelected": "Textinhalt ist deaktiviert wenn eine Datei ausgewählt ist",
+      "uploading": "Hochladen..."
     },
     "members": {
       "title": "Mitglieder",
@@ -97,7 +105,73 @@
       "all": "Alle",
       "topAthletes": "Top Athleten",
       "topTrainers": "Top Trainers",
-      "topParticipants": "Top Teilnehmer pro Training"
+      "topParticipants": "Top Teilnehmer pro Training",
+      "topEventParticipants": "Top Event-Teilnehmer",
+      "topEventCoaches": "Top Event-Coaches",
+      "loading": "Lädt...",
+      "no_event_data": "Keine Event-Daten verfügbar"
+    },
+    "events": {
+      "title": "Events",
+      "today": "Heutige Events",
+      "upcoming": "Kommende Events",
+      "past": "Vergangene Events",
+      "no_events": "Keine Events gefunden",
+      "no_events_found": "Keine Events entsprechen Ihrer Suche",
+      "search_placeholder": "Events suchen...",
+      "create_event": "Event Erstellen",
+      "create_first_event": "Erstes Event Erstellen",
+      "edit_event": "Event Bearbeiten",
+      "add_participant": "Teilnehmer Hinzufügen",
+      "select_member": "Mitglied Auswählen",
+      "choose_member": "Mitglied wählen...",
+      "search_members_placeholder": "Mitglieder suchen...",
+      "participants": "Teilnehmer",
+      "no_participants": "Noch keine Teilnehmer registriert",
+      "description": "Beschreibung",
+      "registration_info": "Anmelde-Informationen",
+      "registration_deadline": "Anmeldeschluss",
+      "registration_closed": "Anmeldung Geschlossen",
+      "max_participants": "Max. Teilnehmer",
+      "event_full": "Event Ausgebucht",
+      "attended_at": "Teilgenommen um",
+      "stats": {
+        "registered": "Angemeldet",
+        "attended": "Teilgenommen",
+        "attendance_rate": "Teilnahmequote"
+      },
+      "status": {
+        "registered": "Angemeldet",
+        "attended": "Teilgenommen",
+        "absent": "Abwesend",
+        "cancelled": "Abgesagt"
+      },
+      "form": {
+        "title": "Event-Titel",
+        "title_placeholder": "z.B. Turnier, Seminar, Prüfung...",
+        "description": "Beschreibung",
+        "description_placeholder": "Beschreibe worum es bei diesem Event geht...",
+        "date": "Datum",
+        "time_from": "Startzeit",
+        "time_to": "Endzeit",
+        "location": "Ort",
+        "location_placeholder": "z.B. Haupthalle, Externe Location...",
+        "section": "Sektion",
+        "select_section": "Sektion auswählen...",
+        "max_participants": "Max. Teilnehmer",
+        "max_participants_placeholder": "Leer lassen für unbegrenzt",
+        "registration_deadline": "Anmeldeschluss"
+      },
+      "validation": {
+        "required_fields": "Bitte alle Pflichtfelder ausfüllen"
+      },
+      "deleteConfirmTitle": "Event Löschen",
+      "deleteConfirmMessage": "Sind Sie sicher, dass Sie das Event löschen möchten",
+      "deleteSuccess": "Event erfolgreich gelöscht",
+      "deleteError": "Fehler beim Löschen des Events",
+      "coach": "Coach",
+      "make_coach": "Als Coach markieren",
+      "remove_coach": "Coach entfernen"
     }
   },
   "components": {
@@ -120,11 +194,16 @@
     "remove": "Entfernen",
     "add": "Hinzufügen",
     "save": "Speichern",
+    "saving": "Speichere...",
     "edit": "Bearbeiten",
     "createNew": "Neu Erstellen",
     "cancel": "Abbrechen",
     "confirm": "Bestätigen",
-    "delete": "Löschen"
+    "delete": "Löschen",
+    "deleting": "Lösche...",
+    "create": "Erstellen",
+    "creating": "Erstelle...",
+    "download": "Herunterladen"
   },
   "dialog": {
     "newMember": {
