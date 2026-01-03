@@ -1,0 +1,15 @@
+[Unit]
+Description=Webling Events Sync to Supabase
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=/home/kraeki/work/jacwohlen.ch/administra/webling-sync
+Environment="ENV=prod"
+ExecStart=/home/kraeki/work/jacwohlen.ch/administra/webling-sync/run-events.sh
+StandardOutput=append:/home/kraeki/work/jacwohlen.ch/administra/webling-sync/logs/events.log
+StandardError=append:/home/kraeki/work/jacwohlen.ch/administra/webling-sync/logs/events.log
+
+[Install]
+WantedBy=default.target
