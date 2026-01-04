@@ -11,14 +11,14 @@
     trainingId: number;
     date: string;
     count: number;
-    trainerCount: number;
+    totalTrainerCount: number;
     hasLessonPlan: boolean;
   }
 
   async function getLogs() {
     const { error, data } = await supabaseClient
       .from('view_logs_summary')
-      .select(`trainingId, date, count, trainerCount, hasLessonPlan`)
+      .select(`trainingId, date, count, totalTrainerCount, hasLessonPlan`)
       .eq('trainingId', trainingId)
       .order('date', { ascending: false })
       .returns<LogSummary[]>();
@@ -41,10 +41,10 @@
           <div class="flex items-center gap-2">
             <span class="chip variant-filled-secondary">{i.count}</span>
             <span class="text-sm opacity-75">{$_('page.trainings.participants')}</span>
-            {#if i.trainerCount > 0}
+            {#if i.totalTrainerCount > 0}
               <span class="chip variant-filled-success">
                 <img class="inline-block w-3" src="/judo-icon.svg" alt="trainer" />
-                {i.trainerCount}
+                {i.totalTrainerCount}
               </span>
             {:else}
               <span class="chip variant-filled-warning">

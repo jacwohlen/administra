@@ -25,9 +25,9 @@
       "searchMembersPlaceholder": "Search Member...",
       "memberNotFound": "Member not found",
       "addMemberPlaceholder": "Add Member...",
-      "noTrainerWarning": {
-        "title": "Trainer missing:",
-        "message": "Please mark at least one trainer."
+      "noMainTrainerWarning": {
+        "title": "Main trainer missing:",
+        "message": "Please mark at least one main trainer for this session."
       },
       "noTrainer": "No Trainer",
       "lessonPlan": "Lesson Plan",
@@ -109,7 +109,10 @@
       "topEventParticipants": "Top Event Participants",
       "topEventCoaches": "Top Event Coaches",
       "loading": "Loading...",
-      "no_event_data": "No event data available"
+      "no_event_data": "No event data available",
+      "downloadTrainerTracking": "Download Trainer Tracking",
+      "noTrainerData": "No trainer data available for this period",
+      "downloadError": "Error downloading trainer data"
     },
     "events": {
       "title": "Events",
@@ -177,7 +180,9 @@
   "components": {
     "ParticipantCard": {
       "View": "View",
-      "ToggleTrainerFlag": "Toogle Trainer Flag",
+      "SetAsAttendee": "Set as Attendee",
+      "SetAsMainTrainer": "Set as Main Trainer",
+      "SetAsAssistant": "Set as Assistant",
       "Remove": "Remove"
     }
   },

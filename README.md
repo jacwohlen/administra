@@ -1,319 +1,214 @@
-# Administra - Absense Tracker (My First Sveltekit App)
+# Administra - Attendance Tracking System
 
-Administra allows to create training sessions and track people's
-attendance.
+A modern attendance tracking system designed specifically for martial arts clubs and training organizations. Built with SvelteKit and Supabase, Administra makes it easy to manage training sessions, track attendance, and generate insightful statistics.
 
 ## Features
 
-- Login using Google Auth or Email/Passowrd
-- Create training classes with meta data (title, start, end, weekday, section)
-- Add participants to a training class
-- Mark participants as present for a particular date
-- Statistics: View attendance of a training class per year
-- ...
+- **Member Management** - Maintain a database of athletes and trainers with profile information and flexible labeling
+- **Training Sessions** - Create and manage recurring training classes with metadata (title, schedule, section)
+- **Attendance Tracking** - Quick and easy attendance marking for each training date
+- **Statistics & Leaderboards** - View comprehensive attendance statistics, top athletes, and trainer activity by year and section
+- **Secure Authentication** - Google OAuth integration with domain-restricted access
+- **Multi-language Support** - Built-in internationalization (German/English)
+- **Responsive Design** - Works seamlessly across desktop and mobile devices
 
-## Technical Aspects
+## Tech Stack
 
-Current stack: npm, node, sveltekit, skeleton (tailwindcss)
+- **Frontend**: SvelteKit with TypeScript
+- **Styling**: Tailwind CSS + Skeleton UI
+- **Backend**: Supabase (PostgreSQL)
+- **Authentication**: Supabase Auth with Google OAuth
+- **Charts**: Carbon Charts
+- **Deployment**: Netlify
+- **Icons**: FontAwesome (via svelte-fa)
 
-Backend: supabase (postgres)
+## Quick Start
 
-## Contribution
+### Prerequisites
 
-More than welcome, I am looking for a productve partnership...
-I believe this product has high potential and we could ease a lot of lives in the judo world.
-As I am a busy man I invested little time. I can bring a network of customers for this idea.
-In case you see the potential and also believe in open source please drop me a line.
+- Node.js (LTS version recommended - use `nvm install --lts`)
+- A Supabase account and project
+- npm, pnpm, or yarn
 
-## Development Setup
+### Installation
 
-1. Create Supabase account
-2. Source environment variables for supabase
+1. Clone the repository:
 
 ```bash
-PUBLIC_SUPABASE_URL=""
-PUBLIC_SUPABASE_ANON_KEY=""
-PUBLIC_MODE=DEV # PROD, DEV
+git clone <repository-url>
+cd administra
 ```
 
-Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
+2. Install dependencies:
+
+```bash
+npm install
+```
+
+3. Set up environment variables:
+
+Create a `.env` file in the root directory:
+
+```bash
+PUBLIC_SUPABASE_URL="your-supabase-project-url"
+PUBLIC_SUPABASE_ANON_KEY="your-supabase-anon-key"
+PUBLIC_MODE="DEV"  # Use "PROD" for production
+```
+
+4. Set up the Supabase database (see [Database Setup](#database-setup) below)
+
+5. Start the development server:
 
 ```bash
 npm run dev
 
-# or start the server and open the app in a new browser tab
+# Or open in browser automatically
 npm run dev -- --open
 ```
 
-## Testing
+The application will be available at `http://localhost:5173`
 
-tbd
+## Development
 
-## Building
+### Available Scripts
 
-To create a production version of the app:
+- `npm run dev` - Start development server
+- `npm run build` - Build for production
+- `npm run preview` - Preview production build
+- `npm run check` - Type check with svelte-check
+- `npm run check:watch` - Type check in watch mode
+- `npm run lint` - Run Prettier and ESLint checks
+- `npm run format` - Format code with Prettier
+- `npm run test:unit` - Run unit tests with Vitest
+
+### Project Structure
+
+```
+src/
+├── lib/
+│   ├── i18n/          # Internationalization files
+│   ├── models.ts      # TypeScript type definitions
+│   └── supabase.ts    # Supabase client configuration
+├── routes/
+│   ├── dashboard/     # Main application routes
+│   │   ├── members/   # Member management
+│   │   ├── trainings/ # Training session management
+│   │   └── stats/     # Statistics and reports
+│   └── +layout.svelte # Root layout with auth
+└── tests/             # Unit tests
+
+webling-sync/          # External member sync tool
+```
+
+## Database Setup
+
+The application requires a Supabase PostgreSQL database with specific tables, views, functions, and security policies.
+
+### Prerequisites
+
+- Supabase CLI installed (`npm install -g supabase`)
+- Supabase project created
+
+### Setup Database
+
+The database schema is managed through migrations located in the `supabase/migrations/` directory. To set up the database:
+
+1. **Link to your Supabase project:**
+
+```bash
+supabase link --project-ref your-project-ref
+```
+
+2. **Apply all migrations:**
+
+```bash
+supabase db push
+```
+
+3. **Or reset and apply migrations locally (for development):**
+
+```bash
+supabase db reset
+```
+
+### Database Structure
+
+**Core Tables:**
+
+- `members` - Athletes and trainers with profile information
+- `trainings` - Training session definitions and schedules
+- `participants` - Member enrollment in training sessions
+- `logs` - Attendance records with date and trainer status
+- `events` - General events and activities
+
+**Views and Functions:**
+
+- Views for statistics aggregation (`view_logs_summary`)
+- Functions for generating checklists and leaderboards
+- Domain-restricted authentication trigger for `@jacwohlen.ch` emails
+
+All SQL schemas, functions, and policies are version-controlled in the `supabase/migrations/` directory. The initial schema is in `20250814155759_remote_schema.sql`.
+
+## Deployment
+
+The application is configured for deployment on Netlify using `@sveltejs/adapter-netlify`.
+
+1. Build the application:
 
 ```bash
 npm run build
 ```
 
-You can preview the production build with `npm run preview`.
+2. Deploy to Netlify (automatic via `netlify.toml` configuration)
 
-## Deployment
+3. Set environment variables in Netlify dashboard:
+   - `PUBLIC_SUPABASE_URL`
+   - `PUBLIC_SUPABASE_ANON_KEY`
+   - `PUBLIC_MODE` (set to "PROD")
 
-> To deploy your app, you may need to install an [adapter](https://kit.svelte.dev/docs/adapters) for your target environment.
+## External Integrations
 
-## Restricted Login (Google Authentication with specific Domain)
+### Webling Sync
 
-This Webapp restricts login to Google Accounts with a given domain.
-To make this happen, we added some policies to the supabase backend.
+The `webling-sync/` directory contains a Python script for synchronizing member data from the Webling API.
 
-Supabase Config: tbd
+**Setup:**
 
-## Tips
+1. Create a virtual environment and install dependencies
+2. Configure Webling API credentials in environment variables
+3. Run `python webling.py` to sync member data
 
-- Tip use `nvm install --lts` to install long term support version of `node`.
+See `webling-sync/README.md` for detailed instructions.
 
-## Todos
+## Contributing
 
-[Todo](./TODO.md)
+Contributions are welcome! This project is designed to help martial arts clubs and similar organizations manage attendance more effectively.
 
-## Prepare Supabase Postgres DB
+### How to Contribute
 
-TODO
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Make your changes and test thoroughly
+4. Run linting and type checking (`npm run lint && npm run check`)
+5. Commit your changes (`git commit -m 'Add amazing feature'`)
+6. Push to your branch (`git push origin feature/amazing-feature`)
+7. Open a Pull Request
 
-- [ ] SQL to create tables/views
-- [ ] SQL to create procedures/functions
-- [ ] SQL to create policies to control access
+### Code Quality
 
-1. Create View for logs summary
+- Follow the existing code style and conventions
+- Add tests for new features
+- Update documentation as needed
+- Ensure all checks pass before submitting PR
 
-```sql
-create view view_logs_summary
-  with (security_invoker=on)
-  as
-select
-  date, "trainingId", count("memberId")
-from
-  logs group by date, "trainingId"
-```
+## License
 
-2. Create function for checklist
+This project is licensed under the MIT License - see the LICENSE file for details.
 
-```sql
--- drop function get_checklist_members (d text, tId int);
-CREATE OR REPLACE function get_checklist_members (d text, tId int)
-returns table (trainingId int2, memberId int4, lastname text, firstname text, labels jsonb, img text, date text, isMainTrainer boolean) language plpgsql
-as
-$$
-declare
-begin
-  return query
-    select participants."trainingId", participants."memberId", members."lastname", members."firstname", members."labels", members."img", logs."date", logs."isMainTrainer"
-    from participants
-    full outer join logs on participants."memberId" = logs."memberId" and logs."date" = $1 and logs."trainingId" = $2
-    inner join members on members.id =  participants."memberId"
-    where participants."trainingId" = $2;
-end;
-$$;
--- select * from get_checklist_members(text '2022-12-19', 47);
-```
+## Support
 
-3. Create View to faciliate seaching members
+For questions, issues, or feature requests, please open an issue on GitHub.
 
-```sql
-create view view_search_members
-  with (security_invoker=on)
-  as
-select
-  id, concat(lastname, ' ', firstname) as fullname, firstname, lastname
-from
-  members
-```
+## Acknowledgments
 
-4. Create functions for stats
-
-```sql
--- drop function get_top_athletes (year text);
-CREATE OR REPLACE function get_top_athletes (year text)
-returns table (memberId int4, lastname text, firstname text, count bigint) language plpgsql
-as
-$$
-declare
-begin
-  return query
-select logs."memberId", members.lastname, members.firstname, count(*)
-    from logs
-    inner join members on members."id" = logs."memberId"
-    where logs."date" like CONCAT($1, '%')
-    group by logs."memberId", members.lastname, members.firstname
-    order by count desc;
-end;
-$$;
-
--- select * from get_top_athletes(text '2022');
-```
-
-```sql
--- drop function get_top_athletes_by_section (year text);
-CREATE OR REPLACE function get_top_athletes_by_section (year text)
-returns table (section text, memberId int4, lastname text, firstname text, count bigint)
-language plpgsql as $$
-declare
-begin
-  return query
-select
-  trainings.section,
-  logs."memberId",
-  members.lastname,
-  members.firstname,
-  count(*)
-from
-  logs
-  inner join members on members."id" = logs."memberId"
-  inner join trainings on trainings."id" = logs."trainingId"
-where
-  logs."date" like concat(year, '%')
-group by
-  trainings.section,
-  logs."memberId",
-  members.lastname,
-  members.firstname
-order by
-  count desc, members.lastname;
-end;
-$$;
-
--- select * from get_top_athletes_by_section(text '2022');
-```
-
-```sql
--- drop function get_top_trainers_by_section (year text);
-CREATE OR REPLACE function get_top_trainers_by_section (year text)
-returns table (section text, memberId int4, lastname text, firstname text, count bigint)
-language plpgsql as $$
-declare
-begin
-  return query
-select
-  trainings.section,
-  logs."memberId",
-  members.lastname,
-  members.firstname,
-  count(*)
-from
-  logs
-  inner join members on members."id" = logs."memberId"
-  inner join trainings on trainings."id" = logs."trainingId"
-where
-  logs."isMainTrainer" is true and
-  logs."date" like concat(year, '%')
-group by
-  trainings.section,
-  logs."memberId",
-  members.lastname,
-  members.firstname
-order by
-  count desc, members.lastname;
-end;
-$$;
-
--- select * from get_top_trainers_by_section(text '2022');
-```
-
-```sql
--- drop function get_top_athletes_from_section (sect text, year text);
-CREATE OR REPLACE function get_top_athletes_from_section (sect text, year text)
-returns table (rank bigint, section text, memberId int4, lastname text, firstname text, count bigint)
-language plpgsql as $$
-declare
-begin
-  return query
-select
-  ROW_NUMBER() OVER (ORDER BY count(*) DESC, members.lastname) AS rank,
-  trainings.section,
-  logs."memberId",
-  members.lastname,
-  members.firstname,
-  count(*)
-from
-  logs
-  inner join members on members."id" = logs."memberId"
-  inner join trainings on trainings."id" = logs."trainingId"
-where
-  logs."date" like concat(year, '%') and
-  LOWER(trainings.section) = LOWER(sect)
-group by
-  trainings.section,
-  logs."memberId",
-  members.lastname,
-  members.firstname
-order by
-  count desc, members.lastname;
-end;
-$$;
-
--- select * from get_top_athletes_from_section(text '2022');
-```
-
-```sql
--- drop function get_top_trainers_from_section (sect text, year text);
-CREATE OR REPLACE function get_top_trainers_from_section (sect text, year text)
-returns table (rank bigint, section text, memberId int4, lastname text, firstname text, count bigint)
-language plpgsql as $$
-declare
-begin
-  return query
-select
-  ROW_NUMBER() OVER (ORDER BY count(*) DESC, members.lastname) AS rank,
-  trainings.section,
-  logs."memberId",
-  members.lastname,
-  members.firstname,
-  count(*)
-from
-  logs
-  inner join members on members."id" = logs."memberId"
-  inner join trainings on trainings."id" = logs."trainingId"
-where
-  logs."isMainTrainer" is true and
-  logs."date" like concat(year, '%') and
-  LOWER(trainings.section) = LOWER(sect)
-group by
-  trainings.section,
-  logs."memberId",
-  members.lastname,
-  members.firstname
-order by
-  count desc, members.lastname;
-end;
-$$;
-
--- select * from get_top_trainers_from_section(text '2022');
-```
-
-5. Secure Login (restrict to google accounts of given domain)
-
-```sql
--- create function with validates email to be from domain "jacwohlen.ch"
-CREATE OR REPLACE FUNCTION validate_google_domain()
-RETURNS TRIGGER AS $$
-BEGIN
-  -- Check if the user's email domain is 'jacwohlen.ch'
-  IF NEW.email LIKE '%@jacwohlen.ch' THEN
-    -- If valid, allow the operation to proceed
-    RETURN NEW;
-  ELSE
-    -- If invalid, raise an error
-    RAISE EXCEPTION 'Invalid email domain. Only jacwohlen.ch is allowed.';
-  END IF;
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
-
-
--- create trigger which fires if new login
-CREATE TRIGGER check_user_domain
-BEFORE INSERT OR UPDATE ON auth.users
-FOR EACH ROW
-EXECUTE FUNCTION validate_google_domain();
-```
+Built with SvelteKit, Supabase, and other excellent open-source tools.

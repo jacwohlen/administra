@@ -2,22 +2,23 @@
 
 Next
 
-- [ ] Events Detail: Improve Add Participants functionality
-- [ ] Events: Add year selector to the events list (<- 2025 ->)
-- [ ] Events Detail: Confirm Modal when removing participant
-- [ ] Member Detail: Visualize Coaches, Trainer, ...
-- [ ] Checklist: Hint if trainer not selected
-- [ ] Checklist: Track Training Plan
-
 Backlog
 
+- [ ] Events: Add year selector to the events list (<- 2025 ->)
+- [ ] Member Detail: Visualize Coaches, Trainer, ...
 - [ ] Member: Pagination (only load 20 and lazy load on scroll) + Search
 - [ ] Checklist, Member photo
-- [ ] Create cronjob for webling sync
 - [ ] Beautify member detail page (add photo)
 
 Done/cancelled
 
+- [x] Enhance Trainer tracking. Be able to track main trainer and assistants (hilfstrainer)
+- [x] Under stats: Offer possibility to download the trainer tracking data for the whole year
+- [x] Create cronjob for webling sync -> systemd timers
+- [x] Events Detail: Confirm Modal when removing participant
+- [x] Checklist: Hint if trainer not selected
+- [x] Checklist: Track Training Plan
+- [x] Events Detail: Improve Add Participants functionality
 - [x] Sync events from webling to administra
 - [x] Training Plan: Allow to attach documents and photos
 - [x] Track Attendance: BUG Adding people -> DB id

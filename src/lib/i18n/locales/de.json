@@ -25,9 +25,9 @@
       "searchMembersPlaceholder": "Mitglied Suchen...",
       "memberNotFound": "Mitglied nicht gefunden",
       "addMemberPlaceholder": "Mitglied Hinzufügen...",
-      "noTrainerWarning": {
-        "title": "Kein Trainer markiert",
-        "message": "Bitte markiere mindestens einen Teilnehmer als Haupttrainer für diese Session."
+      "noMainTrainerWarning": {
+        "title": "Haupttrainer fehlt:",
+        "message": "Bitte markieren Sie mindestens einen Haupttrainer für diese Session."
       },
       "noTrainer": "Kein Trainer",
       "lessonPlan": "Trainingsplan",
@@ -109,7 +109,10 @@
       "topEventParticipants": "Top Event-Teilnehmer",
       "topEventCoaches": "Top Event-Coaches",
       "loading": "Lädt...",
-      "no_event_data": "Keine Event-Daten verfügbar"
+      "no_event_data": "Keine Event-Daten verfügbar",
+      "downloadTrainerTracking": "Trainerübersicht herunterladen",
+      "noTrainerData": "Keine Trainerdaten für diesen Zeitraum verfügbar",
+      "downloadError": "Fehler beim Herunterladen der Trainerdaten"
     },
     "events": {
       "title": "Events",
@@ -177,7 +180,9 @@
   "components": {
     "ParticipantCard": {
       "View": "Anzeigen",
-      "ToggleTrainerFlag": "Trainer Flag umschalten",
+      "SetAsAttendee": "Als Teilnehmer markieren",
+      "SetAsMainTrainer": "Als Haupttrainer markieren",
+      "SetAsAssistant": "Als Hilfstrainer markieren",
       "Remove": "Entfernen"
     }
   },
