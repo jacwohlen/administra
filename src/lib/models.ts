@@ -1,5 +1,7 @@
 import type { Dayjs } from 'dayjs';
 
+export type TrainerRole = 'attendee' | 'main_trainer' | 'assistant';
+
 export interface Member {
   id: string;
   firstname: string;
@@ -26,7 +28,7 @@ export interface Log {
   date: string;
   trainingId: Training;
   memberId: Member;
-  isMainTrainer: boolean;
+  trainerRole: TrainerRole;
 }
 
 export interface Athletes {
@@ -94,4 +96,16 @@ export interface EventStats {
   firstname: string;
   count: number;
   rank: number;
+}
+
+export interface TrainerTrackingRecord {
+  date: string;
+  trainingId: number;
+  trainingTitle: string;
+  section: string;
+  memberId: number;
+  lastname: string;
+  firstname: string;
+  trainerRole: TrainerRole;
+  attendeeCount: number;
 }

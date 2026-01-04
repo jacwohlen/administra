@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { PageData } from './$types';
   import type { MMember } from './types';
+  import type { TrainerRole } from '$lib/models';
   import ParticipantCard from './ParticipantCard.svelte';
   import Fa from 'svelte-fa';
   import {
@@ -26,8 +27,9 @@
 
   let filteredData: MMember[] = [];
   $: presentParticipants = filteredData.filter((p) => p.isPresent);
-  $: presentTrainers = presentParticipants.filter((p) => p.isMainTrainer);
-  $: hasTrainerMarked = presentTrainers.length > 0;
+  $: mainTrainers = presentParticipants.filter((p) => p.trainerRole === 'main_trainer');
+  $: assistantTrainers = presentParticipants.filter((p) => p.trainerRole === 'assistant');
+  $: hasMainTrainer = mainTrainers.length > 0;
 
   let hiIndex = -1;
 
@@ -59,15 +61,15 @@
   filterData();
 
   async function changePresence(
-    event: CustomEvent<{ member: MMember; checked: boolean; isMainTrainer: boolean }>
+    event: CustomEvent<{ member: MMember; checked: boolean; trainerRole: TrainerRole }>
   ) {
-    await _changePresence(event.detail.member, event.detail.checked, event.detail.isMainTrainer);
+    await _changePresence(event.detail.member, event.detail.checked, event.detail.trainerRole);
   }
 
-  async function _changePresence(member: MMember, checked: boolean, isMainTrainer: boolean) {
+  async function _changePresence(member: MMember, checked: boolean, trainerRole: TrainerRole) {
     const index = data.participants.findIndex((m) => m.id === member.id);
     data.participants[index].isPresent = checked;
-    data.participants[index].isMainTrainer = isMainTrainer;
+    data.participants[index].trainerRole = trainerRole;
     clearSearch();
 
     // Always delete any existing entry (code simplicity to the tradeoff of executing 2 api calls)
@@ -86,7 +88,7 @@
         date: data.date,
         trainingId: data.trainingId,
         memberId: member.id,
-        isMainTrainer
+        trainerRole
       });
       if (error) {
         console.log(error);
@@ -108,7 +110,7 @@
     if (d.data?.members) {
       data.participants.push(d.data.members as unknown as MMember);
     }
-    _changePresence(event.detail.member, true, false);
+    _changePresence(event.detail.member, true, 'attendee');
     filterData(); // force reactivity
   }
 
@@ -146,7 +148,7 @@
     } else if (e.key === 'ArrowUp' && hiIndex !== -1) {
       hiIndex === 0 ? (hiIndex = filteredData.length - 1) : (hiIndex -= 1);
     } else if (e.key === 'Enter') {
-      _changePresence(filteredData[hiIndex], !filteredData[hiIndex].isPresent, false);
+      _changePresence(filteredData[hiIndex], !filteredData[hiIndex].isPresent, 'attendee');
       clearSearch();
     } else {
       return;
@@ -207,13 +209,13 @@
       </div>
 
       <!-- Trainer Warning Alert -->
-      {#if presentParticipants.length > 0 && !hasTrainerMarked}
+      {#if presentParticipants.length > 0 && !hasMainTrainer}
         <aside class="alert variant-ghost-warning my-2">
           <div><Fa icon={faExclamationTriangle} class="text-warning-500" /></div>
           <div class="alert-message">
             <p>
-              <span class="font-bold">{$_('page.trainings.noTrainerWarning.title')}</span>
-              {$_('page.trainings.noTrainerWarning.message')}
+              <span class="font-bold">{$_('page.trainings.noMainTrainerWarning.title')}</span>
+              {$_('page.trainings.noMainTrainerWarning.message')}
             </p>
           </div>
         </aside>

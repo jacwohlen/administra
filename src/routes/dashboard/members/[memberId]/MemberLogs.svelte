@@ -15,7 +15,7 @@
     // Fetch logs
     const { error, data } = await supabaseClient
       .from('logs')
-      .select('date, trainingId ( id, title, section, weekday ), isMainTrainer')
+      .select('date, trainingId ( id, title, section, weekday ), trainerRole')
       .eq('memberId', memberId)
       .gte('date', year + '-01-01')
       .lte('date', year + '-12-31')

@@ -13,7 +13,7 @@
       if (log.trainingId.id == id) {
         total++;
         totalOverAll++;
-        if (log.isMainTrainer) {
+        if (log.trainerRole === 'main_trainer' || log.trainerRole === 'assistant') {
           mainTrainerCount++;
           mainTrainerCountOverAll++;
         }

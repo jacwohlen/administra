@@ -1,5 +1,6 @@
 import type { PageLoad } from './$types';
 import type { MMember } from './types';
+import type { TrainerRole } from '$lib/models';
 import { supabaseClient } from '$lib/supabase';
 import { error as err } from '@sveltejs/kit';
 
@@ -10,7 +11,7 @@ interface ChecklistMemberData {
   labels: string[];
   img: string;
   date: string | null;
-  isMainTrainer: boolean;
+  trainerRole: TrainerRole;
 }
 
 export const load = (async ({ params }) => {
@@ -35,7 +36,7 @@ export const load = (async ({ params }) => {
           labels: item.labels,
           img: item.img,
           isPresent: item.date ? true : false,
-          isMainTrainer: item.isMainTrainer
+          trainerRole: item.trainerRole || 'attendee'
         } as MMember)
     );
   }

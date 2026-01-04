@@ -1,6 +1,6 @@
 -- Create Avatar Bucket
-insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
-values ('avatars', 'avatars', false, 10485760, null)
+insert into storage.buckets (id, name)
+values ('avatars', 'avatars')
 on conflict (id) do nothing;
 
 -- Allow all authenticated users to read from the 'avatars' bucket

@@ -10,6 +10,7 @@
   import TopTrainers from './TopTrainers.svelte';
   import TopEventParticipants from './TopEventParticipants.svelte';
   import TopEventCoaches from './TopEventCoaches.svelte';
+  import TrainerDownload from './TrainerDownload.svelte';
 
   export let data: PageData;
 
@@ -65,6 +66,10 @@
   </div>
 
   <div class="card p-4">
+    <div class="flex justify-between items-center mb-4">
+      <h3>{$_('page.stats.topTrainers')}</h3>
+      <TrainerDownload {year} {yearmode} />
+    </div>
     <TopTrainers {data} />
   </div>
 

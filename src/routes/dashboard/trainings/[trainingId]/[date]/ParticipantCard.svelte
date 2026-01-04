@@ -8,6 +8,7 @@
   import { _ } from 'svelte-i18n';
 
   import type { MMember } from './types';
+  import type { TrainerRole } from '$lib/models';
 
   export let member: MMember;
   export let highlight = false;
@@ -15,7 +16,7 @@
   const dispatch = createEventDispatcher();
 
   function change() {
-    dispatch('change', { member, checked: !member.isPresent, isMainTrainer: false });
+    dispatch('change', { member, checked: !member.isPresent, trainerRole: 'attendee' });
   }
 
   function triggerConfirm(): void {
@@ -32,8 +33,8 @@
     modalStore.trigger(confirm);
   }
 
-  function toogleMainTrainer(): void {
-    dispatch('change', { member, checked: true, isMainTrainer: !member.isMainTrainer });
+  function setTrainerRole(role: TrainerRole): void {
+    dispatch('change', { member, checked: true, trainerRole: role });
   }
 </script>
 
@@ -47,9 +48,15 @@
       on:change={change}
     />
     <div class="relative inline-block">
-      {#if member.isMainTrainer}
-        <span class="badge-icon absolute -bottom-0 -right-0 z-10">
-          <img src="/judo-icon.svg" alt="judo-icon" />
+      {#if member.trainerRole === 'main_trainer'}
+        <span class="badge-icon absolute -bottom-0 -right-0 z-10 bg-yellow-500 rounded-full">
+          <img src="/judo-icon.svg" alt="main-trainer" />
+        </span>
+      {:else if member.trainerRole === 'assistant'}
+        <span
+          class="badge-icon absolute -bottom-0 -right-0 z-10 bg-gray-400 text-white text-xs font-bold px-1.5 py-0.5 rounded-full"
+        >
+          A
         </span>
       {/if}
       {#if member.img}
@@ -75,13 +82,24 @@
               {$_('components.ParticipantCard.View')}
             </a>
           </li>
-          <li>
-            <button class="option w-full" on:click={toogleMainTrainer}>
-              <img class="inline-block w-4" src="/judo-icon.svg" alt="judo-icon" />
-              <span class="pl-1">{$_('components.ParticipantCard.ToggleTrainerFlag')}</span>
+          <li class="border-t pt-2 mt-2">
+            <button class="option w-full" on:click={() => setTrainerRole('attendee')}>
+              {$_('components.ParticipantCard.SetAsAttendee')}
             </button>
           </li>
           <li>
+            <button class="option w-full" on:click={() => setTrainerRole('main_trainer')}>
+              <img class="inline-block w-4" src="/judo-icon.svg" alt="judo-icon" />
+              <span class="pl-1">{$_('components.ParticipantCard.SetAsMainTrainer')}</span>
+            </button>
+          </li>
+          <li>
+            <button class="option w-full" on:click={() => setTrainerRole('assistant')}>
+              <span class="inline-block w-4 text-center font-bold text-gray-600">A</span>
+              <span class="pl-1">{$_('components.ParticipantCard.SetAsAssistant')}</span>
+            </button>
+          </li>
+          <li class="border-t pt-2 mt-2">
             <button class="option w-full" on:click={triggerConfirm}>
               {$_('components.ParticipantCard.Remove')}
             </button>
