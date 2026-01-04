@@ -33,12 +33,14 @@ A modern attendance tracking system designed specifically for martial arts clubs
 ### Installation
 
 1. Clone the repository:
+
 ```bash
 git clone <repository-url>
 cd administra
 ```
 
 2. Install dependencies:
+
 ```bash
 npm install
 ```
@@ -56,6 +58,7 @@ PUBLIC_MODE="DEV"  # Use "PROD" for production
 4. Set up the Supabase database (see [Database Setup](#database-setup) below)
 
 5. Start the development server:
+
 ```bash
 npm run dev
 
@@ -111,16 +114,19 @@ The application requires a Supabase PostgreSQL database with specific tables, vi
 The database schema is managed through migrations located in the `supabase/migrations/` directory. To set up the database:
 
 1. **Link to your Supabase project:**
+
 ```bash
 supabase link --project-ref your-project-ref
 ```
 
 2. **Apply all migrations:**
+
 ```bash
 supabase db push
 ```
 
 3. **Or reset and apply migrations locally (for development):**
+
 ```bash
 supabase db reset
 ```
@@ -128,6 +134,7 @@ supabase db reset
 ### Database Structure
 
 **Core Tables:**
+
 - `members` - Athletes and trainers with profile information
 - `trainings` - Training session definitions and schedules
 - `participants` - Member enrollment in training sessions
@@ -135,6 +142,7 @@ supabase db reset
 - `events` - General events and activities
 
 **Views and Functions:**
+
 - Views for statistics aggregation (`view_logs_summary`)
 - Functions for generating checklists and leaderboards
 - Domain-restricted authentication trigger for `@jacwohlen.ch` emails
@@ -146,6 +154,7 @@ All SQL schemas, functions, and policies are version-controlled in the `supabase
 The application is configured for deployment on Netlify using `@sveltejs/adapter-netlify`.
 
 1. Build the application:
+
 ```bash
 npm run build
 ```
@@ -164,6 +173,7 @@ npm run build
 The `webling-sync/` directory contains a Python script for synchronizing member data from the Webling API.
 
 **Setup:**
+
 1. Create a virtual environment and install dependencies
 2. Configure Webling API credentials in environment variables
 3. Run `python webling.py` to sync member data

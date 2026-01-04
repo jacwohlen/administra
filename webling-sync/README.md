@@ -79,6 +79,7 @@ pip install requests
 Create environment-specific configuration files:
 
 **Production (`.env.prod`):**
+
 ```bash
 export WEBLING_API_KEY=<your webling api key>
 export WEBLING_DOMAIN=<your webling domain>  # e.g. jacwohlen
@@ -93,6 +94,7 @@ export WEBLING_PASSWORD=<your webling password>
 ```
 
 **Staging (`.env.staging`):**
+
 ```bash
 export WEBLING_API_KEY=<your webling api key>
 export WEBLING_DOMAIN=<your webling domain>  # e.g. jacwohlen
@@ -113,6 +115,7 @@ export WEBLING_PASSWORD=<your webling password>
 The `systemd/` directory contains service and timer files for automated daily sync.
 
 **Schedule:**
+
 - Events sync: Daily at 23:58
 - Members sync: Daily at 23:59
 
@@ -282,6 +285,7 @@ webling-sync/
 ### Services fail with "Please export WEBLING_DOMAIN" error
 
 The environment file is not being sourced correctly. Make sure:
+
 - The `.env.prod` (or `.env.staging`) file exists and contains `export` statements
 - The wrapper scripts are executable: `chmod +x run-events.sh run-members.sh`
 - The ENV variable matches your environment file name (without the .env. prefix)
@@ -289,6 +293,7 @@ The environment file is not being sourced correctly. Make sure:
 ### Timers don't run when logged out
 
 Enable lingering for your user:
+
 ```bash
 loginctl enable-linger $USER
 ```
