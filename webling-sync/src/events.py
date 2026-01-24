@@ -3,13 +3,15 @@
 Webling Events Sync Script
 
 This script syncs calendar events and their participants from Webling to Administra.
-It fetches events from specified calendars and creates attendance logs based on 
+It fetches events from specified calendars and creates attendance logs based on
 participant data from the Webling API.
 
 Features:
 - Syncs events from Webling calendars to Supabase
 - Fetches participants for each event using the Webling participant query API
-- Creates attendance logs based on participant states
+- Only syncs participants with "confirmed" state (property 594 = "confirmed")
+- For events today/future: deletes all existing participants and replaces with Webling data
+- For past events: preserves historical data, skips participant sync
 - Supports filtering by calendar ID or name
 - Skips events from previous years
 
@@ -361,9 +363,9 @@ def sync_events(selected_calendars=None):
                     # Fetch and sync participant registrations for this event
                     print(f"    Fetching participants for event {event_id}...")
                     participants = get_event_participants(event_id)
-                    
+
                     if participants and len(participants) > 0:
-                        participants_synced = sync_event_participants(event_id, participants)
+                        participants_synced = sync_event_participants(event_id, participants, begin_date)
                         print(f"    Synced {participants_synced} participant registrations")
                     else:
                         print(f"    No participants found for event {event_id}")
@@ -374,20 +376,64 @@ def sync_events(selected_calendars=None):
     
     print(f"\nSync completed! Synced {synced_count} events total.")
 
-def sync_event_participants(event_id, participants):
-    """Sync participant registrations for a specific event"""
+def delete_all_event_participants(event_id):
+    """Delete all participant registrations for an event from Supabase"""
+    url = f"{SUPABASE_URL}/rest/v1/event_participants?eventId=eq.{event_id}"
+    response = requests.delete(url, headers=HEADERS)
+
+    if response.status_code in [200, 204]:
+        print(f"      Cleared existing participants for event {event_id}")
+        return True
+    else:
+        print(f"      Warning: Could not delete existing participants: {response.status_code} - {response.text}")
+        return False
+
+def sync_event_participants(event_id, participants, event_date):
+    """Sync participant registrations for a specific event
+
+    For events today or in the future:
+    - Deletes all existing participants in Supabase
+    - Inserts confirmed participants from Webling
+
+    For past events:
+    - Skips sync to preserve historical data
+    """
+    # Check if event is today or in the future
+    try:
+        event_date_obj = datetime.strptime(event_date, "%Y-%m-%d").date()
+        today = date.today()
+
+        if event_date_obj < today:
+            print(f"      Skipping participant sync for past event ({event_date})")
+            return 0
+    except (ValueError, TypeError):
+        print(f"      Warning: Invalid event date format ({event_date}), skipping participant sync")
+        return 0
+
+    # Delete all existing participants for this event
+    delete_all_event_participants(event_id)
+
     synced_count = 0
-    
+
     for participant in participants:
         try:
             # Extract participant information
             participant_id = participant.get('id')
             member_id_raw = participant.get('links', {}).get('member')
-            state = participant.get('properties', {}).get('state', 'unknown')
-            
+
+            # Property 594 contains the confirmation state
+            properties = participant.get('properties', {})
+            confirmation_state = properties.get('594', None)
+            member_name = properties.get('-28', 'Unknown')
+
             # Debug: print the participant structure
-            print(f"        Participant {participant_id}: member_id_raw = {member_id_raw} (type: {type(member_id_raw)})")
-            
+            print(f"        Participant: {member_name}, member_id_raw = {member_id_raw}, confirmation = {confirmation_state}")
+
+            # Only sync participants with "confirmed" state
+            if confirmation_state != 'confirmed':
+                print(f"      Skipping participant {member_name} - not confirmed (state: {confirmation_state})")
+                continue
+
             # Handle member_id - it might be an array or single value
             if isinstance(member_id_raw, list):
                 if len(member_id_raw) > 0:
@@ -396,7 +442,7 @@ def sync_event_participants(event_id, participants):
                     member_id = None
             else:
                 member_id = member_id_raw
-            
+
             if not participant_id or not member_id:
                 print(f"      Skipping participant with missing ID or member ID (participant_id={participant_id}, member_id={member_id})")
                 continue
@@ -406,7 +452,7 @@ def sync_event_participants(event_id, participants):
                 "eventId": event_id,
                 "memberId": member_id,
                 "attendanceStatus": "registered",  # Default status for imported participants
-                "notes": f"Imported from Webling - State: {state}"
+                "notes": f"Imported from Webling - Confirmed: {confirmation_state}"
             }
             
             # Remove None values
@@ -463,8 +509,10 @@ def print_usage():
     print("Features:")
     print("  - Syncs events from Webling calendars to Administra")
     print("  - Fetches participants for each event and creates attendance logs")
+    print("  - Only syncs participants with 'confirmed' state")
+    print("  - For events today/future: replaces all participants (deletes old, inserts confirmed)")
+    print("  - For past events: preserves historical data")
     print("  - Skips events from previous years (current year and future only)")
-    print("  - Maps participant states to attendance status")
     print()
     print("Examples:")
     print("  python events.py --calendar 22333 21780    # Sync Club and Aikido calendars")
