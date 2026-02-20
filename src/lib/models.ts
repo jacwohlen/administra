@@ -24,7 +24,6 @@ export interface Training {
 }
 
 export interface Log {
-  id: number;
   date: string;
   trainingId: Training;
   memberId: Member;
