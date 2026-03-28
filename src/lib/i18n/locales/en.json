@@ -216,7 +216,8 @@
       "lastName": "Last Name",
       "firstName": "First Name",
       "lastNamePlaceholder": "Enter Last Name...",
-      "firstNamePlaceholder": "Enter First Name..."
+      "firstNamePlaceholder": "Enter First Name...",
+      "labelPlaceholder": "Add label..."
     },
     "editMember": {
       "title": "Edit Member",

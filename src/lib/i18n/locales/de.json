@@ -216,7 +216,8 @@
       "lastName": "Nachname",
       "lastNamePlaceholder": "Nachname eingeben...",
       "firstName": "Vorname",
-      "firstNamePlaceholder": "Vorname eingeben..."
+      "firstNamePlaceholder": "Vorname eingeben...",
+      "labelPlaceholder": "Label hinzufügen..."
     },
     "editMember": {
       "title": "Mitglied bearbeiten",

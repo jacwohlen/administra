@@ -2,7 +2,7 @@
   import { modalStore } from '@skeletonlabs/skeleton';
   import { _ } from 'svelte-i18n';
   import Fa from 'svelte-fa';
-  import { faSpinner } from '@fortawesome/free-solid-svg-icons';
+  import { faSpinner, faXmark } from '@fortawesome/free-solid-svg-icons';
 
   export let lastname = '';
   export let firstname = '';
@@ -13,6 +13,8 @@
   export let isEditing = false;
   export let id = '';
 
+  let labelInput = '';
+
   let formData = {
     id,
     lastname,
@@ -21,6 +23,25 @@
     mobile,
     labels: labels || ['new']
   };
+
+  function addLabel() {
+    const value = labelInput.trim().toLowerCase();
+    if (value && !formData.labels.includes(value)) {
+      formData.labels = [...formData.labels, value];
+    }
+    labelInput = '';
+  }
+
+  function removeLabel(label: string) {
+    formData.labels = formData.labels.filter((l) => l !== label);
+  }
+
+  function handleLabelKeydown(event: KeyboardEvent) {
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      addLabel();
+    }
+  }
 
   function cancel() {
     modalStore.close();
@@ -62,6 +83,33 @@
     <span>{$_('page.members.mobile')}</span>
     <input class="input" bind:value={formData.mobile} type="tel" placeholder="+41 79 123 45 67" />
   </label>
+  <div class="label">
+    <span>{$_('page.members.labels')}</span>
+    <div class="flex flex-wrap gap-1 mb-2">
+      {#each formData.labels as label (label)}
+        <button
+          type="button"
+          class="chip variant-filled-secondary flex items-center gap-1"
+          on:click={() => removeLabel(label)}
+        >
+          {label}
+          <Fa icon={faXmark} size="xs" />
+        </button>
+      {/each}
+    </div>
+    <div class="input-group input-group-divider grid-cols-[1fr_auto]">
+      <input
+        class="input"
+        bind:value={labelInput}
+        on:keydown={handleLabelKeydown}
+        type="text"
+        placeholder={$_('dialog.newMember.labelPlaceholder')}
+      />
+      <button type="button" class="variant-filled-secondary" on:click={addLabel}>
+        {$_('button.add')}
+      </button>
+    </div>
+  </div>
 </form>
 <footer class="modal-footer flex justify-end space-x-2">
   <button class="btn variant-ghost-surface" on:click={cancel}>{$_('button.cancel')}</button>
