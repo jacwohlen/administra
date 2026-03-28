@@ -9,7 +9,9 @@
     faArrowRight,
     faExclamationTriangle,
     faClipboardList,
-    faUsers
+    faUsers,
+    faUserCheck,
+    faChalkboardTeacher
   } from '@fortawesome/free-solid-svg-icons';
   import dayjs from 'dayjs';
   import { goto } from '$app/navigation';
@@ -43,11 +45,11 @@
 
     filteredData = filteredData.sort((a, b) => {
       if (a.isPresent && !b.isPresent) {
-        return -1; // a comes first
+        return -1;
       } else if (!a.isPresent && b.isPresent) {
-        return 1; // b comes first
+        return 1;
       } else {
-        return 0; // no sorting needed
+        return 0;
       }
     });
   };
@@ -72,7 +74,6 @@
     data.participants[index].trainerRole = trainerRole;
     clearSearch();
 
-    // Always delete any existing entry (code simplicity to the tradeoff of executing 2 api calls)
     const { error } = await supabaseClient
       .from('logs')
       .delete()
@@ -99,7 +100,7 @@
   async function addParticipant(event: CustomEvent<{ member: MMember }>) {
     const foundIndex = filteredData.findIndex((item) => item.id === event.detail.member.id);
     if (foundIndex > -1) {
-      return; // member already there
+      return;
     }
     const d = await supabaseClient
       .from('participants')
@@ -111,7 +112,7 @@
       data.participants.push(d.data.members as unknown as MMember);
     }
     _changePresence(event.detail.member, true, 'attendee');
-    filterData(); // force reactivity
+    filterData();
   }
 
   async function removeParticipant(event: CustomEvent<{ member: MMember; checked: boolean }>) {
@@ -120,11 +121,10 @@
       .delete()
       .eq('trainingId', data.trainingId)
       .eq('memberId', event.detail.member.id);
-    // TODO: Splice , would disappear if subscribed to supabase
     const index = data.participants.findIndex((p) => p.id === event.detail.member.id);
     if (index > -1) {
       data.participants.splice(index, 1);
-      filterData(); // force reactivity
+      filterData();
     }
   }
 
@@ -158,90 +158,129 @@
   function toggleView() {
     showLessonPlan = !showLessonPlan;
   }
+
+  $: formattedDate = dayjs(data.date, 'YYYY-MM-DD').format('DD. MMMM YYYY');
 </script>
 
-<div class="flex justify-between items-center">
-  <div>
-    <h2>{data.title}</h2>
-    <h4>{$_('weekday.' + data.weekday)} {data.dateFrom} | {data.section}</h4>
-  </div>
-  <button class="btn variant-outline-primary flex items-center gap-2" on:click={toggleView}>
-    <Fa icon={showLessonPlan ? faUsers : faClipboardList} />
-    <span>{showLessonPlan ? $_('page.trainings.attendance') : $_('page.trainings.lessonPlan')}</span
-    >
-  </button>
-</div>
-<hr class="my-2" />
-<div class="flex justify-between items-center my-2">
-  <div>
-    <button class="btn" on:click={previousWeek}>
-      <Fa icon={faArrowLeft} /><span>{$_('button.week')}</span>
-    </button>
-  </div>
-  <div>
-    <h2>{data.date}</h2>
-  </div>
-  <div>
-    <button class="btn" on:click={nextWeek}>
-      <span>{$_('button.week')}</span><Fa icon={faArrowRight} />
-    </button>
-  </div>
-</div>
-{#if !showLessonPlan}
-  <div>
+<!-- Header card -->
+<div class="card p-4 mb-4">
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
     <div>
-      <div class="flex items-center">
-        <div class="mr-2">
-          <span class="chip variant-filled-secondary">{presentParticipants.length}</span>
-        </div>
-        <div class="grow">
-          <input
-            class="input"
-            on:keydown={navigateList}
-            type="text"
-            placeholder={$_('page.trainings.searchMembersPlaceholder')}
-            bind:value={searchterm}
-            on:input={filterData}
-            on:focus={() => (animateList = false)}
-            on:blur={() => (animateList = true)}
-          />
-        </div>
+      <h2 class="h2">{data.title}</h2>
+      <div class="flex items-center gap-2 mt-1">
+        <span class="badge variant-filled-secondary">{data.section}</span>
+        <span class="text-sm opacity-70">
+          {$_('weekday.' + data.weekday)} | {data.dateFrom}
+        </span>
       </div>
-
-      <!-- Trainer Warning Alert -->
-      {#if presentParticipants.length > 0 && !hasMainTrainer}
-        <aside class="alert variant-ghost-warning my-2">
-          <div><Fa icon={faExclamationTriangle} class="text-warning-500" /></div>
-          <div class="alert-message">
-            <p>
-              <span class="font-bold">{$_('page.trainings.noMainTrainerWarning.title')}</span>
-              {$_('page.trainings.noMainTrainerWarning.message')}
-            </p>
-          </div>
-        </aside>
-      {/if}
-      <ul class="list">
-        {#each filteredData as p, i (p.id)}
-          <div
-            class="item"
-            animate:flip={{ delay: 0, duration: animateList ? 400 : 0, easing: quintInOut }}
-          >
-            <ParticipantCard
-              highlight={hiIndex === i}
-              member={p}
-              on:change={changePresence}
-              on:remove={removeParticipant}
-            />
-          </div>
-        {/each}
-        <li>
-          <aside class="alert variant-ghost-tertiary w-full justify-items-center">
-            <AddParticipantInputBox on:add={addParticipant} />
-          </aside>
-        </li>
-      </ul>
     </div>
   </div>
+</div>
+
+<!-- Date navigation -->
+<div class="flex justify-between items-center mb-4">
+  <button class="btn btn-sm variant-ghost-surface" on:click={previousWeek}>
+    <Fa icon={faArrowLeft} />
+    <span>{$_('button.week')}</span>
+  </button>
+  <h3 class="h3">{formattedDate}</h3>
+  <button class="btn btn-sm variant-ghost-surface" on:click={nextWeek}>
+    <span>{$_('button.week')}</span>
+    <Fa icon={faArrowRight} />
+  </button>
+</div>
+
+<!-- View toggle tabs -->
+<div class="flex gap-1 mb-4">
+  <button
+    class="btn btn-sm flex-1 {!showLessonPlan
+      ? 'variant-filled-primary'
+      : 'variant-soft-surface'}"
+    on:click={() => (showLessonPlan = false)}
+  >
+    <Fa icon={faUsers} />
+    <span>{$_('page.trainings.attendance')}</span>
+  </button>
+  <button
+    class="btn btn-sm flex-1 {showLessonPlan
+      ? 'variant-filled-primary'
+      : 'variant-soft-surface'}"
+    on:click={() => (showLessonPlan = true)}
+  >
+    <Fa icon={faClipboardList} />
+    <span>{$_('page.trainings.lessonPlan')}</span>
+  </button>
+</div>
+
+{#if !showLessonPlan}
+  <!-- Stats bar -->
+  <div class="flex gap-2 mb-3 flex-wrap">
+    <span class="chip variant-filled-primary">
+      <Fa icon={faUserCheck} size="sm" />
+      <span>{presentParticipants.length} / {filteredData.length}</span>
+    </span>
+    {#if mainTrainers.length > 0}
+      <span class="chip variant-filled-warning">
+        <img class="inline-block w-3.5" src="/judo-icon.svg" alt="trainer" />
+        <span>{mainTrainers.length}</span>
+      </span>
+    {/if}
+    {#if assistantTrainers.length > 0}
+      <span class="chip variant-filled-surface">
+        <Fa icon={faChalkboardTeacher} size="sm" />
+        <span>{assistantTrainers.length}</span>
+      </span>
+    {/if}
+  </div>
+
+  <!-- Trainer warning -->
+  {#if presentParticipants.length > 0 && !hasMainTrainer}
+    <aside class="alert variant-ghost-warning mb-3">
+      <div><Fa icon={faExclamationTriangle} class="text-warning-500" /></div>
+      <div class="alert-message">
+        <p>
+          <span class="font-bold">{$_('page.trainings.noMainTrainerWarning.title')}</span>
+          {$_('page.trainings.noMainTrainerWarning.message')}
+        </p>
+      </div>
+    </aside>
+  {/if}
+
+  <!-- Search -->
+  <div class="mb-3">
+    <input
+      class="input"
+      on:keydown={navigateList}
+      type="text"
+      placeholder={$_('page.trainings.searchMembersPlaceholder')}
+      bind:value={searchterm}
+      on:input={filterData}
+      on:focus={() => (animateList = false)}
+      on:blur={() => (animateList = true)}
+    />
+  </div>
+
+  <!-- Participant list -->
+  <ul class="list">
+    {#each filteredData as p, i (p.id)}
+      <div
+        class="item"
+        animate:flip={{ delay: 0, duration: animateList ? 400 : 0, easing: quintInOut }}
+      >
+        <ParticipantCard
+          highlight={hiIndex === i}
+          member={p}
+          on:change={changePresence}
+          on:remove={removeParticipant}
+        />
+      </div>
+    {/each}
+    <li>
+      <aside class="alert variant-ghost-tertiary w-full justify-items-center">
+        <AddParticipantInputBox on:add={addParticipant} />
+      </aside>
+    </li>
+  </ul>
 {:else}
   <LessonPlan trainingId={data.trainingId} date={data.date} />
 {/if}
