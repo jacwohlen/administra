@@ -24,9 +24,7 @@
       type: 'confirm',
       title: $_('dialog.confirm.title'),
       body: $_('dialog.confirm.body'),
-      // TRUE if confirm pressed, FALSE if cancel pressed
       response: (r: boolean) => r === true && dispatch('remove', { member }),
-      // Optionally override the button text
       buttonTextCancel: $_('button.cancel'),
       buttonTextConfirm: $_('button.confirm')
     };
@@ -38,7 +36,9 @@
   }
 </script>
 
-<li class={highlight ? 'bg-primary-50' : ''}>
+<li
+  class="rounded-lg transition-colors {highlight ? 'bg-primary-100 dark:bg-primary-900/30' : ''} {member.isPresent ? '' : 'opacity-50'}"
+>
   {#if member}
     <input
       class="checkbox"
@@ -47,42 +47,44 @@
       checked={member.isPresent}
       on:change={change}
     />
-    <div class="relative inline-block">
+    <div class="relative inline-block flex-shrink-0">
       {#if member.trainerRole === 'main_trainer'}
-        <span class="badge-icon absolute -bottom-0 -right-0 z-10 bg-yellow-500 rounded-full">
-          <img src="/judo-icon.svg" alt="main-trainer" />
+        <span
+          class="badge-icon absolute -bottom-0 -right-0 z-10 bg-warning-500 rounded-full w-5 h-5 flex items-center justify-center"
+        >
+          <img class="w-3.5" src="/judo-icon.svg" alt="main-trainer" />
         </span>
       {:else if member.trainerRole === 'assistant'}
         <span
-          class="badge-icon absolute -bottom-0 -right-0 z-10 bg-gray-400 text-white text-xs font-bold px-1.5 py-0.5 rounded-full"
+          class="badge-icon absolute -bottom-0 -right-0 z-10 bg-surface-400 text-white text-xs font-bold w-5 h-5 flex items-center justify-center rounded-full"
         >
           A
         </span>
       {/if}
       {#if member.img}
-        <Avatar src={member.img} />
+        <Avatar src={member.img} width="w-10" />
       {:else}
-        <Avatar initials={member.lastname.charAt(0) + member.firstname.charAt(0)} />
+        <Avatar initials={member.lastname.charAt(0) + member.firstname.charAt(0)} width="w-10" />
       {/if}
     </div>
-    <span class="flex-auto">
-      <dt>{member.lastname} {member.firstname}</dt>
+    <span class="flex-auto min-w-0">
+      <dt class="font-semibold truncate">{member.lastname} {member.firstname}</dt>
       <dd>
         <Labels labels={member.labels ? member.labels : []} />
       </dd>
     </span>
-    <div class="justify-self-end relative">
-      <button class="btn" use:menu={{ menu: 'ParticipantCard' + member.id }}>
+    <div class="justify-self-end relative flex-shrink-0">
+      <button class="btn btn-sm" use:menu={{ menu: 'ParticipantCard' + member.id }}>
         <Fa icon={faEllipsisVertical} />
       </button>
-      <nav class="card p-2 w-48 shadow-xl" data-menu={'ParticipantCard' + member.id}>
+      <nav class="card p-2 w-48 shadow-xl z-50" data-menu={'ParticipantCard' + member.id}>
         <ul>
           <li>
             <a href={'/dashboard/members/' + member.id} class="btn option w-full">
               {$_('components.ParticipantCard.View')}
             </a>
           </li>
-          <li class="border-t pt-2 mt-2">
+          <li class="border-t border-surface-300 pt-2 mt-2">
             <button class="option w-full" on:click={() => setTrainerRole('attendee')}>
               {$_('components.ParticipantCard.SetAsAttendee')}
             </button>
@@ -99,8 +101,8 @@
               <span class="pl-1">{$_('components.ParticipantCard.SetAsAssistant')}</span>
             </button>
           </li>
-          <li class="border-t pt-2 mt-2">
-            <button class="option w-full" on:click={triggerConfirm}>
+          <li class="border-t border-surface-300 pt-2 mt-2">
+            <button class="option w-full text-error-500" on:click={triggerConfirm}>
               {$_('components.ParticipantCard.Remove')}
             </button>
           </li>
