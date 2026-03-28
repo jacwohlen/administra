@@ -3,8 +3,6 @@
   import type { Log, Training } from '$lib/models';
 
   export let logs: Promise<Log[]>;
-  let totalOverAll = 0;
-  let mainTrainerCountOverAll = 0;
 
   function countPerTraining(logs: Log[], id: string) {
     let total = 0;
@@ -12,10 +10,8 @@
     logs.forEach((log) => {
       if (log.trainingId.id == id) {
         total++;
-        totalOverAll++;
         if (log.trainerRole === 'main_trainer' || log.trainerRole === 'assistant') {
           mainTrainerCount++;
-          mainTrainerCountOverAll++;
         }
       }
     });
@@ -31,6 +27,18 @@
     });
 
     return attendedTrainings;
+  }
+
+  function computeTotals(logs: Log[]) {
+    let total = 0;
+    let trainerCount = 0;
+    logs.forEach((log) => {
+      total++;
+      if (log.trainerRole === 'main_trainer' || log.trainerRole === 'assistant') {
+        trainerCount++;
+      }
+    });
+    return [total - trainerCount, trainerCount, total];
   }
 </script>
 
@@ -79,13 +87,15 @@
             </span>
           {/each}
           <hr class="my-2" />
-          <tr class="font-bold">
-            <td>{$_('page.members.trainingsSummary.table.total')}</td>
-            <td />
-            <td class="text-center">{totalOverAll - mainTrainerCountOverAll}</td>
-            <td class="text-center">{mainTrainerCountOverAll}</td>
-            <td class="text-center">{totalOverAll}</td>
-          </tr>
+          {#each [computeTotals(l)] as totals}
+            <tr class="font-bold">
+              <td>{$_('page.members.trainingsSummary.table.total')}</td>
+              <td />
+              <td class="text-center">{totals[0]}</td>
+              <td class="text-center">{totals[1]}</td>
+              <td class="text-center">{totals[2]}</td>
+            </tr>
+          {/each}
         </tbody>
       </table>
     {:catch err}
