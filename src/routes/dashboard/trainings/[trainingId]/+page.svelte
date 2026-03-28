@@ -3,6 +3,8 @@
   export let data: PageData;
   import LogList from './LogList.svelte';
   import utils from '$lib/utils';
+  import Fa from 'svelte-fa';
+  import { faUsers, faCalendarDay, faClipboardCheck } from '@fortawesome/free-solid-svg-icons';
   import { _ } from 'svelte-i18n';
 
   function getDateString() {
@@ -11,43 +13,53 @@
   }
 </script>
 
-<h1>{$_('page.trainings.id')}: {data.id}</h1>
-<table>
-  <tr>
-    <td>{$_('page.trainings.trainingsTitle')}:</td>
-    <td>{data.title}</td>
-  </tr>
-  <tr>
-    <td>{$_('page.trainings.participants')} #:</td>
-    <td>{data.participants.length}</td>
-  </tr>
-  <tr>
-    <td>{$_('page.trainings.weekday')}:</td>
-    <td>{$_('weekday.' + data.weekday)}</td>
-  </tr>
-  <tr>
-    <td>{$_('page.trainings.dateFrom')}:</td>
-    <td>{data.dateFrom}</td>
-  </tr>
-  <tr>
-    <td>{$_('page.trainings.dateTo')}:</td>
-    <td>{data.dateTo}</td>
-  </tr>
-  <tr>
-    <td>{$_('page.trainings.section')}:</td>
-    <td>{data.section}</td>
-  </tr>
-</table>
-
-<div class="w-full grid grid-cols-2">
-  <h2>{$_('page.trainings.logs')}</h2>
-  <div class="text-right">
+<!-- Header card -->
+<div class="card p-5 mb-4">
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div>
+      <h2 class="h2">{data.title}</h2>
+      <div class="flex items-center gap-2 mt-2 flex-wrap">
+        <span class="badge variant-filled-secondary">{data.section}</span>
+        <span class="badge variant-soft-surface">{$_('weekday.' + data.weekday)}</span>
+      </div>
+    </div>
     <a
-      class="btn btn-sm variant-filled-primary"
+      class="btn variant-filled-primary"
       href="/dashboard/trainings/{data.id}/{getDateString()}"
     >
-      {$_('button.trackAttendance')}
+      <Fa icon={faClipboardCheck} />
+      <span>{$_('button.trackAttendance')}</span>
     </a>
   </div>
 </div>
-<LogList trainingId={data.id} />
+
+<!-- Info cards row -->
+<div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
+  <div class="card p-4 text-center">
+    <div class="flex flex-col items-center gap-1">
+      <Fa icon={faUsers} class="text-lg opacity-60" />
+      <span class="text-2xl font-bold">{data.participants.length}</span>
+      <span class="text-sm opacity-60">{$_('page.trainings.participants')}</span>
+    </div>
+  </div>
+  <div class="card p-4 text-center">
+    <div class="flex flex-col items-center gap-1">
+      <Fa icon={faCalendarDay} class="text-lg opacity-60" />
+      <span class="text-2xl font-bold">{data.dateFrom}</span>
+      <span class="text-sm opacity-60">{$_('page.trainings.dateFrom')}</span>
+    </div>
+  </div>
+  <div class="card p-4 text-center">
+    <div class="flex flex-col items-center gap-1">
+      <Fa icon={faCalendarDay} class="text-lg opacity-60" />
+      <span class="text-2xl font-bold">{data.dateTo}</span>
+      <span class="text-sm opacity-60">{$_('page.trainings.dateTo')}</span>
+    </div>
+  </div>
+</div>
+
+<!-- Session log -->
+<div class="card p-4">
+  <h3 class="h3 mb-3">{$_('page.trainings.logs')}</h3>
+  <LogList trainingId={data.id} />
+</div>
