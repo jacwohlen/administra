@@ -2,7 +2,7 @@
   import { supabaseClient } from '$lib/supabase';
   import type { LessonPlan } from '$lib/models';
   import Fa from 'svelte-fa';
-  import { TabGroup, Tab } from '@skeletonlabs/skeleton';
+  import { TabGroup, Tab, toastStore } from '@skeletonlabs/skeleton';
   import {
     faEdit,
     faSave,
@@ -83,7 +83,7 @@
   }
 
   async function saveLessonPlan() {
-    if (tabSet === 1 && !selectedFile) return;
+    if (tabSet === 1 && !selectedFile && !lessonPlan?.filePath) return;
     if (tabSet === 0 && !content.trim()) return;
 
     isLoading = true;
@@ -113,6 +113,10 @@
 
         if (uploadError) {
           console.error('Error uploading file:', uploadError);
+          toastStore.trigger({
+            message: $_('page.trainings.uploadError'),
+            preset: 'error'
+          });
           return;
         }
       }
@@ -143,12 +147,14 @@
         };
 
         if (tabSet === 1 && selectedFile) {
-          // File upload - clear content, set file fields
+          // New file upload - clear content, set file fields
           updateData.content = null;
           updateData.file_name = fileName;
           updateData.file_path = filePath;
           updateData.file_type = fileType;
           updateData.file_size = fileSize;
+        } else if (tabSet === 1 && !selectedFile) {
+          // Keep existing file - only update title
         } else {
           // Text content - clear file fields, set content
           updateData.content = content.trim();
@@ -167,6 +173,10 @@
 
         if (error) {
           console.error('Error updating lesson plan:', error);
+          toastStore.trigger({
+            message: $_('page.trainings.saveError'),
+            preset: 'error'
+          });
           return;
         }
 
@@ -231,6 +241,10 @@
 
         if (error) {
           console.error('Error creating lesson plan:', error);
+          toastStore.trigger({
+            message: $_('page.trainings.saveError'),
+            preset: 'error'
+          });
           return;
         }
 
@@ -382,7 +396,7 @@
           on:click={saveLessonPlan}
           disabled={isLoading ||
             (tabSet === 0 && !content.trim()) ||
-            (tabSet === 1 && !selectedFile)}
+            (tabSet === 1 && !selectedFile && !lessonPlan?.filePath)}
         >
           <Fa icon={faSave} />
           <span>{$_('button.save')}</span>

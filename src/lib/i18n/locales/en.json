@@ -67,7 +67,9 @@
       "or": "or",
       "writeContent": "Write Content",
       "textDisabledWhenFileSelected": "Text content is disabled when a file is selected",
-      "uploading": "Uploading..."
+      "uploading": "Uploading...",
+      "uploadError": "Error uploading file",
+      "saveError": "Error saving lesson plan"
     },
     "members": {
       "title": "Members",

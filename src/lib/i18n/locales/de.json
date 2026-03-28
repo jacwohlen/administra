@@ -67,7 +67,9 @@
       "or": "oder",
       "writeContent": "Inhalt Schreiben",
       "textDisabledWhenFileSelected": "Textinhalt ist deaktiviert wenn eine Datei ausgewählt ist",
-      "uploading": "Hochladen..."
+      "uploading": "Hochladen...",
+      "uploadError": "Fehler beim Hochladen der Datei",
+      "saveError": "Fehler beim Speichern des Lektionsplans"
     },
     "members": {
       "title": "Mitglieder",
