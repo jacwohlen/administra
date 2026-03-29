@@ -5,6 +5,7 @@
   import { menu, type ModalSettings, Avatar } from '@skeletonlabs/skeleton';
   import { modalStore } from '@skeletonlabs/skeleton';
   import Labels from './Labels.svelte';
+  import ParticipantFrequency from './ParticipantFrequency.svelte';
   import { _ } from 'svelte-i18n';
 
   import type { MMember } from './types';
@@ -71,6 +72,9 @@
       <dt class="font-semibold truncate">{member.lastname} {member.firstname}</dt>
       <dd>
         <Labels labels={member.labels ? member.labels : []} />
+      </dd>
+      <dd>
+        <ParticipantFrequency streak={member.streak} />
       </dd>
     </span>
     <div class="justify-self-end relative flex-shrink-0">

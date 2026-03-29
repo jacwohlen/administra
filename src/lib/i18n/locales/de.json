@@ -186,6 +186,9 @@
       "SetAsMainTrainer": "Als Haupttrainer markieren",
       "SetAsAssistant": "Als Hilfstrainer markieren",
       "Remove": "Entfernen"
+    },
+    "ParticipantFrequency": {
+      "sessions": "Trainings besucht"
     }
   },
   "button": {
