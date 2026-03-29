@@ -115,36 +115,48 @@
         <Fa icon={faEllipsisVertical} />
       </button>
       {#if menuOpen}
-        <nav class="card p-2 w-48 shadow-xl" style={menuStyle}>
+        <nav class="card p-2 w-56 shadow-xl" style={menuStyle}>
           <ul>
             <li>
               <a
                 href={'/dashboard/members/' + member.id}
-                class="btn option w-full"
+                class="btn btn-sm w-full text-left justify-start"
                 on:click={closeMenu}
               >
                 {$_('components.ParticipantCard.View')}
               </a>
             </li>
-            <li class="border-t border-surface-300 pt-2 mt-2">
-              <button class="option w-full" on:click={() => setTrainerRole('attendee')}>
+            <li class="border-t border-surface-300 pt-1 mt-1">
+              <button
+                class="btn btn-sm w-full text-left justify-start"
+                on:click={() => setTrainerRole('attendee')}
+              >
                 {$_('components.ParticipantCard.SetAsAttendee')}
               </button>
             </li>
             <li>
-              <button class="option w-full" on:click={() => setTrainerRole('main_trainer')}>
-                <img class="inline-block w-4" src="/judo-icon.svg" alt="judo-icon" />
-                <span class="pl-1">{$_('components.ParticipantCard.SetAsMainTrainer')}</span>
+              <button
+                class="btn btn-sm w-full text-left justify-start gap-2"
+                on:click={() => setTrainerRole('main_trainer')}
+              >
+                <img class="w-4 flex-shrink-0" src="/judo-icon.svg" alt="judo-icon" />
+                {$_('components.ParticipantCard.SetAsMainTrainer')}
               </button>
             </li>
             <li>
-              <button class="option w-full" on:click={() => setTrainerRole('assistant')}>
-                <span class="inline-block w-4 text-center font-bold text-gray-600">A</span>
-                <span class="pl-1">{$_('components.ParticipantCard.SetAsAssistant')}</span>
+              <button
+                class="btn btn-sm w-full text-left justify-start gap-2"
+                on:click={() => setTrainerRole('assistant')}
+              >
+                <span class="w-4 flex-shrink-0 text-center font-bold text-gray-600">A</span>
+                {$_('components.ParticipantCard.SetAsAssistant')}
               </button>
             </li>
-            <li class="border-t border-surface-300 pt-2 mt-2">
-              <button class="option w-full text-error-500" on:click={triggerConfirm}>
+            <li class="border-t border-surface-300 pt-1 mt-1">
+              <button
+                class="btn btn-sm w-full text-left justify-start text-error-500"
+                on:click={triggerConfirm}
+              >
                 {$_('components.ParticipantCard.Remove')}
               </button>
             </li>
