@@ -31,7 +31,9 @@
     const top = spaceBelow < 220 ? rect.top : rect.bottom + 4;
     const transformY = spaceBelow < 220 ? 'translateY(-100%)' : '';
     const left = spaceRight < 200 ? rect.right - 192 : rect.left;
-    menuStyle = `position:fixed;top:${top}px;left:${left}px;z-index:9999;${transformY ? `transform:${transformY};` : ''}`;
+    menuStyle = `position:fixed;top:${top}px;left:${left}px;z-index:9999;${
+      transformY ? `transform:${transformY};` : ''
+    }`;
     menuOpen = true;
   }
 
@@ -70,11 +72,7 @@
 
 <svelte:window on:click={handleWindowClick} />
 
-<li
-  class="rounded-lg transition-colors {highlight
-    ? 'bg-primary-100 dark:bg-primary-900/30'
-    : ''} {member.isPresent ? '' : 'opacity-50'}"
->
+<li>
   {#if member}
     <input
       class="checkbox"
@@ -120,7 +118,11 @@
         <nav class="card p-2 w-48 shadow-xl" style={menuStyle}>
           <ul>
             <li>
-              <a href={'/dashboard/members/' + member.id} class="btn option w-full" on:click={closeMenu}>
+              <a
+                href={'/dashboard/members/' + member.id}
+                class="btn option w-full"
+                on:click={closeMenu}
+              >
                 {$_('components.ParticipantCard.View')}
               </a>
             </li>
