@@ -155,10 +155,6 @@
     }
   };
 
-  function toggleView() {
-    showLessonPlan = !showLessonPlan;
-  }
-
   $: formattedDate = dayjs(data.date, 'YYYY-MM-DD').format('DD. MMMM YYYY');
 </script>
 
@@ -258,17 +254,12 @@
 
   <!-- Participant list -->
   <ul class="list">
-    {#each filteredData as p, i (p.id)}
+    {#each filteredData as p (p.id)}
       <div
         class="item"
         animate:flip={{ delay: 0, duration: animateList ? 400 : 0, easing: quintInOut }}
       >
-        <ParticipantCard
-          highlight={hiIndex === i}
-          member={p}
-          on:change={changePresence}
-          on:remove={removeParticipant}
-        />
+        <ParticipantCard member={p} on:change={changePresence} on:remove={removeParticipant} />
       </div>
     {/each}
     <li>

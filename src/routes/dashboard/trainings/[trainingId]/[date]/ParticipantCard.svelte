@@ -12,7 +12,6 @@
   import type { TrainerRole } from '$lib/models';
 
   export let member: MMember;
-  export let highlight = false;
 
   const dispatch = createEventDispatcher();
 
