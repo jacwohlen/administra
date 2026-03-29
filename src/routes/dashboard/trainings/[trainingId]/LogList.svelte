@@ -63,7 +63,7 @@
           </div>
 
           <!-- Divider -->
-          <div class="border-l border-surface-400/30 h-8 flex-none"></div>
+          <div class="border-l border-surface-400/30 h-8 flex-none" />
 
           <!-- Stats -->
           <div class="flex items-center gap-2 flex-auto flex-wrap">

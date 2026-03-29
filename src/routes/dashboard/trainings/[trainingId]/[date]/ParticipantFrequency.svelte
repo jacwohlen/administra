@@ -16,19 +16,11 @@
     streak.length +
     ' ' +
     $_('components.ParticipantFrequency.sessions') +
-    (trend === 'up'
-      ? ' \u2197'
-      : trend === 'down'
-      ? ' \u2198'
-      : '');
+    (trend === 'up' ? ' \u2197' : trend === 'down' ? ' \u2198' : '');
 </script>
 
 {#if streak.length > 0}
-  <div
-    class="flex items-center gap-0.5"
-    title={tooltipText}
-    aria-label={tooltipText}
-  >
+  <div class="flex items-center gap-0.5" title={tooltipText} aria-label={tooltipText}>
     {#each streak as attended}
       <span
         class="inline-block w-1.5 h-1.5 rounded-full {attended

@@ -5,11 +5,7 @@
   import utils from '$lib/utils';
   import { _ } from 'svelte-i18n';
   import Fa from 'svelte-fa';
-  import {
-    faClock,
-    faUsers,
-    faClipboardCheck
-  } from '@fortawesome/free-solid-svg-icons';
+  import { faClock, faUsers, faClipboardCheck } from '@fortawesome/free-solid-svg-icons';
 
   function getDateString() {
     const weekday = utils.weekdayToNumber(data.weekday);
@@ -31,7 +27,8 @@
         </span>
         <span class="badge variant-soft-surface">
           <Fa icon={faUsers} size="xs" class="mr-1" />
-          {data.participants.length} {$_('page.trainings.participants')}
+          {data.participants.length}
+          {$_('page.trainings.participants')}
         </span>
       </div>
     </div>

@@ -10,7 +10,8 @@
     "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
     "test:unit": "vitest",
     "lint": "prettier --plugin-search-dir . --check . && eslint .",
-    "format": "prettier --plugin-search-dir . --write ."
+    "format": "prettier --plugin-search-dir . --write .",
+    "prepare": "git config core.hooksPath .githooks"
   },
   "devDependencies": {
     "@carbon/charts-svelte": "^1.15.5",
@@ -32,6 +33,7 @@
     "eslint-config-prettier": "^8.10.0",
     "eslint-plugin-svelte": "^2.35.1",
     "image-resize-compress": "^1.1.0",
+    "lint-staged": "^16.4.0",
     "postcss": "^8.4.38",
     "postcss-load-config": "^4.0.2",
     "prettier": "^2.8.8",
@@ -49,5 +51,14 @@
     "vite": "^5.2.7",
     "vitest": "^1.4.0"
   },
-  "type": "module"
+  "type": "module",
+  "lint-staged": {
+    "*.{js,ts,svelte}": [
+      "prettier --plugin-search-dir . --write",
+      "eslint --fix"
+    ],
+    "*.{json,css,md,html}": [
+      "prettier --plugin-search-dir . --write"
+    ]
+  }
 }

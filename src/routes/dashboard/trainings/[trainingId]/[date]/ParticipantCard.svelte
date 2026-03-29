@@ -38,7 +38,9 @@
 </script>
 
 <li
-  class="rounded-lg transition-colors {highlight ? 'bg-primary-100 dark:bg-primary-900/30' : ''} {member.isPresent ? '' : 'opacity-50'}"
+  class="rounded-lg transition-colors {highlight
+    ? 'bg-primary-100 dark:bg-primary-900/30'
+    : ''} {member.isPresent ? '' : 'opacity-50'}"
 >
   {#if member}
     <input
