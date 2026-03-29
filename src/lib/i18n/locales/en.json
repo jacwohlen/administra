@@ -186,6 +186,9 @@
       "SetAsMainTrainer": "Set as Main Trainer",
       "SetAsAssistant": "Set as Assistant",
       "Remove": "Remove"
+    },
+    "ParticipantFrequency": {
+      "sessions": "sessions attended"
     }
   },
   "button": {

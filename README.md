@@ -109,9 +109,39 @@ The application requires a Supabase PostgreSQL database with specific tables, vi
 - Supabase CLI installed (`npm install -g supabase`)
 - Supabase project created
 
-### Setup Database
+### Local Development with Supabase
 
-The database schema is managed through migrations located in the `supabase/migrations/` directory. To set up the database:
+For local development, use the Supabase CLI to run a full Supabase stack locally (PostgreSQL, Auth, Storage, Studio):
+
+1. **Start local Supabase:**
+
+```bash
+supabase start
+```
+
+This starts PostgreSQL on port 54322, the API on port 54321, and Studio on port 54323. Use the `anon key` and `API URL` printed in the output for your `.env` file.
+
+2. **Apply migrations and seed data:**
+
+```bash
+supabase db reset
+```
+
+This drops and recreates the database, runs all migrations from `supabase/migrations/`, and loads `supabase/seed.sql`.
+
+3. **Create a new migration:**
+
+```bash
+supabase migration new <name>
+```
+
+4. **Stop local Supabase:**
+
+```bash
+supabase stop
+```
+
+### Remote Database Setup
 
 1. **Link to your Supabase project:**
 
@@ -123,12 +153,6 @@ supabase link --project-ref your-project-ref
 
 ```bash
 supabase db push
-```
-
-3. **Or reset and apply migrations locally (for development):**
-
-```bash
-supabase db reset
 ```
 
 ### Database Structure

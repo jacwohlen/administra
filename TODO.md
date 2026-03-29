@@ -2,6 +2,11 @@
 
 Next
 
+- [ ] Enable branch protection on `main` (require PR reviews, status checks, no force-push)
+- [ ] Add error monitoring (e.g. Sentry) for production visibility
+- [ ] Adopt conventional commit messages (consider adding commitlint)
+- [ ] Plan and execute Skeleton UI v2 migration
+
 Backlog
 
 - [ ] Events: Add year selector to the events list (<- 2025 ->)

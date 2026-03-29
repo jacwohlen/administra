@@ -1,0 +1,47 @@
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 10
+    groups:
+      # Safe patch/minor updates — low risk, can be merged quickly
+      minor-and-patch:
+        update-types:
+          - minor
+          - patch
+      # Major bumps grouped by related ecosystem
+      svelte:
+        patterns:
+          - 'svelte*'
+          - '@sveltejs/*'
+        update-types:
+          - major
+      eslint:
+        patterns:
+          - 'eslint*'
+          - '@typescript-eslint/*'
+        update-types:
+          - major
+    # Ignore majors that require large manual migrations
+    ignore:
+      - dependency-name: tailwindcss
+        update-types: ['version-update:semver-major']
+      - dependency-name: '@skeletonlabs/skeleton'
+        update-types: ['version-update:semver-major']
+      - dependency-name: typescript
+        update-types: ['version-update:semver-major']
+      - dependency-name: vite
+        update-types: ['version-update:semver-major']
+      - dependency-name: vitest
+        update-types: ['version-update:semver-major']
+      - dependency-name: prettier
+        update-types: ['version-update:semver-major']
+      - dependency-name: prettier-plugin-svelte
+        update-types: ['version-update:semver-major']
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly

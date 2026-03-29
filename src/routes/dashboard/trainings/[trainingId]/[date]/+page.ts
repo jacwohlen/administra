@@ -14,20 +14,50 @@ interface ChecklistMemberData {
   trainerRole: TrainerRole;
 }
 
+interface StreakRow {
+  memberId: number;
+  date: string;
+  seq: number;
+}
+
+const STREAK_LENGTH = 10;
+
 export const load = (async ({ params }) => {
   async function getMembersWithPresentStatus(): Promise<MMember[]> {
-    const { error, data } = await supabaseClient
-      .rpc('get_checklist_members', {
-        d: params.date,
-        tid: params.trainingId
+    const [checklistResult, streakResult] = await Promise.all([
+      supabaseClient
+        .rpc('get_checklist_members', {
+          d: params.date,
+          tid: params.trainingId
+        })
+        .order('lastname', { ascending: true })
+        .order('firstname', { ascending: true }),
+      supabaseClient.rpc('get_checklist_member_streak', {
+        tid: params.trainingId,
+        before_date: params.date,
+        n: STREAK_LENGTH
       })
-      .order('lastname', { ascending: true })
-      .order('firstname', { ascending: true });
+    ]);
 
-    if (error) {
-      throw err(404, error);
+    if (checklistResult.error) {
+      throw err(404, checklistResult.error);
     }
-    return data.map(
+
+    // Build a map: memberId -> Set of seq numbers they attended
+    const streakRows: StreakRow[] = streakResult.data || [];
+    const totalDates = new Set(streakRows.map((r) => r.seq)).size;
+    const memberSeqs = new Map<number, Set<number>>();
+    for (const row of streakRows) {
+      if (!memberSeqs.has(row.memberId)) {
+        memberSeqs.set(row.memberId, new Set());
+      }
+      memberSeqs.get(row.memberId)!.add(row.seq);
+    }
+
+    // Build ordered sequence numbers (1..totalDates)
+    const seqNumbers = Array.from({ length: totalDates }, (_, i) => i + 1);
+
+    return checklistResult.data.map(
       (item: ChecklistMemberData) =>
         ({
           id: item.memberId,
@@ -36,7 +66,8 @@ export const load = (async ({ params }) => {
           labels: item.labels,
           img: item.img,
           isPresent: item.date ? true : false,
-          trainerRole: item.trainerRole || 'attendee'
+          trainerRole: item.trainerRole || 'attendee',
+          streak: seqNumbers.map((seq) => memberSeqs.get(Number(item.memberId))?.has(seq) ?? false)
         } as MMember)
     );
   }
