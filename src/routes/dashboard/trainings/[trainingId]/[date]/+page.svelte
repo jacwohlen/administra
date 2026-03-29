@@ -155,10 +155,6 @@
     }
   };
 
-  function toggleView() {
-    showLessonPlan = !showLessonPlan;
-  }
-
   $: formattedDate = dayjs(data.date, 'YYYY-MM-DD').format('DD. MMMM YYYY');
 </script>
 
@@ -193,18 +189,14 @@
 <!-- View toggle tabs -->
 <div class="flex gap-1 mb-4">
   <button
-    class="btn btn-sm flex-1 {!showLessonPlan
-      ? 'variant-filled-primary'
-      : 'variant-soft-surface'}"
+    class="btn btn-sm flex-1 {!showLessonPlan ? 'variant-filled-primary' : 'variant-soft-surface'}"
     on:click={() => (showLessonPlan = false)}
   >
     <Fa icon={faUsers} />
     <span>{$_('page.trainings.attendance')}</span>
   </button>
   <button
-    class="btn btn-sm flex-1 {showLessonPlan
-      ? 'variant-filled-primary'
-      : 'variant-soft-surface'}"
+    class="btn btn-sm flex-1 {showLessonPlan ? 'variant-filled-primary' : 'variant-soft-surface'}"
     on:click={() => (showLessonPlan = true)}
   >
     <Fa icon={faClipboardList} />

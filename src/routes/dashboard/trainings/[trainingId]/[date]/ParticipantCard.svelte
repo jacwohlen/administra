@@ -2,9 +2,10 @@
   import { createEventDispatcher } from 'svelte';
   import Fa from 'svelte-fa';
   import { faEllipsisVertical } from '@fortawesome/free-solid-svg-icons';
-  import { menu, type ModalSettings, Avatar } from '@skeletonlabs/skeleton';
+  import { type ModalSettings, Avatar } from '@skeletonlabs/skeleton';
   import { modalStore } from '@skeletonlabs/skeleton';
   import Labels from './Labels.svelte';
+  import ParticipantFrequency from './ParticipantFrequency.svelte';
   import { _ } from 'svelte-i18n';
 
   import type { MMember } from './types';
@@ -15,11 +16,43 @@
 
   const dispatch = createEventDispatcher();
 
+  let menuOpen = false;
+  let menuStyle = '';
+  let btnEl: HTMLButtonElement;
+
+  function toggleMenu() {
+    if (menuOpen) {
+      menuOpen = false;
+      return;
+    }
+    const rect = btnEl.getBoundingClientRect();
+    const spaceBelow = window.innerHeight - rect.bottom;
+    const spaceRight = window.innerWidth - rect.right;
+    const top = spaceBelow < 220 ? rect.top : rect.bottom + 4;
+    const transformY = spaceBelow < 220 ? 'translateY(-100%)' : '';
+    const left = spaceRight < 200 ? rect.right - 192 : rect.left;
+    menuStyle = `position:fixed;top:${top}px;left:${left}px;z-index:9999;${
+      transformY ? `transform:${transformY};` : ''
+    }`;
+    menuOpen = true;
+  }
+
+  function closeMenu() {
+    menuOpen = false;
+  }
+
+  function handleWindowClick(e: MouseEvent) {
+    if (menuOpen && btnEl && !btnEl.contains(e.target as Node)) {
+      menuOpen = false;
+    }
+  }
+
   function change() {
     dispatch('change', { member, checked: !member.isPresent, trainerRole: 'attendee' });
   }
 
   function triggerConfirm(): void {
+    closeMenu();
     const confirm: ModalSettings = {
       type: 'confirm',
       title: $_('dialog.confirm.title'),
@@ -32,12 +65,17 @@
   }
 
   function setTrainerRole(role: TrainerRole): void {
+    closeMenu();
     dispatch('change', { member, checked: true, trainerRole: role });
   }
 </script>
 
+<svelte:window on:click={handleWindowClick} />
+
 <li
-  class="rounded-lg transition-colors {highlight ? 'bg-primary-100 dark:bg-primary-900/30' : ''} {member.isPresent ? '' : 'opacity-50'}"
+  class="rounded-lg transition-colors {highlight
+    ? 'bg-primary-100 dark:bg-primary-900/30'
+    : ''} {member.isPresent ? '' : 'opacity-50'}"
 >
   {#if member}
     <input
@@ -72,42 +110,63 @@
       <dd>
         <Labels labels={member.labels ? member.labels : []} />
       </dd>
+      <dd>
+        <ParticipantFrequency streak={member.streak} />
+      </dd>
     </span>
-    <div class="justify-self-end relative flex-shrink-0">
-      <button class="btn btn-sm" use:menu={{ menu: 'ParticipantCard' + member.id }}>
+    <div class="justify-self-end flex-shrink-0">
+      <button class="btn btn-sm" bind:this={btnEl} on:click|stopPropagation={toggleMenu}>
         <Fa icon={faEllipsisVertical} />
       </button>
-      <nav class="card p-2 w-48 shadow-xl z-50" data-menu={'ParticipantCard' + member.id}>
-        <ul>
-          <li>
-            <a href={'/dashboard/members/' + member.id} class="btn option w-full">
-              {$_('components.ParticipantCard.View')}
-            </a>
-          </li>
-          <li class="border-t border-surface-300 pt-2 mt-2">
-            <button class="option w-full" on:click={() => setTrainerRole('attendee')}>
-              {$_('components.ParticipantCard.SetAsAttendee')}
-            </button>
-          </li>
-          <li>
-            <button class="option w-full" on:click={() => setTrainerRole('main_trainer')}>
-              <img class="inline-block w-4" src="/judo-icon.svg" alt="judo-icon" />
-              <span class="pl-1">{$_('components.ParticipantCard.SetAsMainTrainer')}</span>
-            </button>
-          </li>
-          <li>
-            <button class="option w-full" on:click={() => setTrainerRole('assistant')}>
-              <span class="inline-block w-4 text-center font-bold text-gray-600">A</span>
-              <span class="pl-1">{$_('components.ParticipantCard.SetAsAssistant')}</span>
-            </button>
-          </li>
-          <li class="border-t border-surface-300 pt-2 mt-2">
-            <button class="option w-full text-error-500" on:click={triggerConfirm}>
-              {$_('components.ParticipantCard.Remove')}
-            </button>
-          </li>
-        </ul>
-      </nav>
+      {#if menuOpen}
+        <nav class="card p-2 w-56 shadow-xl" style={menuStyle}>
+          <ul>
+            <li>
+              <a
+                href={'/dashboard/members/' + member.id}
+                class="btn btn-sm w-full text-left justify-start"
+                on:click={closeMenu}
+              >
+                {$_('components.ParticipantCard.View')}
+              </a>
+            </li>
+            <li class="border-t border-surface-300 pt-1 mt-1">
+              <button
+                class="btn btn-sm w-full text-left justify-start"
+                on:click={() => setTrainerRole('attendee')}
+              >
+                {$_('components.ParticipantCard.SetAsAttendee')}
+              </button>
+            </li>
+            <li>
+              <button
+                class="btn btn-sm w-full text-left justify-start gap-2"
+                on:click={() => setTrainerRole('main_trainer')}
+              >
+                <img class="w-4 flex-shrink-0" src="/judo-icon.svg" alt="judo-icon" />
+                {$_('components.ParticipantCard.SetAsMainTrainer')}
+              </button>
+            </li>
+            <li>
+              <button
+                class="btn btn-sm w-full text-left justify-start gap-2"
+                on:click={() => setTrainerRole('assistant')}
+              >
+                <span class="w-4 flex-shrink-0 text-center font-bold text-gray-600">A</span>
+                {$_('components.ParticipantCard.SetAsAssistant')}
+              </button>
+            </li>
+            <li class="border-t border-surface-300 pt-1 mt-1">
+              <button
+                class="btn btn-sm w-full text-left justify-start text-error-500"
+                on:click={triggerConfirm}
+              >
+                {$_('components.ParticipantCard.Remove')}
+              </button>
+            </li>
+          </ul>
+        </nav>
+      {/if}
     </div>
   {:else}
     {$_('page.trainings.memberNotFound')}
