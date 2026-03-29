@@ -19,7 +19,7 @@
     "@skeletonlabs/skeleton": "^0.124.2",
     "@supabase/auth-helpers-sveltekit": "^0.8.7",
     "@supabase/supabase-js": "^2.41.1",
-    "@sveltejs/adapter-auto": "^3.2.0",
+    "@sveltejs/adapter-auto": "^7.0.1",
     "@sveltejs/adapter-netlify": "^3.0.2",
     "@sveltejs/kit": "^2.5.5",
     "@sveltejs/vite-plugin-svelte": "^3.0.2",
