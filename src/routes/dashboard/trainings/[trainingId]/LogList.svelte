@@ -4,7 +4,6 @@
   import {
     faGripLines,
     faExclamationTriangle,
-    faCalendarDays,
     faCheckCircle
   } from '@fortawesome/free-solid-svg-icons';
   import { supabaseClient } from '$lib/supabase';

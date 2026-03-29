@@ -3,7 +3,6 @@
   import { type Athletes } from '$lib/models';
   import { supabaseClient } from '$lib/supabase';
   import type { PageData } from './$types';
-  import { _ } from 'svelte-i18n';
   import TopList from './TopList.svelte';
 
   export let data: PageData;
