@@ -3,7 +3,13 @@
   import { invalidateAll } from '$app/navigation';
   import { supabaseClient } from '$lib/supabase';
   import { onMount } from 'svelte';
+  import dayjs from 'dayjs';
   import 'dayjs/locale/de';
+  import { locale } from 'svelte-i18n';
+
+  $: if ($locale) {
+    dayjs.locale($locale.startsWith('de') ? 'de' : 'en');
+  }
   import '../theme.postcss';
   import '@skeletonlabs/skeleton/styles/all.css';
   import '../app.postcss';
