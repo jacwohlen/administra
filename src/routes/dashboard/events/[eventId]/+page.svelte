@@ -3,7 +3,7 @@
   import { supabaseClient } from '$lib/supabase';
   import { _ } from 'svelte-i18n';
   import Fa from 'svelte-fa';
-  import { modalStore, toastStore } from '@skeletonlabs/skeleton';
+  import { modalStore, toastStore, type ModalSettings } from '@skeletonlabs/skeleton';
   import {
     faCalendarDays,
     faLocationDot,
@@ -158,7 +158,7 @@
   }
 
   function confirmDelete() {
-    const modal = {
+    const modal: ModalSettings = {
       type: 'confirm',
       title: $_('page.events.deleteConfirmTitle'),
       body: `${$_('page.events.deleteConfirmMessage')} "${data.event.title}"?`,
@@ -189,7 +189,7 @@
       // Show success toast
       toastStore.trigger({
         message: $_('page.events.deleteSuccess'),
-        background: 'variant-filled-success',
+        preset: 'success',
         timeout: 4000
       });
 
@@ -199,7 +199,7 @@
       console.error('Error deleting event:', error);
       toastStore.trigger({
         message: $_('page.events.deleteError'),
-        background: 'variant-filled-error',
+        preset: 'error',
         timeout: 6000
       });
     } finally {
@@ -421,7 +421,7 @@
                     class="btn btn-sm {hasAttended
                       ? 'variant-filled-success'
                       : 'variant-ghost-success'}"
-                    on:click={() => markAttendance(participant.memberId, !hasAttended)}
+                    on:click={() => markAttendance(participant.memberId, !hasAttended, false)}
                     disabled={loading}
                   >
                     <Fa icon={faCheck} />

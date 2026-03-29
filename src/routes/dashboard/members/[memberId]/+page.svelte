@@ -5,7 +5,8 @@
     ProgressRadial,
     modalStore,
     toastStore,
-    type ModalComponent
+    type ModalComponent,
+    type ModalSettings
   } from '@skeletonlabs/skeleton';
   import { _ } from 'svelte-i18n';
   import MemberLogs from './MemberLogs.svelte';
@@ -139,7 +140,7 @@
       }
     };
 
-    const modal = {
+    const modal: ModalSettings = {
       type: 'component',
       component: modalComponent,
       response: handleEditResponse
@@ -181,9 +182,8 @@
       // Show success toast
       toastStore.trigger({
         message: $_('dialog.editMember.updateSuccess'),
-        background: 'variant-filled-success',
-        timeout: 4000,
-        classes: 'border-l-4 border-green-500'
+        preset: 'success',
+        timeout: 4000
       });
 
       // Invalidate the data to refresh
@@ -192,9 +192,8 @@
       console.error('Error updating member:', error);
       toastStore.trigger({
         message: $_('dialog.editMember.updateError'),
-        background: 'variant-filled-error',
-        timeout: 6000,
-        classes: 'border-l-4 border-red-500'
+        preset: 'error',
+        timeout: 6000
       });
     } finally {
       isEditing = false;
@@ -202,7 +201,7 @@
   }
 
   function confirmDelete() {
-    const modal = {
+    const modal: ModalSettings = {
       type: 'confirm',
       title: $_('page.members.deleteConfirmTitle'),
       body: `${$_('page.members.deleteConfirmMessage')} ${data.firstname} ${data.lastname}?`,
@@ -234,9 +233,8 @@
       // Show success toast
       toastStore.trigger({
         message: $_('page.members.deleteSuccess'),
-        background: 'variant-filled-success',
-        timeout: 4000,
-        classes: 'border-l-4 border-green-500'
+        preset: 'success',
+        timeout: 4000
       });
 
       // Navigate back to members list
@@ -245,9 +243,8 @@
       console.error('Error deleting member:', error);
       toastStore.trigger({
         message: $_('page.members.deleteError'),
-        background: 'variant-filled-error',
-        timeout: 6000,
-        classes: 'border-l-4 border-red-500'
+        preset: 'error',
+        timeout: 6000
       });
       isDeleting = false;
     }

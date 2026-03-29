@@ -7,7 +7,7 @@ import dayjs from 'dayjs';
 
 export const load = (async ({ params, depends }) => {
   // Register a dependency on this key, so we can invalidate it after edits
-  depends('app:member:' + params.memberId);
+  depends(`app:member:${params.memberId}`);
   const { data: memberData, error: memberError } = await supabaseClient
     .from('members')
     .select()

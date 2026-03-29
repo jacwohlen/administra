@@ -77,17 +77,15 @@
       // Show success toast
       toastStore.trigger({
         message: $_('page.members.createdSuccess'),
-        background: 'variant-filled-success',
-        timeout: 4000,
-        classes: 'border-l-4 border-green-500'
+        preset: 'success',
+        timeout: 4000
       });
     } catch (error) {
       console.error('Error creating member:', error);
       toastStore.trigger({
         message: $_('page.members.createError'),
-        background: 'variant-filled-error',
-        timeout: 6000,
-        classes: 'border-l-4 border-red-500'
+        preset: 'error',
+        timeout: 6000
       });
     } finally {
       isSubmitting = false;

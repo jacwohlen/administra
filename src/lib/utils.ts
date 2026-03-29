@@ -12,7 +12,7 @@ export enum Weekday {
 }
 
 function weekdayToNumber(weekday: string): number {
-  const weekdayEnum = (Weekday as Record<string, number>)[weekday];
+  const weekdayEnum = (Weekday as unknown as Record<string, number>)[weekday];
   console.assert(weekdayEnum !== undefined, 'Error: Weekday does not map to a number');
   return weekdayEnum;
 }
