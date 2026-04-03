@@ -9,6 +9,7 @@
     "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
     "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
     "test:unit": "vitest",
+    "test:e2e": "playwright test",
     "lint": "prettier --plugin-search-dir . --check . && eslint .",
     "format": "prettier --plugin-search-dir . --write .",
     "prepare": "git config core.hooksPath .githooks"
@@ -16,6 +17,7 @@
   "devDependencies": {
     "@carbon/charts-svelte": "^1.22.18",
     "@fortawesome/free-solid-svg-icons": "^6.5.2",
+    "@playwright/test": "^1.59.1",
     "@skeletonlabs/skeleton": "^0.124.2",
     "@supabase/auth-helpers-sveltekit": "^0.8.7",
     "@supabase/supabase-js": "^2.41.1",
@@ -24,6 +26,8 @@
     "@sveltejs/kit": "^2.5.5",
     "@sveltejs/vite-plugin-svelte": "^3.0.2",
     "@tailwindcss/forms": "^0.5.11",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/svelte": "^5.3.1",
     "@typescript-eslint/eslint-plugin": "^5.62.0",
     "@typescript-eslint/parser": "^5.62.0",
     "autoprefixer": "^10.4.27",
@@ -33,6 +37,7 @@
     "eslint-config-prettier": "^8.10.0",
     "eslint-plugin-svelte": "^2.35.1",
     "image-resize-compress": "^1.1.0",
+    "jsdom": "^29.0.1",
     "lint-staged": "^16.4.0",
     "postcss": "^8.4.38",
     "postcss-load-config": "^4.0.2",
