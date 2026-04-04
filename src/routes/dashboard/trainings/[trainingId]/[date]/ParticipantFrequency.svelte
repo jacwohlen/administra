@@ -1,30 +1,40 @@
 <script lang="ts">
   import { _ } from 'svelte-i18n';
 
+  /** Historical attendance for last N sessions (oldest first). */
   export let streak: boolean[];
+  /** Whether the participant is checked as present for the current session. */
+  export let isPresent: boolean;
 
-  const RECENT_HALF = Math.ceil(streak.length / 2);
+  $: fullStreak = [...streak, isPresent];
 
-  $: recentCount = streak.slice(-RECENT_HALF).filter(Boolean).length;
-  $: olderCount = streak.slice(0, RECENT_HALF).filter(Boolean).length;
+  $: recentHalf = Math.ceil(fullStreak.length / 2);
+  $: recentCount = fullStreak.slice(-recentHalf).filter(Boolean).length;
+  $: olderCount = fullStreak.slice(0, recentHalf).filter(Boolean).length;
   $: trend = recentCount > olderCount ? 'up' : recentCount < olderCount ? 'down' : 'stable';
 
-  $: totalAttended = streak.filter(Boolean).length;
+  $: totalAttended = fullStreak.filter(Boolean).length;
   $: tooltipText =
     totalAttended +
     '/' +
-    streak.length +
+    fullStreak.length +
     ' ' +
     $_('components.ParticipantFrequency.sessions') +
     (trend === 'up' ? ' \u2197' : trend === 'down' ? ' \u2198' : '');
 </script>
 
-{#if streak.length > 0}
+{#if fullStreak.length > 0}
   <div class="flex items-center gap-0.5" title={tooltipText} aria-label={tooltipText}>
-    {#each streak as attended}
+    {#each fullStreak as attended, i}
+      {@const isCurrent = i === fullStreak.length - 1}
       <span
-        class="inline-block w-1.5 h-1.5 rounded-full {attended
-          ? 'bg-primary-500'
+        class="inline-block rounded-full {isCurrent ? 'w-2 h-2' : 'w-1.5 h-1.5'}
+          {attended
+          ? isCurrent
+            ? 'bg-primary-500 ring-1 ring-primary-300 dark:ring-primary-700'
+            : 'bg-primary-500'
+          : isCurrent
+          ? 'bg-surface-300 dark:bg-surface-600 ring-1 ring-surface-400 dark:ring-surface-500'
           : 'bg-surface-300 dark:bg-surface-600'}"
       />
     {/each}

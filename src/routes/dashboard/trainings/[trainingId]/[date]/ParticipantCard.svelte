@@ -106,7 +106,7 @@
         <Labels labels={member.labels ? member.labels : []} />
       </dd>
       <dd>
-        <ParticipantFrequency streak={member.streak} />
+        <ParticipantFrequency streak={member.streak} isPresent={member.isPresent} />
       </dd>
     </span>
     <div class="justify-self-end flex-shrink-0">

@@ -20,7 +20,7 @@ interface StreakRow {
   seq: number;
 }
 
-const STREAK_LENGTH = 10;
+const STREAK_LENGTH = 9;
 
 export const load = (async ({ params }) => {
   async function getMembersWithPresentStatus(): Promise<MMember[]> {
