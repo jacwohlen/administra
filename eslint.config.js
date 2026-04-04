@@ -37,7 +37,8 @@ export default ts.config(
       'svelte/no-immutable-reactive-statements': 'off',
       'svelte/require-event-dispatcher-types': 'off',
       'svelte/no-useless-mustaches': 'off',
-      'svelte/valid-prop-names-in-kit-pages': 'off'
+      'svelte/valid-prop-names-in-kit-pages': 'off',
+      'svelte/prefer-svelte-reactivity': 'off'
     }
   },
   {
