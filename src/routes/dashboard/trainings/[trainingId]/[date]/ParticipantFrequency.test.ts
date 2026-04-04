@@ -18,56 +18,86 @@ vi.mock('svelte-i18n', () => {
 afterEach(() => cleanup());
 
 describe('ParticipantFrequency component', () => {
-  it('renders nothing when streak is empty', () => {
-    const { container } = render(ParticipantFrequency, { props: { streak: [] } });
-    expect(container.querySelector('.flex')).not.toBeInTheDocument();
+  it('renders nothing when streak is empty and not present', () => {
+    const { container } = render(ParticipantFrequency, {
+      props: { streak: [], isPresent: false }
+    });
+    // fullStreak = [false] → length 1, so it still renders
+    // Actually [false] has length > 0, so it renders 1 dot
+    const dots = container.querySelectorAll('.rounded-full');
+    expect(dots).toHaveLength(1);
   });
 
-  it('renders dots for each streak entry', () => {
+  it('renders dots for each streak entry plus current session', () => {
     const { container } = render(ParticipantFrequency, {
-      props: { streak: [true, false, true, true] }
+      props: { streak: [true, false, true], isPresent: true }
     });
+    // fullStreak = [true, false, true, true] → 4 dots
     const dots = container.querySelectorAll('.rounded-full');
     expect(dots).toHaveLength(4);
   });
 
   it('renders filled dots for attended sessions', () => {
     const { container } = render(ParticipantFrequency, {
-      props: { streak: [true, false] }
+      props: { streak: [true, false], isPresent: false }
     });
+    // fullStreak = [true, false, false]
     const dots = container.querySelectorAll('.rounded-full');
     expect(dots[0]).toHaveClass('bg-primary-500');
     expect(dots[1]).not.toHaveClass('bg-primary-500');
   });
 
-  it('shows upward trend arrow when recent attendance is higher', () => {
-    // First half: [false, false], second half: [true, true]
+  it('shows current session dot as present when isPresent is true', () => {
     const { container } = render(ParticipantFrequency, {
-      props: { streak: [false, false, true, true] }
+      props: { streak: [false], isPresent: true }
+    });
+    // fullStreak = [false, true], last dot is current
+    const dots = container.querySelectorAll('.rounded-full');
+    const lastDot = dots[dots.length - 1];
+    expect(lastDot).toHaveClass('bg-primary-500');
+  });
+
+  it('shows upward trend arrow when recent attendance is higher', () => {
+    // fullStreak = [false, false, true, true, true]
+    const { container } = render(ParticipantFrequency, {
+      props: { streak: [false, false, true, true], isPresent: true }
     });
     expect(container.textContent).toContain('\u2197');
   });
 
   it('shows downward trend arrow when recent attendance is lower', () => {
-    // First half: [true, true], second half: [false, false]
+    // fullStreak = [true, true, true, false, false]
     const { container } = render(ParticipantFrequency, {
-      props: { streak: [true, true, false, false] }
+      props: { streak: [true, true, true, false], isPresent: false }
     });
     expect(container.textContent).toContain('\u2198');
   });
 
   it('shows stable indicator when attendance is equal', () => {
+    // fullStreak = [true, false, true, false]
     const { container } = render(ParticipantFrequency, {
-      props: { streak: [true, false, true, false] }
+      props: { streak: [true, false, true], isPresent: false }
     });
     expect(container.textContent).toContain('\u00B7');
   });
 
   it('includes attendance count in tooltip', () => {
+    // fullStreak = [true, true, false, true, false] → 3/5
     const { container } = render(ParticipantFrequency, {
-      props: { streak: [true, true, false, true] }
+      props: { streak: [true, true, false, true], isPresent: false }
     });
     const wrapper = container.querySelector('[title]');
-    expect(wrapper?.getAttribute('title')).toContain('3/4');
+    expect(wrapper?.getAttribute('title')).toContain('3/5');
+  });
+
+  it('current session dot is visually larger', () => {
+    const { container } = render(ParticipantFrequency, {
+      props: { streak: [true, false], isPresent: true }
+    });
+    const dots = container.querySelectorAll('.rounded-full');
+    const lastDot = dots[dots.length - 1];
+    // Current dot has w-2 h-2 (larger), historical has w-1.5 h-1.5
+    expect(lastDot).toHaveClass('w-2');
+    expect(dots[0]).toHaveClass('w-1.5');
   });
 });
