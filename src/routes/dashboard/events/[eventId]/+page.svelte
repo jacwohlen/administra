@@ -27,11 +27,11 @@
     calculateAttendanceRate
   } from '$lib/eventUtils';
 
-  export let data: PageData;
+  let { data }: { data: PageData } = $props();
 
-  let showAddParticipant = false;
-  let loading = false;
-  let isDeleting = false;
+  let showAddParticipant = $state(false);
+  let loading = $state(false);
+  let isDeleting = $state(false);
 
   function formatEventDate(date: string) {
     return dayjs(date).format('DD.MM.YYYY');
@@ -210,11 +210,11 @@
   }
 
   // Get existing participant member IDs for the search component
-  $: existingParticipantIds = data.participants.map((p) => p.memberId);
+  let existingParticipantIds = $derived(data.participants.map((p) => p.memberId));
 
-  $: registeredCount = data.participants.length;
-  $: attendedCount = data.logs.length;
-  $: attendanceRate = calculateAttendanceRate(registeredCount, attendedCount);
+  let registeredCount = $derived(data.participants.length);
+  let attendedCount = $derived(data.logs.length);
+  let attendanceRate = $derived(calculateAttendanceRate(registeredCount, attendedCount));
 </script>
 
 <div class="max-w-4xl mx-auto">
@@ -254,7 +254,7 @@
         <Fa icon={faEdit} />
         <span>{$_('button.edit')}</span>
       </a>
-      <button class="btn btn-sm variant-ghost-error" on:click={confirmDelete} disabled={isDeleting}>
+      <button class="btn btn-sm variant-ghost-error" onclick={confirmDelete} disabled={isDeleting}>
         {#if isDeleting}
           <span class="animate-spin">⏳</span>
           <span>{$_('button.deleting')}</span>
@@ -320,7 +320,7 @@
       {#if !isEventPast() && isRegistrationOpen() && (!data.event.maxParticipants || registeredCount < data.event.maxParticipants)}
         <button
           class="btn btn-sm variant-filled-primary"
-          on:click={() => (showAddParticipant = !showAddParticipant)}
+          onclick={() => (showAddParticipant = !showAddParticipant)}
           disabled={loading}
         >
           <Fa icon={faUserPlus} />
@@ -337,10 +337,10 @@
             <AddEventParticipant
               eventId={data.event.id}
               existingParticipants={existingParticipantIds}
-              on:added={onParticipantAdded}
+              onadded={onParticipantAdded}
             />
           </div>
-          <button class="btn variant-ghost-surface" on:click={() => (showAddParticipant = false)}>
+          <button class="btn variant-ghost-surface" onclick={() => (showAddParticipant = false)}>
             {$_('button.cancel')}
           </button>
         </div>
@@ -409,7 +409,7 @@
                       class="btn btn-sm {log && log.isCoach
                         ? 'variant-filled-secondary'
                         : 'variant-ghost-secondary'}"
-                      on:click={() => toggleCoach(participant.memberId)}
+                      onclick={() => toggleCoach(participant.memberId)}
                       disabled={loading}
                       title={log && log.isCoach
                         ? $_('page.events.remove_coach')
@@ -423,7 +423,7 @@
                     class="btn btn-sm {hasAttended
                       ? 'variant-filled-success'
                       : 'variant-ghost-success'}"
-                    on:click={() => markAttendance(participant.memberId, !hasAttended)}
+                    onclick={() => markAttendance(participant.memberId, !hasAttended)}
                     disabled={loading}
                   >
                     <Fa icon={faCheck} />
@@ -432,7 +432,7 @@
                   <!-- Future event - show remove button -->
                   <button
                     class="btn btn-sm variant-ghost-error"
-                    on:click={() => removeParticipant(participant.memberId)}
+                    onclick={() => removeParticipant(participant.memberId)}
                     disabled={loading}
                   >
                     <Fa icon={faTimes} />

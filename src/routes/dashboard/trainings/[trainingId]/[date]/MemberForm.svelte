@@ -2,8 +2,7 @@
   import { modalStore } from '@skeletonlabs/skeleton';
   import { _ } from 'svelte-i18n';
 
-  export let lastname = '';
-  export let firstname = '';
+  let { lastname = '', firstname = '' }: { lastname?: string; firstname?: string } = $props();
 
   let formData = {
     lastname: lastname,
@@ -42,6 +41,6 @@
   </label>
 </form>
 <footer class="modal-footer flex justify-end space-x-2">
-  <button class="btn variant-ghost-surface" on:click={cancel}>{$_('button.cancel')}</button>
-  <button class="btn variant-filled" on:click={onFormSubmit}>{$_('button.add')}</button>
+  <button class="btn variant-ghost-surface" onclick={cancel}>{$_('button.cancel')}</button>
+  <button class="btn variant-filled" onclick={onFormSubmit}>{$_('button.add')}</button>
 </footer>

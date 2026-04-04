@@ -4,14 +4,25 @@
   import Fa from 'svelte-fa';
   import { faSpinner, faXmark } from '@fortawesome/free-solid-svg-icons';
 
-  export let lastname = '';
-  export let firstname = '';
-  export let birthday = '';
-  export let mobile = '';
-  export let labels: string[] = ['new'];
-  export let isSubmitting = false;
-  export let isEditing = false;
-  export let id = '';
+  let {
+    lastname = '',
+    firstname = '',
+    birthday = '',
+    mobile = '',
+    labels = ['new'] as string[],
+    isSubmitting = false,
+    isEditing = false,
+    id = ''
+  }: {
+    lastname?: string;
+    firstname?: string;
+    birthday?: string;
+    mobile?: string;
+    labels?: string[];
+    isSubmitting?: boolean;
+    isEditing?: boolean;
+    id?: string;
+  } = $props();
 
   let labelInput = '';
 
@@ -90,7 +101,7 @@
         <button
           type="button"
           class="chip variant-filled-secondary flex items-center gap-1"
-          on:click={() => removeLabel(label)}
+          onclick={() => removeLabel(label)}
         >
           {label}
           <Fa icon={faXmark} size="xs" />
@@ -101,22 +112,22 @@
       <input
         class="input"
         bind:value={labelInput}
-        on:keydown={handleLabelKeydown}
+        onkeydown={handleLabelKeydown}
         type="text"
         placeholder={$_('dialog.newMember.labelPlaceholder')}
       />
-      <button type="button" class="variant-filled-secondary" on:click={addLabel}>
+      <button type="button" class="variant-filled-secondary" onclick={addLabel}>
         {$_('button.add')}
       </button>
     </div>
   </div>
 </form>
 <footer class="modal-footer flex justify-end space-x-2">
-  <button class="btn variant-ghost-surface" on:click={cancel}>{$_('button.cancel')}</button>
+  <button class="btn variant-ghost-surface" onclick={cancel}>{$_('button.cancel')}</button>
   <button
     class="btn variant-filled-primary"
     disabled={!formData.firstname || !formData.lastname || isSubmitting}
-    on:click={onFormSubmit}
+    onclick={onFormSubmit}
   >
     {#if isSubmitting}
       <Fa icon={faSpinner} spin />

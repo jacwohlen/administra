@@ -2,7 +2,7 @@
   import { _ } from 'svelte-i18n';
   import type { Log, Training } from '$lib/models';
 
-  export let logs: Promise<Log[]>;
+  let { logs }: { logs: Promise<Log[]> } = $props();
 
   function countPerTraining(logs: Log[], id: string) {
     let total = 0;

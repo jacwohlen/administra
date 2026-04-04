@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { createEventDispatcher } from 'svelte';
   import Fa from 'svelte-fa';
   import { faEllipsisVertical } from '@fortawesome/free-solid-svg-icons';
   import { type ModalSettings, Avatar } from '@skeletonlabs/skeleton';
@@ -11,12 +10,18 @@
   import type { MMember } from './types';
   import type { TrainerRole } from '$lib/models';
 
-  export let member: MMember;
+  let {
+    member,
+    onchange,
+    onremove
+  }: {
+    member: MMember;
+    onchange?: (data: { member: MMember; checked: boolean; trainerRole: TrainerRole }) => void;
+    onremove?: (data: { member: MMember }) => void;
+  } = $props();
 
-  const dispatch = createEventDispatcher();
-
-  let menuOpen = false;
-  let menuStyle = '';
+  let menuOpen = $state(false);
+  let menuStyle = $state('');
   let btnEl: HTMLButtonElement;
 
   function toggleMenu() {
@@ -47,7 +52,7 @@
   }
 
   function change() {
-    dispatch('change', { member, checked: !member.isPresent, trainerRole: 'attendee' });
+    onchange?.({ member, checked: !member.isPresent, trainerRole: 'attendee' });
   }
 
   function triggerConfirm(): void {
@@ -56,7 +61,7 @@
       type: 'confirm',
       title: $_('dialog.confirm.title'),
       body: $_('dialog.confirm.body'),
-      response: (r: boolean) => r === true && dispatch('remove', { member }),
+      response: (r: boolean) => r === true && onremove?.({ member }),
       buttonTextCancel: $_('button.cancel'),
       buttonTextConfirm: $_('button.confirm')
     };
@@ -65,11 +70,11 @@
 
   function setTrainerRole(role: TrainerRole): void {
     closeMenu();
-    dispatch('change', { member, checked: true, trainerRole: role });
+    onchange?.({ member, checked: true, trainerRole: role });
   }
 </script>
 
-<svelte:window on:click={handleWindowClick} />
+<svelte:window onclick={handleWindowClick} />
 
 <li>
   {#if member}
@@ -78,7 +83,7 @@
       type="checkbox"
       value={member.id}
       checked={member.isPresent}
-      on:change={change}
+      onchange={change}
     />
     <div class="relative inline-block flex-shrink-0">
       {#if member.trainerRole === 'main_trainer'}
@@ -110,7 +115,7 @@
       </dd>
     </span>
     <div class="justify-self-end flex-shrink-0">
-      <button class="btn btn-sm" bind:this={btnEl} on:click|stopPropagation={toggleMenu}>
+      <button class="btn btn-sm" bind:this={btnEl} onclick={(e) => { e.stopPropagation(); toggleMenu(); }}>
         <Fa icon={faEllipsisVertical} />
       </button>
       {#if menuOpen}
@@ -120,7 +125,7 @@
               <a
                 href={'/dashboard/members/' + member.id}
                 class="btn btn-sm w-full text-left justify-start"
-                on:click={closeMenu}
+                onclick={closeMenu}
               >
                 {$_('components.ParticipantCard.View')}
               </a>
@@ -128,7 +133,7 @@
             <li class="border-t border-surface-300 pt-1 mt-1">
               <button
                 class="btn btn-sm w-full text-left justify-start"
-                on:click={() => setTrainerRole('attendee')}
+                onclick={() => setTrainerRole('attendee')}
               >
                 {$_('components.ParticipantCard.SetAsAttendee')}
               </button>
@@ -136,7 +141,7 @@
             <li>
               <button
                 class="btn btn-sm w-full text-left justify-start gap-2"
-                on:click={() => setTrainerRole('main_trainer')}
+                onclick={() => setTrainerRole('main_trainer')}
               >
                 <img class="w-4 flex-shrink-0" src="/judo-icon.svg" alt="judo-icon" />
                 {$_('components.ParticipantCard.SetAsMainTrainer')}
@@ -145,7 +150,7 @@
             <li>
               <button
                 class="btn btn-sm w-full text-left justify-start gap-2"
-                on:click={() => setTrainerRole('assistant')}
+                onclick={() => setTrainerRole('assistant')}
               >
                 <span class="w-4 flex-shrink-0 text-center font-bold text-gray-600">A</span>
                 {$_('components.ParticipantCard.SetAsAssistant')}
@@ -154,7 +159,7 @@
             <li class="border-t border-surface-300 pt-1 mt-1">
               <button
                 class="btn btn-sm w-full text-left justify-start text-error-500"
-                on:click={triggerConfirm}
+                onclick={triggerConfirm}
               >
                 {$_('components.ParticipantCard.Remove')}
               </button>

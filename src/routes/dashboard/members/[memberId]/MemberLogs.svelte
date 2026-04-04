@@ -9,7 +9,10 @@
   import AttendanceLog from './AttendanceLog.svelte';
   import AttendanceSummary from './AttendanceSummary.svelte';
 
-  export let memberId: string;
+  let { memberId }: { memberId: string } = $props();
+
+  let year = $state(new Date().getFullYear());
+  let l: Promise<Log[]> = $state(getLogs());
 
   async function getLogs() {
     // Fetch logs
@@ -38,14 +41,11 @@
     year = year + 1;
     l = getLogs();
   }
-
-  $: year = new Date().getFullYear();
-  $: l = getLogs();
 </script>
 
 <div class="flex justify-between items-center m-2">
   <div>
-    <button class="btn" on:click={previousYear}>
+    <button class="btn" onclick={previousYear}>
       <Fa icon={faArrowLeft} /><span>{$_('button.year')}</span>
     </button>
   </div>
@@ -53,7 +53,7 @@
     {year}
   </div>
   <div>
-    <button class="btn" on:click={nextYear}>
+    <button class="btn" onclick={nextYear}>
       <span>{$_('button.year')}</span><Fa icon={faArrowRight} />
     </button>
   </div>

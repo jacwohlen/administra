@@ -1,6 +1,5 @@
 <script lang="ts">
   import type { Member } from '$lib/models';
-  import { createEventDispatcher } from 'svelte';
   import Fa from 'svelte-fa';
   import { faUserPlus } from '@fortawesome/free-solid-svg-icons';
   import { menu, type ModalComponent, type ModalSettings } from '@skeletonlabs/skeleton';
@@ -8,9 +7,11 @@
   import { modalStore } from '@skeletonlabs/skeleton';
   import { _ } from 'svelte-i18n';
 
-  let searchterm = '';
+  let { onadd }: { onadd?: (data: { member: Member }) => void } = $props();
 
-  let filteredData: Member[] = [];
+  let searchterm = $state('');
+
+  let filteredData: Member[] = $state([]);
 
   async function filterData(): Promise<void> {
     const text = searchterm;
@@ -29,9 +30,8 @@
     searchterm = '';
   }
 
-  const dispatch = createEventDispatcher();
   function add(member: Member) {
-    dispatch('add', { member: member });
+    onadd?.({ member: member });
     clearSearch();
   }
 
@@ -62,7 +62,7 @@
           .select()
           .single();
         if (error) console.log(error);
-        dispatch('add', { member: data });
+        onadd?.({ member: data });
         clearSearch();
       }
     };
@@ -80,7 +80,7 @@
       type="text"
       placeholder={$_('page.trainings.addMemberPlaceholder')}
       bind:value={searchterm}
-      on:input={filterData}
+      oninput={filterData}
       use:menu={{ menu: 'menu1' }}
     />
   </div>
@@ -90,7 +90,7 @@
         <li>
           <span class="flex-auto">{p.lastname} {p.firstname}</span>
           <div class="justify-self-end relative">
-            <button class="btn btn-sm variant-ringed-primary" on:click={() => add(p)}>
+            <button class="btn btn-sm variant-ringed-primary" onclick={() => add(p)}>
               <Fa icon={faUserPlus} />
               <span>{$_('button.add')}</span>
             </button>
@@ -100,7 +100,7 @@
       <li>
         <span class="flex-auto">{searchterm}...</span>
         <div class="justify-self-end relative">
-          <button class="btn btn-sm variant-filled-primary" on:click={createNewMember}>
+          <button class="btn btn-sm variant-filled-primary" onclick={createNewMember}>
             {$_('button.createNew')}
           </button>
         </div>

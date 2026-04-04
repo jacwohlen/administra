@@ -6,13 +6,19 @@
   import dayjs from 'dayjs';
   import 'dayjs/locale/de';
   import { locale } from 'svelte-i18n';
+  import type { Snippet } from 'svelte';
 
-  $: if ($locale) {
-    dayjs.locale($locale.startsWith('de') ? 'de' : 'en');
-  }
   import '../theme.postcss';
   import '@skeletonlabs/skeleton/styles/all.css';
   import '../app.postcss';
+
+  let { children }: { children: Snippet } = $props();
+
+  $effect(() => {
+    if ($locale) {
+      dayjs.locale($locale.startsWith('de') ? 'de' : 'en');
+    }
+  });
 
   onMount(() => {
     const {
@@ -37,8 +43,8 @@
         main
       </div>
     </div>
-    <slot />
+    {@render children()}
   </div>
 {:else}
-  <slot />
+  {@render children()}
 {/if}

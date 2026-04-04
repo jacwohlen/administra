@@ -6,7 +6,7 @@
   import Fa from 'svelte-fa';
   import { faSave, faArrowLeft } from '@fortawesome/free-solid-svg-icons';
 
-  export let data: PageData;
+  let { data }: { data: PageData } = $props();
 
   let title = data.event.title;
   let description = data.event.description || '';
@@ -71,7 +71,7 @@
     <h1>{$_('page.events.edit_event')}</h1>
   </div>
 
-  <form on:submit|preventDefault={updateEvent} class="space-y-6">
+  <form onsubmit={(e: SubmitEvent) => { e.preventDefault(); updateEvent(); }} class="space-y-6">
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
       <!-- Title -->
       <div class="md:col-span-2">

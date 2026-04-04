@@ -6,7 +6,7 @@
   import { _ } from 'svelte-i18n';
   import TopList from './TopList.svelte';
 
-  export let data: PageData;
+  let { data }: { data: PageData } = $props();
 
   async function getTopTrainers(mode: 'YEAR' | 'ALL', y: number | '') {
     if (mode === 'ALL') y = '';

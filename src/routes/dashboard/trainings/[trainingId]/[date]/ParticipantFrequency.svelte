@@ -2,25 +2,24 @@
   import { _ } from 'svelte-i18n';
 
   /** Historical attendance for last N sessions (oldest first). */
-  export let streak: boolean[];
-  /** Whether the participant is checked as present for the current session. */
-  export let isPresent: boolean;
+  let { streak, isPresent }: { streak: boolean[]; isPresent: boolean } = $props();
 
-  $: fullStreak = [...streak, isPresent];
+  let fullStreak = $derived([...streak, isPresent]);
 
-  $: recentHalf = Math.ceil(fullStreak.length / 2);
-  $: recentCount = fullStreak.slice(-recentHalf).filter(Boolean).length;
-  $: olderCount = fullStreak.slice(0, recentHalf).filter(Boolean).length;
-  $: trend = recentCount > olderCount ? 'up' : recentCount < olderCount ? 'down' : 'stable';
+  let recentHalf = $derived(Math.ceil(fullStreak.length / 2));
+  let recentCount = $derived(fullStreak.slice(-recentHalf).filter(Boolean).length);
+  let olderCount = $derived(fullStreak.slice(0, recentHalf).filter(Boolean).length);
+  let trend = $derived(recentCount > olderCount ? 'up' : recentCount < olderCount ? 'down' : 'stable');
 
-  $: totalAttended = fullStreak.filter(Boolean).length;
-  $: tooltipText =
+  let totalAttended = $derived(fullStreak.filter(Boolean).length);
+  let tooltipText = $derived(
     totalAttended +
     '/' +
     fullStreak.length +
     ' ' +
     $_('components.ParticipantFrequency.sessions') +
-    (trend === 'up' ? ' \u2197' : trend === 'down' ? ' \u2198' : '');
+    (trend === 'up' ? ' \u2197' : trend === 'down' ? ' \u2198' : '')
+  );
 </script>
 
 {#if fullStreak.length > 0}

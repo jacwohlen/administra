@@ -12,10 +12,10 @@
   import TopEventCoaches from './TopEventCoaches.svelte';
   import TrainerDownload from './TrainerDownload.svelte';
 
-  export let data: PageData;
+  let { data }: { data: PageData } = $props();
 
-  $: yearmode = data.yearmode;
-  $: year = data.year;
+  let yearmode = $derived(data.yearmode);
+  let year = $derived(data.year);
 
   async function previousYear() {
     if (yearmode === 'YEAR') year = year - 1;
@@ -31,7 +31,7 @@
 
 <div class="flex justify-between items-center m-2">
   <div>
-    <button class="btn" on:click={previousYear}>
+    <button class="btn" onclick={previousYear}>
       <Fa icon={faArrowLeft} /><span>{$_('button.year')}</span>
     </button>
   </div>
@@ -39,7 +39,7 @@
     <RadioGroup>
       <RadioItem
         bind:group={yearmode}
-        on:click={() => goto('/dashboard/stats/' + year)}
+        onclick={() => goto('/dashboard/stats/' + year)}
         name="yearmode"
         value="YEAR"
       >
@@ -47,14 +47,14 @@
       </RadioItem>
       <RadioItem
         bind:group={yearmode}
-        on:click={() => goto('/dashboard/stats/ALL')}
+        onclick={() => goto('/dashboard/stats/ALL')}
         name="yearmode"
         value="ALL">{$_('page.stats.all')}</RadioItem
       >
     </RadioGroup>
   </div>
   <div>
-    <button class="btn" on:click={nextYear}>
+    <button class="btn" onclick={nextYear}>
       <span>{$_('button.year')}</span><Fa icon={faArrowRight} />
     </button>
   </div>

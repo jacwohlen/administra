@@ -4,7 +4,7 @@
   import { faGripLines } from '@fortawesome/free-solid-svg-icons';
   import { _ } from 'svelte-i18n';
 
-  export let data: PageData;
+  let { data }: { data: PageData } = $props();
 </script>
 
 <h1>{$_('page.trainings.title')}</h1>

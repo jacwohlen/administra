@@ -11,7 +11,7 @@
   import { _ } from 'svelte-i18n';
   import dayjs from 'dayjs';
 
-  export let trainingId: string;
+  let { trainingId }: { trainingId: string } = $props();
 
   interface LogSummary {
     trainingId: number;
@@ -63,7 +63,7 @@
           </div>
 
           <!-- Divider -->
-          <div class="border-l border-surface-400/30 h-8 flex-none" />
+          <div class="border-l border-surface-400/30 h-8 flex-none"></div>
 
           <!-- Stats -->
           <div class="flex items-center gap-2 flex-auto flex-wrap">

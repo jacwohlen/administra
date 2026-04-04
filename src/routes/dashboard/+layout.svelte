@@ -1,7 +1,7 @@
 <script lang="ts">
   import { goto } from '$app/navigation';
   import { TabGroup, Tab } from '@skeletonlabs/skeleton';
-  import { page } from '$app/stores';
+  import { page } from '$app/state';
   import { Avatar, menu, AppShell } from '@skeletonlabs/skeleton';
   import Fa from 'svelte-fa';
   import {
@@ -17,8 +17,9 @@
   import { enhance } from '$app/forms';
   import type { LayoutData } from './$types';
   import { _ } from 'svelte-i18n';
+  import type { Snippet } from 'svelte';
 
-  export let data: LayoutData;
+  let { data, children }: { data: LayoutData; children: Snippet } = $props();
 
   const submitLogout: SubmitFunction = async ({ cancel }) => {
     const { error } = await supabaseClient.auth.signOut();
@@ -29,15 +30,15 @@
   };
 
   let tabSet = 0;
-  if ($page.route.id == '/dashboard') {
+  if (page.route.id == '/dashboard') {
     tabSet = 0;
-  } else if ($page.route.id?.startsWith('/dashboard/trainings')) {
+  } else if (page.route.id?.startsWith('/dashboard/trainings')) {
     tabSet = 1;
-  } else if ($page.route.id?.startsWith('/dashboard/events')) {
+  } else if (page.route.id?.startsWith('/dashboard/events')) {
     tabSet = 2;
-  } else if ($page.route.id?.startsWith('/dashboard/members')) {
+  } else if (page.route.id?.startsWith('/dashboard/members')) {
     tabSet = 3;
-  } else if ($page.route.id?.startsWith('/dashboard/stats')) {
+  } else if (page.route.id?.startsWith('/dashboard/stats')) {
     tabSet = 4;
   }
 
@@ -58,23 +59,23 @@
 <AppShell>
   <svelte:fragment slot="header">
     <TabGroup>
-      <Tab bind:group={tabSet} name="tab0" value={0} on:click={() => goto('/dashboard')}>
+      <Tab bind:group={tabSet} name="tab0" value={0} onclick={() => goto('/dashboard')}>
         <Fa icon={faCalendarCheck} class="mx-auto" />
         <div>{$_('page.dashboard.today')}</div>
       </Tab>
-      <Tab bind:group={tabSet} name="tab1" value={1} on:click={() => goto('/dashboard/trainings')}>
+      <Tab bind:group={tabSet} name="tab1" value={1} onclick={() => goto('/dashboard/trainings')}>
         <Fa icon={faList} class="mx-auto" />
         <div>{$_('page.dashboard.trainings')}</div>
       </Tab>
-      <Tab bind:group={tabSet} name="tab2" value={2} on:click={() => goto('/dashboard/events')}>
+      <Tab bind:group={tabSet} name="tab2" value={2} onclick={() => goto('/dashboard/events')}>
         <Fa icon={faCalendarDays} class="mx-auto" />
         <div>{$_('page.dashboard.events')}</div>
       </Tab>
-      <Tab bind:group={tabSet} name="tab3" value={3} on:click={() => goto('/dashboard/members')}>
+      <Tab bind:group={tabSet} name="tab3" value={3} onclick={() => goto('/dashboard/members')}>
         <Fa icon={faUser} class="mx-auto" />
         <div>{$_('page.dashboard.members')}</div>
       </Tab>
-      <Tab bind:group={tabSet} name="tab4" value={4} on:click={() => goto('/dashboard/stats')}>
+      <Tab bind:group={tabSet} name="tab4" value={4} onclick={() => goto('/dashboard/stats')}>
         <Fa icon={faChartSimple} class="mx-auto" />
         <div>{$_('page.dashboard.stats')}</div>
       </Tab>
@@ -106,7 +107,7 @@
     </TabGroup>
   </svelte:fragment>
   <div class="container p-2 mx-auto">
-    <slot />
+    {@render children()}
   </div>
   <Modal />
   <Toast />

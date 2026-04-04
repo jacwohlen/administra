@@ -1,6 +1,5 @@
 <script lang="ts">
-  export let year: number;
-  export let yearmode: 'YEAR' | 'ALL';
+  let { year, yearmode }: { year: number; yearmode: 'YEAR' | 'ALL' } = $props();
 
   import '@carbon/charts/styles.css';
   import { LineChart, type ChartTabularData } from '@carbon/charts-svelte';
@@ -29,7 +28,7 @@
     })) as ChartTabularData;
   }
 
-  $: data = getLogsSummary(yearmode, year);
+  let data = $derived(getLogsSummary(yearmode, year));
 </script>
 
 {#await data then items}

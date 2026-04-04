@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { PageData } from './$types';
   import type { MMember } from './types';
+  import type { Member } from '$lib/models';
   import type { TrainerRole } from '$lib/models';
   import ParticipantCard from './ParticipantCard.svelte';
   import Fa from 'svelte-fa';
@@ -22,16 +23,16 @@
   import { quintInOut } from 'svelte/easing';
   import LessonPlan from './LessonPlan.svelte';
 
-  export let data: PageData;
-  let searchterm = '';
-  let animateList = true;
-  let showLessonPlan = false;
+  let { data }: { data: PageData } = $props();
+  let searchterm = $state('');
+  let animateList = $state(true);
+  let showLessonPlan = $state(false);
 
-  let filteredData: MMember[] = [];
-  $: presentParticipants = filteredData.filter((p) => p.isPresent);
-  $: mainTrainers = presentParticipants.filter((p) => p.trainerRole === 'main_trainer');
-  $: assistantTrainers = presentParticipants.filter((p) => p.trainerRole === 'assistant');
-  $: hasMainTrainer = mainTrainers.length > 0;
+  let filteredData: MMember[] = $state([]);
+  let presentParticipants = $derived(filteredData.filter((p) => p.isPresent));
+  let mainTrainers = $derived(presentParticipants.filter((p) => p.trainerRole === 'main_trainer'));
+  let assistantTrainers = $derived(presentParticipants.filter((p) => p.trainerRole === 'assistant'));
+  let hasMainTrainer = $derived(mainTrainers.length > 0);
 
   let hiIndex = -1;
 
@@ -63,9 +64,9 @@
   filterData();
 
   async function changePresence(
-    event: CustomEvent<{ member: MMember; checked: boolean; trainerRole: TrainerRole }>
+    detail: { member: MMember; checked: boolean; trainerRole: TrainerRole }
   ) {
-    await _changePresence(event.detail.member, event.detail.checked, event.detail.trainerRole);
+    await _changePresence(detail.member, detail.checked, detail.trainerRole);
   }
 
   async function _changePresence(member: MMember, checked: boolean, trainerRole: TrainerRole) {
@@ -97,14 +98,14 @@
     }
   }
 
-  async function addParticipant(event: CustomEvent<{ member: MMember }>) {
-    const foundIndex = filteredData.findIndex((item) => item.id === event.detail.member.id);
+  async function addParticipant(detail: { member: Member | MMember }) {
+    const foundIndex = filteredData.findIndex((item) => item.id === detail.member.id);
     if (foundIndex > -1) {
       return;
     }
     const d = await supabaseClient
       .from('participants')
-      .upsert({ trainingId: data.trainingId, memberId: event.detail.member.id })
+      .upsert({ trainingId: data.trainingId, memberId: detail.member.id })
       .select('members(*)')
       .single();
 
@@ -112,17 +113,17 @@
       const newMember = { ...(d.data.members as unknown as MMember), streak: [] };
       data.participants.push(newMember);
     }
-    _changePresence(event.detail.member, true, 'attendee');
+    _changePresence(detail.member, true, 'attendee');
     filterData();
   }
 
-  async function removeParticipant(event: CustomEvent<{ member: MMember; checked: boolean }>) {
+  async function removeParticipant(detail: { member: MMember }) {
     await supabaseClient
       .from('participants')
       .delete()
       .eq('trainingId', data.trainingId)
-      .eq('memberId', event.detail.member.id);
-    const index = data.participants.findIndex((p) => p.id === event.detail.member.id);
+      .eq('memberId', detail.member.id);
+    const index = data.participants.findIndex((p) => p.id === detail.member.id);
     if (index > -1) {
       data.participants.splice(index, 1);
       filterData();
@@ -156,7 +157,7 @@
     }
   };
 
-  $: formattedDate = dayjs(data.date, 'YYYY-MM-DD').format('DD. MMMM YYYY');
+  let formattedDate = $derived(dayjs(data.date, 'YYYY-MM-DD').format('DD. MMMM YYYY'));
 </script>
 
 <!-- Header card -->
@@ -176,12 +177,12 @@
 
 <!-- Date navigation -->
 <div class="flex justify-between items-center mb-4">
-  <button class="btn btn-sm variant-ghost-surface" on:click={previousWeek}>
+  <button class="btn btn-sm variant-ghost-surface" onclick={previousWeek}>
     <Fa icon={faArrowLeft} />
     <span>{$_('button.week')}</span>
   </button>
   <h3 class="h3">{formattedDate}</h3>
-  <button class="btn btn-sm variant-ghost-surface" on:click={nextWeek}>
+  <button class="btn btn-sm variant-ghost-surface" onclick={nextWeek}>
     <span>{$_('button.week')}</span>
     <Fa icon={faArrowRight} />
   </button>
@@ -191,14 +192,14 @@
 <div class="flex gap-1 mb-4">
   <button
     class="btn btn-sm flex-1 {!showLessonPlan ? 'variant-filled-primary' : 'variant-soft-surface'}"
-    on:click={() => (showLessonPlan = false)}
+    onclick={() => (showLessonPlan = false)}
   >
     <Fa icon={faUsers} />
     <span>{$_('page.trainings.attendance')}</span>
   </button>
   <button
     class="btn btn-sm flex-1 {showLessonPlan ? 'variant-filled-primary' : 'variant-soft-surface'}"
-    on:click={() => (showLessonPlan = true)}
+    onclick={() => (showLessonPlan = true)}
   >
     <Fa icon={faClipboardList} />
     <span>{$_('page.trainings.lessonPlan')}</span>
@@ -243,13 +244,13 @@
   <div class="mb-3">
     <input
       class="input"
-      on:keydown={navigateList}
+      onkeydown={navigateList}
       type="text"
       placeholder={$_('page.trainings.searchMembersPlaceholder')}
       bind:value={searchterm}
-      on:input={filterData}
-      on:focus={() => (animateList = false)}
-      on:blur={() => (animateList = true)}
+      oninput={filterData}
+      onfocus={() => (animateList = false)}
+      onblur={() => (animateList = true)}
     />
   </div>
 
@@ -260,12 +261,12 @@
         class="item"
         animate:flip={{ delay: 0, duration: animateList ? 400 : 0, easing: quintInOut }}
       >
-        <ParticipantCard member={p} on:change={changePresence} on:remove={removeParticipant} />
+        <ParticipantCard member={p} onchange={changePresence} onremove={removeParticipant} />
       </div>
     {/each}
     <li>
       <aside class="alert variant-ghost-tertiary w-full justify-items-center">
-        <AddParticipantInputBox on:add={addParticipant} />
+        <AddParticipantInputBox onadd={addParticipant} />
       </aside>
     </li>
   </ul>

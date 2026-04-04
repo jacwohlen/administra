@@ -24,7 +24,7 @@
   import { goto, invalidate } from '$app/navigation';
   import MemberForm from '../MemberForm.svelte';
 
-  export let data: PageData;
+  let { data }: { data: PageData } = $props();
   let loadingImage = false;
   let isDeleting = false;
   let isEditing = false;
@@ -258,13 +258,13 @@
   <div class="flex justify-between items-center mb-4">
     <h2 class="h2">{data.firstname} {data.lastname}</h2>
     <div class="flex gap-2">
-      <button class="btn btn-sm variant-filled-primary" on:click={showEditForm}>
+      <button class="btn btn-sm variant-filled-primary" onclick={showEditForm}>
         <Fa icon={faEdit} />
         <span>{$_('button.edit')}</span>
       </button>
       <button
         class="btn btn-sm variant-filled-secondary"
-        on:click={confirmDelete}
+        onclick={confirmDelete}
         disabled={isDeleting}
       >
         {#if isDeleting}
@@ -307,9 +307,9 @@
               id="selectFiles"
               style="display: none;"
               accept="image/*"
-              on:change={handlePhotoChange}
+              onchange={handlePhotoChange}
             />
-            <button class="" on:click={selectFiles}><Fa icon={faUpload} /></button>
+            <button class="" onclick={selectFiles}><Fa icon={faUpload} /></button>
           </div>
           <div>
             <input
@@ -317,13 +317,13 @@
               id="takePhoto"
               style="display: none;"
               accept="image/*"
-              on:change={handlePhotoChange}
+              onchange={handlePhotoChange}
               capture="user"
             />
-            <button class="" on:click={takePhoto}><Fa icon={faCamera} /></button>
+            <button class="" onclick={takePhoto}><Fa icon={faCamera} /></button>
           </div>
           <div>
-            <button class="" on:click={resetImage}><Fa icon={faTrash} /></button>
+            <button class="" onclick={resetImage}><Fa icon={faTrash} /></button>
           </div>
         </div>
       </div>

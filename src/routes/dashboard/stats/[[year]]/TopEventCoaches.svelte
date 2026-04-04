@@ -1,16 +1,14 @@
 <script lang="ts">
   import { supabaseClient } from '$lib/supabase';
-  import { onMount } from 'svelte';
   import { _ } from 'svelte-i18n';
   import type { Athletes } from '$lib/models';
   import TopList from './TopList.svelte';
 
-  export let yearmode: 'YEAR' | 'ALL';
-  export let year: number;
+  let { yearmode, year }: { yearmode: 'YEAR' | 'ALL'; year: number } = $props();
 
-  let topEventCoaches: { [key: string]: Athletes[] } = {};
-  let loading = true;
-  let error = '';
+  let topEventCoaches: { [key: string]: Athletes[] } = $state({});
+  let loading = $state(true);
+  let error = $state('');
 
   async function loadEventCoachStats() {
     loading = true;
@@ -56,14 +54,12 @@
     }
   }
 
-  onMount(() => {
-    loadEventCoachStats();
-  });
-
   // Reload when year or yearmode changes
-  $: if (year || yearmode) {
-    loadEventCoachStats();
-  }
+  $effect(() => {
+    if (year || yearmode) {
+      loadEventCoachStats();
+    }
+  });
 </script>
 
 <div>
@@ -71,7 +67,7 @@
 
   {#if loading}
     <div class="text-center py-4">
-      <span class="loading loading-spinner loading-sm" />
+      <span class="loading loading-spinner loading-sm"></span>
       <p class="text-sm text-gray-500 mt-2">{$_('page.stats.loading')}</p>
     </div>
   {:else if error}

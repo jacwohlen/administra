@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { PageData } from './$types';
-  export let data: PageData;
+  let { data }: { data: PageData } = $props();
   import LogList from './LogList.svelte';
   import utils from '$lib/utils';
   import { _ } from 'svelte-i18n';

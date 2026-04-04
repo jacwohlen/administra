@@ -1,5 +1,5 @@
 <script lang="ts">
-  export let labels: string[] = [];
+  let { labels = [] }: { labels?: string[] } = $props();
 </script>
 
 {#each labels as l, i (l)}

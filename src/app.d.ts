@@ -6,7 +6,7 @@ import type { TypedSupabaseClient } from '@supabase/auth-helpers-sveltekit/dist/
 import type { Session } from '@supabase/supabase-js';
 
 declare global {
-  declare namespace App {
+  namespace App {
     // interface Error {}
     interface Locals {
       sb: TypedSupabaseClient;

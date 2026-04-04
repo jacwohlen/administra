@@ -5,10 +5,17 @@
   import { Avatar } from '@skeletonlabs/skeleton';
   import Fa from 'svelte-fa';
 
-  export let year: string;
-  export let category: string;
-  export let section: string;
-  export let athletes: { [key: string]: Athletes[] };
+  let {
+    year,
+    category,
+    section,
+    athletes
+  }: {
+    year: string;
+    category: string;
+    section: string;
+    athletes: { [key: string]: Athletes[] };
+  } = $props();
 
   async function getImage(id: number) {
     const { error, data } = await supabaseClient
