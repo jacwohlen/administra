@@ -1,7 +1,7 @@
 import { supabaseClient } from '$lib/supabase';
 import { error as err } from '@sveltejs/kit';
 import type { Training } from '$lib/models';
-import utils from '$lib/utils';
+import { compareTrainings } from '$lib/trainingUtils';
 
 export async function load() {
   const { error, data } = await supabaseClient.from('trainings').select('*').returns<Training[]>();
@@ -9,12 +9,7 @@ export async function load() {
     throw err(404, error);
   }
 
-  data.sort((a, b) => {
-    const result = utils.weekdayToNumber(a.weekday) - utils.weekdayToNumber(b.weekday);
-    return result != 0
-      ? result
-      : parseInt(a.dateFrom.replace(':', '')) - parseInt(b.dateFrom.replace(':', ''));
-  });
+  data.sort(compareTrainings);
 
   return {
     trainings: data

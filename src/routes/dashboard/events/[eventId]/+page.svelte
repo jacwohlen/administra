@@ -20,6 +20,12 @@
   import dayjs from 'dayjs';
   import { invalidateAll, goto } from '$app/navigation';
   import AddEventParticipant from './AddEventParticipant.svelte';
+  import {
+    isEventPast as _isEventPast,
+    canTrackAttendance as _canTrackAttendance,
+    isRegistrationOpen as _isRegistrationOpen,
+    calculateAttendanceRate
+  } from '$lib/eventUtils';
 
   export let data: PageData;
 
@@ -36,19 +42,15 @@
   }
 
   function isEventPast() {
-    return dayjs(data.event.date).isBefore(dayjs(), 'day');
+    return _isEventPast(data.event.date);
   }
 
   function canTrackAttendance() {
-    // Allow attendance tracking on the event day or after
-    const eventDate = dayjs(data.event.date);
-    const today = dayjs();
-    return eventDate.isSame(today, 'day') || eventDate.isBefore(today, 'day');
+    return _canTrackAttendance(data.event.date);
   }
 
   function isRegistrationOpen() {
-    if (!data.event.registrationDeadline) return true;
-    return dayjs().isBefore(dayjs(data.event.registrationDeadline));
+    return _isRegistrationOpen(data.event.registrationDeadline);
   }
 
   function getMemberById(id: string) {
@@ -212,7 +214,7 @@
 
   $: registeredCount = data.participants.length;
   $: attendedCount = data.logs.length;
-  $: attendanceRate = registeredCount > 0 ? Math.round((attendedCount / registeredCount) * 100) : 0;
+  $: attendanceRate = calculateAttendanceRate(registeredCount, attendedCount);
 </script>
 
 <div class="max-w-4xl mx-auto">
