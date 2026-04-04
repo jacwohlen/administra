@@ -1,18 +1,7 @@
-import { test as setup } from '@playwright/test';
-import { createClient } from '@supabase/supabase-js';
+import { test as setup, expect } from '@playwright/test';
 
 const STORAGE_STATE_PATH = 'e2e/.auth/user.json';
 
-/**
- * Authenticates a test user via Supabase email/password and stores the
- * session tokens as cookies so that subsequent tests can reuse them.
- *
- * Requires environment variables:
- *   PUBLIC_SUPABASE_URL   – Supabase project URL
- *   PUBLIC_SUPABASE_ANON_KEY – Supabase anon key
- *   E2E_USER_EMAIL        – Test user email
- *   E2E_USER_PASSWORD     – Test user password
- */
 setup('authenticate', async ({ page }) => {
   const supabaseUrl = process.env.PUBLIC_SUPABASE_URL!;
   const supabaseKey = process.env.PUBLIC_SUPABASE_ANON_KEY!;
@@ -25,44 +14,53 @@ setup('authenticate', async ({ page }) => {
     );
   }
 
-  // Sign in via Supabase JS client
-  const supabase = createClient(supabaseUrl, supabaseKey);
-  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+  // Load the app first (establishes origin and waits for dev server)
+  await page.goto('/');
+  await page.waitForLoadState('networkidle');
 
-  if (error || !data.session) {
-    throw new Error(`E2E auth failed: ${error?.message ?? 'No session returned'}`);
+  // Sign in via the Supabase auth API from inside the browser and set the cookie
+  // Retry a few times in case auth service is still starting after db reset
+  const authError = await page.evaluate(
+    async ({ url, key, email, password }) => {
+      for (let attempt = 0; attempt < 10; attempt++) {
+        const res = await fetch(`${url}/auth/v1/token?grant_type=password`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            apikey: key,
+            Authorization: `Bearer ${key}`
+          },
+          body: JSON.stringify({ email, password })
+        });
+        if (res.status === 502 || res.status === 503) {
+          await new Promise((r) => setTimeout(r, 1000));
+          continue;
+        }
+        if (!res.ok) {
+          return `HTTP ${res.status}: ${await res.text()}`;
+        }
+        const data = await res.json();
+        const val = JSON.stringify([
+          data.access_token,
+          data.refresh_token,
+          data.provider_token ?? null,
+          data.provider_refresh_token ?? null
+        ]);
+        document.cookie = `supabase-auth-token=${val}; path=/; max-age=3600; samesite=lax`;
+        return null;
+      }
+      return 'Auth service unavailable after retries';
+    },
+    { url: supabaseUrl, key: supabaseKey, email, password }
+  );
+
+  if (authError) {
+    throw new Error(`E2E auth failed: ${authError}`);
   }
 
-  const { access_token, refresh_token } = data.session;
-
-  // Navigate to the app and inject the auth tokens as cookies
-  // Supabase auth-helpers-sveltekit reads these cookie names
-  await page.goto('/');
-  const url = new URL(supabaseUrl);
-  const projectRef = url.hostname.split('.')[0];
-
-  await page.context().addCookies([
-    {
-      name: `sb-${projectRef}-auth-token`,
-      value: JSON.stringify({
-        access_token,
-        refresh_token,
-        token_type: 'bearer',
-        expires_in: 3600,
-        expires_at: Math.floor(Date.now() / 1000) + 3600
-      }),
-      domain: 'localhost',
-      path: '/',
-      httpOnly: false,
-      secure: false,
-      sameSite: 'Lax'
-    }
-  ]);
-
-  // Verify authentication works by navigating to dashboard
+  // Navigate to dashboard with the auth cookie set
   await page.goto('/dashboard');
-  await page.waitForURL('/dashboard**');
+  await expect(page.getByRole('tab').first()).toBeVisible({ timeout: 15000 });
 
-  // Save the authenticated state for reuse
   await page.context().storageState({ path: STORAGE_STATE_PATH });
 });

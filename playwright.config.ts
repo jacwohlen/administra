@@ -9,6 +9,7 @@ export default defineConfig({
   reporter: process.env.CI ? 'html' : 'list',
   use: {
     baseURL: 'http://localhost:5173',
+    locale: 'en',
     trace: 'on-first-retry'
   },
   projects: [
