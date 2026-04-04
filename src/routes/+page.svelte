@@ -15,6 +15,7 @@
     if (error) throw err(404, error);
   }
 
+  import { page } from '$app/state';
   import type { PageData } from './$types';
   import type { SignInWithOAuthCredentials } from '@supabase/supabase-js';
 
@@ -23,9 +24,9 @@
   // via GET parameters. We catch it here and sign out the user at google.
   // This way the user can start over loggign in with the right google account
   let { data, error = null }: { data: PageData; error: string | null } = $props();
-  let signInError = data.event.url.searchParams.get('error');
+  let signInError = page.url.searchParams.get('error');
   if (signInError) {
-    error = 'Error: Could not log in: ' + data.event.url.searchParams.get('error_description');
+    error = 'Error: Could not log in: ' + page.url.searchParams.get('error_description');
     supabaseClient.auth.signOut();
   }
 </script>
