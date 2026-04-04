@@ -1,7 +1,5 @@
--- Create Avatar Bucket
-insert into storage.buckets (id, name)
-values ('avatars', 'avatars')
-on conflict (id) do nothing;
+-- Bucket is created declaratively in supabase/config.toml.
+-- This migration only sets up RLS policies for the avatars bucket.
 
 -- Allow all authenticated users to read from the 'avatars' bucket
 create policy "all read avatars"
@@ -21,7 +19,7 @@ on storage.objects for delete
 to authenticated
 using (bucket_id = 'avatars');
 
--- Optional: Allow all authenticated users to update/replace objects in the 'avatars' bucket
+-- Allow all authenticated users to update/replace objects in the 'avatars' bucket
 create policy "all update avatars"
 on storage.objects for update
 to authenticated

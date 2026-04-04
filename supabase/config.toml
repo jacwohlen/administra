@@ -106,12 +106,11 @@ file_size_limit = "50MiB"
 # [storage.image_transformation]
 # enabled = true
 
-# Uncomment to configure local storage buckets
-# [storage.buckets.images]
-# public = false
-# file_size_limit = "50MiB"
-# allowed_mime_types = ["image/png", "image/jpeg"]
-# objects_path = "./images"
+# Local storage buckets (created automatically on `supabase start`)
+[storage.buckets.avatars]
+public = false
+file_size_limit = "5MiB"
+allowed_mime_types = ["image/webp", "image/png", "image/jpeg"]
 
 [auth]
 enabled = true
