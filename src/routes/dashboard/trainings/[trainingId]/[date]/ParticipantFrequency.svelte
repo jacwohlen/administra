@@ -30,12 +30,12 @@
       <span
         class="inline-block rounded-full {isCurrent ? 'w-2 h-2' : 'w-1.5 h-1.5'}
           {attended
-            ? isCurrent
-              ? 'bg-primary-500 ring-1 ring-primary-300 dark:ring-primary-700'
-              : 'bg-primary-500'
-            : isCurrent
-              ? 'bg-surface-300 dark:bg-surface-600 ring-1 ring-surface-400 dark:ring-surface-500'
-              : 'bg-surface-300 dark:bg-surface-600'}"
+          ? isCurrent
+            ? 'bg-primary-500 ring-1 ring-primary-300 dark:ring-primary-700'
+            : 'bg-primary-500'
+          : isCurrent
+          ? 'bg-surface-300 dark:bg-surface-600 ring-1 ring-surface-400 dark:ring-surface-500'
+          : 'bg-surface-300 dark:bg-surface-600'}"
       />
     {/each}
     <span
