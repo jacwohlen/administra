@@ -109,7 +109,8 @@
       .single();
 
     if (d.data?.members) {
-      data.participants.push(d.data.members as unknown as MMember);
+      const newMember = { ...(d.data.members as unknown as MMember), streak: [] };
+      data.participants.push(newMember);
     }
     _changePresence(event.detail.member, true, 'attendee');
     filterData();
