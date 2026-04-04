@@ -4,20 +4,20 @@ Upgrade from **SvelteKit 2.5 + Svelte 4** to **latest SvelteKit 2.x + Svelte 5**
 
 ## Current State
 
-| Package | Current Version | Target Version |
-|---|---|---|
-| svelte | ^4.2.12 | ^5.x |
-| @sveltejs/kit | ^2.5.5 | ^2.55+ |
-| @sveltejs/adapter-netlify | ^3.0.2 | ^6.x |
-| @sveltejs/vite-plugin-svelte | ^3.0.2 | ^5.x |
-| @skeletonlabs/skeleton | ^0.124.2 | ^2.x (see Phase 5) |
-| @supabase/auth-helpers-sveltekit | ^0.8.7 | Remove (use @supabase/ssr) |
-| svelte-preprocess | ^5.1.3 | Remove (no longer needed) |
-| tailwindcss | ^3.4.3 | ^4.x |
-| vite | ^5.2.7 | ^6.x |
-| vitest | ^1.4.0 | ^3.x |
-| prettier | ^2.8.8 | ^3.x |
-| eslint | ^8.57.0 | ^9.x |
+| Package                          | Current Version | Target Version             |
+| -------------------------------- | --------------- | -------------------------- |
+| svelte                           | ^4.2.12         | ^5.x                       |
+| @sveltejs/kit                    | ^2.5.5          | ^2.55+                     |
+| @sveltejs/adapter-netlify        | ^3.0.2          | ^6.x                       |
+| @sveltejs/vite-plugin-svelte     | ^3.0.2          | ^5.x                       |
+| @skeletonlabs/skeleton           | ^0.124.2        | ^2.x (see Phase 5)         |
+| @supabase/auth-helpers-sveltekit | ^0.8.7          | Remove (use @supabase/ssr) |
+| svelte-preprocess                | ^5.1.3          | Remove (no longer needed)  |
+| tailwindcss                      | ^3.4.3          | ^4.x                       |
+| vite                             | ^5.2.7          | ^6.x                       |
+| vitest                           | ^1.4.0          | ^3.x                       |
+| prettier                         | ^2.8.8          | ^3.x                       |
+| eslint                           | ^8.57.0         | ^9.x                       |
 
 ## Scope Summary (Revised)
 
@@ -130,11 +130,12 @@ npm uninstall svelte-preprocess
 ### Step 3.2: Update svelte.config.js
 
 Current config uses both `vitePreprocess()` and `svelte-preprocess`:
+
 ```js
 preprocess: [
   vitePreprocess(),
-  preprocess({ postcss: true })  // remove this
-]
+  preprocess({ postcss: true }) // remove this
+];
 ```
 
 - Remove `svelte-preprocess` import and the `preprocess({ postcss: true })` entry
@@ -148,6 +149,7 @@ npx sv migrate svelte-5
 ```
 
 This will automatically convert:
+
 - `export let` -> `$props()`
 - `on:click` -> `onclick` (and other event directives)
 - `<slot>` -> `{@render children()}`
@@ -159,6 +161,7 @@ This will automatically convert:
 The migration tool doesn't catch everything. Known items to fix manually:
 
 **Reactive declarations (`$:`) -> `$derived` / `$effect` (30 occurrences in 14 files):**
+
 - Simple derivations (`$: x = expr`) -> `let x = $derived(expr)`
 - Side effects (`$: if (cond) { ... }`) -> `$effect(() => { ... })`
 - Files with most `$:` usage:
@@ -168,25 +171,30 @@ The migration tool doesn't catch everything. Known items to fix manually:
   - `trainings/[trainingId]/[date]/LessonPlan.svelte` (1 occurrence, but complex)
 
 **`$app/stores` -> `$app/state` (1 file):**
+
 - `dashboard/+layout.svelte`: `import { page } from '$app/stores'` -> `import { page } from '$app/state'`
 - All `$page.xxx` references -> `page.xxx` (no `$` prefix, it's a reactive object now)
 
 **`createEventDispatcher` -> callback props (3 files):**
+
 - `AddParticipantInputBox.svelte` - `dispatch('select', member)` -> call an `onselect` prop
 - `ParticipantCard.svelte` - `dispatch(...)` -> callback props
 - `AddEventParticipant.svelte` - `dispatch(...)` -> callback props
 - Also update parent components that listen via `on:select={handler}` -> `onselect={handler}`
 
 **`<svelte:fragment slot="...">` (2 files):**
+
 - `dashboard/+layout.svelte`: `<svelte:fragment slot="header">` - This is Skeleton UI's slot API; will be addressed in Phase 5
 - `LessonPlan.svelte`: `<svelte:fragment slot="panel">` - Same
 
 **`$locale` store usage (1 file):**
+
 - `+layout.svelte` line 10: `$: if ($locale)` uses svelte-i18n's store - verify this still works with Svelte 5's backward-compatible store support
 
 ### Step 3.5: Update src/app.d.ts
 
 Svelte 5 changed the `App` namespace pattern. Update:
+
 ```ts
 declare global {
   namespace App {  // remove 'declare' keyword (was double-declared)
@@ -215,20 +223,24 @@ Migrate from deprecated `@supabase/auth-helpers-sveltekit` to `@supabase/ssr`. D
 npm install @supabase/ssr
 npm uninstall @supabase/auth-helpers-sveltekit
 ```
+
 - Also upgrade `@supabase/supabase-js` to latest ^2.x
 
 ### Step 4.2: Replace src/lib/supabase.ts
 
 Current file creates a client via `createClient` from auth-helpers. Replace with:
+
 - `createBrowserClient` from `@supabase/ssr` for client-side usage
 - `createServerClient` from `@supabase/ssr` for server-side usage (in hooks)
 
 ### Step 4.3: Update hooks.server.ts
 
 Current code:
+
 ```ts
 import { getSupabase } from '@supabase/auth-helpers-sveltekit';
 ```
+
 Replace with `createServerClient` from `@supabase/ssr` with explicit cookie get/set/remove handlers via `event.cookies`.
 
 ### Step 4.4: Update src/app.d.ts
@@ -259,6 +271,7 @@ Replace with `createServerClient` from `@supabase/ssr` with explicit cookie get/
 The project uses Skeleton **v0.124** (pre-v1). Skeleton v3 is a complete Zag.js-based rewrite with entirely different APIs. Going v0 -> v3 in one step is extremely risky.
 
 **Recommended approach:**
+
 1. Upgrade to **Skeleton v2** first - it supports Svelte 5 compatibility mode and has a clearer migration path from v0/v1
 2. Defer Skeleton v3 to a separate future effort
 
@@ -280,16 +293,17 @@ npm install @skeletonlabs/skeleton@^2 @skeletonlabs/tw-plugin@^0.4
 
 Skeleton v0 -> v2 component changes (less drastic than v0 -> v3):
 
-| Component | Key Changes |
-|---|---|
-| `AppShell` | Props/slots may have changed |
-| `TabGroup` / `Tab` | API updates |
-| `Modal` / `modalStore` | Modal system changes |
-| `Toast` / `toastStore` | Toast system changes |
-| `Avatar` | Prop changes (e.g., `border`, `cursor` strings -> separate props) |
-| `menu` action | May be replaced with popup/popover |
+| Component              | Key Changes                                                       |
+| ---------------------- | ----------------------------------------------------------------- |
+| `AppShell`             | Props/slots may have changed                                      |
+| `TabGroup` / `Tab`     | API updates                                                       |
+| `Modal` / `modalStore` | Modal system changes                                              |
+| `Toast` / `toastStore` | Toast system changes                                              |
+| `Avatar`               | Prop changes (e.g., `border`, `cursor` strings -> separate props) |
+| `menu` action          | May be replaced with popup/popover                                |
 
 Key files to update:
+
 - `src/routes/+layout.svelte` - CSS imports, Toast
 - `src/routes/dashboard/+layout.svelte` - AppShell, TabGroup, Tab, Avatar, menu, Modal, Toast (heaviest Skeleton usage)
 - `src/routes/dashboard/members/+page.svelte` - Modal usage
@@ -315,12 +329,12 @@ Key files to update:
 
 ### Step 6.1: Svelte ecosystem packages
 
-| Package | Action |
-|---|---|
-| `svelte-i18n` | Test with Svelte 5. If peer dep warnings, use `--force`. If broken, evaluate `paraglide-js` |
-| `svelte-fa` | Check for Svelte 5 compatible version |
-| `svelte-heatmap` | Check for Svelte 5 compatible version |
-| `@carbon/charts-svelte` | Check for Svelte 5 compatible version (this may be a blocker) |
+| Package                 | Action                                                                                      |
+| ----------------------- | ------------------------------------------------------------------------------------------- |
+| `svelte-i18n`           | Test with Svelte 5. If peer dep warnings, use `--force`. If broken, evaluate `paraglide-js` |
+| `svelte-fa`             | Check for Svelte 5 compatible version                                                       |
+| `svelte-heatmap`        | Check for Svelte 5 compatible version                                                       |
+| `@carbon/charts-svelte` | Check for Svelte 5 compatible version (this may be a blocker)                               |
 
 ### Step 6.2: Other upgrades
 
@@ -387,12 +401,12 @@ npm run build      # Production build
 
 ## Estimated Effort by Phase
 
-| Phase | Description | Relative Effort |
-|---|---|---|
-| Phase 1 | Tooling (Prettier, ESLint, Vite) | Small |
-| Phase 2 | Tailwind CSS 4 | Medium |
-| Phase 3 | Svelte 5 + SvelteKit core | Large |
-| Phase 4 | Supabase auth migration | Medium |
-| Phase 5 | Skeleton UI v0 -> v2 | Large |
-| Phase 6 | Remaining dependencies | Small |
-| Phase 7 | Verification & deployment | Medium |
+| Phase   | Description                      | Relative Effort |
+| ------- | -------------------------------- | --------------- |
+| Phase 1 | Tooling (Prettier, ESLint, Vite) | Small           |
+| Phase 2 | Tailwind CSS 4                   | Medium          |
+| Phase 3 | Svelte 5 + SvelteKit core        | Large           |
+| Phase 4 | Supabase auth migration          | Medium          |
+| Phase 5 | Skeleton UI v0 -> v2             | Large           |
+| Phase 6 | Remaining dependencies           | Small           |
+| Phase 7 | Verification & deployment        | Medium          |

@@ -13,7 +13,7 @@
   }
 
   // Reactively call handleLogsChange whenever logs is updated
-  $: logs, handleLogsChange();
+  $: (logs, handleLogsChange());
 </script>
 
 <h3>{$_('page.members.trainingsHistory.title')}</h3>

@@ -34,16 +34,16 @@
             ? 'bg-primary-500 ring-1 ring-primary-300 dark:ring-primary-700'
             : 'bg-primary-500'
           : isCurrent
-          ? 'bg-surface-300 dark:bg-surface-600 ring-1 ring-surface-400 dark:ring-surface-500'
-          : 'bg-surface-300 dark:bg-surface-600'}"
+            ? 'bg-surface-300 dark:bg-surface-600 ring-1 ring-surface-400 dark:ring-surface-500'
+            : 'bg-surface-300 dark:bg-surface-600'}"
       />
     {/each}
     <span
       class="ml-1 text-xs leading-none {trend === 'up'
         ? 'text-success-600 dark:text-success-400'
         : trend === 'down'
-        ? 'text-error-500 dark:text-error-400'
-        : 'text-surface-400'}"
+          ? 'text-error-500 dark:text-error-400'
+          : 'text-surface-400'}"
     >
       {#if trend === 'up'}&#8599;{:else if trend === 'down'}&#8600;{:else}&middot;{/if}
     </span>

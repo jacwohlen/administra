@@ -10,8 +10,8 @@
     "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
     "test:unit": "vitest",
     "test:e2e": "playwright test",
-    "lint": "prettier --plugin-search-dir . --check . && eslint .",
-    "format": "prettier --plugin-search-dir . --write .",
+    "lint": "prettier --check . && eslint .",
+    "format": "prettier --write .",
     "prepare": "git config core.hooksPath .githooks"
   },
   "devDependencies": {
@@ -28,21 +28,20 @@
     "@tailwindcss/forms": "^0.5.11",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/svelte": "^5.3.1",
-    "@typescript-eslint/eslint-plugin": "^5.62.0",
-    "@typescript-eslint/parser": "^5.62.0",
     "autoprefixer": "^10.4.27",
     "d3": "^7.9.0",
     "dayjs": "^1.11.20",
-    "eslint": "^8.57.0",
-    "eslint-config-prettier": "^8.10.0",
-    "eslint-plugin-svelte": "^2.35.1",
+    "eslint": "^9.39.4",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-svelte": "^3.17.0",
+    "globals": "^17.4.0",
     "image-resize-compress": "^1.1.0",
     "jsdom": "^29.0.1",
     "lint-staged": "^16.4.0",
     "postcss": "^8.4.38",
     "postcss-load-config": "^4.0.2",
-    "prettier": "^2.8.8",
-    "prettier-plugin-svelte": "^2.10.1",
+    "prettier": "^3.8.1",
+    "prettier-plugin-svelte": "^3.5.1",
     "supabase": "^2.84.4",
     "svelte": "^4.2.12",
     "svelte-check": "^3.6.9",
@@ -53,17 +52,18 @@
     "tailwindcss": "^3.4.3",
     "tslib": "^2.6.2",
     "typescript": "^5.4.3",
+    "typescript-eslint": "^8.58.0",
     "vite": "^5.2.7",
     "vitest": "^1.4.0"
   },
   "type": "module",
   "lint-staged": {
     "*.{js,ts,svelte}": [
-      "prettier --plugin-search-dir . --write",
+      "prettier --write",
       "eslint --fix"
     ],
     "*.{json,css,md,html}": [
-      "prettier --plugin-search-dir . --write"
+      "prettier --write"
     ]
   }
 }
