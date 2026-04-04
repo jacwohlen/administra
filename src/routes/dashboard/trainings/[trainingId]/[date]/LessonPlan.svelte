@@ -108,13 +108,14 @@
           .from('lesson-plans')
           .upload(filePath, selectedFile, {
             cacheControl: '3600',
-            upsert: false
+            contentType: selectedFile.type,
+            upsert: true
           });
 
         if (uploadError) {
           console.error('Error uploading file:', uploadError);
           toastStore.trigger({
-            message: $_('page.trainings.uploadError'),
+            message: `${$_('page.trainings.uploadError')}: ${uploadError.message}`,
             preset: 'error'
           });
           return;
@@ -174,7 +175,7 @@
         if (error) {
           console.error('Error updating lesson plan:', error);
           toastStore.trigger({
-            message: $_('page.trainings.saveError'),
+            message: `${$_('page.trainings.saveError')}: ${error.message}`,
             preset: 'error'
           });
           return;
@@ -242,7 +243,7 @@
         if (error) {
           console.error('Error creating lesson plan:', error);
           toastStore.trigger({
-            message: $_('page.trainings.saveError'),
+            message: `${$_('page.trainings.saveError')}: ${error.message}`,
             preset: 'error'
           });
           return;
