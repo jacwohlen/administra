@@ -2,7 +2,7 @@
   import { supabaseClient } from '$lib/supabase';
   import type { LessonPlan } from '$lib/models';
   import Fa from 'svelte-fa';
-  import { TabGroup, Tab, toastStore } from '@skeletonlabs/skeleton';
+  import { TabGroup, Tab, getToastStore } from '@skeletonlabs/skeleton';
   import {
     faEdit,
     faSave,
@@ -15,6 +15,8 @@
     faFileSignature
   } from '@fortawesome/free-solid-svg-icons';
   import { _ } from 'svelte-i18n';
+
+  const toastStore = getToastStore();
 
   let { trainingId, date }: { trainingId: string; date: string } = $props();
 

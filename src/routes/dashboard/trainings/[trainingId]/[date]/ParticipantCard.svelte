@@ -1,8 +1,9 @@
 <script lang="ts">
   import Fa from 'svelte-fa';
   import { faEllipsisVertical } from '@fortawesome/free-solid-svg-icons';
-  import { type ModalSettings, Avatar } from '@skeletonlabs/skeleton';
-  import { modalStore } from '@skeletonlabs/skeleton';
+  import { type ModalSettings, Avatar, getModalStore } from '@skeletonlabs/skeleton';
+  const modalStore = getModalStore();
+
   import Labels from './Labels.svelte';
   import ParticipantFrequency from './ParticipantFrequency.svelte';
   import { _ } from 'svelte-i18n';

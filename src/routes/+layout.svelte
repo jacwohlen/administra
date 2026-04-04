@@ -8,8 +8,7 @@
   import { locale } from 'svelte-i18n';
   import type { Snippet } from 'svelte';
 
-  import '../theme.postcss';
-  import '@skeletonlabs/skeleton/styles/all.css';
+  import '@skeletonlabs/skeleton/styles/skeleton.css';
   import '../app.postcss';
 
   let { children }: { children: Snippet } = $props();

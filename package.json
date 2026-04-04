@@ -16,9 +16,11 @@
   },
   "devDependencies": {
     "@carbon/charts-svelte": "^1.22.18",
+    "@floating-ui/dom": "^1.7.6",
     "@fortawesome/free-solid-svg-icons": "^6.5.2",
     "@playwright/test": "1.57.0",
-    "@skeletonlabs/skeleton": "^0.124.2",
+    "@skeletonlabs/skeleton": "^2.11.0",
+    "@skeletonlabs/tw-plugin": "^0.4.1",
     "@supabase/supabase-js": "^2.101.1",
     "@sveltejs/adapter-netlify": "^6.0.4",
     "@sveltejs/kit": "^2.56.1",

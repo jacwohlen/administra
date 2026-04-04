@@ -3,7 +3,7 @@
   import { supabaseClient } from '$lib/supabase';
   import { _ } from 'svelte-i18n';
   import Fa from 'svelte-fa';
-  import { modalStore, toastStore } from '@skeletonlabs/skeleton';
+  import { getModalStore, getToastStore } from '@skeletonlabs/skeleton';
   import {
     faCalendarDays,
     faLocationDot,
@@ -26,6 +26,9 @@
     isRegistrationOpen as _isRegistrationOpen,
     calculateAttendanceRate
   } from '$lib/eventUtils';
+
+  const modalStore = getModalStore();
+  const toastStore = getToastStore();
 
   let { data }: { data: PageData } = $props();
 

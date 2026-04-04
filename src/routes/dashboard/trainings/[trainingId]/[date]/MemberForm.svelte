@@ -1,6 +1,8 @@
 <script lang="ts">
-  import { modalStore } from '@skeletonlabs/skeleton';
+  import { getModalStore } from '@skeletonlabs/skeleton';
   import { _ } from 'svelte-i18n';
+
+  const modalStore = getModalStore();
 
   let { lastname = '', firstname = '' }: { lastname?: string; firstname?: string } = $props();
 

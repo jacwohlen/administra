@@ -2,10 +2,17 @@
   import type { Member } from '$lib/models';
   import Fa from 'svelte-fa';
   import { faUserPlus } from '@fortawesome/free-solid-svg-icons';
-  import { menu, type ModalComponent, type ModalSettings } from '@skeletonlabs/skeleton';
+  import { popup, type PopupSettings, getModalStore, type ModalComponent, type ModalSettings } from '@skeletonlabs/skeleton';
   import { supabaseClient } from '$lib/supabase';
-  import { modalStore } from '@skeletonlabs/skeleton';
   import { _ } from 'svelte-i18n';
+
+  const modalStore = getModalStore();
+
+  const popupSettings: PopupSettings = {
+    event: 'focus-click',
+    target: 'menu1',
+    placement: 'bottom'
+  };
 
   let { onadd }: { onadd?: (data: { member: Member }) => void } = $props();
 
@@ -81,10 +88,10 @@
       placeholder={$_('page.trainings.addMemberPlaceholder')}
       bind:value={searchterm}
       oninput={filterData}
-      use:menu={{ menu: 'menu1' }}
+      use:popup={popupSettings}
     />
   </div>
-  <nav class="card p-2 shadow-xl" data-menu={'menu1'}>
+  <nav class="card p-2 shadow-xl" data-popup="menu1">
     <ul class="nav-list">
       {#each filteredData as p (p.id)}
         <li>

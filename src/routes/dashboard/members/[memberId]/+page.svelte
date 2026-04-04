@@ -3,8 +3,8 @@
   import {
     Avatar,
     ProgressRadial,
-    modalStore,
-    toastStore,
+    getModalStore,
+    getToastStore,
     type ModalComponent
   } from '@skeletonlabs/skeleton';
   import { _ } from 'svelte-i18n';
@@ -23,6 +23,9 @@
   import dayjs, { type Dayjs } from 'dayjs';
   import { goto, invalidate } from '$app/navigation';
   import MemberForm from '../MemberForm.svelte';
+
+  const modalStore = getModalStore();
+  const toastStore = getToastStore();
 
   let { data }: { data: PageData } = $props();
   let loadingImage = false;

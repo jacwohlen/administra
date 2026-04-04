@@ -5,13 +5,16 @@
   import { _ } from 'svelte-i18n';
   import { supabaseClient } from '$lib/supabase';
   import {
-    toastStore,
+    getToastStore,
+    getModalStore,
     type ModalSettings,
-    modalStore,
     type ModalComponent
   } from '@skeletonlabs/skeleton';
   import { invalidate } from '$app/navigation';
   import MemberForm from './MemberForm.svelte';
+
+  const modalStore = getModalStore();
+  const toastStore = getToastStore();
 
   let { data }: { data: PageData } = $props();
   let searchTerm = '';
