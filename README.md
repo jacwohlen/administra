@@ -80,24 +80,68 @@ The application will be available at `http://localhost:5173`
 - `npm run lint` - Run Prettier and ESLint checks
 - `npm run format` - Format code with Prettier
 - `npm run test:unit` - Run unit tests with Vitest
+- `npm run test:e2e` - Run end-to-end tests with Playwright
+
+### Testing
+
+**Unit tests** use Vitest with jsdom for component testing:
+
+```bash
+npm run test:unit          # Watch mode
+npm run test:unit -- --run # Single run (used in CI)
+```
+
+Tests cover:
+
+- Utility functions (date handling, weekday mapping)
+- Business logic (attendance stats, streak calculation, training sorting, stats grouping)
+- Route load functions (with mocked Supabase client)
+- Svelte components (Labels, ParticipantFrequency)
+- i18n locale key parity (en/de)
+
+**E2E tests** use Playwright (Chromium):
+
+```bash
+npx playwright install chromium  # First time only
+npm run test:e2e
+```
+
+E2E tests cover login page rendering and auth guard redirects.
+
+### CI Pipeline
+
+GitHub Actions runs automatically on pushes to `main` and pull requests. The pipeline has 4 parallel jobs:
+
+| Job                | What it runs                                               |
+| ------------------ | ---------------------------------------------------------- |
+| **lint-and-check** | Prettier, ESLint, svelte-check                             |
+| **unit-tests**     | All Vitest unit and component tests                        |
+| **e2e-tests**      | Playwright browser tests (uploads HTML report as artifact) |
+| **build**          | Production build (waits for lint + unit tests to pass)     |
 
 ### Project Structure
 
 ```
 src/
 ├── lib/
-│   ├── i18n/          # Internationalization files
-│   ├── models.ts      # TypeScript type definitions
-│   └── supabase.ts    # Supabase client configuration
+│   ├── i18n/              # Internationalization files
+│   ├── test/              # Test setup and utilities
+│   ├── models.ts          # TypeScript type definitions
+│   ├── supabase.ts        # Supabase client configuration
+│   ├── utils.ts           # Shared utility functions
+│   ├── statsUtils.ts      # Statistics grouping and year param logic
+│   ├── trainingUtils.ts   # Streak calculation, training sorting
+│   ├── attendanceUtils.ts # Attendance filtering and stats
+│   └── eventUtils.ts      # Event date and registration logic
 ├── routes/
-│   ├── dashboard/     # Main application routes
-│   │   ├── members/   # Member management
-│   │   ├── trainings/ # Training session management
-│   │   └── stats/     # Statistics and reports
-│   └── +layout.svelte # Root layout with auth
-└── tests/             # Unit tests
-
-webling-sync/          # External member sync tool
+│   ├── dashboard/         # Main application routes
+│   │   ├── members/       # Member management
+│   │   ├── trainings/     # Training session management
+│   │   ├── events/        # Event management
+│   │   └── stats/         # Statistics and reports
+│   └── +layout.svelte     # Root layout with auth
+e2e/                       # Playwright E2E tests
+webling-sync/              # External member sync tool
 ```
 
 ## Database Setup
