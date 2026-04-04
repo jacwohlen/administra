@@ -95,6 +95,8 @@ Tests cover:
 
 - Utility functions (date handling, weekday mapping)
 - Business logic (attendance stats, streak calculation, training sorting, stats grouping)
+- Member form logic (label add/remove/dedup, form validation)
+- Keyboard navigation (list traversal, wrapping, participant filtering)
 - Route load functions (with mocked Supabase client)
 - Svelte components (Labels, ParticipantFrequency)
 - i18n locale key parity (en/de)
@@ -143,7 +145,9 @@ src/
 │   ├── statsUtils.ts      # Statistics grouping and year param logic
 │   ├── trainingUtils.ts   # Streak calculation, training sorting
 │   ├── attendanceUtils.ts # Attendance filtering and stats
-│   └── eventUtils.ts      # Event date and registration logic
+│   ├── eventUtils.ts      # Event date and registration logic
+│   ├── memberFormUtils.ts # Label management and form validation
+│   └── keyboardNavUtils.ts # List keyboard navigation and participant filtering
 ├── routes/
 │   ├── dashboard/         # Main application routes
 │   │   ├── members/       # Member management
