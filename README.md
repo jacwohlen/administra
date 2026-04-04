@@ -103,10 +103,21 @@ Tests cover:
 
 ```bash
 npx playwright install chromium  # First time only
-npm run test:e2e
+npm run test:e2e                 # Public tests only (login, auth guards)
 ```
 
-E2E tests cover login page rendering and auth guard redirects.
+**Authenticated E2E tests** require a running Supabase instance with seed data and a test user:
+
+```bash
+# Start local Supabase and seed data
+supabase start && supabase db reset
+
+# Create a test user (once) via Supabase Dashboard or SQL
+# Then run with auth env vars:
+E2E_USER_EMAIL=test@example.com E2E_USER_PASSWORD=testpass npm run test:e2e
+```
+
+Authenticated tests cover dashboard navigation, members list/search/profile, trainings list/attendance, and stats page.
 
 ### CI Pipeline
 

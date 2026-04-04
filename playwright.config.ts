@@ -12,10 +12,31 @@ export default defineConfig({
     trace: 'on-first-retry'
   },
   projects: [
+    // Unauthenticated tests — run in CI and locally
     {
-      name: 'chromium',
+      name: 'public',
+      testMatch: /login\.spec|navigation\.spec/,
       use: { ...devices['Desktop Chrome'] }
-    }
+    },
+    // Auth setup — only when E2E_USER_EMAIL is set (local dev with Supabase)
+    ...(process.env.E2E_USER_EMAIL
+      ? [
+          {
+            name: 'auth-setup',
+            testMatch: /auth\.setup\.ts/,
+            use: { ...devices['Desktop Chrome'] }
+          },
+          {
+            name: 'authenticated',
+            testMatch: /dashboard\.spec|members\.spec|trainings\.spec|stats\.spec/,
+            dependencies: ['auth-setup'],
+            use: {
+              ...devices['Desktop Chrome'],
+              storageState: 'e2e/.auth/user.json'
+            }
+          }
+        ]
+      : [])
   ],
   webServer: {
     command: 'npm run dev',
