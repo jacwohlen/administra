@@ -286,89 +286,84 @@
     </div>
   {/if}
 
-  <div class="card p-4">
-    <div class="mb-4">
-      <div class="relative w-56 mx-auto">
-        {#if data.img}
-          <Avatar class="mx-auto size-56 rounded-full overflow-hidden">
+  <div class="card p-6">
+    <!-- Avatar + Photo buttons -->
+    <div class="flex flex-col items-center mb-6">
+      <div class="relative">
+        <Avatar class="size-32">
+          {#if data.img}
             <Avatar.Image src={data.img} alt="{data.firstname} {data.lastname}" />
-            <Avatar.Fallback>{data.lastname.charAt(0)}{data.firstname.charAt(0)}</Avatar.Fallback>
-          </Avatar>
-        {:else}
-          <Avatar class="mx-auto size-56 rounded-full overflow-hidden">
-            <Avatar.Fallback>{data.lastname.charAt(0)}{data.firstname.charAt(0)}</Avatar.Fallback>
-          </Avatar>
-        {/if}
+          {/if}
+          <Avatar.Fallback>{data.lastname.charAt(0)}{data.firstname.charAt(0)}</Avatar.Fallback>
+        </Avatar>
         {#if loadingImage}
-          <div class="absolute inset-0 flex items-center justify-center">
-            <span class="animate-spin text-2xl">...</span>
+          <div class="absolute inset-0 flex items-center justify-center rounded-full bg-black/30">
+            <span class="animate-spin text-2xl text-white">...</span>
           </div>
         {/if}
       </div>
-      <div class="flex flex-auto justify-center pt-2">
-        <div class="btn-group preset-tonal-primary">
-          <div>
-            <input
-              type="file"
-              id="selectFiles"
-              style="display: none;"
-              accept="image/*"
-              onchange={handlePhotoChange}
-            />
-            <button class="" onclick={selectFiles}><Fa icon={faUpload} /></button>
-          </div>
-          <div>
-            <input
-              type="file"
-              id="takePhoto"
-              style="display: none;"
-              accept="image/*"
-              onchange={handlePhotoChange}
-              capture="user"
-            />
-            <button class="" onclick={takePhoto}><Fa icon={faCamera} /></button>
-          </div>
-          <div>
-            <button class="" onclick={resetImage}><Fa icon={faTrash} /></button>
-          </div>
-        </div>
+      <div class="flex gap-2 mt-3">
+        <input
+          type="file"
+          id="selectFiles"
+          class="hidden"
+          accept="image/*"
+          onchange={handlePhotoChange}
+        />
+        <button class="btn btn-sm preset-tonal-surface" onclick={selectFiles}>
+          <Fa icon={faUpload} /><span>{$_('button.upload')}</span>
+        </button>
+        <input
+          type="file"
+          id="takePhoto"
+          class="hidden"
+          accept="image/*"
+          onchange={handlePhotoChange}
+          capture="user"
+        />
+        <button class="btn btn-sm preset-tonal-surface" onclick={takePhoto}>
+          <Fa icon={faCamera} /><span>{$_('button.photo')}</span>
+        </button>
+        <button class="btn btn-sm preset-tonal-error" onclick={resetImage}>
+          <Fa icon={faTrash} />
+        </button>
       </div>
     </div>
-    <div class="table-wrap">
-      <table class="table">
-        <tbody>
-          <tr>
-            <td><b>{$_('page.members.id')}</b></td>
-            <td>{data.id}</td>
-          </tr>
-          <tr>
-            <td><b>{$_('page.members.lastName')}</b></td>
-            <td>{data.lastname}</td>
-          </tr>
-          <tr>
-            <td><b>{$_('page.members.firstName')}</b></td>
-            <td>{data.firstname}</td>
-          </tr>
-          <tr>
-            <td><b>{$_('page.members.birthday')}</b></td>
-            <td>{data.birthday}</td>
-          </tr>
-          <tr>
-            <td><b>{$_('page.members.mobile')}</b></td>
-            <td>{data.mobile}</td>
-          </tr>
-          <tr>
-            <td><b>{$_('page.members.labels')}</b></td>
-            <td>
-              {#if data.labels}
-                {#each data.labels as l}
-                  <span class="chip mr-2">{l}</span>
-                {/each}
-              {/if}
-            </td>
-          </tr>
-        </tbody>
-      </table>
+
+    <!-- Member details -->
+    <div class="space-y-3">
+      <div class="flex border-b border-surface-300-700 pb-2">
+        <span class="w-32 font-semibold text-surface-600-400">{$_('page.members.id')}</span>
+        <span>{data.id}</span>
+      </div>
+      <div class="flex border-b border-surface-300-700 pb-2">
+        <span class="w-32 font-semibold text-surface-600-400">{$_('page.members.lastName')}</span>
+        <span>{data.lastname}</span>
+      </div>
+      <div class="flex border-b border-surface-300-700 pb-2">
+        <span class="w-32 font-semibold text-surface-600-400">{$_('page.members.firstName')}</span>
+        <span>{data.firstname}</span>
+      </div>
+      <div class="flex border-b border-surface-300-700 pb-2">
+        <span class="w-32 font-semibold text-surface-600-400">{$_('page.members.birthday')}</span>
+        <span>{data.birthday || '-'}</span>
+      </div>
+      <div class="flex border-b border-surface-300-700 pb-2">
+        <span class="w-32 font-semibold text-surface-600-400">{$_('page.members.mobile')}</span>
+        <span>{data.mobile || '-'}</span>
+      </div>
+      <div class="flex pb-2">
+        <span class="w-32 font-semibold text-surface-600-400">{$_('page.members.labels')}</span>
+        <div class="flex flex-wrap gap-1">
+          {#if data.labels}
+            {#each data.labels as l}
+              <span class="chip preset-tonal-secondary">{l}</span>
+            {/each}
+          {:else}
+            <span>-</span>
+          {/if}
+        </div>
+      </div>
     </div>
   </div>
   <MemberLogs memberId={data.id} />
