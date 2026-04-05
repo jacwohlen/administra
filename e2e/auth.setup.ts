@@ -1,8 +1,9 @@
 import { test as setup, expect } from '@playwright/test';
+import { createClient } from '@supabase/supabase-js';
 
 const STORAGE_STATE_PATH = 'e2e/.auth/user.json';
 
-setup('authenticate', async ({ page }) => {
+setup('authenticate', async ({ page, context }) => {
   const supabaseUrl = process.env.PUBLIC_SUPABASE_URL!;
   const supabaseKey = process.env.PUBLIC_SUPABASE_ANON_KEY!;
   const email = process.env.E2E_USER_EMAIL!;
@@ -14,52 +15,85 @@ setup('authenticate', async ({ page }) => {
     );
   }
 
-  // Load the app first (establishes origin and waits for dev server)
-  await page.goto('/');
-  await page.waitForLoadState('networkidle');
+  // Sign in server-side using the Supabase JS client
+  const supabase = createClient(supabaseUrl, supabaseKey);
+  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
 
-  // Sign in via the Supabase auth API from inside the browser and set the cookie
-  // Retry a few times in case auth service is still starting after db reset
-  const authError = await page.evaluate(
-    async ({ url, key, email, password }) => {
-      for (let attempt = 0; attempt < 10; attempt++) {
-        const res = await fetch(`${url}/auth/v1/token?grant_type=password`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            apikey: key,
-            Authorization: `Bearer ${key}`
-          },
-          body: JSON.stringify({ email, password })
-        });
-        if (res.status === 502 || res.status === 503) {
-          await new Promise((r) => setTimeout(r, 1000));
-          continue;
-        }
-        if (!res.ok) {
-          return `HTTP ${res.status}: ${await res.text()}`;
-        }
-        const data = await res.json();
-        const val = JSON.stringify([
-          data.access_token,
-          data.refresh_token,
-          data.provider_token ?? null,
-          data.provider_refresh_token ?? null
-        ]);
-        document.cookie = `supabase-auth-token=${val}; path=/; max-age=3600; samesite=lax`;
-        return null;
-      }
-      return 'Auth service unavailable after retries';
-    },
-    { url: supabaseUrl, key: supabaseKey, email, password }
-  );
-
-  if (authError) {
-    throw new Error(`E2E auth failed: ${authError}`);
+  if (error || !data.session) {
+    throw new Error(`E2E auth failed: ${error?.message ?? 'no session returned'}`);
   }
 
-  // Navigate to dashboard with the auth cookie set
+  const session = data.session;
+
+  // Build the cookie value in the format @supabase/ssr expects.
+  // @supabase/ssr uses base64url encoding with a "base64-" prefix.
+  const sessionPayload = JSON.stringify({
+    access_token: session.access_token,
+    refresh_token: session.refresh_token,
+    expires_in: session.expires_in,
+    expires_at: session.expires_at,
+    token_type: session.token_type,
+    user: session.user
+  });
+
+  const encoded = Buffer.from(sessionPayload)
+    .toString('base64')
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=+$/, '');
+
+  const cookieValue = `base64-${encoded}`;
+
+  // The default storage key used by @supabase/ssr is "sb-<project-ref>-auth-token".
+  // Supabase extracts the project ref as the first segment of the hostname (before the first dot).
+  const url = new URL(supabaseUrl);
+  const projectRef = url.hostname.split('.')[0];
+  const storageKey = `sb-${projectRef}-auth-token`;
+
+  console.log('Storage key:', storageKey);
+  console.log('Cookie value length:', cookieValue.length);
+
+  // Check if the cookie needs to be chunked (> 3180 bytes per chunk)
+  const CHUNK_SIZE = 3180;
+  const cookiesToSet: Array<{ name: string; value: string }> = [];
+
+  if (cookieValue.length > CHUNK_SIZE) {
+    const chunks = Math.ceil(cookieValue.length / CHUNK_SIZE);
+    for (let i = 0; i < chunks; i++) {
+      cookiesToSet.push({
+        name: `${storageKey}.${i}`,
+        value: cookieValue.slice(i * CHUNK_SIZE, (i + 1) * CHUNK_SIZE)
+      });
+    }
+  } else {
+    cookiesToSet.push({ name: storageKey, value: cookieValue });
+  }
+
+  console.log(
+    'Setting cookies:',
+    cookiesToSet.map((c) => `${c.name} (${c.value.length} bytes)`)
+  );
+
+  // Set cookies on the browser context
+  await context.addCookies(
+    cookiesToSet.map((c) => ({
+      name: c.name,
+      value: c.value,
+      domain: 'localhost',
+      path: '/',
+      httpOnly: false,
+      secure: false,
+      sameSite: 'Lax' as const
+    }))
+  );
+
+  // Navigate to dashboard
   await page.goto('/dashboard');
+
+  // Debug: check where we ended up
+  await page.waitForLoadState('networkidle');
+  console.log('Final URL:', page.url());
+
   await expect(page.getByRole('tab').first()).toBeVisible({ timeout: 15000 });
 
   await page.context().storageState({ path: STORAGE_STATE_PATH });

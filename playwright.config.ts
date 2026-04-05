@@ -10,7 +10,10 @@ export default defineConfig({
   use: {
     baseURL: 'http://localhost:5173',
     locale: 'en',
-    trace: 'on-first-retry'
+    trace: 'on-first-retry',
+    ...(process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH
+      ? { launchOptions: { executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH } }
+      : {})
   },
   projects: [
     // Unauthenticated tests — run in CI and locally

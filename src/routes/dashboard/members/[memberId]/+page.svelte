@@ -333,36 +333,38 @@
     </div>
     <div class="table-container">
       <table class="table">
-        <tr>
-          <td><b>{$_('page.members.id')}</b></td>
-          <td>{data.id}</td>
-        </tr>
-        <tr>
-          <td><b>{$_('page.members.lastName')}</b></td>
-          <td>{data.lastname}</td>
-        </tr>
-        <tr>
-          <td><b>{$_('page.members.firstName')}</b></td>
-          <td>{data.firstname}</td>
-        </tr>
-        <tr>
-          <td><b>{$_('page.members.birthday')}</b></td>
-          <td>{data.birthday}</td>
-        </tr>
-        <tr>
-          <td><b>{$_('page.members.mobile')}</b></td>
-          <td>{data.mobile}</td>
-        </tr>
-        <tr>
-          <td><b>{$_('page.members.labels')}</b></td>
-          <td>
-            {#if data.labels}
-              {#each data.labels as l}
-                <span class="chip mr-2">{l}</span>
-              {/each}
-            {/if}
-          </td>
-        </tr>
+        <tbody>
+          <tr>
+            <td><b>{$_('page.members.id')}</b></td>
+            <td>{data.id}</td>
+          </tr>
+          <tr>
+            <td><b>{$_('page.members.lastName')}</b></td>
+            <td>{data.lastname}</td>
+          </tr>
+          <tr>
+            <td><b>{$_('page.members.firstName')}</b></td>
+            <td>{data.firstname}</td>
+          </tr>
+          <tr>
+            <td><b>{$_('page.members.birthday')}</b></td>
+            <td>{data.birthday}</td>
+          </tr>
+          <tr>
+            <td><b>{$_('page.members.mobile')}</b></td>
+            <td>{data.mobile}</td>
+          </tr>
+          <tr>
+            <td><b>{$_('page.members.labels')}</b></td>
+            <td>
+              {#if data.labels}
+                {#each data.labels as l}
+                  <span class="chip mr-2">{l}</span>
+                {/each}
+              {/if}
+            </td>
+          </tr>
+        </tbody>
       </table>
     </div>
   </div>
