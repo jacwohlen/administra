@@ -79,10 +79,10 @@
     <div class="text-center">
       {#if athletes[section][0] != undefined}
         <div class="relative inline-block">
-          <span class="badge-icon absolute -top-0 -right-0 z-10 bg-warning-400">1</span>
+          <span class="badge-icon absolute -top-0 -right-0 z-10 bg-primary-400">1</span>
           {#await getImage(athletes[section][0].memberId)}
             <div
-              class="mx-auto size-20 rounded-full overflow-hidden border-4 border-warning-400 bg-surface-100-900 flex items-center justify-center text-sm font-bold"
+              class="mx-auto size-20 rounded-full overflow-hidden border-4 border-primary-400 bg-surface-100-900 flex items-center justify-center text-sm font-bold"
             >
               {athletes[section][0].firstname.charAt(0)}{athletes[section][0].lastname.charAt(0)}
             </div>
@@ -91,11 +91,11 @@
               <img
                 src={img}
                 alt="{athletes[section][0].firstname} {athletes[section][0].lastname}"
-                class="mx-auto size-20 rounded-full overflow-hidden border-4 border-warning-400 object-cover"
+                class="mx-auto size-20 rounded-full overflow-hidden border-4 border-primary-400 object-cover"
               />
             {:else}
               <div
-                class="mx-auto size-20 rounded-full overflow-hidden border-4 border-warning-400 bg-surface-100-900 flex items-center justify-center text-sm font-bold"
+                class="mx-auto size-20 rounded-full overflow-hidden border-4 border-primary-400 bg-surface-100-900 flex items-center justify-center text-sm font-bold"
               >
                 {athletes[section][0].firstname.charAt(0)}{athletes[section][0].lastname.charAt(0)}
               </div>
@@ -116,10 +116,10 @@
     <div class="text-center mt-4">
       {#if athletes[section][2] != undefined}
         <div class="relative inline-block">
-          <span class="badge-icon absolute -top-0 -right-0 z-10 bg-warning-700">3</span>
+          <span class="badge-icon absolute -top-0 -right-0 z-10 bg-primary-700">3</span>
           {#await getImage(athletes[section][2].memberId)}
             <div
-              class="mx-auto size-16 rounded-full overflow-hidden border-4 border-warning-700 bg-surface-100-900 flex items-center justify-center text-sm font-bold"
+              class="mx-auto size-16 rounded-full overflow-hidden border-4 border-primary-700 bg-surface-100-900 flex items-center justify-center text-sm font-bold"
             >
               {athletes[section][2].firstname.charAt(0)}{athletes[section][2].lastname.charAt(0)}
             </div>
@@ -128,11 +128,11 @@
               <img
                 src={img}
                 alt="{athletes[section][2].firstname} {athletes[section][2].lastname}"
-                class="mx-auto size-16 rounded-full overflow-hidden border-4 border-warning-700 object-cover"
+                class="mx-auto size-16 rounded-full overflow-hidden border-4 border-primary-700 object-cover"
               />
             {:else}
               <div
-                class="mx-auto size-16 rounded-full overflow-hidden border-4 border-warning-700 bg-surface-100-900 flex items-center justify-center text-sm font-bold"
+                class="mx-auto size-16 rounded-full overflow-hidden border-4 border-primary-700 bg-surface-100-900 flex items-center justify-center text-sm font-bold"
               >
                 {athletes[section][2].firstname.charAt(0)}{athletes[section][2].lastname.charAt(0)}
               </div>

@@ -157,7 +157,7 @@
 
 <div class="flex items-center gap-2">
   <button
-    class="btn preset-tonal-primary"
+    class="btn btn-sm preset-tonal-primary"
     onclick={downloadTrainerTracking}
     disabled={isDownloading}
   >
