@@ -205,51 +205,46 @@
 </script>
 
 <div class="max-w-4xl mx-auto">
-  <!-- Header -->
-  <div class="flex items-center gap-4 mb-6">
-    <a href="/dashboard/events" class="btn preset-tonal-surface">
+  <!-- Header: back + title + actions -->
+  <div class="flex items-center gap-2 mb-2">
+    <a href="/dashboard/events" class="btn btn-sm preset-tonal-surface flex-shrink-0">
       <Fa icon={faArrowLeft} />
     </a>
-    <div class="flex-grow">
-      <h1>{data.event.title}</h1>
-      <div class="flex flex-wrap gap-4 mt-2 text-sm text-surface-600-400">
-        <span class="flex items-center gap-1">
-          <Fa icon={faCalendarDays} size="sm" />
-          {formatEventDate(data.event.date)}
-        </span>
-        {#if data.event.timeFrom}
-          <span class="flex items-center gap-1">
-            <Fa icon={faClock} size="sm" />
-            {formatTime(data.event.timeFrom)}{#if data.event.timeTo}
-              - {formatTime(data.event.timeTo)}{/if}
-          </span>
-        {/if}
-        {#if data.event.location}
-          <span class="flex items-center gap-1">
-            <Fa icon={faLocationDot} size="sm" />
-            {data.event.location}
-          </span>
-        {/if}
-        <span class="flex items-center gap-1">
-          <Fa icon={faUsers} size="sm" />
-          {data.event.section}
-        </span>
-      </div>
-    </div>
-    <div class="flex gap-2">
+    <h1 class="flex-1 truncate">{data.event.title}</h1>
+    <div class="flex gap-2 flex-shrink-0">
       <a href="/dashboard/events/{data.event.id}/edit" class="btn btn-sm preset-tonal-surface">
         <Fa icon={faEdit} />
-        <span>{$_('button.edit')}</span>
       </a>
       <button class="btn btn-sm preset-tonal-error" onclick={confirmDelete} disabled={isDeleting}>
-        {#if isDeleting}
-          <span class="animate-spin">...</span>
-          <span>{$_('button.deleting')}</span>
-        {:else}
-          <Fa icon={faTrash} />
-          <span>{$_('button.delete')}</span>
-        {/if}
+        <Fa icon={faTrash} />
       </button>
+    </div>
+  </div>
+
+  <!-- Metadata -->
+  <div class="mb-6">
+    <div class="flex flex-wrap gap-3 text-sm text-surface-600-400">
+      <span class="flex items-center gap-1">
+        <Fa icon={faCalendarDays} size="sm" />
+        {formatEventDate(data.event.date)}
+      </span>
+      {#if data.event.timeFrom}
+        <span class="flex items-center gap-1">
+          <Fa icon={faClock} size="sm" />
+          {formatTime(data.event.timeFrom)}{#if data.event.timeTo}
+            - {formatTime(data.event.timeTo)}{/if}
+        </span>
+      {/if}
+      {#if data.event.location}
+        <span class="flex items-center gap-1">
+          <Fa icon={faLocationDot} size="sm" />
+          {data.event.location}
+        </span>
+      {/if}
+      <span class="flex items-center gap-1">
+        <Fa icon={faUsers} size="sm" />
+        {data.event.section}
+      </span>
     </div>
   </div>
 
