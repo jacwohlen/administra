@@ -92,30 +92,30 @@
     >
       <Tabs.List>
         <Tabs.Trigger value="today">
-          <Fa icon={faCalendarCheck} class="mx-auto" />
-          <div>{$_('page.dashboard.today')}</div>
+          <Fa icon={faCalendarCheck} />
+          <span class="hidden sm:inline">{$_('page.dashboard.today')}</span>
         </Tabs.Trigger>
         <Tabs.Trigger value="trainings">
-          <Fa icon={faList} class="mx-auto" />
-          <div>{$_('page.dashboard.trainings')}</div>
+          <Fa icon={faList} />
+          <span class="hidden sm:inline">{$_('page.dashboard.trainings')}</span>
         </Tabs.Trigger>
         <Tabs.Trigger value="events">
-          <Fa icon={faCalendarDays} class="mx-auto" />
-          <div>{$_('page.dashboard.events')}</div>
+          <Fa icon={faCalendarDays} />
+          <span class="hidden sm:inline">{$_('page.dashboard.events')}</span>
         </Tabs.Trigger>
         <Tabs.Trigger value="members">
-          <Fa icon={faUser} class="mx-auto" />
-          <div>{$_('page.dashboard.members')}</div>
+          <Fa icon={faUser} />
+          <span class="hidden sm:inline">{$_('page.dashboard.members')}</span>
         </Tabs.Trigger>
         <Tabs.Trigger value="stats">
-          <Fa icon={faChartSimple} class="mx-auto" />
-          <div>{$_('page.dashboard.stats')}</div>
+          <Fa icon={faChartSimple} />
+          <span class="hidden sm:inline">{$_('page.dashboard.stats')}</span>
         </Tabs.Trigger>
       </Tabs.List>
     </Tabs>
 
     <!-- Profile avatar -->
-    <div class="ml-auto my-auto pr-2 relative">
+    <div class="ml-auto flex items-center pr-2 relative">
       <button type="button" class="cursor-pointer" onclick={() => (popoverOpen = !popoverOpen)}>
         {#if data.session.user.user_metadata.avatar_url != null}
           <Avatar class="size-10 rounded-full overflow-hidden hover:ring-2 ring-primary-600-400">
