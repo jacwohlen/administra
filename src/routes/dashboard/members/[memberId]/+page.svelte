@@ -206,7 +206,7 @@
 
 <div class="space-y-4">
   <div class="flex justify-between items-center mb-4">
-    <h2 class="h2">{data.firstname} {data.lastname}</h2>
+    <h1>{data.firstname} {data.lastname}</h1>
     <div class="flex gap-2">
       <button class="btn btn-sm preset-filled-primary-500" onclick={showEditForm}>
         <Fa icon={faEdit} />
@@ -290,7 +290,7 @@
     <!-- Avatar + Photo buttons -->
     <div class="flex flex-col items-center mb-6">
       <div class="relative">
-        <Avatar class="size-32">
+        <Avatar class="size-20">
           {#if data.img}
             <Avatar.Image src={data.img} alt="{data.firstname} {data.lastname}" />
           {/if}

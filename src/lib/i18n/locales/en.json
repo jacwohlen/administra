@@ -93,9 +93,9 @@
         "table": {
           "title": "Training",
           "section": "Section",
-          "attendance": "#Attendance",
-          "trainer": "#Trainer",
-          "total": "#Total"
+          "attendance": "Attendance",
+          "trainer": "Trainer",
+          "total": "Total"
         }
       },
       "trainingsHistory": {
