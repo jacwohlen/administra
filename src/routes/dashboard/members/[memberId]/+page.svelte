@@ -263,12 +263,12 @@
     <div class="mb-4">
       <div class="relative w-56 mx-auto">
         {#if data.img}
-          <Avatar class="mx-auto size-56">
+          <Avatar class="mx-auto size-56 rounded-full overflow-hidden">
             <Avatar.Image src={data.img} alt="{data.firstname} {data.lastname}" />
             <Avatar.Fallback>{data.lastname.charAt(0)}{data.firstname.charAt(0)}</Avatar.Fallback>
           </Avatar>
         {:else}
-          <Avatar class="mx-auto size-56">
+          <Avatar class="mx-auto size-56 rounded-full overflow-hidden">
             <Avatar.Fallback>{data.lastname.charAt(0)}{data.firstname.charAt(0)}</Avatar.Fallback>
           </Avatar>
         {/if}

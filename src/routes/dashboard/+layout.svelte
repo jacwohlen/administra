@@ -98,11 +98,11 @@
     <div class="ml-auto my-auto pr-2 relative">
       <button type="button" class="cursor-pointer" onclick={() => (popoverOpen = !popoverOpen)}>
         {#if data.session.user.user_metadata.avatar_url != null}
-          <Avatar class="size-10 hover:ring-2 ring-primary-500-400">
+          <Avatar class="size-10 rounded-full overflow-hidden hover:ring-2 ring-primary-500-400">
             <Avatar.Image src={data.session.user.user_metadata.avatar_url} alt="Profile" />
           </Avatar>
         {:else}
-          <Avatar class="size-10 hover:ring-2 ring-primary-500-400">
+          <Avatar class="size-10 rounded-full overflow-hidden hover:ring-2 ring-primary-500-400">
             <Avatar.Fallback>{getInitials()}</Avatar.Fallback>
           </Avatar>
         {/if}

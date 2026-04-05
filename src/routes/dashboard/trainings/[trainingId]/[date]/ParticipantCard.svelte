@@ -100,12 +100,12 @@
         </span>
       {/if}
       {#if member.img}
-        <Avatar class="size-10">
+        <Avatar class="size-10 rounded-full overflow-hidden">
           <Avatar.Image src={member.img} alt="{member.lastname} {member.firstname}" />
           <Avatar.Fallback>{member.lastname.charAt(0)}{member.firstname.charAt(0)}</Avatar.Fallback>
         </Avatar>
       {:else}
-        <Avatar class="size-10">
+        <Avatar class="size-10 rounded-full overflow-hidden">
           <Avatar.Fallback>{member.lastname.charAt(0)}{member.firstname.charAt(0)}</Avatar.Fallback>
         </Avatar>
       {/if}
