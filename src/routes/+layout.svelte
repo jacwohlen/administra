@@ -33,15 +33,11 @@
 </script>
 
 {#if mode === 'DEV'}
-  <div class="relative h-screen w-screen border">
-    <div class="absolute left-0 top-0 h-16 w-16 pointer-events-none z-50">
-      <div
-        class="absolute transform -rotate-45 preset-filled-surface text-center font-semibold py-1 left-[-34px] top-[32px] w-[170px]"
-      >
-        main
-      </div>
+  <div class="h-screen w-screen flex flex-col">
+    <div class="bg-surface-600-400 text-white text-center text-xs py-0.5 font-semibold">main</div>
+    <div class="flex-1 overflow-hidden">
+      {@render children()}
     </div>
-    {@render children()}
   </div>
 {:else}
   {@render children()}
