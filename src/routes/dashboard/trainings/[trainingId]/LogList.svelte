@@ -66,7 +66,7 @@
 
           <!-- Stats -->
           <div class="flex items-center gap-2 flex-auto flex-wrap">
-            <span class="chip preset-filled-secondary-500">
+            <span class="chip preset-tonal-secondary">
               {i.count}
               <span class="ml-1 text-xs">{$_('page.trainings.participants')}</span>
             </span>

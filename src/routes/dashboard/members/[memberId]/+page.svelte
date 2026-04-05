@@ -212,11 +212,7 @@
         <Fa icon={faEdit} />
         <span>{$_('button.edit')}</span>
       </button>
-      <button
-        class="btn btn-sm preset-filled-secondary-500"
-        onclick={confirmDelete}
-        disabled={isDeleting}
-      >
+      <button class="btn btn-sm preset-tonal-error" onclick={confirmDelete} disabled={isDeleting}>
         {#if isDeleting}
           <span class="animate-spin">...</span>
         {:else}
@@ -283,7 +279,7 @@
         {/if}
       </div>
       <div class="flex flex-auto justify-center pt-2">
-        <div class="btn-group preset-filled-secondary-500">
+        <div class="btn-group preset-tonal-primary">
           <div>
             <input
               type="file"

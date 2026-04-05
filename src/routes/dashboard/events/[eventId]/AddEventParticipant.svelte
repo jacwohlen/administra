@@ -120,7 +120,7 @@
 
   {#if searchterm.length >= 2}
     <div class="absolute top-full left-0 right-0 z-50 mt-1">
-      <div class="card p-2 shadow-xl bg-white">
+      <div class="card p-2 shadow-xl bg-surface-50">
         {#if filteredData.length > 0}
           <div class="space-y-1">
             {#each filteredData as member, index (member.id)}
@@ -128,7 +128,7 @@
                 class="flex items-center justify-between p-2 rounded cursor-pointer {index ===
                 selectedIndex
                   ? 'bg-primary-100 border-primary-300'
-                  : 'hover:bg-gray-100'}"
+                  : 'hover:bg-surface-100'}"
                 onclick={() => addParticipant(member)}
                 onkeydown={(e: KeyboardEvent) => {
                   if (e.key === 'Enter' || e.key === ' ') {
@@ -155,7 +155,7 @@
             {/each}
           </div>
         {:else}
-          <div class="p-2 text-sm text-gray-500">
+          <div class="p-2 text-sm text-surface-500">
             {$_('page.trainings.memberNotFound')}
           </div>
         {/if}

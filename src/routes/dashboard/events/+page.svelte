@@ -73,11 +73,11 @@
 
 {#if data.events.length === 0}
   <div class="text-center py-8">
-    <p class="text-gray-500">{$_('page.events.no_events')}</p>
+    <p class="text-surface-500">{$_('page.events.no_events')}</p>
   </div>
 {:else if filteredEvents.length === 0 && searchTerm.trim()}
   <div class="text-center py-8">
-    <p class="text-gray-500">{$_('page.events.no_events_found')}</p>
+    <p class="text-surface-500">{$_('page.events.no_events_found')}</p>
   </div>
 {:else}
   <div class="space-y-6">
@@ -85,9 +85,9 @@
     {#if filteredEvents.some((e) => isToday(e.date))}
       <section>
         <h3 class="text-lg font-semibold mb-3 text-warning-500">{$_('page.events.today')}</h3>
-        <ul class="flex flex-col gap-1 space-y-2">
+        <ul class="flex flex-col gap-3">
           {#each filteredEvents.filter((e) => isToday(e.date)) as event (event.id)}
-            <li class="flex items-start">
+            <li class="card p-4 flex items-start gap-3">
               <div class="relative inline-block flex-none">
                 <Avatar class="rounded-md size-10">
                   <Avatar.Fallback>{event.title.charAt(0)}{event.title.charAt(1)}</Avatar.Fallback>
@@ -98,11 +98,11 @@
                   {event.title}
                 </dt>
                 {#if event.description}
-                  <dd class="text-gray-500 text-sm truncate">
+                  <dd class="text-surface-500 text-sm truncate">
                     {event.description}
                   </dd>
                 {/if}
-                <dd class="flex items-center gap-2 text-sm">
+                <dd class="flex items-center gap-2 text-sm text-surface-500">
                   <span class="flex items-center gap-1">
                     <Fa icon={faCalendarDays} size="sm" />
                     {formatEventDate(event.date)}
@@ -120,10 +120,7 @@
                 </dd>
               </span>
               <span class="flex-none">
-                <a
-                  class="btn btn-sm preset-filled-secondary-500"
-                  href="/dashboard/events/{event.id}"
-                >
+                <a class="btn btn-sm preset-tonal-primary" href="/dashboard/events/{event.id}">
                   <Fa icon={faGripLines} />
                   <span>{$_('button.view')}</span>
                 </a>
@@ -138,9 +135,9 @@
     {#if filteredEvents.some((e) => isUpcoming(e.date))}
       <section>
         <h3 class="text-lg font-semibold mb-3 text-primary-500">{$_('page.events.upcoming')}</h3>
-        <ul class="flex flex-col gap-1 space-y-2">
+        <ul class="flex flex-col gap-3">
           {#each filteredEvents.filter((e) => isUpcoming(e.date)) as event (event.id)}
-            <li class="flex items-start">
+            <li class="card p-4 flex items-start gap-3">
               <div class="relative inline-block flex-none">
                 <Avatar class="rounded-md size-10">
                   <Avatar.Fallback>{event.title.charAt(0)}{event.title.charAt(1)}</Avatar.Fallback>
@@ -151,11 +148,11 @@
                   {event.title}
                 </dt>
                 {#if event.description}
-                  <dd class="text-gray-500 text-sm truncate">
+                  <dd class="text-surface-500 text-sm truncate">
                     {event.description}
                   </dd>
                 {/if}
-                <dd class="flex items-center gap-2 text-sm">
+                <dd class="flex items-center gap-2 text-sm text-surface-500">
                   <span class="flex items-center gap-1">
                     <Fa icon={faCalendarDays} size="sm" />
                     {formatEventDate(event.date)}
@@ -173,10 +170,7 @@
                 </dd>
               </span>
               <span class="flex-none">
-                <a
-                  class="btn btn-sm preset-filled-secondary-500"
-                  href="/dashboard/events/{event.id}"
-                >
+                <a class="btn btn-sm preset-tonal-primary" href="/dashboard/events/{event.id}">
                   <Fa icon={faGripLines} />
                   <span>{$_('button.view')}</span>
                 </a>
@@ -190,10 +184,10 @@
     <!-- Past Events -->
     {#if filteredEvents.some((e) => isPast(e.date))}
       <section>
-        <h3 class="text-lg font-semibold mb-3 text-gray-500">{$_('page.events.past')}</h3>
-        <ul class="flex flex-col gap-1 space-y-2">
+        <h3 class="text-lg font-semibold mb-3 text-surface-500">{$_('page.events.past')}</h3>
+        <ul class="flex flex-col gap-3">
           {#each filteredEvents.filter((e) => isPast(e.date)) as event (event.id)}
-            <li class="flex items-start">
+            <li class="card p-4 flex items-start gap-3">
               <div class="relative inline-block flex-none">
                 <Avatar class="rounded-md size-10">
                   <Avatar.Fallback>{event.title.charAt(0)}{event.title.charAt(1)}</Avatar.Fallback>
@@ -204,11 +198,11 @@
                   {event.title}
                 </dt>
                 {#if event.description}
-                  <dd class="text-gray-500 text-sm truncate">
+                  <dd class="text-surface-500 text-sm truncate">
                     {event.description}
                   </dd>
                 {/if}
-                <dd class="flex items-center gap-2 text-sm">
+                <dd class="flex items-center gap-2 text-sm text-surface-500">
                   <span class="flex items-center gap-1">
                     <Fa icon={faCalendarDays} size="sm" />
                     {formatEventDate(event.date)}
@@ -226,10 +220,7 @@
                 </dd>
               </span>
               <span class="flex-none">
-                <a
-                  class="btn btn-sm preset-filled-secondary-500"
-                  href="/dashboard/events/{event.id}"
-                >
+                <a class="btn btn-sm preset-tonal-primary" href="/dashboard/events/{event.id}">
                   <Fa icon={faGripLines} />
                   <span>{$_('button.view')}</span>
                 </a>

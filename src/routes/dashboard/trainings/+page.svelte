@@ -8,28 +8,30 @@
 </script>
 
 <h1>{$_('page.trainings.title')}</h1>
-<ul class="flex flex-col gap-1">
+<ul class="flex flex-col gap-3">
   {#each data.trainings as t, index (t.id)}
     {#if index > 0}
       {#if t.weekday != data.trainings[index - 1].weekday}
         <div class="relative flex pt-4 justify-center">
-          <span class="flex-shrink mx-4 text-gray-400">{$_('weekday.' + t.weekday)}</span>
+          <span class="flex-shrink mx-4 text-surface-400">{$_('weekday.' + t.weekday)}</span>
         </div>
       {/if}
     {:else}
       <div class="relative flex pt-4 justify-center">
-        <span class="flex-shrink mx-4 text-gray-400">{$_('weekday.' + t.weekday)}</span>
+        <span class="flex-shrink mx-4 text-surface-400">{$_('weekday.' + t.weekday)}</span>
       </div>
     {/if}
-    <li>
+    <li class="card p-4 flex items-center">
       <span class="flex-auto">
         <dt class="font-bold">
           {t.title}
         </dt>
-        <dd class="text-sm">{$_('weekday.' + t.weekday)} - {t.dateFrom} | {t.section}</dd>
+        <dd class="text-sm text-surface-500">
+          {$_('weekday.' + t.weekday)} - {t.dateFrom} | {t.section}
+        </dd>
       </span>
       <span>
-        <a class="btn btn-sm preset-filled-secondary-500" href="/dashboard/trainings/{t.id}">
+        <a class="btn btn-sm preset-tonal-primary" href="/dashboard/trainings/{t.id}">
           <Fa icon={faGripLines} />
           <span>{$_('button.view')}</span>
         </a>

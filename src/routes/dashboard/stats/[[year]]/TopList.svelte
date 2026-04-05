@@ -32,7 +32,7 @@
   }
 </script>
 
-<div class="card bg-white p-4 pt-2 pb-4 min-w-72">
+<div class="card p-4 pt-2 pb-4 min-w-72">
   <div class="flex justify-between">
     <h3 class="indent-2">{section}</h3>
     <a class="btn btn-sm" href={'/dashboard/stats/' + year + '/top/' + category + '/' + section}>
@@ -43,9 +43,9 @@
     <div class="text-center mt-4">
       {#if athletes[section][1] != undefined}
         <div class="relative inline-block">
-          <span class="badge-icon absolute -top-0 -right-0 z-10 bg-gray-300">2</span>
+          <span class="badge-icon absolute -top-0 -right-0 z-10 bg-surface-300">2</span>
           {#await getImage(athletes[section][1].memberId)}
-            <Avatar class="mx-auto size-16 border-4 border-gray-300">
+            <Avatar class="mx-auto size-16 border-4 border-surface-300">
               <Avatar.Fallback
                 >{athletes[section][1].firstname.charAt(0)}{athletes[section][1].lastname.charAt(
                   0
@@ -53,7 +53,7 @@
               >
             </Avatar>
           {:then img}
-            <Avatar class="mx-auto size-16 border-4 border-gray-300">
+            <Avatar class="mx-auto size-16 border-4 border-surface-300">
               {#if img}
                 <Avatar.Image
                   src={img}
@@ -162,7 +162,7 @@
   <div class="overflow-y-auto w-full mr-2">
     <ol class="list-decimal list-inside mr-2" start="4">
       {#each athletes[section].slice(3, 10) as item}
-        <li>
+        <li class="py-1">
           <span class="text-nowrap">{item.lastname} {item.firstname} ({item.count})</span>
         </li>
       {/each}

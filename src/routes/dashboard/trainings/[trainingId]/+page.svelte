@@ -19,7 +19,7 @@
     <div>
       <h2 class="h2">{data.title}</h2>
       <div class="flex items-center gap-2 mt-2 flex-wrap">
-        <span class="badge preset-filled-secondary-500">{data.section}</span>
+        <span class="badge preset-tonal-secondary">{data.section}</span>
         <span class="badge preset-tonal-surface">{$_('weekday.' + data.weekday)}</span>
         <span class="badge preset-tonal-surface">
           <Fa icon={faClock} size="xs" class="mr-1" />

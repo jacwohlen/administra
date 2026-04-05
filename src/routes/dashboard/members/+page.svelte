@@ -97,10 +97,10 @@
   />
 </div>
 
-<ul class="flex flex-col gap-1">
+<ul class="flex flex-col gap-3">
   {#each data.members as m (m.id)}
     {#if search(m.firstname, m.lastname)}
-      <li>
+      <li class="card p-4 flex items-center">
         <span class="flex-auto">
           <dt class="font-bold">
             {m.lastname}
@@ -117,7 +117,7 @@
           </dd>
         </span>
         <span>
-          <a class="btn btn-sm preset-filled-secondary-500" href={'/dashboard/members/' + m.id}>
+          <a class="btn btn-sm preset-tonal-primary" href={'/dashboard/members/' + m.id}>
             <Fa icon={faGripLines} />
             <span>{$_('button.view')}</span>
           </a>

@@ -68,7 +68,7 @@
   {#if loading}
     <div class="text-center py-4">
       <span class="loading loading-spinner loading-sm"></span>
-      <p class="text-sm text-gray-500 mt-2">{$_('page.stats.loading')}</p>
+      <p class="text-sm text-surface-500 mt-2">{$_('page.stats.loading')}</p>
     </div>
   {:else if error}
     <div class="flex items-center gap-4 p-4 rounded-lg preset-filled-error-500">
@@ -78,7 +78,7 @@
     </div>
   {:else if Object.keys(topEventCoaches).length === 0}
     <div class="text-center py-8">
-      <p class="text-gray-500">{$_('page.stats.no_event_data')}</p>
+      <p class="text-surface-500">{$_('page.stats.no_event_data')}</p>
     </div>
   {:else}
     <div class="grid gap-4">

@@ -164,7 +164,7 @@
                 class="btn btn-sm w-full text-left justify-start gap-2"
                 onclick={() => setTrainerRole('assistant')}
               >
-                <span class="w-4 flex-shrink-0 text-center font-bold text-gray-600">A</span>
+                <span class="w-4 flex-shrink-0 text-center font-bold text-surface-600">A</span>
                 {$_('components.ParticipantCard.SetAsAssistant')}
               </button>
             </li>

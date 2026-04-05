@@ -170,7 +170,7 @@
     <div>
       <h2 class="h2">{data.title}</h2>
       <div class="flex items-center gap-2 mt-1">
-        <span class="badge preset-filled-secondary-500">{data.section}</span>
+        <span class="badge preset-tonal-secondary">{data.section}</span>
         <span class="text-sm opacity-70">
           {$_('weekday.' + data.weekday)} | {data.dateFrom}
         </span>

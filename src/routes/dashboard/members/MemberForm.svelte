@@ -111,7 +111,7 @@
       {#each formData.labels as label (label)}
         <button
           type="button"
-          class="chip preset-filled-secondary-500 flex items-center gap-1"
+          class="chip preset-tonal-secondary flex items-center gap-1"
           onclick={() => removeLabel(label)}
         >
           {label}
@@ -127,7 +127,7 @@
         type="text"
         placeholder={$_('dialog.newMember.labelPlaceholder')}
       />
-      <button type="button" class="preset-filled-secondary-500" onclick={addLabel}>
+      <button type="button" class="preset-tonal-primary" onclick={addLabel}>
         {$_('button.add')}
       </button>
     </div>

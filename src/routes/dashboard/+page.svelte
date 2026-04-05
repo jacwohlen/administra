@@ -80,17 +80,17 @@
 <!-- Trainings Section -->
 <section class="mb-6">
   {#if trainings.length == 0}
-    <div class="text-center text-gray-500">{$_('page.dashboard.noTrainingsToday')}</div>
+    <div class="text-center text-surface-500">{$_('page.dashboard.noTrainingsToday')}</div>
   {:else}
-    <ul class="flex flex-col gap-1">
+    <ul class="flex flex-col gap-3">
       {#each trainings as t (t.id)}
-        <li>
+        <li class="card p-4 flex items-center">
           <span class="flex-auto">
             {t.title}
           </span>
           <span class="">
             <a
-              class="btn btn-sm preset-filled-secondary-500"
+              class="btn btn-sm preset-tonal-primary"
               href="/dashboard/trainings/{t.id}/{date.format(dateFormat)}"
             >
               <Fa icon={faClipboardCheck} />
@@ -106,9 +106,9 @@
 <!-- Today's Events Section -->
 <section>
   {#if todayEvents.length > 0}
-    <ul class="flex flex-col gap-1 space-y-2">
+    <ul class="flex flex-col gap-3">
       {#each todayEvents as event (event.id)}
-        <li class="flex items-start">
+        <li class="card p-4 flex items-start gap-3">
           <div class="relative inline-block flex-none">
             <div
               class="w-12 h-12 bg-secondary-600 rounded-md flex items-center justify-center text-white"
@@ -121,11 +121,11 @@
               {event.title}
             </dt>
             {#if event.description}
-              <dd class="text-gray-500 text-sm truncate">
+              <dd class="text-surface-500 text-sm truncate">
                 {event.description}
               </dd>
             {/if}
-            <dd class="flex items-center gap-2 text-sm">
+            <dd class="flex items-center gap-2 text-sm text-surface-500">
               <span class="flex items-center gap-1">
                 <Fa icon={faCalendarDays} size="sm" />
                 {formatEventDate(event.date)}
@@ -143,7 +143,7 @@
             </dd>
           </span>
           <span class="flex-none">
-            <a class="btn btn-sm preset-filled-secondary-500" href="/dashboard/events/{event.id}">
+            <a class="btn btn-sm preset-tonal-primary" href="/dashboard/events/{event.id}">
               <Fa icon={faClipboardCheck} />
               <span>{$_('button.trackAttendance')}</span>
             </a>

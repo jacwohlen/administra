@@ -402,18 +402,14 @@
           <span>{$_('button.save')}</span>
         </button>
         <button
-          class="btn btn-sm variant-outline-secondary"
+          class="btn btn-sm preset-tonal-surface"
           onclick={cancelEditing}
           disabled={isLoading}
         >
           {$_('button.cancel')}
         </button>
       {:else if lessonPlan}
-        <button
-          class="btn btn-sm variant-outline-primary"
-          onclick={startEditing}
-          disabled={isLoading}
-        >
+        <button class="btn btn-sm preset-tonal-primary" onclick={startEditing} disabled={isLoading}>
           <Fa icon={faEdit} />
           <span>{$_('button.edit')}</span>
         </button>
@@ -552,7 +548,7 @@
                 </div>
               </div>
               <button
-                class="btn btn-sm preset-filled-secondary-500 flex-shrink-0 w-full sm:w-auto"
+                class="btn btn-sm preset-tonal-primary flex-shrink-0 w-full sm:w-auto"
                 onclick={downloadFile}
               >
                 <Fa icon={faDownload} />

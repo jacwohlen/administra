@@ -62,10 +62,10 @@
   />
 </div>
 
-<ul class="flex flex-col gap-1">
+<ul class="flex flex-col gap-3">
   {#each data.athletes as e (e.memberId)}
     {#if search(e.firstname, e.lastname)}
-      <li>
+      <li class="card p-4 flex items-center gap-3">
         <span>
           {e.rank.toString()}.
         </span>
@@ -75,10 +75,7 @@
           ({e.count})
         </span>
         <span>
-          <a
-            class="btn btn-sm preset-filled-secondary-500"
-            href={'/dashboard/members/' + e.memberId}
-          >
+          <a class="btn btn-sm preset-tonal-primary" href={'/dashboard/members/' + e.memberId}>
             <Fa icon={faGripLines} />
             <span>{$_('button.view')}</span>
           </a>

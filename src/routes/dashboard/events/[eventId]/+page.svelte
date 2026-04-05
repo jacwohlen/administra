@@ -211,7 +211,7 @@
     </a>
     <div class="flex-grow">
       <h1>{data.event.title}</h1>
-      <div class="flex flex-wrap gap-4 mt-2 text-sm text-gray-600">
+      <div class="flex flex-wrap gap-4 mt-2 text-sm text-surface-600">
         <span class="flex items-center gap-1">
           <Fa icon={faCalendarDays} size="sm" />
           {formatEventDate(data.event.date)}
@@ -271,7 +271,7 @@
   {#if data.event.description}
     <div class="card p-4 mb-6">
       <h2 class="font-semibold mb-2">{$_('page.events.description')}</h2>
-      <p class="text-gray-700 break-words">{data.event.description}</p>
+      <p class="text-surface-700 break-words">{data.event.description}</p>
     </div>
   {/if}
 
@@ -279,15 +279,15 @@
   <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
     <div class="card p-4 text-center">
       <div class="text-2xl font-bold text-primary-500">{registeredCount}</div>
-      <div class="text-sm text-gray-600">{$_('page.events.stats.registered')}</div>
+      <div class="text-sm text-surface-600">{$_('page.events.stats.registered')}</div>
     </div>
     <div class="card p-4 text-center">
       <div class="text-2xl font-bold text-success-500">{attendedCount}</div>
-      <div class="text-sm text-gray-600">{$_('page.events.stats.attended')}</div>
+      <div class="text-sm text-surface-600">{$_('page.events.stats.attended')}</div>
     </div>
     <div class="card p-4 text-center">
       <div class="text-2xl font-bold text-tertiary-500">{attendanceRate}%</div>
-      <div class="text-sm text-gray-600">{$_('page.events.stats.attendance_rate')}</div>
+      <div class="text-sm text-surface-600">{$_('page.events.stats.attendance_rate')}</div>
     </div>
   </div>
 
@@ -350,7 +350,7 @@
 
     <!-- Participants List -->
     {#if data.participants.length === 0}
-      <p class="text-center text-gray-500 py-8">{$_('page.events.no_participants')}</p>
+      <p class="text-center text-surface-500 py-8">{$_('page.events.no_participants')}</p>
     {:else}
       <div class="space-y-2">
         {#each data.participants as participant}
@@ -361,7 +361,7 @@
             <div
               class="flex items-center justify-between p-3 border rounded-lg {hasAttended
                 ? 'bg-success-50 border-success-200'
-                : 'bg-gray-50'}"
+                : 'bg-surface-50'}"
             >
               <div class="flex items-center gap-3">
                 <div class="relative">
@@ -389,12 +389,12 @@
                     {member.firstname}
                     {member.lastname}
                     {#if log && log.isCoach}
-                      <span class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded ml-2">
+                      <span class="text-xs bg-primary-100 text-primary-800 px-2 py-1 rounded ml-2">
                         {$_('page.events.coach')}
                       </span>
                     {/if}
                   </div>
-                  <div class="text-sm text-gray-600">
+                  <div class="text-sm text-surface-600">
                     {$_('page.events.status.' + participant.attendanceStatus)}
                     {#if log}
                       - {$_('page.events.attended_at')} {dayjs(log.attendedAt).format('HH:mm')}
@@ -408,8 +408,8 @@
                   {#if hasAttended}
                     <button
                       class="btn btn-sm {log && log.isCoach
-                        ? 'preset-filled-secondary-500'
-                        : 'preset-tonal-secondary'}"
+                        ? 'preset-filled-primary-500'
+                        : 'preset-tonal-primary'}"
                       onclick={() => toggleCoach(participant.memberId)}
                       disabled={loading}
                       title={log && log.isCoach
