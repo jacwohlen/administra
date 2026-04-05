@@ -185,8 +185,8 @@
     </div>
 
     {#if error}
-      <div class="alert preset-filled-error-500">
-        <div class="alert-message">
+      <div class="flex items-center gap-4 p-4 rounded-lg preset-filled-error-500">
+        <div class="flex-1">
           <p>{error}</p>
         </div>
       </div>

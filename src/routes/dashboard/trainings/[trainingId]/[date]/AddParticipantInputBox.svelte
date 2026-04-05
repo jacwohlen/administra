@@ -69,8 +69,8 @@
 </script>
 
 <div class="relative w-full">
-  <div class="input-group input-group-divider grid-cols-[auto_1fr_auto]">
-    <div class="input-group-shim">
+  <div class="input-group grid-cols-[auto_1fr_auto]">
+    <div class="ig-cell">
       <Fa icon={faUserPlus} />
     </div>
     <input
@@ -86,7 +86,7 @@
   </div>
   {#if showDropdown && searchterm}
     <nav class="card p-2 shadow-xl absolute top-full left-0 right-0 z-50 mt-1">
-      <ul class="nav-list">
+      <ul class="flex flex-col gap-1">
         {#each filteredData as p (p.id)}
           <li>
             <span class="flex-auto">{p.lastname} {p.firstname}</span>

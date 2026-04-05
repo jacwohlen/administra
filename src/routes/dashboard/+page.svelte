@@ -82,7 +82,7 @@
   {#if trainings.length == 0}
     <div class="text-center text-gray-500">{$_('page.dashboard.noTrainingsToday')}</div>
   {:else}
-    <ul class="list">
+    <ul class="flex flex-col gap-1">
       {#each trainings as t (t.id)}
         <li>
           <span class="flex-auto">
@@ -106,7 +106,7 @@
 <!-- Today's Events Section -->
 <section>
   {#if todayEvents.length > 0}
-    <ul class="list space-y-2">
+    <ul class="flex flex-col gap-1 space-y-2">
       {#each todayEvents as event (event.id)}
         <li class="flex items-start">
           <div class="relative inline-block flex-none">

@@ -62,7 +62,7 @@
   />
 </div>
 
-<ul class="list">
+<ul class="flex flex-col gap-1">
   {#each data.athletes as e (e.memberId)}
     {#if search(e.firstname, e.lastname)}
       <li>

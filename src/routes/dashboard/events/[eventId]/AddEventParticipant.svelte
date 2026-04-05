@@ -103,8 +103,8 @@
 </script>
 
 <div class="relative w-full">
-  <div class="input-group input-group-divider grid-cols-[auto_1fr]">
-    <div class="input-group-shim">
+  <div class="input-group grid-cols-[auto_1fr]">
+    <div class="ig-cell">
       <Fa icon={faUserPlus} />
     </div>
     <input

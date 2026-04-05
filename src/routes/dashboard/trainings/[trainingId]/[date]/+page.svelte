@@ -237,15 +237,15 @@
 
   <!-- Trainer warning -->
   {#if presentParticipants.length > 0 && !hasMainTrainer}
-    <aside class="alert preset-tonal-warning mb-3">
+    <div class="flex items-center gap-4 p-4 rounded-lg preset-tonal-warning mb-3">
       <div><Fa icon={faExclamationTriangle} class="text-warning-500" /></div>
-      <div class="alert-message">
+      <div class="flex-1">
         <p>
           <span class="font-bold">{$_('page.trainings.noMainTrainerWarning.title')}</span>
           {$_('page.trainings.noMainTrainerWarning.message')}
         </p>
       </div>
-    </aside>
+    </div>
   {/if}
 
   <!-- Search -->
@@ -263,7 +263,7 @@
   </div>
 
   <!-- Participant list -->
-  <ul class="list">
+  <ul class="flex flex-col gap-1">
     {#each filteredData as p (p.id)}
       <div
         class="item"
@@ -273,9 +273,11 @@
       </div>
     {/each}
     <li>
-      <aside class="alert preset-tonal-tertiary w-full justify-items-center">
+      <div
+        class="flex items-center gap-4 p-4 rounded-lg preset-tonal-tertiary w-full justify-items-center"
+      >
         <AddParticipantInputBox onadd={addParticipant} />
-      </aside>
+      </div>
     </li>
   </ul>
 {:else}

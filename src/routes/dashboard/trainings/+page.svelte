@@ -8,7 +8,7 @@
 </script>
 
 <h1>{$_('page.trainings.title')}</h1>
-<ul class="list">
+<ul class="flex flex-col gap-1">
   {#each data.trainings as t, index (t.id)}
     {#if index > 0}
       {#if t.weekday != data.trainings[index - 1].weekday}

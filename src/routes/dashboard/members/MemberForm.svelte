@@ -76,7 +76,7 @@
 </script>
 
 <h3>{isEditing ? $_('dialog.editMember.title') : $_('dialog.newMember.title')}</h3>
-<form class="modal-form border border-surface-500 p-4 space-y-4 rounded-lg">
+<form class="border border-surface-500 p-4 space-y-4 rounded-lg">
   <label class="label">
     <span>{$_('dialog.newMember.lastName')}</span>
     <input
@@ -119,7 +119,7 @@
         </button>
       {/each}
     </div>
-    <div class="input-group input-group-divider grid-cols-[1fr_auto]">
+    <div class="input-group grid-cols-[1fr_auto]">
       <input
         class="input"
         bind:value={labelInput}

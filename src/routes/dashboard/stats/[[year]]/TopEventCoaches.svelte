@@ -71,8 +71,8 @@
       <p class="text-sm text-gray-500 mt-2">{$_('page.stats.loading')}</p>
     </div>
   {:else if error}
-    <div class="alert preset-filled-error-500">
-      <div class="alert-message">
+    <div class="flex items-center gap-4 p-4 rounded-lg preset-filled-error-500">
+      <div class="flex-1">
         <p>{error}</p>
       </div>
     </div>

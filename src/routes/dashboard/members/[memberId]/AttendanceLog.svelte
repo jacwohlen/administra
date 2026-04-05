@@ -31,7 +31,7 @@
     </div>
   </div>
 {:then l}
-  <ul class="list">
+  <ul class="flex flex-col gap-1">
     {#each l.slice(0, currentItem) as i}
       <li>
         <span class="flex-auto truncate">

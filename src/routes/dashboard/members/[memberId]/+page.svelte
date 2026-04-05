@@ -311,7 +311,7 @@
         </div>
       </div>
     </div>
-    <div class="table-container">
+    <div class="table-wrap">
       <table class="table">
         <tbody>
           <tr>
