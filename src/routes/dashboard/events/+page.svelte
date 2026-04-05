@@ -84,7 +84,7 @@
     <!-- Today's Events -->
     {#if filteredEvents.some((e) => isToday(e.date))}
       <section>
-        <h3 class="text-lg font-semibold mb-3 text-warning-600-400">{$_('page.events.today')}</h3>
+        <h3 class="text-lg font-semibold mb-3">{$_('page.events.today')}</h3>
         <ul class="flex flex-col gap-3">
           {#each filteredEvents.filter((e) => isToday(e.date)) as event (event.id)}
             <li class="card p-4 flex items-start gap-3">
@@ -134,7 +134,7 @@
     <!-- Upcoming Events -->
     {#if filteredEvents.some((e) => isUpcoming(e.date))}
       <section>
-        <h3 class="text-lg font-semibold mb-3 text-primary-600-400">
+        <h3 class="text-lg font-semibold mb-3">
           {$_('page.events.upcoming')}
         </h3>
         <ul class="flex flex-col gap-3">
@@ -186,7 +186,7 @@
     <!-- Past Events -->
     {#if filteredEvents.some((e) => isPast(e.date))}
       <section>
-        <h3 class="text-lg font-semibold mb-3 text-surface-600-400">{$_('page.events.past')}</h3>
+        <h3 class="text-lg font-semibold mb-3">{$_('page.events.past')}</h3>
         <ul class="flex flex-col gap-3">
           {#each filteredEvents.filter((e) => isPast(e.date)) as event (event.id)}
             <li class="card p-4 flex items-start gap-3">
