@@ -2,7 +2,6 @@
   import { supabaseClient } from '$lib/supabase';
   import type { LessonPlan } from '$lib/models';
   import Fa from 'svelte-fa';
-  import { Tabs } from '@skeletonlabs/skeleton-svelte';
   import { toaster } from '$lib/toast';
   import {
     faEdit,
@@ -455,22 +454,26 @@
         </label>
 
         <!-- Tab Group -->
-        <Tabs value={String(tabSet)} onValueChange={(e) => (tabSet = Number(e.value))}>
-          <Tabs.List>
-            <Tabs.Trigger value="0">
-              <div class="flex items-center gap-2">
-                <Fa icon={faFileSignature} />
-                <span>{$_('page.trainings.writeContent')}</span>
-              </div>
-            </Tabs.Trigger>
-            <Tabs.Trigger value="1">
-              <div class="flex items-center gap-2">
-                <Fa icon={faFileAlt} />
-                <span>{$_('page.trainings.uploadFile')}</span>
-              </div>
-            </Tabs.Trigger>
-          </Tabs.List>
-        </Tabs>
+        <div class="flex gap-1">
+          <button
+            class="btn btn-sm flex-1 {tabSet === 0
+              ? 'preset-filled-primary-500'
+              : 'preset-tonal-surface'}"
+            onclick={() => (tabSet = 0)}
+          >
+            <Fa icon={faFileSignature} />
+            <span>{$_('page.trainings.writeContent')}</span>
+          </button>
+          <button
+            class="btn btn-sm flex-1 {tabSet === 1
+              ? 'preset-filled-primary-500'
+              : 'preset-tonal-surface'}"
+            onclick={() => (tabSet = 1)}
+          >
+            <Fa icon={faFileAlt} />
+            <span>{$_('page.trainings.uploadFile')}</span>
+          </button>
+        </div>
 
         <!-- Tab Panels -->
         {#if tabSet === 0}

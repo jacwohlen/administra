@@ -193,9 +193,9 @@
 </div>
 
 <!-- View toggle tabs -->
-<div class="flex gap-1 mb-4">
+<div class="flex rounded-lg overflow-hidden border border-surface-300-700 mb-4">
   <button
-    class="btn btn-sm flex-1 {!showLessonPlan
+    class="btn flex-1 rounded-none {!showLessonPlan
       ? 'preset-filled-primary-500'
       : 'preset-tonal-surface'}"
     onclick={() => (showLessonPlan = false)}
@@ -204,7 +204,7 @@
     <span>{$_('page.trainings.attendance')}</span>
   </button>
   <button
-    class="btn btn-sm flex-1 {showLessonPlan
+    class="btn flex-1 rounded-none {showLessonPlan
       ? 'preset-filled-primary-500'
       : 'preset-tonal-surface'}"
     onclick={() => (showLessonPlan = true)}

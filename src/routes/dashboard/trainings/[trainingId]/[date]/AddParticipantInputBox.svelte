@@ -85,7 +85,9 @@
     />
   </div>
   {#if showDropdown && searchterm}
-    <nav class="card p-2 shadow-xl absolute top-full left-0 right-0 z-50 mt-1">
+    <nav
+      class="card p-2 shadow-xl absolute bottom-full left-0 right-0 z-50 mb-1 max-h-64 overflow-y-auto"
+    >
       <ul class="flex flex-col gap-1">
         {#each filteredData as p (p.id)}
           <li>
