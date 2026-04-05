@@ -183,11 +183,11 @@
 <div class="flex justify-between items-center mb-4">
   <button class="btn btn-sm preset-tonal-surface" onclick={previousWeek}>
     <Fa icon={faArrowLeft} />
-    <span>{$_('button.week')}</span>
+    <span class="hidden sm:inline">{$_('button.week')}</span>
   </button>
   <h3 class="h3">{formattedDate}</h3>
   <button class="btn btn-sm preset-tonal-surface" onclick={nextWeek}>
-    <span>{$_('button.week')}</span>
+    <span class="hidden sm:inline">{$_('button.week')}</span>
     <Fa icon={faArrowRight} />
   </button>
 </div>
@@ -249,7 +249,7 @@
   {/if}
 
   <!-- Search -->
-  <div class="mb-4">
+  <div class="sticky top-0 z-30 bg-surface-50-950 pb-3 -mx-3 px-3 sm:-mx-4 sm:px-4 pt-1">
     <input
       class="input"
       onkeydown={navigateList}

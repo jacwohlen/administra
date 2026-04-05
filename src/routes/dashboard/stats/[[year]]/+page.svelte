@@ -32,7 +32,7 @@
 <div class="flex justify-between items-center mb-4">
   <div>
     <button class="btn" onclick={previousYear}>
-      <Fa icon={faArrowLeft} /><span>{$_('button.year')}</span>
+      <Fa icon={faArrowLeft} /><span class="hidden sm:inline">{$_('button.year')}</span>
     </button>
   </div>
   <div>
@@ -60,7 +60,7 @@
   </div>
   <div>
     <button class="btn" onclick={nextYear}>
-      <span>{$_('button.year')}</span><Fa icon={faArrowRight} />
+      <span class="hidden sm:inline">{$_('button.year')}</span><Fa icon={faArrowRight} />
     </button>
   </div>
 </div>

@@ -194,7 +194,7 @@
       >
         <!-- svelte-ignore a11y_no_static_element_interactions -->
         <div
-          class="card p-6 w-full max-w-sm shadow-2xl bg-surface-50-950"
+          class="card p-4 sm:p-6 w-full max-w-sm shadow-2xl bg-surface-50-950"
           onclick={(e) => e.stopPropagation()}
         >
           <h4 class="font-semibold text-lg mb-2">{$_('dialog.confirm.title')}</h4>
