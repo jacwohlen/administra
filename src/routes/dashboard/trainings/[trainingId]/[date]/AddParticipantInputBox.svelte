@@ -4,15 +4,24 @@
   import { faUserPlus } from '@fortawesome/free-solid-svg-icons';
   import { supabaseClient } from '$lib/supabase';
   import { _ } from 'svelte-i18n';
+  import MemberForm from './MemberForm.svelte';
 
   let { onadd }: { onadd?: (data: { member: Member }) => void } = $props();
 
   let searchterm = $state('');
-  let showDropdown = $state(false);
-
   let filteredData: Member[] = $state([]);
+  let selectedIndex = $state(-1);
+  let loading = $state(false);
+  let showNewMemberForm = $state(false);
+  let newMemberLastname = $state('');
+  let newMemberFirstname = $state('');
 
   async function filterData(): Promise<void> {
+    if (searchterm.trim().length < 2) {
+      filteredData = [];
+      selectedIndex = -1;
+      return;
+    }
     const text = searchterm;
     const { error, data } = await supabaseClient
       .from('view_search_members')
@@ -20,27 +29,49 @@
       .like('fullname', `%${text}%`)
       .returns<Member[]>();
     if (error) {
-      console.log(error);
+      console.error('Search error:', error);
+      return;
     }
-    if (data) filteredData = data;
-    showDropdown = true;
+    if (data) {
+      filteredData = data;
+      selectedIndex = filteredData.length > 0 ? 0 : -1;
+    }
   }
 
   function clearSearch() {
     searchterm = '';
-    showDropdown = false;
+    filteredData = [];
+    selectedIndex = -1;
+  }
+
+  function handleKeydown(event: KeyboardEvent) {
+    if (filteredData.length === 0) return;
+    switch (event.key) {
+      case 'ArrowDown':
+        event.preventDefault();
+        selectedIndex = selectedIndex < filteredData.length - 1 ? selectedIndex + 1 : 0;
+        break;
+      case 'ArrowUp':
+        event.preventDefault();
+        selectedIndex = selectedIndex > 0 ? selectedIndex - 1 : filteredData.length - 1;
+        break;
+      case 'Enter':
+        event.preventDefault();
+        if (selectedIndex >= 0 && selectedIndex < filteredData.length) {
+          add(filteredData[selectedIndex]);
+        }
+        break;
+      case 'Escape':
+        event.preventDefault();
+        clearSearch();
+        break;
+    }
   }
 
   function add(member: Member) {
-    onadd?.({ member: member });
+    onadd?.({ member });
     clearSearch();
   }
-
-  import MemberForm from './MemberForm.svelte';
-
-  let showNewMemberForm = $state(false);
-  let newMemberLastname = $state('');
-  let newMemberFirstname = $state('');
 
   function createNewMember() {
     const s = searchterm.split(' ');
@@ -51,25 +82,30 @@
       newMemberLastname = searchterm;
       newMemberFirstname = '';
     }
-    showDropdown = false;
+    filteredData = [];
     showNewMemberForm = true;
   }
 
   async function handleNewMemberSubmit(r: { lastname: string; firstname: string }) {
-    const { error, data } = await supabaseClient
-      .from('members')
-      .insert({ ...r, labels: ['new'] })
-      .select()
-      .single();
-    if (error) console.log(error);
-    onadd?.({ member: data });
-    clearSearch();
-    showNewMemberForm = false;
+    loading = true;
+    try {
+      const { error, data } = await supabaseClient
+        .from('members')
+        .insert({ ...r, labels: ['new'] })
+        .select()
+        .single();
+      if (error) console.error(error);
+      onadd?.({ member: data });
+      clearSearch();
+      showNewMemberForm = false;
+    } finally {
+      loading = false;
+    }
   }
 </script>
 
 <div class="relative w-full">
-  <div class="input-group grid-cols-[auto_1fr_auto]">
+  <div class="input-group grid-cols-[auto_1fr]">
     <div class="ig-cell">
       <Fa icon={faUserPlus} />
     </div>
@@ -79,37 +115,66 @@
       placeholder={$_('page.trainings.addMemberPlaceholder')}
       bind:value={searchterm}
       oninput={filterData}
-      onfocus={() => {
-        if (searchterm && filteredData.length > 0) showDropdown = true;
-      }}
+      onkeydown={handleKeydown}
+      disabled={loading}
     />
   </div>
-  {#if showDropdown && searchterm}
-    <nav
-      class="card p-2 shadow-xl absolute bottom-full left-0 right-0 z-50 mb-1 max-h-64 overflow-y-auto"
-    >
-      <ul class="flex flex-col gap-1">
-        {#each filteredData as p (p.id)}
-          <li>
-            <span class="flex-auto">{p.lastname} {p.firstname}</span>
-            <div class="justify-self-end relative">
-              <button class="btn btn-sm preset-tonal-primary" onclick={() => add(p)}>
-                <Fa icon={faUserPlus} />
-                <span>{$_('button.add')}</span>
-              </button>
-            </div>
-          </li>
-        {/each}
-        <li>
-          <span class="flex-auto">{searchterm}...</span>
-          <div class="justify-self-end relative">
-            <button class="btn btn-sm preset-filled-primary-500" onclick={createNewMember}>
-              {$_('button.createNew')}
+
+  {#if searchterm.length >= 2}
+    <div class="absolute bottom-full left-0 right-0 z-50 mb-1">
+      <div class="card p-2 shadow-xl bg-surface-50-950 max-h-64 overflow-y-auto">
+        {#if filteredData.length > 0}
+          <div class="space-y-1">
+            {#each filteredData as p, index (p.id)}
+              <div
+                class="flex items-center justify-between p-2 rounded cursor-pointer {index ===
+                selectedIndex
+                  ? 'bg-primary-100-900'
+                  : 'hover:bg-surface-100-900'}"
+                onclick={() => add(p)}
+                role="button"
+                tabindex="0"
+                onkeydown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    add(p);
+                  }
+                }}
+              >
+                <span>{p.lastname} {p.firstname}</span>
+                <button
+                  class="btn btn-sm preset-tonal-primary"
+                  onclick={(e) => {
+                    e.stopPropagation();
+                    add(p);
+                  }}
+                  disabled={loading}
+                >
+                  <Fa icon={faUserPlus} />
+                  <span>{$_('button.add')}</span>
+                </button>
+              </div>
+            {/each}
+          </div>
+          <div class="border-t border-surface-300-700 mt-2 pt-2">
+            <button class="btn btn-sm preset-filled-primary-500 w-full" onclick={createNewMember}>
+              <Fa icon={faUserPlus} />
+              <span>{$_('button.createNew')}: "{searchterm}"</span>
             </button>
           </div>
-        </li>
-      </ul>
-    </nav>
+        {:else}
+          <div class="p-2 text-sm text-surface-600-400">
+            {$_('page.trainings.memberNotFound')}
+          </div>
+          <div class="border-t border-surface-300-700 mt-2 pt-2">
+            <button class="btn btn-sm preset-filled-primary-500 w-full" onclick={createNewMember}>
+              <Fa icon={faUserPlus} />
+              <span>{$_('button.createNew')}: "{searchterm}"</span>
+            </button>
+          </div>
+        {/if}
+      </div>
+    </div>
   {/if}
 
   {#if showNewMemberForm}
