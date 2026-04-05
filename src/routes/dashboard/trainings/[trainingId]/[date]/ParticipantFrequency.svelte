@@ -29,7 +29,7 @@
     {#each fullStreak as attended, i}
       {@const isCurrent = i === fullStreak.length - 1}
       <span
-        class="inline-block rounded-full {isCurrent ? 'w-2 h-2' : 'w-1.5 h-1.5'}
+        class="inline-block rounded-full {isCurrent ? 'w-2.5 h-2.5' : 'w-2 h-2'}
           {attended
           ? isCurrent
             ? 'bg-primary-500-400 ring-1 ring-primary-300-700'
