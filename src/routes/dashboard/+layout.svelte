@@ -1,6 +1,6 @@
 <script lang="ts">
   import { goto } from '$app/navigation';
-  import { Tabs, Avatar, Toast } from '@skeletonlabs/skeleton-svelte';
+  import { Tabs, Toast } from '@skeletonlabs/skeleton-svelte';
   import { page } from '$app/state';
   import Fa from 'svelte-fa';
   import {
@@ -53,6 +53,7 @@
   }
 
   let popoverOpen = $state(false);
+  let avatarError = $state(false);
   let isDark = $state(
     typeof document !== 'undefined' && document.documentElement.classList.contains('dark')
   );
@@ -76,55 +77,87 @@
 <div class="h-full flex flex-col overflow-hidden">
   <!-- Header -->
   <header class="bg-surface-100-900 flex items-center px-2">
-    <Tabs
-      value={getActiveTab()}
-      onValueChange={(e) => {
-        const routes: Record<string, string> = {
-          today: '/dashboard',
-          trainings: '/dashboard/trainings',
-          events: '/dashboard/events',
-          members: '/dashboard/members',
-          stats: '/dashboard/stats'
-        };
-        if (e.value && routes[e.value]) goto(routes[e.value]);
-      }}
-      class="flex-1"
-    >
-      <Tabs.List>
-        <Tabs.Trigger value="today">
-          <Fa icon={faCalendarCheck} />
-          <span class="hidden sm:inline">{$_('page.dashboard.today')}</span>
-        </Tabs.Trigger>
-        <Tabs.Trigger value="trainings">
-          <Fa icon={faList} />
-          <span class="hidden sm:inline">{$_('page.dashboard.trainings')}</span>
-        </Tabs.Trigger>
-        <Tabs.Trigger value="events">
-          <Fa icon={faCalendarDays} />
-          <span class="hidden sm:inline">{$_('page.dashboard.events')}</span>
-        </Tabs.Trigger>
-        <Tabs.Trigger value="members">
-          <Fa icon={faUser} />
-          <span class="hidden sm:inline">{$_('page.dashboard.members')}</span>
-        </Tabs.Trigger>
-        <Tabs.Trigger value="stats">
-          <Fa icon={faChartSimple} />
-          <span class="hidden sm:inline">{$_('page.dashboard.stats')}</span>
-        </Tabs.Trigger>
-      </Tabs.List>
-    </Tabs>
+    <div class="flex-1 min-w-0 overflow-hidden">
+      <Tabs
+        value={getActiveTab()}
+        onValueChange={(e) => {
+          const routes: Record<string, string> = {
+            today: '/dashboard',
+            trainings: '/dashboard/trainings',
+            events: '/dashboard/events',
+            members: '/dashboard/members',
+            stats: '/dashboard/stats'
+          };
+          if (e.value && routes[e.value]) goto(routes[e.value], { invalidateAll: true });
+        }}
+      >
+        <Tabs.List>
+          <Tabs.Trigger
+            value="today"
+            onclick={() => {
+              if (getActiveTab() === 'today') goto('/dashboard', { invalidateAll: true });
+            }}
+          >
+            <Fa icon={faCalendarCheck} />
+            <span class="hidden sm:inline">{$_('page.dashboard.today')}</span>
+          </Tabs.Trigger>
+          <Tabs.Trigger
+            value="trainings"
+            onclick={() => {
+              if (getActiveTab() === 'trainings')
+                goto('/dashboard/trainings', { invalidateAll: true });
+            }}
+          >
+            <Fa icon={faList} />
+            <span class="hidden sm:inline">{$_('page.dashboard.trainings')}</span>
+          </Tabs.Trigger>
+          <Tabs.Trigger
+            value="events"
+            onclick={() => {
+              if (getActiveTab() === 'events') goto('/dashboard/events', { invalidateAll: true });
+            }}
+          >
+            <Fa icon={faCalendarDays} />
+            <span class="hidden sm:inline">{$_('page.dashboard.events')}</span>
+          </Tabs.Trigger>
+          <Tabs.Trigger
+            value="members"
+            onclick={() => {
+              if (getActiveTab() === 'members') goto('/dashboard/members', { invalidateAll: true });
+            }}
+          >
+            <Fa icon={faUser} />
+            <span class="hidden sm:inline">{$_('page.dashboard.members')}</span>
+          </Tabs.Trigger>
+          <Tabs.Trigger
+            value="stats"
+            onclick={() => {
+              if (getActiveTab() === 'stats') goto('/dashboard/stats', { invalidateAll: true });
+            }}
+          >
+            <Fa icon={faChartSimple} />
+            <span class="hidden sm:inline">{$_('page.dashboard.stats')}</span>
+          </Tabs.Trigger>
+        </Tabs.List>
+      </Tabs>
+    </div>
 
     <!-- Profile avatar -->
-    <div class="ml-auto flex items-center pr-2 relative">
+    <div class="shrink-0 flex items-center pr-2 relative">
       <button type="button" class="cursor-pointer" onclick={() => (popoverOpen = !popoverOpen)}>
-        {#if data.session.user.user_metadata.avatar_url != null}
-          <Avatar class="size-10 rounded-full overflow-hidden hover:ring-2 ring-primary-600-400">
-            <Avatar.Image src={data.session.user.user_metadata.avatar_url} alt="Profile" />
-          </Avatar>
+        {#if data.session.user.user_metadata.avatar_url && !avatarError}
+          <img
+            src={data.session.user.user_metadata.avatar_url}
+            alt="Profile"
+            class="size-10 rounded-full object-cover hover:ring-2 ring-primary-600-400"
+            onerror={() => (avatarError = true)}
+          />
         {:else}
-          <Avatar class="size-10 rounded-full overflow-hidden hover:ring-2 ring-primary-600-400">
-            <Avatar.Fallback>{getInitials()}</Avatar.Fallback>
-          </Avatar>
+          <div
+            class="size-10 rounded-full bg-surface-400-600 flex items-center justify-center text-sm font-bold hover:ring-2 ring-primary-600-400"
+          >
+            {getInitials()}
+          </div>
         {/if}
       </button>
       {#if popoverOpen}
