@@ -3,6 +3,7 @@
   import { supabaseClient } from '$lib/supabase';
   import { _ } from 'svelte-i18n';
   import Fa from 'svelte-fa';
+  import { Avatar } from '@skeletonlabs/skeleton-svelte';
   import { toaster } from '$lib/toast';
   import {
     faCalendarDays,
@@ -359,25 +360,18 @@
           {@const hasAttended = !!log}
           {#if member}
             <div
-              class="flex items-center justify-between p-3 border rounded-lg {hasAttended
-                ? 'bg-success-50-950 border-success-200-800'
-                : 'bg-surface-50-950'}"
+              class="flex items-center justify-between py-2 border-b border-surface-300-700 {hasAttended
+                ? 'opacity-100'
+                : 'opacity-70'}"
             >
               <div class="flex items-center gap-3">
                 <div class="relative">
-                  {#if member.img}
-                    <img
-                      src={member.img}
-                      alt="{member.firstname} {member.lastname}"
-                      class="w-10 h-10 rounded-full object-cover"
-                    />
-                  {:else}
-                    <div
-                      class="w-10 h-10 rounded-full preset-filled-primary flex items-center justify-center font-semibold"
-                    >
-                      {member.firstname[0]}{member.lastname[0]}
-                    </div>
-                  {/if}
+                  <Avatar class="size-10">
+                    {#if member.img}
+                      <Avatar.Image src={member.img} alt="{member.firstname} {member.lastname}" />
+                    {/if}
+                    <Avatar.Fallback>{member.firstname[0]}{member.lastname[0]}</Avatar.Fallback>
+                  </Avatar>
                   {#if log && log.isCoach}
                     <span class="badge-icon absolute -bottom-0 -right-0 z-10">
                       <img src="/judo-icon.svg" alt="Coach" class="w-4 h-4" />
@@ -389,9 +383,7 @@
                     {member.firstname}
                     {member.lastname}
                     {#if log && log.isCoach}
-                      <span
-                        class="text-xs bg-primary-100-900 text-primary-800-200 px-2 py-1 rounded ml-2"
-                      >
+                      <span class="badge preset-tonal-primary text-xs ml-2">
                         {$_('page.events.coach')}
                       </span>
                     {/if}
