@@ -9,7 +9,7 @@
 
   // Reset currentItem when logs changes
   $effect(() => {
-    logs;
+    void logs;
     currentItem = 10;
   });
 </script>
