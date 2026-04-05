@@ -2,7 +2,6 @@
   import type { Athletes } from '$lib/models';
   import { supabaseClient } from '$lib/supabase';
   import { faAngleRight } from '@fortawesome/free-solid-svg-icons';
-  import { Avatar } from '@skeletonlabs/skeleton-svelte';
   import Fa from 'svelte-fa';
 
   let {
@@ -45,31 +44,25 @@
         <div class="relative inline-block">
           <span class="badge-icon absolute -top-0 -right-0 z-10 bg-surface-300-700">2</span>
           {#await getImage(athletes[section][1].memberId)}
-            <Avatar
-              class="mx-auto size-16 rounded-full overflow-hidden border-4 border-surface-300-700"
+            <div
+              class="mx-auto size-16 rounded-full overflow-hidden border-4 border-surface-300-700 bg-surface-100-900 flex items-center justify-center text-sm font-bold"
             >
-              <Avatar.Fallback
-                >{athletes[section][1].firstname.charAt(0)}{athletes[section][1].lastname.charAt(
-                  0
-                )}</Avatar.Fallback
-              >
-            </Avatar>
+              {athletes[section][1].firstname.charAt(0)}{athletes[section][1].lastname.charAt(0)}
+            </div>
           {:then img}
-            <Avatar
-              class="mx-auto size-16 rounded-full overflow-hidden border-4 border-surface-300-700"
-            >
-              {#if img}
-                <Avatar.Image
-                  src={img}
-                  alt="{athletes[section][1].firstname} {athletes[section][1].lastname}"
-                />
-              {/if}
-              <Avatar.Fallback
-                >{athletes[section][1].firstname.charAt(0)}{athletes[section][1].lastname.charAt(
-                  0
-                )}</Avatar.Fallback
+            {#if img}
+              <img
+                src={img}
+                alt="{athletes[section][1].firstname} {athletes[section][1].lastname}"
+                class="mx-auto size-16 rounded-full overflow-hidden border-4 border-surface-300-700 object-cover"
+              />
+            {:else}
+              <div
+                class="mx-auto size-16 rounded-full overflow-hidden border-4 border-surface-300-700 bg-surface-100-900 flex items-center justify-center text-sm font-bold"
               >
-            </Avatar>
+                {athletes[section][1].firstname.charAt(0)}{athletes[section][1].lastname.charAt(0)}
+              </div>
+            {/if}
           {/await}
         </div>
         <div>
@@ -88,31 +81,25 @@
         <div class="relative inline-block">
           <span class="badge-icon absolute -top-0 -right-0 z-10 bg-warning-400">1</span>
           {#await getImage(athletes[section][0].memberId)}
-            <Avatar
-              class="mx-auto size-20 rounded-full overflow-hidden border-4 border-warning-400"
+            <div
+              class="mx-auto size-20 rounded-full overflow-hidden border-4 border-warning-400 bg-surface-100-900 flex items-center justify-center text-sm font-bold"
             >
-              <Avatar.Fallback
-                >{athletes[section][0].firstname.charAt(0)}{athletes[section][0].lastname.charAt(
-                  0
-                )}</Avatar.Fallback
-              >
-            </Avatar>
+              {athletes[section][0].firstname.charAt(0)}{athletes[section][0].lastname.charAt(0)}
+            </div>
           {:then img}
-            <Avatar
-              class="mx-auto size-20 rounded-full overflow-hidden border-4 border-warning-400"
-            >
-              {#if img}
-                <Avatar.Image
-                  src={img}
-                  alt="{athletes[section][0].firstname} {athletes[section][0].lastname}"
-                />
-              {/if}
-              <Avatar.Fallback
-                >{athletes[section][0].firstname.charAt(0)}{athletes[section][0].lastname.charAt(
-                  0
-                )}</Avatar.Fallback
+            {#if img}
+              <img
+                src={img}
+                alt="{athletes[section][0].firstname} {athletes[section][0].lastname}"
+                class="mx-auto size-20 rounded-full overflow-hidden border-4 border-warning-400 object-cover"
+              />
+            {:else}
+              <div
+                class="mx-auto size-20 rounded-full overflow-hidden border-4 border-warning-400 bg-surface-100-900 flex items-center justify-center text-sm font-bold"
               >
-            </Avatar>
+                {athletes[section][0].firstname.charAt(0)}{athletes[section][0].lastname.charAt(0)}
+              </div>
+            {/if}
           {/await}
         </div>
         <div>
@@ -131,31 +118,25 @@
         <div class="relative inline-block">
           <span class="badge-icon absolute -top-0 -right-0 z-10 bg-warning-700">3</span>
           {#await getImage(athletes[section][2].memberId)}
-            <Avatar
-              class="mx-auto size-16 rounded-full overflow-hidden border-4 border-warning-700"
+            <div
+              class="mx-auto size-16 rounded-full overflow-hidden border-4 border-warning-700 bg-surface-100-900 flex items-center justify-center text-sm font-bold"
             >
-              <Avatar.Fallback
-                >{athletes[section][2].firstname.charAt(0)}{athletes[section][2].lastname.charAt(
-                  0
-                )}</Avatar.Fallback
-              >
-            </Avatar>
+              {athletes[section][2].firstname.charAt(0)}{athletes[section][2].lastname.charAt(0)}
+            </div>
           {:then img}
-            <Avatar
-              class="mx-auto size-16 rounded-full overflow-hidden border-4 border-warning-700"
-            >
-              {#if img}
-                <Avatar.Image
-                  src={img}
-                  alt="{athletes[section][2].firstname} {athletes[section][2].lastname}"
-                />
-              {/if}
-              <Avatar.Fallback
-                >{athletes[section][2].firstname.charAt(0)}{athletes[section][2].lastname.charAt(
-                  0
-                )}</Avatar.Fallback
+            {#if img}
+              <img
+                src={img}
+                alt="{athletes[section][2].firstname} {athletes[section][2].lastname}"
+                class="mx-auto size-16 rounded-full overflow-hidden border-4 border-warning-700 object-cover"
+              />
+            {:else}
+              <div
+                class="mx-auto size-16 rounded-full overflow-hidden border-4 border-warning-700 bg-surface-100-900 flex items-center justify-center text-sm font-bold"
               >
-            </Avatar>
+                {athletes[section][2].firstname.charAt(0)}{athletes[section][2].lastname.charAt(0)}
+              </div>
+            {/if}
           {/await}
         </div>
         <div>

@@ -3,7 +3,6 @@
   import Fa from 'svelte-fa';
   import { faGripLines, faPlus } from '@fortawesome/free-solid-svg-icons';
   import { _ } from 'svelte-i18n';
-  import { Avatar } from '@skeletonlabs/skeleton-svelte';
   import { supabaseClient } from '$lib/supabase';
   import { toaster } from '$lib/toast';
   import { invalidate } from '$app/navigation';
@@ -116,9 +115,11 @@
   {#each data.members as m (m.id)}
     {#if search(m.firstname, m.lastname)}
       <li class="flex items-center gap-3 py-2">
-        <Avatar class="rounded-full size-10 flex-shrink-0">
-          <Avatar.Fallback>{m.lastname.charAt(0)}{m.firstname.charAt(0)}</Avatar.Fallback>
-        </Avatar>
+        <div
+          class="size-10 rounded-full bg-surface-100-900 flex items-center justify-center text-sm font-bold flex-shrink-0"
+        >
+          {m.lastname.charAt(0)}{m.firstname.charAt(0)}
+        </div>
         <span class="flex-auto min-w-0">
           <dt class="font-bold truncate">{m.lastname} {m.firstname}</dt>
           <dd class="flex flex-wrap gap-1">

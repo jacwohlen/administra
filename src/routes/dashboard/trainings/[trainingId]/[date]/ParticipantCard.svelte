@@ -1,8 +1,6 @@
 <script lang="ts">
   import Fa from 'svelte-fa';
   import { faEllipsisVertical } from '@fortawesome/free-solid-svg-icons';
-  import { Avatar } from '@skeletonlabs/skeleton-svelte';
-
   import Labels from './Labels.svelte';
   import ParticipantFrequency from './ParticipantFrequency.svelte';
   import { _ } from 'svelte-i18n';
@@ -88,26 +86,29 @@
     <div class="relative inline-block flex-shrink-0">
       {#if member.trainerRole === 'main_trainer'}
         <span
-          class="badge-icon absolute -bottom-0 -right-0 z-10 bg-warning-600-400 rounded-full w-5 h-5 flex items-center justify-center"
+          class="absolute -bottom-0 -right-0 z-10 bg-primary-600-400 rounded-full w-4 h-4 flex items-center justify-center"
         >
-          <img class="w-3.5" src="/judo-icon.svg" alt="main-trainer" />
+          <img class="w-2.5" src="/judo-icon.svg" alt="main-trainer" />
         </span>
       {:else if member.trainerRole === 'assistant'}
         <span
-          class="badge-icon absolute -bottom-0 -right-0 z-10 preset-filled-surface text-xs font-bold w-5 h-5 flex items-center justify-center rounded-full"
+          class="absolute -bottom-0 -right-0 z-10 bg-primary-600-400 text-white text-[10px] font-bold w-4 h-4 flex items-center justify-center rounded-full"
         >
           A
         </span>
       {/if}
       {#if member.img}
-        <Avatar class="size-10 rounded-full overflow-hidden">
-          <Avatar.Image src={member.img} alt="{member.lastname} {member.firstname}" />
-          <Avatar.Fallback>{member.lastname.charAt(0)}{member.firstname.charAt(0)}</Avatar.Fallback>
-        </Avatar>
+        <img
+          src={member.img}
+          alt="{member.lastname} {member.firstname}"
+          class="size-10 rounded-full object-cover"
+        />
       {:else}
-        <Avatar class="size-10 rounded-full overflow-hidden">
-          <Avatar.Fallback>{member.lastname.charAt(0)}{member.firstname.charAt(0)}</Avatar.Fallback>
-        </Avatar>
+        <div
+          class="size-10 rounded-full bg-surface-100-900 flex items-center justify-center text-sm font-bold"
+        >
+          {member.lastname.charAt(0)}{member.firstname.charAt(0)}
+        </div>
       {/if}
     </div>
     <span class="flex-auto min-w-0">

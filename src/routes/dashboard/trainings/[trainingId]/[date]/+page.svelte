@@ -217,18 +217,18 @@
 {#if !showLessonPlan}
   <!-- Stats bar -->
   <div class="flex gap-2 mb-3 flex-wrap">
-    <span class="chip preset-filled-primary-500">
+    <span class="chip bg-surface-100-900 text-surface-900-50">
       <Fa icon={faUserCheck} size="sm" />
       <span>{presentParticipants.length} / {filteredData.length}</span>
     </span>
     {#if mainTrainers.length > 0}
-      <span class="chip preset-filled-warning-500">
+      <span class="chip bg-surface-100-900 text-surface-900-50">
         <img class="inline-block w-3.5" src="/judo-icon.svg" alt="trainer" />
         <span>{mainTrainers.length}</span>
       </span>
     {/if}
     {#if assistantTrainers.length > 0}
-      <span class="chip preset-filled-surface-500">
+      <span class="chip bg-surface-100-900 text-surface-900-50">
         <Fa icon={faChalkboardTeacher} size="sm" />
         <span>{assistantTrainers.length}</span>
       </span>

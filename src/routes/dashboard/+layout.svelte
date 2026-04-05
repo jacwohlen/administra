@@ -154,7 +154,7 @@
           />
         {:else}
           <div
-            class="size-10 rounded-full bg-surface-400-600 flex items-center justify-center text-sm font-bold hover:ring-2 ring-primary-600-400"
+            class="size-10 rounded-full bg-surface-100-900 flex items-center justify-center text-sm font-bold hover:ring-2 ring-primary-600-400"
           >
             {getInitials()}
           </div>

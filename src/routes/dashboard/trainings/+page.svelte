@@ -3,7 +3,6 @@
   import Fa from 'svelte-fa';
   import { faGripLines } from '@fortawesome/free-solid-svg-icons';
   import { _ } from 'svelte-i18n';
-  import { Avatar } from '@skeletonlabs/skeleton-svelte';
 
   let { data }: { data: PageData } = $props();
 </script>
@@ -15,9 +14,11 @@
       <h3 class="text-lg font-semibold mt-4 mb-1">{$_('weekday.' + t.weekday)}</h3>
     {/if}
     <li class="flex items-center gap-3 py-2">
-      <Avatar class="rounded-md size-10 flex-shrink-0">
-        <Avatar.Fallback>{t.title.charAt(0)}{t.title.charAt(1)}</Avatar.Fallback>
-      </Avatar>
+      <div
+        class="size-10 rounded-md bg-surface-100-900 flex items-center justify-center text-sm font-bold flex-shrink-0"
+      >
+        {t.title.charAt(0)}{t.title.charAt(1)}
+      </div>
       <span class="flex-auto min-w-0">
         <dt class="font-bold truncate">{t.title}</dt>
         <dd class="text-sm text-surface-600-400">

@@ -1,6 +1,5 @@
 <script lang="ts">
   import type { PageData } from './$types';
-  import { Avatar } from '@skeletonlabs/skeleton-svelte';
   import { _ } from 'svelte-i18n';
   import MemberLogs from './MemberLogs.svelte';
   import {
@@ -290,12 +289,19 @@
     <!-- Avatar + Photo buttons -->
     <div class="flex flex-col items-center mb-6">
       <div class="relative">
-        <Avatar class="size-20">
-          {#if data.img}
-            <Avatar.Image src={data.img} alt="{data.firstname} {data.lastname}" />
-          {/if}
-          <Avatar.Fallback>{data.lastname.charAt(0)}{data.firstname.charAt(0)}</Avatar.Fallback>
-        </Avatar>
+        {#if data.img}
+          <img
+            src={data.img}
+            alt="{data.firstname} {data.lastname}"
+            class="size-20 rounded-full object-cover"
+          />
+        {:else}
+          <div
+            class="size-20 rounded-full bg-surface-100-900 flex items-center justify-center text-xl font-bold"
+          >
+            {data.lastname.charAt(0)}{data.firstname.charAt(0)}
+          </div>
+        {/if}
         {#if loadingImage}
           <div class="absolute inset-0 flex items-center justify-center rounded-full bg-black/30">
             <span class="animate-spin text-2xl text-white">...</span>

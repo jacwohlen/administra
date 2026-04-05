@@ -1,6 +1,5 @@
 <script lang="ts">
   import type { PageData } from './$types';
-  import { Avatar } from '@skeletonlabs/skeleton-svelte';
   import Fa from 'svelte-fa';
   import {
     faCalendarDays,
@@ -89,9 +88,11 @@
           {#each filteredEvents.filter((e) => isToday(e.date)) as event (event.id)}
             <li class="flex items-center gap-3 py-2">
               <div class="relative inline-block flex-none">
-                <Avatar class="rounded-md size-10">
-                  <Avatar.Fallback>{event.title.charAt(0)}{event.title.charAt(1)}</Avatar.Fallback>
-                </Avatar>
+                <div
+                  class="size-10 rounded-md bg-surface-100-900 flex items-center justify-center text-sm font-bold"
+                >
+                  {event.title.charAt(0)}{event.title.charAt(1)}
+                </div>
               </div>
               <span class="flex-1 min-w-0">
                 <dt class="font-bold truncate">
@@ -141,9 +142,11 @@
           {#each filteredEvents.filter((e) => isUpcoming(e.date)) as event (event.id)}
             <li class="flex items-center gap-3 py-2">
               <div class="relative inline-block flex-none">
-                <Avatar class="rounded-md size-10">
-                  <Avatar.Fallback>{event.title.charAt(0)}{event.title.charAt(1)}</Avatar.Fallback>
-                </Avatar>
+                <div
+                  class="size-10 rounded-md bg-surface-100-900 flex items-center justify-center text-sm font-bold"
+                >
+                  {event.title.charAt(0)}{event.title.charAt(1)}
+                </div>
               </div>
               <span class="flex-1 min-w-0">
                 <dt class="font-bold truncate">
@@ -191,9 +194,11 @@
           {#each filteredEvents.filter((e) => isPast(e.date)) as event (event.id)}
             <li class="flex items-center gap-3 py-2">
               <div class="relative inline-block flex-none">
-                <Avatar class="rounded-md size-10">
-                  <Avatar.Fallback>{event.title.charAt(0)}{event.title.charAt(1)}</Avatar.Fallback>
-                </Avatar>
+                <div
+                  class="size-10 rounded-md bg-surface-100-900 flex items-center justify-center text-sm font-bold"
+                >
+                  {event.title.charAt(0)}{event.title.charAt(1)}
+                </div>
               </div>
               <span class="flex-1 min-w-0">
                 <dt class="font-bold truncate">

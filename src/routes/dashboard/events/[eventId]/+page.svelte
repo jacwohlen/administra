@@ -3,7 +3,6 @@
   import { supabaseClient } from '$lib/supabase';
   import { _ } from 'svelte-i18n';
   import Fa from 'svelte-fa';
-  import { Avatar } from '@skeletonlabs/skeleton-svelte';
   import { toaster } from '$lib/toast';
   import {
     faCalendarDays,
@@ -374,12 +373,19 @@
             >
               <div class="flex items-center gap-3">
                 <div class="relative">
-                  <Avatar class="size-10">
-                    {#if member.img}
-                      <Avatar.Image src={member.img} alt="{member.firstname} {member.lastname}" />
-                    {/if}
-                    <Avatar.Fallback>{member.firstname[0]}{member.lastname[0]}</Avatar.Fallback>
-                  </Avatar>
+                  {#if member.img}
+                    <img
+                      src={member.img}
+                      alt="{member.firstname} {member.lastname}"
+                      class="size-10 rounded-full object-cover"
+                    />
+                  {:else}
+                    <div
+                      class="size-10 rounded-full bg-surface-100-900 flex items-center justify-center text-sm font-bold"
+                    >
+                      {member.firstname[0]}{member.lastname[0]}
+                    </div>
+                  {/if}
                   {#if log && log.isCoach}
                     <span class="badge-icon absolute -bottom-0 -right-0 z-10">
                       <img src="/judo-icon.svg" alt="Coach" class="w-4 h-4" />
