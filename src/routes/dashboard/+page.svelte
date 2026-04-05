@@ -110,9 +110,7 @@
       {#each todayEvents as event (event.id)}
         <li class="card p-4 flex items-start gap-3">
           <div class="relative inline-block flex-none">
-            <div
-              class="w-12 h-12 preset-filled-secondary rounded-md flex items-center justify-center"
-            >
+            <div class="size-10 bg-surface-100-900 rounded-md flex items-center justify-center">
               <Fa icon={faCalendarDays} size="lg" />
             </div>
           </div>
