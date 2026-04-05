@@ -43,8 +43,8 @@ describe('ParticipantFrequency component', () => {
     });
     // fullStreak = [true, false, false]
     const dots = container.querySelectorAll('.rounded-full');
-    expect(dots[0]).toHaveClass('bg-primary-500');
-    expect(dots[1]).not.toHaveClass('bg-primary-500');
+    expect(dots[0]).toHaveClass('bg-primary-600-400');
+    expect(dots[1]).not.toHaveClass('bg-primary-600-400');
   });
 
   it('shows current session dot as present when isPresent is true', () => {
@@ -54,7 +54,7 @@ describe('ParticipantFrequency component', () => {
     // fullStreak = [false, true], last dot is current
     const dots = container.querySelectorAll('.rounded-full');
     const lastDot = dots[dots.length - 1];
-    expect(lastDot).toHaveClass('bg-primary-500');
+    expect(lastDot).toHaveClass('bg-primary-600-400');
   });
 
   it('shows upward trend arrow when recent attendance is higher', () => {
@@ -96,8 +96,8 @@ describe('ParticipantFrequency component', () => {
     });
     const dots = container.querySelectorAll('.rounded-full');
     const lastDot = dots[dots.length - 1];
-    // Current dot has w-2 h-2 (larger), historical has w-1.5 h-1.5
-    expect(lastDot).toHaveClass('w-2');
-    expect(dots[0]).toHaveClass('w-1.5');
+    // Current dot has w-2.5 h-2.5 (larger), historical has w-2 h-2
+    expect(lastDot).toHaveClass('w-2.5');
+    expect(dots[0]).toHaveClass('w-2');
   });
 });
