@@ -3,11 +3,10 @@
   import SvelteHeatmap from 'svelte-heatmap';
   import type { Log } from '$lib/models';
 
-  export let logs: Promise<Log[]>;
-  export let year: number;
+  let { logs, year }: { logs: Promise<Log[]>; year: number } = $props();
 
-  let startDate: Dayjs = dayjs().subtract(5, 'months');
-  let endDate: Dayjs = dayjs();
+  let startDate: Dayjs = $state(dayjs().subtract(5, 'months'));
+  let endDate: Dayjs = $state(dayjs());
 
   interface HeatmapData {
     date: Date;
@@ -40,7 +39,9 @@
     endDate = dayjs().year(y).endOf('year');
   }
 
-  $: setDatesToView(year);
+  $effect(() => {
+    setDatesToView(year);
+  });
 </script>
 
 <div class=" overflow-x-auto">

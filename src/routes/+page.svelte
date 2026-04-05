@@ -15,18 +15,18 @@
     if (error) throw err(404, error);
   }
 
+  import { page } from '$app/state';
   import type { PageData } from './$types';
   import type { SignInWithOAuthCredentials } from '@supabase/supabase-js';
-  export let data: PageData;
 
   // supabase policy will prevent google accounts to log in if not using the
   // proper domain (e.g. jacwohlen.ch). In such a case the error is passed
   // via GET parameters. We catch it here and sign out the user at google.
   // This way the user can start over loggign in with the right google account
-  export let error: string | null = null;
-  let signInError = data.event.url.searchParams.get('error');
+  let { data, error = null }: { data: PageData; error: string | null } = $props();
+  let signInError = page.url.searchParams.get('error');
   if (signInError) {
-    error = 'Error: Could not log in: ' + data.event.url.searchParams.get('error_description');
+    error = 'Error: Could not log in: ' + page.url.searchParams.get('error_description');
     supabaseClient.auth.signOut();
   }
 </script>
@@ -47,7 +47,7 @@
         {error}
       </span>
     {/if}
-    <button class="btn variant-filled-primary" on:click={login} color="primary">
+    <button class="btn variant-filled-primary" onclick={login} color="primary">
       {$_('button.login')}
     </button>
   {/if}

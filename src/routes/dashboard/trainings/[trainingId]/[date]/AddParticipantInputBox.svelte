@@ -1,16 +1,30 @@
 <script lang="ts">
   import type { Member } from '$lib/models';
-  import { createEventDispatcher } from 'svelte';
   import Fa from 'svelte-fa';
   import { faUserPlus } from '@fortawesome/free-solid-svg-icons';
-  import { menu, type ModalComponent, type ModalSettings } from '@skeletonlabs/skeleton';
+  import {
+    popup,
+    type PopupSettings,
+    getModalStore,
+    type ModalComponent,
+    type ModalSettings
+  } from '@skeletonlabs/skeleton';
   import { supabaseClient } from '$lib/supabase';
-  import { modalStore } from '@skeletonlabs/skeleton';
   import { _ } from 'svelte-i18n';
 
-  let searchterm = '';
+  const modalStore = getModalStore();
 
-  let filteredData: Member[] = [];
+  const popupSettings: PopupSettings = {
+    event: 'focus-click',
+    target: 'menu1',
+    placement: 'bottom'
+  };
+
+  let { onadd }: { onadd?: (data: { member: Member }) => void } = $props();
+
+  let searchterm = $state('');
+
+  let filteredData: Member[] = $state([]);
 
   async function filterData(): Promise<void> {
     const text = searchterm;
@@ -29,9 +43,8 @@
     searchterm = '';
   }
 
-  const dispatch = createEventDispatcher();
   function add(member: Member) {
-    dispatch('add', { member: member });
+    onadd?.({ member: member });
     clearSearch();
   }
 
@@ -62,7 +75,7 @@
           .select()
           .single();
         if (error) console.log(error);
-        dispatch('add', { member: data });
+        onadd?.({ member: data });
         clearSearch();
       }
     };
@@ -80,17 +93,17 @@
       type="text"
       placeholder={$_('page.trainings.addMemberPlaceholder')}
       bind:value={searchterm}
-      on:input={filterData}
-      use:menu={{ menu: 'menu1' }}
+      oninput={filterData}
+      use:popup={popupSettings}
     />
   </div>
-  <nav class="card p-2 shadow-xl" data-menu={'menu1'}>
+  <nav class="card p-2 shadow-xl" data-popup="menu1">
     <ul class="nav-list">
       {#each filteredData as p (p.id)}
         <li>
           <span class="flex-auto">{p.lastname} {p.firstname}</span>
           <div class="justify-self-end relative">
-            <button class="btn btn-sm variant-ringed-primary" on:click={() => add(p)}>
+            <button class="btn btn-sm variant-ringed-primary" onclick={() => add(p)}>
               <Fa icon={faUserPlus} />
               <span>{$_('button.add')}</span>
             </button>
@@ -100,7 +113,7 @@
       <li>
         <span class="flex-auto">{searchterm}...</span>
         <div class="justify-self-end relative">
-          <button class="btn btn-sm variant-filled-primary" on:click={createNewMember}>
+          <button class="btn btn-sm variant-filled-primary" onclick={createNewMember}>
             {$_('button.createNew')}
           </button>
         </div>

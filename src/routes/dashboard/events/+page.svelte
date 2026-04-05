@@ -12,9 +12,9 @@
   import { _ } from 'svelte-i18n';
   import dayjs from 'dayjs';
 
-  export let data: PageData;
+  let { data }: { data: PageData } = $props();
 
-  let searchTerm = '';
+  let searchTerm = $state('');
 
   function formatEventDate(date: string) {
     return dayjs(date).format('DD.MM.YYYY');
@@ -33,22 +33,24 @@
   }
 
   // Filter events based on search term - make it reactive
-  $: filteredEvents = data.events.filter((event) => {
-    if (!searchTerm.trim()) return true;
+  let filteredEvents = $derived(
+    data.events.filter((event) => {
+      if (!searchTerm.trim()) return true;
 
-    const search = searchTerm.toLowerCase().trim();
-    const title = event.title?.toLowerCase() || '';
-    const description = event.description?.toLowerCase() || '';
-    const section = event.section?.toLowerCase() || '';
-    const location = event.location?.toLowerCase() || '';
+      const search = searchTerm.toLowerCase().trim();
+      const title = event.title?.toLowerCase() || '';
+      const description = event.description?.toLowerCase() || '';
+      const section = event.section?.toLowerCase() || '';
+      const location = event.location?.toLowerCase() || '';
 
-    return (
-      title.includes(search) ||
-      description.includes(search) ||
-      section.includes(search) ||
-      location.includes(search)
-    );
-  });
+      return (
+        title.includes(search) ||
+        description.includes(search) ||
+        section.includes(search) ||
+        location.includes(search)
+      );
+    })
+  );
 </script>
 
 <div class="flex justify-between items-center mb-6">

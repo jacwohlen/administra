@@ -5,24 +5,27 @@
   import { _ } from 'svelte-i18n';
   import { supabaseClient } from '$lib/supabase';
   import {
-    toastStore,
+    getToastStore,
+    getModalStore,
     type ModalSettings,
-    modalStore,
     type ModalComponent
   } from '@skeletonlabs/skeleton';
   import { invalidate } from '$app/navigation';
   import MemberForm from './MemberForm.svelte';
 
-  export let data: PageData;
-  let searchTerm = '';
+  const modalStore = getModalStore();
+  const toastStore = getToastStore();
+
+  let { data }: { data: PageData } = $props();
+  let searchTerm = $state('');
   let isSubmitting = false;
 
-  $: search = (firstname: string, lastname: string): boolean => {
+  let search = $derived((firstname: string, lastname: string): boolean => {
     let q = searchTerm.toLowerCase().trim();
     let firstlast = firstname.toLowerCase() + ' ' + lastname.toLowerCase();
     let lastfirst = lastname.toLowerCase() + ' ' + firstname.toLowerCase();
     return firstlast.startsWith(q) || lastfirst.startsWith(q);
-  };
+  });
 
   function showMemberForm() {
     const modalComponent: ModalComponent = {
@@ -97,7 +100,7 @@
 
 <div class="flex items-center justify-between mb-4">
   <h1>{$_('page.members.title')}</h1>
-  <button class="btn btn-sm variant-filled-primary" on:click={showMemberForm}>
+  <button class="btn btn-sm variant-filled-primary" onclick={showMemberForm}>
     <Fa icon={faPlus} />
     <span>{$_('page.members.addMember')}</span>
   </button>

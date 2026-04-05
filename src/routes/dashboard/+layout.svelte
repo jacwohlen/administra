@@ -1,8 +1,11 @@
 <script lang="ts">
   import { goto } from '$app/navigation';
   import { TabGroup, Tab } from '@skeletonlabs/skeleton';
-  import { page } from '$app/stores';
-  import { Avatar, menu, AppShell } from '@skeletonlabs/skeleton';
+  import { page } from '$app/state';
+  import { Avatar, AppShell } from '@skeletonlabs/skeleton';
+  import { popup, type PopupSettings } from '@skeletonlabs/skeleton';
+  import { initializeStores, Modal, Toast } from '@skeletonlabs/skeleton';
+  import { computePosition, autoUpdate, offset, shift, flip, arrow } from '@floating-ui/dom';
   import Fa from 'svelte-fa';
   import {
     faCalendarCheck,
@@ -11,14 +14,18 @@
     faUser,
     faCalendarDays
   } from '@fortawesome/free-solid-svg-icons';
-  import { Modal, Toast } from '@skeletonlabs/skeleton';
   import type { SubmitFunction } from '@sveltejs/kit';
   import { supabaseClient } from '$lib/supabase';
   import { enhance } from '$app/forms';
   import type { LayoutData } from './$types';
   import { _ } from 'svelte-i18n';
+  import type { Snippet } from 'svelte';
+  import { storePopup } from '@skeletonlabs/skeleton';
 
-  export let data: LayoutData;
+  storePopup.set({ computePosition, autoUpdate, offset, shift, flip, arrow });
+  initializeStores();
+
+  let { data, children }: { data: LayoutData; children: Snippet } = $props();
 
   const submitLogout: SubmitFunction = async ({ cancel }) => {
     const { error } = await supabaseClient.auth.signOut();
@@ -29,15 +36,15 @@
   };
 
   let tabSet = 0;
-  if ($page.route.id == '/dashboard') {
+  if (page.route.id == '/dashboard') {
     tabSet = 0;
-  } else if ($page.route.id?.startsWith('/dashboard/trainings')) {
+  } else if (page.route.id?.startsWith('/dashboard/trainings')) {
     tabSet = 1;
-  } else if ($page.route.id?.startsWith('/dashboard/events')) {
+  } else if (page.route.id?.startsWith('/dashboard/events')) {
     tabSet = 2;
-  } else if ($page.route.id?.startsWith('/dashboard/members')) {
+  } else if (page.route.id?.startsWith('/dashboard/members')) {
     tabSet = 3;
-  } else if ($page.route.id?.startsWith('/dashboard/stats')) {
+  } else if (page.route.id?.startsWith('/dashboard/stats')) {
     tabSet = 4;
   }
 
@@ -53,6 +60,12 @@
       return arr[0].charAt(0);
     }
   }
+
+  const profilePopup: PopupSettings = {
+    event: 'click',
+    target: 'profilePopup',
+    placement: 'bottom'
+  };
 </script>
 
 <AppShell>
@@ -79,7 +92,7 @@
         <div>{$_('page.dashboard.stats')}</div>
       </Tab>
 
-      <div class="ml-auto my-auto pr-4" use:menu={{ menu: 'profilemenu' }}>
+      <div class="ml-auto my-auto pr-4" use:popup={profilePopup}>
         {#if data.session.user.user_metadata.avatar_url != null}
           <Avatar
             src={data.session.user.user_metadata.avatar_url}
@@ -94,19 +107,21 @@
           />
         {/if}
       </div>
-      <nav class="list-nav card p-4 w-64 shadow-xl" data-menu="profilemenu">
-        <ul>
-          <li>
-            <form action="/logout" method="POST" use:enhance={submitLogout}>
-              <button type="submit" class="option w-full">{$_('button.logout')}</button>
-            </form>
-          </li>
-        </ul>
-      </nav>
+      <div class="card p-4 w-64 shadow-xl" data-popup="profilePopup">
+        <nav class="list-nav">
+          <ul>
+            <li>
+              <form action="/logout" method="POST" use:enhance={submitLogout}>
+                <button type="submit" class="option w-full">{$_('button.logout')}</button>
+              </form>
+            </li>
+          </ul>
+        </nav>
+      </div>
     </TabGroup>
   </svelte:fragment>
   <div class="container p-2 mx-auto">
-    <slot />
+    {@render children()}
   </div>
   <Modal />
   <Toast />

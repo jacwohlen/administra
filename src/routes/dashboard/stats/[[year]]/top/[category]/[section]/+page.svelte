@@ -5,15 +5,15 @@
   import { _ } from 'svelte-i18n';
   import type { Athletes } from '$lib/models';
 
-  export let data: PageData;
-  let searchTerm = '';
+  let { data }: { data: PageData } = $props();
+  let searchTerm = $state('');
 
-  $: search = (firstname: string, lastname: string): boolean => {
+  let search = $derived((firstname: string, lastname: string): boolean => {
     let q = searchTerm.toLowerCase().trim();
     let firstlast = firstname.toLowerCase() + ' ' + lastname.toLowerCase();
     let lastfirst = lastname.toLowerCase() + ' ' + firstname.toLowerCase();
     return firstlast.startsWith(q) || lastfirst.startsWith(q);
-  };
+  });
 
   // Convert data to CSV format
   function convertToCSV(data: Athletes[]) {
@@ -51,7 +51,7 @@
     {/if}
     {data.section}
   </h1>
-  <button type="button" class="btn-icon" on:click={downloadCsv}><Fa icon={faDownload} /></button>
+  <button type="button" class="btn-icon" onclick={downloadCsv}><Fa icon={faDownload} /></button>
 </span>
 <div class="m-2">
   <input

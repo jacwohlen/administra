@@ -2,7 +2,7 @@
   import { _ } from 'svelte-i18n';
   import type { Log, Training } from '$lib/models';
 
-  export let logs: Promise<Log[]>;
+  let { logs }: { logs: Promise<Log[]> } = $props();
 
   function countPerTraining(logs: Log[], id: string) {
     let total = 0;
@@ -86,7 +86,7 @@
               {$_('page.members.trainingsSummary.noItems')}
             </span>
           {/each}
-          <hr class="my-2" />
+          <tr><td colspan="5"><hr class="my-2" /></td></tr>
           {#each [computeTotals(l)] as totals}
             <tr class="font-bold">
               <td>{$_('page.members.trainingsSummary.table.total')}</td>

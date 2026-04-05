@@ -1,18 +1,24 @@
 <script lang="ts">
   import type { Member } from '$lib/models';
-  import { createEventDispatcher } from 'svelte';
   import Fa from 'svelte-fa';
   import { faUserPlus } from '@fortawesome/free-solid-svg-icons';
   import { supabaseClient } from '$lib/supabase';
   import { _ } from 'svelte-i18n';
 
-  export let eventId: string;
-  export let existingParticipants: string[] = []; // Array of member IDs already registered
+  let {
+    eventId,
+    existingParticipants = [],
+    onadded
+  }: {
+    eventId: string;
+    existingParticipants?: string[];
+    onadded?: (detail: { member: Member }) => void;
+  } = $props();
 
-  let searchterm = '';
-  let filteredData: Member[] = [];
-  let loading = false;
-  let selectedIndex = -1; // For keyboard navigation
+  let searchterm = $state('');
+  let filteredData: Member[] = $state([]);
+  let loading = $state(false);
+  let selectedIndex = $state(-1); // For keyboard navigation
 
   async function filterData(): Promise<void> {
     if (searchterm.trim().length < 2) {
@@ -74,8 +80,6 @@
     }
   }
 
-  const dispatch = createEventDispatcher();
-
   async function addParticipant(member: Member) {
     loading = true;
     try {
@@ -90,7 +94,7 @@
         return;
       }
 
-      dispatch('added', { member });
+      onadded?.({ member });
       clearSearch();
     } finally {
       loading = false;
@@ -108,8 +112,8 @@
       type="text"
       placeholder={$_('page.events.search_members_placeholder')}
       bind:value={searchterm}
-      on:input={filterData}
-      on:keydown={handleKeydown}
+      oninput={filterData}
+      onkeydown={handleKeydown}
       disabled={loading}
     />
   </div>
@@ -125,8 +129,8 @@
                 selectedIndex
                   ? 'bg-primary-100 border-primary-300'
                   : 'hover:bg-gray-100'}"
-                on:click={() => addParticipant(member)}
-                on:keydown={(e) => {
+                onclick={() => addParticipant(member)}
+                onkeydown={(e: KeyboardEvent) => {
                   if (e.key === 'Enter' || e.key === ' ') {
                     e.preventDefault();
                     addParticipant(member);
@@ -138,7 +142,10 @@
                 <span>{member.lastname}, {member.firstname}</span>
                 <button
                   class="btn btn-sm variant-ringed-primary"
-                  on:click|stopPropagation={() => addParticipant(member)}
+                  onclick={(e: MouseEvent) => {
+                    e.stopPropagation();
+                    addParticipant(member);
+                  }}
                   disabled={loading}
                 >
                   <Fa icon={faUserPlus} />

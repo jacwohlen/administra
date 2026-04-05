@@ -2,7 +2,7 @@
   import { supabaseClient } from '$lib/supabase';
   import type { LessonPlan } from '$lib/models';
   import Fa from 'svelte-fa';
-  import { TabGroup, Tab, toastStore } from '@skeletonlabs/skeleton';
+  import { TabGroup, Tab, getToastStore } from '@skeletonlabs/skeleton';
   import {
     faEdit,
     faSave,
@@ -16,19 +16,20 @@
   } from '@fortawesome/free-solid-svg-icons';
   import { _ } from 'svelte-i18n';
 
-  export let trainingId: string;
-  export let date: string;
+  const toastStore = getToastStore();
 
-  let lessonPlan: LessonPlan | null = null;
-  let isEditing = false;
-  let isLoading = false;
-  let isUploading = false;
-  let content = '';
-  let title = '';
-  let selectedFile: File | null = null;
+  let { trainingId, date }: { trainingId: string; date: string } = $props();
+
+  let lessonPlan: LessonPlan | null = $state(null);
+  let isEditing = $state(false);
+  let isLoading = $state(false);
+  let isUploading = $state(false);
+  let content = $state('');
+  let title = $state('');
+  let selectedFile: File | null = $state(null);
   let fileInput: HTMLInputElement;
-  let tabSet = 0; // 0 for text, 1 for file
-  let previewUrl: string | null = null;
+  let tabSet = $state(0); // 0 for text, 1 for file
+  let previewUrl: string | null = $state(null);
 
   async function loadLessonPlan() {
     isLoading = true;
@@ -382,9 +383,11 @@
   }
 
   // Load lesson plan on component mount and when props change
-  $: if (trainingId && date) {
-    loadLessonPlan();
-  }
+  $effect(() => {
+    if (trainingId && date) {
+      loadLessonPlan();
+    }
+  });
 </script>
 
 <div class="card">
@@ -394,7 +397,7 @@
       {#if isEditing}
         <button
           class="btn btn-sm variant-filled-primary"
-          on:click={saveLessonPlan}
+          onclick={saveLessonPlan}
           disabled={isLoading ||
             (tabSet === 0 && !content.trim()) ||
             (tabSet === 1 && !selectedFile && !lessonPlan?.filePath)}
@@ -404,7 +407,7 @@
         </button>
         <button
           class="btn btn-sm variant-outline-secondary"
-          on:click={cancelEditing}
+          onclick={cancelEditing}
           disabled={isLoading}
         >
           {$_('button.cancel')}
@@ -412,7 +415,7 @@
       {:else if lessonPlan}
         <button
           class="btn btn-sm variant-outline-primary"
-          on:click={startEditing}
+          onclick={startEditing}
           disabled={isLoading}
         >
           <Fa icon={faEdit} />
@@ -421,7 +424,7 @@
       {:else}
         <button
           class="btn btn-sm variant-filled-primary"
-          on:click={startEditing}
+          onclick={startEditing}
           disabled={isLoading}
         >
           <Fa icon={faPlus} />
@@ -436,15 +439,15 @@
     <input
       type="file"
       bind:this={fileInput}
-      on:change={onFileSelected}
+      onchange={onFileSelected}
       accept=".pdf,.jpg,.jpeg,.png,.webp,.gif,.doc,.docx,.txt"
       style="display: none;"
     />
 
     {#if isLoading}
       <div class="placeholder animate-pulse">
-        <div class="placeholder-circle w-8 h-8" />
-        <div class="placeholder w-full" />
+        <div class="placeholder-circle w-8 h-8"></div>
+        <div class="placeholder w-full"></div>
       </div>
     {:else if isEditing}
       <div class="space-y-6">
@@ -490,7 +493,7 @@
                   rows="12"
                   placeholder={$_('page.trainings.contentPlaceholder')}
                   bind:value={content}
-                />
+                ></textarea>
               </div>
             {:else if tabSet === 1}
               <!-- File upload section -->
@@ -505,7 +508,7 @@
                           <p class="text-sm opacity-60">{formatFileSize(selectedFile.size)}</p>
                         </div>
                       </div>
-                      <button class="btn btn-sm variant-ghost-error" on:click={removeSelectedFile}>
+                      <button class="btn btn-sm variant-ghost-error" onclick={removeSelectedFile}>
                         <Fa icon={faTrash} />
                       </button>
                     </div>
@@ -514,7 +517,7 @@
                   <div class="text-center border-2 border-dashed border-surface-300 rounded-lg p-8">
                     <button
                       class="btn variant-filled-primary"
-                      on:click={handleFileSelect}
+                      onclick={handleFileSelect}
                       disabled={isUploading}
                     >
                       <Fa icon={faUpload} />
@@ -533,7 +536,7 @@
         {#if isUploading}
           <div class="text-center py-4">
             <div class="placeholder animate-pulse">
-              <div class="placeholder-circle w-6 h-6 mx-auto" />
+              <div class="placeholder-circle w-6 h-6 mx-auto"></div>
               <p class="mt-2">{$_('page.trainings.uploading')}</p>
             </div>
           </div>
@@ -560,7 +563,7 @@
               </div>
               <button
                 class="btn btn-sm variant-filled-secondary flex-shrink-0 w-full sm:w-auto"
-                on:click={downloadFile}
+                onclick={downloadFile}
               >
                 <Fa icon={faDownload} />
                 <span>{$_('button.download')}</span>
@@ -584,7 +587,7 @@
                       title="PDF Preview"
                       class="w-full rounded"
                       style="height: 600px; border: 1px solid var(--color-surface-300);"
-                    />
+                    ></iframe>
                   </div>
                 {/if}
               </div>

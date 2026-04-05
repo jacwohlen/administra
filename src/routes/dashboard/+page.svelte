@@ -63,7 +63,7 @@
 
 <div class="flex justify-between items-center m-2">
   <div>
-    <button class="btn" on:click={previousDay}>
+    <button class="btn" onclick={previousDay}>
       <Fa icon={faArrowLeft} /><span>{$_('button.day')}</span>
     </button>
   </div>
@@ -71,7 +71,7 @@
     <h1>{date.format('dddd')}</h1>
   </div>
   <div>
-    <button class="btn" on:click={nextDay}>
+    <button class="btn" onclick={nextDay}>
       <span>{$_('button.day')}</span><Fa icon={faArrowRight} />
     </button>
   </div>

@@ -4,16 +4,14 @@
   import { _ } from 'svelte-i18n';
   import type { Log } from '$lib/models';
 
-  export let logs: Promise<Log[]>;
-  let currentItem = 10;
+  let { logs }: { logs: Promise<Log[]> } = $props();
+  let currentItem = $state(10);
 
-  // Function to be called when logs is set or changed
-  async function handleLogsChange() {
-    currentItem = 10; // Reset currentItem when logs changes
-  }
-
-  // Reactively call handleLogsChange whenever logs is updated
-  $: logs, handleLogsChange();
+  // Reset currentItem when logs changes
+  $effect(() => {
+    void logs;
+    currentItem = 10;
+  });
 </script>
 
 <h3>{$_('page.members.trainingsHistory.title')}</h3>
@@ -65,7 +63,7 @@
     <span class="flex justify-center">
       <button
         class="btn btn-sm variant-filled-secondary"
-        on:click={() => (currentItem = currentItem + 10)}
+        onclick={() => (currentItem = currentItem + 10)}
       >
         {$_('button.loadMore')}
       </button>

@@ -5,8 +5,7 @@
   import type { Athletes } from '$lib/models';
   import TopList from './TopList.svelte';
 
-  export let yearmode: 'YEAR' | 'ALL';
-  export let year: number;
+  let { yearmode, year }: { yearmode: 'YEAR' | 'ALL'; year: number } = $props();
 
   let topEventParticipants: { [key: string]: Athletes[] } = {};
   let loading = true;
@@ -61,9 +60,11 @@
   });
 
   // Reload when year or yearmode changes
-  $: if (year || yearmode) {
-    loadEventStats();
-  }
+  $effect(() => {
+    if (year || yearmode) {
+      loadEventStats();
+    }
+  });
 </script>
 
 <div>
