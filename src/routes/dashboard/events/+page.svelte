@@ -85,9 +85,9 @@
     {#if filteredEvents.some((e) => isToday(e.date))}
       <section>
         <h3 class="text-lg font-semibold mb-3">{$_('page.events.today')}</h3>
-        <ul class="flex flex-col gap-3">
+        <ul class="flex flex-col gap-1">
           {#each filteredEvents.filter((e) => isToday(e.date)) as event (event.id)}
-            <li class="card p-4 flex items-start gap-3">
+            <li class="flex items-center gap-3 py-2">
               <div class="relative inline-block flex-none">
                 <Avatar class="rounded-md size-10">
                   <Avatar.Fallback>{event.title.charAt(0)}{event.title.charAt(1)}</Avatar.Fallback>
@@ -137,9 +137,9 @@
         <h3 class="text-lg font-semibold mb-3">
           {$_('page.events.upcoming')}
         </h3>
-        <ul class="flex flex-col gap-3">
+        <ul class="flex flex-col gap-1">
           {#each filteredEvents.filter((e) => isUpcoming(e.date)) as event (event.id)}
-            <li class="card p-4 flex items-start gap-3">
+            <li class="flex items-center gap-3 py-2">
               <div class="relative inline-block flex-none">
                 <Avatar class="rounded-md size-10">
                   <Avatar.Fallback>{event.title.charAt(0)}{event.title.charAt(1)}</Avatar.Fallback>
@@ -187,9 +187,9 @@
     {#if filteredEvents.some((e) => isPast(e.date))}
       <section>
         <h3 class="text-lg font-semibold mb-3">{$_('page.events.past')}</h3>
-        <ul class="flex flex-col gap-3">
+        <ul class="flex flex-col gap-1">
           {#each filteredEvents.filter((e) => isPast(e.date)) as event (event.id)}
-            <li class="card p-4 flex items-start gap-3">
+            <li class="flex items-center gap-3 py-2">
               <div class="relative inline-block flex-none">
                 <Avatar class="rounded-md size-10">
                   <Avatar.Fallback>{event.title.charAt(0)}{event.title.charAt(1)}</Avatar.Fallback>
