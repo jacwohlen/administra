@@ -80,7 +80,7 @@
 <!-- Trainings Section -->
 <section class="mb-6">
   {#if trainings.length == 0}
-    <div class="text-center text-surface-500-400">{$_('page.dashboard.noTrainingsToday')}</div>
+    <div class="text-center text-surface-600-400">{$_('page.dashboard.noTrainingsToday')}</div>
   {:else}
     <ul class="flex flex-col gap-3">
       {#each trainings as t (t.id)}
@@ -121,11 +121,11 @@
               {event.title}
             </dt>
             {#if event.description}
-              <dd class="text-surface-500-400 text-sm truncate">
+              <dd class="text-surface-600-400 text-sm truncate">
                 {event.description}
               </dd>
             {/if}
-            <dd class="flex items-center gap-2 text-sm text-surface-500-400">
+            <dd class="flex items-center gap-2 text-sm text-surface-600-400">
               <span class="flex items-center gap-1">
                 <Fa icon={faCalendarDays} size="sm" />
                 {formatEventDate(event.date)}

@@ -155,7 +155,7 @@
             {/each}
           </div>
         {:else}
-          <div class="p-2 text-sm text-surface-500-400">
+          <div class="p-2 text-sm text-surface-600-400">
             {$_('page.trainings.memberNotFound')}
           </div>
         {/if}

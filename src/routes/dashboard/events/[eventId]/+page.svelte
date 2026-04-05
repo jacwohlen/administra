@@ -253,7 +253,7 @@
   </div>
 
   {#if showDeleteConfirm}
-    <div class="card p-4 mb-6 border border-error-500-400">
+    <div class="card p-4 mb-6 border border-error-600-400">
       <h3 class="h3 mb-2">{$_('page.events.deleteConfirmTitle')}</h3>
       <p class="mb-4">{$_('page.events.deleteConfirmMessage')} "{data.event.title}"?</p>
       <div class="flex justify-end gap-2">
@@ -278,15 +278,15 @@
   <!-- Event Statistics -->
   <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
     <div class="card p-4 text-center">
-      <div class="text-2xl font-bold text-primary-500-400">{registeredCount}</div>
+      <div class="text-2xl font-bold text-primary-600-400">{registeredCount}</div>
       <div class="text-sm text-surface-600-400">{$_('page.events.stats.registered')}</div>
     </div>
     <div class="card p-4 text-center">
-      <div class="text-2xl font-bold text-success-500-400">{attendedCount}</div>
+      <div class="text-2xl font-bold text-success-600-400">{attendedCount}</div>
       <div class="text-sm text-surface-600-400">{$_('page.events.stats.attended')}</div>
     </div>
     <div class="card p-4 text-center">
-      <div class="text-2xl font-bold text-tertiary-500-400">{attendanceRate}%</div>
+      <div class="text-2xl font-bold text-tertiary-600-400">{attendanceRate}%</div>
       <div class="text-sm text-surface-600-400">{$_('page.events.stats.attendance_rate')}</div>
     </div>
   </div>
@@ -299,7 +299,7 @@
         <strong>{$_('page.events.registration_deadline')}:</strong>
         {formatEventDate(data.event.registrationDeadline)}
         {#if !isRegistrationOpen()}
-          <span class="text-error-500-400 ml-2">({$_('page.events.registration_closed')})</span>
+          <span class="text-error-600-400 ml-2">({$_('page.events.registration_closed')})</span>
         {/if}
       </p>
       {#if data.event.maxParticipants}
@@ -307,7 +307,7 @@
           <strong>{$_('page.events.max_participants')}:</strong>
           {data.event.maxParticipants}
           {#if registeredCount >= data.event.maxParticipants}
-            <span class="text-warning-500-400 ml-2">({$_('page.events.event_full')})</span>
+            <span class="text-warning-600-400 ml-2">({$_('page.events.event_full')})</span>
           {/if}
         </p>
       {/if}
@@ -350,7 +350,7 @@
 
     <!-- Participants List -->
     {#if data.participants.length === 0}
-      <p class="text-center text-surface-500-400 py-8">{$_('page.events.no_participants')}</p>
+      <p class="text-center text-surface-600-400 py-8">{$_('page.events.no_participants')}</p>
     {:else}
       <div class="space-y-2">
         {#each data.participants as participant}
