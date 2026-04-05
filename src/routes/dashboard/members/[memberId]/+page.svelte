@@ -302,7 +302,7 @@
           </div>
         {/if}
       </div>
-      <div class="flex gap-2 mt-3">
+      <div class="flex gap-1 mt-3">
         <input
           type="file"
           id="selectFiles"
@@ -310,9 +310,6 @@
           accept="image/*"
           onchange={handlePhotoChange}
         />
-        <button class="btn btn-sm preset-tonal-surface" onclick={selectFiles}>
-          <Fa icon={faUpload} /><span>{$_('button.upload')}</span>
-        </button>
         <input
           type="file"
           id="takePhoto"
@@ -321,10 +318,17 @@
           onchange={handlePhotoChange}
           capture="user"
         />
-        <button class="btn btn-sm preset-tonal-surface" onclick={takePhoto}>
-          <Fa icon={faCamera} /><span>{$_('button.photo')}</span>
+        <button
+          class="btn btn-icon btn-sm preset-tonal-surface"
+          onclick={selectFiles}
+          title="Upload"
+        >
+          <Fa icon={faUpload} />
         </button>
-        <button class="btn btn-sm preset-tonal-error" onclick={resetImage}>
+        <button class="btn btn-icon btn-sm preset-tonal-surface" onclick={takePhoto} title="Photo">
+          <Fa icon={faCamera} />
+        </button>
+        <button class="btn btn-icon btn-sm preset-tonal-error" onclick={resetImage} title="Remove">
           <Fa icon={faTrash} />
         </button>
       </div>
