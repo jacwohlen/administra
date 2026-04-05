@@ -14,8 +14,8 @@
   let section = '';
   let maxParticipants: number | undefined = undefined;
   let registrationDeadline = '';
-  let loading = false;
-  let error = '';
+  let loading = $state(false);
+  let error = $state('');
 
   const sections = ['Judo', 'Aikido']; // Should match existing sections
 

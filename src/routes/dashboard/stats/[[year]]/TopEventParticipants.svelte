@@ -7,9 +7,9 @@
 
   let { yearmode, year }: { yearmode: 'YEAR' | 'ALL'; year: number } = $props();
 
-  let topEventParticipants: { [key: string]: Athletes[] } = {};
-  let loading = true;
-  let error = '';
+  let topEventParticipants: { [key: string]: Athletes[] } = $state({});
+  let loading = $state(true);
+  let error = $state('');
 
   async function loadEventStats() {
     loading = true;
