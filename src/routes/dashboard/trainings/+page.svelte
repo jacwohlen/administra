@@ -27,7 +27,7 @@
       </span>
       <a class="btn btn-sm preset-tonal-primary flex-shrink-0" href="/dashboard/trainings/{t.id}">
         <Fa icon={faGripLines} />
-        <span>{$_('button.view')}</span>
+        <span class="hidden sm:inline">{$_('button.view')}</span>
       </a>
     </li>
   {/each}

@@ -172,7 +172,7 @@
             onclick={toggleDarkMode}
           >
             <Fa icon={isDark ? faSun : faMoon} />
-            <span>{isDark ? 'Light Mode' : 'Dark Mode'}</span>
+            <span>{isDark ? $_('button.lightMode') : $_('button.darkMode')}</span>
           </button>
           <form action="/logout" method="POST" use:enhance={submitLogout}>
             <button type="submit" class="btn preset-filled w-full">

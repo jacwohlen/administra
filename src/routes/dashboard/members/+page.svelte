@@ -135,7 +135,7 @@
           href={'/dashboard/members/' + m.id}
         >
           <Fa icon={faGripLines} />
-          <span>{$_('button.view')}</span>
+          <span class="hidden sm:inline">{$_('button.view')}</span>
         </a>
       </li>
     {/if}

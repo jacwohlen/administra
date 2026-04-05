@@ -213,7 +213,9 @@
     "deleting": "Lösche...",
     "create": "Erstellen",
     "creating": "Erstelle...",
-    "download": "Herunterladen"
+    "download": "Herunterladen",
+    "lightMode": "Heller Modus",
+    "darkMode": "Dunkler Modus"
   },
   "dialog": {
     "newMember": {

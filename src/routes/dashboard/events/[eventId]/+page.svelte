@@ -386,7 +386,7 @@
                     <div
                       class="size-10 rounded-full bg-surface-100-900 flex items-center justify-center text-sm font-bold"
                     >
-                      {member.firstname[0]}{member.lastname[0]}
+                      {member.lastname[0]}{member.firstname[0]}
                     </div>
                   {/if}
                   {#if log && log.isCoach}

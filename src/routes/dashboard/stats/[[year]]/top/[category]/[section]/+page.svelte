@@ -81,7 +81,7 @@
         <span>
           <a class="btn btn-sm preset-tonal-primary" href={'/dashboard/members/' + e.memberId}>
             <Fa icon={faGripLines} />
-            <span>{$_('button.view')}</span>
+            <span class="hidden sm:inline">{$_('button.view')}</span>
           </a>
         </span>
       </li>

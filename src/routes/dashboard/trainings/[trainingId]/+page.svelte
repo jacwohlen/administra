@@ -21,7 +21,7 @@
     href="/dashboard/trainings/{data.id}/{getDateString()}"
   >
     <Fa icon={faClipboardCheck} />
-    <span>{$_('button.trackAttendance')}</span>
+    <span class="hidden sm:inline">{$_('button.trackAttendance')}</span>
   </a>
 </div>
 <div class="flex items-center gap-2 mb-6 flex-wrap text-sm">

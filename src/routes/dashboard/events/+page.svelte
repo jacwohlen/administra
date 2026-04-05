@@ -123,7 +123,7 @@
               <span class="flex-none">
                 <a class="btn btn-sm preset-tonal-primary" href="/dashboard/events/{event.id}">
                   <Fa icon={faGripLines} />
-                  <span>{$_('button.view')}</span>
+                  <span class="hidden sm:inline">{$_('button.view')}</span>
                 </a>
               </span>
             </li>
@@ -177,7 +177,7 @@
               <span class="flex-none">
                 <a class="btn btn-sm preset-tonal-primary" href="/dashboard/events/{event.id}">
                   <Fa icon={faGripLines} />
-                  <span>{$_('button.view')}</span>
+                  <span class="hidden sm:inline">{$_('button.view')}</span>
                 </a>
               </span>
             </li>
@@ -229,7 +229,7 @@
               <span class="flex-none">
                 <a class="btn btn-sm preset-tonal-primary" href="/dashboard/events/{event.id}">
                   <Fa icon={faGripLines} />
-                  <span>{$_('button.view')}</span>
+                  <span class="hidden sm:inline">{$_('button.view')}</span>
                 </a>
               </span>
             </li>
