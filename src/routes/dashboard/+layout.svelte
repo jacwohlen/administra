@@ -143,18 +143,18 @@
     </div>
 
     <!-- Profile avatar -->
-    <div class="shrink-0 flex items-center pr-2 relative">
+    <div class="shrink-0 flex items-center pb-2 pr-2 relative">
       <button type="button" class="cursor-pointer" onclick={() => (popoverOpen = !popoverOpen)}>
         {#if data.session.user.user_metadata.avatar_url && !avatarError}
           <img
             src={data.session.user.user_metadata.avatar_url}
             alt="Profile"
-            class="size-10 rounded-full object-cover hover:ring-2 ring-primary-600-400"
+            class="size-8 rounded-full object-cover hover:ring-2 ring-primary-600-400"
             onerror={() => (avatarError = true)}
           />
         {:else}
           <div
-            class="size-10 rounded-full bg-surface-100-900 flex items-center justify-center text-sm font-bold hover:ring-2 ring-primary-600-400"
+            class="size-8 rounded-full bg-surface-100-900 flex items-center justify-center text-xs font-bold hover:ring-2 ring-primary-600-400"
           >
             {getInitials()}
           </div>
