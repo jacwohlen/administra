@@ -237,7 +237,7 @@
         class="card p-6 w-full max-w-lg shadow-2xl bg-surface-50-950"
         onclick={(e) => e.stopPropagation()}
       >
-        <h3 class="font-semibold text-lg mb-4">{$_('page.members.editMember.title')}</h3>
+        <h3 class="font-semibold text-lg mb-4">{$_('dialog.editMember.title')}</h3>
         <MemberForm
           isEditing={true}
           isSubmitting={isEditing}

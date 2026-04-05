@@ -118,15 +118,15 @@
         </button>
       {/each}
     </div>
-    <div class="input-group grid-cols-[1fr_auto]">
+    <div class="flex gap-2">
       <input
-        class="input"
+        class="input flex-1"
         bind:value={labelInput}
         onkeydown={handleLabelKeydown}
         type="text"
         placeholder={$_('dialog.newMember.labelPlaceholder')}
       />
-      <button type="button" class="preset-tonal-primary" onclick={addLabel}>
+      <button type="button" class="btn preset-filled-primary-500" onclick={addLabel}>
         {$_('button.add')}
       </button>
     </div>
