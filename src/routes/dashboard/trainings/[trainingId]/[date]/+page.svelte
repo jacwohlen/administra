@@ -249,7 +249,7 @@
   {/if}
 
   <!-- Search -->
-  <div class="mb-3">
+  <div class="mb-4">
     <input
       class="input"
       onkeydown={navigateList}
@@ -263,7 +263,7 @@
   </div>
 
   <!-- Participant list -->
-  <ul class="flex flex-col gap-1">
+  <ul class="flex flex-col gap-2">
     {#each filteredData as p (p.id)}
       <div
         class="item"

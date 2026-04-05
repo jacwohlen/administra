@@ -205,11 +205,14 @@
 
 <div class="max-w-4xl mx-auto">
   <!-- Header: back + title + actions -->
-  <div class="flex items-center gap-2 mb-2">
-    <a href="/dashboard/events" class="btn btn-sm preset-tonal-surface flex-shrink-0">
+  <div class="flex items-center gap-2 mb-4">
+    <a
+      href="/dashboard/events"
+      class="btn btn-sm preset-tonal-surface flex-shrink-0 min-w-[44px] min-h-[44px]"
+    >
       <Fa icon={faArrowLeft} />
     </a>
-    <h1 class="flex-1 truncate">{data.event.title}</h1>
+    <h1 class="flex-1 min-w-0 truncate">{data.event.title}</h1>
     <div class="flex gap-2 flex-shrink-0">
       <a href="/dashboard/events/{data.event.id}/edit" class="btn btn-sm preset-tonal-surface">
         <Fa icon={faEdit} />
@@ -284,17 +287,17 @@
   {/if}
 
   <!-- Event Statistics -->
-  <div class="grid grid-cols-3 gap-2 mb-4">
-    <div class="card p-3 text-center">
-      <div class="text-xl font-bold text-primary-600-400">{registeredCount}</div>
+  <div class="grid grid-cols-3 gap-2 sm:gap-4 mb-4">
+    <div class="card p-3 sm:p-4 text-center">
+      <div class="text-lg sm:text-xl font-bold text-primary-600-400">{registeredCount}</div>
       <div class="text-xs text-surface-600-400">{$_('page.events.stats.registered')}</div>
     </div>
-    <div class="card p-3 text-center">
-      <div class="text-xl font-bold text-success-600-400">{attendedCount}</div>
+    <div class="card p-3 sm:p-4 text-center">
+      <div class="text-lg sm:text-xl font-bold text-success-600-400">{attendedCount}</div>
       <div class="text-xs text-surface-600-400">{$_('page.events.stats.attended')}</div>
     </div>
-    <div class="card p-3 text-center">
-      <div class="text-xl font-bold text-tertiary-600-400">{attendanceRate}%</div>
+    <div class="card p-3 sm:p-4 text-center">
+      <div class="text-lg sm:text-xl font-bold text-tertiary-600-400">{attendanceRate}%</div>
       <div class="text-xs text-surface-600-400">{$_('page.events.stats.attendance_rate')}</div>
     </div>
   </div>

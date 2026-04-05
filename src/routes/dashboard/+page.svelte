@@ -61,7 +61,7 @@
   getTodayEvents();
 </script>
 
-<div class="flex justify-between items-center m-2">
+<div class="flex justify-between items-center mb-4">
   <div>
     <button class="btn" onclick={previousDay}>
       <Fa icon={faArrowLeft} /><span>{$_('button.day')}</span>
@@ -80,7 +80,7 @@
 <!-- Trainings Section -->
 <section class="mb-6">
   {#if trainings.length == 0}
-    <div class="text-center text-surface-600-400">{$_('page.dashboard.noTrainingsToday')}</div>
+    <div class="text-center text-surface-600-400 py-8">{$_('page.dashboard.noTrainingsToday')}</div>
   {:else}
     <ul class="flex flex-col gap-3">
       {#each trainings as t (t.id)}

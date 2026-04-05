@@ -285,7 +285,7 @@
     </div>
   {/if}
 
-  <div class="card p-6">
+  <div class="card p-4">
     <!-- Avatar + Photo buttons -->
     <div class="flex flex-col items-center mb-6">
       <div class="relative">
@@ -325,16 +325,24 @@
           capture="user"
         />
         <button
-          class="btn btn-icon btn-sm preset-tonal-surface"
+          class="btn btn-icon preset-tonal-surface min-w-[44px] min-h-[44px]"
           onclick={selectFiles}
           title="Upload"
         >
           <Fa icon={faUpload} />
         </button>
-        <button class="btn btn-icon btn-sm preset-tonal-surface" onclick={takePhoto} title="Photo">
+        <button
+          class="btn btn-icon preset-tonal-surface min-w-[44px] min-h-[44px]"
+          onclick={takePhoto}
+          title="Photo"
+        >
           <Fa icon={faCamera} />
         </button>
-        <button class="btn btn-icon btn-sm preset-tonal-error" onclick={resetImage} title="Remove">
+        <button
+          class="btn btn-icon preset-tonal-error min-w-[44px] min-h-[44px]"
+          onclick={resetImage}
+          title="Remove"
+        >
           <Fa icon={faTrash} />
         </button>
       </div>

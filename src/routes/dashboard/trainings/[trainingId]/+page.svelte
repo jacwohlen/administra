@@ -14,10 +14,10 @@
 </script>
 
 <!-- Header -->
-<div class="flex items-center justify-between mb-2">
+<div class="flex items-center justify-between mb-4">
   <h1>{data.title}</h1>
   <a
-    class="btn btn-sm preset-filled-primary-500 flex-none"
+    class="btn btn-sm preset-tonal-primary flex-none"
     href="/dashboard/trainings/{data.id}/{getDateString()}"
   >
     <Fa icon={faClipboardCheck} />
