@@ -168,7 +168,7 @@
 <div class="card p-4 mb-4">
   <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
     <div>
-      <h2 class="h2">{data.title}</h2>
+      <h1>{data.title}</h1>
       <div class="flex items-center gap-2 mt-1">
         <span class="badge preset-tonal-secondary">{data.section}</span>
         <span class="text-sm opacity-70">
@@ -249,7 +249,7 @@
   {/if}
 
   <!-- Search -->
-  <div class="mb-3">
+  <div class="mb-4">
     <input
       class="input"
       onkeydown={navigateList}
@@ -263,7 +263,7 @@
   </div>
 
   <!-- Participant list -->
-  <ul class="flex flex-col gap-1">
+  <ul class="flex flex-col gap-2">
     {#each filteredData as p (p.id)}
       <div
         class="item"

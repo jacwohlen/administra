@@ -111,7 +111,7 @@
   />
 </div>
 
-<ul class="flex flex-col gap-1">
+<ul class="flex flex-col gap-2">
   {#each data.members as m (m.id)}
     {#if search(m.firstname, m.lastname)}
       <li class="flex items-center gap-3 py-2">
@@ -135,7 +135,7 @@
           href={'/dashboard/members/' + m.id}
         >
           <Fa icon={faGripLines} />
-          <span>{$_('button.view')}</span>
+          <span class="hidden sm:inline">{$_('button.view')}</span>
         </a>
       </li>
     {/if}

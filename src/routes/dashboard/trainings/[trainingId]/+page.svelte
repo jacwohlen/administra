@@ -14,14 +14,14 @@
 </script>
 
 <!-- Header -->
-<div class="flex items-center justify-between mb-2">
+<div class="flex items-center justify-between mb-4">
   <h1>{data.title}</h1>
   <a
-    class="btn btn-sm preset-filled-primary-500 flex-none"
+    class="btn btn-sm preset-tonal-primary flex-none"
     href="/dashboard/trainings/{data.id}/{getDateString()}"
   >
     <Fa icon={faClipboardCheck} />
-    <span>{$_('button.trackAttendance')}</span>
+    <span class="hidden sm:inline">{$_('button.trackAttendance')}</span>
   </a>
 </div>
 <div class="flex items-center gap-2 mb-6 flex-wrap text-sm">

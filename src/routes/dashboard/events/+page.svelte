@@ -52,7 +52,7 @@
   );
 </script>
 
-<div class="flex justify-between items-center mb-6">
+<div class="flex justify-between items-center mb-4">
   <h1>{$_('page.events.title')}</h1>
   <a href="/dashboard/events/new" class="btn btn-sm preset-filled-primary-500">
     <Fa icon={faPlus} />
@@ -61,7 +61,7 @@
 </div>
 
 <!-- Search Input -->
-<div class="mb-6">
+<div class="mb-4">
   <input
     class="input"
     bind:value={searchTerm}
@@ -84,7 +84,7 @@
     {#if filteredEvents.some((e) => isToday(e.date))}
       <section>
         <h3 class="text-lg font-semibold mb-3">{$_('page.events.today')}</h3>
-        <ul class="flex flex-col gap-1">
+        <ul class="flex flex-col gap-2">
           {#each filteredEvents.filter((e) => isToday(e.date)) as event (event.id)}
             <li class="flex items-center gap-3 py-2">
               <div class="relative inline-block flex-none">
@@ -123,7 +123,7 @@
               <span class="flex-none">
                 <a class="btn btn-sm preset-tonal-primary" href="/dashboard/events/{event.id}">
                   <Fa icon={faGripLines} />
-                  <span>{$_('button.view')}</span>
+                  <span class="hidden sm:inline">{$_('button.view')}</span>
                 </a>
               </span>
             </li>
@@ -138,7 +138,7 @@
         <h3 class="text-lg font-semibold mb-3">
           {$_('page.events.upcoming')}
         </h3>
-        <ul class="flex flex-col gap-1">
+        <ul class="flex flex-col gap-2">
           {#each filteredEvents.filter((e) => isUpcoming(e.date)) as event (event.id)}
             <li class="flex items-center gap-3 py-2">
               <div class="relative inline-block flex-none">
@@ -177,7 +177,7 @@
               <span class="flex-none">
                 <a class="btn btn-sm preset-tonal-primary" href="/dashboard/events/{event.id}">
                   <Fa icon={faGripLines} />
-                  <span>{$_('button.view')}</span>
+                  <span class="hidden sm:inline">{$_('button.view')}</span>
                 </a>
               </span>
             </li>
@@ -190,7 +190,7 @@
     {#if filteredEvents.some((e) => isPast(e.date))}
       <section>
         <h3 class="text-lg font-semibold mb-3">{$_('page.events.past')}</h3>
-        <ul class="flex flex-col gap-1">
+        <ul class="flex flex-col gap-2">
           {#each filteredEvents.filter((e) => isPast(e.date)) as event (event.id)}
             <li class="flex items-center gap-3 py-2">
               <div class="relative inline-block flex-none">
@@ -229,7 +229,7 @@
               <span class="flex-none">
                 <a class="btn btn-sm preset-tonal-primary" href="/dashboard/events/{event.id}">
                   <Fa icon={faGripLines} />
-                  <span>{$_('button.view')}</span>
+                  <span class="hidden sm:inline">{$_('button.view')}</span>
                 </a>
               </span>
             </li>

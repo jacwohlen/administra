@@ -7,8 +7,8 @@
   let { data }: { data: PageData } = $props();
 </script>
 
-<h1>{$_('page.trainings.title')}</h1>
-<ul class="flex flex-col gap-1">
+<h1 class="mb-4">{$_('page.trainings.title')}</h1>
+<ul class="flex flex-col gap-2">
   {#each data.trainings as t, index (t.id)}
     {#if index === 0 || t.weekday !== data.trainings[index - 1].weekday}
       <h3 class="text-lg font-semibold mt-4 mb-1">{$_('weekday.' + t.weekday)}</h3>
@@ -27,7 +27,7 @@
       </span>
       <a class="btn btn-sm preset-tonal-primary flex-shrink-0" href="/dashboard/trainings/{t.id}">
         <Fa icon={faGripLines} />
-        <span>{$_('button.view')}</span>
+        <span class="hidden sm:inline">{$_('button.view')}</span>
       </a>
     </li>
   {/each}

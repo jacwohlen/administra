@@ -29,7 +29,7 @@
   }
 </script>
 
-<div class="flex justify-between items-center m-2">
+<div class="flex justify-between items-center mb-4">
   <div>
     <button class="btn" onclick={previousYear}>
       <Fa icon={faArrowLeft} /><span>{$_('button.year')}</span>
