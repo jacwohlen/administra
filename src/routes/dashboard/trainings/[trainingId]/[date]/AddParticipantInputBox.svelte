@@ -2,7 +2,13 @@
   import type { Member } from '$lib/models';
   import Fa from 'svelte-fa';
   import { faUserPlus } from '@fortawesome/free-solid-svg-icons';
-  import { popup, type PopupSettings, getModalStore, type ModalComponent, type ModalSettings } from '@skeletonlabs/skeleton';
+  import {
+    popup,
+    type PopupSettings,
+    getModalStore,
+    type ModalComponent,
+    type ModalSettings
+  } from '@skeletonlabs/skeleton';
   import { supabaseClient } from '$lib/supabase';
   import { _ } from 'svelte-i18n';
 

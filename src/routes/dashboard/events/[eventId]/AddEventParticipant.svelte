@@ -142,7 +142,10 @@
                 <span>{member.lastname}, {member.firstname}</span>
                 <button
                   class="btn btn-sm variant-ringed-primary"
-                  onclick={(e: MouseEvent) => { e.stopPropagation(); addParticipant(member); }}
+                  onclick={(e: MouseEvent) => {
+                    e.stopPropagation();
+                    addParticipant(member);
+                  }}
                   disabled={loading}
                 >
                   <Fa icon={faUserPlus} />

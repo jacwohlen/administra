@@ -116,7 +116,14 @@
       </dd>
     </span>
     <div class="justify-self-end flex-shrink-0">
-      <button class="btn btn-sm" bind:this={btnEl} onclick={(e) => { e.stopPropagation(); toggleMenu(); }}>
+      <button
+        class="btn btn-sm"
+        bind:this={btnEl}
+        onclick={(e) => {
+          e.stopPropagation();
+          toggleMenu();
+        }}
+      >
         <Fa icon={faEllipsisVertical} />
       </button>
       {#if menuOpen}

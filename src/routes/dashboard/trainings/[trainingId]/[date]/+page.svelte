@@ -31,7 +31,9 @@
   let filteredData: MMember[] = $state([]);
   let presentParticipants = $derived(filteredData.filter((p) => p.isPresent));
   let mainTrainers = $derived(presentParticipants.filter((p) => p.trainerRole === 'main_trainer'));
-  let assistantTrainers = $derived(presentParticipants.filter((p) => p.trainerRole === 'assistant'));
+  let assistantTrainers = $derived(
+    presentParticipants.filter((p) => p.trainerRole === 'assistant')
+  );
   let hasMainTrainer = $derived(mainTrainers.length > 0);
 
   let hiIndex = -1;
@@ -63,9 +65,11 @@
 
   filterData();
 
-  async function changePresence(
-    detail: { member: MMember; checked: boolean; trainerRole: TrainerRole }
-  ) {
+  async function changePresence(detail: {
+    member: MMember;
+    checked: boolean;
+    trainerRole: TrainerRole;
+  }) {
     await _changePresence(detail.member, detail.checked, detail.trainerRole);
   }
 
@@ -146,9 +150,9 @@
 
   const navigateList = (e: { key: string }) => {
     if (e.key === 'ArrowDown' && hiIndex <= filteredData.length - 1) {
-      hiIndex === filteredData.length - 1 ? (hiIndex = 0) : (hiIndex += 1);
+      hiIndex = hiIndex === filteredData.length - 1 ? 0 : hiIndex + 1;
     } else if (e.key === 'ArrowUp' && hiIndex !== -1) {
-      hiIndex === 0 ? (hiIndex = filteredData.length - 1) : (hiIndex -= 1);
+      hiIndex = hiIndex === 0 ? filteredData.length - 1 : hiIndex - 1;
     } else if (e.key === 'Enter') {
       _changePresence(filteredData[hiIndex], !filteredData[hiIndex].isPresent, 'attendee');
       clearSearch();

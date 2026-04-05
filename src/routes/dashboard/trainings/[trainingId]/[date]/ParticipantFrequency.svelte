@@ -9,16 +9,18 @@
   let recentHalf = $derived(Math.ceil(fullStreak.length / 2));
   let recentCount = $derived(fullStreak.slice(-recentHalf).filter(Boolean).length);
   let olderCount = $derived(fullStreak.slice(0, recentHalf).filter(Boolean).length);
-  let trend = $derived(recentCount > olderCount ? 'up' : recentCount < olderCount ? 'down' : 'stable');
+  let trend = $derived(
+    recentCount > olderCount ? 'up' : recentCount < olderCount ? 'down' : 'stable'
+  );
 
   let totalAttended = $derived(fullStreak.filter(Boolean).length);
   let tooltipText = $derived(
     totalAttended +
-    '/' +
-    fullStreak.length +
-    ' ' +
-    $_('components.ParticipantFrequency.sessions') +
-    (trend === 'up' ? ' \u2197' : trend === 'down' ? ' \u2198' : '')
+      '/' +
+      fullStreak.length +
+      ' ' +
+      $_('components.ParticipantFrequency.sessions') +
+      (trend === 'up' ? ' \u2197' : trend === 'down' ? ' \u2198' : '')
   );
 </script>
 
