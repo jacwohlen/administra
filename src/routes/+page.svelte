@@ -33,9 +33,9 @@
 
 <div class="grid grid-cols-1 place-items-center space-y-8 mt-10">
   <LogoImage />
-  <h1 class="my-2">{$_('page.routes.welcomeMessage')}</h1>
+  <h1 class="my-2 text-surface-900">{$_('page.routes.welcomeMessage')}</h1>
   {#if data.session}
-    <p>
+    <p class="text-surface-700">
       {$_('page.routes.hi')} <strong>{data.session.user.email}</strong>
     </p>
     <a class="btn preset-filled-primary-500 mt-2" href="/dashboard" color="primary"
