@@ -88,13 +88,13 @@
     <div class="relative inline-block flex-shrink-0">
       {#if member.trainerRole === 'main_trainer'}
         <span
-          class="badge-icon absolute -bottom-0 -right-0 z-10 bg-warning-500 rounded-full w-5 h-5 flex items-center justify-center"
+          class="badge-icon absolute -bottom-0 -right-0 z-10 bg-warning-500-400 rounded-full w-5 h-5 flex items-center justify-center"
         >
           <img class="w-3.5" src="/judo-icon.svg" alt="main-trainer" />
         </span>
       {:else if member.trainerRole === 'assistant'}
         <span
-          class="badge-icon absolute -bottom-0 -right-0 z-10 bg-surface-400 text-white text-xs font-bold w-5 h-5 flex items-center justify-center rounded-full"
+          class="badge-icon absolute -bottom-0 -right-0 z-10 preset-filled-surface text-xs font-bold w-5 h-5 flex items-center justify-center rounded-full"
         >
           A
         </span>
@@ -142,7 +142,7 @@
                 {$_('components.ParticipantCard.View')}
               </a>
             </li>
-            <li class="border-t border-surface-300 pt-1 mt-1">
+            <li class="border-t border-surface-300-700 pt-1 mt-1">
               <button
                 class="btn btn-sm w-full text-left justify-start"
                 onclick={() => setTrainerRole('attendee')}
@@ -164,13 +164,13 @@
                 class="btn btn-sm w-full text-left justify-start gap-2"
                 onclick={() => setTrainerRole('assistant')}
               >
-                <span class="w-4 flex-shrink-0 text-center font-bold text-surface-600">A</span>
+                <span class="w-4 flex-shrink-0 text-center font-bold text-surface-600-400">A</span>
                 {$_('components.ParticipantCard.SetAsAssistant')}
               </button>
             </li>
-            <li class="border-t border-surface-300 pt-1 mt-1">
+            <li class="border-t border-surface-300-700 pt-1 mt-1">
               <button
-                class="btn btn-sm w-full text-left justify-start text-error-500"
+                class="btn btn-sm w-full text-left justify-start text-error-500-400"
                 onclick={triggerConfirm}
               >
                 {$_('components.ParticipantCard.Remove')}
@@ -182,7 +182,7 @@
     </div>
 
     {#if showRemoveConfirm}
-      <div class="card p-4 mt-2 border border-error-500 w-full">
+      <div class="card p-4 mt-2 border border-error-500-400 w-full">
         <h4 class="font-semibold mb-2">{$_('dialog.confirm.title')}</h4>
         <p class="mb-3">{$_('dialog.confirm.body')}</p>
         <div class="flex justify-end gap-2">

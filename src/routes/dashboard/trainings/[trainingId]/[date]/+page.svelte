@@ -238,7 +238,7 @@
   <!-- Trainer warning -->
   {#if presentParticipants.length > 0 && !hasMainTrainer}
     <div class="flex items-center gap-4 p-4 rounded-lg preset-tonal-warning mb-3">
-      <div><Fa icon={faExclamationTriangle} class="text-warning-500" /></div>
+      <div><Fa icon={faExclamationTriangle} class="text-warning-500-400" /></div>
       <div class="flex-1">
         <p>
           <span class="font-bold">{$_('page.trainings.noMainTrainerWarning.title')}</span>

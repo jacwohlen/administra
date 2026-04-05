@@ -38,9 +38,9 @@
           <dt>
             {i.date}
           </dt>
-          <dd class="text-sm text-surface-500">{i.trainingId.title}</dd>
+          <dd class="text-sm text-surface-500-400">{i.trainingId.title}</dd>
         </span>
-        <span class="text-sm text-surface-500">
+        <span class="text-sm text-surface-500-400">
           {i.trainingId.section}
         </span>
         <span>
@@ -54,7 +54,7 @@
         </span>
       </li>
     {:else}
-      <span class="flex justify-center text-surface-500">
+      <span class="flex justify-center text-surface-500-400">
         {$_('page.members.trainingsHistory.noItems')}
       </span>
     {/each}

@@ -111,7 +111,7 @@
   {/if}
 
   {#if showNewMemberForm}
-    <div class="card p-4 mt-2 border border-surface-300">
+    <div class="card p-4 mt-2 border border-surface-300-700">
       <MemberForm
         lastname={newMemberLastname}
         firstname={newMemberFirstname}

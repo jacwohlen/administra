@@ -79,7 +79,7 @@
 </div>
 
 {#if showMemberFormDialog}
-  <div class="card p-4 mb-4 border border-surface-300">
+  <div class="card p-4 mb-4 border border-surface-300-700">
     <MemberForm
       {isSubmitting}
       onclose={() => (showMemberFormDialog = false)}

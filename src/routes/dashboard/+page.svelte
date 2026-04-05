@@ -80,7 +80,7 @@
 <!-- Trainings Section -->
 <section class="mb-6">
   {#if trainings.length == 0}
-    <div class="text-center text-surface-500">{$_('page.dashboard.noTrainingsToday')}</div>
+    <div class="text-center text-surface-500-400">{$_('page.dashboard.noTrainingsToday')}</div>
   {:else}
     <ul class="flex flex-col gap-3">
       {#each trainings as t (t.id)}
@@ -111,7 +111,7 @@
         <li class="card p-4 flex items-start gap-3">
           <div class="relative inline-block flex-none">
             <div
-              class="w-12 h-12 bg-secondary-600 rounded-md flex items-center justify-center text-white"
+              class="w-12 h-12 preset-filled-secondary rounded-md flex items-center justify-center"
             >
               <Fa icon={faCalendarDays} size="lg" />
             </div>
@@ -121,11 +121,11 @@
               {event.title}
             </dt>
             {#if event.description}
-              <dd class="text-surface-500 text-sm truncate">
+              <dd class="text-surface-500-400 text-sm truncate">
                 {event.description}
               </dd>
             {/if}
-            <dd class="flex items-center gap-2 text-sm text-surface-500">
+            <dd class="flex items-center gap-2 text-sm text-surface-500-400">
               <span class="flex items-center gap-1">
                 <Fa icon={faCalendarDays} size="sm" />
                 {formatEventDate(event.date)}

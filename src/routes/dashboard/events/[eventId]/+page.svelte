@@ -211,7 +211,7 @@
     </a>
     <div class="flex-grow">
       <h1>{data.event.title}</h1>
-      <div class="flex flex-wrap gap-4 mt-2 text-sm text-surface-600">
+      <div class="flex flex-wrap gap-4 mt-2 text-sm text-surface-600-400">
         <span class="flex items-center gap-1">
           <Fa icon={faCalendarDays} size="sm" />
           {formatEventDate(data.event.date)}
@@ -253,7 +253,7 @@
   </div>
 
   {#if showDeleteConfirm}
-    <div class="card p-4 mb-6 border border-error-500">
+    <div class="card p-4 mb-6 border border-error-500-400">
       <h3 class="h3 mb-2">{$_('page.events.deleteConfirmTitle')}</h3>
       <p class="mb-4">{$_('page.events.deleteConfirmMessage')} "{data.event.title}"?</p>
       <div class="flex justify-end gap-2">
@@ -271,23 +271,23 @@
   {#if data.event.description}
     <div class="card p-4 mb-6">
       <h2 class="font-semibold mb-2">{$_('page.events.description')}</h2>
-      <p class="text-surface-700 break-words">{data.event.description}</p>
+      <p class="text-surface-700-300 break-words">{data.event.description}</p>
     </div>
   {/if}
 
   <!-- Event Statistics -->
   <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
     <div class="card p-4 text-center">
-      <div class="text-2xl font-bold text-primary-500">{registeredCount}</div>
-      <div class="text-sm text-surface-600">{$_('page.events.stats.registered')}</div>
+      <div class="text-2xl font-bold text-primary-500-400">{registeredCount}</div>
+      <div class="text-sm text-surface-600-400">{$_('page.events.stats.registered')}</div>
     </div>
     <div class="card p-4 text-center">
-      <div class="text-2xl font-bold text-success-500">{attendedCount}</div>
-      <div class="text-sm text-surface-600">{$_('page.events.stats.attended')}</div>
+      <div class="text-2xl font-bold text-success-500-400">{attendedCount}</div>
+      <div class="text-sm text-surface-600-400">{$_('page.events.stats.attended')}</div>
     </div>
     <div class="card p-4 text-center">
-      <div class="text-2xl font-bold text-tertiary-500">{attendanceRate}%</div>
-      <div class="text-sm text-surface-600">{$_('page.events.stats.attendance_rate')}</div>
+      <div class="text-2xl font-bold text-tertiary-500-400">{attendanceRate}%</div>
+      <div class="text-sm text-surface-600-400">{$_('page.events.stats.attendance_rate')}</div>
     </div>
   </div>
 
@@ -299,7 +299,7 @@
         <strong>{$_('page.events.registration_deadline')}:</strong>
         {formatEventDate(data.event.registrationDeadline)}
         {#if !isRegistrationOpen()}
-          <span class="text-error-500 ml-2">({$_('page.events.registration_closed')})</span>
+          <span class="text-error-500-400 ml-2">({$_('page.events.registration_closed')})</span>
         {/if}
       </p>
       {#if data.event.maxParticipants}
@@ -307,7 +307,7 @@
           <strong>{$_('page.events.max_participants')}:</strong>
           {data.event.maxParticipants}
           {#if registeredCount >= data.event.maxParticipants}
-            <span class="text-warning-500 ml-2">({$_('page.events.event_full')})</span>
+            <span class="text-warning-500-400 ml-2">({$_('page.events.event_full')})</span>
           {/if}
         </p>
       {/if}
@@ -332,7 +332,7 @@
 
     <!-- Add Participant Search -->
     {#if showAddParticipant}
-      <div class="bg-surface-100 p-4 rounded-lg mb-4">
+      <div class="bg-surface-100-900 p-4 rounded-lg mb-4">
         <div class="flex gap-4 items-center">
           <div class="flex-grow">
             <AddEventParticipant
@@ -350,7 +350,7 @@
 
     <!-- Participants List -->
     {#if data.participants.length === 0}
-      <p class="text-center text-surface-500 py-8">{$_('page.events.no_participants')}</p>
+      <p class="text-center text-surface-500-400 py-8">{$_('page.events.no_participants')}</p>
     {:else}
       <div class="space-y-2">
         {#each data.participants as participant}
@@ -360,8 +360,8 @@
           {#if member}
             <div
               class="flex items-center justify-between p-3 border rounded-lg {hasAttended
-                ? 'bg-success-50 border-success-200'
-                : 'bg-surface-50'}"
+                ? 'bg-success-50-950 border-success-200-800'
+                : 'bg-surface-50-950'}"
             >
               <div class="flex items-center gap-3">
                 <div class="relative">
@@ -373,7 +373,7 @@
                     />
                   {:else}
                     <div
-                      class="w-10 h-10 rounded-full bg-primary-500 flex items-center justify-center text-white font-semibold"
+                      class="w-10 h-10 rounded-full preset-filled-primary flex items-center justify-center font-semibold"
                     >
                       {member.firstname[0]}{member.lastname[0]}
                     </div>
@@ -389,12 +389,14 @@
                     {member.firstname}
                     {member.lastname}
                     {#if log && log.isCoach}
-                      <span class="text-xs bg-primary-100 text-primary-800 px-2 py-1 rounded ml-2">
+                      <span
+                        class="text-xs bg-primary-100-900 text-primary-800-200 px-2 py-1 rounded ml-2"
+                      >
                         {$_('page.events.coach')}
                       </span>
                     {/if}
                   </div>
-                  <div class="text-sm text-surface-600">
+                  <div class="text-sm text-surface-600-400">
                     {$_('page.events.status.' + participant.attendanceStatus)}
                     {#if log}
                       - {$_('page.events.attended_at')} {dayjs(log.attendedAt).format('HH:mm')}

@@ -73,18 +73,18 @@
 
 {#if data.events.length === 0}
   <div class="text-center py-8">
-    <p class="text-surface-500">{$_('page.events.no_events')}</p>
+    <p class="text-surface-500-400">{$_('page.events.no_events')}</p>
   </div>
 {:else if filteredEvents.length === 0 && searchTerm.trim()}
   <div class="text-center py-8">
-    <p class="text-surface-500">{$_('page.events.no_events_found')}</p>
+    <p class="text-surface-500-400">{$_('page.events.no_events_found')}</p>
   </div>
 {:else}
   <div class="space-y-6">
     <!-- Today's Events -->
     {#if filteredEvents.some((e) => isToday(e.date))}
       <section>
-        <h3 class="text-lg font-semibold mb-3 text-warning-500">{$_('page.events.today')}</h3>
+        <h3 class="text-lg font-semibold mb-3 text-warning-500-400">{$_('page.events.today')}</h3>
         <ul class="flex flex-col gap-3">
           {#each filteredEvents.filter((e) => isToday(e.date)) as event (event.id)}
             <li class="card p-4 flex items-start gap-3">
@@ -98,11 +98,11 @@
                   {event.title}
                 </dt>
                 {#if event.description}
-                  <dd class="text-surface-500 text-sm truncate">
+                  <dd class="text-surface-500-400 text-sm truncate">
                     {event.description}
                   </dd>
                 {/if}
-                <dd class="flex items-center gap-2 text-sm text-surface-500">
+                <dd class="flex items-center gap-2 text-sm text-surface-500-400">
                   <span class="flex items-center gap-1">
                     <Fa icon={faCalendarDays} size="sm" />
                     {formatEventDate(event.date)}
@@ -134,7 +134,9 @@
     <!-- Upcoming Events -->
     {#if filteredEvents.some((e) => isUpcoming(e.date))}
       <section>
-        <h3 class="text-lg font-semibold mb-3 text-primary-500">{$_('page.events.upcoming')}</h3>
+        <h3 class="text-lg font-semibold mb-3 text-primary-500-400">
+          {$_('page.events.upcoming')}
+        </h3>
         <ul class="flex flex-col gap-3">
           {#each filteredEvents.filter((e) => isUpcoming(e.date)) as event (event.id)}
             <li class="card p-4 flex items-start gap-3">
@@ -148,11 +150,11 @@
                   {event.title}
                 </dt>
                 {#if event.description}
-                  <dd class="text-surface-500 text-sm truncate">
+                  <dd class="text-surface-500-400 text-sm truncate">
                     {event.description}
                   </dd>
                 {/if}
-                <dd class="flex items-center gap-2 text-sm text-surface-500">
+                <dd class="flex items-center gap-2 text-sm text-surface-500-400">
                   <span class="flex items-center gap-1">
                     <Fa icon={faCalendarDays} size="sm" />
                     {formatEventDate(event.date)}
@@ -184,7 +186,7 @@
     <!-- Past Events -->
     {#if filteredEvents.some((e) => isPast(e.date))}
       <section>
-        <h3 class="text-lg font-semibold mb-3 text-surface-500">{$_('page.events.past')}</h3>
+        <h3 class="text-lg font-semibold mb-3 text-surface-500-400">{$_('page.events.past')}</h3>
         <ul class="flex flex-col gap-3">
           {#each filteredEvents.filter((e) => isPast(e.date)) as event (event.id)}
             <li class="card p-4 flex items-start gap-3">
@@ -198,11 +200,11 @@
                   {event.title}
                 </dt>
                 {#if event.description}
-                  <dd class="text-surface-500 text-sm truncate">
+                  <dd class="text-surface-500-400 text-sm truncate">
                     {event.description}
                   </dd>
                 {/if}
-                <dd class="flex items-center gap-2 text-sm text-surface-500">
+                <dd class="flex items-center gap-2 text-sm text-surface-500-400">
                   <span class="flex items-center gap-1">
                     <Fa icon={faCalendarDays} size="sm" />
                     {formatEventDate(event.date)}

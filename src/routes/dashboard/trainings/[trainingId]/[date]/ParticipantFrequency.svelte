@@ -32,19 +32,19 @@
         class="inline-block rounded-full {isCurrent ? 'w-2 h-2' : 'w-1.5 h-1.5'}
           {attended
           ? isCurrent
-            ? 'bg-primary-500 ring-1 ring-primary-300 dark:ring-primary-700'
-            : 'bg-primary-500'
+            ? 'bg-primary-500-400 ring-1 ring-primary-300-700'
+            : 'bg-primary-500-400'
           : isCurrent
-            ? 'bg-surface-300 dark:bg-surface-600 ring-1 ring-surface-400 dark:ring-surface-500'
-            : 'bg-surface-300 dark:bg-surface-600'}"
+            ? 'bg-surface-300-600 ring-1 ring-surface-400-500'
+            : 'bg-surface-300-600'}"
       />
     {/each}
     <span
       class="ml-1 text-xs leading-none {trend === 'up'
-        ? 'text-success-600 dark:text-success-400'
+        ? 'text-success-600-400'
         : trend === 'down'
-          ? 'text-error-500 dark:text-error-400'
-          : 'text-surface-400'}"
+          ? 'text-error-500-400'
+          : 'text-surface-400-500'}"
     >
       {#if trend === 'up'}&#8599;{:else if trend === 'down'}&#8600;{:else}&middot;{/if}
     </span>

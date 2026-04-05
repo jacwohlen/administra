@@ -36,7 +36,7 @@
   <div class="relative overflow-hidden h-screen w-screen border">
     <div class="absolute left-0 top-0 h-16 w-16 pointer-events-none z-50">
       <div
-        class="absolute transform -rotate-45 bg-surface-600 text-center text-white font-semibold py-1 left-[-34px] top-[32px] w-[170px]"
+        class="absolute transform -rotate-45 preset-filled-surface text-center font-semibold py-1 left-[-34px] top-[32px] w-[170px]"
       >
         main
       </div>

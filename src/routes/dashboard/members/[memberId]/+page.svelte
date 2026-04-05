@@ -224,7 +224,7 @@
   </div>
 
   {#if showEditFormDialog}
-    <div class="card p-4 mb-4 border border-surface-300">
+    <div class="card p-4 mb-4 border border-surface-300-700">
       <MemberForm
         isEditing={true}
         isSubmitting={isEditing}
@@ -241,7 +241,7 @@
   {/if}
 
   {#if showDeleteConfirm}
-    <div class="card p-4 mb-4 border border-error-500">
+    <div class="card p-4 mb-4 border border-error-500-400">
       <h3 class="h3 mb-2">{$_('page.members.deleteConfirmTitle')}</h3>
       <p class="mb-4">
         {$_('page.members.deleteConfirmMessage')}

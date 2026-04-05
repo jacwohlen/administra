@@ -1,6 +1,6 @@
 <script lang="ts">
   import { goto } from '$app/navigation';
-  import { Tabs, Avatar, Popover, Toast } from '@skeletonlabs/skeleton-svelte';
+  import { Tabs, Avatar, Toast } from '@skeletonlabs/skeleton-svelte';
   import { page } from '$app/state';
   import Fa from 'svelte-fa';
   import {
@@ -49,12 +49,13 @@
       return arr[0].charAt(0);
     }
   }
+
+  let popoverOpen = $state(false);
 </script>
 
-<!-- Custom layout replacing AppShell -->
 <div class="h-full flex flex-col overflow-hidden">
-  <!-- Header with tabs -->
-  <header class="flex items-center">
+  <!-- Header -->
+  <header class="bg-surface-100-900 border-b border-surface-300-700 flex items-center px-2">
     <Tabs
       value={getActiveTab()}
       onValueChange={(e) => {
@@ -93,34 +94,32 @@
       </Tabs.List>
     </Tabs>
 
-    <!-- Profile avatar with popover -->
-    <div class="ml-auto my-auto pr-4">
-      <Popover>
-        <Popover.Trigger>
-          {#if data.session.user.user_metadata.avatar_url != null}
-            <Avatar class="size-10 cursor-pointer hover:ring-2 ring-primary-500">
-              <Avatar.Image src={data.session.user.user_metadata.avatar_url} alt="Profile" />
-            </Avatar>
-          {:else}
-            <Avatar class="size-10 cursor-pointer hover:ring-2 ring-primary-500">
-              <Avatar.Fallback>{getInitials()}</Avatar.Fallback>
-            </Avatar>
-          {/if}
-        </Popover.Trigger>
-        <Popover.Content class="card p-4 w-64 shadow-xl z-50">
-          <nav>
-            <ul>
-              <li>
-                <form action="/logout" method="POST" use:enhance={submitLogout}>
-                  <button type="submit" class="btn preset-filled w-full">
-                    {$_('button.logout')}
-                  </button>
-                </form>
-              </li>
-            </ul>
-          </nav>
-        </Popover.Content>
-      </Popover>
+    <!-- Profile avatar -->
+    <div class="ml-auto my-auto pr-2 relative">
+      <button type="button" class="cursor-pointer" onclick={() => (popoverOpen = !popoverOpen)}>
+        {#if data.session.user.user_metadata.avatar_url != null}
+          <Avatar class="size-10 hover:ring-2 ring-primary-500-400">
+            <Avatar.Image src={data.session.user.user_metadata.avatar_url} alt="Profile" />
+          </Avatar>
+        {:else}
+          <Avatar class="size-10 hover:ring-2 ring-primary-500-400">
+            <Avatar.Fallback>{getInitials()}</Avatar.Fallback>
+          </Avatar>
+        {/if}
+      </button>
+      {#if popoverOpen}
+        <!-- svelte-ignore a11y_no_static_element_interactions -->
+        <div
+          class="absolute right-0 top-full mt-2 card p-4 w-64 shadow-xl z-50 bg-surface-50-950 border border-surface-300-700"
+          onmouseleave={() => (popoverOpen = false)}
+        >
+          <form action="/logout" method="POST" use:enhance={submitLogout}>
+            <button type="submit" class="btn preset-filled w-full">
+              {$_('button.logout')}
+            </button>
+          </form>
+        </div>
+      {/if}
     </div>
   </header>
 
@@ -132,5 +131,4 @@
   </main>
 </div>
 
-<!-- Toast group (singleton) -->
 <Toast.Group {toaster} />

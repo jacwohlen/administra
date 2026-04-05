@@ -76,7 +76,7 @@
 </script>
 
 <h3>{isEditing ? $_('dialog.editMember.title') : $_('dialog.newMember.title')}</h3>
-<form class="border border-surface-500 p-4 space-y-4 rounded-lg">
+<form class="border border-surface-500-400 p-4 space-y-4 rounded-lg">
   <label class="label">
     <span>{$_('dialog.newMember.lastName')}</span>
     <input

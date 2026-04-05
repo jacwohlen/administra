@@ -502,7 +502,7 @@
                 </div>
               </div>
             {:else}
-              <div class="text-center border-2 border-dashed border-surface-300 rounded-lg p-8">
+              <div class="text-center border-2 border-dashed border-surface-300-700 rounded-lg p-8">
                 <button
                   class="btn preset-filled-primary-500"
                   onclick={handleFileSelect}
@@ -558,7 +558,7 @@
 
             <!-- File Preview -->
             {#if previewUrl && canPreviewFile(lessonPlan.fileType)}
-              <div class="border-t border-surface-300 pt-4">
+              <div class="border-t border-surface-300-700 pt-4">
                 {#if lessonPlan.fileType?.startsWith('image/')}
                   <img
                     src={previewUrl}
@@ -567,12 +567,12 @@
                     style="max-height: 400px;"
                   />
                 {:else if lessonPlan.fileType === 'application/pdf'}
-                  <div class="text-center p-4 bg-surface-100 rounded-lg">
+                  <div class="text-center p-4 bg-surface-100-900 rounded-lg">
                     <iframe
                       src="{previewUrl}#toolbar=0&navpanes=0&scrollbar=0"
                       title="PDF Preview"
-                      class="w-full rounded"
-                      style="height: 600px; border: 1px solid var(--color-surface-300);"
+                      class="w-full rounded border border-surface-300-700"
+                      style="height: 600px;"
                     ></iframe>
                   </div>
                 {/if}
