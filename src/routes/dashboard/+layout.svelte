@@ -8,7 +8,9 @@
     faChartSimple,
     faList,
     faUser,
-    faCalendarDays
+    faCalendarDays,
+    faSun,
+    faMoon
   } from '@fortawesome/free-solid-svg-icons';
   import type { SubmitFunction } from '@sveltejs/kit';
   import { supabaseClient } from '$lib/supabase';
@@ -51,6 +53,24 @@
   }
 
   let popoverOpen = $state(false);
+  let isDark = $state(
+    typeof document !== 'undefined' && document.documentElement.classList.contains('dark')
+  );
+
+  function toggleDarkMode() {
+    isDark = !isDark;
+    document.documentElement.classList.toggle('dark', isDark);
+    localStorage.setItem('theme', isDark ? 'dark' : 'light');
+  }
+
+  import { onMount } from 'svelte';
+  onMount(() => {
+    const saved = localStorage.getItem('theme');
+    if (saved === 'dark' || (!saved && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+      document.documentElement.classList.add('dark');
+      isDark = true;
+    }
+  });
 </script>
 
 <div class="h-full flex flex-col overflow-hidden">
@@ -113,6 +133,14 @@
           class="absolute right-0 top-full mt-2 card p-4 w-64 shadow-xl z-50 bg-surface-50-950 border border-surface-300-700"
           onmouseleave={() => (popoverOpen = false)}
         >
+          <button
+            type="button"
+            class="btn preset-tonal-surface w-full mb-2"
+            onclick={toggleDarkMode}
+          >
+            <Fa icon={isDark ? faSun : faMoon} />
+            <span>{isDark ? 'Light Mode' : 'Dark Mode'}</span>
+          </button>
           <form action="/logout" method="POST" use:enhance={submitLogout}>
             <button type="submit" class="btn preset-filled w-full">
               {$_('button.logout')}
