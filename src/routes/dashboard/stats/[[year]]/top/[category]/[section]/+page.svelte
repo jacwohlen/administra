@@ -75,7 +75,10 @@
           ({e.count})
         </span>
         <span>
-          <a class="btn btn-sm variant-filled-secondary" href={'/dashboard/members/' + e.memberId}>
+          <a
+            class="btn btn-sm preset-filled-secondary-500"
+            href={'/dashboard/members/' + e.memberId}
+          >
             <Fa icon={faGripLines} />
             <span>{$_('button.view')}</span>
           </a>

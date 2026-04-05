@@ -5,7 +5,7 @@
   import { goto } from '$app/navigation';
   import type { PageData } from './$types';
   import TopParticipantsStats from './TopParticipantsStats.svelte';
-  import { RadioGroup, RadioItem } from '@skeletonlabs/skeleton';
+  import { SegmentedControl } from '@skeletonlabs/skeleton-svelte';
   import { _ } from 'svelte-i18n';
   import TopTrainers from './TopTrainers.svelte';
   import TopEventParticipants from './TopEventParticipants.svelte';
@@ -36,22 +36,27 @@
     </button>
   </div>
   <div>
-    <RadioGroup>
-      <RadioItem
-        bind:group={yearmode}
-        onclick={() => goto('/dashboard/stats/' + year)}
-        name="yearmode"
-        value="YEAR"
-      >
-        {year}
-      </RadioItem>
-      <RadioItem
-        bind:group={yearmode}
-        onclick={() => goto('/dashboard/stats/ALL')}
-        name="yearmode"
-        value="ALL">{$_('page.stats.all')}</RadioItem
-      >
-    </RadioGroup>
+    <SegmentedControl
+      name="yearmode"
+      defaultValue={yearmode}
+      onValueChange={(e) => {
+        if (e.value === 'YEAR') {
+          goto('/dashboard/stats/' + year);
+        } else {
+          goto('/dashboard/stats/ALL');
+        }
+      }}
+    >
+      <SegmentedControl.Item value="YEAR">
+        <SegmentedControl.ItemHiddenInput />
+        <SegmentedControl.ItemText>{year}</SegmentedControl.ItemText>
+      </SegmentedControl.Item>
+      <SegmentedControl.Item value="ALL">
+        <SegmentedControl.ItemHiddenInput />
+        <SegmentedControl.ItemText>{$_('page.stats.all')}</SegmentedControl.ItemText>
+      </SegmentedControl.Item>
+      <SegmentedControl.Indicator />
+    </SegmentedControl>
   </div>
   <div>
     <button class="btn" onclick={nextYear}>

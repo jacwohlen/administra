@@ -4,21 +4,14 @@
   import { faGripLines, faPlus } from '@fortawesome/free-solid-svg-icons';
   import { _ } from 'svelte-i18n';
   import { supabaseClient } from '$lib/supabase';
-  import {
-    getToastStore,
-    getModalStore,
-    type ModalSettings,
-    type ModalComponent
-  } from '@skeletonlabs/skeleton';
+  import { toaster } from '$lib/toast';
   import { invalidate } from '$app/navigation';
   import MemberForm from './MemberForm.svelte';
-
-  const modalStore = getModalStore();
-  const toastStore = getToastStore();
 
   let { data }: { data: PageData } = $props();
   let searchTerm = $state('');
   let isSubmitting = false;
+  let showMemberFormDialog = $state(false);
 
   let search = $derived((firstname: string, lastname: string): boolean => {
     let q = searchTerm.toLowerCase().trim();
@@ -28,18 +21,7 @@
   });
 
   function showMemberForm() {
-    const modalComponent: ModalComponent = {
-      ref: MemberForm,
-      props: { isSubmitting }
-    };
-
-    const modal: ModalSettings = {
-      type: 'component',
-      component: modalComponent,
-      response: addMember
-    };
-
-    modalStore.trigger(modal);
+    showMemberFormDialog = true;
   }
 
   async function addMember(
@@ -78,20 +60,10 @@
       invalidate('members:list');
 
       // Show success toast
-      toastStore.trigger({
-        message: $_('page.members.createdSuccess'),
-        background: 'variant-filled-success',
-        timeout: 4000,
-        classes: 'border-l-4 border-green-500'
-      });
+      toaster.success({ title: $_('page.members.createdSuccess') });
     } catch (error) {
       console.error('Error creating member:', error);
-      toastStore.trigger({
-        message: $_('page.members.createError'),
-        background: 'variant-filled-error',
-        timeout: 6000,
-        classes: 'border-l-4 border-red-500'
-      });
+      toaster.error({ title: $_('page.members.createError') });
     } finally {
       isSubmitting = false;
     }
@@ -100,11 +72,21 @@
 
 <div class="flex items-center justify-between mb-4">
   <h1>{$_('page.members.title')}</h1>
-  <button class="btn btn-sm variant-filled-primary" onclick={showMemberForm}>
+  <button class="btn btn-sm preset-filled-primary-500" onclick={showMemberForm}>
     <Fa icon={faPlus} />
     <span>{$_('page.members.addMember')}</span>
   </button>
 </div>
+
+{#if showMemberFormDialog}
+  <div class="card p-4 mb-4 border border-surface-300">
+    <MemberForm
+      {isSubmitting}
+      onclose={() => (showMemberFormDialog = false)}
+      onsubmit={addMember}
+    />
+  </div>
+{/if}
 
 <div class="m-2">
   <input
@@ -128,14 +110,14 @@
             {#if m.labels}
               {#each m.labels as l (l)}
                 <span class="truncate text-wrap">
-                  <span class="badge variant-filled-secondary font-normal h-4 m-0.5">{l}</span>
+                  <span class="badge preset-filled-secondary-500 font-normal h-4 m-0.5">{l}</span>
                 </span>
               {/each}
             {/if}
           </dd>
         </span>
         <span>
-          <a class="btn btn-sm variant-filled-secondary" href={'/dashboard/members/' + m.id}>
+          <a class="btn btn-sm preset-filled-secondary-500" href={'/dashboard/members/' + m.id}>
             <Fa icon={faGripLines} />
             <span>{$_('button.view')}</span>
           </a>

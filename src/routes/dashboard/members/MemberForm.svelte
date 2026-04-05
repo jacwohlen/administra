@@ -1,8 +1,6 @@
 <script lang="ts">
-  import { getModalStore } from '@skeletonlabs/skeleton';
   import { _ } from 'svelte-i18n';
 
-  const modalStore = getModalStore();
   import Fa from 'svelte-fa';
   import { faSpinner, faXmark } from '@fortawesome/free-solid-svg-icons';
 
@@ -14,7 +12,9 @@
     labels = ['new'] as string[],
     isSubmitting = false,
     isEditing = false,
-    id = ''
+    id = '',
+    onclose,
+    onsubmit
   }: {
     lastname?: string;
     firstname?: string;
@@ -24,6 +24,15 @@
     isSubmitting?: boolean;
     isEditing?: boolean;
     id?: string;
+    onclose?: () => void;
+    onsubmit?: (data: {
+      id: string;
+      lastname: string;
+      firstname: string;
+      birthday: string;
+      mobile: string;
+      labels: string[];
+    }) => void;
   } = $props();
 
   let labelInput = '';
@@ -57,17 +66,17 @@
   }
 
   function cancel() {
-    modalStore.close();
+    onclose?.();
   }
 
   function onFormSubmit(): void {
-    if ($modalStore[0].response) $modalStore[0].response(formData);
-    modalStore.close();
+    onsubmit?.(formData);
+    onclose?.();
   }
 </script>
 
 <h3>{isEditing ? $_('dialog.editMember.title') : $_('dialog.newMember.title')}</h3>
-<form class="modal-form border border-surface-500 p-4 space-y-4 rounded-container-token">
+<form class="modal-form border border-surface-500 p-4 space-y-4 rounded-lg">
   <label class="label">
     <span>{$_('dialog.newMember.lastName')}</span>
     <input
@@ -102,7 +111,7 @@
       {#each formData.labels as label (label)}
         <button
           type="button"
-          class="chip variant-filled-secondary flex items-center gap-1"
+          class="chip preset-filled-secondary-500 flex items-center gap-1"
           onclick={() => removeLabel(label)}
         >
           {label}
@@ -118,16 +127,16 @@
         type="text"
         placeholder={$_('dialog.newMember.labelPlaceholder')}
       />
-      <button type="button" class="variant-filled-secondary" onclick={addLabel}>
+      <button type="button" class="preset-filled-secondary-500" onclick={addLabel}>
         {$_('button.add')}
       </button>
     </div>
   </div>
 </form>
 <footer class="modal-footer flex justify-end space-x-2">
-  <button class="btn variant-ghost-surface" onclick={cancel}>{$_('button.cancel')}</button>
+  <button class="btn preset-tonal-surface" onclick={cancel}>{$_('button.cancel')}</button>
   <button
-    class="btn variant-filled-primary"
+    class="btn preset-filled-primary-500"
     disabled={!formData.firstname || !formData.lastname || isSubmitting}
     onclick={onFormSubmit}
   >

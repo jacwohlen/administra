@@ -2,27 +2,13 @@
   import type { Member } from '$lib/models';
   import Fa from 'svelte-fa';
   import { faUserPlus } from '@fortawesome/free-solid-svg-icons';
-  import {
-    popup,
-    type PopupSettings,
-    getModalStore,
-    type ModalComponent,
-    type ModalSettings
-  } from '@skeletonlabs/skeleton';
   import { supabaseClient } from '$lib/supabase';
   import { _ } from 'svelte-i18n';
-
-  const modalStore = getModalStore();
-
-  const popupSettings: PopupSettings = {
-    event: 'focus-click',
-    target: 'menu1',
-    placement: 'bottom'
-  };
 
   let { onadd }: { onadd?: (data: { member: Member }) => void } = $props();
 
   let searchterm = $state('');
+  let showDropdown = $state(false);
 
   let filteredData: Member[] = $state([]);
 
@@ -37,10 +23,12 @@
       console.log(error);
     }
     if (data) filteredData = data;
+    showDropdown = true;
   }
 
   function clearSearch() {
     searchterm = '';
+    showDropdown = false;
   }
 
   function add(member: Member) {
@@ -49,37 +37,34 @@
   }
 
   import MemberForm from './MemberForm.svelte';
+
+  let showNewMemberForm = $state(false);
+  let newMemberLastname = $state('');
+  let newMemberFirstname = $state('');
+
   function createNewMember() {
     const s = searchterm.split(' ');
-    let lastname = '';
-    let firstname = '';
     if (s.length > 1) {
-      lastname = s[0];
-      firstname = s.splice(1).join(' ');
+      newMemberLastname = s[0];
+      newMemberFirstname = s.splice(1).join(' ');
     } else {
-      lastname = searchterm;
+      newMemberLastname = searchterm;
+      newMemberFirstname = '';
     }
+    showDropdown = false;
+    showNewMemberForm = true;
+  }
 
-    const modalComponent: ModalComponent = {
-      ref: MemberForm,
-      props: { lastname, firstname }
-    };
-
-    const d: ModalSettings = {
-      type: 'component',
-      component: modalComponent,
-      response: async (r) => {
-        const { error, data } = await supabaseClient
-          .from('members')
-          .insert({ ...r, labels: ['new'] })
-          .select()
-          .single();
-        if (error) console.log(error);
-        onadd?.({ member: data });
-        clearSearch();
-      }
-    };
-    modalStore.trigger(d);
+  async function handleNewMemberSubmit(r: { lastname: string; firstname: string }) {
+    const { error, data } = await supabaseClient
+      .from('members')
+      .insert({ ...r, labels: ['new'] })
+      .select()
+      .single();
+    if (error) console.log(error);
+    onadd?.({ member: data });
+    clearSearch();
+    showNewMemberForm = false;
   }
 </script>
 
@@ -94,30 +79,45 @@
       placeholder={$_('page.trainings.addMemberPlaceholder')}
       bind:value={searchterm}
       oninput={filterData}
-      use:popup={popupSettings}
+      onfocus={() => {
+        if (searchterm && filteredData.length > 0) showDropdown = true;
+      }}
     />
   </div>
-  <nav class="card p-2 shadow-xl" data-popup="menu1">
-    <ul class="nav-list">
-      {#each filteredData as p (p.id)}
+  {#if showDropdown && searchterm}
+    <nav class="card p-2 shadow-xl absolute top-full left-0 right-0 z-50 mt-1">
+      <ul class="nav-list">
+        {#each filteredData as p (p.id)}
+          <li>
+            <span class="flex-auto">{p.lastname} {p.firstname}</span>
+            <div class="justify-self-end relative">
+              <button class="btn btn-sm preset-tonal-primary" onclick={() => add(p)}>
+                <Fa icon={faUserPlus} />
+                <span>{$_('button.add')}</span>
+              </button>
+            </div>
+          </li>
+        {/each}
         <li>
-          <span class="flex-auto">{p.lastname} {p.firstname}</span>
+          <span class="flex-auto">{searchterm}...</span>
           <div class="justify-self-end relative">
-            <button class="btn btn-sm variant-ringed-primary" onclick={() => add(p)}>
-              <Fa icon={faUserPlus} />
-              <span>{$_('button.add')}</span>
+            <button class="btn btn-sm preset-filled-primary-500" onclick={createNewMember}>
+              {$_('button.createNew')}
             </button>
           </div>
         </li>
-      {/each}
-      <li>
-        <span class="flex-auto">{searchterm}...</span>
-        <div class="justify-self-end relative">
-          <button class="btn btn-sm variant-filled-primary" onclick={createNewMember}>
-            {$_('button.createNew')}
-          </button>
-        </div>
-      </li>
-    </ul>
-  </nav>
+      </ul>
+    </nav>
+  {/if}
+
+  {#if showNewMemberForm}
+    <div class="card p-4 mt-2 border border-surface-300">
+      <MemberForm
+        lastname={newMemberLastname}
+        firstname={newMemberFirstname}
+        onclose={() => (showNewMemberForm = false)}
+        onsubmit={handleNewMemberSubmit}
+      />
+    </div>
+  {/if}
 </div>

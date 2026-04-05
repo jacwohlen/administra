@@ -65,7 +65,7 @@
 
 <div class="max-w-2xl mx-auto">
   <div class="flex items-center gap-4 mb-6">
-    <a href="/dashboard/events/{data.event.id}" class="btn variant-ghost-surface">
+    <a href="/dashboard/events/{data.event.id}" class="btn preset-tonal-surface">
       <Fa icon={faArrowLeft} />
     </a>
     <h1>{$_('page.events.edit_event')}</h1>
@@ -189,7 +189,7 @@
     </div>
 
     {#if error}
-      <div class="alert variant-filled-error">
+      <div class="alert preset-filled-error-500">
         <div class="alert-message">
           <p>{error}</p>
         </div>
@@ -197,10 +197,10 @@
     {/if}
 
     <div class="flex justify-end gap-4">
-      <a href="/dashboard/events/{data.event.id}" class="btn variant-ghost-surface">
+      <a href="/dashboard/events/{data.event.id}" class="btn preset-tonal-surface">
         {$_('button.cancel')}
       </a>
-      <button type="submit" class="btn variant-filled-primary" disabled={loading}>
+      <button type="submit" class="btn preset-filled-primary-500" disabled={loading}>
         <Fa icon={faSave} />
         <span>{loading ? $_('button.saving') : $_('button.save')}</span>
       </button>

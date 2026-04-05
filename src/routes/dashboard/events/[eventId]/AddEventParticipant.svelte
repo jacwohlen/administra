@@ -141,7 +141,7 @@
               >
                 <span>{member.lastname}, {member.firstname}</span>
                 <button
-                  class="btn btn-sm variant-ringed-primary"
+                  class="btn btn-sm preset-tonal-primary"
                   onclick={(e: MouseEvent) => {
                     e.stopPropagation();
                     addParticipant(member);

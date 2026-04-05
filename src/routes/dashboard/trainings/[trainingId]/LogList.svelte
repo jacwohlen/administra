@@ -53,7 +53,7 @@
       {#each logs as i (i.date)}
         <a
           href="/dashboard/trainings/{trainingId}/{i.date}"
-          class="card p-3 flex items-center gap-3 hover:variant-soft-primary transition-colors"
+          class="card p-3 flex items-center gap-3 hover:preset-tonal-primary transition-colors"
         >
           <!-- Date -->
           <div class="text-center flex-none w-16">
@@ -66,30 +66,30 @@
 
           <!-- Stats -->
           <div class="flex items-center gap-2 flex-auto flex-wrap">
-            <span class="chip variant-filled-secondary">
+            <span class="chip preset-filled-secondary-500">
               {i.count}
               <span class="ml-1 text-xs">{$_('page.trainings.participants')}</span>
             </span>
 
             {#if i.totalTrainerCount > 0}
-              <span class="chip variant-filled-success">
+              <span class="chip preset-filled-success-500">
                 <img class="inline-block w-3" src="/judo-icon.svg" alt="trainer" />
                 <span class="ml-1">{i.totalTrainerCount}</span>
               </span>
             {:else}
-              <span class="chip variant-filled-warning">
+              <span class="chip preset-filled-warning-500">
                 <Fa icon={faExclamationTriangle} class="w-3" />
                 <span class="ml-1 text-xs">{$_('page.trainings.noTrainer')}</span>
               </span>
             {/if}
 
             {#if i.hasLessonPlan}
-              <span class="chip variant-soft-success">
+              <span class="chip preset-tonal-success">
                 <Fa icon={faCheckCircle} size="xs" />
                 <span class="ml-1 text-xs">{$_('page.trainings.hasLessonPlan')}</span>
               </span>
             {:else}
-              <span class="chip variant-filled-warning">
+              <span class="chip preset-filled-warning-500">
                 <Fa icon={faExclamationTriangle} class="w-3" />
                 <span class="ml-1 text-xs">{$_('page.trainings.noLessonPlan')}</span>
               </span>

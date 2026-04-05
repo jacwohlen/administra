@@ -76,7 +76,7 @@
       <p class="text-sm text-gray-500 mt-2">{$_('page.stats.loading')}</p>
     </div>
   {:else if error}
-    <div class="alert variant-filled-error">
+    <div class="alert preset-filled-error-500">
       <div class="alert-message">
         <p>{error}</p>
       </div>

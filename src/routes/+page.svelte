@@ -38,7 +38,7 @@
     <p>
       {$_('page.routes.hi')} <strong>{data.session.user.email}</strong>
     </p>
-    <a class="btn variant-filled-primary mt-2" href="/dashboard" color="primary"
+    <a class="btn preset-filled-primary-500 mt-2" href="/dashboard" color="primary"
       >{$_('button.openDashboard')}</a
     >
   {:else}
@@ -47,7 +47,7 @@
         {error}
       </span>
     {/if}
-    <button class="btn variant-filled-primary" onclick={login} color="primary">
+    <button class="btn preset-filled-primary-500" onclick={login} color="primary">
       {$_('button.login')}
     </button>
   {/if}

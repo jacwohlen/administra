@@ -2,7 +2,7 @@
   import type { Athletes } from '$lib/models';
   import { supabaseClient } from '$lib/supabase';
   import { faAngleRight } from '@fortawesome/free-solid-svg-icons';
-  import { Avatar } from '@skeletonlabs/skeleton';
+  import { Avatar } from '@skeletonlabs/skeleton-svelte';
   import Fa from 'svelte-fa';
 
   let {
@@ -45,20 +45,27 @@
         <div class="relative inline-block">
           <span class="badge-icon absolute -top-0 -right-0 z-10 bg-gray-300">2</span>
           {#await getImage(athletes[section][1].memberId)}
-            <Avatar
-              class="mx-auto w-16"
-              initials={athletes[section][1].firstname.charAt(0) +
-                athletes[section][1].lastname.charAt(0)}
-              border="border-4 border-gray-300"
-            />
+            <Avatar class="mx-auto size-16 border-4 border-gray-300">
+              <Avatar.Fallback
+                >{athletes[section][1].firstname.charAt(0)}{athletes[section][1].lastname.charAt(
+                  0
+                )}</Avatar.Fallback
+              >
+            </Avatar>
           {:then img}
-            <Avatar
-              class="mx-auto w-16"
-              src={img}
-              initials={athletes[section][1].firstname.charAt(0) +
-                athletes[section][1].lastname.charAt(0)}
-              border="border-4 border-gray-300"
-            />
+            <Avatar class="mx-auto size-16 border-4 border-gray-300">
+              {#if img}
+                <Avatar.Image
+                  src={img}
+                  alt="{athletes[section][1].firstname} {athletes[section][1].lastname}"
+                />
+              {/if}
+              <Avatar.Fallback
+                >{athletes[section][1].firstname.charAt(0)}{athletes[section][1].lastname.charAt(
+                  0
+                )}</Avatar.Fallback
+              >
+            </Avatar>
           {/await}
         </div>
         <div>
@@ -77,20 +84,27 @@
         <div class="relative inline-block">
           <span class="badge-icon absolute -top-0 -right-0 z-10 bg-yellow-500">1</span>
           {#await getImage(athletes[section][0].memberId)}
-            <Avatar
-              class="mx-auto w-20"
-              initials={athletes[section][0].firstname.charAt(0) +
-                athletes[section][0].lastname.charAt(0)}
-              border="border-4 border-yellow-500"
-            />
+            <Avatar class="mx-auto size-20 border-4 border-yellow-500">
+              <Avatar.Fallback
+                >{athletes[section][0].firstname.charAt(0)}{athletes[section][0].lastname.charAt(
+                  0
+                )}</Avatar.Fallback
+              >
+            </Avatar>
           {:then img}
-            <Avatar
-              class="mx-auto w-20"
-              src={img}
-              initials={athletes[section][0].firstname.charAt(0) +
-                athletes[section][0].lastname.charAt(0)}
-              border="border-4 border-yellow-500"
-            />
+            <Avatar class="mx-auto size-20 border-4 border-yellow-500">
+              {#if img}
+                <Avatar.Image
+                  src={img}
+                  alt="{athletes[section][0].firstname} {athletes[section][0].lastname}"
+                />
+              {/if}
+              <Avatar.Fallback
+                >{athletes[section][0].firstname.charAt(0)}{athletes[section][0].lastname.charAt(
+                  0
+                )}</Avatar.Fallback
+              >
+            </Avatar>
           {/await}
         </div>
         <div>
@@ -109,20 +123,27 @@
         <div class="relative inline-block">
           <span class="badge-icon absolute -top-0 -right-0 z-10 bg-amber-700">3</span>
           {#await getImage(athletes[section][2].memberId)}
-            <Avatar
-              class="mx-auto w-16"
-              initials={athletes[section][2].firstname.charAt(0) +
-                athletes[section][2].lastname.charAt(0)}
-              border="border-4 border-amber-700"
-            />
+            <Avatar class="mx-auto size-16 border-4 border-amber-700">
+              <Avatar.Fallback
+                >{athletes[section][2].firstname.charAt(0)}{athletes[section][2].lastname.charAt(
+                  0
+                )}</Avatar.Fallback
+              >
+            </Avatar>
           {:then img}
-            <Avatar
-              class="mx-auto w-16"
-              src={img}
-              initials={athletes[section][2].firstname.charAt(0) +
-                athletes[section][2].lastname.charAt(0)}
-              border="border-4 border-amber-700"
-            />
+            <Avatar class="mx-auto size-16 border-4 border-amber-700">
+              {#if img}
+                <Avatar.Image
+                  src={img}
+                  alt="{athletes[section][2].firstname} {athletes[section][2].lastname}"
+                />
+              {/if}
+              <Avatar.Fallback
+                >{athletes[section][2].firstname.charAt(0)}{athletes[section][2].lastname.charAt(
+                  0
+                )}</Avatar.Fallback
+              >
+            </Avatar>
           {/await}
         </div>
         <div>

@@ -29,7 +29,7 @@
         <dd class="text-sm">{$_('weekday.' + t.weekday)} - {t.dateFrom} | {t.section}</dd>
       </span>
       <span>
-        <a class="btn btn-sm variant-filled-secondary" href="/dashboard/trainings/{t.id}">
+        <a class="btn btn-sm preset-filled-secondary-500" href="/dashboard/trainings/{t.id}">
           <Fa icon={faGripLines} />
           <span>{$_('button.view')}</span>
         </a>

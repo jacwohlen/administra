@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { PageData } from './$types';
-  import { Avatar } from '@skeletonlabs/skeleton';
+  import { Avatar } from '@skeletonlabs/skeleton-svelte';
   import Fa from 'svelte-fa';
   import {
     faCalendarDays,
@@ -55,7 +55,7 @@
 
 <div class="flex justify-between items-center mb-6">
   <h1>{$_('page.events.title')}</h1>
-  <a href="/dashboard/events/new" class="btn btn-sm variant-filled-primary">
+  <a href="/dashboard/events/new" class="btn btn-sm preset-filled-primary-500">
     <Fa icon={faPlus} />
     <span>{$_('page.events.create_event')}</span>
   </a>
@@ -89,10 +89,9 @@
           {#each filteredEvents.filter((e) => isToday(e.date)) as event (event.id)}
             <li class="flex items-start">
               <div class="relative inline-block flex-none">
-                <Avatar
-                  class="rounded-md"
-                  initials={event.title.charAt(0) + event.title.charAt(1)}
-                />
+                <Avatar class="rounded-md size-10">
+                  <Avatar.Fallback>{event.title.charAt(0)}{event.title.charAt(1)}</Avatar.Fallback>
+                </Avatar>
               </div>
               <span class="flex-1 min-w-0">
                 <dt class="font-bold truncate">
@@ -121,7 +120,10 @@
                 </dd>
               </span>
               <span class="flex-none">
-                <a class="btn btn-sm variant-filled-secondary" href="/dashboard/events/{event.id}">
+                <a
+                  class="btn btn-sm preset-filled-secondary-500"
+                  href="/dashboard/events/{event.id}"
+                >
                   <Fa icon={faGripLines} />
                   <span>{$_('button.view')}</span>
                 </a>
@@ -140,10 +142,9 @@
           {#each filteredEvents.filter((e) => isUpcoming(e.date)) as event (event.id)}
             <li class="flex items-start">
               <div class="relative inline-block flex-none">
-                <Avatar
-                  class="rounded-md"
-                  initials={event.title.charAt(0) + event.title.charAt(1)}
-                />
+                <Avatar class="rounded-md size-10">
+                  <Avatar.Fallback>{event.title.charAt(0)}{event.title.charAt(1)}</Avatar.Fallback>
+                </Avatar>
               </div>
               <span class="flex-1 min-w-0">
                 <dt class="font-bold truncate">
@@ -172,7 +173,10 @@
                 </dd>
               </span>
               <span class="flex-none">
-                <a class="btn btn-sm variant-filled-secondary" href="/dashboard/events/{event.id}">
+                <a
+                  class="btn btn-sm preset-filled-secondary-500"
+                  href="/dashboard/events/{event.id}"
+                >
                   <Fa icon={faGripLines} />
                   <span>{$_('button.view')}</span>
                 </a>
@@ -191,10 +195,9 @@
           {#each filteredEvents.filter((e) => isPast(e.date)) as event (event.id)}
             <li class="flex items-start">
               <div class="relative inline-block flex-none">
-                <Avatar
-                  class="rounded-md"
-                  initials={event.title.charAt(0) + event.title.charAt(1)}
-                />
+                <Avatar class="rounded-md size-10">
+                  <Avatar.Fallback>{event.title.charAt(0)}{event.title.charAt(1)}</Avatar.Fallback>
+                </Avatar>
               </div>
               <span class="flex-1 min-w-0">
                 <dt class="font-bold truncate">
@@ -223,7 +226,10 @@
                 </dd>
               </span>
               <span class="flex-none">
-                <a class="btn btn-sm variant-filled-secondary" href="/dashboard/events/{event.id}">
+                <a
+                  class="btn btn-sm preset-filled-secondary-500"
+                  href="/dashboard/events/{event.id}"
+                >
                   <Fa icon={faGripLines} />
                   <span>{$_('button.view')}</span>
                 </a>

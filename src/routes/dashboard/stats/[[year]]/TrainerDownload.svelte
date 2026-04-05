@@ -157,7 +157,7 @@
 
 <div class="flex items-center gap-2">
   <button
-    class="btn variant-filled-secondary"
+    class="btn preset-filled-secondary-500"
     onclick={downloadTrainerTracking}
     disabled={isDownloading}
   >

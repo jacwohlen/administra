@@ -19,13 +19,13 @@
     <div>
       <h2 class="h2">{data.title}</h2>
       <div class="flex items-center gap-2 mt-2 flex-wrap">
-        <span class="badge variant-filled-secondary">{data.section}</span>
-        <span class="badge variant-soft-surface">{$_('weekday.' + data.weekday)}</span>
-        <span class="badge variant-soft-surface">
+        <span class="badge preset-filled-secondary-500">{data.section}</span>
+        <span class="badge preset-tonal-surface">{$_('weekday.' + data.weekday)}</span>
+        <span class="badge preset-tonal-surface">
           <Fa icon={faClock} size="xs" class="mr-1" />
           {data.dateFrom} – {data.dateTo}
         </span>
-        <span class="badge variant-soft-surface">
+        <span class="badge preset-tonal-surface">
           <Fa icon={faUsers} size="xs" class="mr-1" />
           {data.participants.length}
           {$_('page.trainings.participants')}
@@ -33,7 +33,7 @@
       </div>
     </div>
     <a
-      class="btn variant-filled-primary flex-none"
+      class="btn preset-filled-primary-500 flex-none"
       href="/dashboard/trainings/{data.id}/{getDateString()}"
     >
       <Fa icon={faClipboardCheck} />

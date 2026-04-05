@@ -1,8 +1,7 @@
 <script lang="ts">
   import Fa from 'svelte-fa';
   import { faEllipsisVertical } from '@fortawesome/free-solid-svg-icons';
-  import { type ModalSettings, Avatar, getModalStore } from '@skeletonlabs/skeleton';
-  const modalStore = getModalStore();
+  import { Avatar } from '@skeletonlabs/skeleton-svelte';
 
   import Labels from './Labels.svelte';
   import ParticipantFrequency from './ParticipantFrequency.svelte';
@@ -24,6 +23,7 @@
   let menuOpen = $state(false);
   let menuStyle = $state('');
   let btnEl: HTMLButtonElement;
+  let showRemoveConfirm = $state(false);
 
   function toggleMenu() {
     if (menuOpen) {
@@ -58,15 +58,14 @@
 
   function triggerConfirm(): void {
     closeMenu();
-    const confirm: ModalSettings = {
-      type: 'confirm',
-      title: $_('dialog.confirm.title'),
-      body: $_('dialog.confirm.body'),
-      response: (r: boolean) => r === true && onremove?.({ member }),
-      buttonTextCancel: $_('button.cancel'),
-      buttonTextConfirm: $_('button.confirm')
-    };
-    modalStore.trigger(confirm);
+    showRemoveConfirm = true;
+  }
+
+  function handleRemoveResponse(confirmed: boolean) {
+    showRemoveConfirm = false;
+    if (confirmed) {
+      onremove?.({ member });
+    }
   }
 
   function setTrainerRole(role: TrainerRole): void {
@@ -101,9 +100,14 @@
         </span>
       {/if}
       {#if member.img}
-        <Avatar src={member.img} width="w-10" />
+        <Avatar class="size-10">
+          <Avatar.Image src={member.img} alt="{member.lastname} {member.firstname}" />
+          <Avatar.Fallback>{member.lastname.charAt(0)}{member.firstname.charAt(0)}</Avatar.Fallback>
+        </Avatar>
       {:else}
-        <Avatar initials={member.lastname.charAt(0) + member.firstname.charAt(0)} width="w-10" />
+        <Avatar class="size-10">
+          <Avatar.Fallback>{member.lastname.charAt(0)}{member.firstname.charAt(0)}</Avatar.Fallback>
+        </Avatar>
       {/if}
     </div>
     <span class="flex-auto min-w-0">
@@ -176,6 +180,27 @@
         </nav>
       {/if}
     </div>
+
+    {#if showRemoveConfirm}
+      <div class="card p-4 mt-2 border border-error-500 w-full">
+        <h4 class="font-semibold mb-2">{$_('dialog.confirm.title')}</h4>
+        <p class="mb-3">{$_('dialog.confirm.body')}</p>
+        <div class="flex justify-end gap-2">
+          <button
+            class="btn btn-sm preset-tonal-surface"
+            onclick={() => handleRemoveResponse(false)}
+          >
+            {$_('button.cancel')}
+          </button>
+          <button
+            class="btn btn-sm preset-filled-error-500"
+            onclick={() => handleRemoveResponse(true)}
+          >
+            {$_('button.confirm')}
+          </button>
+        </div>
+      </div>
+    {/if}
   {:else}
     {$_('page.trainings.memberNotFound')}
   {/if}

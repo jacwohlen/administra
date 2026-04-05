@@ -90,7 +90,7 @@
           </span>
           <span class="">
             <a
-              class="btn btn-sm variant-filled-secondary"
+              class="btn btn-sm preset-filled-secondary-500"
               href="/dashboard/trainings/{t.id}/{date.format(dateFormat)}"
             >
               <Fa icon={faClipboardCheck} />
@@ -143,7 +143,7 @@
             </dd>
           </span>
           <span class="flex-none">
-            <a class="btn btn-sm variant-filled-secondary" href="/dashboard/events/{event.id}">
+            <a class="btn btn-sm preset-filled-secondary-500" href="/dashboard/events/{event.id}">
               <Fa icon={faClipboardCheck} />
               <span>{$_('button.trackAttendance')}</span>
             </a>

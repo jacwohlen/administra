@@ -45,7 +45,7 @@
         </span>
         <span>
           <a
-            class="btn btn-sm variant-filled-secondary"
+            class="btn btn-sm preset-filled-secondary-500"
             href="/dashboard/trainings/{i.trainingId.id}/{i.date}"
           >
             <Fa icon={faGripLines} />
@@ -62,7 +62,7 @@
   {#if currentItem < l.length}
     <span class="flex justify-center">
       <button
-        class="btn btn-sm variant-filled-secondary"
+        class="btn btn-sm preset-filled-secondary-500"
         onclick={() => (currentItem = currentItem + 10)}
       >
         {$_('button.loadMore')}
