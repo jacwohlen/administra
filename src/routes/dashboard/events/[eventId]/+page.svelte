@@ -278,32 +278,32 @@
 
   <!-- Event Description -->
   {#if data.event.description}
-    <div class="card p-4 mb-6">
-      <h2 class="font-semibold mb-2">{$_('page.events.description')}</h2>
-      <p class="text-surface-700-300 break-words">{data.event.description}</p>
+    <div class="mb-4">
+      <h3 class="font-semibold mb-1">{$_('page.events.description')}</h3>
+      <p class="text-sm text-surface-700-300 break-words">{data.event.description}</p>
     </div>
   {/if}
 
   <!-- Event Statistics -->
-  <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-    <div class="card p-4 text-center">
-      <div class="text-2xl font-bold text-primary-600-400">{registeredCount}</div>
-      <div class="text-sm text-surface-600-400">{$_('page.events.stats.registered')}</div>
+  <div class="grid grid-cols-3 gap-2 mb-4">
+    <div class="card p-3 text-center">
+      <div class="text-xl font-bold text-primary-600-400">{registeredCount}</div>
+      <div class="text-xs text-surface-600-400">{$_('page.events.stats.registered')}</div>
     </div>
-    <div class="card p-4 text-center">
-      <div class="text-2xl font-bold text-success-600-400">{attendedCount}</div>
-      <div class="text-sm text-surface-600-400">{$_('page.events.stats.attended')}</div>
+    <div class="card p-3 text-center">
+      <div class="text-xl font-bold text-success-600-400">{attendedCount}</div>
+      <div class="text-xs text-surface-600-400">{$_('page.events.stats.attended')}</div>
     </div>
-    <div class="card p-4 text-center">
-      <div class="text-2xl font-bold text-tertiary-600-400">{attendanceRate}%</div>
-      <div class="text-sm text-surface-600-400">{$_('page.events.stats.attendance_rate')}</div>
+    <div class="card p-3 text-center">
+      <div class="text-xl font-bold text-tertiary-600-400">{attendanceRate}%</div>
+      <div class="text-xs text-surface-600-400">{$_('page.events.stats.attendance_rate')}</div>
     </div>
   </div>
 
   <!-- Registration Status -->
   {#if data.event.registrationDeadline}
-    <div class="card p-4 mb-6">
-      <h2 class="font-semibold mb-2">{$_('page.events.registration_info')}</h2>
+    <div class="mb-4">
+      <h3 class="font-semibold mb-1">{$_('page.events.registration_info')}</h3>
       <p class="text-sm">
         <strong>{$_('page.events.registration_deadline')}:</strong>
         {formatEventDate(data.event.registrationDeadline)}
@@ -324,9 +324,9 @@
   {/if}
 
   <!-- Participants Section -->
-  <div class="card p-6">
-    <div class="flex justify-between items-center mb-4">
-      <h2 class="text-xl font-semibold">{$_('page.events.participants')}</h2>
+  <div>
+    <div class="flex justify-between items-center mb-3">
+      <h3 class="font-semibold">{$_('page.events.participants')}</h3>
       {#if !isEventPast() && isRegistrationOpen() && (!data.event.maxParticipants || registeredCount < data.event.maxParticipants)}
         <button
           class="btn btn-sm preset-filled-primary-500"
