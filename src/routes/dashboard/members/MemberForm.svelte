@@ -35,16 +35,16 @@
     }) => void;
   } = $props();
 
-  let labelInput = '';
+  let labelInput = $state('');
 
-  let formData = {
+  let formData = $state({
     id,
     lastname,
     firstname,
     birthday,
     mobile,
     labels: labels || ['new']
-  };
+  });
 
   function addLabel() {
     const value = labelInput.trim().toLowerCase();
