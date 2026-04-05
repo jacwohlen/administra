@@ -7,9 +7,9 @@
 
   let { yearmode, year }: { yearmode: 'YEAR' | 'ALL'; year: number } = $props();
 
-  let topEventParticipants: { [key: string]: Athletes[] } = {};
-  let loading = true;
-  let error = '';
+  let topEventParticipants: { [key: string]: Athletes[] } = $state({});
+  let loading = $state(true);
+  let error = $state('');
 
   async function loadEventStats() {
     loading = true;
@@ -73,17 +73,17 @@
   {#if loading}
     <div class="text-center py-4">
       <span class="loading loading-spinner loading-sm" />
-      <p class="text-sm text-gray-500 mt-2">{$_('page.stats.loading')}</p>
+      <p class="text-sm text-surface-600-400 mt-2">{$_('page.stats.loading')}</p>
     </div>
   {:else if error}
-    <div class="alert variant-filled-error">
-      <div class="alert-message">
+    <div class="flex items-center gap-4 p-4 rounded-lg preset-filled-error-500">
+      <div class="flex-1">
         <p>{error}</p>
       </div>
     </div>
   {:else if Object.keys(topEventParticipants).length === 0}
     <div class="text-center py-8">
-      <p class="text-gray-500">{$_('page.stats.no_event_data')}</p>
+      <p class="text-surface-600-400">{$_('page.stats.no_event_data')}</p>
     </div>
   {:else}
     <div class="grid gap-4">

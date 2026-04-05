@@ -1,12 +1,6 @@
 <script lang="ts">
   import type { PageData } from './$types';
-  import {
-    Avatar,
-    ProgressRadial,
-    getModalStore,
-    getToastStore,
-    type ModalComponent
-  } from '@skeletonlabs/skeleton';
+  import { Avatar } from '@skeletonlabs/skeleton-svelte';
   import { _ } from 'svelte-i18n';
   import MemberLogs from './MemberLogs.svelte';
   import {
@@ -23,14 +17,14 @@
   import dayjs, { type Dayjs } from 'dayjs';
   import { goto, invalidate } from '$app/navigation';
   import MemberForm from '../MemberForm.svelte';
-
-  const modalStore = getModalStore();
-  const toastStore = getToastStore();
+  import { toaster } from '$lib/toast';
 
   let { data }: { data: PageData } = $props();
   let loadingImage = false;
   let isDeleting = false;
   let isEditing = false;
+  let showEditFormDialog = $state(false);
+  let showDeleteConfirm = $state(false);
 
   async function handlePhotoChange(event: Event) {
     const input = event.target as HTMLInputElement;
@@ -128,27 +122,7 @@
   }
 
   function showEditForm() {
-    const modalComponent: ModalComponent = {
-      ref: MemberForm,
-      props: {
-        isEditing: true,
-        isSubmitting: isEditing,
-        id: data.id,
-        firstname: data.firstname,
-        lastname: data.lastname,
-        birthday: data.birthday,
-        mobile: data.mobile,
-        labels: data.labels
-      }
-    };
-
-    const modal = {
-      type: 'component',
-      component: modalComponent,
-      response: handleEditResponse
-    };
-
-    modalStore.trigger(modal);
+    showEditFormDialog = true;
   }
 
   async function handleEditResponse(
@@ -182,41 +156,24 @@
       }
 
       // Show success toast
-      toastStore.trigger({
-        message: $_('dialog.editMember.updateSuccess'),
-        background: 'variant-filled-success',
-        timeout: 4000,
-        classes: 'border-l-4 border-green-500'
-      });
+      toaster.success({ title: $_('dialog.editMember.updateSuccess') });
 
       // Invalidate the data to refresh
       invalidate('app:member:' + data.id);
     } catch (error) {
       console.error('Error updating member:', error);
-      toastStore.trigger({
-        message: $_('dialog.editMember.updateError'),
-        background: 'variant-filled-error',
-        timeout: 6000,
-        classes: 'border-l-4 border-red-500'
-      });
+      toaster.error({ title: $_('dialog.editMember.updateError') });
     } finally {
       isEditing = false;
     }
   }
 
   function confirmDelete() {
-    const modal = {
-      type: 'confirm',
-      title: $_('page.members.deleteConfirmTitle'),
-      body: `${$_('page.members.deleteConfirmMessage')} ${data.firstname} ${data.lastname}?`,
-      buttonTextConfirm: $_('button.delete'),
-      buttonTextCancel: $_('button.cancel'),
-      response: handleDeleteResponse
-    };
-    modalStore.trigger(modal);
+    showDeleteConfirm = true;
   }
 
   async function handleDeleteResponse(confirmed: boolean) {
+    showDeleteConfirm = false;
     if (!confirmed) return;
 
     isDeleting = true;
@@ -235,23 +192,13 @@
       }
 
       // Show success toast
-      toastStore.trigger({
-        message: $_('page.members.deleteSuccess'),
-        background: 'variant-filled-success',
-        timeout: 4000,
-        classes: 'border-l-4 border-green-500'
-      });
+      toaster.success({ title: $_('page.members.deleteSuccess') });
 
       // Navigate back to members list
       goto('/dashboard/members');
     } catch (error) {
       console.error('Error deleting member:', error);
-      toastStore.trigger({
-        message: $_('page.members.deleteError'),
-        background: 'variant-filled-error',
-        timeout: 6000,
-        classes: 'border-l-4 border-red-500'
-      });
+      toaster.error({ title: $_('page.members.deleteError') });
       isDeleting = false;
     }
   }
@@ -259,24 +206,15 @@
 
 <div class="space-y-4">
   <div class="flex justify-between items-center mb-4">
-    <h2 class="h2">{data.firstname} {data.lastname}</h2>
+    <h1>{data.firstname} {data.lastname}</h1>
     <div class="flex gap-2">
-      <button class="btn btn-sm variant-filled-primary" onclick={showEditForm}>
+      <button class="btn btn-sm preset-filled-primary-500" onclick={showEditForm}>
         <Fa icon={faEdit} />
         <span>{$_('button.edit')}</span>
       </button>
-      <button
-        class="btn btn-sm variant-filled-secondary"
-        onclick={confirmDelete}
-        disabled={isDeleting}
-      >
+      <button class="btn btn-sm preset-tonal-error" onclick={confirmDelete} disabled={isDeleting}>
         {#if isDeleting}
-          <ProgressRadial
-            width="w-6"
-            stroke={100}
-            meter="stroke-surface-50"
-            track="stroke-error-500"
-          />
+          <span class="animate-spin">...</span>
         {:else}
           <Fa icon={faUserMinus} />
           <span>{$_('button.delete')}</span>
@@ -285,87 +223,151 @@
     </div>
   </div>
 
-  <div class="card p-4">
-    <div class="mb-4">
-      <div class="relative w-56 mx-auto">
-        {#if data.img}
-          <Avatar class="mx-auto w-56" src={data.img} />
-        {:else}
-          <Avatar
-            class="mx-auto w-56"
-            initials={data.lastname.charAt(0) + data.firstname.charAt(0)}
-          />
-        {/if}
-        {#if loadingImage}
-          <div class="absolute inset-0">
-            <ProgressRadial value={undefined} />
-          </div>
-        {/if}
+  {#if showEditFormDialog}
+    <!-- svelte-ignore a11y_no_static_element_interactions -->
+    <div
+      class="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+      onclick={() => (showEditFormDialog = false)}
+      onkeydown={(e) => {
+        if (e.key === 'Escape') showEditFormDialog = false;
+      }}
+    >
+      <!-- svelte-ignore a11y_no_static_element_interactions -->
+      <div
+        class="card p-6 w-full max-w-lg shadow-2xl bg-surface-50-950"
+        onclick={(e) => e.stopPropagation()}
+      >
+        <h3 class="font-semibold text-lg mb-4">{$_('dialog.editMember.title')}</h3>
+        <MemberForm
+          isEditing={true}
+          isSubmitting={isEditing}
+          id={data.id}
+          firstname={data.firstname}
+          lastname={data.lastname}
+          birthday={data.birthday}
+          mobile={data.mobile}
+          labels={data.labels}
+          onclose={() => (showEditFormDialog = false)}
+          onsubmit={handleEditResponse}
+        />
       </div>
-      <div class="flex flex-auto justify-center pt-2">
-        <div class="btn-group variant-filled-secondary">
-          <div>
-            <input
-              type="file"
-              id="selectFiles"
-              style="display: none;"
-              accept="image/*"
-              onchange={handlePhotoChange}
-            />
-            <button class="" onclick={selectFiles}><Fa icon={faUpload} /></button>
-          </div>
-          <div>
-            <input
-              type="file"
-              id="takePhoto"
-              style="display: none;"
-              accept="image/*"
-              onchange={handlePhotoChange}
-              capture="user"
-            />
-            <button class="" onclick={takePhoto}><Fa icon={faCamera} /></button>
-          </div>
-          <div>
-            <button class="" onclick={resetImage}><Fa icon={faTrash} /></button>
-          </div>
+    </div>
+  {/if}
+
+  {#if showDeleteConfirm}
+    <!-- svelte-ignore a11y_no_static_element_interactions -->
+    <div
+      class="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+      onclick={() => handleDeleteResponse(false)}
+      onkeydown={(e) => {
+        if (e.key === 'Escape') handleDeleteResponse(false);
+      }}
+    >
+      <!-- svelte-ignore a11y_no_static_element_interactions -->
+      <div
+        class="card p-6 w-full max-w-sm shadow-2xl bg-surface-50-950"
+        onclick={(e) => e.stopPropagation()}
+      >
+        <h3 class="font-semibold text-lg mb-2">{$_('page.members.deleteConfirmTitle')}</h3>
+        <p class="mb-4">
+          {$_('page.members.deleteConfirmMessage')}
+          {data.firstname}
+          {data.lastname}?
+        </p>
+        <div class="flex justify-end gap-2">
+          <button class="btn preset-tonal-surface" onclick={() => handleDeleteResponse(false)}>
+            {$_('button.cancel')}
+          </button>
+          <button class="btn preset-filled-error-500" onclick={() => handleDeleteResponse(true)}>
+            {$_('button.delete')}
+          </button>
         </div>
       </div>
     </div>
-    <div class="table-container">
-      <table class="table">
-        <tbody>
-          <tr>
-            <td><b>{$_('page.members.id')}</b></td>
-            <td>{data.id}</td>
-          </tr>
-          <tr>
-            <td><b>{$_('page.members.lastName')}</b></td>
-            <td>{data.lastname}</td>
-          </tr>
-          <tr>
-            <td><b>{$_('page.members.firstName')}</b></td>
-            <td>{data.firstname}</td>
-          </tr>
-          <tr>
-            <td><b>{$_('page.members.birthday')}</b></td>
-            <td>{data.birthday}</td>
-          </tr>
-          <tr>
-            <td><b>{$_('page.members.mobile')}</b></td>
-            <td>{data.mobile}</td>
-          </tr>
-          <tr>
-            <td><b>{$_('page.members.labels')}</b></td>
-            <td>
-              {#if data.labels}
-                {#each data.labels as l}
-                  <span class="chip mr-2">{l}</span>
-                {/each}
-              {/if}
-            </td>
-          </tr>
-        </tbody>
-      </table>
+  {/if}
+
+  <div class="card p-6">
+    <!-- Avatar + Photo buttons -->
+    <div class="flex flex-col items-center mb-6">
+      <div class="relative">
+        <Avatar class="size-20">
+          {#if data.img}
+            <Avatar.Image src={data.img} alt="{data.firstname} {data.lastname}" />
+          {/if}
+          <Avatar.Fallback>{data.lastname.charAt(0)}{data.firstname.charAt(0)}</Avatar.Fallback>
+        </Avatar>
+        {#if loadingImage}
+          <div class="absolute inset-0 flex items-center justify-center rounded-full bg-black/30">
+            <span class="animate-spin text-2xl text-white">...</span>
+          </div>
+        {/if}
+      </div>
+      <div class="flex gap-1 mt-3">
+        <input
+          type="file"
+          id="selectFiles"
+          class="hidden"
+          accept="image/*"
+          onchange={handlePhotoChange}
+        />
+        <input
+          type="file"
+          id="takePhoto"
+          class="hidden"
+          accept="image/*"
+          onchange={handlePhotoChange}
+          capture="user"
+        />
+        <button
+          class="btn btn-icon btn-sm preset-tonal-surface"
+          onclick={selectFiles}
+          title="Upload"
+        >
+          <Fa icon={faUpload} />
+        </button>
+        <button class="btn btn-icon btn-sm preset-tonal-surface" onclick={takePhoto} title="Photo">
+          <Fa icon={faCamera} />
+        </button>
+        <button class="btn btn-icon btn-sm preset-tonal-error" onclick={resetImage} title="Remove">
+          <Fa icon={faTrash} />
+        </button>
+      </div>
+    </div>
+
+    <!-- Member details -->
+    <div class="space-y-3">
+      <div class="flex border-b border-surface-300-700 pb-2">
+        <span class="w-32 font-semibold text-surface-600-400">{$_('page.members.id')}</span>
+        <span>{data.id}</span>
+      </div>
+      <div class="flex border-b border-surface-300-700 pb-2">
+        <span class="w-32 font-semibold text-surface-600-400">{$_('page.members.lastName')}</span>
+        <span>{data.lastname}</span>
+      </div>
+      <div class="flex border-b border-surface-300-700 pb-2">
+        <span class="w-32 font-semibold text-surface-600-400">{$_('page.members.firstName')}</span>
+        <span>{data.firstname}</span>
+      </div>
+      <div class="flex border-b border-surface-300-700 pb-2">
+        <span class="w-32 font-semibold text-surface-600-400">{$_('page.members.birthday')}</span>
+        <span>{data.birthday || '-'}</span>
+      </div>
+      <div class="flex border-b border-surface-300-700 pb-2">
+        <span class="w-32 font-semibold text-surface-600-400">{$_('page.members.mobile')}</span>
+        <span>{data.mobile || '-'}</span>
+      </div>
+      <div class="flex pb-2">
+        <span class="w-32 font-semibold text-surface-600-400">{$_('page.members.labels')}</span>
+        <div class="flex flex-wrap gap-1">
+          {#if data.labels}
+            {#each data.labels as l}
+              <span class="chip preset-tonal-secondary">{l}</span>
+            {/each}
+          {:else}
+            <span>-</span>
+          {/if}
+        </div>
+      </div>
     </div>
   </div>
   <MemberLogs memberId={data.id} />

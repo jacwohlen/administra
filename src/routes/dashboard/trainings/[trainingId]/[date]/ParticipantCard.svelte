@@ -1,8 +1,7 @@
 <script lang="ts">
   import Fa from 'svelte-fa';
   import { faEllipsisVertical } from '@fortawesome/free-solid-svg-icons';
-  import { type ModalSettings, Avatar, getModalStore } from '@skeletonlabs/skeleton';
-  const modalStore = getModalStore();
+  import { Avatar } from '@skeletonlabs/skeleton-svelte';
 
   import Labels from './Labels.svelte';
   import ParticipantFrequency from './ParticipantFrequency.svelte';
@@ -24,6 +23,7 @@
   let menuOpen = $state(false);
   let menuStyle = $state('');
   let btnEl: HTMLButtonElement;
+  let showRemoveConfirm = $state(false);
 
   function toggleMenu() {
     if (menuOpen) {
@@ -58,15 +58,14 @@
 
   function triggerConfirm(): void {
     closeMenu();
-    const confirm: ModalSettings = {
-      type: 'confirm',
-      title: $_('dialog.confirm.title'),
-      body: $_('dialog.confirm.body'),
-      response: (r: boolean) => r === true && onremove?.({ member }),
-      buttonTextCancel: $_('button.cancel'),
-      buttonTextConfirm: $_('button.confirm')
-    };
-    modalStore.trigger(confirm);
+    showRemoveConfirm = true;
+  }
+
+  function handleRemoveResponse(confirmed: boolean) {
+    showRemoveConfirm = false;
+    if (confirmed) {
+      onremove?.({ member });
+    }
   }
 
   function setTrainerRole(role: TrainerRole): void {
@@ -77,7 +76,7 @@
 
 <svelte:window onclick={handleWindowClick} />
 
-<li>
+<li class="flex items-center gap-3 py-2">
   {#if member}
     <input
       class="checkbox"
@@ -89,29 +88,32 @@
     <div class="relative inline-block flex-shrink-0">
       {#if member.trainerRole === 'main_trainer'}
         <span
-          class="badge-icon absolute -bottom-0 -right-0 z-10 bg-warning-500 rounded-full w-5 h-5 flex items-center justify-center"
+          class="badge-icon absolute -bottom-0 -right-0 z-10 bg-warning-600-400 rounded-full w-5 h-5 flex items-center justify-center"
         >
           <img class="w-3.5" src="/judo-icon.svg" alt="main-trainer" />
         </span>
       {:else if member.trainerRole === 'assistant'}
         <span
-          class="badge-icon absolute -bottom-0 -right-0 z-10 bg-surface-400 text-white text-xs font-bold w-5 h-5 flex items-center justify-center rounded-full"
+          class="badge-icon absolute -bottom-0 -right-0 z-10 preset-filled-surface text-xs font-bold w-5 h-5 flex items-center justify-center rounded-full"
         >
           A
         </span>
       {/if}
       {#if member.img}
-        <Avatar src={member.img} width="w-10" />
+        <Avatar class="size-10 rounded-full overflow-hidden">
+          <Avatar.Image src={member.img} alt="{member.lastname} {member.firstname}" />
+          <Avatar.Fallback>{member.lastname.charAt(0)}{member.firstname.charAt(0)}</Avatar.Fallback>
+        </Avatar>
       {:else}
-        <Avatar initials={member.lastname.charAt(0) + member.firstname.charAt(0)} width="w-10" />
+        <Avatar class="size-10 rounded-full overflow-hidden">
+          <Avatar.Fallback>{member.lastname.charAt(0)}{member.firstname.charAt(0)}</Avatar.Fallback>
+        </Avatar>
       {/if}
     </div>
     <span class="flex-auto min-w-0">
       <dt class="font-semibold truncate">{member.lastname} {member.firstname}</dt>
-      <dd>
+      <dd class="flex items-center gap-2 flex-wrap">
         <Labels labels={member.labels ? member.labels : []} />
-      </dd>
-      <dd>
         <ParticipantFrequency streak={member.streak} isPresent={member.isPresent} />
       </dd>
     </span>
@@ -127,8 +129,11 @@
         <Fa icon={faEllipsisVertical} />
       </button>
       {#if menuOpen}
-        <nav class="card p-2 w-56 shadow-xl" style={menuStyle}>
-          <ul>
+        <nav
+          class="card p-2 w-56 shadow-xl bg-surface-50-950 border border-surface-300-700"
+          style={menuStyle}
+        >
+          <ul class="list-none m-0 p-0">
             <li>
               <a
                 href={'/dashboard/members/' + member.id}
@@ -138,7 +143,7 @@
                 {$_('components.ParticipantCard.View')}
               </a>
             </li>
-            <li class="border-t border-surface-300 pt-1 mt-1">
+            <li class="border-t border-surface-300-700 pt-1 mt-1">
               <button
                 class="btn btn-sm w-full text-left justify-start"
                 onclick={() => setTrainerRole('attendee')}
@@ -160,13 +165,13 @@
                 class="btn btn-sm w-full text-left justify-start gap-2"
                 onclick={() => setTrainerRole('assistant')}
               >
-                <span class="w-4 flex-shrink-0 text-center font-bold text-gray-600">A</span>
+                <span class="w-4 flex-shrink-0 text-center font-bold text-surface-600-400">A</span>
                 {$_('components.ParticipantCard.SetAsAssistant')}
               </button>
             </li>
-            <li class="border-t border-surface-300 pt-1 mt-1">
+            <li class="border-t border-surface-300-700 pt-1 mt-1">
               <button
-                class="btn btn-sm w-full text-left justify-start text-error-500"
+                class="btn btn-sm w-full text-left justify-start text-error-600-400"
                 onclick={triggerConfirm}
               >
                 {$_('components.ParticipantCard.Remove')}
@@ -176,6 +181,34 @@
         </nav>
       {/if}
     </div>
+
+    {#if showRemoveConfirm}
+      <!-- svelte-ignore a11y_no_static_element_interactions -->
+      <div
+        class="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+        onclick={() => handleRemoveResponse(false)}
+        onkeydown={(e) => {
+          if (e.key === 'Escape') handleRemoveResponse(false);
+        }}
+      >
+        <!-- svelte-ignore a11y_no_static_element_interactions -->
+        <div
+          class="card p-6 w-full max-w-sm shadow-2xl bg-surface-50-950"
+          onclick={(e) => e.stopPropagation()}
+        >
+          <h4 class="font-semibold text-lg mb-2">{$_('dialog.confirm.title')}</h4>
+          <p class="mb-4">{$_('dialog.confirm.body')}</p>
+          <div class="flex justify-end gap-2">
+            <button class="btn preset-tonal-surface" onclick={() => handleRemoveResponse(false)}>
+              {$_('button.cancel')}
+            </button>
+            <button class="btn preset-filled-error-500" onclick={() => handleRemoveResponse(true)}>
+              {$_('button.confirm')}
+            </button>
+          </div>
+        </div>
+      </div>
+    {/if}
   {:else}
     {$_('page.trainings.memberNotFound')}
   {/if}

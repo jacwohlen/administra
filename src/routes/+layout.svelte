@@ -8,7 +8,7 @@
   import { locale } from 'svelte-i18n';
   import type { Snippet } from 'svelte';
 
-  import '../app.postcss';
+  import '../app.css';
 
   let { children }: { children: Snippet } = $props();
 
@@ -33,15 +33,11 @@
 </script>
 
 {#if mode === 'DEV'}
-  <div class="relative overflow-hidden h-screen w-screen bg-white border">
-    <div class="absolute left-0 top-0 h-16 w-16">
-      <div
-        class="absolute transform -rotate-45 bg-gray-600 text-center text-white font-semibold py-1 left-[-34px] top-[32px] w-[170px]"
-      >
-        main
-      </div>
+  <div class="h-screen w-screen flex flex-col">
+    <div class="bg-surface-600-400 text-white text-center text-xs py-0.5 font-semibold">main</div>
+    <div class="flex-1 overflow-hidden">
+      {@render children()}
     </div>
-    {@render children()}
   </div>
 {:else}
   {@render children()}

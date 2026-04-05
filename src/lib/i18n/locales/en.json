@@ -93,9 +93,9 @@
         "table": {
           "title": "Training",
           "section": "Section",
-          "attendance": "#Attendance",
-          "trainer": "#Trainer",
-          "total": "#Total"
+          "attendance": "Attendance",
+          "trainer": "Trainer",
+          "total": "Total"
         }
       },
       "trainingsHistory": {
@@ -107,7 +107,7 @@
       "all": "All",
       "topAthletes": "Top Athletes",
       "topTrainers": "Top Trainers",
-      "topParticipants": "Top Participants per training",
+      "topParticipants": "Top Participants Per Training",
       "topEventParticipants": "Top Event Participants",
       "topEventCoaches": "Top Event Coaches",
       "loading": "Loading...",

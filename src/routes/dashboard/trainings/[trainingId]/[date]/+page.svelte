@@ -170,7 +170,7 @@
     <div>
       <h2 class="h2">{data.title}</h2>
       <div class="flex items-center gap-2 mt-1">
-        <span class="badge variant-filled-secondary">{data.section}</span>
+        <span class="badge preset-tonal-secondary">{data.section}</span>
         <span class="text-sm opacity-70">
           {$_('weekday.' + data.weekday)} | {data.dateFrom}
         </span>
@@ -181,28 +181,32 @@
 
 <!-- Date navigation -->
 <div class="flex justify-between items-center mb-4">
-  <button class="btn btn-sm variant-ghost-surface" onclick={previousWeek}>
+  <button class="btn btn-sm preset-tonal-surface" onclick={previousWeek}>
     <Fa icon={faArrowLeft} />
     <span>{$_('button.week')}</span>
   </button>
   <h3 class="h3">{formattedDate}</h3>
-  <button class="btn btn-sm variant-ghost-surface" onclick={nextWeek}>
+  <button class="btn btn-sm preset-tonal-surface" onclick={nextWeek}>
     <span>{$_('button.week')}</span>
     <Fa icon={faArrowRight} />
   </button>
 </div>
 
 <!-- View toggle tabs -->
-<div class="flex gap-1 mb-4">
+<div class="flex rounded-lg overflow-hidden border border-surface-300-700 mb-4">
   <button
-    class="btn btn-sm flex-1 {!showLessonPlan ? 'variant-filled-primary' : 'variant-soft-surface'}"
+    class="btn flex-1 rounded-none {!showLessonPlan
+      ? 'preset-filled-primary-500'
+      : 'preset-tonal-surface'}"
     onclick={() => (showLessonPlan = false)}
   >
     <Fa icon={faUsers} />
     <span>{$_('page.trainings.attendance')}</span>
   </button>
   <button
-    class="btn btn-sm flex-1 {showLessonPlan ? 'variant-filled-primary' : 'variant-soft-surface'}"
+    class="btn flex-1 rounded-none {showLessonPlan
+      ? 'preset-filled-primary-500'
+      : 'preset-tonal-surface'}"
     onclick={() => (showLessonPlan = true)}
   >
     <Fa icon={faClipboardList} />
@@ -213,18 +217,18 @@
 {#if !showLessonPlan}
   <!-- Stats bar -->
   <div class="flex gap-2 mb-3 flex-wrap">
-    <span class="chip variant-filled-primary">
+    <span class="chip preset-filled-primary-500">
       <Fa icon={faUserCheck} size="sm" />
       <span>{presentParticipants.length} / {filteredData.length}</span>
     </span>
     {#if mainTrainers.length > 0}
-      <span class="chip variant-filled-warning">
+      <span class="chip preset-filled-warning-500">
         <img class="inline-block w-3.5" src="/judo-icon.svg" alt="trainer" />
         <span>{mainTrainers.length}</span>
       </span>
     {/if}
     {#if assistantTrainers.length > 0}
-      <span class="chip variant-filled-surface">
+      <span class="chip preset-filled-surface-500">
         <Fa icon={faChalkboardTeacher} size="sm" />
         <span>{assistantTrainers.length}</span>
       </span>
@@ -233,15 +237,15 @@
 
   <!-- Trainer warning -->
   {#if presentParticipants.length > 0 && !hasMainTrainer}
-    <aside class="alert variant-ghost-warning mb-3">
-      <div><Fa icon={faExclamationTriangle} class="text-warning-500" /></div>
-      <div class="alert-message">
+    <div class="flex items-center gap-4 p-4 rounded-lg preset-tonal-warning mb-3">
+      <div><Fa icon={faExclamationTriangle} class="text-warning-600-400" /></div>
+      <div class="flex-1">
         <p>
           <span class="font-bold">{$_('page.trainings.noMainTrainerWarning.title')}</span>
           {$_('page.trainings.noMainTrainerWarning.message')}
         </p>
       </div>
-    </aside>
+    </div>
   {/if}
 
   <!-- Search -->
@@ -259,7 +263,7 @@
   </div>
 
   <!-- Participant list -->
-  <ul class="list">
+  <ul class="flex flex-col gap-1">
     {#each filteredData as p (p.id)}
       <div
         class="item"
@@ -269,9 +273,11 @@
       </div>
     {/each}
     <li>
-      <aside class="alert variant-ghost-tertiary w-full justify-items-center">
+      <div
+        class="flex items-center gap-4 p-4 rounded-lg preset-tonal-tertiary w-full justify-items-center"
+      >
         <AddParticipantInputBox onadd={addParticipant} />
-      </aside>
+      </div>
     </li>
   </ul>
 {:else}

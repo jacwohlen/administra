@@ -14,8 +14,8 @@
   let section = '';
   let maxParticipants: number | undefined = undefined;
   let registrationDeadline = '';
-  let loading = false;
-  let error = '';
+  let loading = $state(false);
+  let error = $state('');
 
   const sections = ['Judo', 'Aikido']; // Should match existing sections
 
@@ -60,8 +60,8 @@
 </script>
 
 <div class="max-w-2xl mx-auto">
-  <div class="flex items-center gap-4 mb-6">
-    <a href="/dashboard/events" class="btn variant-ghost-surface">
+  <div class="flex items-center gap-2 mb-4">
+    <a href="/dashboard/events" class="btn btn-sm preset-tonal-surface">
       <Fa icon={faArrowLeft} />
     </a>
     <h1>{$_('page.events.create_event')}</h1>
@@ -185,18 +185,18 @@
     </div>
 
     {#if error}
-      <div class="alert variant-filled-error">
-        <div class="alert-message">
+      <div class="flex items-center gap-4 p-4 rounded-lg preset-filled-error-500">
+        <div class="flex-1">
           <p>{error}</p>
         </div>
       </div>
     {/if}
 
     <div class="flex justify-end gap-4">
-      <a href="/dashboard/events" class="btn variant-ghost-surface">
+      <a href="/dashboard/events" class="btn preset-tonal-surface">
         {$_('button.cancel')}
       </a>
-      <button type="submit" class="btn variant-filled-primary" disabled={loading}>
+      <button type="submit" class="btn preset-filled-primary-500" disabled={loading}>
         <Fa icon={faSave} />
         <span>{loading ? $_('button.creating') : $_('button.create')}</span>
       </button>

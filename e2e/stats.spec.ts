@@ -19,8 +19,8 @@ test.describe('Stats', () => {
     // Wait for page to load
     await expect(page.getByText('Year').first()).toBeVisible({ timeout: 10000 });
 
-    // Click the "All" radio item
-    await page.getByText('All').click();
-    await expect(page).toHaveURL(/\/dashboard\/stats\/ALL/);
+    // Click the "All" radio item in the segmented control
+    await page.getByRole('radiogroup').getByText('All').click({ force: true });
+    await expect(page).toHaveURL(/\/dashboard\/stats\/ALL/, { timeout: 10000 });
   });
 });

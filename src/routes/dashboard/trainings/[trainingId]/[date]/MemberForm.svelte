@@ -1,10 +1,17 @@
 <script lang="ts">
-  import { getModalStore } from '@skeletonlabs/skeleton';
   import { _ } from 'svelte-i18n';
 
-  const modalStore = getModalStore();
-
-  let { lastname = '', firstname = '' }: { lastname?: string; firstname?: string } = $props();
+  let {
+    lastname = '',
+    firstname = '',
+    onclose,
+    onsubmit
+  }: {
+    lastname?: string;
+    firstname?: string;
+    onclose?: () => void;
+    onsubmit?: (data: { lastname: string; firstname: string }) => void;
+  } = $props();
 
   let formData = {
     lastname: lastname,
@@ -12,17 +19,16 @@
   };
 
   function cancel() {
-    modalStore.close();
+    onclose?.();
   }
 
   function onFormSubmit(): void {
-    if ($modalStore[0].response) $modalStore[0].response(formData);
-    modalStore.close();
+    onsubmit?.(formData);
+    onclose?.();
   }
 </script>
 
-<h3>{$_('dialog.newMember.title')}</h3>
-<form class="modal-form border border-surface-500 p-4 space-y-4 rounded-container-token">
+<form class="space-y-4">
   <label class="label">
     <span>{$_('dialog.newMember.lastName')}</span>
     <input
@@ -42,7 +48,7 @@
     />
   </label>
 </form>
-<footer class="modal-footer flex justify-end space-x-2">
-  <button class="btn variant-ghost-surface" onclick={cancel}>{$_('button.cancel')}</button>
-  <button class="btn variant-filled" onclick={onFormSubmit}>{$_('button.add')}</button>
+<footer class="flex justify-end gap-2 mt-4">
+  <button class="btn preset-tonal-surface" onclick={cancel}>{$_('button.cancel')}</button>
+  <button class="btn preset-filled" onclick={onFormSubmit}>{$_('button.add')}</button>
 </footer>

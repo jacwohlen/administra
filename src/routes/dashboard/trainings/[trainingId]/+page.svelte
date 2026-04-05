@@ -14,36 +14,28 @@
 </script>
 
 <!-- Header -->
-<div class="card p-4 mb-6">
-  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-    <div>
-      <h2 class="h2">{data.title}</h2>
-      <div class="flex items-center gap-2 mt-2 flex-wrap">
-        <span class="badge variant-filled-secondary">{data.section}</span>
-        <span class="badge variant-soft-surface">{$_('weekday.' + data.weekday)}</span>
-        <span class="badge variant-soft-surface">
-          <Fa icon={faClock} size="xs" class="mr-1" />
-          {data.dateFrom} – {data.dateTo}
-        </span>
-        <span class="badge variant-soft-surface">
-          <Fa icon={faUsers} size="xs" class="mr-1" />
-          {data.participants.length}
-          {$_('page.trainings.participants')}
-        </span>
-      </div>
-    </div>
-    <a
-      class="btn variant-filled-primary flex-none"
-      href="/dashboard/trainings/{data.id}/{getDateString()}"
-    >
-      <Fa icon={faClipboardCheck} />
-      <span>{$_('button.trackAttendance')}</span>
-    </a>
-  </div>
+<div class="flex items-center justify-between mb-2">
+  <h1>{data.title}</h1>
+  <a
+    class="btn btn-sm preset-filled-primary-500 flex-none"
+    href="/dashboard/trainings/{data.id}/{getDateString()}"
+  >
+    <Fa icon={faClipboardCheck} />
+    <span>{$_('button.trackAttendance')}</span>
+  </a>
+</div>
+<div class="flex items-center gap-2 mb-6 flex-wrap text-sm">
+  <span class="chip preset-tonal-secondary">{data.section}</span>
+  <span class="text-surface-600-400">{$_('weekday.' + data.weekday)}</span>
+  <span class="text-surface-600-400">
+    <Fa icon={faClock} size="xs" class="inline mr-1" />{data.dateFrom} – {data.dateTo}
+  </span>
+  <span class="text-surface-600-400">
+    <Fa icon={faUsers} size="xs" class="inline mr-1" />{data.participants.length}
+    {$_('page.trainings.participants')}
+  </span>
 </div>
 
 <!-- Logs section -->
-<div class="flex items-center justify-between mb-3">
-  <h3 class="h3">{$_('page.trainings.logs')}</h3>
-</div>
+<h3 class="text-lg font-semibold mb-3">{$_('page.trainings.logs')}</h3>
 <LogList trainingId={data.id} />

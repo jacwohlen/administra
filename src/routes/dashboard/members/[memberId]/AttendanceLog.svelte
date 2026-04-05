@@ -31,38 +31,32 @@
     </div>
   </div>
 {:then l}
-  <ul class="list">
+  <ul class="flex flex-col">
     {#each l.slice(0, currentItem) as i}
-      <li>
+      <li class="flex items-center gap-3 py-2">
         <span class="flex-auto truncate">
-          <dt>
-            {i.date}
-          </dt>
-          <dd class="text-sm">{i.trainingId.title}</dd>
+          <dt class="font-semibold">{i.date}</dt>
+          <dd class="text-sm text-surface-600-400">{i.trainingId.title}</dd>
         </span>
-        <span class="text-sm">
-          {i.trainingId.section}
-        </span>
-        <span>
-          <a
-            class="btn btn-sm variant-filled-secondary"
-            href="/dashboard/trainings/{i.trainingId.id}/{i.date}"
-          >
-            <Fa icon={faGripLines} />
-            <span>{$_('button.view')}</span>
-          </a>
-        </span>
+        <span class="chip preset-tonal-secondary text-sm">{i.trainingId.section}</span>
+        <a
+          class="btn btn-sm preset-tonal-primary"
+          href="/dashboard/trainings/{i.trainingId.id}/{i.date}"
+        >
+          <Fa icon={faGripLines} />
+          <span>{$_('button.view')}</span>
+        </a>
       </li>
     {:else}
-      <span class="flex justify-center">
+      <span class="flex justify-center text-surface-600-400 py-4">
         {$_('page.members.trainingsHistory.noItems')}
       </span>
     {/each}
   </ul>
   {#if currentItem < l.length}
-    <span class="flex justify-center">
+    <span class="flex justify-center mt-3">
       <button
-        class="btn btn-sm variant-filled-secondary"
+        class="btn btn-sm preset-tonal-primary"
         onclick={() => (currentItem = currentItem + 10)}
       >
         {$_('button.loadMore')}

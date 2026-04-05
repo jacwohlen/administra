@@ -103,8 +103,8 @@
 </script>
 
 <div class="relative w-full">
-  <div class="input-group input-group-divider grid-cols-[auto_1fr]">
-    <div class="input-group-shim">
+  <div class="input-group grid-cols-[auto_1fr]">
+    <div class="ig-cell">
       <Fa icon={faUserPlus} />
     </div>
     <input
@@ -120,15 +120,15 @@
 
   {#if searchterm.length >= 2}
     <div class="absolute top-full left-0 right-0 z-50 mt-1">
-      <div class="card p-2 shadow-xl bg-white">
+      <div class="card p-2 shadow-xl bg-surface-50-950">
         {#if filteredData.length > 0}
           <div class="space-y-1">
             {#each filteredData as member, index (member.id)}
               <div
                 class="flex items-center justify-between p-2 rounded cursor-pointer {index ===
                 selectedIndex
-                  ? 'bg-primary-100 border-primary-300'
-                  : 'hover:bg-gray-100'}"
+                  ? 'bg-primary-100-900 border-primary-300-700'
+                  : 'hover:bg-surface-100-900'}"
                 onclick={() => addParticipant(member)}
                 onkeydown={(e: KeyboardEvent) => {
                   if (e.key === 'Enter' || e.key === ' ') {
@@ -141,7 +141,7 @@
               >
                 <span>{member.lastname}, {member.firstname}</span>
                 <button
-                  class="btn btn-sm variant-ringed-primary"
+                  class="btn btn-sm preset-tonal-primary"
                   onclick={(e: MouseEvent) => {
                     e.stopPropagation();
                     addParticipant(member);
@@ -155,7 +155,7 @@
             {/each}
           </div>
         {:else}
-          <div class="p-2 text-sm text-gray-500">
+          <div class="p-2 text-sm text-surface-600-400">
             {$_('page.trainings.memberNotFound')}
           </div>
         {/if}

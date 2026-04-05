@@ -1,18 +1,16 @@
 <script lang="ts">
   import { goto } from '$app/navigation';
-  import { TabGroup, Tab } from '@skeletonlabs/skeleton';
+  import { Tabs, Avatar, Toast } from '@skeletonlabs/skeleton-svelte';
   import { page } from '$app/state';
-  import { Avatar, AppShell } from '@skeletonlabs/skeleton';
-  import { popup, type PopupSettings } from '@skeletonlabs/skeleton';
-  import { initializeStores, Modal, Toast } from '@skeletonlabs/skeleton';
-  import { computePosition, autoUpdate, offset, shift, flip, arrow } from '@floating-ui/dom';
   import Fa from 'svelte-fa';
   import {
     faCalendarCheck,
     faChartSimple,
     faList,
     faUser,
-    faCalendarDays
+    faCalendarDays,
+    faSun,
+    faMoon
   } from '@fortawesome/free-solid-svg-icons';
   import type { SubmitFunction } from '@sveltejs/kit';
   import { supabaseClient } from '$lib/supabase';
@@ -20,10 +18,7 @@
   import type { LayoutData } from './$types';
   import { _ } from 'svelte-i18n';
   import type { Snippet } from 'svelte';
-  import { storePopup } from '@skeletonlabs/skeleton';
-
-  storePopup.set({ computePosition, autoUpdate, offset, shift, flip, arrow });
-  initializeStores();
+  import { toaster } from '$lib/toast';
 
   let { data, children }: { data: LayoutData; children: Snippet } = $props();
 
@@ -35,17 +30,13 @@
     cancel();
   };
 
-  let tabSet = 0;
-  if (page.route.id == '/dashboard') {
-    tabSet = 0;
-  } else if (page.route.id?.startsWith('/dashboard/trainings')) {
-    tabSet = 1;
-  } else if (page.route.id?.startsWith('/dashboard/events')) {
-    tabSet = 2;
-  } else if (page.route.id?.startsWith('/dashboard/members')) {
-    tabSet = 3;
-  } else if (page.route.id?.startsWith('/dashboard/stats')) {
-    tabSet = 4;
+  function getActiveTab(): string {
+    if (page.route.id == '/dashboard') return 'today';
+    if (page.route.id?.startsWith('/dashboard/trainings')) return 'trainings';
+    if (page.route.id?.startsWith('/dashboard/events')) return 'events';
+    if (page.route.id?.startsWith('/dashboard/members')) return 'members';
+    if (page.route.id?.startsWith('/dashboard/stats')) return 'stats';
+    return 'today';
   }
 
   function getInitials(): string {
@@ -61,68 +52,111 @@
     }
   }
 
-  const profilePopup: PopupSettings = {
-    event: 'click',
-    target: 'profilePopup',
-    placement: 'bottom'
-  };
+  let popoverOpen = $state(false);
+  let isDark = $state(
+    typeof document !== 'undefined' && document.documentElement.classList.contains('dark')
+  );
+
+  function toggleDarkMode() {
+    isDark = !isDark;
+    document.documentElement.classList.toggle('dark', isDark);
+    localStorage.setItem('theme', isDark ? 'dark' : 'light');
+  }
+
+  import { onMount } from 'svelte';
+  onMount(() => {
+    const saved = localStorage.getItem('theme');
+    if (saved === 'dark' || (!saved && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+      document.documentElement.classList.add('dark');
+      isDark = true;
+    }
+  });
 </script>
 
-<AppShell>
-  <svelte:fragment slot="header">
-    <TabGroup>
-      <Tab bind:group={tabSet} name="tab0" value={0} on:click={() => goto('/dashboard')}>
-        <Fa icon={faCalendarCheck} class="mx-auto" />
-        <div>{$_('page.dashboard.today')}</div>
-      </Tab>
-      <Tab bind:group={tabSet} name="tab1" value={1} on:click={() => goto('/dashboard/trainings')}>
-        <Fa icon={faList} class="mx-auto" />
-        <div>{$_('page.dashboard.trainings')}</div>
-      </Tab>
-      <Tab bind:group={tabSet} name="tab2" value={2} on:click={() => goto('/dashboard/events')}>
-        <Fa icon={faCalendarDays} class="mx-auto" />
-        <div>{$_('page.dashboard.events')}</div>
-      </Tab>
-      <Tab bind:group={tabSet} name="tab3" value={3} on:click={() => goto('/dashboard/members')}>
-        <Fa icon={faUser} class="mx-auto" />
-        <div>{$_('page.dashboard.members')}</div>
-      </Tab>
-      <Tab bind:group={tabSet} name="tab4" value={4} on:click={() => goto('/dashboard/stats')}>
-        <Fa icon={faChartSimple} class="mx-auto" />
-        <div>{$_('page.dashboard.stats')}</div>
-      </Tab>
+<div class="h-full flex flex-col overflow-hidden">
+  <!-- Header -->
+  <header class="bg-surface-100-900 flex items-center px-2">
+    <Tabs
+      value={getActiveTab()}
+      onValueChange={(e) => {
+        const routes: Record<string, string> = {
+          today: '/dashboard',
+          trainings: '/dashboard/trainings',
+          events: '/dashboard/events',
+          members: '/dashboard/members',
+          stats: '/dashboard/stats'
+        };
+        if (e.value && routes[e.value]) goto(routes[e.value]);
+      }}
+      class="flex-1"
+    >
+      <Tabs.List>
+        <Tabs.Trigger value="today">
+          <Fa icon={faCalendarCheck} />
+          <span class="hidden sm:inline">{$_('page.dashboard.today')}</span>
+        </Tabs.Trigger>
+        <Tabs.Trigger value="trainings">
+          <Fa icon={faList} />
+          <span class="hidden sm:inline">{$_('page.dashboard.trainings')}</span>
+        </Tabs.Trigger>
+        <Tabs.Trigger value="events">
+          <Fa icon={faCalendarDays} />
+          <span class="hidden sm:inline">{$_('page.dashboard.events')}</span>
+        </Tabs.Trigger>
+        <Tabs.Trigger value="members">
+          <Fa icon={faUser} />
+          <span class="hidden sm:inline">{$_('page.dashboard.members')}</span>
+        </Tabs.Trigger>
+        <Tabs.Trigger value="stats">
+          <Fa icon={faChartSimple} />
+          <span class="hidden sm:inline">{$_('page.dashboard.stats')}</span>
+        </Tabs.Trigger>
+      </Tabs.List>
+    </Tabs>
 
-      <div class="ml-auto my-auto pr-4" use:popup={profilePopup}>
+    <!-- Profile avatar -->
+    <div class="ml-auto flex items-center pr-2 relative">
+      <button type="button" class="cursor-pointer" onclick={() => (popoverOpen = !popoverOpen)}>
         {#if data.session.user.user_metadata.avatar_url != null}
-          <Avatar
-            src={data.session.user.user_metadata.avatar_url}
-            border="border-4 border-surface-300-600-token hover:!border-primary-500"
-            cursor="cursor-pointer"
-          />
+          <Avatar class="size-10 rounded-full overflow-hidden hover:ring-2 ring-primary-600-400">
+            <Avatar.Image src={data.session.user.user_metadata.avatar_url} alt="Profile" />
+          </Avatar>
         {:else}
-          <Avatar
-            initials={getInitials()}
-            border="border-4 border-surface-300-600-token hover:!border-primary-500"
-            cursor="cursor-pointer"
-          />
+          <Avatar class="size-10 rounded-full overflow-hidden hover:ring-2 ring-primary-600-400">
+            <Avatar.Fallback>{getInitials()}</Avatar.Fallback>
+          </Avatar>
         {/if}
-      </div>
-      <div class="card p-4 w-64 shadow-xl" data-popup="profilePopup">
-        <nav class="list-nav">
-          <ul>
-            <li>
-              <form action="/logout" method="POST" use:enhance={submitLogout}>
-                <button type="submit" class="option w-full">{$_('button.logout')}</button>
-              </form>
-            </li>
-          </ul>
-        </nav>
-      </div>
-    </TabGroup>
-  </svelte:fragment>
-  <div class="container p-2 mx-auto">
-    {@render children()}
-  </div>
-  <Modal />
-  <Toast />
-</AppShell>
+      </button>
+      {#if popoverOpen}
+        <!-- svelte-ignore a11y_no_static_element_interactions -->
+        <div
+          class="absolute right-0 top-full mt-2 card p-4 w-64 shadow-xl z-50 bg-surface-50-950 border border-surface-300-700"
+          onmouseleave={() => (popoverOpen = false)}
+        >
+          <button
+            type="button"
+            class="btn preset-tonal-surface w-full mb-2"
+            onclick={toggleDarkMode}
+          >
+            <Fa icon={isDark ? faSun : faMoon} />
+            <span>{isDark ? 'Light Mode' : 'Dark Mode'}</span>
+          </button>
+          <form action="/logout" method="POST" use:enhance={submitLogout}>
+            <button type="submit" class="btn preset-filled w-full">
+              {$_('button.logout')}
+            </button>
+          </form>
+        </div>
+      {/if}
+    </div>
+  </header>
+
+  <!-- Main content -->
+  <main class="flex-1 overflow-auto">
+    <div class="container p-2 mx-auto">
+      {@render children()}
+    </div>
+  </main>
+</div>
+
+<Toast.Group {toaster} />

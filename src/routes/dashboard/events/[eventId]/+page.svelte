@@ -3,7 +3,8 @@
   import { supabaseClient } from '$lib/supabase';
   import { _ } from 'svelte-i18n';
   import Fa from 'svelte-fa';
-  import { getModalStore, getToastStore } from '@skeletonlabs/skeleton';
+  import { Avatar } from '@skeletonlabs/skeleton-svelte';
+  import { toaster } from '$lib/toast';
   import {
     faCalendarDays,
     faLocationDot,
@@ -27,14 +28,12 @@
     calculateAttendanceRate
   } from '$lib/eventUtils';
 
-  const modalStore = getModalStore();
-  const toastStore = getToastStore();
-
   let { data }: { data: PageData } = $props();
 
   let showAddParticipant = $state(false);
   let loading = $state(false);
   let isDeleting = $state(false);
+  let showDeleteConfirm = $state(false);
 
   function formatEventDate(date: string) {
     return dayjs(date).format('DD.MM.YYYY');
@@ -163,18 +162,11 @@
   }
 
   function confirmDelete() {
-    const modal = {
-      type: 'confirm',
-      title: $_('page.events.deleteConfirmTitle'),
-      body: `${$_('page.events.deleteConfirmMessage')} "${data.event.title}"?`,
-      buttonTextConfirm: $_('button.delete'),
-      buttonTextCancel: $_('button.cancel'),
-      response: handleDeleteResponse
-    };
-    modalStore.trigger(modal);
+    showDeleteConfirm = true;
   }
 
   async function handleDeleteResponse(confirmed: boolean) {
+    showDeleteConfirm = false;
     if (!confirmed) return;
 
     isDeleting = true;
@@ -192,21 +184,13 @@
       }
 
       // Show success toast
-      toastStore.trigger({
-        message: $_('page.events.deleteSuccess'),
-        background: 'variant-filled-success',
-        timeout: 4000
-      });
+      toaster.success({ title: $_('page.events.deleteSuccess') });
 
       // Navigate back to events list
       await goto('/dashboard/events');
     } catch (error) {
       console.error('Error deleting event:', error);
-      toastStore.trigger({
-        message: $_('page.events.deleteError'),
-        background: 'variant-filled-error',
-        timeout: 6000
-      });
+      toaster.error({ title: $_('page.events.deleteError') });
     } finally {
       isDeleting = false;
     }
@@ -221,87 +205,110 @@
 </script>
 
 <div class="max-w-4xl mx-auto">
-  <!-- Header -->
-  <div class="flex items-center gap-4 mb-6">
-    <a href="/dashboard/events" class="btn variant-ghost-surface">
+  <!-- Header: back + title + actions -->
+  <div class="flex items-center gap-2 mb-2">
+    <a href="/dashboard/events" class="btn btn-sm preset-tonal-surface flex-shrink-0">
       <Fa icon={faArrowLeft} />
     </a>
-    <div class="flex-grow">
-      <h1>{data.event.title}</h1>
-      <div class="flex flex-wrap gap-4 mt-2 text-sm text-gray-600">
-        <span class="flex items-center gap-1">
-          <Fa icon={faCalendarDays} size="sm" />
-          {formatEventDate(data.event.date)}
-        </span>
-        {#if data.event.timeFrom}
-          <span class="flex items-center gap-1">
-            <Fa icon={faClock} size="sm" />
-            {formatTime(data.event.timeFrom)}{#if data.event.timeTo}
-              - {formatTime(data.event.timeTo)}{/if}
-          </span>
-        {/if}
-        {#if data.event.location}
-          <span class="flex items-center gap-1">
-            <Fa icon={faLocationDot} size="sm" />
-            {data.event.location}
-          </span>
-        {/if}
-        <span class="flex items-center gap-1">
-          <Fa icon={faUsers} size="sm" />
-          {data.event.section}
-        </span>
-      </div>
-    </div>
-    <div class="flex gap-2">
-      <a href="/dashboard/events/{data.event.id}/edit" class="btn btn-sm variant-ghost-surface">
+    <h1 class="flex-1 truncate">{data.event.title}</h1>
+    <div class="flex gap-2 flex-shrink-0">
+      <a href="/dashboard/events/{data.event.id}/edit" class="btn btn-sm preset-tonal-surface">
         <Fa icon={faEdit} />
-        <span>{$_('button.edit')}</span>
       </a>
-      <button class="btn btn-sm variant-ghost-error" onclick={confirmDelete} disabled={isDeleting}>
-        {#if isDeleting}
-          <span class="animate-spin">⏳</span>
-          <span>{$_('button.deleting')}</span>
-        {:else}
-          <Fa icon={faTrash} />
-          <span>{$_('button.delete')}</span>
-        {/if}
+      <button class="btn btn-sm preset-tonal-error" onclick={confirmDelete} disabled={isDeleting}>
+        <Fa icon={faTrash} />
       </button>
     </div>
   </div>
 
+  <!-- Metadata -->
+  <div class="mb-6">
+    <div class="flex flex-wrap gap-3 text-sm text-surface-600-400">
+      <span class="flex items-center gap-1">
+        <Fa icon={faCalendarDays} size="sm" />
+        {formatEventDate(data.event.date)}
+      </span>
+      {#if data.event.timeFrom}
+        <span class="flex items-center gap-1">
+          <Fa icon={faClock} size="sm" />
+          {formatTime(data.event.timeFrom)}{#if data.event.timeTo}
+            - {formatTime(data.event.timeTo)}{/if}
+        </span>
+      {/if}
+      {#if data.event.location}
+        <span class="flex items-center gap-1">
+          <Fa icon={faLocationDot} size="sm" />
+          {data.event.location}
+        </span>
+      {/if}
+      <span class="flex items-center gap-1">
+        <Fa icon={faUsers} size="sm" />
+        {data.event.section}
+      </span>
+    </div>
+  </div>
+
+  {#if showDeleteConfirm}
+    <!-- svelte-ignore a11y_no_static_element_interactions -->
+    <div
+      class="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+      onclick={() => handleDeleteResponse(false)}
+      onkeydown={(e) => {
+        if (e.key === 'Escape') handleDeleteResponse(false);
+      }}
+    >
+      <!-- svelte-ignore a11y_no_static_element_interactions -->
+      <div
+        class="card p-6 w-full max-w-sm shadow-2xl bg-surface-50-950"
+        onclick={(e) => e.stopPropagation()}
+      >
+        <h3 class="font-semibold text-lg mb-2">{$_('page.events.deleteConfirmTitle')}</h3>
+        <p class="mb-4">{$_('page.events.deleteConfirmMessage')} "{data.event.title}"?</p>
+        <div class="flex justify-end gap-2">
+          <button class="btn preset-tonal-surface" onclick={() => handleDeleteResponse(false)}>
+            {$_('button.cancel')}
+          </button>
+          <button class="btn preset-filled-error-500" onclick={() => handleDeleteResponse(true)}>
+            {$_('button.delete')}
+          </button>
+        </div>
+      </div>
+    </div>
+  {/if}
+
   <!-- Event Description -->
   {#if data.event.description}
-    <div class="card p-4 mb-6">
-      <h2 class="font-semibold mb-2">{$_('page.events.description')}</h2>
-      <p class="text-gray-700 break-words">{data.event.description}</p>
+    <div class="mb-4">
+      <h3 class="font-semibold mb-1">{$_('page.events.description')}</h3>
+      <p class="text-sm text-surface-700-300 break-words">{data.event.description}</p>
     </div>
   {/if}
 
   <!-- Event Statistics -->
-  <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-    <div class="card p-4 text-center">
-      <div class="text-2xl font-bold text-primary-500">{registeredCount}</div>
-      <div class="text-sm text-gray-600">{$_('page.events.stats.registered')}</div>
+  <div class="grid grid-cols-3 gap-2 mb-4">
+    <div class="card p-3 text-center">
+      <div class="text-xl font-bold text-primary-600-400">{registeredCount}</div>
+      <div class="text-xs text-surface-600-400">{$_('page.events.stats.registered')}</div>
     </div>
-    <div class="card p-4 text-center">
-      <div class="text-2xl font-bold text-success-500">{attendedCount}</div>
-      <div class="text-sm text-gray-600">{$_('page.events.stats.attended')}</div>
+    <div class="card p-3 text-center">
+      <div class="text-xl font-bold text-success-600-400">{attendedCount}</div>
+      <div class="text-xs text-surface-600-400">{$_('page.events.stats.attended')}</div>
     </div>
-    <div class="card p-4 text-center">
-      <div class="text-2xl font-bold text-tertiary-500">{attendanceRate}%</div>
-      <div class="text-sm text-gray-600">{$_('page.events.stats.attendance_rate')}</div>
+    <div class="card p-3 text-center">
+      <div class="text-xl font-bold text-tertiary-600-400">{attendanceRate}%</div>
+      <div class="text-xs text-surface-600-400">{$_('page.events.stats.attendance_rate')}</div>
     </div>
   </div>
 
   <!-- Registration Status -->
   {#if data.event.registrationDeadline}
-    <div class="card p-4 mb-6">
-      <h2 class="font-semibold mb-2">{$_('page.events.registration_info')}</h2>
+    <div class="mb-4">
+      <h3 class="font-semibold mb-1">{$_('page.events.registration_info')}</h3>
       <p class="text-sm">
         <strong>{$_('page.events.registration_deadline')}:</strong>
         {formatEventDate(data.event.registrationDeadline)}
         {#if !isRegistrationOpen()}
-          <span class="text-error-500 ml-2">({$_('page.events.registration_closed')})</span>
+          <span class="text-error-600-400 ml-2">({$_('page.events.registration_closed')})</span>
         {/if}
       </p>
       {#if data.event.maxParticipants}
@@ -309,7 +316,7 @@
           <strong>{$_('page.events.max_participants')}:</strong>
           {data.event.maxParticipants}
           {#if registeredCount >= data.event.maxParticipants}
-            <span class="text-warning-500 ml-2">({$_('page.events.event_full')})</span>
+            <span class="text-warning-600-400 ml-2">({$_('page.events.event_full')})</span>
           {/if}
         </p>
       {/if}
@@ -317,12 +324,12 @@
   {/if}
 
   <!-- Participants Section -->
-  <div class="card p-6">
-    <div class="flex justify-between items-center mb-4">
-      <h2 class="text-xl font-semibold">{$_('page.events.participants')}</h2>
+  <div>
+    <div class="flex justify-between items-center mb-3">
+      <h3 class="font-semibold">{$_('page.events.participants')}</h3>
       {#if !isEventPast() && isRegistrationOpen() && (!data.event.maxParticipants || registeredCount < data.event.maxParticipants)}
         <button
-          class="btn btn-sm variant-filled-primary"
+          class="btn btn-sm preset-filled-primary-500"
           onclick={() => (showAddParticipant = !showAddParticipant)}
           disabled={loading}
         >
@@ -334,7 +341,7 @@
 
     <!-- Add Participant Search -->
     {#if showAddParticipant}
-      <div class="bg-surface-100-800-token p-4 rounded-lg mb-4">
+      <div class="bg-surface-100-900 p-4 rounded-lg mb-4">
         <div class="flex gap-4 items-center">
           <div class="flex-grow">
             <AddEventParticipant
@@ -343,7 +350,7 @@
               onadded={onParticipantAdded}
             />
           </div>
-          <button class="btn variant-ghost-surface" onclick={() => (showAddParticipant = false)}>
+          <button class="btn preset-tonal-surface" onclick={() => (showAddParticipant = false)}>
             {$_('button.cancel')}
           </button>
         </div>
@@ -352,7 +359,7 @@
 
     <!-- Participants List -->
     {#if data.participants.length === 0}
-      <p class="text-center text-gray-500 py-8">{$_('page.events.no_participants')}</p>
+      <p class="text-center text-surface-600-400 py-8">{$_('page.events.no_participants')}</p>
     {:else}
       <div class="space-y-2">
         {#each data.participants as participant}
@@ -361,25 +368,18 @@
           {@const hasAttended = !!log}
           {#if member}
             <div
-              class="flex items-center justify-between p-3 border rounded-lg {hasAttended
-                ? 'bg-success-50 border-success-200'
-                : 'bg-gray-50'}"
+              class="flex items-center justify-between py-2 {hasAttended
+                ? 'opacity-100'
+                : 'opacity-70'}"
             >
               <div class="flex items-center gap-3">
                 <div class="relative">
-                  {#if member.img}
-                    <img
-                      src={member.img}
-                      alt="{member.firstname} {member.lastname}"
-                      class="w-10 h-10 rounded-full object-cover"
-                    />
-                  {:else}
-                    <div
-                      class="w-10 h-10 rounded-full bg-primary-500 flex items-center justify-center text-white font-semibold"
-                    >
-                      {member.firstname[0]}{member.lastname[0]}
-                    </div>
-                  {/if}
+                  <Avatar class="size-10">
+                    {#if member.img}
+                      <Avatar.Image src={member.img} alt="{member.firstname} {member.lastname}" />
+                    {/if}
+                    <Avatar.Fallback>{member.firstname[0]}{member.lastname[0]}</Avatar.Fallback>
+                  </Avatar>
                   {#if log && log.isCoach}
                     <span class="badge-icon absolute -bottom-0 -right-0 z-10">
                       <img src="/judo-icon.svg" alt="Coach" class="w-4 h-4" />
@@ -391,12 +391,12 @@
                     {member.firstname}
                     {member.lastname}
                     {#if log && log.isCoach}
-                      <span class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded ml-2">
+                      <span class="badge preset-tonal-primary text-xs ml-2">
                         {$_('page.events.coach')}
                       </span>
                     {/if}
                   </div>
-                  <div class="text-sm text-gray-600">
+                  <div class="text-sm text-surface-600-400">
                     {$_('page.events.status.' + participant.attendanceStatus)}
                     {#if log}
                       - {$_('page.events.attended_at')} {dayjs(log.attendedAt).format('HH:mm')}
@@ -410,8 +410,8 @@
                   {#if hasAttended}
                     <button
                       class="btn btn-sm {log && log.isCoach
-                        ? 'variant-filled-secondary'
-                        : 'variant-ghost-secondary'}"
+                        ? 'preset-filled-primary-500'
+                        : 'preset-tonal-primary'}"
                       onclick={() => toggleCoach(participant.memberId)}
                       disabled={loading}
                       title={log && log.isCoach
@@ -424,8 +424,8 @@
                   <!-- Event day or past - show attendance buttons -->
                   <button
                     class="btn btn-sm {hasAttended
-                      ? 'variant-filled-success'
-                      : 'variant-ghost-success'}"
+                      ? 'preset-filled-success-500'
+                      : 'preset-tonal-success'}"
                     onclick={() => markAttendance(participant.memberId, !hasAttended)}
                     disabled={loading}
                   >
@@ -434,7 +434,7 @@
                 {:else}
                   <!-- Future event - show remove button -->
                   <button
-                    class="btn btn-sm variant-ghost-error"
+                    class="btn btn-sm preset-tonal-error"
                     onclick={() => removeParticipant(participant.memberId)}
                     disabled={loading}
                   >

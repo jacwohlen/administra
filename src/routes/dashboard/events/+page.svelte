@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { PageData } from './$types';
-  import { Avatar } from '@skeletonlabs/skeleton';
+  import { Avatar } from '@skeletonlabs/skeleton-svelte';
   import Fa from 'svelte-fa';
   import {
     faCalendarDays,
@@ -55,7 +55,7 @@
 
 <div class="flex justify-between items-center mb-6">
   <h1>{$_('page.events.title')}</h1>
-  <a href="/dashboard/events/new" class="btn btn-sm variant-filled-primary">
+  <a href="/dashboard/events/new" class="btn btn-sm preset-filled-primary-500">
     <Fa icon={faPlus} />
     <span>{$_('page.events.create_event')}</span>
   </a>
@@ -73,37 +73,36 @@
 
 {#if data.events.length === 0}
   <div class="text-center py-8">
-    <p class="text-gray-500">{$_('page.events.no_events')}</p>
+    <p class="text-surface-600-400">{$_('page.events.no_events')}</p>
   </div>
 {:else if filteredEvents.length === 0 && searchTerm.trim()}
   <div class="text-center py-8">
-    <p class="text-gray-500">{$_('page.events.no_events_found')}</p>
+    <p class="text-surface-600-400">{$_('page.events.no_events_found')}</p>
   </div>
 {:else}
   <div class="space-y-6">
     <!-- Today's Events -->
     {#if filteredEvents.some((e) => isToday(e.date))}
       <section>
-        <h3 class="text-lg font-semibold mb-3 text-warning-500">{$_('page.events.today')}</h3>
-        <ul class="list space-y-2">
+        <h3 class="text-lg font-semibold mb-3">{$_('page.events.today')}</h3>
+        <ul class="flex flex-col gap-1">
           {#each filteredEvents.filter((e) => isToday(e.date)) as event (event.id)}
-            <li class="flex items-start">
+            <li class="flex items-center gap-3 py-2">
               <div class="relative inline-block flex-none">
-                <Avatar
-                  class="rounded-md"
-                  initials={event.title.charAt(0) + event.title.charAt(1)}
-                />
+                <Avatar class="rounded-md size-10">
+                  <Avatar.Fallback>{event.title.charAt(0)}{event.title.charAt(1)}</Avatar.Fallback>
+                </Avatar>
               </div>
               <span class="flex-1 min-w-0">
                 <dt class="font-bold truncate">
                   {event.title}
                 </dt>
                 {#if event.description}
-                  <dd class="text-gray-500 text-sm truncate">
+                  <dd class="text-surface-600-400 text-sm truncate">
                     {event.description}
                   </dd>
                 {/if}
-                <dd class="flex items-center gap-2 text-sm">
+                <dd class="flex items-center gap-2 text-sm text-surface-600-400">
                   <span class="flex items-center gap-1">
                     <Fa icon={faCalendarDays} size="sm" />
                     {formatEventDate(event.date)}
@@ -121,7 +120,7 @@
                 </dd>
               </span>
               <span class="flex-none">
-                <a class="btn btn-sm variant-filled-secondary" href="/dashboard/events/{event.id}">
+                <a class="btn btn-sm preset-tonal-primary" href="/dashboard/events/{event.id}">
                   <Fa icon={faGripLines} />
                   <span>{$_('button.view')}</span>
                 </a>
@@ -135,26 +134,27 @@
     <!-- Upcoming Events -->
     {#if filteredEvents.some((e) => isUpcoming(e.date))}
       <section>
-        <h3 class="text-lg font-semibold mb-3 text-primary-500">{$_('page.events.upcoming')}</h3>
-        <ul class="list space-y-2">
+        <h3 class="text-lg font-semibold mb-3">
+          {$_('page.events.upcoming')}
+        </h3>
+        <ul class="flex flex-col gap-1">
           {#each filteredEvents.filter((e) => isUpcoming(e.date)) as event (event.id)}
-            <li class="flex items-start">
+            <li class="flex items-center gap-3 py-2">
               <div class="relative inline-block flex-none">
-                <Avatar
-                  class="rounded-md"
-                  initials={event.title.charAt(0) + event.title.charAt(1)}
-                />
+                <Avatar class="rounded-md size-10">
+                  <Avatar.Fallback>{event.title.charAt(0)}{event.title.charAt(1)}</Avatar.Fallback>
+                </Avatar>
               </div>
               <span class="flex-1 min-w-0">
                 <dt class="font-bold truncate">
                   {event.title}
                 </dt>
                 {#if event.description}
-                  <dd class="text-gray-500 text-sm truncate">
+                  <dd class="text-surface-600-400 text-sm truncate">
                     {event.description}
                   </dd>
                 {/if}
-                <dd class="flex items-center gap-2 text-sm">
+                <dd class="flex items-center gap-2 text-sm text-surface-600-400">
                   <span class="flex items-center gap-1">
                     <Fa icon={faCalendarDays} size="sm" />
                     {formatEventDate(event.date)}
@@ -172,7 +172,7 @@
                 </dd>
               </span>
               <span class="flex-none">
-                <a class="btn btn-sm variant-filled-secondary" href="/dashboard/events/{event.id}">
+                <a class="btn btn-sm preset-tonal-primary" href="/dashboard/events/{event.id}">
                   <Fa icon={faGripLines} />
                   <span>{$_('button.view')}</span>
                 </a>
@@ -186,26 +186,25 @@
     <!-- Past Events -->
     {#if filteredEvents.some((e) => isPast(e.date))}
       <section>
-        <h3 class="text-lg font-semibold mb-3 text-gray-500">{$_('page.events.past')}</h3>
-        <ul class="list space-y-2">
+        <h3 class="text-lg font-semibold mb-3">{$_('page.events.past')}</h3>
+        <ul class="flex flex-col gap-1">
           {#each filteredEvents.filter((e) => isPast(e.date)) as event (event.id)}
-            <li class="flex items-start">
+            <li class="flex items-center gap-3 py-2">
               <div class="relative inline-block flex-none">
-                <Avatar
-                  class="rounded-md"
-                  initials={event.title.charAt(0) + event.title.charAt(1)}
-                />
+                <Avatar class="rounded-md size-10">
+                  <Avatar.Fallback>{event.title.charAt(0)}{event.title.charAt(1)}</Avatar.Fallback>
+                </Avatar>
               </div>
               <span class="flex-1 min-w-0">
                 <dt class="font-bold truncate">
                   {event.title}
                 </dt>
                 {#if event.description}
-                  <dd class="text-gray-500 text-sm truncate">
+                  <dd class="text-surface-600-400 text-sm truncate">
                     {event.description}
                   </dd>
                 {/if}
-                <dd class="flex items-center gap-2 text-sm">
+                <dd class="flex items-center gap-2 text-sm text-surface-600-400">
                   <span class="flex items-center gap-1">
                     <Fa icon={faCalendarDays} size="sm" />
                     {formatEventDate(event.date)}
@@ -223,7 +222,7 @@
                 </dd>
               </span>
               <span class="flex-none">
-                <a class="btn btn-sm variant-filled-secondary" href="/dashboard/events/{event.id}">
+                <a class="btn btn-sm preset-tonal-primary" href="/dashboard/events/{event.id}">
                   <Fa icon={faGripLines} />
                   <span>{$_('button.view')}</span>
                 </a>
