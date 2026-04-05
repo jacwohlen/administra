@@ -176,9 +176,23 @@
       </div>
     </div>
   {/if}
+</div>
 
-  {#if showNewMemberForm}
-    <div class="card p-4 mt-2 border border-surface-300-700">
+{#if showNewMemberForm}
+  <!-- svelte-ignore a11y_no_static_element_interactions -->
+  <div
+    class="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+    onclick={() => (showNewMemberForm = false)}
+    onkeydown={(e) => {
+      if (e.key === 'Escape') showNewMemberForm = false;
+    }}
+  >
+    <!-- svelte-ignore a11y_no_static_element_interactions -->
+    <div
+      class="card p-6 w-full max-w-md shadow-2xl bg-surface-50-950"
+      onclick={(e) => e.stopPropagation()}
+    >
+      <h3 class="font-semibold text-lg mb-4">{$_('button.createNew')}</h3>
       <MemberForm
         lastname={newMemberLastname}
         firstname={newMemberFirstname}
@@ -186,5 +200,5 @@
         onsubmit={handleNewMemberSubmit}
       />
     </div>
-  {/if}
-</div>
+  </div>
+{/if}
