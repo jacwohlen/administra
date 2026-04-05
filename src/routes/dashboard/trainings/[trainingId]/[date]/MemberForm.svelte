@@ -28,8 +28,7 @@
   }
 </script>
 
-<h3>{$_('dialog.newMember.title')}</h3>
-<form class="border border-surface-600-400 p-4 space-y-4 rounded-lg">
+<form class="space-y-4">
   <label class="label">
     <span>{$_('dialog.newMember.lastName')}</span>
     <input
@@ -49,7 +48,7 @@
     />
   </label>
 </form>
-<footer class="modal-footer flex justify-end space-x-2">
+<footer class="flex justify-end gap-2 mt-4">
   <button class="btn preset-tonal-surface" onclick={cancel}>{$_('button.cancel')}</button>
   <button class="btn preset-filled" onclick={onFormSubmit}>{$_('button.add')}</button>
 </footer>
