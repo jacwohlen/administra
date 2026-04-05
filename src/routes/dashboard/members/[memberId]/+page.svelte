@@ -224,37 +224,64 @@
   </div>
 
   {#if showEditFormDialog}
-    <div class="card p-4 mb-4 border border-surface-300-700">
-      <MemberForm
-        isEditing={true}
-        isSubmitting={isEditing}
-        id={data.id}
-        firstname={data.firstname}
-        lastname={data.lastname}
-        birthday={data.birthday}
-        mobile={data.mobile}
-        labels={data.labels}
-        onclose={() => (showEditFormDialog = false)}
-        onsubmit={handleEditResponse}
-      />
+    <!-- svelte-ignore a11y_no_static_element_interactions -->
+    <div
+      class="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+      onclick={() => (showEditFormDialog = false)}
+      onkeydown={(e) => {
+        if (e.key === 'Escape') showEditFormDialog = false;
+      }}
+    >
+      <!-- svelte-ignore a11y_no_static_element_interactions -->
+      <div
+        class="card p-6 w-full max-w-lg shadow-2xl bg-surface-50-950"
+        onclick={(e) => e.stopPropagation()}
+      >
+        <h3 class="font-semibold text-lg mb-4">{$_('page.members.editMember')}</h3>
+        <MemberForm
+          isEditing={true}
+          isSubmitting={isEditing}
+          id={data.id}
+          firstname={data.firstname}
+          lastname={data.lastname}
+          birthday={data.birthday}
+          mobile={data.mobile}
+          labels={data.labels}
+          onclose={() => (showEditFormDialog = false)}
+          onsubmit={handleEditResponse}
+        />
+      </div>
     </div>
   {/if}
 
   {#if showDeleteConfirm}
-    <div class="card p-4 mb-4 border border-error-600-400">
-      <h3 class="h3 mb-2">{$_('page.members.deleteConfirmTitle')}</h3>
-      <p class="mb-4">
-        {$_('page.members.deleteConfirmMessage')}
-        {data.firstname}
-        {data.lastname}?
-      </p>
-      <div class="flex justify-end gap-2">
-        <button class="btn preset-tonal-surface" onclick={() => handleDeleteResponse(false)}>
-          {$_('button.cancel')}
-        </button>
-        <button class="btn preset-filled-error-500" onclick={() => handleDeleteResponse(true)}>
-          {$_('button.delete')}
-        </button>
+    <!-- svelte-ignore a11y_no_static_element_interactions -->
+    <div
+      class="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+      onclick={() => handleDeleteResponse(false)}
+      onkeydown={(e) => {
+        if (e.key === 'Escape') handleDeleteResponse(false);
+      }}
+    >
+      <!-- svelte-ignore a11y_no_static_element_interactions -->
+      <div
+        class="card p-6 w-full max-w-sm shadow-2xl bg-surface-50-950"
+        onclick={(e) => e.stopPropagation()}
+      >
+        <h3 class="font-semibold text-lg mb-2">{$_('page.members.deleteConfirmTitle')}</h3>
+        <p class="mb-4">
+          {$_('page.members.deleteConfirmMessage')}
+          {data.firstname}
+          {data.lastname}?
+        </p>
+        <div class="flex justify-end gap-2">
+          <button class="btn preset-tonal-surface" onclick={() => handleDeleteResponse(false)}>
+            {$_('button.cancel')}
+          </button>
+          <button class="btn preset-filled-error-500" onclick={() => handleDeleteResponse(true)}>
+            {$_('button.delete')}
+          </button>
+        </div>
       </div>
     </div>
   {/if}

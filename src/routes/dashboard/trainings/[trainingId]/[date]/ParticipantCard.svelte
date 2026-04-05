@@ -183,22 +183,29 @@
     </div>
 
     {#if showRemoveConfirm}
-      <div class="card p-4 mt-2 border border-error-600-400 w-full">
-        <h4 class="font-semibold mb-2">{$_('dialog.confirm.title')}</h4>
-        <p class="mb-3">{$_('dialog.confirm.body')}</p>
-        <div class="flex justify-end gap-2">
-          <button
-            class="btn btn-sm preset-tonal-surface"
-            onclick={() => handleRemoveResponse(false)}
-          >
-            {$_('button.cancel')}
-          </button>
-          <button
-            class="btn btn-sm preset-filled-error-500"
-            onclick={() => handleRemoveResponse(true)}
-          >
-            {$_('button.confirm')}
-          </button>
+      <!-- svelte-ignore a11y_no_static_element_interactions -->
+      <div
+        class="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+        onclick={() => handleRemoveResponse(false)}
+        onkeydown={(e) => {
+          if (e.key === 'Escape') handleRemoveResponse(false);
+        }}
+      >
+        <!-- svelte-ignore a11y_no_static_element_interactions -->
+        <div
+          class="card p-6 w-full max-w-sm shadow-2xl bg-surface-50-950"
+          onclick={(e) => e.stopPropagation()}
+        >
+          <h4 class="font-semibold text-lg mb-2">{$_('dialog.confirm.title')}</h4>
+          <p class="mb-4">{$_('dialog.confirm.body')}</p>
+          <div class="flex justify-end gap-2">
+            <button class="btn preset-tonal-surface" onclick={() => handleRemoveResponse(false)}>
+              {$_('button.cancel')}
+            </button>
+            <button class="btn preset-filled-error-500" onclick={() => handleRemoveResponse(true)}>
+              {$_('button.confirm')}
+            </button>
+          </div>
         </div>
       </div>
     {/if}

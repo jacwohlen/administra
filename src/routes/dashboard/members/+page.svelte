@@ -79,12 +79,26 @@
 </div>
 
 {#if showMemberFormDialog}
-  <div class="card p-4 mb-4 border border-surface-300-700">
-    <MemberForm
-      {isSubmitting}
-      onclose={() => (showMemberFormDialog = false)}
-      onsubmit={addMember}
-    />
+  <!-- svelte-ignore a11y_no_static_element_interactions -->
+  <div
+    class="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+    onclick={() => (showMemberFormDialog = false)}
+    onkeydown={(e) => {
+      if (e.key === 'Escape') showMemberFormDialog = false;
+    }}
+  >
+    <!-- svelte-ignore a11y_no_static_element_interactions -->
+    <div
+      class="card p-6 w-full max-w-lg shadow-2xl bg-surface-50-950"
+      onclick={(e) => e.stopPropagation()}
+    >
+      <h3 class="font-semibold text-lg mb-4">{$_('page.members.addMember')}</h3>
+      <MemberForm
+        {isSubmitting}
+        onclose={() => (showMemberFormDialog = false)}
+        onsubmit={addMember}
+      />
+    </div>
   </div>
 {/if}
 
