@@ -64,8 +64,8 @@
 </script>
 
 <div class="max-w-2xl mx-auto">
-  <div class="flex items-center gap-4 mb-6">
-    <a href="/dashboard/events/{data.event.id}" class="btn preset-tonal-surface">
+  <div class="flex items-center gap-2 mb-4">
+    <a href="/dashboard/events/{data.event.id}" class="btn btn-sm preset-tonal-surface">
       <Fa icon={faArrowLeft} />
     </a>
     <h1>{$_('page.events.edit_event')}</h1>
