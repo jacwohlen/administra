@@ -76,7 +76,7 @@
 
 <svelte:window onclick={handleWindowClick} />
 
-<li class="flex items-center gap-3 py-2 border-b border-surface-300-700">
+<li class="flex items-center gap-3 py-2">
   {#if member}
     <input
       class="checkbox"

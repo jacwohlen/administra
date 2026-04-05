@@ -368,7 +368,7 @@
           {@const hasAttended = !!log}
           {#if member}
             <div
-              class="flex items-center justify-between py-2 border-b border-surface-300-700 {hasAttended
+              class="flex items-center justify-between py-2 {hasAttended
                 ? 'opacity-100'
                 : 'opacity-70'}"
             >

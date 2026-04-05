@@ -33,7 +33,7 @@
 {:then l}
   <ul class="flex flex-col">
     {#each l.slice(0, currentItem) as i}
-      <li class="flex items-center gap-3 py-2 border-b border-surface-300-700">
+      <li class="flex items-center gap-3 py-2">
         <span class="flex-auto truncate">
           <dt class="font-semibold">{i.date}</dt>
           <dd class="text-sm text-surface-600-400">{i.trainingId.title}</dd>
