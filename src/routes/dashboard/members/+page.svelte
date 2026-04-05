@@ -3,6 +3,7 @@
   import Fa from 'svelte-fa';
   import { faGripLines, faPlus } from '@fortawesome/free-solid-svg-icons';
   import { _ } from 'svelte-i18n';
+  import { Avatar } from '@skeletonlabs/skeleton-svelte';
   import { supabaseClient } from '$lib/supabase';
   import { toaster } from '$lib/toast';
   import { invalidate } from '$app/navigation';
@@ -102,7 +103,7 @@
   </div>
 {/if}
 
-<div class="m-2">
+<div class="mb-4">
   <input
     class="input"
     bind:value={searchTerm}
@@ -111,31 +112,30 @@
   />
 </div>
 
-<ul class="flex flex-col gap-3">
+<ul class="flex flex-col gap-1">
   {#each data.members as m (m.id)}
     {#if search(m.firstname, m.lastname)}
-      <li class="card p-4 flex items-center">
-        <span class="flex-auto">
-          <dt class="font-bold">
-            {m.lastname}
-            {m.firstname}
-          </dt>
-          <dd class="text-xs">
+      <li class="flex items-center gap-3 py-2">
+        <Avatar class="rounded-full size-10 flex-shrink-0">
+          <Avatar.Fallback>{m.lastname.charAt(0)}{m.firstname.charAt(0)}</Avatar.Fallback>
+        </Avatar>
+        <span class="flex-auto min-w-0">
+          <dt class="font-bold truncate">{m.lastname} {m.firstname}</dt>
+          <dd class="flex flex-wrap gap-1">
             {#if m.labels}
               {#each m.labels as l (l)}
-                <span class="truncate text-wrap">
-                  <span class="badge preset-filled-secondary-500 font-normal h-4 m-0.5">{l}</span>
-                </span>
+                <span class="chip preset-tonal-secondary text-xs">{l}</span>
               {/each}
             {/if}
           </dd>
         </span>
-        <span>
-          <a class="btn btn-sm preset-tonal-primary" href={'/dashboard/members/' + m.id}>
-            <Fa icon={faGripLines} />
-            <span>{$_('button.view')}</span>
-          </a>
-        </span>
+        <a
+          class="btn btn-sm preset-tonal-primary flex-shrink-0"
+          href={'/dashboard/members/' + m.id}
+        >
+          <Fa icon={faGripLines} />
+          <span>{$_('button.view')}</span>
+        </a>
       </li>
     {/if}
   {/each}
