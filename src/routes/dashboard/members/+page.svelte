@@ -17,7 +17,7 @@
   const toastStore = getToastStore();
 
   let { data }: { data: PageData } = $props();
-  let searchTerm = '';
+  let searchTerm = $state('');
   let isSubmitting = false;
 
   let search = $derived((firstname: string, lastname: string): boolean => {

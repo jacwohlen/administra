@@ -66,7 +66,7 @@
 
   async function onParticipantAdded() {
     await invalidateAll();
-    showAddParticipant = false;
+    // Keep the search area open so the user can add more participants
   }
 
   async function removeParticipant(memberId: string) {
