@@ -76,7 +76,7 @@
 
 <svelte:window onclick={handleWindowClick} />
 
-<li class="card flex items-center gap-3 p-3">
+<li class="flex items-center gap-3 py-2 border-b border-surface-300-700">
   {#if member}
     <input
       class="checkbox"
@@ -112,10 +112,8 @@
     </div>
     <span class="flex-auto min-w-0">
       <dt class="font-semibold truncate">{member.lastname} {member.firstname}</dt>
-      <dd>
+      <dd class="flex items-center gap-2 flex-wrap">
         <Labels labels={member.labels ? member.labels : []} />
-      </dd>
-      <dd>
         <ParticipantFrequency streak={member.streak} isPresent={member.isPresent} />
       </dd>
     </span>
