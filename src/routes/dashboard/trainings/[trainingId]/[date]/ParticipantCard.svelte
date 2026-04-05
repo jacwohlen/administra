@@ -129,8 +129,11 @@
         <Fa icon={faEllipsisVertical} />
       </button>
       {#if menuOpen}
-        <nav class="card p-2 w-56 shadow-xl" style={menuStyle}>
-          <ul>
+        <nav
+          class="card p-2 w-56 shadow-xl bg-surface-50-950 border border-surface-300-700"
+          style={menuStyle}
+        >
+          <ul class="list-none m-0 p-0">
             <li>
               <a
                 href={'/dashboard/members/' + member.id}
