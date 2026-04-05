@@ -11,8 +11,8 @@ body {
 
 /* Avatar - Skeleton v4 is headless */
 [data-scope='avatar'][data-part='root'] {
-  border-radius: 9999px;
   overflow: hidden;
+  border-radius: inherit;
 }
 
 [data-scope='avatar'][data-part='fallback'] {
