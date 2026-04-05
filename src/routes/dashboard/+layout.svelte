@@ -144,7 +144,11 @@
 
     <!-- Profile avatar -->
     <div class="shrink-0 flex items-center pb-2 pr-2 relative">
-      <button type="button" class="cursor-pointer" onclick={() => (popoverOpen = !popoverOpen)}>
+      <button
+        type="button"
+        class="cursor-pointer min-w-[44px] min-h-[44px] flex items-center justify-center"
+        onclick={() => (popoverOpen = !popoverOpen)}
+      >
         {#if data.session.user.user_metadata.avatar_url && !avatarError}
           <img
             src={data.session.user.user_metadata.avatar_url}
@@ -163,8 +167,14 @@
       {#if popoverOpen}
         <!-- svelte-ignore a11y_no_static_element_interactions -->
         <div
+          class="fixed inset-0 z-40"
+          onclick={() => (popoverOpen = false)}
+          onkeydown={(e) => {
+            if (e.key === 'Escape') popoverOpen = false;
+          }}
+        ></div>
+        <div
           class="absolute right-0 top-full mt-2 card p-4 w-64 shadow-xl z-50 bg-surface-50-950 border border-surface-300-700"
-          onmouseleave={() => (popoverOpen = false)}
         >
           <button
             type="button"
