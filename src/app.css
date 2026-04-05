@@ -9,7 +9,7 @@ body {
   height: 100%;
 }
 
-/* Avatar fallback styling - Skeleton v4 Avatar is headless */
+/* Avatar - Skeleton v4 is headless */
 [data-scope='avatar'][data-part='root'] {
   border-radius: 9999px;
   overflow: hidden;
@@ -31,4 +31,35 @@ body {
   width: 100%;
   height: 100%;
   object-fit: cover;
+}
+
+/* Tabs - Skeleton v4 is headless */
+[data-scope='tabs'][data-part='list'] {
+  display: flex;
+  gap: 0;
+}
+
+[data-scope='tabs'][data-part='trigger'] {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.5rem 1rem;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--color-surface-600-400);
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  transition:
+    color 0.15s,
+    border-color 0.15s;
+}
+
+[data-scope='tabs'][data-part='trigger']:hover {
+  color: var(--color-primary-500);
+}
+
+[data-scope='tabs'][data-part='trigger'][data-selected] {
+  color: var(--color-primary-500);
+  border-bottom-color: var(--color-primary-500);
 }

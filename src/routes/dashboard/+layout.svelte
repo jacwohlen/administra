@@ -75,7 +75,7 @@
 
 <div class="h-full flex flex-col overflow-hidden">
   <!-- Header -->
-  <header class="bg-surface-100-900 border-b border-surface-300-700 flex items-center px-2 py-2">
+  <header class="bg-surface-100-900 flex items-center px-2">
     <Tabs
       value={getActiveTab()}
       onValueChange={(e) => {
