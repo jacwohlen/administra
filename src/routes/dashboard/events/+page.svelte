@@ -89,7 +89,7 @@
             <li class="list-item">
               <div class="relative inline-block flex-none">
                 <div class="entity-badge">
-                  {event.title.charAt(0)}{event.title.charAt(1)}
+                  <Fa icon={faCalendarDays} size="lg" />
                 </div>
               </div>
               <span class="list-item-content">
@@ -141,7 +141,7 @@
             <li class="list-item">
               <div class="relative inline-block flex-none">
                 <div class="entity-badge">
-                  {event.title.charAt(0)}{event.title.charAt(1)}
+                  <Fa icon={faCalendarDays} size="lg" />
                 </div>
               </div>
               <span class="list-item-content">
@@ -191,7 +191,7 @@
             <li class="list-item">
               <div class="relative inline-block flex-none">
                 <div class="entity-badge">
-                  {event.title.charAt(0)}{event.title.charAt(1)}
+                  <Fa icon={faCalendarDays} size="lg" />
                 </div>
               </div>
               <span class="list-item-content">

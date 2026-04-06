@@ -108,9 +108,9 @@
 <!-- Today's Events Section -->
 <section>
   {#if todayEvents.length > 0}
-    <ul class="flex flex-col gap-3">
+    <ul class="flex flex-col gap-2">
       {#each todayEvents as event (event.id)}
-        <li class="card p-4 flex items-start gap-3">
+        <li class="list-item">
           <div class="relative inline-block flex-none">
             <div class="entity-badge">
               <Fa icon={faCalendarDays} size="lg" />
