@@ -387,7 +387,7 @@
 
 <div class="card">
   <header class="card-header flex justify-between items-center mb-4">
-    <h3 class="h3">{$_('page.trainings.lessonPlanTitle')}</h3>
+    <h3>{$_('page.trainings.lessonPlanTitle')}</h3>
     <div class="flex gap-2">
       {#if isEditing}
         <button
@@ -522,7 +522,7 @@
     {:else if lessonPlan}
       <div class="space-y-4">
         {#if lessonPlan.title}
-          <h4 class="h4">{lessonPlan.title}</h4>
+          <h4>{lessonPlan.title}</h4>
         {/if}
 
         {#if lessonPlan.filePath}
@@ -532,7 +532,7 @@
               <div class="flex items-center gap-3 min-w-0 flex-1">
                 <Fa icon={faFile} size="lg" class="flex-shrink-0" />
                 <div class="min-w-0 flex-1">
-                  <p class="font-semibold truncate">{lessonPlan.fileName || 'Attachment'}</p>
+                  <p class="truncate">{lessonPlan.fileName || 'Attachment'}</p>
                   {#if lessonPlan.fileSize}
                     <p class="text-sm opacity-60">{formatFileSize(lessonPlan.fileSize)}</p>
                   {/if}

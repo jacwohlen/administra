@@ -112,7 +112,7 @@
       {/if}
     </div>
     <span class="flex-auto min-w-0">
-      <dt class="font-semibold truncate">{member.lastname} {member.firstname}</dt>
+      <dt class="truncate">{member.lastname} {member.firstname}</dt>
       <dd class="flex items-center gap-2 flex-wrap">
         <Labels labels={member.labels ? member.labels : []} />
         <ParticipantFrequency streak={member.streak} isPresent={member.isPresent} />
@@ -197,7 +197,7 @@
           class="card p-4 sm:p-6 w-full max-w-sm shadow-2xl bg-surface-50-950"
           onclick={(e) => e.stopPropagation()}
         >
-          <h4 class="font-semibold text-lg mb-2">{$_('dialog.confirm.title')}</h4>
+          <h4 class="mb-2">{$_('dialog.confirm.title')}</h4>
           <p class="mb-4">{$_('dialog.confirm.body')}</p>
           <div class="flex justify-end gap-2">
             <button class="btn preset-tonal-surface" onclick={() => handleRemoveResponse(false)}>

@@ -9,7 +9,7 @@
   let topAthletes = $derived(data.topAthletes as { [key: string]: Athletes[] });
 </script>
 
-<h3 class="text-lg font-semibold mb-3">{$_('page.stats.topAthletes')}</h3>
+<h3 class="mb-3">{$_('page.stats.topAthletes')}</h3>
 <div class="gap-4 justify-start flex flex-col md:flex-row">
   {#each Object.keys(topAthletes) as section}
     <TopList

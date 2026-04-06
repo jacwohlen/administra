@@ -72,14 +72,14 @@
 
   <div class="card p-4">
     <div class="flex justify-between items-center mb-4">
-      <h3 class="text-lg font-semibold">{$_('page.stats.topTrainers')}</h3>
+      <h3>{$_('page.stats.topTrainers')}</h3>
       <TrainerDownload {year} {yearmode} />
     </div>
     <TopTrainers {data} />
   </div>
 
   <div class="card p-4">
-    <h3 class="text-lg font-semibold mb-3">{$_('page.stats.topParticipants')}</h3>
+    <h3 class="mb-3">{$_('page.stats.topParticipants')}</h3>
     <TopParticipantsStats {yearmode} {year} />
   </div>
 

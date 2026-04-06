@@ -34,7 +34,7 @@
 
 {#if mode === 'DEV'}
   <div class="h-screen w-screen flex flex-col">
-    <div class="bg-surface-600-400 text-white text-center text-xs py-0.5 font-semibold">main</div>
+    <div class="bg-surface-600-400 text-white text-center text-xs py-0.5">main</div>
     <div class="flex-1 overflow-hidden">
       {@render children()}
     </div>

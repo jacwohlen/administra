@@ -261,7 +261,7 @@
         class="card p-4 sm:p-6 w-full max-w-sm shadow-2xl bg-surface-50-950"
         onclick={(e) => e.stopPropagation()}
       >
-        <h3 class="font-semibold text-lg mb-2">{$_('page.events.deleteConfirmTitle')}</h3>
+        <h3 class="mb-2">{$_('page.events.deleteConfirmTitle')}</h3>
         <p class="mb-4">{$_('page.events.deleteConfirmMessage')} "{data.event.title}"?</p>
         <div class="flex justify-end gap-2">
           <button class="btn preset-tonal-surface" onclick={() => handleDeleteResponse(false)}>
@@ -278,7 +278,7 @@
   <!-- Event Description -->
   {#if data.event.description}
     <div class="mb-4">
-      <h3 class="font-semibold mb-1">{$_('page.events.description')}</h3>
+      <h3 class="mb-1">{$_('page.events.description')}</h3>
       <p class="text-sm text-surface-700-300 break-words">{data.event.description}</p>
     </div>
   {/if}
@@ -286,15 +286,15 @@
   <!-- Event Statistics -->
   <div class="grid grid-cols-3 gap-2 sm:gap-4 mb-4">
     <div class="card p-3 sm:p-4 text-center">
-      <div class="text-lg sm:text-xl font-bold text-primary-600-400">{registeredCount}</div>
+      <div class="sm:text-xl font-bold text-primary-600-400">{registeredCount}</div>
       <div class="text-xs text-surface-600-400">{$_('page.events.stats.registered')}</div>
     </div>
     <div class="card p-3 sm:p-4 text-center">
-      <div class="text-lg sm:text-xl font-bold text-success-600-400">{attendedCount}</div>
+      <div class="sm:text-xl font-bold text-success-600-400">{attendedCount}</div>
       <div class="text-xs text-surface-600-400">{$_('page.events.stats.attended')}</div>
     </div>
     <div class="card p-3 sm:p-4 text-center">
-      <div class="text-lg sm:text-xl font-bold text-tertiary-600-400">{attendanceRate}%</div>
+      <div class="sm:text-xl font-bold text-tertiary-600-400">{attendanceRate}%</div>
       <div class="text-xs text-surface-600-400">{$_('page.events.stats.attendance_rate')}</div>
     </div>
   </div>
@@ -302,7 +302,7 @@
   <!-- Registration Status -->
   {#if data.event.registrationDeadline}
     <div class="mb-4">
-      <h3 class="font-semibold mb-1">{$_('page.events.registration_info')}</h3>
+      <h3 class="mb-1">{$_('page.events.registration_info')}</h3>
       <p class="text-sm">
         <strong>{$_('page.events.registration_deadline')}:</strong>
         {formatEventDate(data.event.registrationDeadline)}
@@ -325,7 +325,7 @@
   <!-- Participants Section -->
   <div>
     <div class="flex justify-between items-center mb-3">
-      <h3 class="font-semibold">{$_('page.events.participants')}</h3>
+      <h3>{$_('page.events.participants')}</h3>
       {#if !isEventPast() && isRegistrationOpen() && (!data.event.maxParticipants || registeredCount < data.event.maxParticipants)}
         <button
           class="btn preset-filled-primary-500"

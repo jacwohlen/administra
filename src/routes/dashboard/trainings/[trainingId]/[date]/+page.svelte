@@ -185,7 +185,7 @@
     <Fa icon={faArrowLeft} />
     <span class="hidden sm:inline">{$_('button.week')}</span>
   </button>
-  <h3 class="h3">{formattedDate}</h3>
+  <h3>{formattedDate}</h3>
   <button class="btn preset-tonal-surface" onclick={nextWeek}>
     <span class="hidden sm:inline">{$_('button.week')}</span>
     <Fa icon={faArrowRight} />

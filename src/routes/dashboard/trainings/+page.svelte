@@ -11,7 +11,7 @@
 <ul class="flex flex-col gap-2">
   {#each data.trainings as t, index (t.id)}
     {#if index === 0 || t.weekday !== data.trainings[index - 1].weekday}
-      <h3 class="text-lg font-semibold mt-4 mb-1">{$_('weekday.' + t.weekday)}</h3>
+      <h3 class="mt-4 mb-1">{$_('weekday.' + t.weekday)}</h3>
     {/if}
     <li class="flex items-center gap-3 py-2">
       <div

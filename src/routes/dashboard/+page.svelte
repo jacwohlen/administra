@@ -90,7 +90,7 @@
           <span class="flex-auto">
             {t.title}
           </span>
-          <span class="">
+          <span>
             <a
               class="btn preset-tonal-primary"
               href="/dashboard/trainings/{t.id}/{date.format(dateFormat)}"

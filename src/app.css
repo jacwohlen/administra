@@ -4,6 +4,45 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
+/* Mobile-friendly heading sizes (override Skeleton defaults) */
+h1,
+.h1 {
+  font-size: var(--text-xl) !important;
+  line-height: var(--text-xl--line-height) !important;
+}
+
+h2,
+.h2 {
+  font-size: var(--text-lg) !important;
+  line-height: var(--text-lg--line-height) !important;
+}
+
+h3,
+.h3 {
+  font-size: var(--text-lg) !important;
+  line-height: var(--text-lg--line-height) !important;
+}
+
+h4,
+.h4 {
+  font-size: var(--text-lg) !important;
+  line-height: var(--text-lg--line-height) !important;
+}
+
+@media (min-width: 640px) {
+  h1,
+  .h1 {
+    font-size: var(--text-2xl) !important;
+    line-height: var(--text-2xl--line-height) !important;
+  }
+
+  h2,
+  .h2 {
+    font-size: var(--text-xl) !important;
+    line-height: var(--text-xl--line-height) !important;
+  }
+}
+
 /* Touch-friendly buttons - 44px minimum (Apple HIG) */
 .btn,
 .btn-icon {

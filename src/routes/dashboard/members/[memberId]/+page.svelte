@@ -236,7 +236,7 @@
         class="card p-4 sm:p-6 w-full max-w-lg shadow-2xl bg-surface-50-950"
         onclick={(e) => e.stopPropagation()}
       >
-        <h3 class="font-semibold text-lg mb-4">{$_('dialog.editMember.title')}</h3>
+        <h3 class="mb-4">{$_('dialog.editMember.title')}</h3>
         <MemberForm
           isEditing={true}
           isSubmitting={isEditing}
@@ -267,7 +267,7 @@
         class="card p-4 sm:p-6 w-full max-w-sm shadow-2xl bg-surface-50-950"
         onclick={(e) => e.stopPropagation()}
       >
-        <h3 class="font-semibold text-lg mb-2">{$_('page.members.deleteConfirmTitle')}</h3>
+        <h3 class="mb-2">{$_('page.members.deleteConfirmTitle')}</h3>
         <p class="mb-4">
           {$_('page.members.deleteConfirmMessage')}
           {data.firstname}
@@ -339,31 +339,27 @@
     <!-- Member details -->
     <div class="space-y-3">
       <div class="flex flex-col sm:flex-row border-b border-surface-300-700 pb-2">
-        <span class="sm:w-32 font-semibold text-surface-600-400">{$_('page.members.id')}</span>
+        <span class="sm:w-32 text-surface-600-400">{$_('page.members.id')}</span>
         <span>{data.id}</span>
       </div>
       <div class="flex flex-col sm:flex-row border-b border-surface-300-700 pb-2">
-        <span class="sm:w-32 font-semibold text-surface-600-400">{$_('page.members.lastName')}</span
-        >
+        <span class="sm:w-32 text-surface-600-400">{$_('page.members.lastName')}</span>
         <span>{data.lastname}</span>
       </div>
       <div class="flex flex-col sm:flex-row border-b border-surface-300-700 pb-2">
-        <span class="sm:w-32 font-semibold text-surface-600-400"
-          >{$_('page.members.firstName')}</span
-        >
+        <span class="sm:w-32 text-surface-600-400">{$_('page.members.firstName')}</span>
         <span>{data.firstname}</span>
       </div>
       <div class="flex flex-col sm:flex-row border-b border-surface-300-700 pb-2">
-        <span class="sm:w-32 font-semibold text-surface-600-400">{$_('page.members.birthday')}</span
-        >
+        <span class="sm:w-32 text-surface-600-400">{$_('page.members.birthday')}</span>
         <span>{data.birthday || '-'}</span>
       </div>
       <div class="flex flex-col sm:flex-row border-b border-surface-300-700 pb-2">
-        <span class="sm:w-32 font-semibold text-surface-600-400">{$_('page.members.mobile')}</span>
+        <span class="sm:w-32 text-surface-600-400">{$_('page.members.mobile')}</span>
         <span>{data.mobile || '-'}</span>
       </div>
       <div class="flex flex-col sm:flex-row pb-2">
-        <span class="sm:w-32 font-semibold text-surface-600-400">{$_('page.members.labels')}</span>
+        <span class="sm:w-32 text-surface-600-400">{$_('page.members.labels')}</span>
         <div class="flex flex-wrap gap-1">
           {#if data.labels}
             {#each data.labels as l}

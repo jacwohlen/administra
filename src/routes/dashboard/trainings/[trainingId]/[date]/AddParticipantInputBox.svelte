@@ -192,7 +192,7 @@
       class="card p-4 sm:p-6 w-full max-w-lg shadow-2xl bg-surface-50-950"
       onclick={(e) => e.stopPropagation()}
     >
-      <h3 class="font-semibold text-lg mb-4">{$_('button.createNew')}</h3>
+      <h3 class="mb-4">{$_('button.createNew')}</h3>
       <MemberForm
         lastname={newMemberLastname}
         firstname={newMemberFirstname}
