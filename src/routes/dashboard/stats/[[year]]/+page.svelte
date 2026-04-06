@@ -11,6 +11,12 @@
   import TopEventParticipants from './TopEventParticipants.svelte';
   import TopEventCoaches from './TopEventCoaches.svelte';
   import TrainerDownload from './TrainerDownload.svelte';
+  import SummaryKPIs from './SummaryKPIs.svelte';
+  import MonthlyTrend from './MonthlyTrend.svelte';
+  import SectionDistribution from './SectionDistribution.svelte';
+  import AttendanceByTraining from './AttendanceByTraining.svelte';
+  import TrainerWorkload from './TrainerWorkload.svelte';
+  import MemberRetention from './MemberRetention.svelte';
 
   let { data }: { data: PageData } = $props();
 
@@ -66,6 +72,8 @@
 </div>
 
 <div class="space-y-4">
+  <SummaryKPIs {year} {yearmode} />
+
   <div class="card p-4">
     <TopAthletes {data} />
   </div>
@@ -79,8 +87,28 @@
   </div>
 
   <div class="card p-4">
+    <h3>{$_('page.stats.trainerWorkload')}</h3>
+    <TrainerWorkload {yearmode} {year} />
+  </div>
+
+  <div class="card p-4">
     <h3>{$_('page.stats.topParticipants')}</h3>
     <TopParticipantsStats {yearmode} {year} />
+  </div>
+
+  <div class="card p-4">
+    <h3>{$_('page.stats.monthlyTrend')}</h3>
+    <MonthlyTrend {yearmode} {year} />
+  </div>
+
+  <div class="card p-4">
+    <h3>{$_('page.stats.attendanceByTraining')}</h3>
+    <AttendanceByTraining {yearmode} {year} />
+  </div>
+
+  <div class="card p-4">
+    <h3>{$_('page.stats.sectionDistribution')}</h3>
+    <SectionDistribution {yearmode} {year} />
   </div>
 
   <div class="card p-4">
@@ -88,5 +116,10 @@
   </div>
   <div class="card p-4">
     <TopEventCoaches {yearmode} {year} />
+  </div>
+
+  <div class="card p-4">
+    <h3>{$_('page.stats.memberRetention')}</h3>
+    <MemberRetention {yearmode} {year} />
   </div>
 </div>
