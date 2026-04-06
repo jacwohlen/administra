@@ -69,7 +69,30 @@
       "textDisabledWhenFileSelected": "Textinhalt ist deaktiviert wenn eine Datei ausgewählt ist",
       "uploading": "Hochladen...",
       "uploadError": "Fehler beim Hochladen der Datei",
-      "saveError": "Fehler beim Speichern des Lektionsplans"
+      "saveError": "Fehler beim Speichern des Lektionsplans",
+      "create_training": "Training Erstellen",
+      "edit_training": "Training Bearbeiten",
+      "form": {
+        "title": "Trainingstitel",
+        "title_placeholder": "z.B. Kinder Judo, Fortgeschrittenes Aikido...",
+        "weekday": "Wochentag",
+        "select_weekday": "Wochentag auswählen...",
+        "time_from": "Startzeit",
+        "time_to": "Endzeit",
+        "section": "Sektion",
+        "select_section": "Sektion auswählen..."
+      },
+      "validation": {
+        "required_fields": "Bitte alle Pflichtfelder ausfüllen"
+      },
+      "createSuccess": "Training erfolgreich erstellt",
+      "createError": "Fehler beim Erstellen des Trainings",
+      "updateSuccess": "Training erfolgreich aktualisiert",
+      "updateError": "Fehler beim Aktualisieren des Trainings",
+      "deleteConfirmTitle": "Training Löschen",
+      "deleteConfirmMessage": "Sind Sie sicher, dass Sie das Training löschen möchten",
+      "deleteSuccess": "Training erfolgreich gelöscht",
+      "deleteError": "Fehler beim Löschen des Trainings"
     },
     "members": {
       "title": "Mitglieder",
@@ -114,7 +137,30 @@
       "no_event_data": "Keine Event-Daten verfügbar",
       "downloadTrainerTracking": "Trainerübersicht herunterladen",
       "noTrainerData": "Keine Trainerdaten für diesen Zeitraum verfügbar",
-      "downloadError": "Fehler beim Herunterladen der Trainerdaten"
+      "downloadError": "Fehler beim Herunterladen der Trainerdaten",
+      "totalTrainingSessions": "Trainingseinheiten",
+      "uniqueParticipants": "Aktive Teilnehmer",
+      "totalEvents": "Events",
+      "avgAttendanceTraining": "Ø pro Training",
+      "avgAttendanceEvent": "Ø pro Event",
+      "monthlyTrend": "Monatlicher Teilnahmetrend",
+      "sectionDistribution": "Teilnahme nach Sektion",
+      "attendanceByTraining": "Durchschnittliche Teilnahme pro Training",
+      "trainerWorkload": "Trainer-Auslastung",
+      "memberRetention": "Mitglieder-Bindung",
+      "newMembers": "Neue Mitglieder",
+      "returningMembers": "Wiederkehrende Mitglieder",
+      "churnedMembers": "Abgewanderte Mitglieder",
+      "retentionYearOnly": "Bindungsdaten sind nur für bestimmte Jahre verfügbar",
+      "mainTrainer": "Haupttrainer",
+      "assistant": "Hilfstrainer",
+      "month": "Monat",
+      "attendance": "Teilnahme",
+      "training": "Training",
+      "avgAttendance": "Ø Teilnahme",
+      "sessions": "Einheiten",
+      "totalAttendance": "Total",
+      "no_data": "Keine Daten verfügbar"
     },
     "events": {
       "title": "Events",
@@ -235,6 +281,38 @@
       "title": "Bitte Bestätigen",
       "body": "Bist du sicher, dass du fortfahren möchtest?"
     }
+  },
+  "badges": {
+    "title": "Abzeichen",
+    "noBadges": "Noch keine Abzeichen verdient",
+    "refreshAll": "Abzeichen aktualisieren",
+    "refreshing": "Aktualisiere...",
+    "refreshSuccess": "Abzeichen erfolgreich aktualisiert",
+    "refreshError": "Fehler beim Aktualisieren der Abzeichen",
+    "leaderboard": "Abzeichen-Rangliste",
+    "noBadgeData": "Keine Abzeichen-Daten verfügbar",
+    "category": {
+      "attendance": "Teilnahme",
+      "streak": "Serien",
+      "trainer": "Trainer",
+      "event": "Events",
+      "top_performer": "Top-Performer"
+    },
+    "attendance_10": { "name": "Anfänger", "description": "10 Trainings besucht" },
+    "attendance_25": { "name": "Stammgast", "description": "25 Trainings besucht" },
+    "attendance_50": { "name": "Engagiert", "description": "50 Trainings besucht" },
+    "attendance_100": { "name": "Krieger", "description": "100 Trainings besucht" },
+    "attendance_200": { "name": "Meister", "description": "200 Trainings besucht" },
+    "streak_5": { "name": "Am Brennen", "description": "5 Trainings in Folge" },
+    "streak_10": { "name": "Unaufhaltsam", "description": "10 Trainings in Folge" },
+    "streak_20": { "name": "Eiserner Wille", "description": "20 Trainings in Folge" },
+    "trainer_10": { "name": "Helfer", "description": "10 Trainings geleitet" },
+    "trainer_50": { "name": "Sensei", "description": "50 Trainings geleitet" },
+    "trainer_100": { "name": "Grossmeister", "description": "100 Trainings geleitet" },
+    "event_3": { "name": "Entdecker", "description": "3 Events besucht" },
+    "event_10": { "name": "Wettkämpfer", "description": "10 Events besucht" },
+    "event_25": { "name": "Champion", "description": "25 Events besucht" },
+    "top_3": { "name": "Top-Performer", "description": "Top 3 in einer Sektion" }
   },
   "weekday": {
     "Monday": "Montag",

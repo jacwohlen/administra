@@ -63,13 +63,13 @@
      transform="translate(-16.312881,-54.215191)">
     <path
        id="path195"
-       style="fill:#ff0000;fill-rule:evenodd;stroke-width:1.03561"
+       style="fill:#dc0024;fill-rule:evenodd;stroke-width:1.03561"
        inkscape:transform-center-y="-6.4120104"
        d="M 83.951172 11.414062 L 41.974609 84.117188 L 14.423828 131.83594 A 83.950001 83.950001 0 0 0 30.835938 149.5957 L 42.142578 130.01367 L 84.117188 57.310547 L 126.0918 130.01367 L 137.09961 149.08008 A 83.950001 83.950001 0 0 0 153.21484 131.38281 L 125.92578 84.117188 L 83.951172 11.414062 z "
        transform="matrix(0.26458333,0,0,0.26458333,16.312881,54.215191)" />
     <path
        id="path195-37"
-       style="fill:#ff0000;fill-rule:evenodd;stroke-width:0.274005"
+       style="fill:#dc0024;fill-rule:evenodd;stroke-width:0.274005"
        inkscape:transform-center-y="-6.4120104"
        d="m 38.568887,75.804565 -11.105782,19.236034 -0.38499,0.666628 h 22.981544 l -0.38499,-0.666628 z" />
   </g>

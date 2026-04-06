@@ -4,14 +4,14 @@ import { createClient } from '@supabase/supabase-js';
 const STORAGE_STATE_PATH = 'e2e/.auth/user.json';
 
 setup('authenticate', async ({ page, context }) => {
-  const supabaseUrl = process.env.PUBLIC_SUPABASE_URL!;
+  const supabaseUrl = process.env.PUBLIC_SUPABASE_DATABASE_URL!;
   const supabaseKey = process.env.PUBLIC_SUPABASE_ANON_KEY!;
   const email = process.env.E2E_USER_EMAIL!;
   const password = process.env.E2E_USER_PASSWORD!;
 
   if (!supabaseUrl || !supabaseKey || !email || !password) {
     throw new Error(
-      'Missing E2E auth env vars. Set PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY, E2E_USER_EMAIL, E2E_USER_PASSWORD.'
+      'Missing E2E auth env vars. Set PUBLIC_SUPABASE_DATABASE_URL, PUBLIC_SUPABASE_ANON_KEY, E2E_USER_EMAIL, E2E_USER_PASSWORD.'
     );
   }
 

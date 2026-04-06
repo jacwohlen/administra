@@ -69,7 +69,30 @@
       "textDisabledWhenFileSelected": "Text content is disabled when a file is selected",
       "uploading": "Uploading...",
       "uploadError": "Error uploading file",
-      "saveError": "Error saving lesson plan"
+      "saveError": "Error saving lesson plan",
+      "create_training": "Create Training",
+      "edit_training": "Edit Training",
+      "form": {
+        "title": "Training Title",
+        "title_placeholder": "e.g. Kids Judo, Advanced Aikido...",
+        "weekday": "Weekday",
+        "select_weekday": "Select a weekday...",
+        "time_from": "Start Time",
+        "time_to": "End Time",
+        "section": "Section",
+        "select_section": "Select a section..."
+      },
+      "validation": {
+        "required_fields": "Please fill in all required fields"
+      },
+      "createSuccess": "Training created successfully",
+      "createError": "Error creating training",
+      "updateSuccess": "Training updated successfully",
+      "updateError": "Error updating training",
+      "deleteConfirmTitle": "Delete Training",
+      "deleteConfirmMessage": "Are you sure you want to delete the training",
+      "deleteSuccess": "Training successfully deleted",
+      "deleteError": "Error deleting training"
     },
     "members": {
       "title": "Members",
@@ -114,7 +137,30 @@
       "no_event_data": "No event data available",
       "downloadTrainerTracking": "Download Trainer Tracking",
       "noTrainerData": "No trainer data available for this period",
-      "downloadError": "Error downloading trainer data"
+      "downloadError": "Error downloading trainer data",
+      "totalTrainingSessions": "Training Sessions",
+      "uniqueParticipants": "Unique Participants",
+      "totalEvents": "Events",
+      "avgAttendanceTraining": "Avg. per Training",
+      "avgAttendanceEvent": "Avg. per Event",
+      "monthlyTrend": "Monthly Attendance Trend",
+      "sectionDistribution": "Attendance by Section",
+      "attendanceByTraining": "Average Attendance per Training",
+      "trainerWorkload": "Trainer Workload",
+      "memberRetention": "Member Retention",
+      "newMembers": "New Members",
+      "returningMembers": "Returning Members",
+      "churnedMembers": "Churned Members",
+      "retentionYearOnly": "Retention data is only available for specific years",
+      "mainTrainer": "Main Trainer",
+      "assistant": "Assistant",
+      "month": "Month",
+      "attendance": "Attendance",
+      "training": "Training",
+      "avgAttendance": "Avg. Attendance",
+      "sessions": "Sessions",
+      "totalAttendance": "Total",
+      "no_data": "No data available"
     },
     "events": {
       "title": "Events",
@@ -235,6 +281,38 @@
       "title": "Please Confirm",
       "body": "Are you sure you wish to proceed?"
     }
+  },
+  "badges": {
+    "title": "Badges",
+    "noBadges": "No badges earned yet",
+    "refreshAll": "Refresh Badges",
+    "refreshing": "Refreshing...",
+    "refreshSuccess": "Badges refreshed successfully",
+    "refreshError": "Error refreshing badges",
+    "leaderboard": "Badge Leaderboard",
+    "noBadgeData": "No badge data available",
+    "category": {
+      "attendance": "Attendance",
+      "streak": "Streaks",
+      "trainer": "Trainer",
+      "event": "Events",
+      "top_performer": "Top Performer"
+    },
+    "attendance_10": { "name": "Beginner", "description": "Attended 10 training sessions" },
+    "attendance_25": { "name": "Regular", "description": "Attended 25 training sessions" },
+    "attendance_50": { "name": "Dedicated", "description": "Attended 50 training sessions" },
+    "attendance_100": { "name": "Warrior", "description": "Attended 100 training sessions" },
+    "attendance_200": { "name": "Master", "description": "Attended 200 training sessions" },
+    "streak_5": { "name": "On Fire", "description": "5 consecutive training sessions" },
+    "streak_10": { "name": "Unstoppable", "description": "10 consecutive training sessions" },
+    "streak_20": { "name": "Iron Will", "description": "20 consecutive training sessions" },
+    "trainer_10": { "name": "Helper", "description": "Coached 10 training sessions" },
+    "trainer_50": { "name": "Sensei", "description": "Coached 50 training sessions" },
+    "trainer_100": { "name": "Grand Master", "description": "Coached 100 training sessions" },
+    "event_3": { "name": "Explorer", "description": "Attended 3 events" },
+    "event_10": { "name": "Competitor", "description": "Attended 10 events" },
+    "event_25": { "name": "Champion", "description": "Attended 25 events" },
+    "top_3": { "name": "Top Performer", "description": "Ranked in the top 3 of a section" }
   },
   "weekday": {
     "Monday": "Monday",

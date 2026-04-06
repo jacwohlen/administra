@@ -97,6 +97,28 @@ export interface EventStats {
   rank: number;
 }
 
+export interface Badge {
+  badgeId: string;
+  category: string;
+  emoji: string;
+  sortOrder: number;
+  earnedAt: string;
+}
+
+export interface BadgeLeaderboardEntry {
+  memberId: number;
+  lastname: string;
+  firstname: string;
+  badgeCount: number;
+  topBadgeEmoji: string;
+}
+
+export interface MemberTopBadge {
+  memberId: number;
+  emoji: string;
+  badgeId: string;
+}
+
 export interface TrainerTrackingRecord {
   date: string;
   trainingId: number;

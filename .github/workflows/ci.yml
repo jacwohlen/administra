@@ -22,7 +22,7 @@ jobs:
 
       - name: Create env file
         run: |
-          echo 'PUBLIC_SUPABASE_URL=http://localhost:54321' >> .env
+          echo 'PUBLIC_SUPABASE_DATABASE_URL=http://localhost:54321' >> .env
           echo 'PUBLIC_SUPABASE_ANON_KEY=placeholder' >> .env
           echo 'PUBLIC_SUPABASE_SITE_URL=http://localhost:5173' >> .env
           echo 'PUBLIC_MODE=DEV' >> .env
@@ -50,7 +50,7 @@ jobs:
 
       - name: Create env file
         run: |
-          echo 'PUBLIC_SUPABASE_URL=http://localhost:54321' >> .env
+          echo 'PUBLIC_SUPABASE_DATABASE_URL=http://localhost:54321' >> .env
           echo 'PUBLIC_SUPABASE_ANON_KEY=placeholder' >> .env
           echo 'PUBLIC_SUPABASE_SITE_URL=http://localhost:5173' >> .env
           echo 'PUBLIC_MODE=DEV' >> .env
@@ -73,7 +73,7 @@ jobs:
 
       - name: Create env file
         run: |
-          echo 'PUBLIC_SUPABASE_URL=http://localhost:54321' >> .env
+          echo 'PUBLIC_SUPABASE_DATABASE_URL=http://localhost:54321' >> .env
           echo 'PUBLIC_SUPABASE_ANON_KEY=placeholder' >> .env
           echo 'PUBLIC_SUPABASE_SITE_URL=http://localhost:5173' >> .env
           echo 'PUBLIC_MODE=DEV' >> .env
@@ -108,7 +108,7 @@ jobs:
 
       - name: Create env file
         run: |
-          echo 'PUBLIC_SUPABASE_URL=http://localhost:54321' >> .env
+          echo 'PUBLIC_SUPABASE_DATABASE_URL=http://localhost:54321' >> .env
           echo 'PUBLIC_SUPABASE_ANON_KEY=placeholder' >> .env
           echo 'PUBLIC_SUPABASE_SITE_URL=http://localhost:5173' >> .env
           echo 'PUBLIC_MODE=DEV' >> .env
