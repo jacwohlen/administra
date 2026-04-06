@@ -1,10 +1,10 @@
-import { PUBLIC_SUPABASE_ANON_KEY, PUBLIC_SUPABASE_URL } from '$env/static/public';
+import { PUBLIC_SUPABASE_ANON_KEY, PUBLIC_SUPABASE_DATABASE_URL } from '$env/static/public';
 import { createServerClient } from '@supabase/ssr';
 import type { Handle } from '@sveltejs/kit';
 import { locale } from 'svelte-i18n';
 
 export const handle: Handle = async ({ event, resolve }) => {
-  event.locals.supabase = createServerClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY, {
+  event.locals.supabase = createServerClient(PUBLIC_SUPABASE_DATABASE_URL, PUBLIC_SUPABASE_ANON_KEY, {
     cookies: {
       getAll: () => event.cookies.getAll(),
       setAll: (cookiesToSet) => {
