@@ -69,7 +69,30 @@
       "textDisabledWhenFileSelected": "Text content is disabled when a file is selected",
       "uploading": "Uploading...",
       "uploadError": "Error uploading file",
-      "saveError": "Error saving lesson plan"
+      "saveError": "Error saving lesson plan",
+      "create_training": "Create Training",
+      "edit_training": "Edit Training",
+      "form": {
+        "title": "Training Title",
+        "title_placeholder": "e.g. Kids Judo, Advanced Aikido...",
+        "weekday": "Weekday",
+        "select_weekday": "Select a weekday...",
+        "time_from": "Start Time",
+        "time_to": "End Time",
+        "section": "Section",
+        "select_section": "Select a section..."
+      },
+      "validation": {
+        "required_fields": "Please fill in all required fields"
+      },
+      "createSuccess": "Training created successfully",
+      "createError": "Error creating training",
+      "updateSuccess": "Training updated successfully",
+      "updateError": "Error updating training",
+      "deleteConfirmTitle": "Delete Training",
+      "deleteConfirmMessage": "Are you sure you want to delete the training",
+      "deleteSuccess": "Training successfully deleted",
+      "deleteError": "Error deleting training"
     },
     "members": {
       "title": "Members",

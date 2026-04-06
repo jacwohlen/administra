@@ -69,7 +69,30 @@
       "textDisabledWhenFileSelected": "Textinhalt ist deaktiviert wenn eine Datei ausgewählt ist",
       "uploading": "Hochladen...",
       "uploadError": "Fehler beim Hochladen der Datei",
-      "saveError": "Fehler beim Speichern des Lektionsplans"
+      "saveError": "Fehler beim Speichern des Lektionsplans",
+      "create_training": "Training Erstellen",
+      "edit_training": "Training Bearbeiten",
+      "form": {
+        "title": "Trainingstitel",
+        "title_placeholder": "z.B. Kinder Judo, Fortgeschrittenes Aikido...",
+        "weekday": "Wochentag",
+        "select_weekday": "Wochentag auswählen...",
+        "time_from": "Startzeit",
+        "time_to": "Endzeit",
+        "section": "Sektion",
+        "select_section": "Sektion auswählen..."
+      },
+      "validation": {
+        "required_fields": "Bitte alle Pflichtfelder ausfüllen"
+      },
+      "createSuccess": "Training erfolgreich erstellt",
+      "createError": "Fehler beim Erstellen des Trainings",
+      "updateSuccess": "Training erfolgreich aktualisiert",
+      "updateError": "Fehler beim Aktualisieren des Trainings",
+      "deleteConfirmTitle": "Training Löschen",
+      "deleteConfirmMessage": "Sind Sie sicher, dass Sie das Training löschen möchten",
+      "deleteSuccess": "Training erfolgreich gelöscht",
+      "deleteError": "Fehler beim Löschen des Trainings"
     },
     "members": {
       "title": "Mitglieder",
