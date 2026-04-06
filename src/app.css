@@ -61,9 +61,17 @@ body {
   border-bottom: 2px solid transparent;
   cursor: pointer;
   min-height: 44px;
+  min-width: 44px;
+  justify-content: center;
   transition:
     color 0.15s,
     border-color 0.15s;
+}
+
+/* Nav avatar button - match tab trigger touch target */
+.nav-avatar {
+  min-height: 44px;
+  min-width: 44px;
 }
 
 [data-scope='tabs'][data-part='trigger']:hover {
