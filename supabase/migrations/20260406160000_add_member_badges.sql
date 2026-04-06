@@ -44,7 +44,7 @@ INSERT INTO public.badge_definitions (id, category, emoji, threshold, "sortOrder
     ('attendance_25',  'attendance', '🟡', 25,  20),
     ('attendance_50',  'attendance', '🟠', 50,  30),
     ('attendance_100', 'attendance', '🟢', 100, 40),
-    ('attendance_200', 'attendance', '⬛', 200, 50),
+    ('attendance_200', 'attendance', '⚫', 200, 50),
     -- Streak badges
     ('streak_5',  'streak', '🔥', 5,  15),
     ('streak_10', 'streak', '⚡', 10, 25),
