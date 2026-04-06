@@ -52,7 +52,7 @@
   );
 </script>
 
-<div class="flex justify-between items-center mb-4">
+<div class="page-header">
   <h1>{$_('page.events.title')}</h1>
   <a href="/dashboard/events/new" class="btn preset-filled-primary-500">
     <Fa icon={faPlus} />
@@ -71,11 +71,11 @@
 </div>
 
 {#if data.events.length === 0}
-  <div class="text-center py-8">
+  <div class="empty-state">
     <p class="text-surface-600-400">{$_('page.events.no_events')}</p>
   </div>
 {:else if filteredEvents.length === 0 && searchTerm.trim()}
-  <div class="text-center py-8">
+  <div class="empty-state">
     <p class="text-surface-600-400">{$_('page.events.no_events_found')}</p>
   </div>
 {:else}
@@ -86,11 +86,9 @@
         <h3 class="mb-3">{$_('page.events.today')}</h3>
         <ul class="flex flex-col gap-2">
           {#each filteredEvents.filter((e) => isToday(e.date)) as event (event.id)}
-            <li class="flex items-center gap-3 py-2">
+            <li class="list-item">
               <div class="relative inline-block flex-none">
-                <div
-                  class="size-10 rounded-md bg-surface-100-900 flex items-center justify-center text-sm font-bold"
-                >
+                <div class="entity-badge">
                   {event.title.charAt(0)}{event.title.charAt(1)}
                 </div>
               </div>
@@ -104,17 +102,17 @@
                   </dd>
                 {/if}
                 <dd class="flex items-center gap-2 text-sm text-surface-600-400">
-                  <span class="flex items-center gap-1">
+                  <span class="meta-item">
                     <Fa icon={faCalendarDays} size="sm" />
                     {formatEventDate(event.date)}
                   </span>
                   {#if event.location}
-                    <span class="flex items-center gap-1 truncate">
+                    <span class="meta-item truncate">
                       <Fa icon={faLocationDot} size="sm" />
                       {event.location}
                     </span>
                   {/if}
-                  <span class="flex items-center gap-1">
+                  <span class="meta-item">
                     <Fa icon={faUsers} size="sm" />
                     {event.section}
                   </span>
@@ -140,11 +138,9 @@
         </h3>
         <ul class="flex flex-col gap-2">
           {#each filteredEvents.filter((e) => isUpcoming(e.date)) as event (event.id)}
-            <li class="flex items-center gap-3 py-2">
+            <li class="list-item">
               <div class="relative inline-block flex-none">
-                <div
-                  class="size-10 rounded-md bg-surface-100-900 flex items-center justify-center text-sm font-bold"
-                >
+                <div class="entity-badge">
                   {event.title.charAt(0)}{event.title.charAt(1)}
                 </div>
               </div>
@@ -158,17 +154,17 @@
                   </dd>
                 {/if}
                 <dd class="flex items-center gap-2 text-sm text-surface-600-400">
-                  <span class="flex items-center gap-1">
+                  <span class="meta-item">
                     <Fa icon={faCalendarDays} size="sm" />
                     {formatEventDate(event.date)}
                   </span>
                   {#if event.location}
-                    <span class="flex items-center gap-1 truncate">
+                    <span class="meta-item truncate">
                       <Fa icon={faLocationDot} size="sm" />
                       {event.location}
                     </span>
                   {/if}
-                  <span class="flex items-center gap-1">
+                  <span class="meta-item">
                     <Fa icon={faUsers} size="sm" />
                     {event.section}
                   </span>
@@ -192,11 +188,9 @@
         <h3 class="mb-3">{$_('page.events.past')}</h3>
         <ul class="flex flex-col gap-2">
           {#each filteredEvents.filter((e) => isPast(e.date)) as event (event.id)}
-            <li class="flex items-center gap-3 py-2">
+            <li class="list-item">
               <div class="relative inline-block flex-none">
-                <div
-                  class="size-10 rounded-md bg-surface-100-900 flex items-center justify-center text-sm font-bold"
-                >
+                <div class="entity-badge">
                   {event.title.charAt(0)}{event.title.charAt(1)}
                 </div>
               </div>
@@ -210,17 +204,17 @@
                   </dd>
                 {/if}
                 <dd class="flex items-center gap-2 text-sm text-surface-600-400">
-                  <span class="flex items-center gap-1">
+                  <span class="meta-item">
                     <Fa icon={faCalendarDays} size="sm" />
                     {formatEventDate(event.date)}
                   </span>
                   {#if event.location}
-                    <span class="flex items-center gap-1 truncate">
+                    <span class="meta-item truncate">
                       <Fa icon={faLocationDot} size="sm" />
                       {event.location}
                     </span>
                   {/if}
-                  <span class="flex items-center gap-1">
+                  <span class="meta-item">
                     <Fa icon={faUsers} size="sm" />
                     {event.section}
                   </span>

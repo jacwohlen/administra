@@ -181,17 +181,14 @@
 {#if showNewMemberForm}
   <!-- svelte-ignore a11y_no_static_element_interactions -->
   <div
-    class="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+    class="modal-overlay"
     onclick={() => (showNewMemberForm = false)}
     onkeydown={(e) => {
       if (e.key === 'Escape') showNewMemberForm = false;
     }}
   >
     <!-- svelte-ignore a11y_no_static_element_interactions -->
-    <div
-      class="card p-4 sm:p-6 w-full max-w-lg shadow-2xl bg-surface-50-950"
-      onclick={(e) => e.stopPropagation()}
-    >
+    <div class="card modal-dialog modal-dialog-lg" onclick={(e) => e.stopPropagation()}>
       <h3 class="mb-4">{$_('button.createNew')}</h3>
       <MemberForm
         lastname={newMemberLastname}

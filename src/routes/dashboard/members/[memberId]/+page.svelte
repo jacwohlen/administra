@@ -204,7 +204,7 @@
 </script>
 
 <div class="space-y-4">
-  <div class="flex justify-between items-center mb-4">
+  <div class="page-header">
     <h1>{data.firstname} {data.lastname}</h1>
     <div class="flex gap-2">
       <button class="btn preset-filled-primary-500" onclick={showEditForm}>
@@ -225,17 +225,14 @@
   {#if showEditFormDialog}
     <!-- svelte-ignore a11y_no_static_element_interactions -->
     <div
-      class="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+      class="modal-overlay"
       onclick={() => (showEditFormDialog = false)}
       onkeydown={(e) => {
         if (e.key === 'Escape') showEditFormDialog = false;
       }}
     >
       <!-- svelte-ignore a11y_no_static_element_interactions -->
-      <div
-        class="card p-4 sm:p-6 w-full max-w-lg shadow-2xl bg-surface-50-950"
-        onclick={(e) => e.stopPropagation()}
-      >
+      <div class="card modal-dialog modal-dialog-lg" onclick={(e) => e.stopPropagation()}>
         <h3 class="mb-4">{$_('dialog.editMember.title')}</h3>
         <MemberForm
           isEditing={true}
@@ -256,17 +253,14 @@
   {#if showDeleteConfirm}
     <!-- svelte-ignore a11y_no_static_element_interactions -->
     <div
-      class="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+      class="modal-overlay"
       onclick={() => handleDeleteResponse(false)}
       onkeydown={(e) => {
         if (e.key === 'Escape') handleDeleteResponse(false);
       }}
     >
       <!-- svelte-ignore a11y_no_static_element_interactions -->
-      <div
-        class="card p-4 sm:p-6 w-full max-w-sm shadow-2xl bg-surface-50-950"
-        onclick={(e) => e.stopPropagation()}
-      >
+      <div class="card modal-dialog" onclick={(e) => e.stopPropagation()}>
         <h3 class="mb-2">{$_('page.members.deleteConfirmTitle')}</h3>
         <p class="mb-4">
           {$_('page.members.deleteConfirmMessage')}

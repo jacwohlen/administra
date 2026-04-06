@@ -14,7 +14,7 @@
 </script>
 
 <!-- Header -->
-<div class="flex items-center justify-between mb-4">
+<div class="page-header">
   <h1>{data.title}</h1>
   <a
     class="btn preset-tonal-primary flex-none"

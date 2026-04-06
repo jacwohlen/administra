@@ -61,7 +61,7 @@
   getTodayEvents();
 </script>
 
-<div class="flex justify-between items-center mb-4">
+<div class="page-header">
   <div>
     <button class="btn" onclick={previousDay}>
       <Fa icon={faArrowLeft} /><span class="hidden sm:inline">{$_('button.day')}</span>
@@ -80,7 +80,7 @@
 <!-- Trainings Section -->
 <section class="mb-6">
   {#if trainings.length == 0}
-    <div class="text-center text-surface-600-400 py-8">
+    <div class="empty-state">
       {$_('page.dashboard.noTrainingsToday')}
     </div>
   {:else}
@@ -126,17 +126,17 @@
               </dd>
             {/if}
             <dd class="flex items-center gap-2 text-sm text-surface-600-400">
-              <span class="flex items-center gap-1">
+              <span class="meta-item">
                 <Fa icon={faCalendarDays} size="sm" />
                 {formatEventDate(event.date)}
               </span>
               {#if event.location}
-                <span class="flex items-center gap-1 truncate">
+                <span class="meta-item truncate">
                   <Fa icon={faLocationDot} size="sm" />
                   {event.location}
                 </span>
               {/if}
-              <span class="flex items-center gap-1">
+              <span class="meta-item">
                 <Fa icon={faUsers} size="sm" />
                 {event.section}
               </span>

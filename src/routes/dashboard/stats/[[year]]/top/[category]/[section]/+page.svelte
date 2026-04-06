@@ -38,7 +38,7 @@
   }
 </script>
 
-<span class="flex justify-between items-center mb-4">
+<span class="page-header">
   <h1>
     {#if data.category?.toLowerCase() == 'athletes'}
       {$_('page.stats.topAthletes')}

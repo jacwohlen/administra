@@ -77,7 +77,7 @@
       </div>
     </div>
   {:else if Object.keys(topEventCoaches).length === 0}
-    <div class="text-center py-8">
+    <div class="empty-state">
       <p class="text-surface-600-400">{$_('page.stats.no_event_data')}</p>
     </div>
   {:else}

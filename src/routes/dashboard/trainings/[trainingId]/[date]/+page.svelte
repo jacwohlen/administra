@@ -180,7 +180,7 @@
 </div>
 
 <!-- Date navigation -->
-<div class="flex justify-between items-center mb-4">
+<div class="page-header">
   <button class="btn preset-tonal-surface" onclick={previousWeek}>
     <Fa icon={faArrowLeft} />
     <span class="hidden sm:inline">{$_('button.week')}</span>

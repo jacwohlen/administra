@@ -74,7 +74,7 @@
 
 <svelte:window onclick={handleWindowClick} />
 
-<li class="flex items-center gap-3 py-2">
+<li class="list-item">
   {#if member}
     <input
       class="checkbox"
@@ -104,9 +104,7 @@
           class="size-10 rounded-full object-cover"
         />
       {:else}
-        <div
-          class="size-10 rounded-full bg-surface-100-900 flex items-center justify-center text-sm font-bold"
-        >
+        <div class="avatar-initials">
           {member.lastname.charAt(0)}{member.firstname.charAt(0)}
         </div>
       {/if}
@@ -186,17 +184,14 @@
     {#if showRemoveConfirm}
       <!-- svelte-ignore a11y_no_static_element_interactions -->
       <div
-        class="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+        class="modal-overlay"
         onclick={() => handleRemoveResponse(false)}
         onkeydown={(e) => {
           if (e.key === 'Escape') handleRemoveResponse(false);
         }}
       >
         <!-- svelte-ignore a11y_no_static_element_interactions -->
-        <div
-          class="card p-4 sm:p-6 w-full max-w-sm shadow-2xl bg-surface-50-950"
-          onclick={(e) => e.stopPropagation()}
-        >
+        <div class="card modal-dialog" onclick={(e) => e.stopPropagation()}>
           <h4 class="mb-2">{$_('dialog.confirm.title')}</h4>
           <p class="mb-4">{$_('dialog.confirm.body')}</p>
           <div class="flex justify-end gap-2">

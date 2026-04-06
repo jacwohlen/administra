@@ -594,7 +594,7 @@
         </footer>
       </div>
     {:else}
-      <div class="text-center py-8">
+      <div class="empty-state">
         <p class="opacity-60">{$_('page.trainings.noLessonPlanMessage')}</p>
       </div>
     {/if}

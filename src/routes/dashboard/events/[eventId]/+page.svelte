@@ -223,24 +223,24 @@
   <!-- Metadata -->
   <div class="mb-6">
     <div class="flex flex-wrap gap-3 text-sm text-surface-600-400">
-      <span class="flex items-center gap-1">
+      <span class="meta-item">
         <Fa icon={faCalendarDays} size="sm" />
         {formatEventDate(data.event.date)}
       </span>
       {#if data.event.timeFrom}
-        <span class="flex items-center gap-1">
+        <span class="meta-item">
           <Fa icon={faClock} size="sm" />
           {formatTime(data.event.timeFrom)}{#if data.event.timeTo}
             - {formatTime(data.event.timeTo)}{/if}
         </span>
       {/if}
       {#if data.event.location}
-        <span class="flex items-center gap-1">
+        <span class="meta-item">
           <Fa icon={faLocationDot} size="sm" />
           {data.event.location}
         </span>
       {/if}
-      <span class="flex items-center gap-1">
+      <span class="meta-item">
         <Fa icon={faUsers} size="sm" />
         {data.event.section}
       </span>
@@ -250,17 +250,14 @@
   {#if showDeleteConfirm}
     <!-- svelte-ignore a11y_no_static_element_interactions -->
     <div
-      class="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+      class="modal-overlay"
       onclick={() => handleDeleteResponse(false)}
       onkeydown={(e) => {
         if (e.key === 'Escape') handleDeleteResponse(false);
       }}
     >
       <!-- svelte-ignore a11y_no_static_element_interactions -->
-      <div
-        class="card p-4 sm:p-6 w-full max-w-sm shadow-2xl bg-surface-50-950"
-        onclick={(e) => e.stopPropagation()}
-      >
+      <div class="card modal-dialog" onclick={(e) => e.stopPropagation()}>
         <h3 class="mb-2">{$_('page.events.deleteConfirmTitle')}</h3>
         <p class="mb-4">{$_('page.events.deleteConfirmMessage')} "{data.event.title}"?</p>
         <div class="flex justify-end gap-2">
@@ -358,7 +355,7 @@
 
     <!-- Participants List -->
     {#if data.participants.length === 0}
-      <p class="text-center text-surface-600-400 py-8">{$_('page.events.no_participants')}</p>
+      <p class="empty-state">{$_('page.events.no_participants')}</p>
     {:else}
       <div class="space-y-2">
         {#each data.participants as participant}
@@ -380,9 +377,7 @@
                       class="size-10 rounded-full object-cover"
                     />
                   {:else}
-                    <div
-                      class="size-10 rounded-full bg-surface-100-900 flex items-center justify-center text-sm font-bold"
-                    >
+                    <div class="avatar-initials">
                       {member.lastname[0]}{member.firstname[0]}
                     </div>
                   {/if}
