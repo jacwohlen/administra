@@ -1,9 +1,10 @@
 <script lang="ts">
   import type { PageData } from './$types';
   import type { MMember } from './types';
-  import type { Member } from '$lib/models';
+  import type { Member, NewBadge } from '$lib/models';
   import type { TrainerRole } from '$lib/models';
   import ParticipantCard from './ParticipantCard.svelte';
+  import BadgeCelebration from '$lib/components/BadgeCelebration.svelte';
   import Fa from 'svelte-fa';
   import {
     faArrowLeft,
@@ -27,6 +28,8 @@
   let searchterm = $state('');
   let animateList = $state(true);
   let showLessonPlan = $state(false);
+  let celebrationBadges: NewBadge[] = $state([]);
+  let celebrationMemberName = $state('');
 
   let filteredData: MMember[] = $state([]);
   let presentParticipants = $derived(filteredData.filter((p) => p.isPresent));
@@ -98,6 +101,15 @@
       });
       if (error) {
         console.log(error);
+      } else {
+        // Check for newly earned badges (awarded by DB trigger)
+        const { data: newBadges } = await supabaseClient.rpc('get_new_badges_for_member', {
+          p_member_id: parseInt(member.id)
+        });
+        if (Array.isArray(newBadges) && newBadges.length > 0) {
+          celebrationMemberName = `${member.firstname} ${member.lastname}`;
+          celebrationBadges = newBadges as NewBadge[];
+        }
       }
     }
   }
@@ -288,3 +300,5 @@
 {:else}
   <LessonPlan trainingId={data.trainingId} date={data.date} />
 {/if}
+
+<BadgeCelebration badges={celebrationBadges} memberName={celebrationMemberName} />

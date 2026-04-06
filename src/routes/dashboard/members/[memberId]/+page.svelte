@@ -3,6 +3,7 @@
   import { _ } from 'svelte-i18n';
   import MemberLogs from './MemberLogs.svelte';
   import MemberBadges from '$lib/components/MemberBadges.svelte';
+  import MemberBadgeProgress from '$lib/components/MemberBadgeProgress.svelte';
   import {
     faCamera,
     faEdit,
@@ -369,6 +370,9 @@
   </div>
   <div class="card p-4">
     <MemberBadges badges={data.badges} />
+  </div>
+  <div class="card p-4">
+    <MemberBadgeProgress progress={data.badgeProgress} />
   </div>
   <MemberLogs memberId={data.id} />
 </div>

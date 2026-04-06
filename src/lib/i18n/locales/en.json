@@ -361,6 +361,19 @@
     "top_3": {
       "name": "Top Performer",
       "description": "Ranked in the top 3 of a section"
+    },
+    "progress": {
+      "title": "Next Badges",
+      "of": "of"
+    },
+    "recentAchievements": {
+      "title": "Recent Achievements",
+      "noAchievements": "No achievements yet",
+      "earned": "earned"
+    },
+    "celebration": {
+      "title": "New Badge Earned!",
+      "message": "{name} just earned {badge}!"
     }
   },
   "weekday": {
