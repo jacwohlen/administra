@@ -76,7 +76,7 @@
 
 <div class="h-full flex flex-col overflow-hidden">
   <!-- Header -->
-  <header class="bg-surface-100-900 flex items-end px-2 pt-2">
+  <header class="bg-surface-100-900 flex items-center px-2">
     <div class="flex-1 min-w-0 overflow-hidden">
       <Tabs
         value={getActiveTab()}
@@ -98,7 +98,7 @@
               if (getActiveTab() === 'today') goto('/dashboard', { invalidateAll: true });
             }}
           >
-            <Fa icon={faCalendarCheck} scale={1.4} />
+            <Fa icon={faCalendarCheck} scale={1.8} />
             <span class="hidden sm:inline">{$_('page.dashboard.today')}</span>
           </Tabs.Trigger>
           <Tabs.Trigger
@@ -108,7 +108,7 @@
                 goto('/dashboard/trainings', { invalidateAll: true });
             }}
           >
-            <Fa icon={faList} scale={1.4} />
+            <Fa icon={faList} scale={1.8} />
             <span class="hidden sm:inline">{$_('page.dashboard.trainings')}</span>
           </Tabs.Trigger>
           <Tabs.Trigger
@@ -117,7 +117,7 @@
               if (getActiveTab() === 'events') goto('/dashboard/events', { invalidateAll: true });
             }}
           >
-            <Fa icon={faCalendarDays} scale={1.4} />
+            <Fa icon={faCalendarDays} scale={1.8} />
             <span class="hidden sm:inline">{$_('page.dashboard.events')}</span>
           </Tabs.Trigger>
           <Tabs.Trigger
@@ -126,7 +126,7 @@
               if (getActiveTab() === 'members') goto('/dashboard/members', { invalidateAll: true });
             }}
           >
-            <Fa icon={faUser} scale={1.4} />
+            <Fa icon={faUser} scale={1.8} />
             <span class="hidden sm:inline">{$_('page.dashboard.members')}</span>
           </Tabs.Trigger>
           <Tabs.Trigger
@@ -135,7 +135,7 @@
               if (getActiveTab() === 'stats') goto('/dashboard/stats', { invalidateAll: true });
             }}
           >
-            <Fa icon={faChartSimple} scale={1.4} />
+            <Fa icon={faChartSimple} scale={1.8} />
             <span class="hidden sm:inline">{$_('page.dashboard.stats')}</span>
           </Tabs.Trigger>
         </Tabs.List>
@@ -143,7 +143,7 @@
     </div>
 
     <!-- Profile avatar -->
-    <div class="shrink-0 flex items-center pb-2 pr-2 relative">
+    <div class="shrink-0 flex items-center pr-2 relative">
       <button
         type="button"
         class="cursor-pointer min-w-[44px] min-h-[44px] flex items-center justify-center"
