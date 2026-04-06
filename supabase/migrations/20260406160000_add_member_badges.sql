@@ -233,9 +233,14 @@ RETURNS TABLE (
 $$;
 
 -- Trigger: auto-refresh badges when a training log is inserted or deleted
+-- Uses a session variable to allow disabling during bulk operations (e.g. seeding)
+-- To disable: SET LOCAL app.skip_badge_refresh = 'true';
 CREATE OR REPLACE FUNCTION public.trigger_refresh_badges_on_log()
 RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER AS $$
 BEGIN
+    IF current_setting('app.skip_badge_refresh', true) = 'true' THEN
+        IF TG_OP = 'DELETE' THEN RETURN OLD; ELSE RETURN NEW; END IF;
+    END IF;
     IF TG_OP = 'DELETE' THEN
         PERFORM public.refresh_member_badges(OLD."memberId");
         RETURN OLD;
