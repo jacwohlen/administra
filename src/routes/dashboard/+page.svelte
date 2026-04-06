@@ -61,93 +61,97 @@
   getTodayEvents();
 </script>
 
-<div class="flex justify-between items-center mb-4">
-  <div>
-    <button class="btn" onclick={previousDay}>
-      <Fa icon={faArrowLeft} /><span class="hidden sm:inline">{$_('button.day')}</span>
-    </button>
+<div class="max-w-4xl mx-auto">
+  <div class="flex justify-between items-center mb-4">
+    <div>
+      <button class="btn" onclick={previousDay}>
+        <Fa icon={faArrowLeft} /><span class="hidden sm:inline">{$_('button.day')}</span>
+      </button>
+    </div>
+    <div>
+      <h1>{date.format('dddd')}</h1>
+    </div>
+    <div>
+      <button class="btn" onclick={nextDay}>
+        <span class="hidden sm:inline">{$_('button.day')}</span><Fa icon={faArrowRight} />
+      </button>
+    </div>
   </div>
-  <div>
-    <h1>{date.format('dddd')}</h1>
-  </div>
-  <div>
-    <button class="btn" onclick={nextDay}>
-      <span class="hidden sm:inline">{$_('button.day')}</span><Fa icon={faArrowRight} />
-    </button>
-  </div>
-</div>
 
-<!-- Trainings Section -->
-<section class="mb-6">
-  {#if trainings.length == 0}
-    <div class="text-center text-surface-600-400 py-8">{$_('page.dashboard.noTrainingsToday')}</div>
-  {:else}
-    <ul class="flex flex-col gap-3">
-      {#each trainings as t (t.id)}
-        <li class="card p-4 flex items-center">
-          <span class="flex-auto">
-            {t.title}
-          </span>
-          <span class="">
-            <a
-              class="btn btn-sm preset-tonal-primary"
-              href="/dashboard/trainings/{t.id}/{date.format(dateFormat)}"
-            >
-              <Fa icon={faClipboardCheck} />
-              <span class="hidden sm:inline">{$_('button.trackAttendance')}</span>
-            </a>
-          </span>
-        </li>
-      {/each}
-    </ul>
-  {/if}
-</section>
+  <!-- Trainings Section -->
+  <section class="mb-6">
+    {#if trainings.length == 0}
+      <div class="text-center text-surface-600-400 py-8">
+        {$_('page.dashboard.noTrainingsToday')}
+      </div>
+    {:else}
+      <ul class="flex flex-col gap-3">
+        {#each trainings as t (t.id)}
+          <li class="card p-4 flex items-center">
+            <span class="flex-auto">
+              {t.title}
+            </span>
+            <span class="">
+              <a
+                class="btn btn-sm preset-tonal-primary"
+                href="/dashboard/trainings/{t.id}/{date.format(dateFormat)}"
+              >
+                <Fa icon={faClipboardCheck} />
+                <span class="hidden sm:inline">{$_('button.trackAttendance')}</span>
+              </a>
+            </span>
+          </li>
+        {/each}
+      </ul>
+    {/if}
+  </section>
 
-<!-- Today's Events Section -->
-<section>
-  {#if todayEvents.length > 0}
-    <ul class="flex flex-col gap-3">
-      {#each todayEvents as event (event.id)}
-        <li class="card p-4 flex items-start gap-3">
-          <div class="relative inline-block flex-none">
-            <div class="size-10 bg-surface-100-900 rounded-md flex items-center justify-center">
-              <Fa icon={faCalendarDays} size="lg" />
+  <!-- Today's Events Section -->
+  <section>
+    {#if todayEvents.length > 0}
+      <ul class="flex flex-col gap-3">
+        {#each todayEvents as event (event.id)}
+          <li class="card p-4 flex items-start gap-3">
+            <div class="relative inline-block flex-none">
+              <div class="size-10 bg-surface-100-900 rounded-md flex items-center justify-center">
+                <Fa icon={faCalendarDays} size="lg" />
+              </div>
             </div>
-          </div>
-          <span class="flex-1 min-w-0">
-            <dt class="font-bold truncate">
-              {event.title}
-            </dt>
-            {#if event.description}
-              <dd class="text-surface-600-400 text-sm truncate">
-                {event.description}
-              </dd>
-            {/if}
-            <dd class="flex items-center gap-2 text-sm text-surface-600-400">
-              <span class="flex items-center gap-1">
-                <Fa icon={faCalendarDays} size="sm" />
-                {formatEventDate(event.date)}
-              </span>
-              {#if event.location}
-                <span class="flex items-center gap-1 truncate">
-                  <Fa icon={faLocationDot} size="sm" />
-                  {event.location}
-                </span>
+            <span class="flex-1 min-w-0">
+              <dt class="font-bold truncate">
+                {event.title}
+              </dt>
+              {#if event.description}
+                <dd class="text-surface-600-400 text-sm truncate">
+                  {event.description}
+                </dd>
               {/if}
-              <span class="flex items-center gap-1">
-                <Fa icon={faUsers} size="sm" />
-                {event.section}
-              </span>
-            </dd>
-          </span>
-          <span class="flex-none">
-            <a class="btn btn-sm preset-tonal-primary" href="/dashboard/events/{event.id}">
-              <Fa icon={faClipboardCheck} />
-              <span class="hidden sm:inline">{$_('button.trackAttendance')}</span>
-            </a>
-          </span>
-        </li>
-      {/each}
-    </ul>
-  {/if}
-</section>
+              <dd class="flex items-center gap-2 text-sm text-surface-600-400">
+                <span class="flex items-center gap-1">
+                  <Fa icon={faCalendarDays} size="sm" />
+                  {formatEventDate(event.date)}
+                </span>
+                {#if event.location}
+                  <span class="flex items-center gap-1 truncate">
+                    <Fa icon={faLocationDot} size="sm" />
+                    {event.location}
+                  </span>
+                {/if}
+                <span class="flex items-center gap-1">
+                  <Fa icon={faUsers} size="sm" />
+                  {event.section}
+                </span>
+              </dd>
+            </span>
+            <span class="flex-none">
+              <a class="btn btn-sm preset-tonal-primary" href="/dashboard/events/{event.id}">
+                <Fa icon={faClipboardCheck} />
+                <span class="hidden sm:inline">{$_('button.trackAttendance')}</span>
+              </a>
+            </span>
+          </li>
+        {/each}
+      </ul>
+    {/if}
+  </section>
+</div>

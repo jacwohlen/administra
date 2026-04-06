@@ -63,7 +63,7 @@
 </script>
 
 <div>
-  <h3 class="mb-4">{$_('page.stats.topEventCoaches')}</h3>
+  <h3 class="text-lg font-semibold mb-3">{$_('page.stats.topEventCoaches')}</h3>
 
   {#if loading}
     <div class="text-center py-4">

@@ -52,190 +52,192 @@
   );
 </script>
 
-<div class="flex justify-between items-center mb-4">
-  <h1>{$_('page.events.title')}</h1>
-  <a href="/dashboard/events/new" class="btn btn-sm preset-filled-primary-500">
-    <Fa icon={faPlus} />
-    <span>{$_('page.events.create_event')}</span>
-  </a>
+<div class="max-w-4xl mx-auto">
+  <div class="flex justify-between items-center mb-4">
+    <h1>{$_('page.events.title')}</h1>
+    <a href="/dashboard/events/new" class="btn btn-sm preset-filled-primary-500">
+      <Fa icon={faPlus} />
+      <span>{$_('page.events.create_event')}</span>
+    </a>
+  </div>
+
+  <!-- Search Input -->
+  <div class="mb-4">
+    <input
+      class="input"
+      bind:value={searchTerm}
+      type="text"
+      placeholder={$_('page.events.search_placeholder')}
+    />
+  </div>
+
+  {#if data.events.length === 0}
+    <div class="text-center py-8">
+      <p class="text-surface-600-400">{$_('page.events.no_events')}</p>
+    </div>
+  {:else if filteredEvents.length === 0 && searchTerm.trim()}
+    <div class="text-center py-8">
+      <p class="text-surface-600-400">{$_('page.events.no_events_found')}</p>
+    </div>
+  {:else}
+    <div class="space-y-6">
+      <!-- Today's Events -->
+      {#if filteredEvents.some((e) => isToday(e.date))}
+        <section>
+          <h3 class="text-lg font-semibold mb-3">{$_('page.events.today')}</h3>
+          <ul class="flex flex-col gap-2">
+            {#each filteredEvents.filter((e) => isToday(e.date)) as event (event.id)}
+              <li class="flex items-center gap-3 py-2">
+                <div class="relative inline-block flex-none">
+                  <div
+                    class="size-10 rounded-md bg-surface-100-900 flex items-center justify-center text-sm font-bold"
+                  >
+                    {event.title.charAt(0)}{event.title.charAt(1)}
+                  </div>
+                </div>
+                <span class="flex-1 min-w-0">
+                  <dt class="font-bold truncate">
+                    {event.title}
+                  </dt>
+                  {#if event.description}
+                    <dd class="text-surface-600-400 text-sm truncate">
+                      {event.description}
+                    </dd>
+                  {/if}
+                  <dd class="flex items-center gap-2 text-sm text-surface-600-400">
+                    <span class="flex items-center gap-1">
+                      <Fa icon={faCalendarDays} size="sm" />
+                      {formatEventDate(event.date)}
+                    </span>
+                    {#if event.location}
+                      <span class="flex items-center gap-1 truncate">
+                        <Fa icon={faLocationDot} size="sm" />
+                        {event.location}
+                      </span>
+                    {/if}
+                    <span class="flex items-center gap-1">
+                      <Fa icon={faUsers} size="sm" />
+                      {event.section}
+                    </span>
+                  </dd>
+                </span>
+                <span class="flex-none">
+                  <a class="btn btn-sm preset-tonal-primary" href="/dashboard/events/{event.id}">
+                    <Fa icon={faGripLines} />
+                    <span class="hidden sm:inline">{$_('button.view')}</span>
+                  </a>
+                </span>
+              </li>
+            {/each}
+          </ul>
+        </section>
+      {/if}
+
+      <!-- Upcoming Events -->
+      {#if filteredEvents.some((e) => isUpcoming(e.date))}
+        <section>
+          <h3 class="text-lg font-semibold mb-3">
+            {$_('page.events.upcoming')}
+          </h3>
+          <ul class="flex flex-col gap-2">
+            {#each filteredEvents.filter((e) => isUpcoming(e.date)) as event (event.id)}
+              <li class="flex items-center gap-3 py-2">
+                <div class="relative inline-block flex-none">
+                  <div
+                    class="size-10 rounded-md bg-surface-100-900 flex items-center justify-center text-sm font-bold"
+                  >
+                    {event.title.charAt(0)}{event.title.charAt(1)}
+                  </div>
+                </div>
+                <span class="flex-1 min-w-0">
+                  <dt class="font-bold truncate">
+                    {event.title}
+                  </dt>
+                  {#if event.description}
+                    <dd class="text-surface-600-400 text-sm truncate">
+                      {event.description}
+                    </dd>
+                  {/if}
+                  <dd class="flex items-center gap-2 text-sm text-surface-600-400">
+                    <span class="flex items-center gap-1">
+                      <Fa icon={faCalendarDays} size="sm" />
+                      {formatEventDate(event.date)}
+                    </span>
+                    {#if event.location}
+                      <span class="flex items-center gap-1 truncate">
+                        <Fa icon={faLocationDot} size="sm" />
+                        {event.location}
+                      </span>
+                    {/if}
+                    <span class="flex items-center gap-1">
+                      <Fa icon={faUsers} size="sm" />
+                      {event.section}
+                    </span>
+                  </dd>
+                </span>
+                <span class="flex-none">
+                  <a class="btn btn-sm preset-tonal-primary" href="/dashboard/events/{event.id}">
+                    <Fa icon={faGripLines} />
+                    <span class="hidden sm:inline">{$_('button.view')}</span>
+                  </a>
+                </span>
+              </li>
+            {/each}
+          </ul>
+        </section>
+      {/if}
+
+      <!-- Past Events -->
+      {#if filteredEvents.some((e) => isPast(e.date))}
+        <section>
+          <h3 class="text-lg font-semibold mb-3">{$_('page.events.past')}</h3>
+          <ul class="flex flex-col gap-2">
+            {#each filteredEvents.filter((e) => isPast(e.date)) as event (event.id)}
+              <li class="flex items-center gap-3 py-2">
+                <div class="relative inline-block flex-none">
+                  <div
+                    class="size-10 rounded-md bg-surface-100-900 flex items-center justify-center text-sm font-bold"
+                  >
+                    {event.title.charAt(0)}{event.title.charAt(1)}
+                  </div>
+                </div>
+                <span class="flex-1 min-w-0">
+                  <dt class="font-bold truncate">
+                    {event.title}
+                  </dt>
+                  {#if event.description}
+                    <dd class="text-surface-600-400 text-sm truncate">
+                      {event.description}
+                    </dd>
+                  {/if}
+                  <dd class="flex items-center gap-2 text-sm text-surface-600-400">
+                    <span class="flex items-center gap-1">
+                      <Fa icon={faCalendarDays} size="sm" />
+                      {formatEventDate(event.date)}
+                    </span>
+                    {#if event.location}
+                      <span class="flex items-center gap-1 truncate">
+                        <Fa icon={faLocationDot} size="sm" />
+                        {event.location}
+                      </span>
+                    {/if}
+                    <span class="flex items-center gap-1">
+                      <Fa icon={faUsers} size="sm" />
+                      {event.section}
+                    </span>
+                  </dd>
+                </span>
+                <span class="flex-none">
+                  <a class="btn btn-sm preset-tonal-primary" href="/dashboard/events/{event.id}">
+                    <Fa icon={faGripLines} />
+                    <span class="hidden sm:inline">{$_('button.view')}</span>
+                  </a>
+                </span>
+              </li>
+            {/each}
+          </ul>
+        </section>
+      {/if}
+    </div>
+  {/if}
 </div>
-
-<!-- Search Input -->
-<div class="mb-4">
-  <input
-    class="input"
-    bind:value={searchTerm}
-    type="text"
-    placeholder={$_('page.events.search_placeholder')}
-  />
-</div>
-
-{#if data.events.length === 0}
-  <div class="text-center py-8">
-    <p class="text-surface-600-400">{$_('page.events.no_events')}</p>
-  </div>
-{:else if filteredEvents.length === 0 && searchTerm.trim()}
-  <div class="text-center py-8">
-    <p class="text-surface-600-400">{$_('page.events.no_events_found')}</p>
-  </div>
-{:else}
-  <div class="space-y-6">
-    <!-- Today's Events -->
-    {#if filteredEvents.some((e) => isToday(e.date))}
-      <section>
-        <h3 class="text-lg font-semibold mb-3">{$_('page.events.today')}</h3>
-        <ul class="flex flex-col gap-2">
-          {#each filteredEvents.filter((e) => isToday(e.date)) as event (event.id)}
-            <li class="flex items-center gap-3 py-2">
-              <div class="relative inline-block flex-none">
-                <div
-                  class="size-10 rounded-md bg-surface-100-900 flex items-center justify-center text-sm font-bold"
-                >
-                  {event.title.charAt(0)}{event.title.charAt(1)}
-                </div>
-              </div>
-              <span class="flex-1 min-w-0">
-                <dt class="font-bold truncate">
-                  {event.title}
-                </dt>
-                {#if event.description}
-                  <dd class="text-surface-600-400 text-sm truncate">
-                    {event.description}
-                  </dd>
-                {/if}
-                <dd class="flex items-center gap-2 text-sm text-surface-600-400">
-                  <span class="flex items-center gap-1">
-                    <Fa icon={faCalendarDays} size="sm" />
-                    {formatEventDate(event.date)}
-                  </span>
-                  {#if event.location}
-                    <span class="flex items-center gap-1 truncate">
-                      <Fa icon={faLocationDot} size="sm" />
-                      {event.location}
-                    </span>
-                  {/if}
-                  <span class="flex items-center gap-1">
-                    <Fa icon={faUsers} size="sm" />
-                    {event.section}
-                  </span>
-                </dd>
-              </span>
-              <span class="flex-none">
-                <a class="btn btn-sm preset-tonal-primary" href="/dashboard/events/{event.id}">
-                  <Fa icon={faGripLines} />
-                  <span class="hidden sm:inline">{$_('button.view')}</span>
-                </a>
-              </span>
-            </li>
-          {/each}
-        </ul>
-      </section>
-    {/if}
-
-    <!-- Upcoming Events -->
-    {#if filteredEvents.some((e) => isUpcoming(e.date))}
-      <section>
-        <h3 class="text-lg font-semibold mb-3">
-          {$_('page.events.upcoming')}
-        </h3>
-        <ul class="flex flex-col gap-2">
-          {#each filteredEvents.filter((e) => isUpcoming(e.date)) as event (event.id)}
-            <li class="flex items-center gap-3 py-2">
-              <div class="relative inline-block flex-none">
-                <div
-                  class="size-10 rounded-md bg-surface-100-900 flex items-center justify-center text-sm font-bold"
-                >
-                  {event.title.charAt(0)}{event.title.charAt(1)}
-                </div>
-              </div>
-              <span class="flex-1 min-w-0">
-                <dt class="font-bold truncate">
-                  {event.title}
-                </dt>
-                {#if event.description}
-                  <dd class="text-surface-600-400 text-sm truncate">
-                    {event.description}
-                  </dd>
-                {/if}
-                <dd class="flex items-center gap-2 text-sm text-surface-600-400">
-                  <span class="flex items-center gap-1">
-                    <Fa icon={faCalendarDays} size="sm" />
-                    {formatEventDate(event.date)}
-                  </span>
-                  {#if event.location}
-                    <span class="flex items-center gap-1 truncate">
-                      <Fa icon={faLocationDot} size="sm" />
-                      {event.location}
-                    </span>
-                  {/if}
-                  <span class="flex items-center gap-1">
-                    <Fa icon={faUsers} size="sm" />
-                    {event.section}
-                  </span>
-                </dd>
-              </span>
-              <span class="flex-none">
-                <a class="btn btn-sm preset-tonal-primary" href="/dashboard/events/{event.id}">
-                  <Fa icon={faGripLines} />
-                  <span class="hidden sm:inline">{$_('button.view')}</span>
-                </a>
-              </span>
-            </li>
-          {/each}
-        </ul>
-      </section>
-    {/if}
-
-    <!-- Past Events -->
-    {#if filteredEvents.some((e) => isPast(e.date))}
-      <section>
-        <h3 class="text-lg font-semibold mb-3">{$_('page.events.past')}</h3>
-        <ul class="flex flex-col gap-2">
-          {#each filteredEvents.filter((e) => isPast(e.date)) as event (event.id)}
-            <li class="flex items-center gap-3 py-2">
-              <div class="relative inline-block flex-none">
-                <div
-                  class="size-10 rounded-md bg-surface-100-900 flex items-center justify-center text-sm font-bold"
-                >
-                  {event.title.charAt(0)}{event.title.charAt(1)}
-                </div>
-              </div>
-              <span class="flex-1 min-w-0">
-                <dt class="font-bold truncate">
-                  {event.title}
-                </dt>
-                {#if event.description}
-                  <dd class="text-surface-600-400 text-sm truncate">
-                    {event.description}
-                  </dd>
-                {/if}
-                <dd class="flex items-center gap-2 text-sm text-surface-600-400">
-                  <span class="flex items-center gap-1">
-                    <Fa icon={faCalendarDays} size="sm" />
-                    {formatEventDate(event.date)}
-                  </span>
-                  {#if event.location}
-                    <span class="flex items-center gap-1 truncate">
-                      <Fa icon={faLocationDot} size="sm" />
-                      {event.location}
-                    </span>
-                  {/if}
-                  <span class="flex items-center gap-1">
-                    <Fa icon={faUsers} size="sm" />
-                    {event.section}
-                  </span>
-                </dd>
-              </span>
-              <span class="flex-none">
-                <a class="btn btn-sm preset-tonal-primary" href="/dashboard/events/{event.id}">
-                  <Fa icon={faGripLines} />
-                  <span class="hidden sm:inline">{$_('button.view')}</span>
-                </a>
-              </span>
-            </li>
-          {/each}
-        </ul>
-      </section>
-    {/if}
-  </div>
-{/if}

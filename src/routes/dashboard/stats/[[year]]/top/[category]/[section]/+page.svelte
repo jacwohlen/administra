@@ -38,53 +38,55 @@
   }
 </script>
 
-<span class="flex justify-between items-center mb-4">
-  <h1>
-    {#if data.category?.toLowerCase() == 'athletes'}
-      {$_('page.stats.topAthletes')}
-    {:else if data.category?.toLowerCase() == 'events'}
-      {$_('page.stats.topEventParticipants')}
-    {:else if data.category?.toLowerCase() == 'coaches'}
-      {$_('page.stats.topEventCoaches')}
-    {:else}
-      {$_('page.stats.topTrainers')}
-    {/if}
-    {data.section}
-  </h1>
-  <button
-    type="button"
-    class="btn btn-icon preset-tonal-surface min-w-[44px] min-h-[44px]"
-    onclick={downloadCsv}><Fa icon={faDownload} /></button
-  >
-</span>
-<div class="mb-4">
-  <input
-    class="input"
-    bind:value={searchTerm}
-    type="text"
-    placeholder={$_('page.trainings.searchMembersPlaceholder')}
-  />
-</div>
+<div class="max-w-4xl mx-auto">
+  <span class="flex justify-between items-center mb-4">
+    <h1>
+      {#if data.category?.toLowerCase() == 'athletes'}
+        {$_('page.stats.topAthletes')}
+      {:else if data.category?.toLowerCase() == 'events'}
+        {$_('page.stats.topEventParticipants')}
+      {:else if data.category?.toLowerCase() == 'coaches'}
+        {$_('page.stats.topEventCoaches')}
+      {:else}
+        {$_('page.stats.topTrainers')}
+      {/if}
+      {data.section}
+    </h1>
+    <button
+      type="button"
+      class="btn btn-icon preset-tonal-surface min-w-[44px] min-h-[44px]"
+      onclick={downloadCsv}><Fa icon={faDownload} /></button
+    >
+  </span>
+  <div class="mb-4">
+    <input
+      class="input"
+      bind:value={searchTerm}
+      type="text"
+      placeholder={$_('page.trainings.searchMembersPlaceholder')}
+    />
+  </div>
 
-<ul class="flex flex-col gap-3">
-  {#each data.athletes as e (e.memberId)}
-    {#if search(e.firstname, e.lastname)}
-      <li class="card p-4 flex items-center gap-3">
-        <span>
-          {e.rank.toString()}.
-        </span>
-        <span class="flex-auto font-bold">
-          {e.lastname}
-          {e.firstname}
-          ({e.count})
-        </span>
-        <span>
-          <a class="btn btn-sm preset-tonal-primary" href={'/dashboard/members/' + e.memberId}>
-            <Fa icon={faGripLines} />
-            <span class="hidden sm:inline">{$_('button.view')}</span>
-          </a>
-        </span>
-      </li>
-    {/if}
-  {/each}
-</ul>
+  <ul class="flex flex-col gap-3">
+    {#each data.athletes as e (e.memberId)}
+      {#if search(e.firstname, e.lastname)}
+        <li class="card p-4 flex items-center gap-3">
+          <span>
+            {e.rank.toString()}.
+          </span>
+          <span class="flex-auto font-bold">
+            {e.lastname}
+            {e.firstname}
+            ({e.count})
+          </span>
+          <span>
+            <a class="btn btn-sm preset-tonal-primary" href={'/dashboard/members/' + e.memberId}>
+              <Fa icon={faGripLines} />
+              <span class="hidden sm:inline">{$_('button.view')}</span>
+            </a>
+          </span>
+        </li>
+      {/if}
+    {/each}
+  </ul>
+</div>

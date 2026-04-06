@@ -29,64 +29,66 @@
   }
 </script>
 
-<div class="flex justify-between items-center mb-4">
-  <div>
-    <button class="btn" onclick={previousYear}>
-      <Fa icon={faArrowLeft} /><span class="hidden sm:inline">{$_('button.year')}</span>
-    </button>
-  </div>
-  <div>
-    <SegmentedControl
-      name="yearmode"
-      defaultValue={yearmode}
-      onValueChange={(e) => {
-        if (e.value === 'YEAR') {
-          goto('/dashboard/stats/' + year);
-        } else {
-          goto('/dashboard/stats/ALL');
-        }
-      }}
-    >
-      <SegmentedControl.Item value="YEAR">
-        <SegmentedControl.ItemHiddenInput />
-        <SegmentedControl.ItemText>{year}</SegmentedControl.ItemText>
-      </SegmentedControl.Item>
-      <SegmentedControl.Item value="ALL">
-        <SegmentedControl.ItemHiddenInput />
-        <SegmentedControl.ItemText>{$_('page.stats.all')}</SegmentedControl.ItemText>
-      </SegmentedControl.Item>
-      <SegmentedControl.Indicator />
-    </SegmentedControl>
-  </div>
-  <div>
-    <button class="btn" onclick={nextYear}>
-      <span class="hidden sm:inline">{$_('button.year')}</span><Fa icon={faArrowRight} />
-    </button>
-  </div>
-</div>
-
-<div class="space-y-4">
-  <div class="card p-4">
-    <TopAthletes {data} />
-  </div>
-
-  <div class="card p-4">
-    <div class="flex justify-between items-center mb-4">
-      <h3>{$_('page.stats.topTrainers')}</h3>
-      <TrainerDownload {year} {yearmode} />
+<div class="max-w-4xl mx-auto">
+  <div class="flex justify-between items-center mb-4">
+    <div>
+      <button class="btn" onclick={previousYear}>
+        <Fa icon={faArrowLeft} /><span class="hidden sm:inline">{$_('button.year')}</span>
+      </button>
     </div>
-    <TopTrainers {data} />
+    <div>
+      <SegmentedControl
+        name="yearmode"
+        defaultValue={yearmode}
+        onValueChange={(e) => {
+          if (e.value === 'YEAR') {
+            goto('/dashboard/stats/' + year);
+          } else {
+            goto('/dashboard/stats/ALL');
+          }
+        }}
+      >
+        <SegmentedControl.Item value="YEAR">
+          <SegmentedControl.ItemHiddenInput />
+          <SegmentedControl.ItemText>{year}</SegmentedControl.ItemText>
+        </SegmentedControl.Item>
+        <SegmentedControl.Item value="ALL">
+          <SegmentedControl.ItemHiddenInput />
+          <SegmentedControl.ItemText>{$_('page.stats.all')}</SegmentedControl.ItemText>
+        </SegmentedControl.Item>
+        <SegmentedControl.Indicator />
+      </SegmentedControl>
+    </div>
+    <div>
+      <button class="btn" onclick={nextYear}>
+        <span class="hidden sm:inline">{$_('button.year')}</span><Fa icon={faArrowRight} />
+      </button>
+    </div>
   </div>
 
-  <div class="card p-4">
-    <h3>{$_('page.stats.topParticipants')}</h3>
-    <TopParticipantsStats {yearmode} {year} />
-  </div>
+  <div class="space-y-4">
+    <div class="card p-4">
+      <TopAthletes {data} />
+    </div>
 
-  <div class="card p-4">
-    <TopEventParticipants {yearmode} {year} />
-  </div>
-  <div class="card p-4">
-    <TopEventCoaches {yearmode} {year} />
+    <div class="card p-4">
+      <div class="flex justify-between items-center mb-4">
+        <h3 class="text-lg font-semibold">{$_('page.stats.topTrainers')}</h3>
+        <TrainerDownload {year} {yearmode} />
+      </div>
+      <TopTrainers {data} />
+    </div>
+
+    <div class="card p-4">
+      <h3 class="text-lg font-semibold mb-3">{$_('page.stats.topParticipants')}</h3>
+      <TopParticipantsStats {yearmode} {year} />
+    </div>
+
+    <div class="card p-4">
+      <TopEventParticipants {yearmode} {year} />
+    </div>
+    <div class="card p-4">
+      <TopEventCoaches {yearmode} {year} />
+    </div>
   </div>
 </div>
