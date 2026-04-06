@@ -84,13 +84,13 @@
       {$_('page.dashboard.noTrainingsToday')}
     </div>
   {:else}
-    <ul class="flex flex-col gap-3">
+    <ul class="flex flex-col gap-2">
       {#each trainings as t (t.id)}
-        <li class="card p-4 flex items-center">
-          <span class="flex-auto">
-            {t.title}
+        <li class="list-item">
+          <span class="list-item-content">
+            <dt class="font-bold truncate">{t.title}</dt>
           </span>
-          <span>
+          <span class="flex-none">
             <a
               class="btn preset-tonal-primary"
               href="/dashboard/trainings/{t.id}/{date.format(dateFormat)}"
