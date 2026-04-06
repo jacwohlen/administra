@@ -118,7 +118,7 @@ enabled = true
 # in emails.
 site_url = "env(PUBLIC_SUPABASE_SITE_URL)"
 # A list of *exact* URLs that auth providers are permitted to redirect to post authentication.
-additional_redirect_urls = ["https://jacwohlen.webling.ch/portal#/page/29463/Administra", "https://127.0.0.1:5173", "https://localhost:5173"]
+additional_redirect_urls = ["https://jacwohlen.webling.ch/portal#/page/29463/Administra", "https://127.0.0.1:5173", "https://localhost:5173", "https://*--administra.netlify.app"]
 # How long tokens are valid for, in seconds. Defaults to 3600 (1 hour), maximum 604,800 (1 week).
 jwt_expiry = 3600
 # Path to JWT signing key. DO NOT commit your signing keys file to git.
