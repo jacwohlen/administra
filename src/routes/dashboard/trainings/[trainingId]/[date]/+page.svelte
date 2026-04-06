@@ -269,7 +269,12 @@
         class="item"
         animate:flip={{ delay: 0, duration: animateList ? 400 : 0, easing: quintInOut }}
       >
-        <ParticipantCard member={p} onchange={changePresence} onremove={removeParticipant} />
+        <ParticipantCard
+          member={p}
+          badgeEmoji={data.badgeMap[p.id]}
+          onchange={changePresence}
+          onremove={removeParticipant}
+        />
       </div>
     {/each}
     <li>

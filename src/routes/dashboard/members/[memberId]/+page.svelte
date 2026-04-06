@@ -2,6 +2,7 @@
   import type { PageData } from './$types';
   import { _ } from 'svelte-i18n';
   import MemberLogs from './MemberLogs.svelte';
+  import MemberBadges from '$lib/components/MemberBadges.svelte';
   import {
     faCamera,
     faEdit,
@@ -365,6 +366,9 @@
         </div>
       </div>
     </div>
+  </div>
+  <div class="card p-4">
+    <MemberBadges badges={data.badges} />
   </div>
   <MemberLogs memberId={data.id} />
 </div>

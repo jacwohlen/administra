@@ -1,4 +1,9 @@
 --
+-- Skip badge refresh triggers during seeding for performance
+--
+SET LOCAL app.skip_badge_refresh = 'true';
+
+--
 -- E2E test user (email/password auth for Playwright tests)
 --
 INSERT INTO auth.users (
@@ -14198,3 +14203,9 @@ INSERT INTO public.event_logs ("eventId", "memberId", "isCoach") VALUES
 INSERT INTO public.event_participants ("eventId", "memberId", "attendanceStatus") VALUES
   (2, 103, 'registered'),
   (2, 110, 'registered');
+
+--
+-- Compute badges for all seeded members
+--
+RESET app.skip_badge_refresh;
+SELECT public.refresh_all_member_badges();

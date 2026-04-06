@@ -1,5 +1,5 @@
 import { error as err } from '@sveltejs/kit';
-import type { Member } from '$lib/models';
+import type { Member, MemberTopBadge } from '$lib/models';
 import { supabaseClient } from '$lib/supabase';
 
 export async function load({ depends }) {
@@ -13,7 +13,18 @@ export async function load({ depends }) {
     .order('firstname', { ascending: true })
     .returns<Member[]>();
   if (error) throw err(404, error);
+
+  const { data: topBadges } = await supabaseClient.rpc('get_members_top_badges');
+
+  const badgeMap: Record<string, string> = {};
+  if (Array.isArray(topBadges)) {
+    for (const tb of topBadges as MemberTopBadge[]) {
+      badgeMap[tb.memberId] = tb.emoji;
+    }
+  }
+
   return {
-    members: data
+    members: data,
+    badgeMap
   };
 }

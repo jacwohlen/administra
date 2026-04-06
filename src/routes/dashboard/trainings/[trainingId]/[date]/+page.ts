@@ -1,5 +1,6 @@
 import type { PageLoad } from './$types';
 import type { MMember } from './types';
+import type { MemberTopBadge } from '$lib/models';
 import { supabaseClient } from '$lib/supabase';
 import { error as err } from '@sveltejs/kit';
 import { buildMembersWithStreaks } from '$lib/trainingUtils';
@@ -30,9 +31,19 @@ export const load = (async ({ params }) => {
     return buildMembersWithStreaks(checklistResult.data, streakResult.data || []) as MMember[];
   }
 
+  const { data: topBadges } = await supabaseClient.rpc('get_members_top_badges');
+
+  const badgeMap: Record<string, string> = {};
+  if (Array.isArray(topBadges)) {
+    for (const tb of topBadges as MemberTopBadge[]) {
+      badgeMap[tb.memberId] = tb.emoji;
+    }
+  }
+
   return {
     trainingId: params.trainingId,
     date: params.date,
-    participants: await getMembersWithPresentStatus()
+    participants: await getMembersWithPresentStatus(),
+    badgeMap
   };
 }) satisfies PageLoad;

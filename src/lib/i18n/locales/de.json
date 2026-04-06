@@ -282,6 +282,38 @@
       "body": "Bist du sicher, dass du fortfahren möchtest?"
     }
   },
+  "badges": {
+    "title": "Abzeichen",
+    "noBadges": "Noch keine Abzeichen verdient",
+    "refreshAll": "Abzeichen aktualisieren",
+    "refreshing": "Aktualisiere...",
+    "refreshSuccess": "Abzeichen erfolgreich aktualisiert",
+    "refreshError": "Fehler beim Aktualisieren der Abzeichen",
+    "leaderboard": "Abzeichen-Rangliste",
+    "noBadgeData": "Keine Abzeichen-Daten verfügbar",
+    "category": {
+      "attendance": "Teilnahme",
+      "streak": "Serien",
+      "trainer": "Trainer",
+      "event": "Events",
+      "top_performer": "Top-Performer"
+    },
+    "attendance_10": { "name": "Anfänger", "description": "10 Trainings besucht" },
+    "attendance_25": { "name": "Stammgast", "description": "25 Trainings besucht" },
+    "attendance_50": { "name": "Engagiert", "description": "50 Trainings besucht" },
+    "attendance_100": { "name": "Krieger", "description": "100 Trainings besucht" },
+    "attendance_200": { "name": "Meister", "description": "200 Trainings besucht" },
+    "streak_5": { "name": "Am Brennen", "description": "5 Trainings in Folge" },
+    "streak_10": { "name": "Unaufhaltsam", "description": "10 Trainings in Folge" },
+    "streak_20": { "name": "Eiserner Wille", "description": "20 Trainings in Folge" },
+    "trainer_10": { "name": "Helfer", "description": "10 Trainings geleitet" },
+    "trainer_50": { "name": "Sensei", "description": "50 Trainings geleitet" },
+    "trainer_100": { "name": "Grossmeister", "description": "100 Trainings geleitet" },
+    "event_3": { "name": "Entdecker", "description": "3 Events besucht" },
+    "event_10": { "name": "Wettkämpfer", "description": "10 Events besucht" },
+    "event_25": { "name": "Champion", "description": "25 Events besucht" },
+    "top_3": { "name": "Top-Performer", "description": "Top 3 in einer Sektion" }
+  },
   "weekday": {
     "Monday": "Montag",
     "Tuesday": "Dienstag",

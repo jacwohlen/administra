@@ -17,6 +17,7 @@
   import AttendanceByTraining from './AttendanceByTraining.svelte';
   import TrainerWorkload from './TrainerWorkload.svelte';
   import MemberRetention from './MemberRetention.svelte';
+  import BadgeLeaderboard from './BadgeLeaderboard.svelte';
 
   let { data }: { data: PageData } = $props();
 
@@ -121,5 +122,8 @@
   <div class="card p-4">
     <h3>{$_('page.stats.memberRetention')}</h3>
     <MemberRetention {yearmode} {year} />
+  </div>
+  <div class="card p-4">
+    <BadgeLeaderboard />
   </div>
 </div>

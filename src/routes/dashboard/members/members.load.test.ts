@@ -49,6 +49,7 @@ describe('members list load', () => {
     ];
 
     mockSupabase.from.mockReturnValueOnce(createChainFromResult({ data: members, error: null }));
+    mockSupabase.rpc.mockReturnValueOnce(createChainFromResult({ data: [], error: null }));
 
     const mockDepends = vi.fn();
     const result = await load({ depends: mockDepends } as never);
@@ -59,6 +60,7 @@ describe('members list load', () => {
 
   it('queries the members table', async () => {
     mockSupabase.from.mockReturnValueOnce(createChainFromResult({ data: [], error: null }));
+    mockSupabase.rpc.mockReturnValueOnce(createChainFromResult({ data: [], error: null }));
 
     await load({ depends: vi.fn() } as never);
     expect(mockSupabase.from).toHaveBeenCalledWith('members');
@@ -74,6 +76,7 @@ describe('members list load', () => {
 
   it('returns empty array when no members exist', async () => {
     mockSupabase.from.mockReturnValueOnce(createChainFromResult({ data: [], error: null }));
+    mockSupabase.rpc.mockReturnValueOnce(createChainFromResult({ data: [], error: null }));
 
     const result = await load({ depends: vi.fn() } as never);
     expect(result.members).toEqual([]);
