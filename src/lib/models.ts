@@ -119,6 +119,31 @@ export interface MemberTopBadge {
   badgeId: string;
 }
 
+export interface BadgeProgress {
+  category: string;
+  current_count: number;
+  next_badge_id: string;
+  next_badge_emoji: string;
+  next_threshold: number;
+}
+
+export interface RecentAchievement {
+  memberId: number;
+  lastname: string;
+  firstname: string;
+  badgeId: string;
+  emoji: string;
+  category: string;
+  earnedAt: string;
+}
+
+export interface NewBadge {
+  badgeId: string;
+  emoji: string;
+  category: string;
+  earnedAt: string;
+}
+
 export interface TrainerTrackingRecord {
   date: string;
   trainingId: number;
