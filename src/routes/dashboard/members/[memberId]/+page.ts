@@ -1,6 +1,6 @@
 import type { PageLoad } from './$types';
 import { error as err } from '@sveltejs/kit';
-import type { Member } from '$lib/models';
+import type { Member, Badge } from '$lib/models';
 import { supabaseClient } from '$lib/supabase';
 import { blobToURL } from 'image-resize-compress';
 import dayjs from 'dayjs';
@@ -32,5 +32,9 @@ export const load = (async ({ params, depends }) => {
     }
   }
 
-  return memberData;
+  const { data: badgeData } = await supabaseClient.rpc('get_member_badges', {
+    p_member_id: parseInt(params.memberId)
+  });
+
+  return { ...memberData, badges: (Array.isArray(badgeData) ? badgeData : []) as Badge[] };
 }) satisfies PageLoad;

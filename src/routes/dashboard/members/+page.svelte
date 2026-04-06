@@ -112,8 +112,15 @@
   {#each data.members as m (m.id)}
     {#if search(m.firstname, m.lastname)}
       <li class="list-item">
-        <div class="avatar-initials">
-          {m.lastname.charAt(0)}{m.firstname.charAt(0)}
+        <div class="relative inline-block flex-shrink-0">
+          {#if data.badgeMap[m.id]}
+            <span class="absolute -top-0.5 -left-0.5 z-10 text-xs leading-none">
+              {data.badgeMap[m.id]}
+            </span>
+          {/if}
+          <div class="avatar-initials">
+            {m.lastname.charAt(0)}{m.firstname.charAt(0)}
+          </div>
         </div>
         <span class="list-item-content">
           <dt class="font-bold truncate">{m.lastname} {m.firstname}</dt>

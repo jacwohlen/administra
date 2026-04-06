@@ -282,6 +282,38 @@
       "body": "Are you sure you wish to proceed?"
     }
   },
+  "badges": {
+    "title": "Badges",
+    "noBadges": "No badges earned yet",
+    "refreshAll": "Refresh Badges",
+    "refreshing": "Refreshing...",
+    "refreshSuccess": "Badges refreshed successfully",
+    "refreshError": "Error refreshing badges",
+    "leaderboard": "Badge Leaderboard",
+    "noBadgeData": "No badge data available",
+    "category": {
+      "attendance": "Attendance",
+      "streak": "Streaks",
+      "trainer": "Trainer",
+      "event": "Events",
+      "top_performer": "Top Performer"
+    },
+    "attendance_10": { "name": "Beginner", "description": "Attended 10 training sessions" },
+    "attendance_25": { "name": "Regular", "description": "Attended 25 training sessions" },
+    "attendance_50": { "name": "Dedicated", "description": "Attended 50 training sessions" },
+    "attendance_100": { "name": "Warrior", "description": "Attended 100 training sessions" },
+    "attendance_200": { "name": "Master", "description": "Attended 200 training sessions" },
+    "streak_5": { "name": "On Fire", "description": "5 consecutive training sessions" },
+    "streak_10": { "name": "Unstoppable", "description": "10 consecutive training sessions" },
+    "streak_20": { "name": "Iron Will", "description": "20 consecutive training sessions" },
+    "trainer_10": { "name": "Helper", "description": "Coached 10 training sessions" },
+    "trainer_50": { "name": "Sensei", "description": "Coached 50 training sessions" },
+    "trainer_100": { "name": "Grand Master", "description": "Coached 100 training sessions" },
+    "event_3": { "name": "Explorer", "description": "Attended 3 events" },
+    "event_10": { "name": "Competitor", "description": "Attended 10 events" },
+    "event_25": { "name": "Champion", "description": "Attended 25 events" },
+    "top_3": { "name": "Top Performer", "description": "Ranked in the top 3 of a section" }
+  },
   "weekday": {
     "Monday": "Monday",
     "Tuesday": "Tuesday",

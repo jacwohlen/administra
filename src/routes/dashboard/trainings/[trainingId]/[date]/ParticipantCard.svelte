@@ -10,10 +10,12 @@
 
   let {
     member,
+    badgeEmoji,
     onchange,
     onremove
   }: {
     member: MMember;
+    badgeEmoji?: string;
     onchange?: (data: { member: MMember; checked: boolean; trainerRole: TrainerRole }) => void;
     onremove?: (data: { member: MMember }) => void;
   } = $props();
@@ -84,6 +86,11 @@
       onchange={change}
     />
     <div class="relative inline-block flex-shrink-0">
+      {#if badgeEmoji}
+        <span class="absolute -top-0.5 -left-0.5 z-10 text-xs leading-none">
+          {badgeEmoji}
+        </span>
+      {/if}
       {#if member.trainerRole === 'main_trainer'}
         <span
           class="absolute -bottom-0 -right-0 z-10 bg-primary-600-400 rounded-full w-4 h-4 flex items-center justify-center"
