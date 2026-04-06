@@ -11,7 +11,8 @@
     faClipboardCheck,
     faArrowLeft,
     faEdit,
-    faTrash
+    faTrash,
+    faEllipsisVertical
   } from '@fortawesome/free-solid-svg-icons';
   import { supabaseClient } from '$lib/supabase';
   import { goto } from '$app/navigation';
@@ -19,6 +20,18 @@
 
   let isDeleting = $state(false);
   let showDeleteConfirm = $state(false);
+  let menuOpen = $state(false);
+  let menuBtnEl: HTMLButtonElement;
+
+  function toggleMenu() {
+    menuOpen = !menuOpen;
+  }
+
+  function handleWindowClick(e: MouseEvent) {
+    if (menuOpen && menuBtnEl && !menuBtnEl.contains(e.target as Node)) {
+      menuOpen = false;
+    }
+  }
 
   function getDateString() {
     const weekday = utils.weekdayToNumber(data.weekday);
@@ -58,6 +71,8 @@
   }
 </script>
 
+<svelte:window onclick={handleWindowClick} />
+
 <!-- Header -->
 <div class="page-header-back">
   <a href="/dashboard/trainings" class="btn preset-tonal-surface flex-shrink-0">
@@ -65,16 +80,29 @@
   </a>
   <h1 class="flex-1 min-w-0 truncate">{data.title}</h1>
   <div class="flex gap-2 flex-shrink-0">
-    <a class="btn preset-tonal-primary" href="/dashboard/trainings/{data.id}/{getDateString()}">
-      <Fa icon={faClipboardCheck} />
-      <span class="hidden sm:inline">{$_('button.trackAttendance')}</span>
-    </a>
     <a href="/dashboard/trainings/{data.id}/edit" class="btn preset-tonal-surface">
       <Fa icon={faEdit} />
     </a>
-    <button class="btn preset-tonal-error" onclick={confirmDelete} disabled={isDeleting}>
-      <Fa icon={faTrash} />
-    </button>
+    <div class="relative">
+      <button class="btn preset-tonal-surface" bind:this={menuBtnEl} onclick={toggleMenu}>
+        <Fa icon={faEllipsisVertical} />
+      </button>
+      {#if menuOpen}
+        <nav class="card absolute right-0 top-full mt-1 z-50 min-w-40 p-1 shadow-xl">
+          <button
+            class="btn w-full justify-start text-error-600-400"
+            onclick={() => {
+              menuOpen = false;
+              confirmDelete();
+            }}
+            disabled={isDeleting}
+          >
+            <Fa icon={faTrash} />
+            <span>{$_('button.delete')}</span>
+          </button>
+        </nav>
+      {/if}
+    </div>
   </div>
 </div>
 <div class="flex items-center gap-2 mb-6 flex-wrap text-sm">
@@ -88,6 +116,15 @@
     {$_('page.trainings.participants')}
   </span>
 </div>
+
+<!-- Track Attendance -->
+<a
+  class="btn preset-filled-primary-500 w-full mb-6"
+  href="/dashboard/trainings/{data.id}/{getDateString()}"
+>
+  <Fa icon={faClipboardCheck} />
+  <span>{$_('button.trackAttendance')}</span>
+</a>
 
 {#if showDeleteConfirm}
   <!-- svelte-ignore a11y_no_static_element_interactions -->
