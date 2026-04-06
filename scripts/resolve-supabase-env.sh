@@ -6,7 +6,7 @@
 # On production deploys, uses the env vars already set in Netlify.
 #
 # Required Netlify environment variables:
-#   PUBLIC_SUPABASE_URL       - Production Supabase URL (set in Netlify dashboard)
+#   PUBLIC_SUPABASE_DATABASE_URL       - Production Supabase URL (set in Netlify dashboard)
 #   PUBLIC_SUPABASE_ANON_KEY  - Production anon key (set in Netlify dashboard)
 #   SUPABASE_ACCESS_TOKEN     - Personal access token for Supabase Management API
 #   SUPABASE_PROJECT_REF      - Your Supabase project reference ID (e.g. "abcdefghijklmnop")
@@ -67,10 +67,10 @@ if [ "${CONTEXT:-}" != "production" ] && [ -n "${SUPABASE_ACCESS_TOKEN:-}" ] && 
     echo "    Overriding Supabase env vars with branch credentials."
 
     # Write to .env file for SvelteKit to pick up
-    echo "PUBLIC_SUPABASE_URL=${BRANCH_URL}" >> .env
+    echo "PUBLIC_SUPABASE_DATABASE_URL=${BRANCH_URL}" >> .env
     echo "PUBLIC_SUPABASE_ANON_KEY=${BRANCH_KEY}" >> .env
 
-    echo "    PUBLIC_SUPABASE_URL=${BRANCH_URL}"
+    echo "    PUBLIC_SUPABASE_DATABASE_URL=${BRANCH_URL}"
     echo "    PUBLIC_SUPABASE_ANON_KEY=<redacted>"
   else
     echo "    No branch DB found for '$BRANCH'. Using production credentials."
