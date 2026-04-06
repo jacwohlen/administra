@@ -50,7 +50,7 @@ npm install
 Create a `.env` file in the root directory:
 
 ```bash
-PUBLIC_SUPABASE_URL="your-supabase-project-url"
+PUBLIC_SUPABASE_DATABASE_URL="your-supabase-project-url"
 PUBLIC_SUPABASE_ANON_KEY="your-supabase-anon-key"
 PUBLIC_MODE="DEV"  # Use "PROD" for production
 ```
@@ -245,7 +245,7 @@ npm run build
 2. Deploy to Netlify (automatic via `netlify.toml` configuration)
 
 3. Set environment variables in Netlify dashboard:
-   - `PUBLIC_SUPABASE_URL`
+   - `PUBLIC_SUPABASE_DATABASE_URL`
    - `PUBLIC_SUPABASE_ANON_KEY`
    - `PUBLIC_MODE` (set to "PROD")
 
