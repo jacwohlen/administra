@@ -146,7 +146,7 @@
     <div class="shrink-0 flex items-center pr-2 relative">
       <button
         type="button"
-        class="cursor-pointer min-w-[44px] min-h-[44px] flex items-center justify-center"
+        class="cursor-pointer flex items-center justify-center"
         onclick={() => (popoverOpen = !popoverOpen)}
       >
         {#if data.session.user.user_metadata.avatar_url && !avatarError}

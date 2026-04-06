@@ -4,6 +4,17 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
+/* Touch-friendly buttons - 44px minimum (Apple HIG) */
+.btn,
+.btn-sm,
+.btn-icon {
+  min-height: 44px;
+}
+
+.btn-icon {
+  min-width: 44px;
+}
+
 html,
 body {
   height: 100%;

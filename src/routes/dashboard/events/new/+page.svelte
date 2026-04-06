@@ -60,7 +60,7 @@
 </script>
 
 <div class="flex items-center gap-2 mb-4">
-  <a href="/dashboard/events" class="btn btn-sm preset-tonal-surface min-w-[44px] min-h-[44px]">
+  <a href="/dashboard/events" class="btn btn-sm preset-tonal-surface">
     <Fa icon={faArrowLeft} />
   </a>
   <h1>{$_('page.events.create_event')}</h1>
@@ -192,10 +192,10 @@
   {/if}
 
   <div class="flex justify-end gap-4">
-    <a href="/dashboard/events" class="btn min-h-[44px] preset-tonal-surface">
+    <a href="/dashboard/events" class="btn preset-tonal-surface">
       {$_('button.cancel')}
     </a>
-    <button type="submit" class="btn min-h-[44px] preset-filled-primary-500" disabled={loading}>
+    <button type="submit" class="btn preset-filled-primary-500" disabled={loading}>
       <Fa icon={faSave} />
       <span>{loading ? $_('button.creating') : $_('button.create')}</span>
     </button>

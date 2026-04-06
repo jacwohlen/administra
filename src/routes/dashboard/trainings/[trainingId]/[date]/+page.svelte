@@ -181,12 +181,12 @@
 
 <!-- Date navigation -->
 <div class="flex justify-between items-center mb-4">
-  <button class="btn btn-sm min-h-[44px] preset-tonal-surface" onclick={previousWeek}>
+  <button class="btn btn-sm preset-tonal-surface" onclick={previousWeek}>
     <Fa icon={faArrowLeft} />
     <span class="hidden sm:inline">{$_('button.week')}</span>
   </button>
   <h3 class="h3">{formattedDate}</h3>
-  <button class="btn btn-sm min-h-[44px] preset-tonal-surface" onclick={nextWeek}>
+  <button class="btn btn-sm preset-tonal-surface" onclick={nextWeek}>
     <span class="hidden sm:inline">{$_('button.week')}</span>
     <Fa icon={faArrowRight} />
   </button>
@@ -195,7 +195,7 @@
 <!-- View toggle tabs -->
 <div class="flex rounded-lg overflow-hidden border border-surface-300-700 mb-4">
   <button
-    class="btn min-h-[44px] flex-1 rounded-none {!showLessonPlan
+    class="btn flex-1 rounded-none {!showLessonPlan
       ? 'preset-filled-primary-500'
       : 'preset-tonal-surface'}"
     onclick={() => (showLessonPlan = false)}
@@ -204,7 +204,7 @@
     <span>{$_('page.trainings.attendance')}</span>
   </button>
   <button
-    class="btn min-h-[44px] flex-1 rounded-none {showLessonPlan
+    class="btn flex-1 rounded-none {showLessonPlan
       ? 'preset-filled-primary-500'
       : 'preset-tonal-surface'}"
     onclick={() => (showLessonPlan = true)}
