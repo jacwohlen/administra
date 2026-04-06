@@ -1,4 +1,43 @@
 --
+-- E2E test user (email/password auth for Playwright tests)
+--
+INSERT INTO auth.users (
+  instance_id, id, aud, role, email, encrypted_password,
+  email_confirmed_at, created_at, updated_at,
+  confirmation_token, recovery_token,
+  email_change, email_change_token_new, email_change_token_current,
+  phone, phone_change, phone_change_token,
+  reauthentication_token,
+  raw_app_meta_data, raw_user_meta_data,
+  is_sso_user, is_anonymous
+) VALUES (
+  '00000000-0000-0000-0000-000000000000',
+  'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
+  'authenticated', 'authenticated',
+  'test@example.com',
+  crypt('testpass', gen_salt('bf')),
+  now(), now(), now(),
+  '', '',
+  '', '', '',
+  '', '', '',
+  '',
+  '{"provider":"email","providers":["email"]}',
+  '{"full_name":"Test User"}',
+  false, false
+);
+
+INSERT INTO auth.identities (
+  id, user_id, provider_id, identity_data, provider, last_sign_in_at, created_at, updated_at
+) VALUES (
+  'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
+  'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
+  'test@example.com',
+  jsonb_build_object('sub', 'a1b2c3d4-e5f6-7890-abcd-ef1234567890', 'email', 'test@example.com'),
+  'email',
+  now(), now(), now()
+);
+
+--
 -- Data for Name: members; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
@@ -14121,3 +14160,41 @@ INSERT INTO public.participants (id, "trainingId", "memberId") VALUES
 	(642, 27, 29504),
 	(643, 25, 193);
 
+
+--
+-- Seed data for events
+--
+
+INSERT INTO public.events (id, title, description, date, "timeFrom", "timeTo", location, section, "maxParticipants", "registrationDeadline") VALUES
+  (1, 'Judo Vereinsmeisterschaft 2026', 'Interne Vereinsmeisterschaft für alle Judo-Klassen', '2026-04-05', '09:00', '16:00', 'Turnhalle Jac Wohlen', 'Judo', 50, '2026-04-03'),
+  (2, 'Aikido Seminar mit Gasttrainer', 'Wochenend-Seminar mit Sensei Tanaka aus Japan', '2026-04-12', '10:00', '17:00', 'Turnhalle Jac Wohlen', 'Aikido', 30, '2026-04-10'),
+  (3, 'Ju-Jitsu Gürtelprüfung', 'Gürtelprüfungen für alle Stufen', '2026-04-19', '14:00', '18:00', 'Turnhalle Jac Wohlen', 'Ju-Jitsu', NULL, '2026-04-17'),
+  (4, 'Judo Trainingslager Sommer', 'Einwöchiges Trainingslager in den Bergen', '2026-07-14', '08:00', '20:00', 'Sportzentrum Lenzerheide', 'Judo', 25, '2026-06-30'),
+  (5, 'Judo Turnier Frühling (vergangen)', 'Frühlings-Turnier für Jugend und Erwachsene', '2026-03-15', '09:00', '15:00', 'Sporthalle Aarau', 'Judo', 40, '2026-03-13'),
+  (6, 'Aikido Vorführung Tag der offenen Tür', 'Vorführung am Tag der offenen Tür', '2026-05-10', '11:00', '12:00', 'Turnhalle Jac Wohlen', 'Aikido', NULL, NULL),
+  (7, 'Judo Jugend Wettkampf', 'Regionaler Wettkampf für Jugend U15', '2026-04-26', '08:30', '14:00', 'Sporthalle Bremgarten', 'Judo Jugend', 20, '2026-04-24');
+
+-- Participants for Event 1 (today's event - Vereinsmeisterschaft)
+INSERT INTO public.event_participants ("eventId", "memberId", "attendanceStatus") VALUES
+  (1, 103, 'registered'),
+  (1, 107, 'registered'),
+  (1, 110, 'registered'),
+  (1, 115, 'registered');
+
+-- Participants for Event 5 (past event with attendance)
+INSERT INTO public.event_participants ("eventId", "memberId", "attendanceStatus") VALUES
+  (5, 103, 'attended'),
+  (5, 107, 'attended'),
+  (5, 110, 'attended'),
+  (5, 115, 'absent');
+
+-- Attendance logs for past event
+INSERT INTO public.event_logs ("eventId", "memberId", "isCoach") VALUES
+  (5, 103, false),
+  (5, 107, false),
+  (5, 110, true);
+
+-- Participants for Event 2 (upcoming Aikido seminar)
+INSERT INTO public.event_participants ("eventId", "memberId", "attendanceStatus") VALUES
+  (2, 103, 'registered'),
+  (2, 110, 'registered');

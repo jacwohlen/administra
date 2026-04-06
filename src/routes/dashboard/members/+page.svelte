@@ -4,39 +4,24 @@
   import { faGripLines, faPlus } from '@fortawesome/free-solid-svg-icons';
   import { _ } from 'svelte-i18n';
   import { supabaseClient } from '$lib/supabase';
-  import {
-    toastStore,
-    type ModalSettings,
-    modalStore,
-    type ModalComponent
-  } from '@skeletonlabs/skeleton';
+  import { toaster } from '$lib/toast';
   import { invalidate } from '$app/navigation';
   import MemberForm from './MemberForm.svelte';
 
-  export let data: PageData;
-  let searchTerm = '';
+  let { data }: { data: PageData } = $props();
+  let searchTerm = $state('');
   let isSubmitting = false;
+  let showMemberFormDialog = $state(false);
 
-  $: search = (firstname: string, lastname: string): boolean => {
+  let search = $derived((firstname: string, lastname: string): boolean => {
     let q = searchTerm.toLowerCase().trim();
     let firstlast = firstname.toLowerCase() + ' ' + lastname.toLowerCase();
     let lastfirst = lastname.toLowerCase() + ' ' + firstname.toLowerCase();
     return firstlast.startsWith(q) || lastfirst.startsWith(q);
-  };
+  });
 
   function showMemberForm() {
-    const modalComponent: ModalComponent = {
-      ref: MemberForm,
-      props: { isSubmitting }
-    };
-
-    const modal: ModalSettings = {
-      type: 'component',
-      component: modalComponent,
-      response: addMember
-    };
-
-    modalStore.trigger(modal);
+    showMemberFormDialog = true;
   }
 
   async function addMember(
@@ -75,33 +60,46 @@
       invalidate('members:list');
 
       // Show success toast
-      toastStore.trigger({
-        message: $_('page.members.createdSuccess'),
-        preset: 'success',
-        timeout: 4000
-      });
+      toaster.success({ title: $_('page.members.createdSuccess') });
     } catch (error) {
       console.error('Error creating member:', error);
-      toastStore.trigger({
-        message: $_('page.members.createError'),
-        preset: 'error',
-        timeout: 6000
-      });
+      toaster.error({ title: $_('page.members.createError') });
     } finally {
       isSubmitting = false;
     }
   }
 </script>
 
-<div class="flex items-center justify-between mb-4">
+<div class="page-header">
   <h1>{$_('page.members.title')}</h1>
-  <button class="btn btn-sm variant-filled-primary" on:click={showMemberForm}>
+  <button class="btn preset-filled-primary-500" onclick={showMemberForm}>
     <Fa icon={faPlus} />
     <span>{$_('page.members.addMember')}</span>
   </button>
 </div>
 
-<div class="m-2">
+{#if showMemberFormDialog}
+  <!-- svelte-ignore a11y_no_static_element_interactions -->
+  <div
+    class="modal-overlay"
+    onclick={() => (showMemberFormDialog = false)}
+    onkeydown={(e) => {
+      if (e.key === 'Escape') showMemberFormDialog = false;
+    }}
+  >
+    <!-- svelte-ignore a11y_no_static_element_interactions -->
+    <div class="card modal-dialog modal-dialog-lg" onclick={(e) => e.stopPropagation()}>
+      <h3>{$_('page.members.addMember')}</h3>
+      <MemberForm
+        {isSubmitting}
+        onclose={() => (showMemberFormDialog = false)}
+        onsubmit={addMember}
+      />
+    </div>
+  </div>
+{/if}
+
+<div class="mb-4">
   <input
     class="input"
     bind:value={searchTerm}
@@ -110,31 +108,27 @@
   />
 </div>
 
-<ul class="list">
+<ul class="flex flex-col gap-2">
   {#each data.members as m (m.id)}
     {#if search(m.firstname, m.lastname)}
-      <li>
-        <span class="flex-auto">
-          <dt class="font-bold">
-            {m.lastname}
-            {m.firstname}
-          </dt>
-          <dd class="text-xs">
+      <li class="list-item">
+        <div class="avatar-initials">
+          {m.lastname.charAt(0)}{m.firstname.charAt(0)}
+        </div>
+        <span class="list-item-content">
+          <dt class="font-bold truncate">{m.lastname} {m.firstname}</dt>
+          <dd class="flex flex-wrap gap-1">
             {#if m.labels}
               {#each m.labels as l (l)}
-                <span class="truncate text-wrap">
-                  <span class="badge variant-filled-secondary font-normal h-4 m-0.5">{l}</span>
-                </span>
+                <span class="chip preset-tonal-secondary text-xs">{l}</span>
               {/each}
             {/if}
           </dd>
         </span>
-        <span>
-          <a class="btn btn-sm variant-filled-secondary" href={'/dashboard/members/' + m.id}>
-            <Fa icon={faGripLines} />
-            <span>{$_('button.view')}</span>
-          </a>
-        </span>
+        <a class="btn preset-tonal-primary flex-shrink-0" href={'/dashboard/members/' + m.id}>
+          <Fa icon={faGripLines} />
+          <span class="hidden sm:inline">{$_('button.view')}</span>
+        </a>
       </li>
     {/if}
   {/each}

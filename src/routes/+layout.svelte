@@ -6,13 +6,17 @@
   import dayjs from 'dayjs';
   import 'dayjs/locale/de';
   import { locale } from 'svelte-i18n';
+  import type { Snippet } from 'svelte';
 
-  $: if ($locale) {
-    dayjs.locale($locale.startsWith('de') ? 'de' : 'en');
-  }
-  import '../theme.postcss';
-  import '@skeletonlabs/skeleton/styles/all.css';
-  import '../app.postcss';
+  import '../app.css';
+
+  let { children }: { children: Snippet } = $props();
+
+  $effect(() => {
+    if ($locale) {
+      dayjs.locale($locale.startsWith('de') ? 'de' : 'en');
+    }
+  });
 
   onMount(() => {
     const {
@@ -29,16 +33,12 @@
 </script>
 
 {#if mode === 'DEV'}
-  <div class="relative overflow-hidden h-screen w-screen bg-white border">
-    <div class="absolute left-0 top-0 h-16 w-16">
-      <div
-        class="absolute transform -rotate-45 bg-gray-600 text-center text-white font-semibold py-1 left-[-34px] top-[32px] w-[170px]"
-      >
-        main
-      </div>
+  <div class="h-screen w-screen flex flex-col">
+    <div class="bg-surface-600-400 text-white text-center text-xs py-0.5">main</div>
+    <div class="flex-1 overflow-hidden">
+      {@render children()}
     </div>
-    <slot />
   </div>
 {:else}
-  <slot />
+  {@render children()}
 {/if}

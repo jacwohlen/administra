@@ -4,16 +4,14 @@
   import { _ } from 'svelte-i18n';
   import type { Log } from '$lib/models';
 
-  export let logs: Promise<Log[]>;
-  let currentItem = 10;
+  let { logs }: { logs: Promise<Log[]> } = $props();
+  let currentItem = $state(10);
 
-  // Function to be called when logs is set or changed
-  async function handleLogsChange() {
-    currentItem = 10; // Reset currentItem when logs changes
-  }
-
-  // Reactively call handleLogsChange whenever logs is updated
-  $: logs, handleLogsChange();
+  // Reset currentItem when logs changes
+  $effect(() => {
+    void logs;
+    currentItem = 10;
+  });
 </script>
 
 <h3>{$_('page.members.trainingsHistory.title')}</h3>
@@ -33,40 +31,28 @@
     </div>
   </div>
 {:then l}
-  <ul class="list">
+  <ul class="flex flex-col">
     {#each l.slice(0, currentItem) as i}
-      <li>
+      <li class="list-item">
         <span class="flex-auto truncate">
-          <dt>
-            {i.date}
-          </dt>
-          <dd class="text-sm">{i.trainingId.title}</dd>
+          <dt class="font-semibold">{i.date}</dt>
+          <dd class="text-sm text-surface-600-400">{i.trainingId.title}</dd>
         </span>
-        <span class="text-sm">
-          {i.trainingId.section}
-        </span>
-        <span>
-          <a
-            class="btn btn-sm variant-filled-secondary"
-            href="/dashboard/trainings/{i.trainingId.id}/{i.date}"
-          >
-            <Fa icon={faGripLines} />
-            <span>{$_('button.view')}</span>
-          </a>
-        </span>
+        <span class="chip preset-tonal-secondary text-sm">{i.trainingId.section}</span>
+        <a class="btn preset-tonal-primary" href="/dashboard/trainings/{i.trainingId.id}/{i.date}">
+          <Fa icon={faGripLines} />
+          <span>{$_('button.view')}</span>
+        </a>
       </li>
     {:else}
-      <span class="flex justify-center">
+      <span class="flex justify-center text-surface-600-400 py-4">
         {$_('page.members.trainingsHistory.noItems')}
       </span>
     {/each}
   </ul>
   {#if currentItem < l.length}
-    <span class="flex justify-center">
-      <button
-        class="btn btn-sm variant-filled-secondary"
-        on:click={() => (currentItem = currentItem + 10)}
-      >
+    <span class="flex justify-center mt-3">
+      <button class="btn preset-tonal-primary" onclick={() => (currentItem = currentItem + 10)}>
         {$_('button.loadMore')}
       </button>
     </span>

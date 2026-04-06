@@ -4,9 +4,9 @@
   import { _ } from 'svelte-i18n';
   import TopList from './TopList.svelte';
 
-  export let data: PageData;
+  let { data }: { data: PageData } = $props();
 
-  $: topAthletes = data.topAthletes as { [key: string]: Athletes[] };
+  let topAthletes = $derived(data.topAthletes as { [key: string]: Athletes[] });
 </script>
 
 <h3>{$_('page.stats.topAthletes')}</h3>

@@ -2,15 +2,15 @@
   import { error as err } from '@sveltejs/kit';
   import Fa from 'svelte-fa';
   import {
-    faGripLines,
     faExclamationTriangle,
-    faCheckCircle
+    faCheckCircle,
+    faGripLines
   } from '@fortawesome/free-solid-svg-icons';
   import { supabaseClient } from '$lib/supabase';
   import { _ } from 'svelte-i18n';
   import dayjs from 'dayjs';
 
-  export let trainingId: string;
+  let { trainingId }: { trainingId: string } = $props();
 
   interface LogSummary {
     trainingId: number;
@@ -45,61 +45,53 @@
 
 {#await getLogs() then logs}
   {#if logs.length === 0}
-    <div class="card p-6 text-center">
-      <p class="opacity-50">{$_('page.trainings.noLessonPlanMessage')}</p>
-    </div>
+    <p class="text-center text-surface-600-400 py-4">{$_('page.trainings.noLessonPlanMessage')}</p>
   {:else}
-    <div class="space-y-2">
+    <div class="flex flex-col gap-1">
       {#each logs as i (i.date)}
         <a
           href="/dashboard/trainings/{trainingId}/{i.date}"
-          class="card p-3 flex items-center gap-3 hover:variant-soft-primary transition-colors"
+          class="flex items-center gap-3 py-2 hover:bg-surface-100-900 rounded px-2 -mx-2 transition-colors"
         >
-          <!-- Date -->
-          <div class="text-center flex-none w-16">
-            <p class="text-xs opacity-50 uppercase">{formatWeekday(i.date)}</p>
+          <div class="text-center flex-none w-20">
+            <p class="text-xs text-surface-600-400 uppercase">{formatWeekday(i.date)}</p>
             <p class="font-bold text-sm">{formatDate(i.date)}</p>
           </div>
 
-          <!-- Divider -->
-          <div class="border-l border-surface-400/30 h-8 flex-none" />
-
-          <!-- Stats -->
-          <div class="flex items-center gap-2 flex-auto flex-wrap">
-            <span class="chip variant-filled-secondary">
+          <div class="flex items-center gap-1.5 flex-auto flex-wrap">
+            <span class="chip preset-tonal-secondary text-xs">
               {i.count}
-              <span class="ml-1 text-xs">{$_('page.trainings.participants')}</span>
+              {$_('page.trainings.participants')}
             </span>
 
             {#if i.totalTrainerCount > 0}
-              <span class="chip variant-filled-success">
+              <span class="chip preset-tonal-success text-xs">
                 <img class="inline-block w-3" src="/judo-icon.svg" alt="trainer" />
-                <span class="ml-1">{i.totalTrainerCount}</span>
+                <span class="ml-0.5">{i.totalTrainerCount}</span>
               </span>
             {:else}
-              <span class="chip variant-filled-warning">
-                <Fa icon={faExclamationTriangle} class="w-3" />
-                <span class="ml-1 text-xs">{$_('page.trainings.noTrainer')}</span>
+              <span class="chip preset-tonal-warning text-xs">
+                <Fa icon={faExclamationTriangle} size="xs" />
+                <span class="ml-0.5">{$_('page.trainings.noTrainer')}</span>
               </span>
             {/if}
 
             {#if i.hasLessonPlan}
-              <span class="chip variant-soft-success">
+              <span class="chip preset-tonal-success text-xs">
                 <Fa icon={faCheckCircle} size="xs" />
-                <span class="ml-1 text-xs">{$_('page.trainings.hasLessonPlan')}</span>
               </span>
             {:else}
-              <span class="chip variant-filled-warning">
-                <Fa icon={faExclamationTriangle} class="w-3" />
-                <span class="ml-1 text-xs">{$_('page.trainings.noLessonPlan')}</span>
+              <span class="chip preset-tonal-warning text-xs">
+                <Fa icon={faExclamationTriangle} size="xs" />
+                <span class="ml-0.5">{$_('page.trainings.noLessonPlan')}</span>
               </span>
             {/if}
           </div>
 
-          <!-- Arrow -->
-          <div class="flex-none opacity-50">
+          <span class="btn preset-tonal-primary flex-shrink-0">
             <Fa icon={faGripLines} />
-          </div>
+            <span>{$_('button.view')}</span>
+          </span>
         </a>
       {/each}
     </div>

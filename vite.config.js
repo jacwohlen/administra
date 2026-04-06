@@ -1,11 +1,13 @@
+import tailwindcss from '@tailwindcss/vite';
 import { sveltekit } from '@sveltejs/kit/vite';
+import { svelteTesting } from '@testing-library/svelte/vite';
+import { defineConfig } from 'vitest/config';
 
-/** @type {import('vite').UserConfig} */
-const config = {
-  plugins: [sveltekit()],
+export default defineConfig({
+  plugins: [tailwindcss(), sveltekit(), svelteTesting()],
   test: {
-    include: ['src/**/*.{test,spec}.{js,ts}']
+    include: ['src/**/*.{test,spec}.{js,ts}'],
+    environment: 'jsdom',
+    setupFiles: ['./src/lib/test/setup.ts']
   }
-};
-
-export default config;
+});
