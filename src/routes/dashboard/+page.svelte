@@ -156,6 +156,6 @@
 </section>
 
 <!-- Recent Achievements Section -->
-<section class="card p-4">
+<section>
   <RecentAchievements />
 </section>
