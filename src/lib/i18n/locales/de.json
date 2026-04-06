@@ -312,7 +312,20 @@
     "event_3": { "name": "Entdecker", "description": "3 Events besucht" },
     "event_10": { "name": "Wettkämpfer", "description": "10 Events besucht" },
     "event_25": { "name": "Champion", "description": "25 Events besucht" },
-    "top_3": { "name": "Top-Performer", "description": "Top 3 in einer Sektion" }
+    "top_3": { "name": "Top-Performer", "description": "Top 3 in einer Sektion" },
+    "progress": {
+      "title": "Nächste Abzeichen",
+      "of": "von"
+    },
+    "recentAchievements": {
+      "title": "Letzte Errungenschaften",
+      "noAchievements": "Noch keine Errungenschaften",
+      "earned": "verdient"
+    },
+    "celebration": {
+      "title": "Neues Abzeichen!",
+      "message": "{name} hat {badge} verdient!"
+    }
   },
   "weekday": {
     "Monday": "Montag",

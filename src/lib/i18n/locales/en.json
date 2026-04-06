@@ -312,7 +312,20 @@
     "event_3": { "name": "Explorer", "description": "Attended 3 events" },
     "event_10": { "name": "Competitor", "description": "Attended 10 events" },
     "event_25": { "name": "Champion", "description": "Attended 25 events" },
-    "top_3": { "name": "Top Performer", "description": "Ranked in the top 3 of a section" }
+    "top_3": { "name": "Top Performer", "description": "Ranked in the top 3 of a section" },
+    "progress": {
+      "title": "Next Badges",
+      "of": "of"
+    },
+    "recentAchievements": {
+      "title": "Recent Achievements",
+      "noAchievements": "No achievements yet",
+      "earned": "earned"
+    },
+    "celebration": {
+      "title": "New Badge Earned!",
+      "message": "{name} just earned {badge}!"
+    }
   },
   "weekday": {
     "Monday": "Monday",
