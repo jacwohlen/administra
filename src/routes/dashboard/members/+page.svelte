@@ -89,7 +89,7 @@
   >
     <!-- svelte-ignore a11y_no_static_element_interactions -->
     <div class="card modal-dialog modal-dialog-lg" onclick={(e) => e.stopPropagation()}>
-      <h3 class="mb-4">{$_('page.members.addMember')}</h3>
+      <h3>{$_('page.members.addMember')}</h3>
       <MemberForm
         {isSubmitting}
         onclose={() => (showMemberFormDialog = false)}
@@ -115,7 +115,7 @@
         <div class="avatar-initials">
           {m.lastname.charAt(0)}{m.firstname.charAt(0)}
         </div>
-        <span class="flex-auto min-w-0">
+        <span class="list-item-content">
           <dt class="font-bold truncate">{m.lastname} {m.firstname}</dt>
           <dd class="flex flex-wrap gap-1">
             {#if m.labels}

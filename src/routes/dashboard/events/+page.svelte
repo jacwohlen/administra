@@ -83,7 +83,7 @@
     <!-- Today's Events -->
     {#if filteredEvents.some((e) => isToday(e.date))}
       <section>
-        <h3 class="mb-3">{$_('page.events.today')}</h3>
+        <h3>{$_('page.events.today')}</h3>
         <ul class="flex flex-col gap-2">
           {#each filteredEvents.filter((e) => isToday(e.date)) as event (event.id)}
             <li class="list-item">
@@ -92,7 +92,7 @@
                   {event.title.charAt(0)}{event.title.charAt(1)}
                 </div>
               </div>
-              <span class="flex-1 min-w-0">
+              <span class="list-item-content">
                 <dt class="font-bold truncate">
                   {event.title}
                 </dt>
@@ -133,7 +133,7 @@
     <!-- Upcoming Events -->
     {#if filteredEvents.some((e) => isUpcoming(e.date))}
       <section>
-        <h3 class="mb-3">
+        <h3>
           {$_('page.events.upcoming')}
         </h3>
         <ul class="flex flex-col gap-2">
@@ -144,7 +144,7 @@
                   {event.title.charAt(0)}{event.title.charAt(1)}
                 </div>
               </div>
-              <span class="flex-1 min-w-0">
+              <span class="list-item-content">
                 <dt class="font-bold truncate">
                   {event.title}
                 </dt>
@@ -185,7 +185,7 @@
     <!-- Past Events -->
     {#if filteredEvents.some((e) => isPast(e.date))}
       <section>
-        <h3 class="mb-3">{$_('page.events.past')}</h3>
+        <h3>{$_('page.events.past')}</h3>
         <ul class="flex flex-col gap-2">
           {#each filteredEvents.filter((e) => isPast(e.date)) as event (event.id)}
             <li class="list-item">
@@ -194,7 +194,7 @@
                   {event.title.charAt(0)}{event.title.charAt(1)}
                 </div>
               </div>
-              <span class="flex-1 min-w-0">
+              <span class="list-item-content">
                 <dt class="font-bold truncate">
                   {event.title}
                 </dt>

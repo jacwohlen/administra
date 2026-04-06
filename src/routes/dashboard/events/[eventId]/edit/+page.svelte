@@ -63,7 +63,7 @@
   }
 </script>
 
-<div class="flex items-center gap-2 mb-4">
+<div class="page-header-back">
   <a href="/dashboard/events/{data.event.id}" class="btn preset-tonal-surface">
     <Fa icon={faArrowLeft} />
   </a>

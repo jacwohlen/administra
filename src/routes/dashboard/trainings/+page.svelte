@@ -17,7 +17,7 @@
       <div class="entity-badge">
         {t.title.charAt(0)}{t.title.charAt(1)}
       </div>
-      <span class="flex-auto min-w-0">
+      <span class="list-item-content">
         <dt class="font-bold truncate">{t.title}</dt>
         <dd class="text-sm text-surface-600-400">
           {$_('weekday.' + t.weekday)} - {t.dateFrom} | {t.section}

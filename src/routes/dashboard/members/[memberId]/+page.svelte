@@ -233,7 +233,7 @@
     >
       <!-- svelte-ignore a11y_no_static_element_interactions -->
       <div class="card modal-dialog modal-dialog-lg" onclick={(e) => e.stopPropagation()}>
-        <h3 class="mb-4">{$_('dialog.editMember.title')}</h3>
+        <h3>{$_('dialog.editMember.title')}</h3>
         <MemberForm
           isEditing={true}
           isSubmitting={isEditing}
@@ -261,7 +261,7 @@
     >
       <!-- svelte-ignore a11y_no_static_element_interactions -->
       <div class="card modal-dialog" onclick={(e) => e.stopPropagation()}>
-        <h3 class="mb-2">{$_('page.members.deleteConfirmTitle')}</h3>
+        <h3>{$_('page.members.deleteConfirmTitle')}</h3>
         <p class="mb-4">
           {$_('page.members.deleteConfirmMessage')}
           {data.firstname}

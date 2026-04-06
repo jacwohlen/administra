@@ -205,7 +205,7 @@
 
 <div>
   <!-- Header: back + title + actions -->
-  <div class="flex items-center gap-2 mb-4">
+  <div class="page-header-back">
     <a href="/dashboard/events" class="btn preset-tonal-surface flex-shrink-0">
       <Fa icon={faArrowLeft} />
     </a>
@@ -258,7 +258,7 @@
     >
       <!-- svelte-ignore a11y_no_static_element_interactions -->
       <div class="card modal-dialog" onclick={(e) => e.stopPropagation()}>
-        <h3 class="mb-2">{$_('page.events.deleteConfirmTitle')}</h3>
+        <h3>{$_('page.events.deleteConfirmTitle')}</h3>
         <p class="mb-4">{$_('page.events.deleteConfirmMessage')} "{data.event.title}"?</p>
         <div class="flex justify-end gap-2">
           <button class="btn preset-tonal-surface" onclick={() => handleDeleteResponse(false)}>
@@ -275,7 +275,7 @@
   <!-- Event Description -->
   {#if data.event.description}
     <div class="mb-4">
-      <h3 class="mb-1">{$_('page.events.description')}</h3>
+      <h3>{$_('page.events.description')}</h3>
       <p class="text-sm text-surface-700-300 break-words">{data.event.description}</p>
     </div>
   {/if}
@@ -299,7 +299,7 @@
   <!-- Registration Status -->
   {#if data.event.registrationDeadline}
     <div class="mb-4">
-      <h3 class="mb-1">{$_('page.events.registration_info')}</h3>
+      <h3>{$_('page.events.registration_info')}</h3>
       <p class="text-sm">
         <strong>{$_('page.events.registration_deadline')}:</strong>
         {formatEventDate(data.event.registrationDeadline)}

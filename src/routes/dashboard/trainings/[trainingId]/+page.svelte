@@ -37,5 +37,5 @@
 </div>
 
 <!-- Logs section -->
-<h3 class="mb-3">{$_('page.trainings.logs')}</h3>
+<h3>{$_('page.trainings.logs')}</h3>
 <LogList trainingId={data.id} />

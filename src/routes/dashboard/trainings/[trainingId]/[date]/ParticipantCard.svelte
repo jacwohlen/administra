@@ -109,7 +109,7 @@
         </div>
       {/if}
     </div>
-    <span class="flex-auto min-w-0">
+    <span class="list-item-content">
       <dt class="truncate">{member.lastname} {member.firstname}</dt>
       <dd class="flex items-center gap-2 flex-wrap">
         <Labels labels={member.labels ? member.labels : []} />
@@ -192,7 +192,7 @@
       >
         <!-- svelte-ignore a11y_no_static_element_interactions -->
         <div class="card modal-dialog" onclick={(e) => e.stopPropagation()}>
-          <h4 class="mb-2">{$_('dialog.confirm.title')}</h4>
+          <h4>{$_('dialog.confirm.title')}</h4>
           <p class="mb-4">{$_('dialog.confirm.body')}</p>
           <div class="flex justify-end gap-2">
             <button class="btn preset-tonal-surface" onclick={() => handleRemoveResponse(false)}>

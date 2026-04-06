@@ -79,7 +79,7 @@
   </div>
 
   <div class="card p-4">
-    <h3 class="mb-3">{$_('page.stats.topParticipants')}</h3>
+    <h3>{$_('page.stats.topParticipants')}</h3>
     <TopParticipantsStats {yearmode} {year} />
   </div>
 

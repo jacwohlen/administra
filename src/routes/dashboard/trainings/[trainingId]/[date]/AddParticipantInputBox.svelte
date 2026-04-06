@@ -189,7 +189,7 @@
   >
     <!-- svelte-ignore a11y_no_static_element_interactions -->
     <div class="card modal-dialog modal-dialog-lg" onclick={(e) => e.stopPropagation()}>
-      <h3 class="mb-4">{$_('button.createNew')}</h3>
+      <h3>{$_('button.createNew')}</h3>
       <MemberForm
         lastname={newMemberLastname}
         firstname={newMemberFirstname}
