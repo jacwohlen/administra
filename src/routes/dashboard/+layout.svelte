@@ -98,7 +98,7 @@
               if (getActiveTab() === 'today') goto('/dashboard', { invalidateAll: true });
             }}
           >
-            <Fa icon={faCalendarCheck} scale={1.8} />
+            <Fa icon={faCalendarCheck} class="nav-icon" />
             <span class="hidden sm:inline">{$_('page.dashboard.today')}</span>
           </Tabs.Trigger>
           <Tabs.Trigger
@@ -108,7 +108,7 @@
                 goto('/dashboard/trainings', { invalidateAll: true });
             }}
           >
-            <Fa icon={faList} scale={1.8} />
+            <Fa icon={faList} class="nav-icon" />
             <span class="hidden sm:inline">{$_('page.dashboard.trainings')}</span>
           </Tabs.Trigger>
           <Tabs.Trigger
@@ -117,7 +117,7 @@
               if (getActiveTab() === 'events') goto('/dashboard/events', { invalidateAll: true });
             }}
           >
-            <Fa icon={faCalendarDays} scale={1.8} />
+            <Fa icon={faCalendarDays} class="nav-icon" />
             <span class="hidden sm:inline">{$_('page.dashboard.events')}</span>
           </Tabs.Trigger>
           <Tabs.Trigger
@@ -126,7 +126,7 @@
               if (getActiveTab() === 'members') goto('/dashboard/members', { invalidateAll: true });
             }}
           >
-            <Fa icon={faUser} scale={1.8} />
+            <Fa icon={faUser} class="nav-icon" />
             <span class="hidden sm:inline">{$_('page.dashboard.members')}</span>
           </Tabs.Trigger>
           <Tabs.Trigger
@@ -135,7 +135,7 @@
               if (getActiveTab() === 'stats') goto('/dashboard/stats', { invalidateAll: true });
             }}
           >
-            <Fa icon={faChartSimple} scale={1.8} />
+            <Fa icon={faChartSimple} class="nav-icon" />
             <span class="hidden sm:inline">{$_('page.dashboard.stats')}</span>
           </Tabs.Trigger>
         </Tabs.List>

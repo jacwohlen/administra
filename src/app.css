@@ -218,6 +218,27 @@ body {
   min-width: 44px;
 }
 
+/* Nav icons - large on mobile (icon-only), compact on desktop (with labels) */
+.nav-icon {
+  font-size: 1.4em;
+}
+
+@media (min-width: 640px) {
+  [data-scope='tabs'][data-part='trigger'] {
+    min-height: unset;
+    min-width: unset;
+  }
+
+  .nav-avatar {
+    min-height: unset;
+    min-width: unset;
+  }
+
+  .nav-icon {
+    font-size: 1em;
+  }
+}
+
 [data-scope='tabs'][data-part='trigger']:hover {
   color: var(--color-primary-500);
 }
