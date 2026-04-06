@@ -203,7 +203,7 @@
   }
 </script>
 
-<div class="max-w-4xl mx-auto space-y-4">
+<div class="space-y-4">
   <div class="flex justify-between items-center mb-4">
     <h1>{data.firstname} {data.lastname}</h1>
     <div class="flex gap-2">

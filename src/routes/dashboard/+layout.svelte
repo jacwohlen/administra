@@ -196,7 +196,7 @@
 
   <!-- Main content -->
   <main class="flex-1 overflow-auto">
-    <div class="container px-3 sm:px-4 py-2 mx-auto">
+    <div class="max-w-4xl px-3 sm:px-4 py-2 mx-auto">
       {@render children()}
     </div>
   </main>

@@ -70,76 +70,74 @@
   }
 </script>
 
-<div class="max-w-4xl mx-auto">
-  <div class="flex items-center justify-between mb-4">
-    <h1>{$_('page.members.title')}</h1>
-    <button class="btn btn-sm preset-filled-primary-500" onclick={showMemberForm}>
-      <Fa icon={faPlus} />
-      <span>{$_('page.members.addMember')}</span>
-    </button>
-  </div>
+<div class="flex items-center justify-between mb-4">
+  <h1>{$_('page.members.title')}</h1>
+  <button class="btn btn-sm preset-filled-primary-500" onclick={showMemberForm}>
+    <Fa icon={faPlus} />
+    <span>{$_('page.members.addMember')}</span>
+  </button>
+</div>
 
-  {#if showMemberFormDialog}
+{#if showMemberFormDialog}
+  <!-- svelte-ignore a11y_no_static_element_interactions -->
+  <div
+    class="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+    onclick={() => (showMemberFormDialog = false)}
+    onkeydown={(e) => {
+      if (e.key === 'Escape') showMemberFormDialog = false;
+    }}
+  >
     <!-- svelte-ignore a11y_no_static_element_interactions -->
     <div
-      class="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
-      onclick={() => (showMemberFormDialog = false)}
-      onkeydown={(e) => {
-        if (e.key === 'Escape') showMemberFormDialog = false;
-      }}
+      class="card p-4 sm:p-6 w-full max-w-lg shadow-2xl bg-surface-50-950"
+      onclick={(e) => e.stopPropagation()}
     >
-      <!-- svelte-ignore a11y_no_static_element_interactions -->
-      <div
-        class="card p-4 sm:p-6 w-full max-w-lg shadow-2xl bg-surface-50-950"
-        onclick={(e) => e.stopPropagation()}
-      >
-        <h3 class="font-semibold text-lg mb-4">{$_('page.members.addMember')}</h3>
-        <MemberForm
-          {isSubmitting}
-          onclose={() => (showMemberFormDialog = false)}
-          onsubmit={addMember}
-        />
-      </div>
+      <h3 class="font-semibold text-lg mb-4">{$_('page.members.addMember')}</h3>
+      <MemberForm
+        {isSubmitting}
+        onclose={() => (showMemberFormDialog = false)}
+        onsubmit={addMember}
+      />
     </div>
-  {/if}
-
-  <div class="mb-4">
-    <input
-      class="input"
-      bind:value={searchTerm}
-      type="text"
-      placeholder={$_('page.trainings.searchMembersPlaceholder')}
-    />
   </div>
+{/if}
 
-  <ul class="flex flex-col gap-2">
-    {#each data.members as m (m.id)}
-      {#if search(m.firstname, m.lastname)}
-        <li class="flex items-center gap-3 py-2">
-          <div
-            class="size-10 rounded-full bg-surface-100-900 flex items-center justify-center text-sm font-bold flex-shrink-0"
-          >
-            {m.lastname.charAt(0)}{m.firstname.charAt(0)}
-          </div>
-          <span class="flex-auto min-w-0">
-            <dt class="font-bold truncate">{m.lastname} {m.firstname}</dt>
-            <dd class="flex flex-wrap gap-1">
-              {#if m.labels}
-                {#each m.labels as l (l)}
-                  <span class="chip preset-tonal-secondary text-xs">{l}</span>
-                {/each}
-              {/if}
-            </dd>
-          </span>
-          <a
-            class="btn btn-sm preset-tonal-primary flex-shrink-0"
-            href={'/dashboard/members/' + m.id}
-          >
-            <Fa icon={faGripLines} />
-            <span class="hidden sm:inline">{$_('button.view')}</span>
-          </a>
-        </li>
-      {/if}
-    {/each}
-  </ul>
+<div class="mb-4">
+  <input
+    class="input"
+    bind:value={searchTerm}
+    type="text"
+    placeholder={$_('page.trainings.searchMembersPlaceholder')}
+  />
 </div>
+
+<ul class="flex flex-col gap-2">
+  {#each data.members as m (m.id)}
+    {#if search(m.firstname, m.lastname)}
+      <li class="flex items-center gap-3 py-2">
+        <div
+          class="size-10 rounded-full bg-surface-100-900 flex items-center justify-center text-sm font-bold flex-shrink-0"
+        >
+          {m.lastname.charAt(0)}{m.firstname.charAt(0)}
+        </div>
+        <span class="flex-auto min-w-0">
+          <dt class="font-bold truncate">{m.lastname} {m.firstname}</dt>
+          <dd class="flex flex-wrap gap-1">
+            {#if m.labels}
+              {#each m.labels as l (l)}
+                <span class="chip preset-tonal-secondary text-xs">{l}</span>
+              {/each}
+            {/if}
+          </dd>
+        </span>
+        <a
+          class="btn btn-sm preset-tonal-primary flex-shrink-0"
+          href={'/dashboard/members/' + m.id}
+        >
+          <Fa icon={faGripLines} />
+          <span class="hidden sm:inline">{$_('button.view')}</span>
+        </a>
+      </li>
+    {/if}
+  {/each}
+</ul>

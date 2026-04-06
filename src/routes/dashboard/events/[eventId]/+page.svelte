@@ -203,7 +203,7 @@
   let attendanceRate = $derived(calculateAttendanceRate(registeredCount, attendedCount));
 </script>
 
-<div class="max-w-4xl mx-auto">
+<div>
   <!-- Header: back + title + actions -->
   <div class="flex items-center gap-2 mb-4">
     <a
