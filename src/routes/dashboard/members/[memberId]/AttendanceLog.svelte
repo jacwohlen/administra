@@ -39,10 +39,7 @@
           <dd class="text-sm text-surface-600-400">{i.trainingId.title}</dd>
         </span>
         <span class="chip preset-tonal-secondary text-sm">{i.trainingId.section}</span>
-        <a
-          class="btn btn-sm preset-tonal-primary"
-          href="/dashboard/trainings/{i.trainingId.id}/{i.date}"
-        >
+        <a class="btn preset-tonal-primary" href="/dashboard/trainings/{i.trainingId.id}/{i.date}">
           <Fa icon={faGripLines} />
           <span>{$_('button.view')}</span>
         </a>
@@ -55,10 +52,7 @@
   </ul>
   {#if currentItem < l.length}
     <span class="flex justify-center mt-3">
-      <button
-        class="btn btn-sm preset-tonal-primary"
-        onclick={() => (currentItem = currentItem + 10)}
-      >
+      <button class="btn preset-tonal-primary" onclick={() => (currentItem = currentItem + 10)}>
         {$_('button.loadMore')}
       </button>
     </span>

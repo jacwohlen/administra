@@ -77,7 +77,7 @@
           ({e.count})
         </span>
         <span>
-          <a class="btn btn-sm preset-tonal-primary" href={'/dashboard/members/' + e.memberId}>
+          <a class="btn preset-tonal-primary" href={'/dashboard/members/' + e.memberId}>
             <Fa icon={faGripLines} />
             <span class="hidden sm:inline">{$_('button.view')}</span>
           </a>

@@ -54,7 +54,7 @@
 
 <div class="flex justify-between items-center mb-4">
   <h1>{$_('page.events.title')}</h1>
-  <a href="/dashboard/events/new" class="btn btn-sm preset-filled-primary-500">
+  <a href="/dashboard/events/new" class="btn preset-filled-primary-500">
     <Fa icon={faPlus} />
     <span>{$_('page.events.create_event')}</span>
   </a>
@@ -121,7 +121,7 @@
                 </dd>
               </span>
               <span class="flex-none">
-                <a class="btn btn-sm preset-tonal-primary" href="/dashboard/events/{event.id}">
+                <a class="btn preset-tonal-primary" href="/dashboard/events/{event.id}">
                   <Fa icon={faGripLines} />
                   <span class="hidden sm:inline">{$_('button.view')}</span>
                 </a>
@@ -175,7 +175,7 @@
                 </dd>
               </span>
               <span class="flex-none">
-                <a class="btn btn-sm preset-tonal-primary" href="/dashboard/events/{event.id}">
+                <a class="btn preset-tonal-primary" href="/dashboard/events/{event.id}">
                   <Fa icon={faGripLines} />
                   <span class="hidden sm:inline">{$_('button.view')}</span>
                 </a>
@@ -227,7 +227,7 @@
                 </dd>
               </span>
               <span class="flex-none">
-                <a class="btn btn-sm preset-tonal-primary" href="/dashboard/events/{event.id}">
+                <a class="btn preset-tonal-primary" href="/dashboard/events/{event.id}">
                   <Fa icon={faGripLines} />
                   <span class="hidden sm:inline">{$_('button.view')}</span>
                 </a>

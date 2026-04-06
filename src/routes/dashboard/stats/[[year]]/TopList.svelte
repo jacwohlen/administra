@@ -34,7 +34,7 @@
 <div class="card p-4 pt-2 pb-4 min-w-72">
   <div class="flex justify-between">
     <h3 class="indent-2">{section}</h3>
-    <a class="btn btn-sm" href={'/dashboard/stats/' + year + '/top/' + category + '/' + section}>
+    <a class="btn" href={'/dashboard/stats/' + year + '/top/' + category + '/' + section}>
       <Fa icon={faAngleRight} />
     </a>
   </div>

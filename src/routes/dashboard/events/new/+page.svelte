@@ -60,7 +60,7 @@
 </script>
 
 <div class="flex items-center gap-2 mb-4">
-  <a href="/dashboard/events" class="btn btn-sm preset-tonal-surface">
+  <a href="/dashboard/events" class="btn preset-tonal-surface">
     <Fa icon={faArrowLeft} />
   </a>
   <h1>{$_('page.events.create_event')}</h1>

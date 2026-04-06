@@ -143,7 +143,7 @@
               >
                 <span>{p.lastname} {p.firstname}</span>
                 <button
-                  class="btn btn-sm preset-tonal-primary"
+                  class="btn preset-tonal-primary"
                   onclick={(e) => {
                     e.stopPropagation();
                     add(p);
@@ -157,7 +157,7 @@
             {/each}
           </div>
           <div class="border-t border-surface-300-700 mt-2 pt-2">
-            <button class="btn btn-sm preset-filled-primary-500 w-full" onclick={createNewMember}>
+            <button class="btn preset-filled-primary-500 w-full" onclick={createNewMember}>
               <Fa icon={faUserPlus} />
               <span>{$_('button.createNew')}: "{searchterm}"</span>
             </button>
@@ -167,7 +167,7 @@
             {$_('page.trainings.memberNotFound')}
           </div>
           <div class="border-t border-surface-300-700 mt-2 pt-2">
-            <button class="btn btn-sm preset-filled-primary-500 w-full" onclick={createNewMember}>
+            <button class="btn preset-filled-primary-500 w-full" onclick={createNewMember}>
               <Fa icon={faUserPlus} />
               <span>{$_('button.createNew')}: "{searchterm}"</span>
             </button>

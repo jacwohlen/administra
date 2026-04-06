@@ -17,7 +17,7 @@
 <div class="flex items-center justify-between mb-4">
   <h1>{data.title}</h1>
   <a
-    class="btn btn-sm preset-tonal-primary flex-none"
+    class="btn preset-tonal-primary flex-none"
     href="/dashboard/trainings/{data.id}/{getDateString()}"
   >
     <Fa icon={faClipboardCheck} />

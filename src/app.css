@@ -6,7 +6,6 @@
 
 /* Touch-friendly buttons - 44px minimum (Apple HIG) */
 .btn,
-.btn-sm,
 .btn-icon {
   min-height: 44px;
 }

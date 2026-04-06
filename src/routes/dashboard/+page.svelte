@@ -92,7 +92,7 @@
           </span>
           <span class="">
             <a
-              class="btn btn-sm preset-tonal-primary"
+              class="btn preset-tonal-primary"
               href="/dashboard/trainings/{t.id}/{date.format(dateFormat)}"
             >
               <Fa icon={faClipboardCheck} />
@@ -143,7 +143,7 @@
             </dd>
           </span>
           <span class="flex-none">
-            <a class="btn btn-sm preset-tonal-primary" href="/dashboard/events/{event.id}">
+            <a class="btn preset-tonal-primary" href="/dashboard/events/{event.id}">
               <Fa icon={faClipboardCheck} />
               <span class="hidden sm:inline">{$_('button.trackAttendance')}</span>
             </a>

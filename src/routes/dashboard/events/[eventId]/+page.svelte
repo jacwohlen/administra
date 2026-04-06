@@ -206,15 +206,15 @@
 <div>
   <!-- Header: back + title + actions -->
   <div class="flex items-center gap-2 mb-4">
-    <a href="/dashboard/events" class="btn btn-sm preset-tonal-surface flex-shrink-0">
+    <a href="/dashboard/events" class="btn preset-tonal-surface flex-shrink-0">
       <Fa icon={faArrowLeft} />
     </a>
     <h1 class="flex-1 min-w-0 truncate">{data.event.title}</h1>
     <div class="flex gap-2 flex-shrink-0">
-      <a href="/dashboard/events/{data.event.id}/edit" class="btn btn-sm preset-tonal-surface">
+      <a href="/dashboard/events/{data.event.id}/edit" class="btn preset-tonal-surface">
         <Fa icon={faEdit} />
       </a>
-      <button class="btn btn-sm preset-tonal-error" onclick={confirmDelete} disabled={isDeleting}>
+      <button class="btn preset-tonal-error" onclick={confirmDelete} disabled={isDeleting}>
         <Fa icon={faTrash} />
       </button>
     </div>
@@ -328,7 +328,7 @@
       <h3 class="font-semibold">{$_('page.events.participants')}</h3>
       {#if !isEventPast() && isRegistrationOpen() && (!data.event.maxParticipants || registeredCount < data.event.maxParticipants)}
         <button
-          class="btn btn-sm preset-filled-primary-500"
+          class="btn preset-filled-primary-500"
           onclick={() => (showAddParticipant = !showAddParticipant)}
           disabled={loading}
         >
@@ -415,7 +415,7 @@
                   <!-- Coach toggle button - only show if participant has attended -->
                   {#if hasAttended}
                     <button
-                      class="btn btn-sm {log && log.isCoach
+                      class="btn {log && log.isCoach
                         ? 'preset-filled-primary-500'
                         : 'preset-tonal-primary'}"
                       onclick={() => toggleCoach(participant.memberId)}
@@ -429,9 +429,7 @@
                   {/if}
                   <!-- Event day or past - show attendance buttons -->
                   <button
-                    class="btn btn-sm {hasAttended
-                      ? 'preset-filled-success-500'
-                      : 'preset-tonal-success'}"
+                    class="btn {hasAttended ? 'preset-filled-success-500' : 'preset-tonal-success'}"
                     onclick={() => markAttendance(participant.memberId, !hasAttended)}
                     disabled={loading}
                   >
@@ -440,7 +438,7 @@
                 {:else}
                   <!-- Future event - show remove button -->
                   <button
-                    class="btn btn-sm preset-tonal-error"
+                    class="btn preset-tonal-error"
                     onclick={() => removeParticipant(participant.memberId)}
                     disabled={loading}
                   >

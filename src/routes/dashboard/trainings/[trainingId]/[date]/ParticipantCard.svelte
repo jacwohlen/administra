@@ -120,7 +120,7 @@
     </span>
     <div class="justify-self-end flex-shrink-0">
       <button
-        class="btn btn-sm"
+        class="btn"
         bind:this={btnEl}
         onclick={(e) => {
           e.stopPropagation();
@@ -138,7 +138,7 @@
             <li>
               <a
                 href={'/dashboard/members/' + member.id}
-                class="btn btn-sm w-full text-left justify-start"
+                class="btn w-full text-left justify-start"
                 onclick={closeMenu}
               >
                 {$_('components.ParticipantCard.View')}
@@ -146,7 +146,7 @@
             </li>
             <li class="border-t border-surface-300-700 pt-1 mt-1">
               <button
-                class="btn btn-sm w-full text-left justify-start"
+                class="btn w-full text-left justify-start"
                 onclick={() => setTrainerRole('attendee')}
               >
                 {$_('components.ParticipantCard.SetAsAttendee')}
@@ -154,7 +154,7 @@
             </li>
             <li>
               <button
-                class="btn btn-sm w-full text-left justify-start gap-2"
+                class="btn w-full text-left justify-start gap-2"
                 onclick={() => setTrainerRole('main_trainer')}
               >
                 <img class="w-4 flex-shrink-0" src="/judo-icon.svg" alt="judo-icon" />
@@ -163,7 +163,7 @@
             </li>
             <li>
               <button
-                class="btn btn-sm w-full text-left justify-start gap-2"
+                class="btn w-full text-left justify-start gap-2"
                 onclick={() => setTrainerRole('assistant')}
               >
                 <span class="w-4 flex-shrink-0 text-center font-bold text-surface-600-400">A</span>
@@ -172,7 +172,7 @@
             </li>
             <li class="border-t border-surface-300-700 pt-1 mt-1">
               <button
-                class="btn btn-sm w-full text-left justify-start text-error-600-400"
+                class="btn w-full text-left justify-start text-error-600-400"
                 onclick={triggerConfirm}
               >
                 {$_('components.ParticipantCard.Remove')}

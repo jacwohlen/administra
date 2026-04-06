@@ -181,12 +181,12 @@
 
 <!-- Date navigation -->
 <div class="flex justify-between items-center mb-4">
-  <button class="btn btn-sm preset-tonal-surface" onclick={previousWeek}>
+  <button class="btn preset-tonal-surface" onclick={previousWeek}>
     <Fa icon={faArrowLeft} />
     <span class="hidden sm:inline">{$_('button.week')}</span>
   </button>
   <h3 class="h3">{formattedDate}</h3>
-  <button class="btn btn-sm preset-tonal-surface" onclick={nextWeek}>
+  <button class="btn preset-tonal-surface" onclick={nextWeek}>
     <span class="hidden sm:inline">{$_('button.week')}</span>
     <Fa icon={faArrowRight} />
   </button>

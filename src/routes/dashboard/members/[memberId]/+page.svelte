@@ -207,11 +207,11 @@
   <div class="flex justify-between items-center mb-4">
     <h1>{data.firstname} {data.lastname}</h1>
     <div class="flex gap-2">
-      <button class="btn btn-sm preset-filled-primary-500" onclick={showEditForm}>
+      <button class="btn preset-filled-primary-500" onclick={showEditForm}>
         <Fa icon={faEdit} />
         <span>{$_('button.edit')}</span>
       </button>
-      <button class="btn btn-sm preset-tonal-error" onclick={confirmDelete} disabled={isDeleting}>
+      <button class="btn preset-tonal-error" onclick={confirmDelete} disabled={isDeleting}>
         {#if isDeleting}
           <span class="animate-spin">...</span>
         {:else}
