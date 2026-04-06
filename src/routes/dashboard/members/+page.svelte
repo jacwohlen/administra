@@ -72,7 +72,7 @@
 
 <div class="flex items-center justify-between mb-4">
   <h1>{$_('page.members.title')}</h1>
-  <button class="btn btn-sm preset-filled-primary-500" onclick={showMemberForm}>
+  <button class="btn btn-sm min-h-[44px] preset-filled-primary-500" onclick={showMemberForm}>
     <Fa icon={faPlus} />
     <span>{$_('page.members.addMember')}</span>
   </button>
@@ -131,7 +131,7 @@
           </dd>
         </span>
         <a
-          class="btn btn-sm preset-tonal-primary flex-shrink-0"
+          class="btn btn-sm min-h-[44px] preset-tonal-primary flex-shrink-0"
           href={'/dashboard/members/' + m.id}
         >
           <Fa icon={faGripLines} />

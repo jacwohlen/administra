@@ -214,10 +214,17 @@
     </a>
     <h1 class="flex-1 min-w-0 truncate">{data.event.title}</h1>
     <div class="flex gap-2 flex-shrink-0">
-      <a href="/dashboard/events/{data.event.id}/edit" class="btn btn-sm preset-tonal-surface">
+      <a
+        href="/dashboard/events/{data.event.id}/edit"
+        class="btn btn-sm min-w-[44px] min-h-[44px] preset-tonal-surface"
+      >
         <Fa icon={faEdit} />
       </a>
-      <button class="btn btn-sm preset-tonal-error" onclick={confirmDelete} disabled={isDeleting}>
+      <button
+        class="btn btn-sm min-w-[44px] min-h-[44px] preset-tonal-error"
+        onclick={confirmDelete}
+        disabled={isDeleting}
+      >
         <Fa icon={faTrash} />
       </button>
     </div>
@@ -267,10 +274,16 @@
         <h3 class="font-semibold text-lg mb-2">{$_('page.events.deleteConfirmTitle')}</h3>
         <p class="mb-4">{$_('page.events.deleteConfirmMessage')} "{data.event.title}"?</p>
         <div class="flex justify-end gap-2">
-          <button class="btn preset-tonal-surface" onclick={() => handleDeleteResponse(false)}>
+          <button
+            class="btn min-h-[44px] preset-tonal-surface"
+            onclick={() => handleDeleteResponse(false)}
+          >
             {$_('button.cancel')}
           </button>
-          <button class="btn preset-filled-error-500" onclick={() => handleDeleteResponse(true)}>
+          <button
+            class="btn min-h-[44px] preset-filled-error-500"
+            onclick={() => handleDeleteResponse(true)}
+          >
             {$_('button.delete')}
           </button>
         </div>
@@ -331,7 +344,7 @@
       <h3 class="font-semibold">{$_('page.events.participants')}</h3>
       {#if !isEventPast() && isRegistrationOpen() && (!data.event.maxParticipants || registeredCount < data.event.maxParticipants)}
         <button
-          class="btn btn-sm preset-filled-primary-500"
+          class="btn btn-sm min-h-[44px] preset-filled-primary-500"
           onclick={() => (showAddParticipant = !showAddParticipant)}
           disabled={loading}
         >
@@ -352,7 +365,10 @@
               onadded={onParticipantAdded}
             />
           </div>
-          <button class="btn preset-tonal-surface" onclick={() => (showAddParticipant = false)}>
+          <button
+            class="btn min-h-[44px] preset-tonal-surface"
+            onclick={() => (showAddParticipant = false)}
+          >
             {$_('button.cancel')}
           </button>
         </div>
@@ -418,7 +434,7 @@
                   <!-- Coach toggle button - only show if participant has attended -->
                   {#if hasAttended}
                     <button
-                      class="btn btn-sm {log && log.isCoach
+                      class="btn btn-sm min-w-[44px] min-h-[44px] {log && log.isCoach
                         ? 'preset-filled-primary-500'
                         : 'preset-tonal-primary'}"
                       onclick={() => toggleCoach(participant.memberId)}
@@ -432,7 +448,7 @@
                   {/if}
                   <!-- Event day or past - show attendance buttons -->
                   <button
-                    class="btn btn-sm {hasAttended
+                    class="btn btn-sm min-w-[44px] min-h-[44px] {hasAttended
                       ? 'preset-filled-success-500'
                       : 'preset-tonal-success'}"
                     onclick={() => markAttendance(participant.memberId, !hasAttended)}
@@ -443,7 +459,7 @@
                 {:else}
                   <!-- Future event - show remove button -->
                   <button
-                    class="btn btn-sm preset-tonal-error"
+                    class="btn btn-sm min-w-[44px] min-h-[44px] preset-tonal-error"
                     onclick={() => removeParticipant(participant.memberId)}
                     disabled={loading}
                   >

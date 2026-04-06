@@ -63,7 +63,7 @@
 
 <div class="flex justify-between items-center mb-4">
   <div>
-    <button class="btn" onclick={previousDay}>
+    <button class="btn min-h-[44px]" onclick={previousDay}>
       <Fa icon={faArrowLeft} /><span class="hidden sm:inline">{$_('button.day')}</span>
     </button>
   </div>
@@ -71,7 +71,7 @@
     <h1>{date.format('dddd')}</h1>
   </div>
   <div>
-    <button class="btn" onclick={nextDay}>
+    <button class="btn min-h-[44px]" onclick={nextDay}>
       <span class="hidden sm:inline">{$_('button.day')}</span><Fa icon={faArrowRight} />
     </button>
   </div>
@@ -92,7 +92,7 @@
           </span>
           <span class="">
             <a
-              class="btn btn-sm preset-tonal-primary"
+              class="btn btn-sm min-h-[44px] preset-tonal-primary"
               href="/dashboard/trainings/{t.id}/{date.format(dateFormat)}"
             >
               <Fa icon={faClipboardCheck} />
@@ -143,7 +143,10 @@
             </dd>
           </span>
           <span class="flex-none">
-            <a class="btn btn-sm preset-tonal-primary" href="/dashboard/events/{event.id}">
+            <a
+              class="btn btn-sm min-h-[44px] preset-tonal-primary"
+              href="/dashboard/events/{event.id}"
+            >
               <Fa icon={faClipboardCheck} />
               <span class="hidden sm:inline">{$_('button.trackAttendance')}</span>
             </a>

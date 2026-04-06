@@ -199,10 +199,10 @@
   {/if}
 
   <div class="flex justify-end gap-4">
-    <a href="/dashboard/events/{data.event.id}" class="btn preset-tonal-surface">
+    <a href="/dashboard/events/{data.event.id}" class="btn min-h-[44px] preset-tonal-surface">
       {$_('button.cancel')}
     </a>
-    <button type="submit" class="btn preset-filled-primary-500" disabled={loading}>
+    <button type="submit" class="btn min-h-[44px] preset-filled-primary-500" disabled={loading}>
       <Fa icon={faSave} />
       <span>{loading ? $_('button.saving') : $_('button.save')}</span>
     </button>

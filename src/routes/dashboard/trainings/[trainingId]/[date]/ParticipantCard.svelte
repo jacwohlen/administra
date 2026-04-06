@@ -120,7 +120,7 @@
     </span>
     <div class="justify-self-end flex-shrink-0">
       <button
-        class="btn btn-sm"
+        class="btn btn-sm min-w-[44px] min-h-[44px]"
         bind:this={btnEl}
         onclick={(e) => {
           e.stopPropagation();
@@ -138,7 +138,7 @@
             <li>
               <a
                 href={'/dashboard/members/' + member.id}
-                class="btn btn-sm w-full text-left justify-start"
+                class="btn btn-sm min-h-[44px] w-full text-left justify-start"
                 onclick={closeMenu}
               >
                 {$_('components.ParticipantCard.View')}
@@ -146,7 +146,7 @@
             </li>
             <li class="border-t border-surface-300-700 pt-1 mt-1">
               <button
-                class="btn btn-sm w-full text-left justify-start"
+                class="btn btn-sm min-h-[44px] w-full text-left justify-start"
                 onclick={() => setTrainerRole('attendee')}
               >
                 {$_('components.ParticipantCard.SetAsAttendee')}
@@ -154,7 +154,7 @@
             </li>
             <li>
               <button
-                class="btn btn-sm w-full text-left justify-start gap-2"
+                class="btn btn-sm min-h-[44px] w-full text-left justify-start gap-2"
                 onclick={() => setTrainerRole('main_trainer')}
               >
                 <img class="w-4 flex-shrink-0" src="/judo-icon.svg" alt="judo-icon" />
@@ -163,7 +163,7 @@
             </li>
             <li>
               <button
-                class="btn btn-sm w-full text-left justify-start gap-2"
+                class="btn btn-sm min-h-[44px] w-full text-left justify-start gap-2"
                 onclick={() => setTrainerRole('assistant')}
               >
                 <span class="w-4 flex-shrink-0 text-center font-bold text-surface-600-400">A</span>
@@ -172,7 +172,7 @@
             </li>
             <li class="border-t border-surface-300-700 pt-1 mt-1">
               <button
-                class="btn btn-sm w-full text-left justify-start text-error-600-400"
+                class="btn btn-sm min-h-[44px] w-full text-left justify-start text-error-600-400"
                 onclick={triggerConfirm}
               >
                 {$_('components.ParticipantCard.Remove')}
@@ -200,10 +200,16 @@
           <h4 class="font-semibold text-lg mb-2">{$_('dialog.confirm.title')}</h4>
           <p class="mb-4">{$_('dialog.confirm.body')}</p>
           <div class="flex justify-end gap-2">
-            <button class="btn preset-tonal-surface" onclick={() => handleRemoveResponse(false)}>
+            <button
+              class="btn min-h-[44px] preset-tonal-surface"
+              onclick={() => handleRemoveResponse(false)}
+            >
               {$_('button.cancel')}
             </button>
-            <button class="btn preset-filled-error-500" onclick={() => handleRemoveResponse(true)}>
+            <button
+              class="btn min-h-[44px] preset-filled-error-500"
+              onclick={() => handleRemoveResponse(true)}
+            >
               {$_('button.confirm')}
             </button>
           </div>

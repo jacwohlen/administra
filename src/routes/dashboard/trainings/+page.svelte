@@ -25,7 +25,10 @@
           {$_('weekday.' + t.weekday)} - {t.dateFrom} | {t.section}
         </dd>
       </span>
-      <a class="btn btn-sm preset-tonal-primary flex-shrink-0" href="/dashboard/trainings/{t.id}">
+      <a
+        class="btn btn-sm min-h-[44px] preset-tonal-primary flex-shrink-0"
+        href="/dashboard/trainings/{t.id}"
+      >
         <Fa icon={faGripLines} />
         <span class="hidden sm:inline">{$_('button.view')}</span>
       </a>

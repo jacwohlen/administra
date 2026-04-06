@@ -207,11 +207,15 @@
   <div class="flex justify-between items-center mb-4">
     <h1>{data.firstname} {data.lastname}</h1>
     <div class="flex gap-2">
-      <button class="btn btn-sm preset-filled-primary-500" onclick={showEditForm}>
+      <button class="btn btn-sm min-h-[44px] preset-filled-primary-500" onclick={showEditForm}>
         <Fa icon={faEdit} />
         <span>{$_('button.edit')}</span>
       </button>
-      <button class="btn btn-sm preset-tonal-error" onclick={confirmDelete} disabled={isDeleting}>
+      <button
+        class="btn btn-sm min-h-[44px] preset-tonal-error"
+        onclick={confirmDelete}
+        disabled={isDeleting}
+      >
         {#if isDeleting}
           <span class="animate-spin">...</span>
         {:else}
@@ -274,10 +278,16 @@
           {data.lastname}?
         </p>
         <div class="flex justify-end gap-2">
-          <button class="btn preset-tonal-surface" onclick={() => handleDeleteResponse(false)}>
+          <button
+            class="btn min-h-[44px] preset-tonal-surface"
+            onclick={() => handleDeleteResponse(false)}
+          >
             {$_('button.cancel')}
           </button>
-          <button class="btn preset-filled-error-500" onclick={() => handleDeleteResponse(true)}>
+          <button
+            class="btn min-h-[44px] preset-filled-error-500"
+            onclick={() => handleDeleteResponse(true)}
+          >
             {$_('button.delete')}
           </button>
         </div>

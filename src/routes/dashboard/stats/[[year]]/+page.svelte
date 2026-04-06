@@ -31,7 +31,7 @@
 
 <div class="flex justify-between items-center mb-4">
   <div>
-    <button class="btn" onclick={previousYear}>
+    <button class="btn min-h-[44px]" onclick={previousYear}>
       <Fa icon={faArrowLeft} /><span class="hidden sm:inline">{$_('button.year')}</span>
     </button>
   </div>
@@ -59,7 +59,7 @@
     </SegmentedControl>
   </div>
   <div>
-    <button class="btn" onclick={nextYear}>
+    <button class="btn min-h-[44px]" onclick={nextYear}>
       <span class="hidden sm:inline">{$_('button.year')}</span><Fa icon={faArrowRight} />
     </button>
   </div>
