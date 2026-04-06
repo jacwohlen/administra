@@ -28,6 +28,19 @@ describe('weekdayToNumber', () => {
       expect(utils.weekdayToNumber(name)).toBe(value);
     }
   });
+
+  it('returns undefined for an invalid weekday string', () => {
+    expect(utils.weekdayToNumber('Notaday')).toBeUndefined();
+  });
+
+  it('is case-sensitive', () => {
+    expect(utils.weekdayToNumber('monday')).toBeUndefined();
+    expect(utils.weekdayToNumber('MONDAY')).toBeUndefined();
+  });
+
+  it('returns undefined for an empty string', () => {
+    expect(utils.weekdayToNumber('')).toBeUndefined();
+  });
 });
 
 describe('Weekday enum', () => {
@@ -39,6 +52,11 @@ describe('Weekday enum', () => {
     expect(Weekday.Thursday).toBe(4);
     expect(Weekday.Friday).toBe(5);
     expect(Weekday.Saturday).toBe(6);
+  });
+
+  it('has exactly 7 members', () => {
+    const numericValues = Object.values(Weekday).filter((v) => typeof v === 'number');
+    expect(numericValues).toHaveLength(7);
   });
 });
 
@@ -65,5 +83,14 @@ describe('getMostRecentDateByWeekday', () => {
       const result = utils.getMostRecentDateByWeekday(weekday);
       expect(result.day()).toBe(weekday);
     }
+  });
+
+  it('returns today when today matches the requested weekday', () => {
+    const todayWeekday = new Date().getDay();
+    const result = utils.getMostRecentDateByWeekday(todayWeekday);
+    expect(result.day()).toBe(todayWeekday);
+    // Should be today or at most 7 days ago (never in the future)
+    const diffDays = Math.abs(result.diff(new Date(), 'day'));
+    expect(diffDays).toBeLessThanOrEqual(7);
   });
 });

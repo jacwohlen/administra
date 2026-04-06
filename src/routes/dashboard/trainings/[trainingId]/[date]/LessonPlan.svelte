@@ -2,7 +2,7 @@
   import { supabaseClient } from '$lib/supabase';
   import type { LessonPlan } from '$lib/models';
   import Fa from 'svelte-fa';
-  import { TabGroup, Tab, toastStore } from '@skeletonlabs/skeleton';
+  import { toaster } from '$lib/toast';
   import {
     faEdit,
     faSave,
@@ -16,19 +16,18 @@
   } from '@fortawesome/free-solid-svg-icons';
   import { _ } from 'svelte-i18n';
 
-  export let trainingId: string;
-  export let date: string;
+  let { trainingId, date }: { trainingId: string; date: string } = $props();
 
-  let lessonPlan: LessonPlan | null = null;
-  let isEditing = false;
-  let isLoading = false;
-  let isUploading = false;
-  let content = '';
-  let title = '';
-  let selectedFile: File | null = null;
+  let lessonPlan: LessonPlan | null = $state(null);
+  let isEditing = $state(false);
+  let isLoading = $state(false);
+  let isUploading = $state(false);
+  let content = $state('');
+  let title = $state('');
+  let selectedFile: File | null = $state(null);
   let fileInput: HTMLInputElement;
-  let tabSet = 0; // 0 for text, 1 for file
-  let previewUrl: string | null = null;
+  let tabSet = $state(0); // 0 for text, 1 for file
+  let previewUrl: string | null = $state(null);
 
   async function loadLessonPlan() {
     isLoading = true;
@@ -108,14 +107,14 @@
           .from('lesson-plans')
           .upload(filePath, selectedFile, {
             cacheControl: '3600',
-            upsert: false
+            contentType: selectedFile.type,
+            upsert: true
           });
 
         if (uploadError) {
           console.error('Error uploading file:', uploadError);
-          toastStore.trigger({
-            message: $_('page.trainings.uploadError'),
-            preset: 'error'
+          toaster.error({
+            title: `${$_('page.trainings.uploadError')}: ${uploadError.message}`
           });
           return;
         }
@@ -173,9 +172,8 @@
 
         if (error) {
           console.error('Error updating lesson plan:', error);
-          toastStore.trigger({
-            message: $_('page.trainings.saveError'),
-            preset: 'error'
+          toaster.error({
+            title: `${$_('page.trainings.saveError')}: ${error.message}`
           });
           return;
         }
@@ -241,9 +239,8 @@
 
         if (error) {
           console.error('Error creating lesson plan:', error);
-          toastStore.trigger({
-            message: $_('page.trainings.saveError'),
-            preset: 'error'
+          toaster.error({
+            title: `${$_('page.trainings.saveError')}: ${error.message}`
           });
           return;
         }
@@ -381,19 +378,21 @@
   }
 
   // Load lesson plan on component mount and when props change
-  $: if (trainingId && date) {
-    loadLessonPlan();
-  }
+  $effect(() => {
+    if (trainingId && date) {
+      loadLessonPlan();
+    }
+  });
 </script>
 
 <div class="card">
   <header class="card-header flex justify-between items-center mb-4">
-    <h3 class="h3">{$_('page.trainings.lessonPlanTitle')}</h3>
+    <h3>{$_('page.trainings.lessonPlanTitle')}</h3>
     <div class="flex gap-2">
       {#if isEditing}
         <button
-          class="btn btn-sm variant-filled-primary"
-          on:click={saveLessonPlan}
+          class="btn preset-filled-primary-500"
+          onclick={saveLessonPlan}
           disabled={isLoading ||
             (tabSet === 0 && !content.trim()) ||
             (tabSet === 1 && !selectedFile && !lessonPlan?.filePath)}
@@ -401,28 +400,16 @@
           <Fa icon={faSave} />
           <span>{$_('button.save')}</span>
         </button>
-        <button
-          class="btn btn-sm variant-outline-secondary"
-          on:click={cancelEditing}
-          disabled={isLoading}
-        >
+        <button class="btn preset-tonal-surface" onclick={cancelEditing} disabled={isLoading}>
           {$_('button.cancel')}
         </button>
       {:else if lessonPlan}
-        <button
-          class="btn btn-sm variant-outline-primary"
-          on:click={startEditing}
-          disabled={isLoading}
-        >
+        <button class="btn preset-tonal-primary" onclick={startEditing} disabled={isLoading}>
           <Fa icon={faEdit} />
           <span>{$_('button.edit')}</span>
         </button>
       {:else}
-        <button
-          class="btn btn-sm variant-filled-primary"
-          on:click={startEditing}
-          disabled={isLoading}
-        >
+        <button class="btn preset-filled-primary-500" onclick={startEditing} disabled={isLoading}>
           <Fa icon={faPlus} />
           <span>{$_('page.trainings.createLessonPlan')}</span>
         </button>
@@ -435,15 +422,15 @@
     <input
       type="file"
       bind:this={fileInput}
-      on:change={onFileSelected}
+      onchange={onFileSelected}
       accept=".pdf,.jpg,.jpeg,.png,.webp,.gif,.doc,.docx,.txt"
       style="display: none;"
     />
 
     {#if isLoading}
       <div class="placeholder animate-pulse">
-        <div class="placeholder-circle w-8 h-8" />
-        <div class="placeholder w-full" />
+        <div class="placeholder-circle w-8 h-8"></div>
+        <div class="placeholder w-full"></div>
       </div>
     {:else if isEditing}
       <div class="space-y-6">
@@ -459,80 +446,74 @@
         </label>
 
         <!-- Tab Group -->
-        <TabGroup
-          active="variant-filled-primary"
-          hover="hover:variant-soft-primary"
-          rounded="rounded-lg"
-          border=""
-          class="tab-group-spaced"
-        >
-          <Tab bind:group={tabSet} name="text" value={0}>
-            <div class="flex items-center gap-2">
-              <Fa icon={faFileSignature} />
-              <span>{$_('page.trainings.writeContent')}</span>
-            </div>
-          </Tab>
-          <Tab bind:group={tabSet} name="file" value={1}>
-            <div class="flex items-center gap-2">
-              <Fa icon={faFileAlt} />
-              <span>{$_('page.trainings.uploadFile')}</span>
-            </div>
-          </Tab>
+        <div class="flex gap-1">
+          <button
+            class="btn flex-1 {tabSet === 0 ? 'preset-filled-primary-500' : 'preset-tonal-surface'}"
+            onclick={() => (tabSet = 0)}
+          >
+            <Fa icon={faFileSignature} />
+            <span>{$_('page.trainings.writeContent')}</span>
+          </button>
+          <button
+            class="btn flex-1 {tabSet === 1 ? 'preset-filled-primary-500' : 'preset-tonal-surface'}"
+            onclick={() => (tabSet = 1)}
+          >
+            <Fa icon={faFileAlt} />
+            <span>{$_('page.trainings.uploadFile')}</span>
+          </button>
+        </div>
 
-          <!-- Tab Panels -->
-          <svelte:fragment slot="panel">
-            {#if tabSet === 0}
-              <!-- Text content -->
-              <div class="space-y-2 mt-4">
-                <textarea
-                  class="textarea"
-                  rows="12"
-                  placeholder={$_('page.trainings.contentPlaceholder')}
-                  bind:value={content}
-                />
-              </div>
-            {:else if tabSet === 1}
-              <!-- File upload section -->
-              <div class="space-y-4 mt-4">
-                {#if selectedFile}
-                  <div class="card variant-soft-primary p-4">
-                    <div class="flex items-center justify-between">
-                      <div class="flex items-center gap-3">
-                        <Fa icon={faFile} size="lg" />
-                        <div>
-                          <p class="font-semibold">{selectedFile.name}</p>
-                          <p class="text-sm opacity-60">{formatFileSize(selectedFile.size)}</p>
-                        </div>
-                      </div>
-                      <button class="btn btn-sm variant-ghost-error" on:click={removeSelectedFile}>
-                        <Fa icon={faTrash} />
-                      </button>
+        <!-- Tab Panels -->
+        {#if tabSet === 0}
+          <!-- Text content -->
+          <div class="space-y-2 mt-4">
+            <textarea
+              class="textarea"
+              rows="12"
+              placeholder={$_('page.trainings.contentPlaceholder')}
+              bind:value={content}
+            ></textarea>
+          </div>
+        {:else if tabSet === 1}
+          <!-- File upload section -->
+          <div class="space-y-4 mt-4">
+            {#if selectedFile}
+              <div class="card preset-tonal-primary p-4">
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center gap-3">
+                    <Fa icon={faFile} size="lg" />
+                    <div>
+                      <p class="font-semibold">{selectedFile.name}</p>
+                      <p class="text-sm opacity-60">{formatFileSize(selectedFile.size)}</p>
                     </div>
                   </div>
-                {:else}
-                  <div class="text-center border-2 border-dashed border-surface-300 rounded-lg p-8">
-                    <button
-                      class="btn variant-filled-primary"
-                      on:click={handleFileSelect}
-                      disabled={isUploading}
-                    >
-                      <Fa icon={faUpload} />
-                      <span>{$_('page.trainings.selectFile')}</span>
-                    </button>
-                    <p class="text-sm opacity-60 mt-2">
-                      {$_('page.trainings.supportedFormats')}: PDF, Images, Word docs, Text files
-                    </p>
-                  </div>
-                {/if}
+                  <button class="btn preset-tonal-error" onclick={removeSelectedFile}>
+                    <Fa icon={faTrash} />
+                  </button>
+                </div>
+              </div>
+            {:else}
+              <div class="text-center border-2 border-dashed border-surface-300-700 rounded-lg p-8">
+                <button
+                  class="btn preset-filled-primary-500"
+                  onclick={handleFileSelect}
+                  disabled={isUploading}
+                >
+                  <Fa icon={faUpload} />
+                  <span>{$_('page.trainings.selectFile')}</span>
+                </button>
+                <p class="text-sm opacity-60 mt-2">
+                  {$_('page.trainings.supportedFormats')}: PDF, Images, Word docs, Text files
+                </p>
               </div>
             {/if}
-          </svelte:fragment>
-        </TabGroup>
+          </div>
+        {/if}
 
         {#if isUploading}
           <div class="text-center py-4">
             <div class="placeholder animate-pulse">
-              <div class="placeholder-circle w-6 h-6 mx-auto" />
+              <div class="placeholder-circle w-6 h-6 mx-auto"></div>
               <p class="mt-2">{$_('page.trainings.uploading')}</p>
             </div>
           </div>
@@ -541,25 +522,25 @@
     {:else if lessonPlan}
       <div class="space-y-4">
         {#if lessonPlan.title}
-          <h4 class="h4">{lessonPlan.title}</h4>
+          <h4>{lessonPlan.title}</h4>
         {/if}
 
         {#if lessonPlan.filePath}
           <!-- File attachment display -->
-          <div class="card variant-soft-surface p-4">
+          <div class="card preset-tonal-surface p-4">
             <div class="flex flex-col sm:flex-row sm:items-center gap-3 mb-4">
               <div class="flex items-center gap-3 min-w-0 flex-1">
                 <Fa icon={faFile} size="lg" class="flex-shrink-0" />
                 <div class="min-w-0 flex-1">
-                  <p class="font-semibold truncate">{lessonPlan.fileName || 'Attachment'}</p>
+                  <p class="truncate">{lessonPlan.fileName || 'Attachment'}</p>
                   {#if lessonPlan.fileSize}
                     <p class="text-sm opacity-60">{formatFileSize(lessonPlan.fileSize)}</p>
                   {/if}
                 </div>
               </div>
               <button
-                class="btn btn-sm variant-filled-secondary flex-shrink-0 w-full sm:w-auto"
-                on:click={downloadFile}
+                class="btn preset-tonal-primary flex-shrink-0 w-full sm:w-auto"
+                onclick={downloadFile}
               >
                 <Fa icon={faDownload} />
                 <span>{$_('button.download')}</span>
@@ -568,7 +549,7 @@
 
             <!-- File Preview -->
             {#if previewUrl && canPreviewFile(lessonPlan.fileType)}
-              <div class="border-t border-surface-300 pt-4">
+              <div class="border-t border-surface-300-700 pt-4">
                 {#if lessonPlan.fileType?.startsWith('image/')}
                   <img
                     src={previewUrl}
@@ -577,13 +558,13 @@
                     style="max-height: 400px;"
                   />
                 {:else if lessonPlan.fileType === 'application/pdf'}
-                  <div class="text-center p-4 bg-surface-100-800-token rounded-lg">
+                  <div class="text-center p-4 bg-surface-100-900 rounded-lg">
                     <iframe
                       src="{previewUrl}#toolbar=0&navpanes=0&scrollbar=0"
                       title="PDF Preview"
-                      class="w-full rounded"
-                      style="height: 600px; border: 1px solid var(--color-surface-300);"
-                    />
+                      class="w-full rounded border border-surface-300-700"
+                      style="height: 600px;"
+                    ></iframe>
                   </div>
                 {/if}
               </div>
@@ -613,19 +594,9 @@
         </footer>
       </div>
     {:else}
-      <div class="text-center py-8">
+      <div class="empty-state">
         <p class="opacity-60">{$_('page.trainings.noLessonPlanMessage')}</p>
       </div>
     {/if}
   </section>
 </div>
-
-<style>
-  :global(.tab-group-spaced .tab) {
-    margin-right: 0.5rem;
-  }
-
-  :global(.tab-group-spaced .tab:last-child) {
-    margin-right: 0;
-  }
-</style>

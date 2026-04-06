@@ -61,18 +61,18 @@
   getTodayEvents();
 </script>
 
-<div class="flex justify-between items-center m-2">
+<div class="page-header">
   <div>
-    <button class="btn" on:click={previousDay}>
-      <Fa icon={faArrowLeft} /><span>{$_('button.day')}</span>
+    <button class="btn" onclick={previousDay}>
+      <Fa icon={faArrowLeft} /><span class="hidden sm:inline">{$_('button.day')}</span>
     </button>
   </div>
   <div>
     <h1>{date.format('dddd')}</h1>
   </div>
   <div>
-    <button class="btn" on:click={nextDay}>
-      <span>{$_('button.day')}</span><Fa icon={faArrowRight} />
+    <button class="btn" onclick={nextDay}>
+      <span class="hidden sm:inline">{$_('button.day')}</span><Fa icon={faArrowRight} />
     </button>
   </div>
 </div>
@@ -80,21 +80,23 @@
 <!-- Trainings Section -->
 <section class="mb-6">
   {#if trainings.length == 0}
-    <div class="text-center text-gray-500">{$_('page.dashboard.noTrainingsToday')}</div>
+    <div class="empty-state">
+      {$_('page.dashboard.noTrainingsToday')}
+    </div>
   {:else}
-    <ul class="list">
+    <ul class="flex flex-col gap-2">
       {#each trainings as t (t.id)}
-        <li>
-          <span class="flex-auto">
-            {t.title}
+        <li class="list-item">
+          <span class="list-item-content">
+            <dt class="font-bold truncate">{t.title}</dt>
           </span>
-          <span class="">
+          <span class="flex-none">
             <a
-              class="btn btn-sm variant-filled-secondary"
+              class="btn preset-tonal-primary"
               href="/dashboard/trainings/{t.id}/{date.format(dateFormat)}"
             >
               <Fa icon={faClipboardCheck} />
-              <span>{$_('button.trackAttendance')}</span>
+              <span class="hidden sm:inline">{$_('button.trackAttendance')}</span>
             </a>
           </span>
         </li>
@@ -106,46 +108,44 @@
 <!-- Today's Events Section -->
 <section>
   {#if todayEvents.length > 0}
-    <ul class="list space-y-2">
+    <ul class="flex flex-col gap-2">
       {#each todayEvents as event (event.id)}
-        <li class="flex items-start">
+        <li class="list-item">
           <div class="relative inline-block flex-none">
-            <div
-              class="w-12 h-12 bg-secondary-600 rounded-md flex items-center justify-center text-white"
-            >
+            <div class="entity-badge">
               <Fa icon={faCalendarDays} size="lg" />
             </div>
           </div>
-          <span class="flex-1 min-w-0">
+          <span class="list-item-content">
             <dt class="font-bold truncate">
               {event.title}
             </dt>
             {#if event.description}
-              <dd class="text-gray-500 text-sm truncate">
+              <dd class="text-surface-600-400 text-sm truncate">
                 {event.description}
               </dd>
             {/if}
-            <dd class="flex items-center gap-2 text-sm">
-              <span class="flex items-center gap-1">
+            <dd class="flex items-center gap-2 text-sm text-surface-600-400">
+              <span class="meta-item">
                 <Fa icon={faCalendarDays} size="sm" />
                 {formatEventDate(event.date)}
               </span>
               {#if event.location}
-                <span class="flex items-center gap-1 truncate">
+                <span class="meta-item truncate">
                   <Fa icon={faLocationDot} size="sm" />
                   {event.location}
                 </span>
               {/if}
-              <span class="flex items-center gap-1">
+              <span class="meta-item">
                 <Fa icon={faUsers} size="sm" />
                 {event.section}
               </span>
             </dd>
           </span>
           <span class="flex-none">
-            <a class="btn btn-sm variant-filled-secondary" href="/dashboard/events/{event.id}">
+            <a class="btn preset-tonal-primary" href="/dashboard/events/{event.id}">
               <Fa icon={faClipboardCheck} />
-              <span>{$_('button.trackAttendance')}</span>
+              <span class="hidden sm:inline">{$_('button.trackAttendance')}</span>
             </a>
           </span>
         </li>

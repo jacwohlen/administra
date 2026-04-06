@@ -1,15 +1,10 @@
 import { error as err } from '@sveltejs/kit';
 import type { Athletes } from '$lib/models';
 import { supabaseClient } from '$lib/supabase';
+import { resolveYearForRpc } from '$lib/statsUtils';
 
 export async function load({ params }) {
-  let year: string;
-
-  if (!params.year || params.year === 'ALL') {
-    year = '';
-  } else {
-    year = params.year;
-  }
+  const year = resolveYearForRpc(params.year);
 
   const category = params.category?.toLowerCase();
   switch (category) {

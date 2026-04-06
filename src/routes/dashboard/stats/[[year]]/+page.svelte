@@ -5,17 +5,17 @@
   import { goto } from '$app/navigation';
   import type { PageData } from './$types';
   import TopParticipantsStats from './TopParticipantsStats.svelte';
-  import { RadioGroup, RadioItem } from '@skeletonlabs/skeleton';
+  import { SegmentedControl } from '@skeletonlabs/skeleton-svelte';
   import { _ } from 'svelte-i18n';
   import TopTrainers from './TopTrainers.svelte';
   import TopEventParticipants from './TopEventParticipants.svelte';
   import TopEventCoaches from './TopEventCoaches.svelte';
   import TrainerDownload from './TrainerDownload.svelte';
 
-  export let data: PageData;
+  let { data }: { data: PageData } = $props();
 
-  $: yearmode = data.yearmode;
-  $: year = data.year;
+  let yearmode = $derived(data.yearmode);
+  let year = $derived(data.year);
 
   async function previousYear() {
     if (yearmode === 'YEAR') year = year - 1;
@@ -29,33 +29,38 @@
   }
 </script>
 
-<div class="flex justify-between items-center m-2">
+<div class="page-header">
   <div>
-    <button class="btn" on:click={previousYear}>
-      <Fa icon={faArrowLeft} /><span>{$_('button.year')}</span>
+    <button class="btn" onclick={previousYear}>
+      <Fa icon={faArrowLeft} /><span class="hidden sm:inline">{$_('button.year')}</span>
     </button>
   </div>
   <div>
-    <RadioGroup>
-      <RadioItem
-        bind:group={yearmode}
-        on:click={() => goto('/dashboard/stats/' + year)}
-        name="yearmode"
-        value="YEAR"
-      >
-        {year}
-      </RadioItem>
-      <RadioItem
-        bind:group={yearmode}
-        on:click={() => goto('/dashboard/stats/ALL')}
-        name="yearmode"
-        value="ALL">{$_('page.stats.all')}</RadioItem
-      >
-    </RadioGroup>
+    <SegmentedControl
+      name="yearmode"
+      defaultValue={yearmode}
+      onValueChange={(e) => {
+        if (e.value === 'YEAR') {
+          goto('/dashboard/stats/' + year);
+        } else {
+          goto('/dashboard/stats/ALL');
+        }
+      }}
+    >
+      <SegmentedControl.Item value="YEAR">
+        <SegmentedControl.ItemHiddenInput />
+        <SegmentedControl.ItemText>{year}</SegmentedControl.ItemText>
+      </SegmentedControl.Item>
+      <SegmentedControl.Item value="ALL">
+        <SegmentedControl.ItemHiddenInput />
+        <SegmentedControl.ItemText>{$_('page.stats.all')}</SegmentedControl.ItemText>
+      </SegmentedControl.Item>
+      <SegmentedControl.Indicator />
+    </SegmentedControl>
   </div>
   <div>
-    <button class="btn" on:click={nextYear}>
-      <span>{$_('button.year')}</span><Fa icon={faArrowRight} />
+    <button class="btn" onclick={nextYear}>
+      <span class="hidden sm:inline">{$_('button.year')}</span><Fa icon={faArrowRight} />
     </button>
   </div>
 </div>
@@ -66,7 +71,7 @@
   </div>
 
   <div class="card p-4">
-    <div class="flex justify-between items-center mb-4">
+    <div class="page-header">
       <h3>{$_('page.stats.topTrainers')}</h3>
       <TrainerDownload {year} {yearmode} />
     </div>

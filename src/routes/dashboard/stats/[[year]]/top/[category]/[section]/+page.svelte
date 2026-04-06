@@ -5,15 +5,15 @@
   import { _ } from 'svelte-i18n';
   import type { Athletes } from '$lib/models';
 
-  export let data: PageData;
-  let searchTerm = '';
+  let { data }: { data: PageData } = $props();
+  let searchTerm = $state('');
 
-  $: search = (firstname: string, lastname: string): boolean => {
+  let search = $derived((firstname: string, lastname: string): boolean => {
     let q = searchTerm.toLowerCase().trim();
     let firstlast = firstname.toLowerCase() + ' ' + lastname.toLowerCase();
     let lastfirst = lastname.toLowerCase() + ' ' + firstname.toLowerCase();
     return firstlast.startsWith(q) || lastfirst.startsWith(q);
-  };
+  });
 
   // Convert data to CSV format
   function convertToCSV(data: Athletes[]) {
@@ -38,7 +38,7 @@
   }
 </script>
 
-<span class="flex justify-between">
+<span class="page-header">
   <h1>
     {#if data.category?.toLowerCase() == 'athletes'}
       {$_('page.stats.topAthletes')}
@@ -51,9 +51,11 @@
     {/if}
     {data.section}
   </h1>
-  <button type="button" class="btn-icon" on:click={downloadCsv}><Fa icon={faDownload} /></button>
+  <button type="button" class="btn btn-icon preset-tonal-surface" onclick={downloadCsv}
+    ><Fa icon={faDownload} /></button
+  >
 </span>
-<div class="m-2">
+<div class="mb-4">
   <input
     class="input"
     bind:value={searchTerm}
@@ -62,10 +64,10 @@
   />
 </div>
 
-<ul class="list">
+<ul class="flex flex-col gap-3">
   {#each data.athletes as e (e.memberId)}
     {#if search(e.firstname, e.lastname)}
-      <li>
+      <li class="card p-4 flex items-center gap-3">
         <span>
           {e.rank.toString()}.
         </span>
@@ -75,9 +77,9 @@
           ({e.count})
         </span>
         <span>
-          <a class="btn btn-sm variant-filled-secondary" href={'/dashboard/members/' + e.memberId}>
+          <a class="btn preset-tonal-primary" href={'/dashboard/members/' + e.memberId}>
             <Fa icon={faGripLines} />
-            <span>{$_('button.view')}</span>
+            <span class="hidden sm:inline">{$_('button.view')}</span>
           </a>
         </span>
       </li>

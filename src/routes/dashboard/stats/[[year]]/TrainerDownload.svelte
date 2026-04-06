@@ -5,10 +5,9 @@
   import { faDownload, faSpinner } from '@fortawesome/free-solid-svg-icons';
   import { _ } from 'svelte-i18n';
 
-  export let year: number | string;
-  export let yearmode: 'YEAR' | 'ALL';
+  let { year, yearmode }: { year: number | string; yearmode: 'YEAR' | 'ALL' } = $props();
 
-  let isDownloading = false;
+  let isDownloading = $state(false);
 
   async function downloadTrainerTracking() {
     isDownloading = true;
@@ -158,8 +157,8 @@
 
 <div class="flex items-center gap-2">
   <button
-    class="btn variant-filled-secondary"
-    on:click={downloadTrainerTracking}
+    class="btn preset-tonal-primary"
+    onclick={downloadTrainerTracking}
     disabled={isDownloading}
   >
     <Fa icon={isDownloading ? faSpinner : faDownload} spin={isDownloading} />
