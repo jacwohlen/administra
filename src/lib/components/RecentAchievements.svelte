@@ -21,32 +21,32 @@
   loadAchievements();
 </script>
 
-<div>
-  <h3 class="mb-3">{$_('badges.recentAchievements.title')}</h3>
-  {#if loading}
-    <p class="text-surface-600-400">{$_('page.stats.loading')}</p>
-  {:else if achievements.length === 0}
-    <p class="text-surface-600-400">{$_('badges.recentAchievements.noAchievements')}</p>
-  {:else}
-    <ul class="space-y-2">
-      {#each achievements as a}
-        <li class="flex items-center gap-3">
-          <span class="text-xl">{a.emoji}</span>
-          <div class="flex-1 min-w-0">
-            <a href="/dashboard/members/{a.memberId}" class="hover:underline font-medium truncate">
+<h3 class="mb-3">{$_('badges.recentAchievements.title')}</h3>
+{#if loading}
+  <p class="text-surface-600-400">{$_('page.stats.loading')}</p>
+{:else if achievements.length === 0}
+  <p class="text-surface-600-400">{$_('badges.recentAchievements.noAchievements')}</p>
+{:else}
+  <ul class="flex flex-col gap-2">
+    {#each achievements as a}
+      <li class="list-item">
+        <span class="text-xl flex-none">{a.emoji}</span>
+        <span class="list-item-content">
+          <dt class="font-bold truncate">
+            <a href="/dashboard/members/{a.memberId}" class="hover:underline">
               {a.firstname}
               {a.lastname}
             </a>
-            <p class="text-sm text-surface-600-400 truncate">
-              {$_('badges.recentAchievements.earned')}
-              {$_('badges.' + a.badgeId + '.name')}
-            </p>
-          </div>
-          <span class="text-xs text-surface-600-400 flex-none">
-            {dayjs(a.earnedAt).fromNow()}
-          </span>
-        </li>
-      {/each}
-    </ul>
-  {/if}
-</div>
+          </dt>
+          <dd class="text-sm text-surface-600-400 truncate">
+            {$_('badges.recentAchievements.earned')}
+            {$_('badges.' + a.badgeId + '.name')}
+          </dd>
+        </span>
+        <span class="text-xs text-surface-600-400 flex-none">
+          {dayjs(a.earnedAt).fromNow()}
+        </span>
+      </li>
+    {/each}
+  </ul>
+{/if}
