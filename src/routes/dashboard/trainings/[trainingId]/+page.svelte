@@ -21,10 +21,19 @@
   let isDeleting = $state(false);
   let showDeleteConfirm = $state(false);
   let menuOpen = $state(false);
+  let menuStyle = $state('');
   let menuBtnEl: HTMLButtonElement;
 
   function toggleMenu() {
-    menuOpen = !menuOpen;
+    if (menuOpen) {
+      menuOpen = false;
+      return;
+    }
+    const rect = menuBtnEl.getBoundingClientRect();
+    const top = rect.bottom + 4;
+    const left = rect.right - 192;
+    menuStyle = `position:fixed;top:${top}px;left:${left}px;z-index:9999;`;
+    menuOpen = true;
   }
 
   function handleWindowClick(e: MouseEvent) {
@@ -88,7 +97,7 @@
         <Fa icon={faEllipsisVertical} />
       </button>
       {#if menuOpen}
-        <nav class="card absolute right-0 top-full mt-1 z-50 min-w-40 p-1 shadow-xl">
+        <nav class="card min-w-48 p-1 shadow-xl" style={menuStyle}>
           <button
             class="btn w-full justify-start text-error-600-400"
             onclick={() => {
