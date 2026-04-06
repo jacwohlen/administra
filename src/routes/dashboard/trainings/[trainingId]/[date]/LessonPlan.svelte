@@ -387,11 +387,11 @@
 
 <div class="card">
   <header class="card-header flex justify-between items-center mb-4">
-    <h3 class="h3">{$_('page.trainings.lessonPlanTitle')}</h3>
+    <h3>{$_('page.trainings.lessonPlanTitle')}</h3>
     <div class="flex gap-2">
       {#if isEditing}
         <button
-          class="btn btn-sm preset-filled-primary-500"
+          class="btn preset-filled-primary-500"
           onclick={saveLessonPlan}
           disabled={isLoading ||
             (tabSet === 0 && !content.trim()) ||
@@ -400,24 +400,16 @@
           <Fa icon={faSave} />
           <span>{$_('button.save')}</span>
         </button>
-        <button
-          class="btn btn-sm preset-tonal-surface"
-          onclick={cancelEditing}
-          disabled={isLoading}
-        >
+        <button class="btn preset-tonal-surface" onclick={cancelEditing} disabled={isLoading}>
           {$_('button.cancel')}
         </button>
       {:else if lessonPlan}
-        <button class="btn btn-sm preset-tonal-primary" onclick={startEditing} disabled={isLoading}>
+        <button class="btn preset-tonal-primary" onclick={startEditing} disabled={isLoading}>
           <Fa icon={faEdit} />
           <span>{$_('button.edit')}</span>
         </button>
       {:else}
-        <button
-          class="btn btn-sm preset-filled-primary-500"
-          onclick={startEditing}
-          disabled={isLoading}
-        >
+        <button class="btn preset-filled-primary-500" onclick={startEditing} disabled={isLoading}>
           <Fa icon={faPlus} />
           <span>{$_('page.trainings.createLessonPlan')}</span>
         </button>
@@ -456,18 +448,14 @@
         <!-- Tab Group -->
         <div class="flex gap-1">
           <button
-            class="btn btn-sm flex-1 {tabSet === 0
-              ? 'preset-filled-primary-500'
-              : 'preset-tonal-surface'}"
+            class="btn flex-1 {tabSet === 0 ? 'preset-filled-primary-500' : 'preset-tonal-surface'}"
             onclick={() => (tabSet = 0)}
           >
             <Fa icon={faFileSignature} />
             <span>{$_('page.trainings.writeContent')}</span>
           </button>
           <button
-            class="btn btn-sm flex-1 {tabSet === 1
-              ? 'preset-filled-primary-500'
-              : 'preset-tonal-surface'}"
+            class="btn flex-1 {tabSet === 1 ? 'preset-filled-primary-500' : 'preset-tonal-surface'}"
             onclick={() => (tabSet = 1)}
           >
             <Fa icon={faFileAlt} />
@@ -499,7 +487,7 @@
                       <p class="text-sm opacity-60">{formatFileSize(selectedFile.size)}</p>
                     </div>
                   </div>
-                  <button class="btn btn-sm preset-tonal-error" onclick={removeSelectedFile}>
+                  <button class="btn preset-tonal-error" onclick={removeSelectedFile}>
                     <Fa icon={faTrash} />
                   </button>
                 </div>
@@ -534,7 +522,7 @@
     {:else if lessonPlan}
       <div class="space-y-4">
         {#if lessonPlan.title}
-          <h4 class="h4">{lessonPlan.title}</h4>
+          <h4>{lessonPlan.title}</h4>
         {/if}
 
         {#if lessonPlan.filePath}
@@ -544,14 +532,14 @@
               <div class="flex items-center gap-3 min-w-0 flex-1">
                 <Fa icon={faFile} size="lg" class="flex-shrink-0" />
                 <div class="min-w-0 flex-1">
-                  <p class="font-semibold truncate">{lessonPlan.fileName || 'Attachment'}</p>
+                  <p class="truncate">{lessonPlan.fileName || 'Attachment'}</p>
                   {#if lessonPlan.fileSize}
                     <p class="text-sm opacity-60">{formatFileSize(lessonPlan.fileSize)}</p>
                   {/if}
                 </div>
               </div>
               <button
-                class="btn btn-sm preset-tonal-primary flex-shrink-0 w-full sm:w-auto"
+                class="btn preset-tonal-primary flex-shrink-0 w-full sm:w-auto"
                 onclick={downloadFile}
               >
                 <Fa icon={faDownload} />
@@ -606,7 +594,7 @@
         </footer>
       </div>
     {:else}
-      <div class="text-center py-8">
+      <div class="empty-state">
         <p class="opacity-60">{$_('page.trainings.noLessonPlanMessage')}</p>
       </div>
     {/if}

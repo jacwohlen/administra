@@ -88,7 +88,7 @@
             {/if}
           </div>
 
-          <span class="btn btn-sm preset-tonal-primary flex-shrink-0">
+          <span class="btn preset-tonal-primary flex-shrink-0">
             <Fa icon={faGripLines} />
             <span>{$_('button.view')}</span>
           </span>

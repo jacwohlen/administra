@@ -29,10 +29,10 @@
   }
 </script>
 
-<div class="flex justify-between items-center mb-4">
+<div class="page-header">
   <div>
     <button class="btn" onclick={previousYear}>
-      <Fa icon={faArrowLeft} /><span>{$_('button.year')}</span>
+      <Fa icon={faArrowLeft} /><span class="hidden sm:inline">{$_('button.year')}</span>
     </button>
   </div>
   <div>
@@ -60,7 +60,7 @@
   </div>
   <div>
     <button class="btn" onclick={nextYear}>
-      <span>{$_('button.year')}</span><Fa icon={faArrowRight} />
+      <span class="hidden sm:inline">{$_('button.year')}</span><Fa icon={faArrowRight} />
     </button>
   </div>
 </div>
@@ -71,7 +71,7 @@
   </div>
 
   <div class="card p-4">
-    <div class="flex justify-between items-center mb-4">
+    <div class="page-header">
       <h3>{$_('page.stats.topTrainers')}</h3>
       <TrainerDownload {year} {yearmode} />
     </div>

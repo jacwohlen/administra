@@ -14,10 +14,10 @@
 </script>
 
 <!-- Header -->
-<div class="flex items-center justify-between mb-4">
+<div class="page-header">
   <h1>{data.title}</h1>
   <a
-    class="btn btn-sm preset-tonal-primary flex-none"
+    class="btn preset-tonal-primary flex-none"
     href="/dashboard/trainings/{data.id}/{getDateString()}"
   >
     <Fa icon={faClipboardCheck} />
@@ -37,5 +37,5 @@
 </div>
 
 <!-- Logs section -->
-<h3 class="text-lg font-semibold mb-3">{$_('page.trainings.logs')}</h3>
+<h3>{$_('page.trainings.logs')}</h3>
 <LogList trainingId={data.id} />

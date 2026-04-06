@@ -70,9 +70,9 @@
   }
 </script>
 
-<div class="flex items-center justify-between mb-4">
+<div class="page-header">
   <h1>{$_('page.members.title')}</h1>
-  <button class="btn btn-sm preset-filled-primary-500" onclick={showMemberForm}>
+  <button class="btn preset-filled-primary-500" onclick={showMemberForm}>
     <Fa icon={faPlus} />
     <span>{$_('page.members.addMember')}</span>
   </button>
@@ -81,18 +81,15 @@
 {#if showMemberFormDialog}
   <!-- svelte-ignore a11y_no_static_element_interactions -->
   <div
-    class="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+    class="modal-overlay"
     onclick={() => (showMemberFormDialog = false)}
     onkeydown={(e) => {
       if (e.key === 'Escape') showMemberFormDialog = false;
     }}
   >
     <!-- svelte-ignore a11y_no_static_element_interactions -->
-    <div
-      class="card p-6 w-full max-w-lg shadow-2xl bg-surface-50-950"
-      onclick={(e) => e.stopPropagation()}
-    >
-      <h3 class="font-semibold text-lg mb-4">{$_('page.members.addMember')}</h3>
+    <div class="card modal-dialog modal-dialog-lg" onclick={(e) => e.stopPropagation()}>
+      <h3>{$_('page.members.addMember')}</h3>
       <MemberForm
         {isSubmitting}
         onclose={() => (showMemberFormDialog = false)}
@@ -114,13 +111,11 @@
 <ul class="flex flex-col gap-2">
   {#each data.members as m (m.id)}
     {#if search(m.firstname, m.lastname)}
-      <li class="flex items-center gap-3 py-2">
-        <div
-          class="size-10 rounded-full bg-surface-100-900 flex items-center justify-center text-sm font-bold flex-shrink-0"
-        >
+      <li class="list-item">
+        <div class="avatar-initials">
           {m.lastname.charAt(0)}{m.firstname.charAt(0)}
         </div>
-        <span class="flex-auto min-w-0">
+        <span class="list-item-content">
           <dt class="font-bold truncate">{m.lastname} {m.firstname}</dt>
           <dd class="flex flex-wrap gap-1">
             {#if m.labels}
@@ -130,10 +125,7 @@
             {/if}
           </dd>
         </span>
-        <a
-          class="btn btn-sm preset-tonal-primary flex-shrink-0"
-          href={'/dashboard/members/' + m.id}
-        >
+        <a class="btn preset-tonal-primary flex-shrink-0" href={'/dashboard/members/' + m.id}>
           <Fa icon={faGripLines} />
           <span class="hidden sm:inline">{$_('button.view')}</span>
         </a>

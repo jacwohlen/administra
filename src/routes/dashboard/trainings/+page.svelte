@@ -11,21 +11,19 @@
 <ul class="flex flex-col gap-2">
   {#each data.trainings as t, index (t.id)}
     {#if index === 0 || t.weekday !== data.trainings[index - 1].weekday}
-      <h3 class="text-lg font-semibold mt-4 mb-1">{$_('weekday.' + t.weekday)}</h3>
+      <h3 class="mt-4 mb-1">{$_('weekday.' + t.weekday)}</h3>
     {/if}
-    <li class="flex items-center gap-3 py-2">
-      <div
-        class="size-10 rounded-md bg-surface-100-900 flex items-center justify-center text-sm font-bold flex-shrink-0"
-      >
+    <li class="list-item">
+      <div class="entity-badge">
         {t.title.charAt(0)}{t.title.charAt(1)}
       </div>
-      <span class="flex-auto min-w-0">
+      <span class="list-item-content">
         <dt class="font-bold truncate">{t.title}</dt>
         <dd class="text-sm text-surface-600-400">
           {$_('weekday.' + t.weekday)} - {t.dateFrom} | {t.section}
         </dd>
       </span>
-      <a class="btn btn-sm preset-tonal-primary flex-shrink-0" href="/dashboard/trainings/{t.id}">
+      <a class="btn preset-tonal-primary flex-shrink-0" href="/dashboard/trainings/{t.id}">
         <Fa icon={faGripLines} />
         <span class="hidden sm:inline">{$_('button.view')}</span>
       </a>

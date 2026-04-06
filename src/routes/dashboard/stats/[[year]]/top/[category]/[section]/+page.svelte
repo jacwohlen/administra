@@ -38,7 +38,7 @@
   }
 </script>
 
-<span class="flex justify-between items-center mb-4">
+<span class="page-header">
   <h1>
     {#if data.category?.toLowerCase() == 'athletes'}
       {$_('page.stats.topAthletes')}
@@ -51,10 +51,8 @@
     {/if}
     {data.section}
   </h1>
-  <button
-    type="button"
-    class="btn btn-icon preset-tonal-surface min-w-[44px] min-h-[44px]"
-    onclick={downloadCsv}><Fa icon={faDownload} /></button
+  <button type="button" class="btn btn-icon preset-tonal-surface" onclick={downloadCsv}
+    ><Fa icon={faDownload} /></button
   >
 </span>
 <div class="mb-4">
@@ -79,7 +77,7 @@
           ({e.count})
         </span>
         <span>
-          <a class="btn btn-sm preset-tonal-primary" href={'/dashboard/members/' + e.memberId}>
+          <a class="btn preset-tonal-primary" href={'/dashboard/members/' + e.memberId}>
             <Fa icon={faGripLines} />
             <span class="hidden sm:inline">{$_('button.view')}</span>
           </a>

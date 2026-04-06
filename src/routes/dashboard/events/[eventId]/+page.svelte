@@ -203,21 +203,18 @@
   let attendanceRate = $derived(calculateAttendanceRate(registeredCount, attendedCount));
 </script>
 
-<div class="max-w-4xl mx-auto">
+<div>
   <!-- Header: back + title + actions -->
-  <div class="flex items-center gap-2 mb-4">
-    <a
-      href="/dashboard/events"
-      class="btn btn-sm preset-tonal-surface flex-shrink-0 min-w-[44px] min-h-[44px]"
-    >
+  <div class="page-header-back">
+    <a href="/dashboard/events" class="btn preset-tonal-surface flex-shrink-0">
       <Fa icon={faArrowLeft} />
     </a>
     <h1 class="flex-1 min-w-0 truncate">{data.event.title}</h1>
     <div class="flex gap-2 flex-shrink-0">
-      <a href="/dashboard/events/{data.event.id}/edit" class="btn btn-sm preset-tonal-surface">
+      <a href="/dashboard/events/{data.event.id}/edit" class="btn preset-tonal-surface">
         <Fa icon={faEdit} />
       </a>
-      <button class="btn btn-sm preset-tonal-error" onclick={confirmDelete} disabled={isDeleting}>
+      <button class="btn preset-tonal-error" onclick={confirmDelete} disabled={isDeleting}>
         <Fa icon={faTrash} />
       </button>
     </div>
@@ -226,24 +223,24 @@
   <!-- Metadata -->
   <div class="mb-6">
     <div class="flex flex-wrap gap-3 text-sm text-surface-600-400">
-      <span class="flex items-center gap-1">
+      <span class="meta-item">
         <Fa icon={faCalendarDays} size="sm" />
         {formatEventDate(data.event.date)}
       </span>
       {#if data.event.timeFrom}
-        <span class="flex items-center gap-1">
+        <span class="meta-item">
           <Fa icon={faClock} size="sm" />
           {formatTime(data.event.timeFrom)}{#if data.event.timeTo}
             - {formatTime(data.event.timeTo)}{/if}
         </span>
       {/if}
       {#if data.event.location}
-        <span class="flex items-center gap-1">
+        <span class="meta-item">
           <Fa icon={faLocationDot} size="sm" />
           {data.event.location}
         </span>
       {/if}
-      <span class="flex items-center gap-1">
+      <span class="meta-item">
         <Fa icon={faUsers} size="sm" />
         {data.event.section}
       </span>
@@ -253,18 +250,15 @@
   {#if showDeleteConfirm}
     <!-- svelte-ignore a11y_no_static_element_interactions -->
     <div
-      class="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+      class="modal-overlay"
       onclick={() => handleDeleteResponse(false)}
       onkeydown={(e) => {
         if (e.key === 'Escape') handleDeleteResponse(false);
       }}
     >
       <!-- svelte-ignore a11y_no_static_element_interactions -->
-      <div
-        class="card p-6 w-full max-w-sm shadow-2xl bg-surface-50-950"
-        onclick={(e) => e.stopPropagation()}
-      >
-        <h3 class="font-semibold text-lg mb-2">{$_('page.events.deleteConfirmTitle')}</h3>
+      <div class="card modal-dialog" onclick={(e) => e.stopPropagation()}>
+        <h3>{$_('page.events.deleteConfirmTitle')}</h3>
         <p class="mb-4">{$_('page.events.deleteConfirmMessage')} "{data.event.title}"?</p>
         <div class="flex justify-end gap-2">
           <button class="btn preset-tonal-surface" onclick={() => handleDeleteResponse(false)}>
@@ -281,7 +275,7 @@
   <!-- Event Description -->
   {#if data.event.description}
     <div class="mb-4">
-      <h3 class="font-semibold mb-1">{$_('page.events.description')}</h3>
+      <h3>{$_('page.events.description')}</h3>
       <p class="text-sm text-surface-700-300 break-words">{data.event.description}</p>
     </div>
   {/if}
@@ -289,15 +283,15 @@
   <!-- Event Statistics -->
   <div class="grid grid-cols-3 gap-2 sm:gap-4 mb-4">
     <div class="card p-3 sm:p-4 text-center">
-      <div class="text-lg sm:text-xl font-bold text-primary-600-400">{registeredCount}</div>
+      <div class="sm:text-xl font-bold text-primary-600-400">{registeredCount}</div>
       <div class="text-xs text-surface-600-400">{$_('page.events.stats.registered')}</div>
     </div>
     <div class="card p-3 sm:p-4 text-center">
-      <div class="text-lg sm:text-xl font-bold text-success-600-400">{attendedCount}</div>
+      <div class="sm:text-xl font-bold text-success-600-400">{attendedCount}</div>
       <div class="text-xs text-surface-600-400">{$_('page.events.stats.attended')}</div>
     </div>
     <div class="card p-3 sm:p-4 text-center">
-      <div class="text-lg sm:text-xl font-bold text-tertiary-600-400">{attendanceRate}%</div>
+      <div class="sm:text-xl font-bold text-tertiary-600-400">{attendanceRate}%</div>
       <div class="text-xs text-surface-600-400">{$_('page.events.stats.attendance_rate')}</div>
     </div>
   </div>
@@ -305,7 +299,7 @@
   <!-- Registration Status -->
   {#if data.event.registrationDeadline}
     <div class="mb-4">
-      <h3 class="font-semibold mb-1">{$_('page.events.registration_info')}</h3>
+      <h3>{$_('page.events.registration_info')}</h3>
       <p class="text-sm">
         <strong>{$_('page.events.registration_deadline')}:</strong>
         {formatEventDate(data.event.registrationDeadline)}
@@ -328,10 +322,10 @@
   <!-- Participants Section -->
   <div>
     <div class="flex justify-between items-center mb-3">
-      <h3 class="font-semibold">{$_('page.events.participants')}</h3>
+      <h3>{$_('page.events.participants')}</h3>
       {#if !isEventPast() && isRegistrationOpen() && (!data.event.maxParticipants || registeredCount < data.event.maxParticipants)}
         <button
-          class="btn btn-sm preset-filled-primary-500"
+          class="btn preset-filled-primary-500"
           onclick={() => (showAddParticipant = !showAddParticipant)}
           disabled={loading}
         >
@@ -361,7 +355,7 @@
 
     <!-- Participants List -->
     {#if data.participants.length === 0}
-      <p class="text-center text-surface-600-400 py-8">{$_('page.events.no_participants')}</p>
+      <p class="empty-state">{$_('page.events.no_participants')}</p>
     {:else}
       <div class="space-y-2">
         {#each data.participants as participant}
@@ -383,9 +377,7 @@
                       class="size-10 rounded-full object-cover"
                     />
                   {:else}
-                    <div
-                      class="size-10 rounded-full bg-surface-100-900 flex items-center justify-center text-sm font-bold"
-                    >
+                    <div class="avatar-initials">
                       {member.lastname[0]}{member.firstname[0]}
                     </div>
                   {/if}
@@ -418,7 +410,7 @@
                   <!-- Coach toggle button - only show if participant has attended -->
                   {#if hasAttended}
                     <button
-                      class="btn btn-sm {log && log.isCoach
+                      class="btn {log && log.isCoach
                         ? 'preset-filled-primary-500'
                         : 'preset-tonal-primary'}"
                       onclick={() => toggleCoach(participant.memberId)}
@@ -432,9 +424,7 @@
                   {/if}
                   <!-- Event day or past - show attendance buttons -->
                   <button
-                    class="btn btn-sm {hasAttended
-                      ? 'preset-filled-success-500'
-                      : 'preset-tonal-success'}"
+                    class="btn {hasAttended ? 'preset-filled-success-500' : 'preset-tonal-success'}"
                     onclick={() => markAttendance(participant.memberId, !hasAttended)}
                     disabled={loading}
                   >
@@ -443,7 +433,7 @@
                 {:else}
                   <!-- Future event - show remove button -->
                   <button
-                    class="btn btn-sm preset-tonal-error"
+                    class="btn preset-tonal-error"
                     onclick={() => removeParticipant(participant.memberId)}
                     disabled={loading}
                   >

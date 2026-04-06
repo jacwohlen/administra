@@ -61,10 +61,10 @@
   getTodayEvents();
 </script>
 
-<div class="flex justify-between items-center mb-4">
+<div class="page-header">
   <div>
     <button class="btn" onclick={previousDay}>
-      <Fa icon={faArrowLeft} /><span>{$_('button.day')}</span>
+      <Fa icon={faArrowLeft} /><span class="hidden sm:inline">{$_('button.day')}</span>
     </button>
   </div>
   <div>
@@ -72,7 +72,7 @@
   </div>
   <div>
     <button class="btn" onclick={nextDay}>
-      <span>{$_('button.day')}</span><Fa icon={faArrowRight} />
+      <span class="hidden sm:inline">{$_('button.day')}</span><Fa icon={faArrowRight} />
     </button>
   </div>
 </div>
@@ -80,17 +80,19 @@
 <!-- Trainings Section -->
 <section class="mb-6">
   {#if trainings.length == 0}
-    <div class="text-center text-surface-600-400 py-8">{$_('page.dashboard.noTrainingsToday')}</div>
+    <div class="empty-state">
+      {$_('page.dashboard.noTrainingsToday')}
+    </div>
   {:else}
-    <ul class="flex flex-col gap-3">
+    <ul class="flex flex-col gap-2">
       {#each trainings as t (t.id)}
-        <li class="card p-4 flex items-center">
-          <span class="flex-auto">
-            {t.title}
+        <li class="list-item">
+          <span class="list-item-content">
+            <dt class="font-bold truncate">{t.title}</dt>
           </span>
-          <span class="">
+          <span class="flex-none">
             <a
-              class="btn btn-sm preset-tonal-primary"
+              class="btn preset-tonal-primary"
               href="/dashboard/trainings/{t.id}/{date.format(dateFormat)}"
             >
               <Fa icon={faClipboardCheck} />
@@ -106,15 +108,15 @@
 <!-- Today's Events Section -->
 <section>
   {#if todayEvents.length > 0}
-    <ul class="flex flex-col gap-3">
+    <ul class="flex flex-col gap-2">
       {#each todayEvents as event (event.id)}
-        <li class="card p-4 flex items-start gap-3">
+        <li class="list-item">
           <div class="relative inline-block flex-none">
-            <div class="size-10 bg-surface-100-900 rounded-md flex items-center justify-center">
+            <div class="entity-badge">
               <Fa icon={faCalendarDays} size="lg" />
             </div>
           </div>
-          <span class="flex-1 min-w-0">
+          <span class="list-item-content">
             <dt class="font-bold truncate">
               {event.title}
             </dt>
@@ -124,24 +126,24 @@
               </dd>
             {/if}
             <dd class="flex items-center gap-2 text-sm text-surface-600-400">
-              <span class="flex items-center gap-1">
+              <span class="meta-item">
                 <Fa icon={faCalendarDays} size="sm" />
                 {formatEventDate(event.date)}
               </span>
               {#if event.location}
-                <span class="flex items-center gap-1 truncate">
+                <span class="meta-item truncate">
                   <Fa icon={faLocationDot} size="sm" />
                   {event.location}
                 </span>
               {/if}
-              <span class="flex items-center gap-1">
+              <span class="meta-item">
                 <Fa icon={faUsers} size="sm" />
                 {event.section}
               </span>
             </dd>
           </span>
           <span class="flex-none">
-            <a class="btn btn-sm preset-tonal-primary" href="/dashboard/events/{event.id}">
+            <a class="btn preset-tonal-primary" href="/dashboard/events/{event.id}">
               <Fa icon={faClipboardCheck} />
               <span class="hidden sm:inline">{$_('button.trackAttendance')}</span>
             </a>

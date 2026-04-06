@@ -4,6 +4,161 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
+/* Mobile-friendly heading sizes (override Skeleton defaults) */
+h1,
+.h1 {
+  font-size: var(--text-xl) !important;
+  line-height: var(--text-xl--line-height) !important;
+}
+
+h2,
+.h2 {
+  font-size: var(--text-lg) !important;
+  line-height: var(--text-lg--line-height) !important;
+}
+
+h3,
+.h3 {
+  font-size: var(--text-lg) !important;
+  line-height: var(--text-lg--line-height) !important;
+}
+
+h4,
+.h4 {
+  font-size: var(--text-lg) !important;
+  line-height: var(--text-lg--line-height) !important;
+}
+
+@media (min-width: 640px) {
+  h1,
+  .h1 {
+    font-size: var(--text-2xl) !important;
+    line-height: var(--text-2xl--line-height) !important;
+  }
+
+  h2,
+  .h2 {
+    font-size: var(--text-xl) !important;
+    line-height: var(--text-xl--line-height) !important;
+  }
+}
+
+/* Touch-friendly buttons - 44px minimum (Apple HIG) */
+.btn,
+.btn-icon {
+  min-height: 44px;
+}
+
+.btn-icon {
+  min-width: 44px;
+}
+
+/* Default heading margins */
+h3,
+.h3 {
+  margin-bottom: 0.75rem;
+}
+
+h4,
+.h4 {
+  margin-bottom: 0.5rem;
+}
+
+/* Reusable layout patterns */
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.page-header-back {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.list-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding-block: 0.5rem;
+}
+
+.list-item-content {
+  flex: 1 1 0%;
+  min-width: 0;
+}
+
+.meta-item {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.empty-state {
+  text-align: center;
+  color: var(--color-surface-600-400);
+  padding-block: 2rem;
+}
+
+/* Avatar and badge patterns */
+.avatar-initials {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 9999px;
+  background-color: var(--color-surface-100-900);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--text-sm);
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.entity-badge {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: var(--radius-md, 0.375rem);
+  background-color: var(--color-surface-100-900);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--text-sm);
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+/* Modal patterns */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgb(0 0 0 / 0.5);
+}
+
+.modal-dialog {
+  padding: 1rem;
+  width: 100%;
+  max-width: 24rem;
+  box-shadow: var(--shadow-2xl, 0 25px 50px -12px rgb(0 0 0 / 0.25));
+  background-color: var(--color-surface-50-950);
+}
+
+.modal-dialog-lg {
+  max-width: 32rem;
+}
+
+@media (min-width: 640px) {
+  .modal-dialog {
+    padding: 1.5rem;
+  }
+}
+
 html,
 body {
   height: 100%;
@@ -44,15 +199,44 @@ body {
   display: flex;
   align-items: center;
   gap: 0.375rem;
-  padding: 0.625rem 0.75rem;
+  padding: 0.5rem 0.75rem;
   font-size: 0.8rem;
   font-weight: 500;
   color: var(--color-surface-600-400);
   border-bottom: 2px solid transparent;
   cursor: pointer;
+  min-height: 44px;
+  min-width: 44px;
   transition:
     color 0.15s,
     border-color 0.15s;
+}
+
+/* Nav avatar button - match tab trigger touch target */
+.nav-avatar {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+/* Nav icons - large on mobile (icon-only), compact on desktop (with labels) */
+.nav-icon {
+  font-size: 1.4em;
+}
+
+@media (min-width: 640px) {
+  [data-scope='tabs'][data-part='trigger'] {
+    min-height: unset;
+    min-width: unset;
+  }
+
+  .nav-avatar {
+    min-height: unset;
+    min-width: unset;
+  }
+
+  .nav-icon {
+    font-size: 1em;
+  }
 }
 
 [data-scope='tabs'][data-part='trigger']:hover {

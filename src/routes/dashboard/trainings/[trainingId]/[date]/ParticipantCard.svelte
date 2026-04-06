@@ -74,7 +74,7 @@
 
 <svelte:window onclick={handleWindowClick} />
 
-<li class="flex items-center gap-3 py-2">
+<li class="list-item">
   {#if member}
     <input
       class="checkbox"
@@ -104,15 +104,13 @@
           class="size-10 rounded-full object-cover"
         />
       {:else}
-        <div
-          class="size-10 rounded-full bg-surface-100-900 flex items-center justify-center text-sm font-bold"
-        >
+        <div class="avatar-initials">
           {member.lastname.charAt(0)}{member.firstname.charAt(0)}
         </div>
       {/if}
     </div>
-    <span class="flex-auto min-w-0">
-      <dt class="font-semibold truncate">{member.lastname} {member.firstname}</dt>
+    <span class="list-item-content">
+      <dt class="truncate">{member.lastname} {member.firstname}</dt>
       <dd class="flex items-center gap-2 flex-wrap">
         <Labels labels={member.labels ? member.labels : []} />
         <ParticipantFrequency streak={member.streak} isPresent={member.isPresent} />
@@ -120,7 +118,7 @@
     </span>
     <div class="justify-self-end flex-shrink-0">
       <button
-        class="btn btn-sm"
+        class="btn"
         bind:this={btnEl}
         onclick={(e) => {
           e.stopPropagation();
@@ -138,7 +136,7 @@
             <li>
               <a
                 href={'/dashboard/members/' + member.id}
-                class="btn btn-sm w-full text-left justify-start"
+                class="btn w-full text-left justify-start"
                 onclick={closeMenu}
               >
                 {$_('components.ParticipantCard.View')}
@@ -146,7 +144,7 @@
             </li>
             <li class="border-t border-surface-300-700 pt-1 mt-1">
               <button
-                class="btn btn-sm w-full text-left justify-start"
+                class="btn w-full text-left justify-start"
                 onclick={() => setTrainerRole('attendee')}
               >
                 {$_('components.ParticipantCard.SetAsAttendee')}
@@ -154,7 +152,7 @@
             </li>
             <li>
               <button
-                class="btn btn-sm w-full text-left justify-start gap-2"
+                class="btn w-full text-left justify-start gap-2"
                 onclick={() => setTrainerRole('main_trainer')}
               >
                 <img class="w-4 flex-shrink-0" src="/judo-icon.svg" alt="judo-icon" />
@@ -163,7 +161,7 @@
             </li>
             <li>
               <button
-                class="btn btn-sm w-full text-left justify-start gap-2"
+                class="btn w-full text-left justify-start gap-2"
                 onclick={() => setTrainerRole('assistant')}
               >
                 <span class="w-4 flex-shrink-0 text-center font-bold text-surface-600-400">A</span>
@@ -172,7 +170,7 @@
             </li>
             <li class="border-t border-surface-300-700 pt-1 mt-1">
               <button
-                class="btn btn-sm w-full text-left justify-start text-error-600-400"
+                class="btn w-full text-left justify-start text-error-600-400"
                 onclick={triggerConfirm}
               >
                 {$_('components.ParticipantCard.Remove')}
@@ -186,18 +184,15 @@
     {#if showRemoveConfirm}
       <!-- svelte-ignore a11y_no_static_element_interactions -->
       <div
-        class="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+        class="modal-overlay"
         onclick={() => handleRemoveResponse(false)}
         onkeydown={(e) => {
           if (e.key === 'Escape') handleRemoveResponse(false);
         }}
       >
         <!-- svelte-ignore a11y_no_static_element_interactions -->
-        <div
-          class="card p-6 w-full max-w-sm shadow-2xl bg-surface-50-950"
-          onclick={(e) => e.stopPropagation()}
-        >
-          <h4 class="font-semibold text-lg mb-2">{$_('dialog.confirm.title')}</h4>
+        <div class="card modal-dialog" onclick={(e) => e.stopPropagation()}>
+          <h4>{$_('dialog.confirm.title')}</h4>
           <p class="mb-4">{$_('dialog.confirm.body')}</p>
           <div class="flex justify-end gap-2">
             <button class="btn preset-tonal-surface" onclick={() => handleRemoveResponse(false)}>

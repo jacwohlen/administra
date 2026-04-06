@@ -204,14 +204,14 @@
 </script>
 
 <div class="space-y-4">
-  <div class="flex justify-between items-center mb-4">
+  <div class="page-header">
     <h1>{data.firstname} {data.lastname}</h1>
     <div class="flex gap-2">
-      <button class="btn btn-sm preset-filled-primary-500" onclick={showEditForm}>
+      <button class="btn preset-filled-primary-500" onclick={showEditForm}>
         <Fa icon={faEdit} />
         <span>{$_('button.edit')}</span>
       </button>
-      <button class="btn btn-sm preset-tonal-error" onclick={confirmDelete} disabled={isDeleting}>
+      <button class="btn preset-tonal-error" onclick={confirmDelete} disabled={isDeleting}>
         {#if isDeleting}
           <span class="animate-spin">...</span>
         {:else}
@@ -225,18 +225,15 @@
   {#if showEditFormDialog}
     <!-- svelte-ignore a11y_no_static_element_interactions -->
     <div
-      class="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+      class="modal-overlay"
       onclick={() => (showEditFormDialog = false)}
       onkeydown={(e) => {
         if (e.key === 'Escape') showEditFormDialog = false;
       }}
     >
       <!-- svelte-ignore a11y_no_static_element_interactions -->
-      <div
-        class="card p-6 w-full max-w-lg shadow-2xl bg-surface-50-950"
-        onclick={(e) => e.stopPropagation()}
-      >
-        <h3 class="font-semibold text-lg mb-4">{$_('dialog.editMember.title')}</h3>
+      <div class="card modal-dialog modal-dialog-lg" onclick={(e) => e.stopPropagation()}>
+        <h3>{$_('dialog.editMember.title')}</h3>
         <MemberForm
           isEditing={true}
           isSubmitting={isEditing}
@@ -256,18 +253,15 @@
   {#if showDeleteConfirm}
     <!-- svelte-ignore a11y_no_static_element_interactions -->
     <div
-      class="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+      class="modal-overlay"
       onclick={() => handleDeleteResponse(false)}
       onkeydown={(e) => {
         if (e.key === 'Escape') handleDeleteResponse(false);
       }}
     >
       <!-- svelte-ignore a11y_no_static_element_interactions -->
-      <div
-        class="card p-6 w-full max-w-sm shadow-2xl bg-surface-50-950"
-        onclick={(e) => e.stopPropagation()}
-      >
-        <h3 class="font-semibold text-lg mb-2">{$_('page.members.deleteConfirmTitle')}</h3>
+      <div class="card modal-dialog" onclick={(e) => e.stopPropagation()}>
+        <h3>{$_('page.members.deleteConfirmTitle')}</h3>
         <p class="mb-4">
           {$_('page.members.deleteConfirmMessage')}
           {data.firstname}
@@ -293,11 +287,11 @@
           <img
             src={data.img}
             alt="{data.firstname} {data.lastname}"
-            class="size-20 rounded-full object-cover"
+            class="size-32 rounded-full object-cover"
           />
         {:else}
           <div
-            class="size-20 rounded-full bg-surface-100-900 flex items-center justify-center text-xl font-bold"
+            class="size-32 rounded-full bg-surface-100-900 flex items-center justify-center text-3xl font-bold"
           >
             {data.lastname.charAt(0)}{data.firstname.charAt(0)}
           </div>
@@ -324,25 +318,13 @@
           onchange={handlePhotoChange}
           capture="user"
         />
-        <button
-          class="btn btn-icon preset-tonal-surface min-w-[44px] min-h-[44px]"
-          onclick={selectFiles}
-          title="Upload"
-        >
+        <button class="btn btn-icon preset-tonal-surface" onclick={selectFiles} title="Upload">
           <Fa icon={faUpload} />
         </button>
-        <button
-          class="btn btn-icon preset-tonal-surface min-w-[44px] min-h-[44px]"
-          onclick={takePhoto}
-          title="Photo"
-        >
+        <button class="btn btn-icon preset-tonal-surface" onclick={takePhoto} title="Photo">
           <Fa icon={faCamera} />
         </button>
-        <button
-          class="btn btn-icon preset-tonal-error min-w-[44px] min-h-[44px]"
-          onclick={resetImage}
-          title="Remove"
-        >
+        <button class="btn btn-icon preset-tonal-error" onclick={resetImage} title="Remove">
           <Fa icon={faTrash} />
         </button>
       </div>
@@ -350,28 +332,28 @@
 
     <!-- Member details -->
     <div class="space-y-3">
-      <div class="flex border-b border-surface-300-700 pb-2">
-        <span class="w-32 font-semibold text-surface-600-400">{$_('page.members.id')}</span>
+      <div class="flex flex-col sm:flex-row border-b border-surface-300-700 pb-2">
+        <span class="sm:w-32 text-surface-600-400">{$_('page.members.id')}</span>
         <span>{data.id}</span>
       </div>
-      <div class="flex border-b border-surface-300-700 pb-2">
-        <span class="w-32 font-semibold text-surface-600-400">{$_('page.members.lastName')}</span>
+      <div class="flex flex-col sm:flex-row border-b border-surface-300-700 pb-2">
+        <span class="sm:w-32 text-surface-600-400">{$_('page.members.lastName')}</span>
         <span>{data.lastname}</span>
       </div>
-      <div class="flex border-b border-surface-300-700 pb-2">
-        <span class="w-32 font-semibold text-surface-600-400">{$_('page.members.firstName')}</span>
+      <div class="flex flex-col sm:flex-row border-b border-surface-300-700 pb-2">
+        <span class="sm:w-32 text-surface-600-400">{$_('page.members.firstName')}</span>
         <span>{data.firstname}</span>
       </div>
-      <div class="flex border-b border-surface-300-700 pb-2">
-        <span class="w-32 font-semibold text-surface-600-400">{$_('page.members.birthday')}</span>
+      <div class="flex flex-col sm:flex-row border-b border-surface-300-700 pb-2">
+        <span class="sm:w-32 text-surface-600-400">{$_('page.members.birthday')}</span>
         <span>{data.birthday || '-'}</span>
       </div>
-      <div class="flex border-b border-surface-300-700 pb-2">
-        <span class="w-32 font-semibold text-surface-600-400">{$_('page.members.mobile')}</span>
+      <div class="flex flex-col sm:flex-row border-b border-surface-300-700 pb-2">
+        <span class="sm:w-32 text-surface-600-400">{$_('page.members.mobile')}</span>
         <span>{data.mobile || '-'}</span>
       </div>
-      <div class="flex pb-2">
-        <span class="w-32 font-semibold text-surface-600-400">{$_('page.members.labels')}</span>
+      <div class="flex flex-col sm:flex-row pb-2">
+        <span class="sm:w-32 text-surface-600-400">{$_('page.members.labels')}</span>
         <div class="flex flex-wrap gap-1">
           {#if data.labels}
             {#each data.labels as l}
