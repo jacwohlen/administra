@@ -97,7 +97,10 @@
         <Fa icon={faEllipsisVertical} />
       </button>
       {#if menuOpen}
-        <nav class="card min-w-48 p-1 shadow-xl" style={menuStyle}>
+        <nav
+          class="card min-w-48 p-1 shadow-xl bg-surface-50-950 border border-surface-300-700"
+          style={menuStyle}
+        >
           <button
             class="btn w-full justify-start text-error-600-400"
             onclick={() => {
