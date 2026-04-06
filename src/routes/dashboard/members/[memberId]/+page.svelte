@@ -287,11 +287,11 @@
           <img
             src={data.img}
             alt="{data.firstname} {data.lastname}"
-            class="size-20 rounded-full object-cover"
+            class="size-32 rounded-full object-cover"
           />
         {:else}
           <div
-            class="size-20 rounded-full bg-surface-100-900 flex items-center justify-center text-xl font-bold"
+            class="size-32 rounded-full bg-surface-100-900 flex items-center justify-center text-3xl font-bold"
           >
             {data.lastname.charAt(0)}{data.firstname.charAt(0)}
           </div>
