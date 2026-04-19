@@ -32,6 +32,8 @@
           lastname: string;
           birthday?: string;
           mobile?: string;
+          email?: string;
+          notes?: string;
           labels: string[];
         }
       | undefined
@@ -45,6 +47,8 @@
       const { id, ...memberData } = result;
       const dataToInsert = {
         ...memberData,
+        email: memberData.email || null,
+        notes: memberData.notes || null,
         labels: result.labels || ['new'],
         // Only include id if it's not empty (for editing existing members)
         ...(id && id.trim() !== '' && { id: parseInt(id) })
