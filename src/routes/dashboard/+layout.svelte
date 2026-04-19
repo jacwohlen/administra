@@ -8,6 +8,7 @@
     faChartSimple,
     faList,
     faUser,
+    faUserPlus,
     faCalendarDays,
     faSun,
     faMoon
@@ -35,6 +36,7 @@
     if (page.route.id?.startsWith('/dashboard/trainings')) return 'trainings';
     if (page.route.id?.startsWith('/dashboard/events')) return 'events';
     if (page.route.id?.startsWith('/dashboard/members')) return 'members';
+    if (page.route.id?.startsWith('/dashboard/probetraining')) return 'probetraining';
     if (page.route.id?.startsWith('/dashboard/stats')) return 'stats';
     return 'today';
   }
@@ -86,6 +88,7 @@
             trainings: '/dashboard/trainings',
             events: '/dashboard/events',
             members: '/dashboard/members',
+            probetraining: '/dashboard/probetraining',
             stats: '/dashboard/stats'
           };
           if (e.value && routes[e.value]) goto(routes[e.value], { invalidateAll: true });
@@ -128,6 +131,16 @@
           >
             <Fa icon={faUser} class="nav-icon" />
             <span class="hidden sm:inline">{$_('page.dashboard.members')}</span>
+          </Tabs.Trigger>
+          <Tabs.Trigger
+            value="probetraining"
+            onclick={() => {
+              if (getActiveTab() === 'probetraining')
+                goto('/dashboard/probetraining', { invalidateAll: true });
+            }}
+          >
+            <Fa icon={faUserPlus} class="nav-icon" />
+            <span class="hidden sm:inline">{$_('page.dashboard.probetraining')}</span>
           </Tabs.Trigger>
           <Tabs.Trigger
             value="stats"

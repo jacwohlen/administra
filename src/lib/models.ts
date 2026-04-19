@@ -8,6 +8,9 @@ export interface Member {
   lastname: string;
   birthday?: string;
   mobile?: string;
+  email?: string;
+  notes?: string;
+  trialRegisteredAt?: string;
   labels?: string[];
   img?: string;
   imgUploaded?: string | Dayjs;
@@ -20,7 +23,22 @@ export interface Training {
   dateTo: string;
   weekday: string;
   section: string;
+  ageFrom?: number;
+  ageTo?: number;
   participants: Member[];
+}
+
+export interface TrialMember {
+  id: number;
+  firstname: string;
+  lastname: string;
+  birthday?: string;
+  email?: string;
+  mobile?: string;
+  notes?: string;
+  labels: string[];
+  trialRegisteredAt?: string;
+  attendedCount: number;
 }
 
 export interface Log {

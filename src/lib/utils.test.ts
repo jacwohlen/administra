@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import utils, { Weekday } from './utils';
+import utils, { Weekday, calculateAge } from './utils';
+import dayjs from 'dayjs';
 
 describe('weekdayToNumber', () => {
   it('maps Sunday to 0', () => {
@@ -92,5 +93,28 @@ describe('getMostRecentDateByWeekday', () => {
     // Should be today or at most 7 days ago (never in the future)
     const diffDays = Math.abs(result.diff(new Date(), 'day'));
     expect(diffDays).toBeLessThanOrEqual(7);
+  });
+});
+
+describe('calculateAge', () => {
+  const ref = dayjs('2026-04-19');
+
+  it('returns null when birthday is missing', () => {
+    expect(calculateAge(undefined, ref)).toBeNull();
+    expect(calculateAge('', ref)).toBeNull();
+  });
+
+  it('returns null for invalid dates', () => {
+    expect(calculateAge('not-a-date', ref)).toBeNull();
+  });
+
+  it('returns the age in full years', () => {
+    expect(calculateAge('2020-01-15', ref)).toBe(6);
+    expect(calculateAge('2010-04-19', ref)).toBe(16);
+  });
+
+  it('does not count the birthday if it has not passed yet', () => {
+    expect(calculateAge('2020-04-20', ref)).toBe(5);
+    expect(calculateAge('2020-04-19', ref)).toBe(6);
   });
 });
