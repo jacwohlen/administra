@@ -9,6 +9,7 @@
       "trainings": "Trainings",
       "events": "Events",
       "members": "Members",
+      "probetraining": "Trial",
       "stats": "Stats",
       "noTrainingsToday": "There are no trainings happening today!"
     },
@@ -80,10 +81,14 @@
         "time_from": "Start Time",
         "time_to": "End Time",
         "section": "Section",
-        "select_section": "Select a section..."
+        "select_section": "Select a section...",
+        "age_from": "Age from",
+        "age_to": "Age to",
+        "age_placeholder": "e.g. 5"
       },
       "validation": {
-        "required_fields": "Please fill in all required fields"
+        "required_fields": "Please fill in all required fields",
+        "age_range_invalid": "\"Age from\" must be less than or equal to \"Age to\""
       },
       "createSuccess": "Training created successfully",
       "createError": "Error creating training",
@@ -101,6 +106,9 @@
       "firstName": "First Name",
       "birthday": "Birthday",
       "mobile": "Mobile",
+      "email": "Email",
+      "notes": "Notes",
+      "notesPlaceholder": "Free-form notes about this member...",
       "labels": "Labels",
       "addMember": "Add Member",
       "newMember": "New Member",
@@ -223,6 +231,46 @@
       "coach": "Coach",
       "make_coach": "Mark as Coach",
       "remove_coach": "Remove Coach"
+    },
+    "trialRegistration": {
+      "title": "Trial Training Registration",
+      "subtitle": "Sign up for a free trial training session.",
+      "firstName": "First Name",
+      "lastName": "Last Name",
+      "birthday": "Date of Birth",
+      "email": "Contact Email",
+      "emailHint": "For children, please enter a parent's email.",
+      "mobile": "Mobile",
+      "section": "Section / Interest",
+      "sectionPlaceholder": "Pick a section...",
+      "notes": "Note",
+      "notesPlaceholder": "E.g. prior experience, preferred time, questions...",
+      "submit": "Send Registration",
+      "submitting": "Sending...",
+      "successTitle": "Thank you!",
+      "successMessage": "We've received your registration and will be in touch shortly to schedule your trial training.",
+      "validation": {
+        "required": "Please fill in first name, last name, date of birth, and email."
+      }
+    },
+    "probetraining": {
+      "title": "Trial Training",
+      "description": "All candidates with the 'probetraining' label.",
+      "openPublicForm": "Public form",
+      "empty": "No trial training registrations at the moment.",
+      "yearsOld": "yrs",
+      "registeredOn": "Registered on",
+      "attended": "trial sessions attended",
+      "noAssignment": "Not assigned to a training yet",
+      "assignTraining": "Assign Training",
+      "assignTitle": "Assign to Training",
+      "ageLabel": "Age",
+      "suggestedTrainings": "Suggested by age",
+      "otherTrainings": "Other Trainings",
+      "noOtherTrainings": "No other trainings available.",
+      "assign": "Assign",
+      "assignSuccess": "Training assigned successfully",
+      "assignError": "Error assigning training"
     }
   },
   "components": {

@@ -10,6 +10,8 @@
   let dateFrom = $state('');
   let dateTo = $state('');
   let section = $state('');
+  let ageFrom = $state<number | null>(null);
+  let ageTo = $state<number | null>(null);
   let loading = $state(false);
   let error = $state('');
 
@@ -26,6 +28,11 @@
     error = '';
 
     try {
+      if (ageFrom !== null && ageTo !== null && ageFrom > ageTo) {
+        error = $_('page.trainings.validation.age_range_invalid');
+        return;
+      }
+
       const { error: insertError, data } = await supabaseClient
         .from('trainings')
         .insert({
@@ -33,7 +40,9 @@
           weekday,
           dateFrom,
           dateTo: dateTo || null,
-          section
+          section,
+          ageFrom,
+          ageTo
         })
         .select()
         .single();
@@ -122,6 +131,38 @@
         <span>{$_('page.trainings.form.time_to')}</span>
       </label>
       <input id="dateTo" type="time" class="input" bind:value={dateTo} />
+    </div>
+
+    <!-- Age From -->
+    <div>
+      <label class="label" for="ageFrom">
+        <span>{$_('page.trainings.form.age_from')}</span>
+      </label>
+      <input
+        id="ageFrom"
+        type="number"
+        min="0"
+        max="120"
+        class="input"
+        bind:value={ageFrom}
+        placeholder={$_('page.trainings.form.age_placeholder')}
+      />
+    </div>
+
+    <!-- Age To -->
+    <div>
+      <label class="label" for="ageTo">
+        <span>{$_('page.trainings.form.age_to')}</span>
+      </label>
+      <input
+        id="ageTo"
+        type="number"
+        min="0"
+        max="120"
+        class="input"
+        bind:value={ageTo}
+        placeholder={$_('page.trainings.form.age_placeholder')}
+      />
     </div>
   </div>
 

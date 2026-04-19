@@ -9,6 +9,7 @@
       "trainings": "Trainings",
       "events": "Events",
       "members": "Mitglieder",
+      "probetraining": "Probetraining",
       "stats": "Statistik",
       "noTrainingsToday": "Heute findet kein Training statt!"
     },
@@ -80,10 +81,14 @@
         "time_from": "Startzeit",
         "time_to": "Endzeit",
         "section": "Sektion",
-        "select_section": "Sektion auswählen..."
+        "select_section": "Sektion auswählen...",
+        "age_from": "Alter von",
+        "age_to": "Alter bis",
+        "age_placeholder": "z.B. 5"
       },
       "validation": {
-        "required_fields": "Bitte alle Pflichtfelder ausfüllen"
+        "required_fields": "Bitte alle Pflichtfelder ausfüllen",
+        "age_range_invalid": "„Alter von“ muss kleiner oder gleich „Alter bis“ sein"
       },
       "createSuccess": "Training erfolgreich erstellt",
       "createError": "Fehler beim Erstellen des Trainings",
@@ -101,6 +106,9 @@
       "firstName": "Vorname",
       "birthday": "Geburtstag",
       "mobile": "Mobiltelefon",
+      "email": "E-Mail",
+      "notes": "Notizen",
+      "notesPlaceholder": "Freie Notizen zum Mitglied...",
       "labels": "Labels",
       "addMember": "Mitglied hinzufügen",
       "newMember": "Neues Mitglied",
@@ -223,6 +231,46 @@
       "coach": "Coach",
       "make_coach": "Als Coach markieren",
       "remove_coach": "Coach entfernen"
+    },
+    "trialRegistration": {
+      "title": "Anmeldung Probetraining",
+      "subtitle": "Melde dich hier für ein unverbindliches Probetraining an.",
+      "firstName": "Vorname",
+      "lastName": "Nachname",
+      "birthday": "Geburtsdatum",
+      "email": "Kontakt-E-Mail",
+      "emailHint": "Bei Kindern bitte die E-Mail eines Elternteils angeben.",
+      "mobile": "Mobilnummer",
+      "section": "Sektion / Interesse",
+      "sectionPlaceholder": "Sektion wählen...",
+      "notes": "Anmerkung",
+      "notesPlaceholder": "Z.B. Vorerfahrung, gewünschter Zeitpunkt, Fragen...",
+      "submit": "Anmeldung absenden",
+      "submitting": "Sende...",
+      "successTitle": "Vielen Dank!",
+      "successMessage": "Deine Anmeldung ist bei uns eingegangen. Wir melden uns in Kürze mit einem Termin für dein Probetraining.",
+      "validation": {
+        "required": "Bitte Vorname, Nachname, Geburtsdatum und E-Mail ausfüllen."
+      }
+    },
+    "probetraining": {
+      "title": "Probetraining",
+      "description": "Übersicht aller Kandidaten mit dem Label „probetraining“.",
+      "openPublicForm": "Öffentliches Formular",
+      "empty": "Aktuell keine Anmeldungen für Probetrainings.",
+      "yearsOld": "Jahre",
+      "registeredOn": "Angemeldet am",
+      "attended": "Probetrainings besucht",
+      "noAssignment": "Noch keinem Training zugewiesen",
+      "assignTraining": "Training zuweisen",
+      "assignTitle": "Training zuweisen",
+      "ageLabel": "Alter",
+      "suggestedTrainings": "Vorschlag anhand Alter",
+      "otherTrainings": "Weitere Trainings",
+      "noOtherTrainings": "Keine weiteren Trainings verfügbar.",
+      "assign": "Zuweisen",
+      "assignSuccess": "Training erfolgreich zugewiesen",
+      "assignError": "Fehler beim Zuweisen des Trainings"
     }
   },
   "components": {

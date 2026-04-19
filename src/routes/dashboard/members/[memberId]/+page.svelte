@@ -131,6 +131,8 @@
       lastname: string;
       birthday?: string;
       mobile?: string;
+      email?: string;
+      notes?: string;
       labels?: string[];
     } | null
   ) {
@@ -147,6 +149,8 @@
           lastname: result.lastname,
           birthday: result.birthday,
           mobile: result.mobile,
+          email: result.email || null,
+          notes: result.notes || null,
           labels: result.labels
         })
         .eq('id', data.id);
@@ -243,6 +247,8 @@
           lastname={data.lastname}
           birthday={data.birthday}
           mobile={data.mobile}
+          email={data.email}
+          notes={data.notes}
           labels={data.labels}
           onclose={() => (showEditFormDialog = false)}
           onsubmit={handleEditResponse}
@@ -353,6 +359,16 @@
         <span class="sm:w-32 text-surface-600-400">{$_('page.members.mobile')}</span>
         <span>{data.mobile || '-'}</span>
       </div>
+      <div class="flex flex-col sm:flex-row border-b border-surface-300-700 pb-2">
+        <span class="sm:w-32 text-surface-600-400">{$_('page.members.email')}</span>
+        <span>{data.email || '-'}</span>
+      </div>
+      {#if data.notes}
+        <div class="flex flex-col sm:flex-row border-b border-surface-300-700 pb-2">
+          <span class="sm:w-32 text-surface-600-400">{$_('page.members.notes')}</span>
+          <span class="whitespace-pre-wrap">{data.notes}</span>
+        </div>
+      {/if}
       <div class="flex flex-col sm:flex-row pb-2">
         <span class="sm:w-32 text-surface-600-400">{$_('page.members.labels')}</span>
         <div class="flex flex-wrap gap-1">
