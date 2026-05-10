@@ -86,11 +86,6 @@
       onchange={change}
     />
     <div class="relative inline-block flex-shrink-0">
-      {#if badgeEmoji}
-        <span class="absolute -top-0.5 -left-0.5 z-10 text-xs leading-none">
-          {badgeEmoji}
-        </span>
-      {/if}
       {#if member.trainerRole === 'main_trainer'}
         <span
           class="absolute -bottom-0 -right-0 z-10 bg-primary-600-400 rounded-full w-4 h-4 flex items-center justify-center"
@@ -117,7 +112,12 @@
       {/if}
     </div>
     <span class="list-item-content">
-      <dt class="truncate">{member.lastname} {member.firstname}</dt>
+      <dt class="truncate">
+        {member.lastname}
+        {member.firstname}{#if badgeEmoji}<span
+            class="ml-1 inline-block text-base leading-none align-middle">{badgeEmoji}</span
+          >{/if}
+      </dt>
       <dd class="flex items-center gap-2 flex-wrap">
         <Labels labels={member.labels ? member.labels : []} />
         <ParticipantFrequency streak={member.streak} isPresent={member.isPresent} />
