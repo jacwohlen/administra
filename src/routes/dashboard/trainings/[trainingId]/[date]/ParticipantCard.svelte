@@ -114,8 +114,9 @@
     <span class="list-item-content">
       <dt class="truncate">
         {member.lastname}
-        {member.firstname}{#if badgeEmoji}
-          {badgeEmoji}{/if}
+        {member.firstname}{#if badgeEmoji}<span
+            class="ml-1 inline-block text-base leading-none align-middle">{badgeEmoji}</span
+          >{/if}
       </dt>
       <dd class="flex items-center gap-2 flex-wrap">
         <Labels labels={member.labels ? member.labels : []} />

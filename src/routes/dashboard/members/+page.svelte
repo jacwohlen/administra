@@ -120,8 +120,10 @@
         <span class="list-item-content">
           <dt class="font-bold truncate">
             {m.lastname}
-            {m.firstname}{#if data.badgeMap[m.id]}
-              {data.badgeMap[m.id]}{/if}
+            {m.firstname}{#if data.badgeMap[m.id]}<span
+                class="ml-1 inline-block text-base leading-none align-middle"
+                >{data.badgeMap[m.id]}</span
+              >{/if}
           </dt>
           <dd class="flex flex-wrap gap-1">
             {#if m.labels}
