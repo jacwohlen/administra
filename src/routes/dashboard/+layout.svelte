@@ -156,17 +156,6 @@
             <Fa icon={faChartSimple} class="nav-icon" />
             <span class="hidden sm:inline">{$_('page.dashboard.stats')}</span>
           </Tabs.Trigger>
-          {#if isAdmin}
-            <Tabs.Trigger
-              value="users"
-              onclick={() => {
-                if (getActiveTab() === 'users') goto('/dashboard/users', { invalidateAll: true });
-              }}
-            >
-              <Fa icon={faUsersGear} class="nav-icon" />
-              <span class="hidden sm:inline">{$_('page.dashboard.users')}</span>
-            </Tabs.Trigger>
-          {/if}
         </Tabs.List>
       </Tabs>
     </div>
@@ -205,6 +194,19 @@
         <div
           class="absolute right-0 top-full mt-2 card p-4 w-64 shadow-xl z-50 bg-surface-50-950 border border-surface-300-700"
         >
+          {#if isAdmin}
+            <button
+              type="button"
+              class="btn preset-tonal-surface w-full mb-2"
+              onclick={() => {
+                popoverOpen = false;
+                goto('/dashboard/users', { invalidateAll: true });
+              }}
+            >
+              <Fa icon={faUsersGear} />
+              <span>{$_('page.dashboard.users')}</span>
+            </button>
+          {/if}
           <button
             type="button"
             class="btn preset-tonal-surface w-full mb-2"
