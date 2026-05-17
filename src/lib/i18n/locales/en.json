@@ -15,7 +15,51 @@
       "members": "Members",
       "probetraining": "Trial",
       "stats": "Stats",
+      "users": "Users",
       "noTrainingsToday": "There are no trainings happening today!"
+    },
+    "pending": {
+      "title": "Access pending",
+      "message": "Your account is waiting for approval by an administrator. You will be granted access once an admin reviews your sign-up.",
+      "disabledTitle": "Account disabled",
+      "disabledMessage": "Your account has been disabled. Please contact an administrator."
+    },
+    "users": {
+      "title": "User management",
+      "subtitle": "Approve users, change roles, and link users to members.",
+      "empty": "No users found.",
+      "unlinked": "— not linked —",
+      "confirmDelete": "Really delete this profile? The auth account itself stays.",
+      "cols": {
+        "user": "User",
+        "status": "Status",
+        "role": "Role",
+        "member": "Member",
+        "actions": "Actions"
+      },
+      "status": {
+        "pending": "Pending",
+        "approved": "Approved",
+        "disabled": "Disabled"
+      },
+      "role": {
+        "viewer": "Viewer",
+        "trainer": "Trainer",
+        "admin": "Administrator"
+      },
+      "action": {
+        "approve": "Approve",
+        "disable": "Disable",
+        "reEnable": "Re-enable",
+        "delete": "Delete profile"
+      },
+      "toast": {
+        "approved": "User approved",
+        "disabled": "User disabled",
+        "roleChanged": "Role updated",
+        "memberLinked": "Member link updated",
+        "deleted": "Profile deleted"
+      }
     },
     "trainings": {
       "title": "Trainings",
@@ -327,7 +371,8 @@
     "creating": "Creating...",
     "download": "Download",
     "lightMode": "Light Mode",
-    "darkMode": "Dark Mode"
+    "darkMode": "Dark Mode",
+    "refresh": "Refresh"
   },
   "dialog": {
     "newMember": {

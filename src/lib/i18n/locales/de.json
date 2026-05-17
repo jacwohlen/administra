@@ -15,7 +15,51 @@
       "members": "Mitglieder",
       "probetraining": "Probetraining",
       "stats": "Statistik",
+      "users": "Benutzer",
       "noTrainingsToday": "Heute findet kein Training statt!"
+    },
+    "pending": {
+      "title": "Zugriff ausstehend",
+      "message": "Dein Konto wartet auf die Freigabe durch einen Administrator. Du wirst benachrichtigt, sobald dein Zugriff aktiviert wurde.",
+      "disabledTitle": "Konto deaktiviert",
+      "disabledMessage": "Dein Konto wurde deaktiviert. Bitte wende dich an einen Administrator."
+    },
+    "users": {
+      "title": "Benutzerverwaltung",
+      "subtitle": "Freigaben, Rollen und Verknüpfung mit Mitgliedern verwalten.",
+      "empty": "Keine Benutzer gefunden.",
+      "unlinked": "— nicht verknüpft —",
+      "confirmDelete": "Profil wirklich löschen? Der Auth-Account bleibt bestehen.",
+      "cols": {
+        "user": "Benutzer",
+        "status": "Status",
+        "role": "Rolle",
+        "member": "Mitglied",
+        "actions": "Aktionen"
+      },
+      "status": {
+        "pending": "Ausstehend",
+        "approved": "Freigegeben",
+        "disabled": "Deaktiviert"
+      },
+      "role": {
+        "viewer": "Betrachter",
+        "trainer": "Trainer",
+        "admin": "Administrator"
+      },
+      "action": {
+        "approve": "Freigeben",
+        "disable": "Deaktivieren",
+        "reEnable": "Wieder aktivieren",
+        "delete": "Profil löschen"
+      },
+      "toast": {
+        "approved": "Benutzer freigegeben",
+        "disabled": "Benutzer deaktiviert",
+        "roleChanged": "Rolle aktualisiert",
+        "memberLinked": "Mitgliedsverknüpfung aktualisiert",
+        "deleted": "Profil gelöscht"
+      }
     },
     "trainings": {
       "title": "Trainings",
@@ -327,7 +371,8 @@
     "creating": "Erstelle...",
     "download": "Herunterladen",
     "lightMode": "Heller Modus",
-    "darkMode": "Dunkler Modus"
+    "darkMode": "Dunkler Modus",
+    "refresh": "Aktualisieren"
   },
   "dialog": {
     "newMember": {

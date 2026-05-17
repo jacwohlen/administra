@@ -9,6 +9,7 @@
     faList,
     faUser,
     faUserPlus,
+    faUsersGear,
     faCalendarDays,
     faSun,
     faMoon
@@ -22,6 +23,8 @@
   import { toaster } from '$lib/toast';
 
   let { data, children }: { data: LayoutData; children: Snippet } = $props();
+
+  let isAdmin = $derived(data.userProfile?.role === 'admin');
 
   const submitLogout: SubmitFunction = async ({ cancel }) => {
     const { error } = await supabaseClient.auth.signOut();
@@ -38,6 +41,7 @@
     if (page.route.id?.startsWith('/dashboard/members')) return 'members';
     if (page.route.id?.startsWith('/dashboard/probetraining')) return 'probetraining';
     if (page.route.id?.startsWith('/dashboard/stats')) return 'stats';
+    if (page.route.id?.startsWith('/dashboard/users')) return 'users';
     return 'today';
   }
 
@@ -89,7 +93,8 @@
             events: '/dashboard/events',
             members: '/dashboard/members',
             probetraining: '/dashboard/probetraining',
-            stats: '/dashboard/stats'
+            stats: '/dashboard/stats',
+            users: '/dashboard/users'
           };
           if (e.value && routes[e.value]) goto(routes[e.value], { invalidateAll: true });
         }}
@@ -151,6 +156,17 @@
             <Fa icon={faChartSimple} class="nav-icon" />
             <span class="hidden sm:inline">{$_('page.dashboard.stats')}</span>
           </Tabs.Trigger>
+          {#if isAdmin}
+            <Tabs.Trigger
+              value="users"
+              onclick={() => {
+                if (getActiveTab() === 'users') goto('/dashboard/users', { invalidateAll: true });
+              }}
+            >
+              <Fa icon={faUsersGear} class="nav-icon" />
+              <span class="hidden sm:inline">{$_('page.dashboard.users')}</span>
+            </Tabs.Trigger>
+          {/if}
         </Tabs.List>
       </Tabs>
     </div>
