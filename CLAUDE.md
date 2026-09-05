@@ -42,4 +42,11 @@ Attendance tracking app for martial arts clubs. SvelteKit frontend + Supabase (P
 
 Create new migrations with: `supabase migration new <name>`
 Apply migrations locally: `supabase db reset`
-Push to remote: `supabase db push`
+
+Migrations deploy through Supabase Branching (see
+`docs/SUPABASE_BRANCHING.md`): each PR gets an ephemeral Supabase preview
+branch (migrations + seed applied, Netlify Deploy Preview points at it);
+merging to `main` applies new migrations to the Dev project
+(main.admin.jacwohlen.ch), and promoting `main` into `prod` applies them
+to production (admin.jacwohlen.ch). Never edit an already-merged
+migration — add a new one. Manual `supabase db push` is only a fallback.

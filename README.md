@@ -249,6 +249,15 @@ npm run build
    - `PUBLIC_SUPABASE_ANON_KEY`
    - `PUBLIC_MODE` (set to "PROD")
 
+### Preview branches and database deployments
+
+Pull requests get an isolated Supabase preview branch (with migrations and
+seed data applied) wired to the Netlify Deploy Preview. Merging to `main`
+deploys migrations to the dev environment (main.admin.jacwohlen.ch);
+promoting `main` into `prod` deploys them to production
+(admin.jacwohlen.ch). Environments and workflow are documented in
+[docs/SUPABASE_BRANCHING.md](docs/SUPABASE_BRANCHING.md).
+
 ## External Integrations
 
 ### Webling Sync

@@ -14,7 +14,9 @@ export default ts.config(
     languageOptions: {
       globals: {
         ...globals.browser,
-        ...globals.node
+        ...globals.node,
+        // Injected by the `define` block in vite.config.js.
+        __GIT_BRANCH__: 'readonly'
       }
     }
   },
@@ -48,6 +50,6 @@ export default ts.config(
     }
   },
   {
-    ignores: ['build/', '.svelte-kit/', 'dist/', 'package/']
+    ignores: ['build/', '.svelte-kit/', '.netlify/', 'dist/', 'package/']
   }
 );

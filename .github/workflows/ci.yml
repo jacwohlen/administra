@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [main, prod]
   pull_request:
-    branches: [main]
+    branches: [main, prod]
 
 jobs:
   lint-and-check:
@@ -91,6 +91,32 @@ jobs:
           name: playwright-report
           path: playwright-report/
           retention-days: 30
+
+  db-validate:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Create env file
+        run: |
+          echo 'PUBLIC_SUPABASE_DATABASE_URL=http://localhost:54321' >> .env
+          echo 'PUBLIC_SUPABASE_ANON_KEY=placeholder' >> .env
+          echo 'PUBLIC_SUPABASE_SITE_URL=http://localhost:5173' >> .env
+          echo 'PUBLIC_MODE=DEV' >> .env
+
+      # Applies every migration plus seed.sql to a fresh database and fails
+      # on the first broken statement — the same thing the Supabase preview
+      # branch will do, but without needing branching or any secrets.
+      - name: Apply migrations and seed to a fresh database
+        run: supabase db start
+
+      - name: Lint database schema
+        run: supabase db lint
 
   build:
     runs-on: ubuntu-latest

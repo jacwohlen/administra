@@ -1,0 +1,41 @@
+name: Supabase Preview Status
+
+# Mirrors the "Supabase Preview" check posted by the Supabase GitHub
+# integration into a regular Actions job, so a failed preview-branch
+# deployment (broken migration, invalid config.toml, failed seed) turns
+# the PR red and can be used as a required check in branch protection.
+#
+# If the Supabase GitHub integration is not (yet) connected, the wait
+# step times out with a neutral conclusion and this job passes.
+
+on:
+  pull_request:
+    types:
+      - opened
+      - reopened
+      - synchronize
+    branches:
+      - main
+      - prod
+    paths:
+      - 'supabase/**'
+
+jobs:
+  preview-branch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: fountainhead/action-wait-for-check@v1.2.0
+        id: check
+        with:
+          checkName: Supabase Preview
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+          timeoutSeconds: 900
+          intervalSeconds: 20
+
+      - name: Fail when the Supabase preview branch deployment failed
+        if: ${{ steps.check.outputs.conclusion == 'failure' }}
+        run: |
+          echo "The Supabase preview branch for this PR failed to deploy."
+          echo "Check the PR comment from Supabase or the branches page in the Supabase dashboard for logs."
+          exit 1

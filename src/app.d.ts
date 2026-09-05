@@ -5,6 +5,9 @@
 import type { SupabaseClient, Session, User } from '@supabase/supabase-js';
 
 declare global {
+  // Injected by the `define` block in vite.config.js.
+  const __GIT_BRANCH__: string;
+
   namespace App {
     // interface Error {}
     interface Locals {
