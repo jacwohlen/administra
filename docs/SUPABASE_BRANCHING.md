@@ -5,16 +5,23 @@ request to production, the environment layout, and what remains to verify.
 
 ## Environments
 
-| Environment   | Git branch     | Supabase project                                  | Frontend URL                  |
-| ------------- | -------------- | ------------------------------------------------- | ----------------------------- |
-| Production    | `prod`         | Administra (Prod) — `hyppoiywqpfkvvcrmsdl`, PG 15 | admin.jacwohlen.ch            |
-| Dev / staging | `main`         | Administra (Dev) — `hkxeuofxdxkviqrfnfns`, PG 17  | main.admin.jacwohlen.ch       |
-| PR previews   | feature branch | Ephemeral preview branches off the Prod project   | Netlify Deploy Preview per PR |
+| Environment   | Git branch     | Supabase                                                         | Frontend URL                  |
+| ------------- | -------------- | ---------------------------------------------------------------- | ----------------------------- |
+| Production    | `prod`         | Administra (Prod) — `hyppoiywqpfkvvcrmsdl`, PG 15                | admin.jacwohlen.ch            |
+| Dev / staging | `main`         | Persistent branch `dev` — `kbnnwrazgeuqlizjqqgb` (child of Prod) | main.admin.jacwohlen.ch       |
+| PR previews   | feature branch | Ephemeral preview branches off the Prod project                  | Netlify Deploy Preview per PR |
 
 Feature PRs target `main`. Production releases are promotion PRs merging
 `main` into `prod`. `supabase/config.toml` has `major_version = 15` to match
-the Prod project (preview branches clone from Prod); revisit when Prod is
-upgraded to Postgres 17 like the Dev project.
+the Prod project (all branches clone from Prod).
+
+The `dev` environment is a **persistent branch** of the Prod project,
+declared as `[remotes.dev]` in `config.toml`. Linked to git branch `main`
+in the dashboard, it re-runs the deployment workflow (migrations, config,
+functions) on every push to `main`. It replaces the former standalone
+"Administra (Dev)" project (`hkxeuofxdxkviqrfnfns`), which had no GitHub
+connection and therefore never received migrations automatically; delete
+that project once the cutover is verified.
 
 ## Workflow
 
@@ -38,9 +45,9 @@ upgraded to Postgres 17 like the Dev project.
      (`supabase-preview-status.yml`) so broken migrations block the merge.
 3. Each further push to the PR applies only the _new_ migrations to the
    preview branch.
-4. Merge the PR into `main`: new migrations are applied to the **Dev**
-   project and the preview branch is deleted. main.admin.jacwohlen.ch is
-   the integration environment.
+4. Merge the PR into `main`: new migrations are applied to the persistent
+   **dev** branch and the preview branch is deleted.
+   main.admin.jacwohlen.ch is the integration environment.
 5. Promote by opening/merging a PR from `main` into `prod`: Supabase
    applies the new migrations to the **Prod** project (plus Edge Functions
    and storage buckets declared in `config.toml`), and Netlify deploys
@@ -54,8 +61,9 @@ create and `seed.sql` inserts. Seed data changes are never merged onward.
 - The GitHub integration with **automatic branching is enabled** on the
   Prod project: preview branches exist for open PRs and the project's
   default branch tracks git branch `prod`.
-- All 11 repo migrations are applied on **both** the Prod and Dev
-  projects — migration deployment on merge is working.
+- Migration deployment on merge to `prod` is working (verified via the
+  Management API). Deployment to the dev environment goes through the
+  persistent `dev` branch's git link (set in the dashboard).
 - Still worth double-checking in the dashboards (not readable via API):
   - **Supabase changes only** toggle in the GitHub integration (avoids
     paying for preview branches on frontend-only PRs).
@@ -116,8 +124,12 @@ One-time Netlify setup (Site configuration → Environment variables — done
 - `SUPABASE_PROJECT_ID` — `hyppoiywqpfkvvcrmsdl` (the Prod project, whose
   preview branches these are).
 
-Production and branch deploys are untouched — they keep the env vars
-configured in Netlify for their contexts.
+Branch deploys (`main` → main.admin.jacwohlen.ch) use the persistent
+`dev` branch: in the **branch-deploy** context set
+`PUBLIC_SUPABASE_DATABASE_URL=https://kbnnwrazgeuqlizjqqgb.supabase.co`
+and the dev branch's anon key. Use the same values as the
+**deploy-preview** fallback so no preview ever talks to production.
+Production keeps the Prod project values.
 
 ## GitHub branch protection
 
