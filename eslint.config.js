@@ -50,6 +50,6 @@ export default ts.config(
     }
   },
   {
-    ignores: ['build/', '.svelte-kit/', 'dist/', 'package/']
+    ignores: ['build/', '.svelte-kit/', '.netlify/', 'dist/', 'package/']
   }
 );
