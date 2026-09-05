@@ -106,7 +106,8 @@ through a build wrapper (`[context.deploy-preview]` in `netlify.toml`):
 - If no branch exists (frontend-only PR, or missing credentials), the
   build falls back to the site's configured env vars.
 
-One-time Netlify setup (Site configuration → Environment variables):
+One-time Netlify setup (Site configuration → Environment variables — done
+2026-09-05):
 
 - `SUPABASE_ACCESS_TOKEN` — a Supabase personal access token
   (https://supabase.com/dashboard/account/tokens). Mark it as a **secret**
