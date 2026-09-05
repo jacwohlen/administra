@@ -164,9 +164,15 @@
     <div class="shrink-0 flex items-center pr-2 relative">
       <button
         type="button"
-        class="nav-avatar cursor-pointer flex items-center justify-center"
+        class="nav-avatar relative cursor-pointer flex items-center justify-center"
         onclick={() => (popoverOpen = !popoverOpen)}
       >
+        {#if isAdmin && data.pendingUsers > 0}
+          <span
+            class="absolute -top-1 -right-0 size-3 rounded-full bg-warning-500 ring-2 ring-surface-100-900"
+            aria-hidden="true"
+          ></span>
+        {/if}
         {#if data.session.user.user_metadata.avatar_url && !avatarError}
           <img
             src={data.session.user.user_metadata.avatar_url}
@@ -205,6 +211,14 @@
             >
               <Fa icon={faUsersGear} />
               <span>{$_('page.dashboard.users')}</span>
+              {#if data.pendingUsers > 0}
+                <span
+                  class="badge preset-filled-warning-500 text-xs"
+                  title={$_('page.users.pendingCount', { values: { count: data.pendingUsers } })}
+                >
+                  {data.pendingUsers}
+                </span>
+              {/if}
             </button>
           {/if}
           <button

@@ -8,7 +8,7 @@ A modern attendance tracking system designed specifically for martial arts clubs
 - **Training Sessions** - Create and manage recurring training classes with metadata (title, schedule, section)
 - **Attendance Tracking** - Quick and easy attendance marking for each training date
 - **Statistics & Leaderboards** - View comprehensive attendance statistics, top athletes, and trainer activity by year and section
-- **Secure Authentication** - Google OAuth integration with domain-restricted access
+- **Secure Authentication** - Google OAuth with admin approval and role-based access (viewer / trainer / admin)
 - **Multi-language Support** - Built-in internationalization (German/English)
 - **Responsive Design** - Works seamlessly across desktop and mobile devices
 
@@ -235,7 +235,8 @@ supabase db push
 
 - Views for statistics aggregation (`view_logs_summary`)
 - Functions for generating checklists and leaderboards
-- Domain-restricted authentication trigger for `@jacwohlen.ch` emails
+- `user_profiles` with status (`pending` / `approved` / `disabled`) and role (`viewer` / `trainer` / `admin`); a trigger on `auth.users` creates and syncs the profile, admins approve new accounts under `/dashboard/users`
+- RLS helper functions `is_approved_user()`, `is_writer()`, `is_admin()` used by every table and storage policy
 
 All SQL schemas, functions, and policies are version-controlled in the `supabase/migrations/` directory. The initial schema is in `20250814155759_remote_schema.sql`.
 

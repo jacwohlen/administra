@@ -29,7 +29,13 @@
       "subtitle": "Approve users, change roles, and link users to members.",
       "empty": "No users found.",
       "unlinked": "— not linked —",
-      "confirmDelete": "Really delete this profile? The auth account itself stays.",
+      "you": "You",
+      "selfLocked": "You cannot change your own role or status",
+      "pendingCount": "{count} users waiting for approval",
+      "error": {
+        "lastAdmin": "The last administrator cannot be removed",
+        "memberTaken": "This member is already linked to another user"
+      },
       "cols": {
         "user": "User",
         "status": "Status",
@@ -50,15 +56,13 @@
       "action": {
         "approve": "Approve",
         "disable": "Disable",
-        "reEnable": "Re-enable",
-        "delete": "Delete profile"
+        "reEnable": "Re-enable"
       },
       "toast": {
         "approved": "User approved",
         "disabled": "User disabled",
         "roleChanged": "Role updated",
-        "memberLinked": "Member link updated",
-        "deleted": "Profile deleted"
+        "memberLinked": "Member link updated"
       }
     },
     "trainings": {

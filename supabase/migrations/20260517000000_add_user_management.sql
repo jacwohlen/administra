@@ -23,6 +23,9 @@ CREATE TABLE public.user_profiles (
 
 CREATE INDEX idx_user_profiles_status ON public.user_profiles(status);
 CREATE INDEX idx_user_profiles_role   ON public.user_profiles(role);
+-- A member can be claimed by at most one account
+CREATE UNIQUE INDEX idx_user_profiles_member_id ON public.user_profiles(member_id)
+  WHERE member_id IS NOT NULL;
 
 -- Reused updated_at helper (created in lesson_plans migration)
 CREATE TRIGGER update_user_profiles_updated_at BEFORE UPDATE
@@ -41,37 +44,76 @@ AS $$
 $$;
 
 -----------------
--- Trigger: create a profile for every new auth user
+-- Trigger: keep a profile row in sync with every auth user
+--   INSERT  -> create the profile (pending, or admin for the bootstrap email)
+--   UPDATE  -> refresh email / name / avatar; recreate the row if it went missing.
+--              Supabase updates auth.users on every sign-in (last_sign_in_at), so this
+--              also acts as a self-healing path: a user without a profile gets one again
+--              on their next login instead of being stuck on /pending forever.
 -----------------
-CREATE OR REPLACE FUNCTION public.handle_new_auth_user()
+CREATE OR REPLACE FUNCTION public.handle_auth_user_change()
 RETURNS trigger
 LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path = public
 AS $$
+DECLARE
+  v_is_admin boolean := public.is_bootstrap_admin(NEW.email);
 BEGIN
   INSERT INTO public.user_profiles (
     user_id, email, full_name, avatar_url, status, role, approved_at
   )
   VALUES (
     NEW.id,
-    NEW.email,
+    coalesce(NEW.email, ''),
     NEW.raw_user_meta_data->>'full_name',
     NEW.raw_user_meta_data->>'avatar_url',
-    CASE WHEN public.is_bootstrap_admin(NEW.email) THEN 'approved'::public.user_status
-         ELSE 'pending'::public.user_status END,
-    CASE WHEN public.is_bootstrap_admin(NEW.email) THEN 'admin'::public.user_role
-         ELSE 'viewer'::public.user_role END,
-    CASE WHEN public.is_bootstrap_admin(NEW.email) THEN now() ELSE NULL END
+    CASE WHEN v_is_admin THEN 'approved'::public.user_status ELSE 'pending'::public.user_status END,
+    CASE WHEN v_is_admin THEN 'admin'::public.user_role    ELSE 'viewer'::public.user_role  END,
+    CASE WHEN v_is_admin THEN now() ELSE NULL END
   )
-  ON CONFLICT (user_id) DO NOTHING;
+  ON CONFLICT (user_id) DO UPDATE SET
+    email      = EXCLUDED.email,
+    full_name  = coalesce(EXCLUDED.full_name,  public.user_profiles.full_name),
+    avatar_url = coalesce(EXCLUDED.avatar_url, public.user_profiles.avatar_url);
   RETURN NEW;
 END;
 $$;
 
-CREATE TRIGGER on_auth_user_created
-  AFTER INSERT ON auth.users
-  FOR EACH ROW EXECUTE FUNCTION public.handle_new_auth_user();
+CREATE TRIGGER on_auth_user_change
+  AFTER INSERT OR UPDATE ON auth.users
+  FOR EACH ROW EXECUTE FUNCTION public.handle_auth_user_change();
+
+-----------------
+-- Guard: never let the last active admin be demoted, disabled or deleted
+-----------------
+CREATE OR REPLACE FUNCTION public.protect_last_admin()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_other_admins integer;
+  v_was_admin boolean := OLD.status = 'approved' AND OLD.role = 'admin';
+  v_still_admin boolean := TG_OP = 'UPDATE' AND NEW.status = 'approved' AND NEW.role = 'admin';
+BEGIN
+  IF v_was_admin AND NOT v_still_admin THEN
+    SELECT count(*) INTO v_other_admins
+    FROM public.user_profiles
+    WHERE status = 'approved' AND role = 'admin' AND user_id <> OLD.user_id;
+    IF v_other_admins = 0 THEN
+      RAISE EXCEPTION 'LAST_ADMIN' USING HINT = 'At least one approved admin must remain.';
+    END IF;
+  END IF;
+  IF TG_OP = 'DELETE' THEN RETURN OLD; END IF;
+  RETURN NEW;
+END;
+$$;
+
+CREATE TRIGGER protect_last_admin
+  BEFORE UPDATE OR DELETE ON public.user_profiles
+  FOR EACH ROW EXECUTE FUNCTION public.protect_last_admin();
 
 -----------------
 -- Backfill profiles for users that already exist
@@ -157,12 +199,20 @@ CREATE POLICY user_profiles_update_admin ON public.user_profiles
   USING (public.is_admin())
   WITH CHECK (public.is_admin());
 
--- Admins delete profiles (the auth.users row stays unless cleaned up separately)
-CREATE POLICY user_profiles_delete_admin ON public.user_profiles
-  FOR DELETE TO authenticated
-  USING (public.is_admin());
+-- No INSERT or DELETE policy: rows are created by the SECURITY DEFINER trigger and
+-- follow the auth.users row (ON DELETE CASCADE). Use status = 'disabled' to revoke access.
 
--- No INSERT policy: rows are created exclusively by the SECURITY DEFINER trigger
+-----------------
+-- Lock down function execution
+--   Helper predicates are only meaningful for logged-in users; the trigger bodies and the
+--   bootstrap-email check must not be callable through PostgREST at all.
+-----------------
+REVOKE EXECUTE ON FUNCTION public.is_bootstrap_admin(text)      FROM PUBLIC, anon, authenticated;
+REVOKE EXECUTE ON FUNCTION public.handle_auth_user_change()     FROM PUBLIC, anon, authenticated;
+REVOKE EXECUTE ON FUNCTION public.protect_last_admin()          FROM PUBLIC, anon, authenticated;
+REVOKE EXECUTE ON FUNCTION public.is_approved_user()            FROM PUBLIC, anon;
+REVOKE EXECUTE ON FUNCTION public.is_writer()                   FROM PUBLIC, anon;
+REVOKE EXECUTE ON FUNCTION public.is_admin()                    FROM PUBLIC, anon;
 
 -----------------
 -- Rewrite all existing permissive RLS policies to use roles
@@ -281,3 +331,93 @@ CREATE POLICY lesson_plans_storage_read   ON storage.objects FOR SELECT TO authe
 CREATE POLICY lesson_plans_storage_insert ON storage.objects FOR INSERT TO authenticated WITH CHECK (bucket_id = 'lesson-plans' AND public.is_writer());
 CREATE POLICY lesson_plans_storage_update ON storage.objects FOR UPDATE TO authenticated USING (bucket_id = 'lesson-plans' AND public.is_writer()) WITH CHECK (bucket_id = 'lesson-plans' AND public.is_writer());
 CREATE POLICY lesson_plans_storage_delete ON storage.objects FOR DELETE TO authenticated USING (bucket_id = 'lesson-plans' AND public.is_writer());
+
+-----------------
+-- Badge functions are SECURITY DEFINER and therefore bypass RLS.
+-- Gate them explicitly so anon / pending users cannot read member data or trigger writes.
+-----------------
+REVOKE EXECUTE ON FUNCTION public.refresh_member_badges(int)   FROM PUBLIC, anon, authenticated;
+REVOKE EXECUTE ON FUNCTION public.refresh_all_member_badges()  FROM PUBLIC, anon;
+REVOKE EXECUTE ON FUNCTION public.get_member_badges(int)       FROM PUBLIC, anon;
+REVOKE EXECUTE ON FUNCTION public.get_badge_leaderboard()      FROM PUBLIC, anon;
+REVOKE EXECUTE ON FUNCTION public.get_members_top_badges()     FROM PUBLIC, anon;
+
+CREATE OR REPLACE FUNCTION public.refresh_all_member_badges()
+RETURNS void LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+DECLARE
+    v_member record;
+BEGIN
+    IF NOT public.is_writer() THEN
+        RAISE EXCEPTION 'NOT_ALLOWED' USING HINT = 'Trainer or admin role required.';
+    END IF;
+    FOR v_member IN SELECT id FROM public.members LOOP
+        PERFORM public.refresh_member_badges(v_member.id);
+    END LOOP;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION public.get_member_badges(p_member_id int)
+RETURNS TABLE (
+    "badgeId" text,
+    category text,
+    emoji text,
+    "sortOrder" int,
+    "earnedAt" timestamptz
+) LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $$
+    SELECT bd.id, bd.category, bd.emoji, bd."sortOrder", mb."earnedAt"
+    FROM public.member_badges mb
+    JOIN public.badge_definitions bd ON bd.id = mb."badgeId"
+    WHERE mb."memberId" = p_member_id
+      AND public.is_approved_user()
+    ORDER BY bd."sortOrder" DESC;
+$$;
+
+CREATE OR REPLACE FUNCTION public.get_badge_leaderboard()
+RETURNS TABLE (
+    "memberId" int,
+    lastname text,
+    firstname text,
+    "badgeCount" bigint,
+    "topBadgeEmoji" text
+) LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $$
+    SELECT
+        m.id AS "memberId",
+        m.lastname,
+        m.firstname,
+        COUNT(mb."badgeId") AS "badgeCount",
+        (
+            SELECT bd.emoji
+            FROM public.member_badges mb2
+            JOIN public.badge_definitions bd ON bd.id = mb2."badgeId"
+            WHERE mb2."memberId" = m.id
+            ORDER BY bd."sortOrder" DESC
+            LIMIT 1
+        ) AS "topBadgeEmoji"
+    FROM public.members m
+    JOIN public.member_badges mb ON mb."memberId" = m.id
+    WHERE public.is_approved_user()
+    GROUP BY m.id, m.lastname, m.firstname
+    ORDER BY COUNT(mb."badgeId") DESC, m.lastname, m.firstname
+    LIMIT 20;
+$$;
+
+CREATE OR REPLACE FUNCTION public.get_members_top_badges()
+RETURNS TABLE (
+    "memberId" int,
+    emoji text,
+    "badgeId" text
+) LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $$
+    SELECT DISTINCT ON (mb."memberId")
+        mb."memberId",
+        bd.emoji,
+        bd.id AS "badgeId"
+    FROM public.member_badges mb
+    JOIN public.badge_definitions bd ON bd.id = mb."badgeId"
+    WHERE public.is_approved_user()
+    ORDER BY mb."memberId", bd."sortOrder" DESC;
+$$;
+
+-----------------
+-- Cleanup: the domain restriction is superseded by the approval flow
+-----------------
+DROP FUNCTION IF EXISTS public.check_user_domain();

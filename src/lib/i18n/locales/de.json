@@ -29,7 +29,13 @@
       "subtitle": "Freigaben, Rollen und Verknüpfung mit Mitgliedern verwalten.",
       "empty": "Keine Benutzer gefunden.",
       "unlinked": "— nicht verknüpft —",
-      "confirmDelete": "Profil wirklich löschen? Der Auth-Account bleibt bestehen.",
+      "you": "Du",
+      "selfLocked": "Eigene Rolle und Status können nicht geändert werden",
+      "pendingCount": "{count} Benutzer warten auf Freigabe",
+      "error": {
+        "lastAdmin": "Der letzte Administrator kann nicht entfernt werden",
+        "memberTaken": "Dieses Mitglied ist bereits mit einem anderen Benutzer verknüpft"
+      },
       "cols": {
         "user": "Benutzer",
         "status": "Status",
@@ -50,15 +56,13 @@
       "action": {
         "approve": "Freigeben",
         "disable": "Deaktivieren",
-        "reEnable": "Wieder aktivieren",
-        "delete": "Profil löschen"
+        "reEnable": "Wieder aktivieren"
       },
       "toast": {
         "approved": "Benutzer freigegeben",
         "disabled": "Benutzer deaktiviert",
         "roleChanged": "Rolle aktualisiert",
-        "memberLinked": "Mitgliedsverknüpfung aktualisiert",
-        "deleted": "Profil gelöscht"
+        "memberLinked": "Mitgliedsverknüpfung aktualisiert"
       }
     },
     "trainings": {

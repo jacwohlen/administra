@@ -19,10 +19,10 @@
   import type { PageData } from './$types';
   import type { SignInWithOAuthCredentials } from '@supabase/supabase-js';
 
-  // supabase policy will prevent google accounts to log in if not using the
-  // proper domain (e.g. jacwohlen.ch). In such a case the error is passed
-  // via GET parameters. We catch it here and sign out the user at google.
-  // This way the user can start over loggign in with the right google account
+  // If the OAuth provider reports an error it is passed back via GET
+  // parameters. We surface it here and sign the user out so they can start
+  // over with a different Google account. Access itself is governed by the
+  // admin approval flow (see user_profiles), not by the login step.
   let { data, error = null }: { data: PageData; error: string | null } = $props();
   let signInError = page.url.searchParams.get('error');
   if (signInError) {

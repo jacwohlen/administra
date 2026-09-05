@@ -2,7 +2,7 @@
   import type { PageData } from './$types';
   import type { UserRole, UserStatus } from '$lib/models';
   import Fa from 'svelte-fa';
-  import { faCheck, faBan, faRotateLeft, faTrash } from '@fortawesome/free-solid-svg-icons';
+  import { faCheck, faBan, faRotateLeft } from '@fortawesome/free-solid-svg-icons';
   import { _ } from 'svelte-i18n';
   import { supabaseClient } from '$lib/supabase';
   import { toaster } from '$lib/toast';
@@ -11,12 +11,22 @@
   let { data }: { data: PageData } = $props();
   let busyId = $state<string | null>(null);
 
+  let currentUserId = $derived(data.session?.user?.id);
+  let isSelf = $derived((userId: string) => userId === currentUserId);
+
   let statusBadgeClass = (s: UserStatus) =>
     s === 'approved'
       ? 'badge preset-filled-success-500'
       : s === 'pending'
         ? 'badge preset-filled-warning-500'
         : 'badge preset-filled-error-500';
+
+  function errorMessage(e: unknown): string {
+    const msg = (e as Error)?.message ?? String(e);
+    if (msg.includes('LAST_ADMIN')) return $_('page.users.error.lastAdmin');
+    if (msg.includes('idx_user_profiles_member_id')) return $_('page.users.error.memberTaken');
+    return msg;
+  }
 
   async function patch(userId: string, patch: Record<string, unknown>, successKey: string) {
     busyId = userId;
@@ -27,18 +37,22 @@
         .eq('user_id', userId);
       if (error) throw error;
       toaster.success({ title: $_(successKey) });
-      await invalidateAll();
     } catch (e) {
-      toaster.error({ title: (e as Error).message });
+      toaster.error({ title: errorMessage(e) });
     } finally {
       busyId = null;
+      await invalidateAll();
     }
   }
 
   function approve(userId: string) {
     return patch(
       userId,
-      { status: 'approved', approved_at: new Date().toISOString() },
+      {
+        status: 'approved',
+        approved_at: new Date().toISOString(),
+        approved_by: currentUserId ?? null
+      },
       'page.users.toast.approved'
     );
   }
@@ -47,36 +61,13 @@
     return patch(userId, { status: 'disabled' }, 'page.users.toast.disabled');
   }
 
-  function reEnable(userId: string) {
-    return patch(
-      userId,
-      { status: 'approved', approved_at: new Date().toISOString() },
-      'page.users.toast.approved'
-    );
-  }
-
-  async function changeRole(userId: string, role: UserRole) {
+  function changeRole(userId: string, role: UserRole) {
     return patch(userId, { role }, 'page.users.toast.roleChanged');
   }
 
-  async function changeMember(userId: string, value: string) {
+  function changeMember(userId: string, value: string) {
     const member_id = value === '' ? null : Number(value);
     return patch(userId, { member_id }, 'page.users.toast.memberLinked');
-  }
-
-  async function remove(userId: string) {
-    if (!confirm($_('page.users.confirmDelete'))) return;
-    busyId = userId;
-    try {
-      const { error } = await supabaseClient.from('user_profiles').delete().eq('user_id', userId);
-      if (error) throw error;
-      toaster.success({ title: $_('page.users.toast.deleted') });
-      await invalidateAll();
-    } catch (e) {
-      toaster.error({ title: (e as Error).message });
-    } finally {
-      busyId = null;
-    }
   }
 </script>
 
@@ -110,7 +101,12 @@
                   </div>
                 {/if}
                 <div class="min-w-0">
-                  <div class="font-medium truncate">{p.full_name || '—'}</div>
+                  <div class="font-medium truncate">
+                    {p.full_name || '—'}
+                    {#if isSelf(p.user_id)}
+                      <span class="badge preset-tonal text-xs ml-1">{$_('page.users.you')}</span>
+                    {/if}
+                  </div>
                   <div class="text-xs opacity-70 truncate">{p.email}</div>
                 </div>
               </div>
@@ -124,7 +120,8 @@
               <select
                 class="select"
                 value={p.role}
-                disabled={busyId === p.user_id}
+                disabled={busyId === p.user_id || isSelf(p.user_id)}
+                title={isSelf(p.user_id) ? $_('page.users.selfLocked') : undefined}
                 onchange={(e) =>
                   changeRole(p.user_id, (e.target as HTMLSelectElement).value as UserRole)}
               >
@@ -155,34 +152,31 @@
                   title={$_('page.users.action.approve')}
                 >
                   <Fa icon={faCheck} />
+                  <span class="hidden sm:inline">{$_('page.users.action.approve')}</span>
                 </button>
               {:else if p.status === 'approved'}
                 <button
                   class="btn btn-sm preset-tonal"
-                  disabled={busyId === p.user_id}
+                  disabled={busyId === p.user_id || isSelf(p.user_id)}
                   onclick={() => disable(p.user_id)}
-                  title={$_('page.users.action.disable')}
+                  title={isSelf(p.user_id)
+                    ? $_('page.users.selfLocked')
+                    : $_('page.users.action.disable')}
                 >
                   <Fa icon={faBan} />
+                  <span class="hidden sm:inline">{$_('page.users.action.disable')}</span>
                 </button>
               {:else}
                 <button
                   class="btn btn-sm preset-filled-success-500"
                   disabled={busyId === p.user_id}
-                  onclick={() => reEnable(p.user_id)}
+                  onclick={() => approve(p.user_id)}
                   title={$_('page.users.action.reEnable')}
                 >
                   <Fa icon={faRotateLeft} />
+                  <span class="hidden sm:inline">{$_('page.users.action.reEnable')}</span>
                 </button>
               {/if}
-              <button
-                class="btn btn-sm preset-tonal-error ml-1"
-                disabled={busyId === p.user_id || p.user_id === data.session?.user?.id}
-                onclick={() => remove(p.user_id)}
-                title={$_('page.users.action.delete')}
-              >
-                <Fa icon={faTrash} />
-              </button>
             </td>
           </tr>
         {/each}

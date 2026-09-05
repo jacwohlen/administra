@@ -14,7 +14,7 @@ Attendance tracking app for martial arts clubs. SvelteKit frontend + Supabase (P
 ## Architecture
 
 - **Frontend:** SvelteKit 2 + Svelte 4, Tailwind CSS + Skeleton UI, svelte-i18n (de/en)
-- **Backend:** Supabase (PostgreSQL with RLS), Google OAuth (restricted to @jacwohlen.ch)
+- **Backend:** Supabase (PostgreSQL with RLS), Google OAuth. New accounts land in `user_profiles` with status `pending` and must be approved by an admin; roles are `viewer` (read), `trainer` (write) and `admin` (write + user management). RLS policies use `is_approved_user()`, `is_writer()` and `is_admin()`.
 - **Deployment:** Netlify via `@sveltejs/adapter-netlify`
 - **External sync:** Python scripts in `/webling-sync/` sync members/events from Webling API
 
