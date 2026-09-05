@@ -27,10 +27,12 @@ upgraded to Postgres 17 like the Dev project.
      `supabase/migrations/` are applied to it and `supabase/seed.sql` seeds
      it. Supabase comments on the PR and posts a **"Supabase Preview"**
      check.
-   - **Netlify** builds a Deploy Preview. The Supabase extension for
-     Netlify injects the preview branch's `PUBLIC_SUPABASE_DATABASE_URL`
-     and `PUBLIC_SUPABASE_ANON_KEY`, so the Deploy Preview talks to the
-     preview database, not production.
+   - **Netlify** builds a Deploy Preview. In the deploy-preview context,
+     `scripts/netlify-preview-supabase-env.sh` resolves the PR's preview
+     branch via the Supabase CLI and exports its
+     `PUBLIC_SUPABASE_DATABASE_URL` / `PUBLIC_SUPABASE_ANON_KEY`, so the
+     Deploy Preview talks to the preview database. PRs without a preview
+     branch fall back to the env vars configured in Netlify.
    - **GitHub Actions** validates migrations independently (`db-validate`
      job in `ci.yml`) and mirrors the Supabase Preview check
      (`supabase-preview-status.yml`) so broken migrations block the merge.
@@ -58,8 +60,11 @@ create and `seed.sql` inserts. Seed data changes are never merged onward.
   - **Supabase changes only** toggle in the GitHub integration (avoids
     paying for preview branches on frontend-only PRs).
   - Branch secrets for the `env()` references in `config.toml` (see below).
-  - Netlify Supabase extension env-var mapping for Deploy Previews (see
-    verification checklist).
+- Verified 2026-09-05 on PR #81: the Netlify Supabase extension does
+  **not** inject per-PR branch credentials — the Deploy Preview was built
+  with the dev-context env vars (Dev project data, `PUBLIC_MODE=DEV`
+  banner). That is why deploy previews now run through the resolver
+  script below.
 
 ## Costs
 
@@ -88,13 +93,30 @@ Unset variables resolve to empty strings, which can make the branch's
 
 ## Netlify
 
-The Supabase extension for Netlify is installed on the site and connected
-to the Supabase project, with the environment variable names configured as
-`PUBLIC_SUPABASE_DATABASE_URL` / `PUBLIC_SUPABASE_ANON_KEY` (matching
-`src/lib/supabase.ts`). It keeps these in sync per deploy context.
+Supabase has a first-party branching integration only for Vercel; on
+Netlify the Supabase extension syncs credentials of one fixed project per
+deploy context and is not branch-aware. Deploy Previews therefore run
+through a build wrapper (`[context.deploy-preview]` in `netlify.toml`):
 
-`netlify.toml` stays a plain `npm run build` — no env-resolver script is
-needed (removed in #73).
+- `scripts/netlify-preview-supabase-env.sh` asks the Supabase CLI for the
+  preview branch matching the PR's git branch (`$HEAD`), retrying while
+  the branch is still provisioning, and exports its URL and anon key as
+  `PUBLIC_SUPABASE_DATABASE_URL` / `PUBLIC_SUPABASE_ANON_KEY` before
+  `npm run build`.
+- If no branch exists (frontend-only PR, or missing credentials), the
+  build falls back to the site's configured env vars.
+
+One-time Netlify setup (Site configuration → Environment variables):
+
+- `SUPABASE_ACCESS_TOKEN` — a Supabase personal access token
+  (https://supabase.com/dashboard/account/tokens). Mark it as a **secret**
+  value; since the repo is public, also set the sensitive variable policy
+  so untrusted (fork) deploy previews don't receive it.
+- `SUPABASE_PROJECT_ID` — `hyppoiywqpfkvvcrmsdl` (the Prod project, whose
+  preview branches these are).
+
+Production and branch deploys are untouched — they keep the env vars
+configured in Netlify for their contexts.
 
 ## GitHub branch protection
 
@@ -131,10 +153,10 @@ check directly.
 
 - **Google login on previews**: each preview branch has its own auth
   callback (`https://<branch-ref>.supabase.co/auth/v1/callback`), which the
-  Google OAuth client does not know about. Options: add the branch
-  callback to the Google Cloud OAuth client while testing, seed an
-  email/password test user for previews, or accept that login is
-  untestable on previews and covered locally instead.
+  Google OAuth client does not know about, so Google login fails on Deploy
+  Previews wired to a preview branch. Use the seeded test user from
+  `seed.sql` (`test@example.com` / `testpass`) instead, or add the branch
+  callback to the Google Cloud OAuth client while testing.
 - **Never edit an already-merged migration** — the Dev/Prod databases have
   already run it. Always add a new migration file.
 - **Rolling back on a PR**: if you amend/replace a migration that the

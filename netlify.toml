@@ -1,3 +1,8 @@
 [build]
   command = "npm run build"
   publish = "build"
+
+# Deploy Previews resolve the PR's Supabase preview branch credentials
+# before building — see docs/SUPABASE_BRANCHING.md.
+[context.deploy-preview]
+  command = "bash scripts/netlify-preview-supabase-env.sh npm run build"
