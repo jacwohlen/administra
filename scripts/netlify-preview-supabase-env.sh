@@ -48,9 +48,10 @@ resolve_branch_env() {
 
   # The Supabase branch is provisioned in parallel with this build and
   # usually takes ~1-2 minutes, so retry for a while before falling back.
-  local attempt out url anon
+  local attempt out url anon errfile
+  errfile=$(mktemp)
   for attempt in $(seq 1 8); do
-    if out=$(npx supabase --experimental branches get "$git_branch" -o env 2>/dev/null); then
+    if out=$(npx supabase --experimental branches get "$git_branch" -o env 2>"$errfile"); then
       url=$(env_value "$(grep -m1 '^SUPABASE_URL=' <<<"$out" || true)")
       anon=$(env_value "$(grep -m1 '^SUPABASE_ANON_KEY=' <<<"$out" || true)")
       if [ -z "$anon" ] || [ "$anon" = "******" ]; then
@@ -64,6 +65,7 @@ resolve_branch_env() {
       fi
     fi
     log "preview branch for '$git_branch' not ready (attempt $attempt/8); retrying in 15s"
+    log "supabase CLI said: $(tr '\n' ' ' <"$errfile" | head -c 300)"
     sleep 15
   done
   log "no Supabase preview branch found for '$git_branch'; using configured env vars"
