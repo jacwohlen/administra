@@ -99,6 +99,12 @@ supabase secrets set --project-ref hyppoiywqpfkvvcrmsdl \
 Unset variables resolve to empty strings, which can make the branch's
 `configure` step fail or silently disable Google login on previews.
 
+**Secrets are copied from the parent project only at branch creation.**
+A branch created before a secret existed never sees it — set the secret
+directly on that branch's project ref as well (done for the `dev` branch,
+`--project-ref kbnnwrazgeuqlizjqqgb`). Ephemeral preview branches are
+recreated per PR, so they always pick up the parent's current secrets.
+
 ## Netlify
 
 Supabase has a first-party branching integration only for Vercel; on
