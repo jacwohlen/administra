@@ -16,6 +16,7 @@ on:
       - synchronize
     branches:
       - main
+      - prod
     paths:
       - 'supabase/**'
 
