@@ -249,6 +249,14 @@ npm run build
    - `PUBLIC_SUPABASE_ANON_KEY`
    - `PUBLIC_MODE` (set to "PROD")
 
+### Preview branches and database deployments
+
+Pull requests get an isolated Supabase preview branch (with migrations and
+seed data applied) wired to the Netlify Deploy Preview, and merging to
+`main` applies new migrations to the production database automatically.
+Setup and workflow are documented in
+[docs/SUPABASE_BRANCHING.md](docs/SUPABASE_BRANCHING.md).
+
 ## External Integrations
 
 ### Webling Sync
