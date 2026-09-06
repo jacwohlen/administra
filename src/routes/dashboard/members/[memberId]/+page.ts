@@ -1,6 +1,6 @@
 import type { PageLoad } from './$types';
 import { error as err } from '@sveltejs/kit';
-import type { Member, Badge, BadgeProgress } from '$lib/models';
+import type { Member, Badge, BadgeDefinition, BadgeProgress } from '$lib/models';
 import { supabaseClient } from '$lib/supabase';
 import { blobToURL } from 'image-resize-compress';
 import dayjs from 'dayjs';
@@ -32,13 +32,14 @@ export const load = (async ({ params, depends }) => {
     }
   }
 
-  const [badgeResult, progressResult] = await Promise.all([
+  const [badgeResult, progressResult, definitionResult] = await Promise.all([
     supabaseClient.rpc('get_member_badges', {
       p_member_id: parseInt(params.memberId)
     }),
     supabaseClient.rpc('get_member_badge_progress', {
       p_member_id: parseInt(params.memberId)
-    })
+    }),
+    supabaseClient.from('badge_definitions').select('*')
   ]);
 
   return {
@@ -46,6 +47,9 @@ export const load = (async ({ params, depends }) => {
     badges: (Array.isArray(badgeResult.data) ? badgeResult.data : []) as Badge[],
     badgeProgress: (Array.isArray(progressResult.data)
       ? progressResult.data
-      : []) as BadgeProgress[]
+      : []) as BadgeProgress[],
+    badgeDefinitions: (Array.isArray(definitionResult.data)
+      ? definitionResult.data
+      : []) as BadgeDefinition[]
   };
 }) satisfies PageLoad;

@@ -1,6 +1,12 @@
 import { describe, it, expect } from 'vitest';
-import { badgeKey, badgeSuffix, groupBadgesWithProgress, progressPercent } from './badgeUtils';
-import type { Badge, BadgeProgress } from './models';
+import {
+  badgeKey,
+  badgeSuffix,
+  buildBadgeTrails,
+  groupBadgesWithProgress,
+  progressPercent
+} from './badgeUtils';
+import type { Badge, BadgeDefinition, BadgeProgress } from './models';
 
 const badge = (
   badgeId: string,
@@ -24,6 +30,20 @@ const next = (category: string, current: number, threshold: number): BadgeProgre
   next_badge_id: `${category}_${threshold}`,
   next_badge_emoji: 'y',
   next_threshold: threshold
+});
+
+const def = (
+  id: string,
+  category: string,
+  threshold: number | null,
+  sortOrder = 0
+): BadgeDefinition => ({
+  id,
+  category,
+  emoji: 'z',
+  threshold,
+  sortOrder,
+  scope: threshold === null ? 'season' : 'lifetime'
 });
 
 describe('groupBadgesWithProgress', () => {
@@ -62,6 +82,51 @@ describe('groupBadgesWithProgress', () => {
       'top_3:2025:Judo'
     ]);
     expect(groups[0].next?.next_threshold).toBe(40);
+  });
+});
+
+describe('buildBadgeTrails', () => {
+  const definitions = [
+    def('attendance_50', 'attendance', 50),
+    def('attendance_10', 'attendance', 10),
+    def('attendance_25', 'attendance', 25),
+    def('streak_5', 'streak', 5),
+    def('streak_10', 'streak', 10),
+    def('top_3', 'season', null)
+  ];
+
+  it('marks earned tiers done, the first unearned tier next with progress, the rest locked', () => {
+    const trails = buildBadgeTrails(
+      definitions,
+      [badge('attendance_10', 'attendance', 10)],
+      [next('attendance', 20, 25)]
+    );
+    const attendance = trails.find((t) => t.category === 'attendance')!;
+    expect(attendance.steps.map((s) => s.def.id)).toEqual([
+      'attendance_10',
+      'attendance_25',
+      'attendance_50'
+    ]);
+    expect(attendance.steps.map((s) => s.state)).toEqual(['done', 'next', 'lock']);
+    expect(attendance.steps[1].current).toBe(20);
+    expect(attendance.steps[1].pct).toBe(80);
+  });
+
+  it('shows a fully earned ladder as all done and skips categories without tiers', () => {
+    const trails = buildBadgeTrails(
+      definitions,
+      [badge('streak_5', 'streak', 15), badge('streak_10', 'streak', 25)],
+      []
+    );
+    expect(trails.map((t) => t.category)).toEqual(['attendance', 'streak']);
+    expect(trails[1].steps.map((s) => s.state)).toEqual(['done', 'done']);
+    expect(trails[0].steps.map((s) => s.state)).toEqual(['next', 'lock', 'lock']);
+    expect(trails[0].steps[0].current).toBe(0);
+  });
+
+  it('ignores season badges when deciding which lifetime tiers are earned', () => {
+    const trails = buildBadgeTrails(definitions, [badge('top_3', 'season', 55, 2026, 'Judo')], []);
+    expect(trails.every((t) => t.steps[0].state === 'next')).toBe(true);
   });
 });
 

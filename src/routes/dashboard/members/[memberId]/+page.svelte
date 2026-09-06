@@ -368,7 +368,11 @@
     </div>
   </div>
   <div class="card p-4">
-    <MemberBadges badges={data.badges} progress={data.badgeProgress} />
+    <MemberBadges
+      badges={data.badges}
+      progress={data.badgeProgress}
+      definitions={data.badgeDefinitions}
+    />
   </div>
   <MemberLogs memberId={data.id} />
 </div>

@@ -109,6 +109,15 @@ export interface Badge {
   context: string;
 }
 
+export interface BadgeDefinition {
+  id: string;
+  category: string;
+  emoji: string;
+  threshold: number | null;
+  sortOrder: number;
+  scope: string;
+}
+
 export interface BadgeLeaderboardEntry {
   memberId: number;
   lastname: string;
