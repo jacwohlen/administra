@@ -9,11 +9,11 @@
     visible = false;
   }
 
-  // Auto-dismiss after 5 seconds
+  // Show on every new badge set and auto-dismiss after 6 seconds
   $effect(() => {
     if (badges.length > 0) {
       visible = true;
-      const timeout = setTimeout(() => (visible = false), 5000);
+      const timeout = setTimeout(() => (visible = false), 6000);
       return () => clearTimeout(timeout);
     }
   });
@@ -22,7 +22,7 @@
 {#if visible && badges.length > 0}
   <!-- svelte-ignore a11y_no_static_element_interactions -->
   <div
-    class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 animate-fade-in"
+    class="modal-overlay celebration-overlay"
     onclick={dismiss}
     onkeydown={(e) => {
       if (e.key === 'Escape') dismiss();
@@ -30,31 +30,41 @@
   >
     <!-- svelte-ignore a11y_no_static_element_interactions -->
     <div
-      class="card p-6 text-center shadow-2xl max-w-sm mx-4 animate-bounce-in"
+      class="card modal-dialog text-center celebration-dialog"
       onclick={(e) => e.stopPropagation()}
     >
-      <div class="text-5xl mb-3 animate-pulse">
+      <div class="text-6xl leading-none mb-4 celebration-emoji">
         {#each badges as b}
-          {b.emoji}
+          <span>{b.emoji}</span>
         {/each}
       </div>
-      <h2 class="text-xl font-bold mb-2">{$_('badges.celebration.title')}</h2>
-      {#each badges as b}
-        <p class="text-surface-600-400">
-          {memberName} — {$_('badges.' + b.badgeId + '.name')}
-        </p>
-      {/each}
-      <button class="btn preset-tonal-primary mt-4" onclick={dismiss}>OK</button>
+      <h2 class="mb-1">{$_('badges.celebration.title')}</h2>
+      <p class="font-bold mb-3">{memberName}</p>
+      <div class="flex flex-wrap justify-center gap-2 mb-4">
+        {#each badges as b}
+          <span
+            class="chip preset-tonal-primary"
+            title={$_('badges.' + b.badgeId + '.description')}
+          >
+            <span>{b.emoji}</span>
+            <span>{$_('badges.' + b.badgeId + '.name')}</span>
+          </span>
+        {/each}
+      </div>
+      <button class="btn preset-filled-primary-500 w-full" onclick={dismiss}>OK</button>
     </div>
   </div>
 {/if}
 
 <style>
-  .animate-fade-in {
-    animation: fadeIn 0.3s ease-out;
+  .celebration-overlay {
+    animation: fadeIn 0.25s ease-out;
   }
-  .animate-bounce-in {
+  .celebration-dialog {
     animation: bounceIn 0.5s ease-out;
+  }
+  .celebration-emoji {
+    animation: pop 0.8s ease-out;
   }
   @keyframes fadeIn {
     from {
@@ -67,7 +77,7 @@
   @keyframes bounceIn {
     0% {
       opacity: 0;
-      transform: scale(0.5);
+      transform: scale(0.6);
     }
     70% {
       transform: scale(1.05);
@@ -75,6 +85,17 @@
     100% {
       opacity: 1;
       transform: scale(1);
+    }
+  }
+  @keyframes pop {
+    0% {
+      transform: scale(0.4) rotate(-15deg);
+    }
+    60% {
+      transform: scale(1.25) rotate(8deg);
+    }
+    100% {
+      transform: scale(1) rotate(0);
     }
   }
 </style>
