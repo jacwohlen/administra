@@ -7,7 +7,9 @@
     faEnvelope,
     faPhone,
     faTriangleExclamation,
-    faCalendarPlus
+    faCalendarPlus,
+    faChevronDown,
+    faNoteSticky
   } from '@fortawesome/free-solid-svg-icons';
   import { calculateAge } from '$lib/utils';
   import { trialStatus, type TrialStatus } from '$lib/trialUtils';
@@ -20,6 +22,7 @@
   let { data }: { data: PageData } = $props();
 
   let selectedMember = $state<TrialMember | null>(null);
+  let expandedId = $state<number | null>(null);
   let searchTerm = $state('');
   let filter = $state<Filter>('all');
 
@@ -56,20 +59,18 @@
     });
   });
 
-  function assignedTrainingIds(memberId: number): Set<number> {
-    return new Set(assignmentsByMember.get(memberId) ?? []);
+  function assignedTrainings(memberId: number): Training[] {
+    return (assignmentsByMember.get(memberId) ?? [])
+      .map((id) => trainingById.get(id))
+      .filter((t): t is Training => t !== undefined);
   }
 
   function countChipClass(status: TrialStatus): string {
     return status === 'convert' ? 'preset-filled-warning-500' : 'preset-tonal-surface';
   }
 
-  function openAssign(m: TrialMember) {
-    selectedMember = m;
-  }
-
-  function closeAssign() {
-    selectedMember = null;
+  function toggle(id: number) {
+    expandedId = expandedId === id ? null : id;
   }
 </script>
 
@@ -87,12 +88,10 @@
   </a>
 </div>
 
-<p class="text-sm text-surface-600-400 mb-4">{$_('page.probetraining.description')}</p>
-
 {#if data.trialMembers.length === 0}
   <p class="empty-state">{$_('page.probetraining.empty')}</p>
 {:else}
-  <div class="flex flex-col sm:flex-row gap-2 mb-4">
+  <div class="flex flex-col sm:flex-row gap-2 mb-3">
     <input
       class="input flex-1"
       bind:value={searchTerm}
@@ -128,45 +127,98 @@
   {#if visibleMembers.length === 0}
     <p class="empty-state">{$_('page.probetraining.noResults')}</p>
   {:else}
-    <ul class="flex flex-col gap-3">
+    <ul class="card overflow-hidden">
       {#each visibleMembers as m (m.id)}
         {@const age = calculateAge(m.birthday)}
-        {@const assigned = assignmentsByMember.get(m.id) ?? []}
+        {@const assigned = assignedTrainings(m.id)}
         {@const status = trialStatus(m.attendedCount)}
+        {@const isOpen = expandedId === m.id}
         <li
-          class="card p-4 flex flex-col gap-3 {status === 'convert'
-            ? 'border-l-4 border-warning-500'
-            : ''}"
+          class="border-b border-surface-300-700 last:border-b-0 border-l-4 {status === 'convert'
+            ? 'border-l-warning-500'
+            : 'border-l-transparent'}"
         >
-          <div class="flex items-start gap-3">
-            <div class="avatar-initials">
+          <button
+            type="button"
+            class="w-full flex items-center gap-2 sm:gap-3 px-2 sm:px-3 py-2 text-left hover:bg-surface-100-900"
+            aria-expanded={isOpen}
+            onclick={() => toggle(m.id)}
+          >
+            <span
+              class="size-8 rounded-full bg-surface-100-900 flex items-center justify-center text-xs font-bold flex-shrink-0"
+            >
               {m.lastname.charAt(0)}{m.firstname.charAt(0)}
-            </div>
+            </span>
 
-            <div class="flex-1 min-w-0">
-              <a href="/dashboard/members/{m.id}" class="font-bold truncate block hover:underline">
+            <span class="flex-1 min-w-0">
+              <span class="font-semibold truncate block leading-tight">
                 {m.lastname}
                 {m.firstname}
-              </a>
-              <div
-                class="text-xs text-surface-600-400 flex flex-wrap items-center gap-x-2 gap-y-1 mt-0.5"
-              >
                 {#if age !== null}
-                  <span>{age} {$_('page.probetraining.yearsOld')}</span>
+                  <span class="font-normal text-surface-600-400 text-xs">· {age} J</span>
                 {/if}
+                {#if m.notes}
+                  <Fa
+                    icon={faNoteSticky}
+                    size="xs"
+                    class="inline text-surface-600-400 ml-1 align-baseline"
+                  />
+                {/if}
+              </span>
+            </span>
+
+            <span class="hidden sm:flex items-center gap-1 min-w-0 max-w-[38%] flex-shrink-0">
+              {#if assigned.length === 0}
+                <span class="text-xs text-surface-600-400 italic">
+                  {$_('page.probetraining.noAssignment')}
+                </span>
+              {:else}
+                <span class="chip preset-tonal-secondary text-xs truncate">
+                  {assigned[0].title} · {$_('weekdayShort.' + assigned[0].weekday)}
+                </span>
+                {#if assigned.length > 1}
+                  <span class="text-xs text-surface-600-400">+{assigned.length - 1}</span>
+                {/if}
+              {/if}
+            </span>
+
+            <span
+              class="chip gap-1 flex-shrink-0 text-xs {countChipClass(status)}"
+              title={$_('page.probetraining.attended')}
+            >
+              {#if status === 'convert'}
+                <Fa icon={faTriangleExclamation} size="xs" />
+              {/if}
+              {m.attendedCount}×
+            </span>
+
+            <Fa
+              icon={faChevronDown}
+              size="xs"
+              class="text-surface-600-400 flex-shrink-0 transition-transform {isOpen
+                ? 'rotate-180'
+                : ''}"
+            />
+          </button>
+
+          {#if isOpen}
+            <div class="px-3 sm:pl-14 pb-3 space-y-2 text-sm">
+              {#if status === 'convert'}
+                <p class="text-xs text-warning-600-400">
+                  {$_('page.probetraining.convertHint')}
+                </p>
+              {/if}
+
+              <div class="text-xs text-surface-600-400 flex flex-wrap gap-x-3 gap-y-1">
                 {#if m.trialSection}
-                  <span aria-hidden="true">·</span>
                   <span>{m.trialSection}</span>
                 {/if}
                 {#if m.trialRegisteredAt}
-                  <span aria-hidden="true">·</span>
                   <span>
                     {$_('page.probetraining.registeredOn')}
                     {dayjs(m.trialRegisteredAt).format('DD.MM.YYYY')}
                   </span>
                 {/if}
-              </div>
-              <div class="text-xs flex flex-wrap gap-x-3 gap-y-1 mt-1">
                 {#if m.email}
                   <a class="meta-item hover:underline" href="mailto:{m.email}">
                     <Fa icon={faEnvelope} size="xs" />
@@ -180,56 +232,46 @@
                   </a>
                 {/if}
               </div>
-            </div>
 
-            <span
-              class="chip flex-shrink-0 gap-1 whitespace-nowrap {countChipClass(status)}"
-              title={$_('page.probetraining.attended')}
-            >
-              {#if status === 'convert'}
-                <Fa icon={faTriangleExclamation} size="xs" />
+              {#if m.notes}
+                <p
+                  class="whitespace-pre-wrap text-surface-700-300 border-l-2 border-surface-300-700 pl-3"
+                >
+                  {m.notes}
+                </p>
               {/if}
-              {m.attendedCount}
-              {$_('page.probetraining.sessionsShort')}
-            </span>
-          </div>
 
-          {#if status === 'convert'}
-            <p class="text-xs text-warning-600-400">{$_('page.probetraining.convertHint')}</p>
-          {/if}
-
-          {#if m.notes}
-            <p
-              class="text-sm whitespace-pre-wrap text-surface-700-300 border-l-2 border-surface-300-700 pl-3"
-            >
-              {m.notes}
-            </p>
-          {/if}
-
-          <div class="flex flex-wrap items-center gap-2">
-            {#if assigned.length === 0}
-              <span class="text-xs text-surface-600-400">
-                {$_('page.probetraining.noAssignment')}
-              </span>
-            {:else}
-              {#each assigned as tId (tId)}
-                {@const t = trainingById.get(tId)}
-                {#if t}
-                  <span class="chip preset-tonal-secondary text-xs">
-                    {t.title} · {$_('weekdayShort.' + t.weekday)}
+              <div class="flex flex-wrap items-center gap-2 pt-1">
+                <div class="flex flex-wrap gap-1 sm:hidden">
+                  {#if assigned.length === 0}
+                    <span class="text-xs text-surface-600-400 italic">
+                      {$_('page.probetraining.noAssignment')}
+                    </span>
+                  {:else}
+                    {#each assigned as t (t.id)}
+                      <span class="chip preset-tonal-secondary text-xs">
+                        {t.title} · {$_('weekdayShort.' + t.weekday)}
+                      </span>
+                    {/each}
+                  {/if}
+                </div>
+                <a href="/dashboard/members/{m.id}" class="btn btn-sm preset-tonal-surface">
+                  {$_('button.view')}
+                </a>
+                <button
+                  class="btn btn-sm preset-tonal-primary ml-auto"
+                  onclick={() => (selectedMember = m)}
+                >
+                  <Fa icon={faCalendarPlus} size="xs" />
+                  <span>
+                    {assigned.length
+                      ? $_('page.probetraining.manageTrainings')
+                      : $_('page.probetraining.assignTraining')}
                   </span>
-                {/if}
-              {/each}
-            {/if}
-            <button class="btn btn-sm preset-tonal-primary ml-auto" onclick={() => openAssign(m)}>
-              <Fa icon={faCalendarPlus} size="xs" />
-              <span>
-                {assigned.length
-                  ? $_('page.probetraining.manageTrainings')
-                  : $_('page.probetraining.assignTraining')}
-              </span>
-            </button>
-          </div>
+                </button>
+              </div>
+            </div>
+          {/if}
         </li>
       {/each}
     </ul>
@@ -240,9 +282,9 @@
   <!-- svelte-ignore a11y_no_static_element_interactions -->
   <div
     class="modal-overlay"
-    onclick={closeAssign}
+    onclick={() => (selectedMember = null)}
     onkeydown={(e) => {
-      if (e.key === 'Escape') closeAssign();
+      if (e.key === 'Escape') selectedMember = null;
     }}
   >
     <!-- svelte-ignore a11y_no_static_element_interactions -->
@@ -250,8 +292,8 @@
       <AssignTrainingDialog
         member={selectedMember}
         trainings={data.trainings}
-        assignedTrainingIds={assignedTrainingIds(selectedMember.id)}
-        onclose={closeAssign}
+        assignedTrainingIds={new Set(assignmentsByMember.get(selectedMember.id) ?? [])}
+        onclose={() => (selectedMember = null)}
       />
     </div>
   </div>
