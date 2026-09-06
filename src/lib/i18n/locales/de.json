@@ -406,7 +406,9 @@
       "streak": "Serien",
       "trainer": "Trainer",
       "event": "Events",
-      "top_performer": "Top-Performer"
+      "season": "Saison",
+      "grade": "Graduierung",
+      "medal": "Medaillen"
     },
     "attendance_10": {
       "name": "Anfänger",
@@ -464,10 +466,93 @@
       "name": "Champion",
       "description": "25 Events besucht"
     },
+    "attendance_500": {
+      "name": "Legende",
+      "description": "500 Trainings besucht"
+    },
     "top_3": {
-      "name": "Top-Performer",
-      "description": "Top 3 in einer Sektion"
+      "name": "Top 3",
+      "description": "Unter den drei aktivsten Mitgliedern einer Sektion in diesem Jahr"
+    },
+    "most_improved": {
+      "name": "Aufsteiger",
+      "description": "Grösste Steigerung der Trainings gegenüber dem Vorjahr in einer Sektion"
+    },
+    "season_regular": {
+      "name": "Saison-Stammgast",
+      "description": "40 Trainings in einem Jahr"
+    },
+    "coach_of_year": {
+      "name": "Trainer des Jahres",
+      "description": "Die meisten Trainings einer Sektion in diesem Jahr geleitet"
+    },
+    "black_belt": {
+      "name": "Schwarzgurt",
+      "description": "Erste Dan-Prüfung bestanden"
+    },
+    "medalist": {
+      "name": "Medaillengewinner",
+      "description": "Erste Medaille gewonnen"
+    },
+    "podium_5": {
+      "name": "Podest-Stammgast",
+      "description": "Fünf Medaillen gewonnen"
+    },
+    "first_gold": {
+      "name": "Gold",
+      "description": "Erste Goldmedaille gewonnen"
+    },
+    "progress": {
+      "of": "von"
+    },
+    "recentAchievements": {
+      "title": "Letzte Errungenschaften",
+      "noAchievements": "Noch keine Errungenschaften",
+      "earned": "verdient"
+    },
+    "celebration": {
+      "title": "Neues Abzeichen!",
+      "message": "{name} hat {badge} verdient!"
     }
+  },
+  "grades": {
+    "title": "Graduierungen",
+    "noGrades": "Noch keine Prüfung erfasst",
+    "addGrading": "Prüfung erfassen",
+    "section": "Sektion",
+    "grade": "Grad",
+    "examDate": "Prüfungsdatum",
+    "note": "Notiz",
+    "next": "Nächster",
+    "history": "Prüfungshistorie",
+    "deleteConfirm": "Diese Prüfung entfernen?",
+    "saveSuccess": "Prüfung gespeichert",
+    "saveError": "Fehler beim Speichern der Prüfung",
+    "deleteSuccess": "Prüfung entfernt",
+    "deleteError": "Fehler beim Entfernen der Prüfung"
+  },
+  "medals": {
+    "title": "Medaillen",
+    "noMedals": "Noch keine Medaillen erfasst",
+    "addMedal": "Medaille erfassen",
+    "competition": "Wettkampf",
+    "date": "Datum",
+    "section": "Sektion",
+    "category": "Kategorie",
+    "categoryPlaceholder": "z.B. U18 -66 kg",
+    "medal": "Medaille",
+    "gold": "Gold",
+    "silver": "Silber",
+    "bronze": "Bronze",
+    "placement": "Platzierung",
+    "none": "Keine",
+    "fromEvent": "Vom Event",
+    "noEvent": "Nicht mit einem Event verknüpft",
+    "deleteConfirm": "Diese Medaille entfernen?",
+    "saveSuccess": "Medaille gespeichert",
+    "saveError": "Fehler beim Speichern der Medaille",
+    "deleteSuccess": "Medaille entfernt",
+    "deleteError": "Fehler beim Entfernen der Medaille"
   },
   "weekday": {
     "Monday": "Montag",

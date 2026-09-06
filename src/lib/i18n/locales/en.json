@@ -406,7 +406,9 @@
       "streak": "Streaks",
       "trainer": "Trainer",
       "event": "Events",
-      "top_performer": "Top Performer"
+      "season": "Season",
+      "grade": "Grade",
+      "medal": "Medals"
     },
     "attendance_10": {
       "name": "Beginner",
@@ -464,10 +466,93 @@
       "name": "Champion",
       "description": "Attended 25 events"
     },
+    "attendance_500": {
+      "name": "Legend",
+      "description": "Attended 500 training sessions"
+    },
     "top_3": {
-      "name": "Top Performer",
-      "description": "Ranked in the top 3 of a section"
+      "name": "Top 3",
+      "description": "Among the three most active members of a section that year"
+    },
+    "most_improved": {
+      "name": "Most Improved",
+      "description": "Biggest increase in sessions over the previous year in a section"
+    },
+    "season_regular": {
+      "name": "Season Regular",
+      "description": "40 training sessions in one year"
+    },
+    "coach_of_year": {
+      "name": "Coach of the Year",
+      "description": "Led the most training sessions in a section that year"
+    },
+    "black_belt": {
+      "name": "Black Belt",
+      "description": "Passed the first Dan grading"
+    },
+    "medalist": {
+      "name": "Medalist",
+      "description": "Won a first medal"
+    },
+    "podium_5": {
+      "name": "Podium Regular",
+      "description": "Won five medals"
+    },
+    "first_gold": {
+      "name": "Gold",
+      "description": "Won a first gold medal"
+    },
+    "progress": {
+      "of": "of"
+    },
+    "recentAchievements": {
+      "title": "Recent Achievements",
+      "noAchievements": "No achievements yet",
+      "earned": "earned"
+    },
+    "celebration": {
+      "title": "New Badge Earned!",
+      "message": "{name} just earned {badge}!"
     }
+  },
+  "grades": {
+    "title": "Grades",
+    "noGrades": "No grading recorded yet",
+    "addGrading": "Add grading",
+    "section": "Section",
+    "grade": "Grade",
+    "examDate": "Exam date",
+    "note": "Note",
+    "next": "Next",
+    "history": "Grading history",
+    "deleteConfirm": "Remove this grading?",
+    "saveSuccess": "Grading saved",
+    "saveError": "Error saving grading",
+    "deleteSuccess": "Grading removed",
+    "deleteError": "Error removing grading"
+  },
+  "medals": {
+    "title": "Medals",
+    "noMedals": "No medals recorded yet",
+    "addMedal": "Add medal",
+    "competition": "Competition",
+    "date": "Date",
+    "section": "Section",
+    "category": "Category",
+    "categoryPlaceholder": "e.g. U18 -66 kg",
+    "medal": "Medal",
+    "gold": "Gold",
+    "silver": "Silver",
+    "bronze": "Bronze",
+    "placement": "Placement",
+    "none": "None",
+    "fromEvent": "From event",
+    "noEvent": "Not linked to an event",
+    "deleteConfirm": "Remove this medal?",
+    "saveSuccess": "Medal saved",
+    "saveError": "Error saving medal",
+    "deleteSuccess": "Medal removed",
+    "deleteError": "Error removing medal"
   },
   "weekday": {
     "Monday": "Monday",

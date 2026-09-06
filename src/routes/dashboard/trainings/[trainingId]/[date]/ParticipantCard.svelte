@@ -3,22 +3,41 @@
   import { faEllipsisVertical } from '@fortawesome/free-solid-svg-icons';
   import Labels from './Labels.svelte';
   import ParticipantFrequency from './ParticipantFrequency.svelte';
+  import BeltStrip from '$lib/components/BeltStrip.svelte';
+  import MedalTally from '$lib/components/MedalTally.svelte';
+  import { beltRingColor } from '$lib/gradeUtils';
   import { _ } from 'svelte-i18n';
 
   import type { MMember } from './types';
-  import type { TrainerRole } from '$lib/models';
+  import type { MedalCounts, MemberSectionGrade, TrainerRole } from '$lib/models';
 
   let {
     member,
     badgeEmoji,
+    grade,
+    medals,
     onchange,
     onremove
   }: {
     member: MMember;
     badgeEmoji?: string;
+    grade?: MemberSectionGrade;
+    medals?: MedalCounts;
     onchange?: (data: { member: MMember; checked: boolean; trainerRole: TrainerRole }) => void;
     onremove?: (data: { member: MMember }) => void;
   } = $props();
+
+  let ringColor = $derived(grade ? beltRingColor(grade.beltColor) : null);
+  let tally = $derived(
+    medals
+      ? {
+          gold: Number(medals.gold),
+          silver: Number(medals.silver),
+          bronze: Number(medals.bronze),
+          total: Number(medals.gold) + Number(medals.silver) + Number(medals.bronze)
+        }
+      : null
+  );
 
   let menuOpen = $state(false);
   let menuStyle = $state('');
@@ -85,7 +104,13 @@
       checked={member.isPresent}
       onchange={change}
     />
-    <div class="relative inline-block flex-shrink-0">
+    <div
+      class="relative inline-block flex-shrink-0 rounded-full"
+      style:box-shadow={ringColor
+        ? `0 0 0 2px var(--color-surface-50-950), 0 0 0 4px ${ringColor}`
+        : undefined}
+      title={grade ? `${grade.grade} ${grade.section}` : undefined}
+    >
       {#if member.trainerRole === 'main_trainer'}
         <span
           class="absolute -bottom-0 -right-0 z-10 bg-primary-600-400 rounded-full w-4 h-4 flex items-center justify-center"
@@ -119,6 +144,15 @@
           >{/if}
       </dt>
       <dd class="flex items-center gap-2 flex-wrap">
+        {#if grade}
+          <span class="inline-flex items-center gap-1 text-xs text-surface-600-400">
+            <BeltStrip color={grade.beltColor} isDan={grade.isDan} size="sm" />
+            {grade.grade}
+          </span>
+        {/if}
+        {#if tally && tally.total > 0}
+          <MedalTally {tally} compact />
+        {/if}
         <Labels labels={member.labels ? member.labels : []} />
         <ParticipantFrequency streak={member.streak} isPresent={member.isPresent} />
       </dd>

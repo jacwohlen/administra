@@ -13,6 +13,7 @@
   import utils from '$lib/utils';
   import { supabaseClient } from '$lib/supabase';
   import { _ } from 'svelte-i18n';
+  import RecentAchievements from '$lib/components/RecentAchievements.svelte';
 
   let date: Dayjs = utils.getMostRecentDateByWeekday(dayjs().day());
   const dateFormat = 'YYYY-MM-DD';
@@ -106,7 +107,7 @@
 </section>
 
 <!-- Today's Events Section -->
-<section>
+<section class="mb-6">
   {#if todayEvents.length > 0}
     <ul class="flex flex-col gap-2">
       {#each todayEvents as event (event.id)}
@@ -152,4 +153,9 @@
       {/each}
     </ul>
   {/if}
+</section>
+
+<!-- Recent Achievements Section -->
+<section>
+  <RecentAchievements />
 </section>

@@ -1,6 +1,6 @@
 import { supabaseClient } from '$lib/supabase';
 import { error as err } from '@sveltejs/kit';
-import type { Member } from '$lib/models';
+import type { Member, MemberMedal } from '$lib/models';
 
 export async function load({ params, parent }) {
   const { event } = await parent();
@@ -45,6 +45,12 @@ export async function load({ params, parent }) {
     throw err(404, logsError);
   }
 
+  // Medals recorded for this event (tournament placements)
+  const { data: medalsData } = await supabaseClient
+    .from('member_medals')
+    .select('*')
+    .eq('eventId', params.eventId);
+
   // Get all members for adding new participants
   const { error: membersError, data: membersData } = await supabaseClient
     .from('members')
@@ -59,6 +65,7 @@ export async function load({ params, parent }) {
     event,
     participants: participantsData || [],
     logs: logsData || [],
+    medals: (medalsData as MemberMedal[]) || [],
     allMembers: (membersData as Member[]) || []
   };
 }
