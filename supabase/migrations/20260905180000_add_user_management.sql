@@ -347,7 +347,10 @@ RETURNS void LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
 DECLARE
     v_member record;
 BEGIN
-    IF NOT public.is_writer() THEN
+    -- Only gate calls that arrive with a user JWT (PostgREST / RPC). Direct SQL
+    -- sessions such as seed.sql or the service role have no auth.uid() and pass.
+    -- anon has EXECUTE revoked above, so it never reaches this check.
+    IF auth.uid() IS NOT NULL AND NOT public.is_writer() THEN
         RAISE EXCEPTION 'NOT_ALLOWED' USING HINT = 'Trainer or admin role required.';
     END IF;
     FOR v_member IN SELECT id FROM public.members LOOP
