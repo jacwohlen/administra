@@ -225,6 +225,13 @@ DROP POLICY IF EXISTS members_update_all ON public.members;
 DROP POLICY IF EXISTS members_delete_all ON public.members;
 CREATE POLICY members_read   ON public.members FOR SELECT TO authenticated USING (public.is_approved_user());
 CREATE POLICY members_insert ON public.members FOR INSERT TO authenticated WITH CHECK (public.is_writer());
+-- Public trial registration form (/probetraining) submits without a login. Allow that
+-- single shape only: a fresh trial candidate carrying exactly the 'probetraining' label.
+CREATE POLICY members_insert_trial ON public.members FOR INSERT TO anon, authenticated
+  WITH CHECK (
+    labels = '["probetraining"]'::jsonb
+    AND "trialRegisteredAt" IS NOT NULL
+  );
 CREATE POLICY members_update ON public.members FOR UPDATE TO authenticated USING (public.is_writer()) WITH CHECK (public.is_writer());
 CREATE POLICY members_delete ON public.members FOR DELETE TO authenticated USING (public.is_writer());
 
