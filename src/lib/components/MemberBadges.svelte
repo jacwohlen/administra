@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { Badge, BadgeProgress } from '$lib/models';
-  import { groupBadgesWithProgress, progressPercent } from '$lib/badgeUtils';
+  import { badgeKey, badgeSuffix, groupBadgesWithProgress, progressPercent } from '$lib/badgeUtils';
   import { _ } from 'svelte-i18n';
 
   let { badges, progress = [] }: { badges: Badge[]; progress?: BadgeProgress[] } = $props();
@@ -21,13 +21,17 @@
           </p>
           {#if group.badges.length > 0}
             <div class="flex flex-wrap gap-2" class:mb-2={group.next}>
-              {#each group.badges as badge (badge.badgeId)}
+              {#each group.badges as badge (badgeKey(badge))}
+                {@const suffix = badgeSuffix(badge)}
                 <span
                   class="chip preset-tonal-primary text-sm"
                   title={$_('badges.' + badge.badgeId + '.description')}
                 >
                   <span>{badge.emoji}</span>
                   <span>{$_('badges.' + badge.badgeId + '.name')}</span>
+                  {#if suffix}
+                    <span class="opacity-70">{suffix}</span>
+                  {/if}
                 </span>
               {/each}
             </div>

@@ -1,8 +1,9 @@
 <script lang="ts">
-  import type { NewBadge } from '$lib/models';
+  import type { Badge } from '$lib/models';
+  import { badgeKey, badgeSuffix } from '$lib/badgeUtils';
   import { _ } from 'svelte-i18n';
 
-  let { badges, memberName }: { badges: NewBadge[]; memberName: string } = $props();
+  let { badges, memberName }: { badges: Badge[]; memberName: string } = $props();
   let visible = $state(true);
 
   function dismiss() {
@@ -41,13 +42,17 @@
       <h2 class="mb-1">{$_('badges.celebration.title')}</h2>
       <p class="font-bold mb-3">{memberName}</p>
       <div class="flex flex-wrap justify-center gap-2 mb-4">
-        {#each badges as b}
+        {#each badges as b (badgeKey(b))}
+          {@const suffix = badgeSuffix(b)}
           <span
             class="chip preset-tonal-primary"
             title={$_('badges.' + b.badgeId + '.description')}
           >
             <span>{b.emoji}</span>
             <span>{$_('badges.' + b.badgeId + '.name')}</span>
+            {#if suffix}
+              <span class="opacity-70">{suffix}</span>
+            {/if}
           </span>
         {/each}
       </div>

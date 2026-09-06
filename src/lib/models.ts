@@ -103,6 +103,10 @@ export interface Badge {
   emoji: string;
   sortOrder: number;
   earnedAt: string;
+  /** Calendar year for season badges, 0 for lifetime badges */
+  season: number;
+  /** Section for per-section season badges, empty otherwise */
+  context: string;
 }
 
 export interface BadgeLeaderboardEntry {
@@ -135,13 +139,8 @@ export interface RecentAchievement {
   emoji: string;
   category: string;
   earnedAt: string;
-}
-
-export interface NewBadge {
-  badgeId: string;
-  emoji: string;
-  category: string;
-  earnedAt: string;
+  season: number;
+  context: string;
 }
 
 export interface TrainerTrackingRecord {

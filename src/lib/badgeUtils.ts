@@ -1,11 +1,22 @@
 import type { Badge, BadgeProgress } from '$lib/models';
 
-const CATEGORY_ORDER = ['top_performer', 'attendance', 'streak', 'trainer', 'event'];
+const CATEGORY_ORDER = ['season', 'attendance', 'streak', 'trainer', 'event'];
 
 export interface BadgeCategoryGroup {
   category: string;
   badges: Badge[];
   next?: BadgeProgress;
+}
+
+/** A badge earned in several seasons is several rows; key by all three parts. */
+export function badgeKey(b: Pick<Badge, 'badgeId' | 'season' | 'context'>): string {
+  return `${b.badgeId}:${b.season ?? 0}:${b.context ?? ''}`;
+}
+
+/** "Judo 2026" for a per-section season badge, "2026" for a season badge, "" for lifetime. */
+export function badgeSuffix(b: Pick<Badge, 'season' | 'context'>): string {
+  if (!b.season) return '';
+  return b.context ? `${b.context} ${b.season}` : `${b.season}`;
 }
 
 export function getTopBadges(badges: Badge[], count = 2): Badge[] {
@@ -26,9 +37,19 @@ export function groupBadgesByCategory(badges: Badge[]): { category: string; badg
 }
 
 /**
+ * Lifetime badges read as a progression, lowest to highest.
+ * Season badges read as a record, newest year first and most prestigious first within a year.
+ */
+function compareBadges(a: Badge, b: Badge): number {
+  const sa = a.season ?? 0;
+  const sb = b.season ?? 0;
+  if (sa !== sb) return sb - sa;
+  return sa === 0 ? a.sortOrder - b.sortOrder : b.sortOrder - a.sortOrder;
+}
+
+/**
  * Merge earned badges and next-badge progress into one list per category.
- * Earned badges are ordered lowest to highest so the row reads as a progression,
- * and a category appears if it has either earned badges or a next badge to work toward.
+ * A category appears if it has either earned badges or a next badge to work toward.
  */
 export function groupBadgesWithProgress(
   badges: Badge[],
@@ -44,7 +65,7 @@ export function groupBadgesWithProgress(
 
   return CATEGORY_ORDER.filter((c) => earned.has(c) || next.has(c)).map((c) => ({
     category: c,
-    badges: [...(earned.get(c) ?? [])].sort((a, b) => a.sortOrder - b.sortOrder),
+    badges: [...(earned.get(c) ?? [])].sort(compareBadges),
     next: next.get(c)
   }));
 }

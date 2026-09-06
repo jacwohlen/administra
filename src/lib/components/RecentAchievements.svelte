@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { RecentAchievement } from '$lib/models';
+  import { badgeSuffix } from '$lib/badgeUtils';
   import { supabaseClient } from '$lib/supabase';
   import { _ } from 'svelte-i18n';
   import dayjs from 'dayjs';
@@ -41,6 +42,7 @@
           <dd class="text-sm text-surface-600-400 truncate">
             {$_('badges.recentAchievements.earned')}
             {$_('badges.' + a.badgeId + '.name')}
+            {badgeSuffix(a)}
           </dd>
         </span>
         <span class="text-xs text-surface-600-400 flex-none">

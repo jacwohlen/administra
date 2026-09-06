@@ -1,13 +1,21 @@
 import { describe, it, expect } from 'vitest';
-import { groupBadgesWithProgress, progressPercent } from './badgeUtils';
+import { badgeKey, badgeSuffix, groupBadgesWithProgress, progressPercent } from './badgeUtils';
 import type { Badge, BadgeProgress } from './models';
 
-const badge = (badgeId: string, category: string, sortOrder: number): Badge => ({
+const badge = (
+  badgeId: string,
+  category: string,
+  sortOrder: number,
+  season = 0,
+  context = ''
+): Badge => ({
   badgeId,
   category,
   emoji: 'x',
   sortOrder,
-  earnedAt: '2026-01-01T00:00:00Z'
+  earnedAt: '2026-01-01T00:00:00Z',
+  season,
+  context
 });
 
 const next = (category: string, current: number, threshold: number): BadgeProgress => ({
@@ -19,7 +27,7 @@ const next = (category: string, current: number, threshold: number): BadgeProgre
 });
 
 describe('groupBadgesWithProgress', () => {
-  it('orders earned badges lowest to highest within a category', () => {
+  it('orders lifetime badges lowest to highest within a category', () => {
     const groups = groupBadgesWithProgress(
       [badge('attendance_25', 'attendance', 20), badge('attendance_10', 'attendance', 10)],
       []
@@ -37,14 +45,31 @@ describe('groupBadgesWithProgress', () => {
     expect(groups[0].next?.next_threshold).toBe(3);
   });
 
-  it('keeps the fixed category order and attaches progress to earned groups', () => {
+  it('puts the season group first and orders it newest year, then most prestigious', () => {
     const groups = groupBadgesWithProgress(
-      [badge('streak_5', 'streak', 15), badge('top_3', 'top_performer', 55)],
-      [next('attendance', 25, 50), next('streak', 9, 10)]
+      [
+        badge('streak_5', 'streak', 15),
+        badge('season_regular', 'season', 38, 2026),
+        badge('top_3', 'season', 55, 2025, 'Judo'),
+        badge('top_3', 'season', 55, 2026, 'Judo')
+      ],
+      [next('attendance', 25, 50), next('season', 25, 40)]
     );
-    expect(groups.map((g) => g.category)).toEqual(['top_performer', 'attendance', 'streak']);
-    expect(groups[2].badges.map((b) => b.badgeId)).toEqual(['streak_5']);
-    expect(groups[2].next?.current_count).toBe(9);
+    expect(groups.map((g) => g.category)).toEqual(['season', 'attendance', 'streak']);
+    expect(groups[0].badges.map(badgeKey)).toEqual([
+      'top_3:2026:Judo',
+      'season_regular:2026:',
+      'top_3:2025:Judo'
+    ]);
+    expect(groups[0].next?.next_threshold).toBe(40);
+  });
+});
+
+describe('badgeSuffix', () => {
+  it('names the section and year for season badges only', () => {
+    expect(badgeSuffix(badge('top_3', 'season', 55, 2026, 'Judo'))).toBe('Judo 2026');
+    expect(badgeSuffix(badge('season_regular', 'season', 38, 2026))).toBe('2026');
+    expect(badgeSuffix(badge('attendance_10', 'attendance', 10))).toBe('');
   });
 });
 

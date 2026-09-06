@@ -300,7 +300,7 @@
       "streak": "Streaks",
       "trainer": "Trainer",
       "event": "Events",
-      "top_performer": "Top Performer"
+      "season": "Season"
     },
     "attendance_10": {
       "name": "Beginner",
@@ -358,9 +358,25 @@
       "name": "Champion",
       "description": "Attended 25 events"
     },
+    "attendance_500": {
+      "name": "Legend",
+      "description": "Attended 500 training sessions"
+    },
     "top_3": {
-      "name": "Top Performer",
-      "description": "Ranked in the top 3 of a section"
+      "name": "Top 3",
+      "description": "Among the three most active members of a section that year"
+    },
+    "most_improved": {
+      "name": "Most Improved",
+      "description": "Biggest increase in sessions over the previous year in a section"
+    },
+    "season_regular": {
+      "name": "Season Regular",
+      "description": "40 training sessions in one year"
+    },
+    "coach_of_year": {
+      "name": "Coach of the Year",
+      "description": "Led the most training sessions in a section that year"
     },
     "progress": {
       "of": "of"

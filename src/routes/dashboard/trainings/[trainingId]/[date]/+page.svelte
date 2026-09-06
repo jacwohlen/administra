@@ -1,10 +1,11 @@
 <script lang="ts">
   import type { PageData } from './$types';
   import type { MMember } from './types';
-  import type { Member, NewBadge } from '$lib/models';
+  import type { Badge, Member } from '$lib/models';
   import type { TrainerRole } from '$lib/models';
   import ParticipantCard from './ParticipantCard.svelte';
   import BadgeCelebration from '$lib/components/BadgeCelebration.svelte';
+  import { badgeKey } from '$lib/badgeUtils';
   import Fa from 'svelte-fa';
   import {
     faArrowLeft,
@@ -28,8 +29,15 @@
   let searchterm = $state('');
   let animateList = $state(true);
   let showLessonPlan = $state(false);
-  let celebrationBadges: NewBadge[] = $state([]);
+  let celebrationBadges: Badge[] = $state([]);
   let celebrationMemberName = $state('');
+
+  async function fetchBadges(memberId: string): Promise<Badge[]> {
+    const { data: rows } = await supabaseClient.rpc('get_member_badges', {
+      p_member_id: parseInt(memberId)
+    });
+    return Array.isArray(rows) ? (rows as Badge[]) : [];
+  }
 
   let filteredData: MMember[] = $state([]);
   let presentParticipants = $derived(filteredData.filter((p) => p.isPresent));
@@ -82,6 +90,10 @@
     data.participants[index].trainerRole = trainerRole;
     clearSearch();
 
+    // Badges are awarded by a database trigger inside the log insert, so the
+    // badges present afterwards but not before are exactly the new ones.
+    const before = checked ? new Set((await fetchBadges(member.id)).map(badgeKey)) : null;
+
     const { error } = await supabaseClient
       .from('logs')
       .delete()
@@ -101,14 +113,11 @@
       });
       if (error) {
         console.log(error);
-      } else {
-        // Check for newly earned badges (awarded by DB trigger)
-        const { data: newBadges } = await supabaseClient.rpc('get_new_badges_for_member', {
-          p_member_id: parseInt(member.id)
-        });
-        if (Array.isArray(newBadges) && newBadges.length > 0) {
+      } else if (before) {
+        const fresh = (await fetchBadges(member.id)).filter((b) => !before.has(badgeKey(b)));
+        if (fresh.length > 0) {
           celebrationMemberName = `${member.firstname} ${member.lastname}`;
-          celebrationBadges = newBadges as NewBadge[];
+          celebrationBadges = fresh;
         }
       }
     }
