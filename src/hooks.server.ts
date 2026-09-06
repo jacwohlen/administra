@@ -41,7 +41,14 @@ export const handle: Handle = async ({ event, resolve }) => {
     locale.set(lang);
   }
 
+  // The public trial registration form is German-first (see its +page.ts);
+  // everything else follows the request's language.
+  const documentLang = event.url.pathname.startsWith('/probetraining')
+    ? 'de'
+    : (lang?.split('-')[0] ?? 'en');
+
   return resolve(event, {
+    transformPageChunk: ({ html }) => html.replace('%lang%', documentLang),
     filterSerializedResponseHeaders(name) {
       return name === 'content-range' || name === 'x-supabase-api-version';
     }

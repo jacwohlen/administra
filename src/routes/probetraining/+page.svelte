@@ -1,9 +1,12 @@
 <script lang="ts">
-  import { _ } from 'svelte-i18n';
+  import { _, locale } from 'svelte-i18n';
   import Fa from 'svelte-fa';
-  import { faSpinner, faCheck } from '@fortawesome/free-solid-svg-icons';
+  import { faSpinner, faCheck, faArrowUpRightFromSquare } from '@fortawesome/free-solid-svg-icons';
   import { supabaseClient } from '$lib/supabase';
-  import LogoImage from '../LogoImage.svelte';
+  import ClubLogo from '$lib/components/ClubLogo.svelte';
+  import { setPublicLocale } from '$lib/publicLocale';
+
+  const CLUB_URL = 'https://jacwohlen.ch';
 
   let firstname = $state('');
   let lastname = $state('');
@@ -62,28 +65,65 @@
   }
 </script>
 
+<svelte:head>
+  <title>{$_('page.trialRegistration.title')}</title>
+  <meta name="description" content={$_('page.trialRegistration.metaDescription')} />
+  <meta property="og:title" content={$_('page.trialRegistration.title')} />
+  <meta property="og:description" content={$_('page.trialRegistration.metaDescription')} />
+  <meta property="og:type" content="website" />
+</svelte:head>
+
 <div class="max-w-lg mx-auto px-4 py-8">
-  <div class="flex flex-col items-center mb-6">
-    <LogoImage />
-    <h1 class="mt-4">{$_('page.trialRegistration.title')}</h1>
-    <p class="text-center text-surface-600-400 mt-2">
-      {$_('page.trialRegistration.subtitle')}
-    </p>
+  <div class="flex justify-end mb-2">
+    <div class="flex items-center gap-1 text-xs" role="group" aria-label="Sprache / Language">
+      <button
+        type="button"
+        class="btn btn-sm {$locale?.startsWith('de')
+          ? 'preset-filled-primary-500'
+          : 'preset-tonal-surface'}"
+        aria-pressed={$locale?.startsWith('de')}
+        onclick={() => setPublicLocale('de')}
+      >
+        DE
+      </button>
+      <button
+        type="button"
+        class="btn btn-sm {$locale?.startsWith('en')
+          ? 'preset-filled-primary-500'
+          : 'preset-tonal-surface'}"
+        aria-pressed={$locale?.startsWith('en')}
+        onclick={() => setPublicLocale('en')}
+      >
+        EN
+      </button>
+    </div>
   </div>
 
   {#if submitted}
     <div class="card p-6 text-center space-y-4">
       <div class="flex justify-center">
-        <div
-          class="size-14 rounded-full bg-success-500/10 text-success-600-400 flex items-center justify-center"
+        <span
+          class="size-14 rounded-full preset-filled-primary-500 flex items-center justify-center"
         >
           <Fa icon={faCheck} size="2x" />
-        </div>
+        </span>
       </div>
-      <h2>{$_('page.trialRegistration.successTitle')}</h2>
+      <h1>{$_('page.trialRegistration.successTitle')}</h1>
       <p class="text-surface-600-400">{$_('page.trialRegistration.successMessage')}</p>
+      <a class="btn preset-tonal-surface" href={CLUB_URL} target="_blank" rel="noopener noreferrer">
+        <span>{$_('page.trialRegistration.backToWebsite')}</span>
+        <Fa icon={faArrowUpRightFromSquare} size="xs" />
+      </a>
     </div>
   {:else}
+    <div class="flex flex-col items-center mb-6">
+      <ClubLogo class="h-24 w-auto" />
+      <h1 class="mt-4 text-center">{$_('page.trialRegistration.title')}</h1>
+      <p class="text-center text-surface-600-400 mt-2">
+        {$_('page.trialRegistration.subtitle')}
+      </p>
+    </div>
+
     <form
       class="card p-6 space-y-4"
       onsubmit={(e: SubmitEvent) => {

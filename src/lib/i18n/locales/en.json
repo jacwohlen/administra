@@ -255,7 +255,10 @@
       "successMessage": "We've received your registration and will be in touch shortly to schedule your trial training.",
       "validation": {
         "required": "Please fill in first name, last name, date of birth, and email."
-      }
+      },
+      "logoAlt": "Club logo",
+      "metaDescription": "Sign up for a free, no-obligation trial training session – Judo and Aikido in Wohlen.",
+      "backToWebsite": "To the club website"
     },
     "probetraining": {
       "title": "Trial Training",

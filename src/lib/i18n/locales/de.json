@@ -255,7 +255,10 @@
       "successMessage": "Deine Anmeldung ist bei uns eingegangen. Wir melden uns in Kürze mit einem Termin für dein Probetraining.",
       "validation": {
         "required": "Bitte Vorname, Nachname, Geburtsdatum und E-Mail ausfüllen."
-      }
+      },
+      "logoAlt": "Vereinslogo",
+      "metaDescription": "Melde dich unverbindlich für ein Probetraining an – Judo und Aikido in Wohlen.",
+      "backToWebsite": "Zur Vereinswebsite"
     },
     "probetraining": {
       "title": "Probetraining",
