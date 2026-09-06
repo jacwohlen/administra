@@ -42,10 +42,8 @@
         birthday,
         email: email.trim(),
         mobile: mobile.trim() || null,
-        notes:
-          [section ? `Sektion: ${section}` : null, notes.trim() || null]
-            .filter(Boolean)
-            .join('\n') || null,
+        trialSection: section || null,
+        notes: notes.trim() || null,
         labels: ['probetraining'],
         trialRegisteredAt: new Date().toISOString()
       });

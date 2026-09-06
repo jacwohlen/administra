@@ -1,11 +1,17 @@
 <script lang="ts">
   import { _ } from 'svelte-i18n';
   import Fa from 'svelte-fa';
-  import { faSpinner, faWandMagicSparkles } from '@fortawesome/free-solid-svg-icons';
+  import {
+    faSpinner,
+    faWandMagicSparkles,
+    faXmark,
+    faPlus
+  } from '@fortawesome/free-solid-svg-icons';
   import { supabaseClient } from '$lib/supabase';
   import { toaster } from '$lib/toast';
   import { invalidate } from '$app/navigation';
   import { calculateAge } from '$lib/utils';
+  import { splitTrainingsByAge } from '$lib/trialUtils';
   import type { Training, TrialMember } from '$lib/models';
 
   let {
@@ -21,122 +27,163 @@
   } = $props();
 
   let age = $derived(calculateAge(member.birthday));
+  let assignedList = $derived(trainings.filter((t) => assignedTrainingIds.has(Number(t.id))));
+  let split = $derived(splitTrainingsByAge(trainings, age, assignedTrainingIds));
 
-  let sorted = $derived.by(() => {
-    const suggested: Training[] = [];
-    const others: Training[] = [];
-    for (const t of trainings) {
-      if (assignedTrainingIds.has(Number(t.id))) continue;
-      const matches =
-        age !== null &&
-        t.ageFrom !== undefined &&
-        t.ageFrom !== null &&
-        t.ageTo !== undefined &&
-        t.ageTo !== null &&
-        age >= t.ageFrom &&
-        age <= t.ageTo;
-      if (matches) suggested.push(t);
-      else others.push(t);
-    }
-    return { suggested, others };
-  });
-
-  let submitting = $state(false);
+  let busy = $state(false);
 
   async function assign(trainingId: string | number) {
-    submitting = true;
+    busy = true;
     try {
-      const { error } = await supabaseClient.from('participants').insert({
-        trainingId: Number(trainingId),
-        memberId: member.id
-      });
+      const { error } = await supabaseClient
+        .from('participants')
+        .insert({ trainingId: Number(trainingId), memberId: member.id });
       if (error) throw error;
       toaster.success({ title: $_('page.probetraining.assignSuccess') });
       await invalidate('probetraining:list');
       onclose();
     } catch (e) {
-      console.error(e);
+      console.error('Error assigning training:', e);
       toaster.error({ title: $_('page.probetraining.assignError') });
     } finally {
-      submitting = false;
+      busy = false;
+    }
+  }
+
+  async function unassign(trainingId: string | number) {
+    busy = true;
+    try {
+      const { error } = await supabaseClient
+        .from('participants')
+        .delete()
+        .eq('trainingId', Number(trainingId))
+        .eq('memberId', member.id);
+      if (error) throw error;
+      toaster.success({ title: $_('page.probetraining.removeSuccess') });
+      await invalidate('probetraining:list');
+      onclose();
+    } catch (e) {
+      console.error('Error removing training assignment:', e);
+      toaster.error({ title: $_('page.probetraining.removeError') });
+    } finally {
+      busy = false;
     }
   }
 </script>
 
 <div class="space-y-4">
-  <h3>{$_('page.probetraining.assignTitle')}</h3>
-  <p class="text-sm text-surface-600-400">
-    {member.firstname}
-    {member.lastname}{#if age !== null}
-      · {$_('page.probetraining.ageLabel')}: {age}
-    {/if}
-  </p>
+  <header>
+    <h3>{$_('page.probetraining.manageTitle')}</h3>
+    <p class="text-sm text-surface-600-400">
+      {member.firstname}
+      {member.lastname}{#if age !== null}
+        · {age} {$_('page.probetraining.yearsOld')}{/if}
+    </p>
+  </header>
 
-  {#if sorted.suggested.length > 0}
-    <div>
-      <div class="flex items-center gap-2 mb-2 text-sm font-semibold">
-        <Fa icon={faWandMagicSparkles} />
-        <span>{$_('page.probetraining.suggestedTrainings')}</span>
-      </div>
-      <ul class="space-y-2">
-        {#each sorted.suggested as t (t.id)}
-          <li class="list-item border border-primary-500/40 rounded-md px-3">
-            <span class="list-item-content">
-              <dt class="font-bold truncate">{t.title}</dt>
-              <dd class="text-xs text-surface-600-400">
-                {$_('weekday.' + t.weekday)} · {t.dateFrom} · {t.section} · {t.ageFrom}–{t.ageTo}
-              </dd>
-            </span>
-            <button
-              class="btn preset-filled-primary-500 flex-shrink-0"
-              disabled={submitting}
-              onclick={() => assign(t.id)}
-            >
-              {$_('page.probetraining.assign')}
-            </button>
-          </li>
-        {/each}
-      </ul>
-    </div>
-  {/if}
-
-  <div>
-    <div class="mb-2 text-sm font-semibold">
-      {$_('page.probetraining.otherTrainings')}
-    </div>
-    {#if sorted.others.length === 0}
-      <p class="text-sm text-surface-600-400">{$_('page.probetraining.noOtherTrainings')}</p>
-    {:else}
-      <ul class="space-y-2">
-        {#each sorted.others as t (t.id)}
-          <li class="list-item">
-            <span class="list-item-content">
-              <dt class="font-bold truncate">{t.title}</dt>
-              <dd class="text-xs text-surface-600-400">
-                {$_('weekday.' + t.weekday)} · {t.dateFrom} · {t.section}{#if t.ageFrom != null && t.ageTo != null}
-                  · {t.ageFrom}–{t.ageTo}
-                {/if}
-              </dd>
-            </span>
-            <button
-              class="btn preset-tonal-primary flex-shrink-0"
-              disabled={submitting}
-              onclick={() => assign(t.id)}
-            >
-              {$_('page.probetraining.assign')}
-            </button>
-          </li>
-        {/each}
-      </ul>
+  <div class="max-h-[60vh] overflow-y-auto space-y-4 pr-1">
+    {#if assignedList.length > 0}
+      <section>
+        <h4 class="text-sm font-semibold mb-2">{$_('page.probetraining.assignedTrainings')}</h4>
+        <ul class="space-y-1">
+          {#each assignedList as t (t.id)}
+            <li class="flex items-center gap-2 rounded-md bg-surface-100-900 px-3 py-2">
+              <span class="flex-1 min-w-0">
+                <span class="font-medium block truncate">{t.title}</span>
+                <span class="text-xs text-surface-600-400">
+                  {$_('weekday.' + t.weekday)} · {t.dateFrom} · {t.section}
+                </span>
+              </span>
+              <button
+                class="btn-icon preset-tonal-error flex-shrink-0"
+                disabled={busy}
+                title={$_('button.remove')}
+                aria-label="{$_('button.remove')}: {t.title}"
+                onclick={() => unassign(t.id)}
+              >
+                <Fa icon={faXmark} />
+              </button>
+            </li>
+          {/each}
+        </ul>
+      </section>
     {/if}
+
+    <section>
+      <h4 class="text-sm font-semibold mb-2 flex items-center gap-2">
+        <Fa icon={faWandMagicSparkles} size="xs" />
+        {$_('page.probetraining.suggestedTrainings')}
+      </h4>
+      {#if split.suggested.length === 0}
+        <p class="text-xs text-surface-600-400">
+          {age === null
+            ? $_('page.probetraining.noBirthday')
+            : $_('page.probetraining.noSuggestion')}
+        </p>
+      {:else}
+        <ul class="space-y-1">
+          {#each split.suggested as t (t.id)}
+            <li
+              class="flex items-center gap-2 rounded-md border border-primary-500/50 bg-primary-500/5 px-3 py-2"
+            >
+              <span class="flex-1 min-w-0">
+                <span class="font-medium block truncate">{t.title}</span>
+                <span class="text-xs text-surface-600-400">
+                  {$_('weekday.' + t.weekday)} · {t.dateFrom} · {t.section} · {t.ageFrom}–{t.ageTo}
+                  {$_('page.probetraining.yearsOld')}
+                </span>
+              </span>
+              <button
+                class="btn btn-sm preset-filled-primary-500 flex-shrink-0"
+                disabled={busy}
+                onclick={() => assign(t.id)}
+              >
+                <Fa icon={faPlus} size="xs" />
+                <span>{$_('page.probetraining.assign')}</span>
+              </button>
+            </li>
+          {/each}
+        </ul>
+      {/if}
+    </section>
+
+    <section>
+      <h4 class="text-sm font-semibold mb-2">{$_('page.probetraining.otherTrainings')}</h4>
+      {#if split.others.length === 0}
+        <p class="text-xs text-surface-600-400">{$_('page.probetraining.noOtherTrainings')}</p>
+      {:else}
+        <ul class="space-y-1">
+          {#each split.others as t (t.id)}
+            <li class="flex items-center gap-2 px-3 py-2">
+              <span class="flex-1 min-w-0">
+                <span class="font-medium block truncate">{t.title}</span>
+                <span class="text-xs text-surface-600-400">
+                  {$_('weekday.' + t.weekday)} · {t.dateFrom} · {t.section}{#if t.ageFrom != null && t.ageTo != null}
+                    · {t.ageFrom}–{t.ageTo}
+                    {$_('page.probetraining.yearsOld')}{/if}
+                </span>
+              </span>
+              <button
+                class="btn btn-sm preset-tonal-primary flex-shrink-0"
+                disabled={busy}
+                onclick={() => assign(t.id)}
+              >
+                <Fa icon={faPlus} size="xs" />
+                <span>{$_('page.probetraining.assign')}</span>
+              </button>
+            </li>
+          {/each}
+        </ul>
+      {/if}
+    </section>
   </div>
 
-  <footer class="flex justify-end gap-2">
-    <button class="btn preset-tonal-surface" disabled={submitting} onclick={onclose}>
-      {$_('button.cancel')}
-    </button>
-    {#if submitting}
-      <span class="btn"><Fa icon={faSpinner} spin /></span>
+  <footer class="flex justify-end items-center gap-2">
+    {#if busy}
+      <Fa icon={faSpinner} spin />
     {/if}
+    <button class="btn preset-tonal-surface" disabled={busy} onclick={onclose}>
+      {$_('button.close')}
+    </button>
   </footer>
 </div>

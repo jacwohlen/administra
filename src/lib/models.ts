@@ -10,6 +10,7 @@ export interface Member {
   mobile?: string;
   email?: string;
   notes?: string;
+  trialSection?: string;
   trialRegisteredAt?: string;
   labels?: string[];
   img?: string;
@@ -37,6 +38,7 @@ export interface TrialMember {
   mobile?: string;
   notes?: string;
   labels: string[];
+  trialSection?: string;
   trialRegisteredAt?: string;
   attendedCount: number;
 }
