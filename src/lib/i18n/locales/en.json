@@ -25,23 +25,18 @@
       "disabledMessage": "Your account has been disabled. Please contact an administrator."
     },
     "users": {
-      "title": "User management",
-      "subtitle": "Approve users, change roles, and link users to members.",
-      "empty": "No users found.",
-      "unlinked": "— not linked —",
+      "title": "Users",
+      "searchPlaceholder": "Search users...",
+      "empty": "No users found",
+      "unlinked": "No member linked",
+      "roleLabel": "Role",
+      "memberLabel": "Linked member",
       "you": "You",
       "selfLocked": "You cannot change your own role or status",
       "pendingCount": "{count} users waiting for approval",
       "error": {
         "lastAdmin": "The last administrator cannot be removed",
         "memberTaken": "This member is already linked to another user"
-      },
-      "cols": {
-        "user": "User",
-        "status": "Status",
-        "role": "Role",
-        "member": "Member",
-        "actions": "Actions"
       },
       "status": {
         "pending": "Pending",

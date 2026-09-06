@@ -25,23 +25,18 @@
       "disabledMessage": "Dein Konto wurde deaktiviert. Bitte wende dich an einen Administrator."
     },
     "users": {
-      "title": "Benutzerverwaltung",
-      "subtitle": "Freigaben, Rollen und Verknüpfung mit Mitgliedern verwalten.",
-      "empty": "Keine Benutzer gefunden.",
-      "unlinked": "— nicht verknüpft —",
+      "title": "Benutzer",
+      "searchPlaceholder": "Benutzer suchen...",
+      "empty": "Keine Benutzer gefunden",
+      "unlinked": "Kein Mitglied verknüpft",
+      "roleLabel": "Rolle",
+      "memberLabel": "Verknüpftes Mitglied",
       "you": "Du",
       "selfLocked": "Eigene Rolle und Status können nicht geändert werden",
       "pendingCount": "{count} Benutzer warten auf Freigabe",
       "error": {
         "lastAdmin": "Der letzte Administrator kann nicht entfernt werden",
         "memberTaken": "Dieses Mitglied ist bereits mit einem anderen Benutzer verknüpft"
-      },
-      "cols": {
-        "user": "Benutzer",
-        "status": "Status",
-        "role": "Rolle",
-        "member": "Mitglied",
-        "actions": "Aktionen"
       },
       "status": {
         "pending": "Ausstehend",
