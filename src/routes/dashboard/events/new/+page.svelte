@@ -4,6 +4,7 @@
   import { _ } from 'svelte-i18n';
   import Fa from 'svelte-fa';
   import { faSave, faArrowLeft } from '@fortawesome/free-solid-svg-icons';
+  import { clubConfig } from '$lib/clubConfig';
 
   let title = '';
   let description = '';
@@ -17,7 +18,7 @@
   let loading = $state(false);
   let error = $state('');
 
-  const sections = ['Judo', 'Aikido']; // Should match existing sections
+  const sections = clubConfig.sections;
 
   async function createEvent() {
     if (!title || !date || !section) {

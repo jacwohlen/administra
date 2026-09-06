@@ -55,6 +55,11 @@ PUBLIC_SUPABASE_ANON_KEY="your-supabase-anon-key"
 PUBLIC_MODE="DEV"  # Use "PROD" for production
 ```
 
+These are required. Club-specific settings (name, website, logo, sections,
+trial threshold, default language) are optional `PUBLIC_CLUB_*` variables
+with sensible defaults — see `.env.example` for the full list and
+`src/lib/clubConfig.ts` for how they are parsed.
+
 4. Set up the Supabase database (see [Database Setup](#database-setup) below)
 
 5. Start the development server:
@@ -140,6 +145,8 @@ src/
 │   ├── i18n/              # Internationalization files
 │   ├── test/              # Test setup and utilities
 │   ├── models.ts          # TypeScript type definitions
+│   ├── clubConfig.ts      # Club settings for the app (reads PUBLIC_CLUB_* env)
+│   ├── clubConfigParser.ts # Pure parsing and defaults, unit-tested
 │   ├── supabase.ts        # Supabase client configuration
 │   ├── utils.ts           # Shared utility functions
 │   ├── statsUtils.ts      # Statistics grouping and year param logic
@@ -248,6 +255,11 @@ npm run build
    - `PUBLIC_SUPABASE_DATABASE_URL`
    - `PUBLIC_SUPABASE_ANON_KEY`
    - `PUBLIC_MODE` (set to "PROD")
+
+   Optionally, to override a club setting for a specific deploy context
+   (production vs. deploy previews), add any of the `PUBLIC_CLUB_*` /
+   `PUBLIC_TRIAL_*` / `PUBLIC_DEFAULT_LOCALE` variables listed in
+   `.env.example`. Unset variables keep their defaults.
 
 ### Preview branches and database deployments
 
