@@ -289,6 +289,10 @@
   "badges": {
     "title": "Abzeichen",
     "noBadges": "Noch keine Abzeichen verdient",
+    "howItWorks": {
+      "summary": "Wie funktionieren Abzeichen?",
+      "text": "Abzeichen werden automatisch aus den Anwesenheiten vergeben: für besuchte Trainings, Trainings in Folge, geleitete Trainings und Events. Jede Reihe ist eine Leiter. Gefüllte Felder sind verdient, der Ring zeigt den Fortschritt zur nächsten Stufe, graue Stufen kommen noch. Saison-Abzeichen starten jedes Jahr neu und behalten das Jahr, in dem sie gewonnen wurden. Tippe auf ein Abzeichen, um zu sehen, wofür es steht."
+    },
     "refreshAll": "Abzeichen aktualisieren",
     "refreshing": "Aktualisiere...",
     "refreshSuccess": "Abzeichen erfolgreich aktualisiert",

@@ -289,6 +289,10 @@
   "badges": {
     "title": "Badges",
     "noBadges": "No badges earned yet",
+    "howItWorks": {
+      "summary": "How do badges work?",
+      "text": "Badges are awarded automatically from check-ins: for training sessions attended, sessions in a row, sessions coached, and events. Each row is a ladder. Filled tiles are earned, the ring shows progress toward the next tier, and grey tiers are still ahead. Season badges start fresh every year and keep the year they were won. Tap a badge to see what it stands for."
+    },
     "refreshAll": "Refresh Badges",
     "refreshing": "Refreshing...",
     "refreshSuccess": "Badges refreshed successfully",
