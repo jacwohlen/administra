@@ -101,6 +101,9 @@ jobs:
       - uses: supabase/setup-cli@v1
         with:
           version: latest
+          # Resolving "latest" hits the GitHub API; without a token the runner's
+          # shared unauthenticated quota can be exhausted and the job dies in setup.
+          github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Create env file
         run: |
