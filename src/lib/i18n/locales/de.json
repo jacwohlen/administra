@@ -256,9 +256,9 @@
       "validation": {
         "required": "Bitte Vorname, Nachname, Geburtsdatum und E-Mail ausfüllen."
       },
-      "logoAlt": "Vereinslogo",
       "metaDescription": "Melde dich unverbindlich für ein Probetraining an – Judo und Aikido in Wohlen.",
-      "backToWebsite": "Zur Vereinswebsite"
+      "backToWebsite": "Zur Vereinswebsite",
+      "contactHint": "Fragen vorab? Schreib uns:"
     },
     "probetraining": {
       "title": "Probetraining",

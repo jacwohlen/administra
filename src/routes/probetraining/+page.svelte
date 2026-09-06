@@ -3,10 +3,9 @@
   import Fa from 'svelte-fa';
   import { faSpinner, faCheck, faArrowUpRightFromSquare } from '@fortawesome/free-solid-svg-icons';
   import { supabaseClient } from '$lib/supabase';
+  import { clubConfig } from '$lib/clubConfig';
   import ClubLogo from '$lib/components/ClubLogo.svelte';
   import { setPublicLocale } from '$lib/publicLocale';
-
-  const CLUB_URL = 'https://jacwohlen.ch';
 
   let firstname = $state('');
   let lastname = $state('');
@@ -22,7 +21,7 @@
   let submitted = $state(false);
   let error = $state('');
 
-  const sections = ['Judo', 'Aikido'];
+  const sections = clubConfig.sections;
 
   async function submit() {
     error = '';
@@ -66,9 +65,10 @@
 </script>
 
 <svelte:head>
-  <title>{$_('page.trialRegistration.title')}</title>
+  <title>{clubConfig.name} – {$_('page.trialRegistration.title')}</title>
   <meta name="description" content={$_('page.trialRegistration.metaDescription')} />
-  <meta property="og:title" content={$_('page.trialRegistration.title')} />
+  <meta property="og:site_name" content={clubConfig.name} />
+  <meta property="og:title" content="{clubConfig.name} – {$_('page.trialRegistration.title')}" />
   <meta property="og:description" content={$_('page.trialRegistration.metaDescription')} />
   <meta property="og:type" content="website" />
 </svelte:head>
@@ -116,9 +116,17 @@
         </div>
         <h1>{$_('page.trialRegistration.successTitle')}</h1>
         <p class="text-surface-600-400">{$_('page.trialRegistration.successMessage')}</p>
+        {#if clubConfig.contactEmail}
+          <p class="text-sm text-surface-600-400">
+            {$_('page.trialRegistration.contactHint')}
+            <a class="underline" href="mailto:{clubConfig.contactEmail}">
+              {clubConfig.contactEmail}
+            </a>
+          </p>
+        {/if}
         <a
           class="btn preset-tonal-surface"
-          href={CLUB_URL}
+          href={clubConfig.url}
           target="_blank"
           rel="noopener noreferrer"
         >
@@ -129,7 +137,10 @@
     {:else}
       <div class="flex flex-col items-center mb-6">
         <ClubLogo class="h-24 w-auto" />
-        <h1 class="mt-4 text-center">{$_('page.trialRegistration.title')}</h1>
+        <p class="mt-3 text-sm font-semibold tracking-wide text-surface-700-300">
+          {clubConfig.name}
+        </p>
+        <h1 class="mt-2 text-center">{$_('page.trialRegistration.title')}</h1>
         <p class="text-center text-surface-600-400 mt-2">
           {$_('page.trialRegistration.subtitle')}
         </p>
@@ -208,7 +219,7 @@
           <span>{$_('page.trialRegistration.section')}</span>
           <select class="select" bind:value={section}>
             <option value="">{$_('page.trialRegistration.sectionPlaceholder')}</option>
-            {#each sections as s}
+            {#each sections as s (s)}
               <option value={s}>{s}</option>
             {/each}
           </select>

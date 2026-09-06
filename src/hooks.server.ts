@@ -2,6 +2,7 @@ import { PUBLIC_SUPABASE_ANON_KEY, PUBLIC_SUPABASE_DATABASE_URL } from '$env/sta
 import { createServerClient } from '@supabase/ssr';
 import type { Handle } from '@sveltejs/kit';
 import { locale } from 'svelte-i18n';
+import { clubConfig } from '$lib/clubConfig';
 
 export const handle: Handle = async ({ event, resolve }) => {
   event.locals.supabase = createServerClient(
@@ -44,7 +45,7 @@ export const handle: Handle = async ({ event, resolve }) => {
   // The public trial registration form is German-first (see its +page.ts);
   // everything else follows the request's language.
   const documentLang = event.url.pathname.startsWith('/probetraining')
-    ? 'de'
+    ? clubConfig.defaultLocale
     : (lang?.split('-')[0] ?? 'en');
 
   return resolve(event, {

@@ -13,6 +13,7 @@
   } from '@fortawesome/free-solid-svg-icons';
   import { calculateAge } from '$lib/utils';
   import { trialStatus, type TrialStatus } from '$lib/trialUtils';
+  import { clubConfig } from '$lib/clubConfig';
   import AssignTrainingDialog from './AssignTrainingDialog.svelte';
   import type { TrialMember, Training } from '$lib/models';
   import dayjs from 'dayjs';
@@ -46,7 +47,9 @@
     data.trialMembers.filter((m) => (assignmentsByMember.get(m.id) ?? []).length === 0).length
   );
   let convertCount = $derived(
-    data.trialMembers.filter((m) => trialStatus(m.attendedCount) === 'convert').length
+    data.trialMembers.filter(
+      (m) => trialStatus(m.attendedCount, clubConfig.trialSessionThreshold) === 'convert'
+    ).length
   );
 
   let visibleMembers = $derived.by(() => {
@@ -54,7 +57,8 @@
     return data.trialMembers.filter((m) => {
       if (q && !`${m.firstname} ${m.lastname}`.toLowerCase().includes(q)) return false;
       if (filter === 'unassigned') return (assignmentsByMember.get(m.id) ?? []).length === 0;
-      if (filter === 'convert') return trialStatus(m.attendedCount) === 'convert';
+      if (filter === 'convert')
+        return trialStatus(m.attendedCount, clubConfig.trialSessionThreshold) === 'convert';
       return true;
     });
   });
@@ -131,7 +135,7 @@
       {#each visibleMembers as m (m.id)}
         {@const age = calculateAge(m.birthday)}
         {@const assigned = assignedTrainings(m.id)}
-        {@const status = trialStatus(m.attendedCount)}
+        {@const status = trialStatus(m.attendedCount, clubConfig.trialSessionThreshold)}
         {@const isOpen = expandedId === m.id}
         <li
           class="border-b border-surface-300-700 last:border-b-0 border-l-4 {status === 'convert'

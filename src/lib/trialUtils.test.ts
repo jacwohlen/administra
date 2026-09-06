@@ -1,10 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import {
-  TRIAL_SESSION_THRESHOLD,
-  trialStatus,
-  trainingMatchesAge,
-  splitTrainingsByAge
-} from './trialUtils';
+import { trialStatus, trainingMatchesAge, splitTrainingsByAge } from './trialUtils';
 import type { Training } from './models';
 
 function training(partial: Partial<Training> & { id: string }): Training {
@@ -20,18 +15,26 @@ function training(partial: Partial<Training> & { id: string }): Training {
 }
 
 describe('trialStatus', () => {
+  const threshold = 3;
+
   it('reports no attendance yet', () => {
-    expect(trialStatus(0)).toBe('none');
+    expect(trialStatus(0, threshold)).toBe('none');
   });
 
   it('reports an ongoing trial below the threshold', () => {
-    expect(trialStatus(1)).toBe('active');
-    expect(trialStatus(TRIAL_SESSION_THRESHOLD - 1)).toBe('active');
+    expect(trialStatus(1, threshold)).toBe('active');
+    expect(trialStatus(threshold - 1, threshold)).toBe('active');
   });
 
   it('flags conversion once the threshold is reached', () => {
-    expect(trialStatus(TRIAL_SESSION_THRESHOLD)).toBe('convert');
-    expect(trialStatus(TRIAL_SESSION_THRESHOLD + 5)).toBe('convert');
+    expect(trialStatus(threshold, threshold)).toBe('convert');
+    expect(trialStatus(threshold + 5, threshold)).toBe('convert');
+  });
+
+  it('respects whatever threshold is configured', () => {
+    expect(trialStatus(3, 5)).toBe('active');
+    expect(trialStatus(5, 5)).toBe('convert');
+    expect(trialStatus(1, 1)).toBe('convert');
   });
 });
 

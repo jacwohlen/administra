@@ -1,15 +1,16 @@
 import type { Training } from './models';
 
-/**
- * How many trial sessions a candidate may attend before they are expected to
- * sign up as a proper member. Reaching it flags the candidate in the overview.
- */
-export const TRIAL_SESSION_THRESHOLD = 3;
-
 export type TrialStatus = 'none' | 'active' | 'convert';
 
-export function trialStatus(attendedCount: number): TrialStatus {
-  if (attendedCount >= TRIAL_SESSION_THRESHOLD) return 'convert';
+/**
+ * Where a candidate stands in their trial. `threshold` is the number of
+ * sessions after which they are expected to sign up as a member — the
+ * configured value is `clubConfig.trialSessionThreshold`. It is passed in
+ * rather than imported here so this module stays free of SvelteKit runtime
+ * imports and can be unit-tested without mocking.
+ */
+export function trialStatus(attendedCount: number, threshold: number): TrialStatus {
+  if (attendedCount >= threshold) return 'convert';
   if (attendedCount <= 0) return 'none';
   return 'active';
 }
