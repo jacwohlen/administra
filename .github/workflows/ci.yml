@@ -18,7 +18,16 @@ jobs:
           node-version: 20
           cache: npm
 
-      - run: npm ci
+      - name: Install dependencies
+        # The supabase package downloads its CLI binary in postinstall; retry so
+        # one dropped connection on the runner does not fail the whole job.
+        run: |
+          for attempt in 1 2 3; do
+            npm ci && break
+            if [ "$attempt" = 3 ]; then exit 1; fi
+            echo "npm ci failed (attempt $attempt), retrying in 15s"
+            sleep 15
+          done
 
       - name: Create env file
         run: |
@@ -46,7 +55,16 @@ jobs:
           node-version: 20
           cache: npm
 
-      - run: npm ci
+      - name: Install dependencies
+        # The supabase package downloads its CLI binary in postinstall; retry so
+        # one dropped connection on the runner does not fail the whole job.
+        run: |
+          for attempt in 1 2 3; do
+            npm ci && break
+            if [ "$attempt" = 3 ]; then exit 1; fi
+            echo "npm ci failed (attempt $attempt), retrying in 15s"
+            sleep 15
+          done
 
       - name: Create env file
         run: |
@@ -69,7 +87,16 @@ jobs:
           node-version: 20
           cache: npm
 
-      - run: npm ci
+      - name: Install dependencies
+        # The supabase package downloads its CLI binary in postinstall; retry so
+        # one dropped connection on the runner does not fail the whole job.
+        run: |
+          for attempt in 1 2 3; do
+            npm ci && break
+            if [ "$attempt" = 3 ]; then exit 1; fi
+            echo "npm ci failed (attempt $attempt), retrying in 15s"
+            sleep 15
+          done
 
       - name: Create env file
         run: |
@@ -133,7 +160,16 @@ jobs:
           node-version: 20
           cache: npm
 
-      - run: npm ci
+      - name: Install dependencies
+        # The supabase package downloads its CLI binary in postinstall; retry so
+        # one dropped connection on the runner does not fail the whole job.
+        run: |
+          for attempt in 1 2 3; do
+            npm ci && break
+            if [ "$attempt" = 3 ]; then exit 1; fi
+            echo "npm ci failed (attempt $attempt), retrying in 15s"
+            sleep 15
+          done
 
       - name: Create env file
         run: |
