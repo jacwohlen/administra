@@ -98,16 +98,13 @@
           </p>
           <div class="overflow-x-auto -mx-1 px-1 pb-1">
             <div class="trail">
-              {#each trail.steps as step, i (step.def.id)}
+              {#each trail.steps as step (step.def.id)}
                 <div
                   class="step {step.state}"
                   title="{$_('badges.' + step.def.id + '.name')}: {$_(
                     'badges.' + step.def.id + '.description'
                   )}"
                 >
-                  {#if i > 0}
-                    <span class="line" class:done={trail.steps[i - 1].state === 'done'}></span>
-                  {/if}
                   <div class="tile" style:--pct="{step.pct}%">
                     <span>{step.def.emoji}</span>
                   </div>
@@ -145,17 +142,6 @@
     gap: 0.25rem;
     width: 3.5rem;
     flex: none;
-  }
-  .line {
-    position: absolute;
-    left: -50%;
-    top: calc(1.25rem - 1px);
-    width: 100%;
-    height: 2px;
-    background: var(--color-surface-200-800);
-  }
-  .line.done {
-    background: var(--color-primary-500);
   }
   .tile {
     position: relative;
