@@ -30,27 +30,78 @@
   let trails = $derived(hasTrails ? buildBadgeTrails(definitions, badges, progress) : []);
   let isEmpty = $derived(!seasonGroup && otherGroups.length === 0 && trails.length === 0);
 
-  // Tapping a badge reveals its name and description under its row.
-  // Keyed by category plus badge so the same badge id in two seasons stays distinct.
-  let selected: string | null = $state(null);
+  // One tooltip for the whole card. It is positioned against the viewport because
+  // the trail rows scroll horizontally and would clip anything hanging outside them.
+  // Hover shows it transiently; a tap pins it until the next tap or a tap elsewhere.
+  interface Tip {
+    key: string;
+    badgeId: string;
+    current?: number;
+    threshold?: number | null;
+    x: number;
+    y: number;
+    below: boolean;
+  }
+  let tip: Tip | null = $state(null);
+  let pinned = $state(false);
 
-  function toggle(key: string) {
-    selected = selected === key ? null : key;
+  function place(
+    el: HTMLElement,
+    key: string,
+    badgeId: string,
+    current?: number,
+    threshold?: number | null
+  ): Tip {
+    const r = el.getBoundingClientRect();
+    const below = r.top < 96;
+    const half = 128;
+    const x = Math.min(Math.max(r.left + r.width / 2, half + 8), window.innerWidth - half - 8);
+    return { key, badgeId, current, threshold, x, y: below ? r.bottom + 8 : r.top - 8, below };
+  }
+
+  function hover(
+    el: HTMLElement,
+    key: string,
+    badgeId: string,
+    current?: number,
+    threshold?: number | null
+  ) {
+    if (!pinned) tip = place(el, key, badgeId, current, threshold);
+  }
+
+  function leave() {
+    if (!pinned) tip = null;
+  }
+
+  function tap(
+    el: HTMLElement,
+    key: string,
+    badgeId: string,
+    current?: number,
+    threshold?: number | null
+  ) {
+    if (pinned && tip?.key === key) {
+      pinned = false;
+      tip = null;
+      return;
+    }
+    pinned = true;
+    tip = place(el, key, badgeId, current, threshold);
+  }
+
+  function dismiss() {
+    pinned = false;
+    tip = null;
+  }
+
+  function onWindowClick(e: MouseEvent) {
+    if (pinned && !(e.target as HTMLElement).closest('[data-badge-tip]')) dismiss();
   }
 </script>
 
-{#snippet detail(badgeId: string, current?: number, threshold?: number | null)}
-  <p class="text-sm mt-2">
-    <span class="font-semibold">{$_('badges.' + badgeId + '.name')}</span>
-    <span class="text-surface-600-400">
-      {$_('badges.' + badgeId + '.description')}{#if current !== undefined && threshold}
-        · {current} {$_('badges.progress.of')} {threshold}{/if}
-    </span>
-  </p>
-{/snippet}
+<svelte:window onclick={onWindowClick} onscrollcapture={dismiss} onresize={dismiss} />
 
 {#snippet chipGroup(group: BadgeCategoryGroup)}
-  {@const picked = group.badges.find((b) => selected === group.category + ':' + badgeKey(b))}
   <div>
     <p class="text-sm font-medium text-surface-600-400 mb-1.5">
       {$_('badges.category.' + group.category)}
@@ -63,10 +114,11 @@
           <button
             type="button"
             class="chip preset-tonal-primary text-sm"
-            class:ring-2={selected === key}
-            class:ring-primary-500={selected === key}
-            aria-pressed={selected === key}
-            onclick={() => toggle(key)}
+            data-badge-tip
+            aria-label={$_('badges.' + badge.badgeId + '.description')}
+            onmouseenter={(e) => hover(e.currentTarget, key, badge.badgeId)}
+            onmouseleave={leave}
+            onclick={(e) => tap(e.currentTarget, key, badge.badgeId)}
           >
             <span>{badge.emoji}</span>
             <span>{$_('badges.' + badge.badgeId + '.name')}</span>
@@ -79,7 +131,10 @@
     {/if}
     {#if group.next}
       {@const pct = progressPercent(group.next)}
-      <div class="text-sm text-surface-600-400">
+      <div
+        class="text-sm text-surface-600-400"
+        title={$_('badges.' + group.next.next_badge_id + '.description')}
+      >
         <div class="flex items-center justify-between gap-2 mb-1">
           <span class="truncate">
             <span class="opacity-60">{group.next.next_badge_emoji}</span>
@@ -99,20 +154,11 @@
         </div>
       </div>
     {/if}
-    {#if picked}
-      {@render detail(picked.badgeId)}
-    {/if}
   </div>
 {/snippet}
 
 <div>
   <h3>{$_('badges.title')}</h3>
-  <details class="mb-3 text-sm">
-    <summary class="cursor-pointer text-surface-600-400 select-none">
-      {$_('badges.howItWorks.summary')}
-    </summary>
-    <p class="mt-1 text-surface-600-400">{$_('badges.howItWorks.text')}</p>
-  </details>
   {#if isEmpty}
     <p class="text-surface-600-400">{$_('badges.noBadges')}</p>
   {:else}
@@ -122,7 +168,6 @@
       {/if}
 
       {#each trails as trail (trail.category)}
-        {@const picked = trail.steps.find((s) => selected === trail.category + ':' + s.def.id)}
         <div>
           <p class="text-sm font-medium text-surface-600-400 mb-1.5">
             {$_('badges.category.' + trail.category)}
@@ -131,13 +176,18 @@
             <div class="trail">
               {#each trail.steps as step (step.def.id)}
                 {@const key = trail.category + ':' + step.def.id}
+                {@const current = step.state === 'next' ? step.current : undefined}
                 <button
                   type="button"
                   class="step {step.state}"
-                  class:selected={selected === key}
-                  aria-pressed={selected === key}
+                  class:pinned={pinned && tip?.key === key}
+                  data-badge-tip
                   aria-label={$_('badges.' + step.def.id + '.name')}
-                  onclick={() => toggle(key)}
+                  onmouseenter={(e) =>
+                    hover(e.currentTarget, key, step.def.id, current, step.def.threshold)}
+                  onmouseleave={leave}
+                  onclick={(e) =>
+                    tap(e.currentTarget, key, step.def.id, current, step.def.threshold)}
                 >
                   <div class="tile" style:--pct="{step.pct}%">
                     <span>{step.def.emoji}</span>
@@ -153,13 +203,6 @@
               {/each}
             </div>
           </div>
-          {#if picked}
-            {@render detail(
-              picked.def.id,
-              picked.state === 'next' ? picked.current : undefined,
-              picked.def.threshold
-            )}
-          {/if}
         </div>
       {/each}
 
@@ -169,6 +212,23 @@
     </div>
   {/if}
 </div>
+
+{#if tip}
+  <div
+    class="tip"
+    class:below={tip.below}
+    role="tooltip"
+    style:left="{tip.x}px"
+    style:top="{tip.y}px"
+    data-badge-tip
+  >
+    <span class="font-semibold">{$_('badges.' + tip.badgeId + '.name')}</span>
+    <span class="tip-text">
+      {$_('badges.' + tip.badgeId + '.description')}{#if tip.current !== undefined && tip.threshold}
+        · {tip.current} {$_('badges.progress.of')} {tip.threshold}{/if}
+    </span>
+  </div>
+{/if}
 
 <style>
   /* Sized to its tiles so the background line ends at the last tile, not the card edge */
@@ -202,6 +262,7 @@
     font: inherit;
     color: inherit;
     cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
   }
   .step:focus-visible .tile {
     outline: 2px solid var(--color-primary-500);
@@ -243,7 +304,7 @@
     filter: grayscale(1);
     font-size: 1rem;
   }
-  .step.selected .tile {
+  .step.pinned .tile {
     box-shadow:
       0 0 0 3px var(--color-surface-50-950),
       0 0 0 5px var(--color-primary-500);
@@ -261,5 +322,28 @@
   .step.lock .lbl {
     font-weight: 500;
     opacity: 0.7;
+  }
+
+  /* Tooltip: dark on light and light on dark, centred on the badge */
+  .tip {
+    position: fixed;
+    z-index: 60;
+    transform: translate(-50%, -100%);
+    max-width: 16rem;
+    padding: 0.5rem 0.75rem;
+    border-radius: var(--radius-container, 0.75rem);
+    background: var(--color-surface-950-50);
+    color: var(--color-surface-50-950);
+    font-size: 0.8rem;
+    line-height: 1.35;
+    box-shadow: 0 10px 25px -5px rgb(0 0 0 / 0.3);
+    pointer-events: none;
+  }
+  .tip.below {
+    transform: translate(-50%, 0);
+  }
+  .tip-text {
+    display: block;
+    opacity: 0.85;
   }
 </style>
