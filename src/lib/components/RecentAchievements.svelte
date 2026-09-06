@@ -1,6 +1,9 @@
 <script lang="ts">
   import type { RecentAchievement } from '$lib/models';
-  import { badgeSuffix } from '$lib/badgeUtils';
+  import { badgeKey, badgeSuffix } from '$lib/badgeUtils';
+  import { hoverTip, isPinned, leaveTip, tapTip } from '$lib/badgeTip.svelte';
+  import BadgeTile from './BadgeTile.svelte';
+  import BadgeTooltip from './BadgeTooltip.svelte';
   import { supabaseClient } from '$lib/supabase';
   import { _ } from 'svelte-i18n';
   import dayjs from 'dayjs';
@@ -29,9 +32,20 @@
   <p class="text-surface-600-400">{$_('badges.recentAchievements.noAchievements')}</p>
 {:else}
   <ul class="flex flex-col gap-2">
-    {#each achievements as a}
+    {#each achievements as a (a.memberId + ':' + badgeKey(a))}
+      {@const key = a.memberId + ':' + badgeKey(a)}
       <li class="list-item">
-        <span class="text-xl flex-none">{a.emoji}</span>
+        <button
+          type="button"
+          class="badge-btn"
+          data-badge-tip
+          aria-label={$_('badges.' + a.badgeId + '.description')}
+          onmouseenter={(e) => hoverTip(e.currentTarget, key, a.badgeId)}
+          onmouseleave={leaveTip}
+          onclick={(e) => tapTip(e.currentTarget, key, a.badgeId)}
+        >
+          <BadgeTile emoji={a.emoji} pinned={isPinned(key)} />
+        </button>
         <span class="list-item-content">
           <dt class="font-bold truncate">
             <a href="/dashboard/members/{a.memberId}" class="hover:underline">
@@ -52,3 +66,21 @@
     {/each}
   </ul>
 {/if}
+
+<BadgeTooltip />
+
+<style>
+  .badge-btn {
+    flex: none;
+    background: none;
+    border: 0;
+    padding: 0;
+    cursor: pointer;
+    border-radius: 9999px;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .badge-btn:focus-visible {
+    outline: 2px solid var(--color-primary-500);
+    outline-offset: 2px;
+  }
+</style>

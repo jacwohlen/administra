@@ -9,6 +9,9 @@
     TRAIL_CATEGORIES,
     type BadgeCategoryGroup
   } from '$lib/badgeUtils';
+  import { hoverTip, isPinned, leaveTip, tapTip } from '$lib/badgeTip.svelte';
+  import BadgeTile from './BadgeTile.svelte';
+  import BadgeTooltip from './BadgeTooltip.svelte';
   import { _ } from 'svelte-i18n';
 
   let {
@@ -29,77 +32,7 @@
   );
   let trails = $derived(hasTrails ? buildBadgeTrails(definitions, badges, progress) : []);
   let isEmpty = $derived(!seasonGroup && otherGroups.length === 0 && trails.length === 0);
-
-  // One tooltip for the whole card. It is positioned against the viewport because
-  // the trail rows scroll horizontally and would clip anything hanging outside them.
-  // Hover shows it transiently; a tap pins it until the next tap or a tap elsewhere.
-  interface Tip {
-    key: string;
-    badgeId: string;
-    current?: number;
-    threshold?: number | null;
-    x: number;
-    y: number;
-    below: boolean;
-  }
-  let tip: Tip | null = $state(null);
-  let pinned = $state(false);
-
-  function place(
-    el: HTMLElement,
-    key: string,
-    badgeId: string,
-    current?: number,
-    threshold?: number | null
-  ): Tip {
-    const r = el.getBoundingClientRect();
-    const below = r.top < 96;
-    const half = 128;
-    const x = Math.min(Math.max(r.left + r.width / 2, half + 8), window.innerWidth - half - 8);
-    return { key, badgeId, current, threshold, x, y: below ? r.bottom + 8 : r.top - 8, below };
-  }
-
-  function hover(
-    el: HTMLElement,
-    key: string,
-    badgeId: string,
-    current?: number,
-    threshold?: number | null
-  ) {
-    if (!pinned) tip = place(el, key, badgeId, current, threshold);
-  }
-
-  function leave() {
-    if (!pinned) tip = null;
-  }
-
-  function tap(
-    el: HTMLElement,
-    key: string,
-    badgeId: string,
-    current?: number,
-    threshold?: number | null
-  ) {
-    if (pinned && tip?.key === key) {
-      pinned = false;
-      tip = null;
-      return;
-    }
-    pinned = true;
-    tip = place(el, key, badgeId, current, threshold);
-  }
-
-  function dismiss() {
-    pinned = false;
-    tip = null;
-  }
-
-  function onWindowClick(e: MouseEvent) {
-    if (pinned && !(e.target as HTMLElement).closest('[data-badge-tip]')) dismiss();
-  }
 </script>
-
-<svelte:window onclick={onWindowClick} onscrollcapture={dismiss} onresize={dismiss} />
 
 {#snippet chipGroup(group: BadgeCategoryGroup)}
   <div>
@@ -116,9 +49,9 @@
             class="chip preset-tonal-primary text-sm"
             data-badge-tip
             aria-label={$_('badges.' + badge.badgeId + '.description')}
-            onmouseenter={(e) => hover(e.currentTarget, key, badge.badgeId)}
-            onmouseleave={leave}
-            onclick={(e) => tap(e.currentTarget, key, badge.badgeId)}
+            onmouseenter={(e) => hoverTip(e.currentTarget, key, badge.badgeId)}
+            onmouseleave={leaveTip}
+            onclick={(e) => tapTip(e.currentTarget, key, badge.badgeId)}
           >
             <span>{badge.emoji}</span>
             <span>{$_('badges.' + badge.badgeId + '.name')}</span>
@@ -180,18 +113,20 @@
                 <button
                   type="button"
                   class="step {step.state}"
-                  class:pinned={pinned && tip?.key === key}
                   data-badge-tip
                   aria-label={$_('badges.' + step.def.id + '.name')}
                   onmouseenter={(e) =>
-                    hover(e.currentTarget, key, step.def.id, current, step.def.threshold)}
-                  onmouseleave={leave}
+                    hoverTip(e.currentTarget, key, step.def.id, current, step.def.threshold)}
+                  onmouseleave={leaveTip}
                   onclick={(e) =>
-                    tap(e.currentTarget, key, step.def.id, current, step.def.threshold)}
+                    tapTip(e.currentTarget, key, step.def.id, current, step.def.threshold)}
                 >
-                  <div class="tile" style:--pct="{step.pct}%">
-                    <span>{step.def.emoji}</span>
-                  </div>
+                  <BadgeTile
+                    emoji={step.def.emoji}
+                    status={step.state}
+                    pct={step.pct}
+                    pinned={isPinned(key)}
+                  />
                   <span class="lbl">
                     {#if step.state === 'next'}
                       {step.current} / {step.def.threshold}
@@ -213,22 +148,7 @@
   {/if}
 </div>
 
-{#if tip}
-  <div
-    class="tip"
-    class:below={tip.below}
-    role="tooltip"
-    style:left="{tip.x}px"
-    style:top="{tip.y}px"
-    data-badge-tip
-  >
-    <span class="font-semibold">{$_('badges.' + tip.badgeId + '.name')}</span>
-    <span class="tip-text">
-      {$_('badges.' + tip.badgeId + '.description')}{#if tip.current !== undefined && tip.threshold}
-        · {tip.current} {$_('badges.progress.of')} {tip.threshold}{/if}
-    </span>
-  </div>
-{/if}
+<BadgeTooltip />
 
 <style>
   /* Sized to its tiles so the background line ends at the last tile, not the card edge */
@@ -264,50 +184,10 @@
     cursor: pointer;
     -webkit-tap-highlight-color: transparent;
   }
-  .step:focus-visible .tile {
+  .step:focus-visible {
     outline: 2px solid var(--color-primary-500);
     outline-offset: 2px;
-  }
-  .tile {
-    position: relative;
-    z-index: 1;
-    width: 2.5rem;
-    height: 2.5rem;
-    border-radius: 9999px;
-    display: grid;
-    place-items: center;
-    font-size: 1.15rem;
-    line-height: 1;
-  }
-  .tile > span {
-    width: 100%;
-    height: 100%;
-    border-radius: 9999px;
-    display: grid;
-    place-items: center;
-  }
-  .step.done .tile {
-    background: var(--color-primary-50-950);
-    border: 2px solid var(--color-primary-500);
-  }
-  .step.next .tile {
-    background: conic-gradient(var(--color-primary-500) var(--pct), var(--color-surface-200-800) 0);
-  }
-  .step.next .tile > span {
-    width: calc(100% - 6px);
-    height: calc(100% - 6px);
-    background: var(--color-surface-50-950);
-  }
-  .step.lock .tile {
-    background: var(--color-surface-200-800);
-    opacity: 0.5;
-    filter: grayscale(1);
-    font-size: 1rem;
-  }
-  .step.pinned .tile {
-    box-shadow:
-      0 0 0 3px var(--color-surface-50-950),
-      0 0 0 5px var(--color-primary-500);
+    border-radius: 0.5rem;
   }
   .lbl {
     font-size: 0.68rem;
@@ -322,28 +202,5 @@
   .step.lock .lbl {
     font-weight: 500;
     opacity: 0.7;
-  }
-
-  /* Tooltip: dark on light and light on dark, centred on the badge */
-  .tip {
-    position: fixed;
-    z-index: 60;
-    transform: translate(-50%, -100%);
-    max-width: 16rem;
-    padding: 0.5rem 0.75rem;
-    border-radius: var(--radius-container, 0.75rem);
-    background: var(--color-surface-950-50);
-    color: var(--color-surface-50-950);
-    font-size: 0.8rem;
-    line-height: 1.35;
-    box-shadow: 0 10px 25px -5px rgb(0 0 0 / 0.3);
-    pointer-events: none;
-  }
-  .tip.below {
-    transform: translate(-50%, 0);
-  }
-  .tip-text {
-    display: block;
-    opacity: 0.85;
   }
 </style>

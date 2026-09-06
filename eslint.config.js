@@ -21,7 +21,9 @@ export default ts.config(
     }
   },
   {
-    files: ['**/*.svelte'],
+    // Rune modules (*.svelte.ts / *.svelte.js) go through the Svelte parser
+    // too, so they need the TypeScript parser handed in the same way.
+    files: ['**/*.svelte', '**/*.svelte.ts', '**/*.svelte.js'],
     languageOptions: {
       parserOptions: {
         parser: ts.parser
