@@ -13,7 +13,7 @@ export interface ClubConfig {
   name: string;
   /** The club's public website, linked from public-facing pages. */
   url: string;
-  /** Path under `static/` (or an absolute URL) of the club logo. */
+  /** Absolute URL (or a path under `static/`) of the club logo. */
   logo: string;
   /** Public address for enquiries; `null` when the club does not publish one. */
   contactEmail: string | null;
@@ -28,7 +28,7 @@ export interface ClubConfig {
 export const DEFAULT_CLUB_CONFIG: ClubConfig = {
   name: 'JAC Wohlen',
   url: 'https://jacwohlen.ch',
-  logo: '/club-logo.svg',
+  logo: 'https://jacwohlen.ch/wp-content/uploads/2019/01/jacw_logo_favicon-1-300x300.png',
   contactEmail: null,
   sections: ['Judo', 'Aikido'],
   trialSessionThreshold: 3,
