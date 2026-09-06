@@ -15,7 +15,50 @@
       "members": "Mitglieder",
       "probetraining": "Probetraining",
       "stats": "Statistik",
+      "users": "Benutzer",
       "noTrainingsToday": "Heute findet kein Training statt!"
+    },
+    "pending": {
+      "title": "Zugriff ausstehend",
+      "message": "Dein Konto wartet auf die Freigabe durch einen Administrator. Du wirst benachrichtigt, sobald dein Zugriff aktiviert wurde.",
+      "disabledTitle": "Konto deaktiviert",
+      "disabledMessage": "Dein Konto wurde deaktiviert. Bitte wende dich an einen Administrator."
+    },
+    "users": {
+      "title": "Benutzer",
+      "searchPlaceholder": "Benutzer suchen...",
+      "empty": "Keine Benutzer gefunden",
+      "unlinked": "Kein Mitglied verknüpft",
+      "roleLabel": "Rolle",
+      "memberLabel": "Verknüpftes Mitglied",
+      "you": "Du",
+      "selfLocked": "Eigene Rolle und Status können nicht geändert werden",
+      "pendingCount": "{count} Benutzer warten auf Freigabe",
+      "error": {
+        "lastAdmin": "Der letzte Administrator kann nicht entfernt werden",
+        "memberTaken": "Dieses Mitglied ist bereits mit einem anderen Benutzer verknüpft"
+      },
+      "status": {
+        "pending": "Ausstehend",
+        "approved": "Freigegeben",
+        "disabled": "Deaktiviert"
+      },
+      "role": {
+        "viewer": "Betrachter",
+        "trainer": "Trainer",
+        "admin": "Administrator"
+      },
+      "action": {
+        "approve": "Freigeben",
+        "disable": "Deaktivieren",
+        "reEnable": "Wieder aktivieren"
+      },
+      "toast": {
+        "approved": "Benutzer freigegeben",
+        "disabled": "Benutzer deaktiviert",
+        "roleChanged": "Rolle aktualisiert",
+        "memberLinked": "Mitgliedsverknüpfung aktualisiert"
+      }
     },
     "trainings": {
       "title": "Trainings",
@@ -327,7 +370,8 @@
     "creating": "Erstelle...",
     "download": "Herunterladen",
     "lightMode": "Heller Modus",
-    "darkMode": "Dunkler Modus"
+    "darkMode": "Dunkler Modus",
+    "refresh": "Aktualisieren"
   },
   "dialog": {
     "newMember": {

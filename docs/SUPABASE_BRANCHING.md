@@ -119,6 +119,13 @@ through a build wrapper (`[context.deploy-preview]` in `netlify.toml`):
   `npm run build`.
 - If no branch exists (frontend-only PR, or missing credentials), the
   build falls back to the site's configured env vars.
+- The resolved URL and key are **baked into the build**. Netlify only
+  rebuilds on a push, so anything that replaces the preview branch
+  without a new commit (closing and reopening the PR, resetting the
+  branch in the dashboard) leaves the Deploy Preview pointing at a
+  deleted project — every request fails with "Failed to fetch". After
+  such a reset, retrigger the Deploy Preview (Netlify → Deploys → the
+  PR's deploy → **Retry deploy**) or push a commit.
 
 One-time Netlify setup (Site configuration → Environment variables — done
 2026-09-05):
@@ -181,7 +188,11 @@ check directly.
 - **Rolling back on a PR**: if you amend/replace a migration that the
   preview branch already applied, reset the branch from the Supabase
   dashboard (or close and reopen the PR) to re-run all migrations from
-  scratch. Resets drop the branch's data and re-seed.
+  scratch. Resets drop the branch's data and re-seed. Both give the branch
+  a **new project ref**, so the Netlify Deploy Preview must be rebuilt
+  afterwards (see [Netlify](#netlify)); the `preview-branch` GitHub check
+  may also fail once because it briefly sees the old branch's final
+  "Supabase Preview" result — re-run that job once the new check is green.
 - **Seeding happens once**, at branch creation. Changing `seed.sql` on an
   open PR does not re-seed; reset the branch to pick it up.
 - **Manual fallback**: `supabase link --project-ref <ref> && supabase db push`

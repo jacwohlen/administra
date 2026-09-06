@@ -2,6 +2,23 @@ import type { Dayjs } from 'dayjs';
 
 export type TrainerRole = 'attendee' | 'main_trainer' | 'assistant';
 
+export type UserStatus = 'pending' | 'approved' | 'disabled';
+export type UserRole = 'viewer' | 'trainer' | 'admin';
+
+export interface UserProfile {
+  user_id: string;
+  email: string;
+  full_name?: string;
+  avatar_url?: string;
+  status: UserStatus;
+  role: UserRole;
+  member_id?: number;
+  approved_at?: string;
+  approved_by?: string;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface Member {
   id: string;
   firstname: string;

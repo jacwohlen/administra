@@ -42,6 +42,11 @@ INSERT INTO auth.identities (
   now(), now(), now()
 );
 
+-- Promote the seeded E2E user to approved admin so local dev/tests have full access
+UPDATE public.user_profiles
+SET status = 'approved', role = 'admin', approved_at = now()
+WHERE user_id = 'a1b2c3d4-e5f6-7890-abcd-ef1234567890';
+
 --
 -- Data for Name: members; Type: TABLE DATA; Schema: public; Owner: postgres
 --

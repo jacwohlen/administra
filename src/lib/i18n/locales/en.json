@@ -15,7 +15,50 @@
       "members": "Members",
       "probetraining": "Trial",
       "stats": "Stats",
+      "users": "Users",
       "noTrainingsToday": "There are no trainings happening today!"
+    },
+    "pending": {
+      "title": "Access pending",
+      "message": "Your account is waiting for approval by an administrator. You will be granted access once an admin reviews your sign-up.",
+      "disabledTitle": "Account disabled",
+      "disabledMessage": "Your account has been disabled. Please contact an administrator."
+    },
+    "users": {
+      "title": "Users",
+      "searchPlaceholder": "Search users...",
+      "empty": "No users found",
+      "unlinked": "No member linked",
+      "roleLabel": "Role",
+      "memberLabel": "Linked member",
+      "you": "You",
+      "selfLocked": "You cannot change your own role or status",
+      "pendingCount": "{count} users waiting for approval",
+      "error": {
+        "lastAdmin": "The last administrator cannot be removed",
+        "memberTaken": "This member is already linked to another user"
+      },
+      "status": {
+        "pending": "Pending",
+        "approved": "Approved",
+        "disabled": "Disabled"
+      },
+      "role": {
+        "viewer": "Viewer",
+        "trainer": "Trainer",
+        "admin": "Administrator"
+      },
+      "action": {
+        "approve": "Approve",
+        "disable": "Disable",
+        "reEnable": "Re-enable"
+      },
+      "toast": {
+        "approved": "User approved",
+        "disabled": "User disabled",
+        "roleChanged": "Role updated",
+        "memberLinked": "Member link updated"
+      }
     },
     "trainings": {
       "title": "Trainings",
@@ -327,7 +370,8 @@
     "creating": "Creating...",
     "download": "Download",
     "lightMode": "Light Mode",
-    "darkMode": "Dark Mode"
+    "darkMode": "Dark Mode",
+    "refresh": "Refresh"
   },
   "dialog": {
     "newMember": {
