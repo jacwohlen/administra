@@ -293,6 +293,8 @@
         <ParticipantCard
           member={p}
           badgeEmoji={data.badgeMap[p.id]}
+          grade={data.gradeMap[p.id]?.find((g) => g.section === data.section)}
+          medals={data.medalMap[p.id]}
           onchange={changePresence}
           onremove={removeParticipant}
         />

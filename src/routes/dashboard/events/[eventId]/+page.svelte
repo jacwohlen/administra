@@ -26,6 +26,8 @@
     isRegistrationOpen as _isRegistrationOpen,
     calculateAttendanceRate
   } from '$lib/eventUtils';
+  import type { Medal } from '$lib/models';
+  import { MEDALS, medalEmoji } from '$lib/gradeUtils';
 
   let { data }: { data: PageData } = $props();
 
@@ -60,6 +62,46 @@
 
   function getLogByMemberId(memberId: string) {
     return data.logs.find((l) => l.memberId === memberId);
+  }
+
+  function getMedalByMemberId(memberId: string) {
+    return data.medals.find((m) => String(m.memberId) === String(memberId));
+  }
+
+  /** Record, change, or clear a participant's placement at this event. */
+  async function setMedal(memberId: string, medal: Medal | null) {
+    loading = true;
+    try {
+      const existing = getMedalByMemberId(memberId);
+      let error;
+      if (existing && medal === null) {
+        ({ error } = await supabaseClient.from('member_medals').delete().eq('id', existing.id));
+      } else if (existing && medal) {
+        ({ error } = await supabaseClient
+          .from('member_medals')
+          .update({ medal })
+          .eq('id', existing.id));
+      } else if (medal) {
+        ({ error } = await supabaseClient.from('member_medals').insert({
+          memberId,
+          eventId: data.event.id,
+          competition: data.event.title,
+          date: data.event.date,
+          section: data.event.section,
+          medal
+        }));
+      } else {
+        return;
+      }
+      if (error) {
+        console.error('Error saving placement:', error);
+        toaster.error({ title: $_('medals.saveError') });
+        return;
+      }
+      await invalidateAll();
+    } finally {
+      loading = false;
+    }
   }
 
   async function onParticipantAdded() {
@@ -362,6 +404,7 @@
           {@const member = getMemberById(participant.memberId)}
           {@const log = getLogByMemberId(participant.memberId)}
           {@const hasAttended = !!log}
+          {@const placement = getMedalByMemberId(participant.memberId)}
           {#if member}
             <div
               class="flex items-center justify-between py-2 {hasAttended
@@ -391,6 +434,11 @@
                   <div class="font-medium">
                     {member.firstname}
                     {member.lastname}
+                    {#if placement}
+                      <span class="ml-1" title={$_('medals.' + placement.medal)}>
+                        {medalEmoji(placement.medal)}
+                      </span>
+                    {/if}
                     {#if log && log.isCoach}
                       <span class="badge preset-tonal-primary text-xs ml-2">
                         {$_('page.events.coach')}
@@ -407,6 +455,27 @@
               </div>
               <div class="flex items-center gap-2">
                 {#if canTrackAttendance()}
+                  <!-- Placement: record a medal for this event, once the participant has attended -->
+                  {#if hasAttended}
+                    <div
+                      class="flex rounded-lg overflow-hidden border border-surface-300-700"
+                      title={$_('medals.placement')}
+                    >
+                      {#each MEDALS as m (m)}
+                        <button
+                          class="px-2 min-h-[44px] {placement?.medal === m
+                            ? 'preset-filled-primary-500'
+                            : 'preset-tonal-surface'}"
+                          onclick={() =>
+                            setMedal(participant.memberId, placement?.medal === m ? null : m)}
+                          disabled={loading}
+                          title={$_('medals.' + m)}
+                        >
+                          {medalEmoji(m)}
+                        </button>
+                      {/each}
+                    </div>
+                  {/if}
                   <!-- Coach toggle button - only show if participant has attended -->
                   {#if hasAttended}
                     <button

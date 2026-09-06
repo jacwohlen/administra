@@ -14205,6 +14205,31 @@ INSERT INTO public.event_participants ("eventId", "memberId", "attendanceStatus"
   (2, 110, 'registered');
 
 --
+-- Gradings (belts) and medals
+--
+INSERT INTO public.member_grades ("memberId", section, grade, "examDate") VALUES
+  (103, 'Judo', '6. Kyu', '2023-12-09'),
+  (103, 'Judo', '5. Kyu', '2024-06-15'),
+  (103, 'Judo', '4. Kyu', '2024-11-30'),
+  (103, 'Judo', '3. Kyu', '2025-06-14'),
+  (103, 'Aikido', '6. Kyu', '2024-03-02'),
+  (103, 'Aikido', '5. Kyu', '2024-11-02'),
+  (107, 'Judo', '6. Kyu', '2025-06-14'),
+  (107, 'Judo', '5. Kyu', '2025-12-06'),
+  (110, 'Judo', '1. Kyu', '2019-06-15'),
+  (110, 'Judo', '1. Dan', '2021-11-27'),
+  (110, 'Judo', '2. Dan', '2025-11-29'),
+  (3337, 'Judo', '2. Kyu', '2025-06-14'),
+  (29504, 'Judo', '1. Kyu', '2025-12-06'),
+  (3268, 'Aikido', '4. Kyu', '2025-05-10');
+
+INSERT INTO public.member_medals ("memberId", "eventId", competition, date, section, medal, category) VALUES
+  (103, 5, 'Judo Turnier Frühling', '2026-03-15', 'Judo', 'silver', 'U18 -66 kg'),
+  (107, 5, 'Judo Turnier Frühling', '2026-03-15', 'Judo', 'bronze', 'U15 -50 kg'),
+  (103, NULL, 'Aargauer Meisterschaft', '2026-03-22', 'Judo', 'gold', 'U18 -66 kg'),
+  (103, NULL, 'Swiss Open Juniors', '2025-11-08', 'Judo', 'bronze', 'U18 -60 kg');
+
+--
 -- Compute badges for all seeded members
 --
 RESET app.skip_badge_refresh;

@@ -35,6 +35,15 @@ vi.mock('@sveltejs/kit', () => ({
 
 import { load } from './[eventId]/+page';
 
+// The loader queries, in order: event_participants, event_logs, member_medals, members
+function mockQueries(...results: { data: unknown; error: unknown }[]) {
+  for (const r of results) {
+    mockSupabase.from.mockReturnValueOnce(createChainFromResult(r));
+  }
+}
+
+const ok = (data: unknown = []) => ({ data, error: null });
+
 describe('event detail load', () => {
   const mockEvent = {
     id: 'evt-1',
@@ -51,10 +60,7 @@ describe('event detail load', () => {
   });
 
   it('returns event data from parent', async () => {
-    mockSupabase.from
-      .mockReturnValueOnce(createChainFromResult({ data: [], error: null }))
-      .mockReturnValueOnce(createChainFromResult({ data: [], error: null }))
-      .mockReturnValueOnce(createChainFromResult({ data: [], error: null }));
+    mockQueries(ok(), ok(), ok(), ok());
 
     const result = await load({
       params: { eventId: 'evt-1' },
@@ -65,10 +71,7 @@ describe('event detail load', () => {
   });
 
   it('queries correct tables', async () => {
-    mockSupabase.from
-      .mockReturnValueOnce(createChainFromResult({ data: [], error: null }))
-      .mockReturnValueOnce(createChainFromResult({ data: [], error: null }))
-      .mockReturnValueOnce(createChainFromResult({ data: [], error: null }));
+    mockQueries(ok(), ok(), ok(), ok());
 
     await load({
       params: { eventId: 'evt-1' },
@@ -77,18 +80,17 @@ describe('event detail load', () => {
 
     expect(mockSupabase.from).toHaveBeenCalledWith('event_participants');
     expect(mockSupabase.from).toHaveBeenCalledWith('event_logs');
+    expect(mockSupabase.from).toHaveBeenCalledWith('member_medals');
     expect(mockSupabase.from).toHaveBeenCalledWith('members');
   });
 
-  it('returns participants, logs, and allMembers', async () => {
+  it('returns participants, logs, medals, and allMembers', async () => {
     const participants = [{ id: 'p1', memberId: '1', eventId: 'evt-1' }];
     const logs = [{ id: 1, memberId: '1', eventId: 'evt-1' }];
+    const medals = [{ id: 7, memberId: 1, eventId: 1, medal: 'gold' }];
     const members = [{ id: '1', firstname: 'Alice', lastname: 'Smith' }];
 
-    mockSupabase.from
-      .mockReturnValueOnce(createChainFromResult({ data: participants, error: null }))
-      .mockReturnValueOnce(createChainFromResult({ data: logs, error: null }))
-      .mockReturnValueOnce(createChainFromResult({ data: members, error: null }));
+    mockQueries(ok(participants), ok(logs), ok(medals), ok(members));
 
     const result = await load({
       params: { eventId: 'evt-1' },
@@ -97,14 +99,12 @@ describe('event detail load', () => {
 
     expect(result.participants).toEqual(participants);
     expect(result.logs).toEqual(logs);
+    expect(result.medals).toEqual(medals);
     expect(result.allMembers).toEqual(members);
   });
 
   it('defaults to empty arrays when data is null', async () => {
-    mockSupabase.from
-      .mockReturnValueOnce(createChainFromResult({ data: null, error: null }))
-      .mockReturnValueOnce(createChainFromResult({ data: null, error: null }))
-      .mockReturnValueOnce(createChainFromResult({ data: null, error: null }));
+    mockQueries(ok(null), ok(null), ok(null), ok(null));
 
     const result = await load({
       params: { eventId: 'evt-1' },
@@ -113,13 +113,12 @@ describe('event detail load', () => {
 
     expect(result.participants).toEqual([]);
     expect(result.logs).toEqual([]);
+    expect(result.medals).toEqual([]);
     expect(result.allMembers).toEqual([]);
   });
 
   it('throws when participants query fails', async () => {
-    mockSupabase.from.mockReturnValueOnce(
-      createChainFromResult({ data: null, error: { message: 'fail' } })
-    );
+    mockQueries({ data: null, error: { message: 'fail' } });
 
     await expect(
       load({ params: { eventId: 'evt-1' }, parent: mockParent } as never)
@@ -127,9 +126,7 @@ describe('event detail load', () => {
   });
 
   it('throws when logs query fails', async () => {
-    mockSupabase.from
-      .mockReturnValueOnce(createChainFromResult({ data: [], error: null }))
-      .mockReturnValueOnce(createChainFromResult({ data: null, error: { message: 'logs fail' } }));
+    mockQueries(ok(), { data: null, error: { message: 'logs fail' } });
 
     await expect(
       load({ params: { eventId: 'evt-1' }, parent: mockParent } as never)
@@ -137,12 +134,7 @@ describe('event detail load', () => {
   });
 
   it('throws when members query fails', async () => {
-    mockSupabase.from
-      .mockReturnValueOnce(createChainFromResult({ data: [], error: null }))
-      .mockReturnValueOnce(createChainFromResult({ data: [], error: null }))
-      .mockReturnValueOnce(
-        createChainFromResult({ data: null, error: { message: 'members fail' } })
-      );
+    mockQueries(ok(), ok(), ok(), { data: null, error: { message: 'members fail' } });
 
     await expect(
       load({ params: { eventId: 'evt-1' }, parent: mockParent } as never)

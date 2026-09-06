@@ -152,6 +152,74 @@ export interface RecentAchievement {
   context: string;
 }
 
+export type Medal = 'gold' | 'silver' | 'bronze';
+
+/** One rung of a section's grade ladder */
+export interface GradeDefinition {
+  section: string;
+  grade: string;
+  gradeRank: number;
+  beltColor: string;
+  isDan: boolean;
+}
+
+/** One grading a member passed */
+export interface MemberGrade {
+  id: number;
+  memberId: number;
+  section: string;
+  grade: string;
+  examDate: string;
+  note?: string | null;
+}
+
+/** A member's current (highest) grade in one section */
+export interface MemberCurrentGrade {
+  section: string;
+  grade: string;
+  gradeRank: number;
+  beltColor: string;
+  isDan: boolean;
+  examDate: string;
+  nextGrade: string | null;
+}
+
+/** Current grade per member and section, for list views */
+export interface MemberSectionGrade {
+  memberId: number;
+  section: string;
+  grade: string;
+  gradeRank: number;
+  beltColor: string;
+  isDan: boolean;
+}
+
+export interface MemberMedal {
+  id: number;
+  memberId: number;
+  eventId: number | null;
+  competition: string;
+  date: string;
+  section?: string | null;
+  medal: Medal;
+  category?: string | null;
+}
+
+/** A past event a medal can be linked to */
+export interface PastEvent {
+  id: number;
+  title: string;
+  date: string;
+  section: string | null;
+}
+
+export interface MedalCounts {
+  memberId: number;
+  gold: number;
+  silver: number;
+  bronze: number;
+}
+
 export interface TrainerTrackingRecord {
   date: string;
   trainingId: number;

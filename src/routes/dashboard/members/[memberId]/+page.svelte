@@ -3,6 +3,11 @@
   import { _ } from 'svelte-i18n';
   import MemberLogs from './MemberLogs.svelte';
   import MemberBadges from '$lib/components/MemberBadges.svelte';
+  import MemberGrades from '$lib/components/MemberGrades.svelte';
+  import MemberMedals from '$lib/components/MemberMedals.svelte';
+  import MedalTally from '$lib/components/MedalTally.svelte';
+  import BeltStrip from '$lib/components/BeltStrip.svelte';
+  import { beltRingColor, highestGrade, medalTally } from '$lib/gradeUtils';
   import {
     faCamera,
     faEdit,
@@ -25,6 +30,15 @@
   let isEditing = false;
   let showEditFormDialog = $state(false);
   let showDeleteConfirm = $state(false);
+
+  let topGrade = $derived(highestGrade(data.currentGrades));
+  let ringColor = $derived(topGrade ? beltRingColor(topGrade.beltColor) : null);
+  let tally = $derived(medalTally(data.medals));
+  let gradeSections = $derived([...new Set(data.gradeDefinitions.map((d) => d.section))]);
+
+  function refresh() {
+    invalidate('app:member:' + data.id);
+  }
 
   async function handlePhotoChange(event: Event) {
     const input = event.target as HTMLInputElement;
@@ -283,7 +297,13 @@
   <div class="card p-4">
     <!-- Avatar + Photo buttons -->
     <div class="flex flex-col items-center mb-6">
-      <div class="relative">
+      <div
+        class="relative rounded-full"
+        style:box-shadow={ringColor
+          ? `0 0 0 3px var(--color-surface-50-950), 0 0 0 6px ${ringColor}`
+          : undefined}
+        title={topGrade ? `${topGrade.grade} ${topGrade.section}` : undefined}
+      >
         {#if data.img}
           <img
             src={data.img}
@@ -329,6 +349,24 @@
           <Fa icon={faTrash} />
         </button>
       </div>
+      {#if data.currentGrades.length > 0 || tally.total > 0}
+        <div class="flex flex-col items-center gap-2 mt-4">
+          {#if data.currentGrades.length > 0}
+            <div class="flex flex-wrap justify-center gap-x-4 gap-y-1">
+              {#each data.currentGrades as g (g.section)}
+                <span class="inline-flex items-center gap-2 text-sm" title={g.grade}>
+                  <BeltStrip color={g.beltColor} isDan={g.isDan} />
+                  <span class="font-semibold">{g.grade}</span>
+                  <span class="text-surface-600-400">{g.section}</span>
+                </span>
+              {/each}
+            </div>
+          {/if}
+          {#if tally.total > 0}
+            <MedalTally {tally} />
+          {/if}
+        </div>
+      {/if}
     </div>
 
     <!-- Member details -->
@@ -366,6 +404,24 @@
         </div>
       </div>
     </div>
+  </div>
+  <div class="card p-4">
+    <MemberGrades
+      memberId={parseInt(data.id)}
+      current={data.currentGrades}
+      history={data.gradeHistory}
+      definitions={data.gradeDefinitions}
+      onchanged={refresh}
+    />
+  </div>
+  <div class="card p-4">
+    <MemberMedals
+      memberId={parseInt(data.id)}
+      medals={data.medals}
+      events={data.pastEvents}
+      sections={gradeSections}
+      onchanged={refresh}
+    />
   </div>
   <div class="card p-4">
     <MemberBadges

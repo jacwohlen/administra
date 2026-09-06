@@ -1,6 +1,6 @@
 import type { PageLoad } from './$types';
 import type { MMember } from './types';
-import type { MemberTopBadge } from '$lib/models';
+import type { MedalCounts, MemberSectionGrade, MemberTopBadge } from '$lib/models';
 import { supabaseClient } from '$lib/supabase';
 import { error as err } from '@sveltejs/kit';
 import { buildMembersWithStreaks } from '$lib/trainingUtils';
@@ -31,7 +31,11 @@ export const load = (async ({ params }) => {
     return buildMembersWithStreaks(checklistResult.data, streakResult.data || []) as MMember[];
   }
 
-  const { data: topBadges } = await supabaseClient.rpc('get_members_top_badges');
+  const [{ data: topBadges }, { data: grades }, { data: medalCounts }] = await Promise.all([
+    supabaseClient.rpc('get_members_top_badges'),
+    supabaseClient.rpc('get_members_current_grades'),
+    supabaseClient.rpc('get_members_medal_counts')
+  ]);
 
   const badgeMap: Record<string, string> = {};
   if (Array.isArray(topBadges)) {
@@ -40,10 +44,27 @@ export const load = (async ({ params }) => {
     }
   }
 
+  // Current grade per member in every section; the page picks the training's section
+  const gradeMap: Record<string, MemberSectionGrade[]> = {};
+  if (Array.isArray(grades)) {
+    for (const g of grades as MemberSectionGrade[]) {
+      (gradeMap[g.memberId] ??= []).push(g);
+    }
+  }
+
+  const medalMap: Record<string, MedalCounts> = {};
+  if (Array.isArray(medalCounts)) {
+    for (const m of medalCounts as MedalCounts[]) {
+      medalMap[m.memberId] = m;
+    }
+  }
+
   return {
     trainingId: params.trainingId,
     date: params.date,
     participants: await getMembersWithPresentStatus(),
-    badgeMap
+    badgeMap,
+    gradeMap,
+    medalMap
   };
 }) satisfies PageLoad;

@@ -300,7 +300,9 @@
       "streak": "Serien",
       "trainer": "Trainer",
       "event": "Events",
-      "season": "Saison"
+      "season": "Saison",
+      "grade": "Graduierung",
+      "medal": "Medaillen"
     },
     "attendance_10": {
       "name": "Anfänger",
@@ -378,6 +380,22 @@
       "name": "Trainer des Jahres",
       "description": "Die meisten Trainings einer Sektion in diesem Jahr geleitet"
     },
+    "black_belt": {
+      "name": "Schwarzgurt",
+      "description": "Erste Dan-Prüfung bestanden"
+    },
+    "medalist": {
+      "name": "Medaillengewinner",
+      "description": "Erste Medaille gewonnen"
+    },
+    "podium_5": {
+      "name": "Podest-Stammgast",
+      "description": "Fünf Medaillen gewonnen"
+    },
+    "first_gold": {
+      "name": "Gold",
+      "description": "Erste Goldmedaille gewonnen"
+    },
     "progress": {
       "of": "von"
     },
@@ -390,6 +408,45 @@
       "title": "Neues Abzeichen!",
       "message": "{name} hat {badge} verdient!"
     }
+  },
+  "grades": {
+    "title": "Graduierungen",
+    "noGrades": "Noch keine Prüfung erfasst",
+    "addGrading": "Prüfung erfassen",
+    "section": "Sektion",
+    "grade": "Grad",
+    "examDate": "Prüfungsdatum",
+    "note": "Notiz",
+    "next": "Nächster",
+    "history": "Prüfungshistorie",
+    "deleteConfirm": "Diese Prüfung entfernen?",
+    "saveSuccess": "Prüfung gespeichert",
+    "saveError": "Fehler beim Speichern der Prüfung",
+    "deleteSuccess": "Prüfung entfernt",
+    "deleteError": "Fehler beim Entfernen der Prüfung"
+  },
+  "medals": {
+    "title": "Medaillen",
+    "noMedals": "Noch keine Medaillen erfasst",
+    "addMedal": "Medaille erfassen",
+    "competition": "Wettkampf",
+    "date": "Datum",
+    "section": "Sektion",
+    "category": "Kategorie",
+    "categoryPlaceholder": "z.B. U18 -66 kg",
+    "medal": "Medaille",
+    "gold": "Gold",
+    "silver": "Silber",
+    "bronze": "Bronze",
+    "placement": "Platzierung",
+    "none": "Keine",
+    "fromEvent": "Vom Event",
+    "noEvent": "Nicht mit einem Event verknüpft",
+    "deleteConfirm": "Diese Medaille entfernen?",
+    "saveSuccess": "Medaille gespeichert",
+    "saveError": "Fehler beim Speichern der Medaille",
+    "deleteSuccess": "Medaille entfernt",
+    "deleteError": "Fehler beim Entfernen der Medaille"
   },
   "weekday": {
     "Monday": "Montag",
