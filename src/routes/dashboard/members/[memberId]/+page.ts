@@ -27,15 +27,19 @@ export const load = (async ({ params, depends }) => {
   if (memberError) {
     throw err(404, memberError);
   }
-  if (memberData.img && memberData.imgUploaded) {
-    memberData.imgUploaded = dayjs(memberData.imgUploaded); // cast to dayjs for easier handling
+  const member = memberData;
+
+  // Resolve the avatar in parallel with the data queries below.
+  async function resolveAvatar() {
+    if (!member.img || !member.imgUploaded) return;
+    member.imgUploaded = dayjs(member.imgUploaded); // cast to dayjs for easier handling
 
     const { data: avatarData, error: avatarError } = await supabaseClient.storage
       .from('avatars')
-      .download(memberData.id + '_' + memberData.imgUploaded.valueOf() + '.webp');
+      .download(member.id + '_' + member.imgUploaded.valueOf() + '.webp');
 
     if (avatarData) {
-      memberData.img = await blobToURL(avatarData);
+      member.img = await blobToURL(avatarData);
     }
     if (avatarError) {
       throw err(404, avatarError);
@@ -75,14 +79,15 @@ export const load = (async ({ params, depends }) => {
       .select('id, title, date, section')
       .lte('date', today)
       .order('date', { ascending: false })
-      .limit(100)
+      .limit(100),
+    resolveAvatar()
   ]);
 
   const list = <T>(result: { data: unknown }): T[] =>
     (Array.isArray(result.data) ? result.data : []) as T[];
 
   return {
-    ...memberData,
+    ...member,
     badges: list<Badge>(badgeResult),
     badgeProgress: list<BadgeProgress>(progressResult),
     badgeDefinitions: list<BadgeDefinition>(definitionResult),

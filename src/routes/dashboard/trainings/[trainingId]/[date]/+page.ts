@@ -8,34 +8,33 @@ import { buildMembersWithStreaks } from '$lib/trainingUtils';
 const STREAK_LENGTH = 9;
 
 export const load = (async ({ params }) => {
-  async function getMembersWithPresentStatus(): Promise<MMember[]> {
-    const [checklistResult, streakResult] = await Promise.all([
-      supabaseClient
-        .rpc('get_checklist_members', {
-          d: params.date,
-          tid: params.trainingId
-        })
-        .order('lastname', { ascending: true })
-        .order('firstname', { ascending: true }),
-      supabaseClient.rpc('get_checklist_member_streak', {
-        tid: params.trainingId,
-        before_date: params.date,
-        n: STREAK_LENGTH
+  const [
+    checklistResult,
+    streakResult,
+    { data: topBadges },
+    { data: grades },
+    { data: medalCounts }
+  ] = await Promise.all([
+    supabaseClient
+      .rpc('get_checklist_members', {
+        d: params.date,
+        tid: params.trainingId
       })
-    ]);
-
-    if (checklistResult.error) {
-      throw err(404, checklistResult.error);
-    }
-
-    return buildMembersWithStreaks(checklistResult.data, streakResult.data || []) as MMember[];
-  }
-
-  const [{ data: topBadges }, { data: grades }, { data: medalCounts }] = await Promise.all([
+      .order('lastname', { ascending: true })
+      .order('firstname', { ascending: true }),
+    supabaseClient.rpc('get_checklist_member_streak', {
+      tid: params.trainingId,
+      before_date: params.date,
+      n: STREAK_LENGTH
+    }),
     supabaseClient.rpc('get_members_top_badges'),
     supabaseClient.rpc('get_members_current_grades'),
     supabaseClient.rpc('get_members_medal_counts')
   ]);
+
+  if (checklistResult.error) {
+    throw err(404, checklistResult.error);
+  }
 
   const badgeMap: Record<string, string> = {};
   if (Array.isArray(topBadges)) {
@@ -62,7 +61,10 @@ export const load = (async ({ params }) => {
   return {
     trainingId: params.trainingId,
     date: params.date,
-    participants: await getMembersWithPresentStatus(),
+    participants: buildMembersWithStreaks(
+      checklistResult.data,
+      streakResult.data || []
+    ) as MMember[],
     badgeMap,
     gradeMap,
     medalMap
