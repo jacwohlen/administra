@@ -3,15 +3,14 @@ import { error as err } from '@sveltejs/kit';
 import type {
   Member,
   Badge,
-  BadgeDefinition,
   BadgeProgress,
-  GradeDefinition,
   MemberCurrentGrade,
   MemberGrade,
   MemberMedal,
   PastEvent
 } from '$lib/models';
 import { supabaseClient } from '$lib/supabase';
+import { getBadgeDefinitions, getGradeDefinitions } from '$lib/referenceData';
 import { blobToURL } from 'image-resize-compress';
 import dayjs from 'dayjs';
 
@@ -52,16 +51,16 @@ export const load = (async ({ params, depends }) => {
   const [
     badgeResult,
     progressResult,
-    definitionResult,
+    badgeDefinitions,
     currentGradeResult,
     gradeHistoryResult,
     medalResult,
-    gradeDefinitionResult,
+    gradeDefinitions,
     eventResult
   ] = await Promise.all([
     supabaseClient.rpc('get_member_badges', { p_member_id: memberId }),
     supabaseClient.rpc('get_member_badge_progress', { p_member_id: memberId }),
-    supabaseClient.from('badge_definitions').select('*'),
+    getBadgeDefinitions(),
     supabaseClient.rpc('get_member_current_grades', { p_member_id: memberId }),
     supabaseClient
       .from('member_grades')
@@ -73,7 +72,7 @@ export const load = (async ({ params, depends }) => {
       .select('*')
       .eq('memberId', memberId)
       .order('date', { ascending: false }),
-    supabaseClient.from('grade_definitions').select('*'),
+    getGradeDefinitions(),
     supabaseClient
       .from('events')
       .select('id, title, date, section')
@@ -90,11 +89,11 @@ export const load = (async ({ params, depends }) => {
     ...member,
     badges: list<Badge>(badgeResult),
     badgeProgress: list<BadgeProgress>(progressResult),
-    badgeDefinitions: list<BadgeDefinition>(definitionResult),
+    badgeDefinitions,
     currentGrades: list<MemberCurrentGrade>(currentGradeResult),
     gradeHistory: list<MemberGrade>(gradeHistoryResult),
     medals: list<MemberMedal>(medalResult),
-    gradeDefinitions: list<GradeDefinition>(gradeDefinitionResult),
+    gradeDefinitions,
     pastEvents: list<PastEvent>(eventResult)
   };
 }) satisfies PageLoad;
