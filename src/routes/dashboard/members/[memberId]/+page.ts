@@ -3,15 +3,14 @@ import { error as err } from '@sveltejs/kit';
 import type {
   Member,
   Badge,
-  BadgeDefinition,
   BadgeProgress,
-  GradeDefinition,
   MemberCurrentGrade,
   MemberGrade,
   MemberMedal,
   PastEvent
 } from '$lib/models';
 import { supabaseClient } from '$lib/supabase';
+import { getBadgeDefinitions, getGradeDefinitions } from '$lib/referenceData';
 import { blobToURL } from 'image-resize-compress';
 import dayjs from 'dayjs';
 
@@ -27,15 +26,19 @@ export const load = (async ({ params, depends }) => {
   if (memberError) {
     throw err(404, memberError);
   }
-  if (memberData.img && memberData.imgUploaded) {
-    memberData.imgUploaded = dayjs(memberData.imgUploaded); // cast to dayjs for easier handling
+  const member = memberData;
+
+  // Resolve the avatar in parallel with the data queries below.
+  async function resolveAvatar() {
+    if (!member.img || !member.imgUploaded) return;
+    member.imgUploaded = dayjs(member.imgUploaded); // cast to dayjs for easier handling
 
     const { data: avatarData, error: avatarError } = await supabaseClient.storage
       .from('avatars')
-      .download(memberData.id + '_' + memberData.imgUploaded.valueOf() + '.webp');
+      .download(member.id + '_' + member.imgUploaded.valueOf() + '.webp');
 
     if (avatarData) {
-      memberData.img = await blobToURL(avatarData);
+      member.img = await blobToURL(avatarData);
     }
     if (avatarError) {
       throw err(404, avatarError);
@@ -48,16 +51,16 @@ export const load = (async ({ params, depends }) => {
   const [
     badgeResult,
     progressResult,
-    definitionResult,
+    badgeDefinitions,
     currentGradeResult,
     gradeHistoryResult,
     medalResult,
-    gradeDefinitionResult,
+    gradeDefinitions,
     eventResult
   ] = await Promise.all([
     supabaseClient.rpc('get_member_badges', { p_member_id: memberId }),
     supabaseClient.rpc('get_member_badge_progress', { p_member_id: memberId }),
-    supabaseClient.from('badge_definitions').select('*'),
+    getBadgeDefinitions(),
     supabaseClient.rpc('get_member_current_grades', { p_member_id: memberId }),
     supabaseClient
       .from('member_grades')
@@ -69,27 +72,28 @@ export const load = (async ({ params, depends }) => {
       .select('*')
       .eq('memberId', memberId)
       .order('date', { ascending: false }),
-    supabaseClient.from('grade_definitions').select('*'),
+    getGradeDefinitions(),
     supabaseClient
       .from('events')
       .select('id, title, date, section')
       .lte('date', today)
       .order('date', { ascending: false })
-      .limit(100)
+      .limit(100),
+    resolveAvatar()
   ]);
 
   const list = <T>(result: { data: unknown }): T[] =>
     (Array.isArray(result.data) ? result.data : []) as T[];
 
   return {
-    ...memberData,
+    ...member,
     badges: list<Badge>(badgeResult),
     badgeProgress: list<BadgeProgress>(progressResult),
-    badgeDefinitions: list<BadgeDefinition>(definitionResult),
+    badgeDefinitions,
     currentGrades: list<MemberCurrentGrade>(currentGradeResult),
     gradeHistory: list<MemberGrade>(gradeHistoryResult),
     medals: list<MemberMedal>(medalResult),
-    gradeDefinitions: list<GradeDefinition>(gradeDefinitionResult),
+    gradeDefinitions,
     pastEvents: list<PastEvent>(eventResult)
   };
 }) satisfies PageLoad;
