@@ -153,6 +153,7 @@
           >{/if}
       </dt>
       <dd class="flex items-center gap-2 flex-wrap">
+        <ParticipantFrequency streak={member.streak} isPresent={member.isPresent} />
         {#if grade}
           <span class="inline-flex items-center gap-1 text-xs text-surface-600-400">
             <BeltStrip color={grade.beltColor} isDan={grade.isDan} size="sm" />
@@ -172,7 +173,6 @@
           </span>
         {/if}
         <Labels labels={member.labels ? member.labels : []} />
-        <ParticipantFrequency streak={member.streak} isPresent={member.isPresent} />
       </dd>
     </span>
     <div class="justify-self-end flex-shrink-0">
