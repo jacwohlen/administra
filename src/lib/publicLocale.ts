@@ -15,7 +15,14 @@ export type { PublicLocale };
  */
 const STORAGE_KEY = 'trial-registration-locale';
 
-export const DEFAULT_PUBLIC_LOCALE: PublicLocale = clubConfig.defaultLocale;
+/**
+ * Read at call time, not import time: admins can override the club's
+ * language at runtime (see $lib/appSettings), which mutates `clubConfig`
+ * after this module is first imported.
+ */
+export function defaultPublicLocale(): PublicLocale {
+  return clubConfig.defaultLocale;
+}
 
 export function readStoredLocale(): PublicLocale | null {
   if (!browser) return null;
