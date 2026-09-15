@@ -15,7 +15,8 @@ export const load = (async ({ params }) => {
     streakResult,
     { data: topBadges },
     { data: grades },
-    { data: medalCounts }
+    { data: medalCounts },
+    { data: trialMembers }
   ] = await Promise.all([
     supabaseClient
       .rpc('get_checklist_members', {
@@ -31,7 +32,8 @@ export const load = (async ({ params }) => {
     }),
     supabaseClient.rpc('get_members_top_badges'),
     supabaseClient.rpc('get_members_current_grades'),
-    supabaseClient.rpc('get_members_medal_counts')
+    supabaseClient.rpc('get_members_medal_counts'),
+    supabaseClient.from('view_trial_members').select('id, attendedCount')
   ]);
 
   if (checklistResult.error) {
@@ -60,6 +62,15 @@ export const load = (async ({ params }) => {
     }
   }
 
+  // Attended-session count per trial member ("probetraining" label), so the
+  // checklist can flag candidates who have reached the membership threshold.
+  const trialCountMap: Record<string, number> = {};
+  if (Array.isArray(trialMembers)) {
+    for (const t of trialMembers as { id: number; attendedCount: number }[]) {
+      trialCountMap[t.id] = t.attendedCount;
+    }
+  }
+
   return {
     trainingId: params.trainingId,
     date: params.date,
@@ -69,6 +80,7 @@ export const load = (async ({ params }) => {
     ) as MMember[],
     badgeMap,
     gradeMap,
-    medalMap
+    medalMap,
+    trialCountMap
   };
 }) satisfies PageLoad;
