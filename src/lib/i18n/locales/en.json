@@ -16,7 +16,8 @@
       "probetraining": "Trial",
       "stats": "Stats",
       "users": "Users",
-      "noTrainingsToday": "There are no trainings happening today!"
+      "noTrainingsToday": "There are no trainings happening today!",
+      "settings": "Settings"
     },
     "pending": {
       "title": "Access pending",
@@ -58,6 +59,75 @@
         "disabled": "User disabled",
         "roleChanged": "Role updated",
         "memberLinked": "Member link updated"
+      }
+    },
+    "settings": {
+      "title": "Settings",
+      "intro": "Changes apply to everyone right away. Leave a field blank to use the default from the deployment's environment or the app itself.",
+      "overridden": "Overridden",
+      "save": "Save",
+      "defaultHint": "Default: {value}",
+      "group": {
+        "club": "Club",
+        "trial": "Trial training",
+        "display": "Display"
+      },
+      "field": {
+        "clubName": {
+          "label": "Club name",
+          "description": "Shown on public pages and in the browser tab."
+        },
+        "clubUrl": {
+          "label": "Website",
+          "description": "The club's public website, linked from public pages."
+        },
+        "clubLogo": {
+          "label": "Logo URL",
+          "description": "Absolute URL or a path under static/."
+        },
+        "clubContactEmail": {
+          "label": "Contact email",
+          "description": "Shown on the public trial registration page; blank hides it."
+        },
+        "clubSections": {
+          "label": "Sections",
+          "description": "Comma-separated. Offered wherever a training, event or trial candidate is assigned a section."
+        },
+        "defaultLocale": {
+          "label": "Public pages language",
+          "description": "Language of public pages unless the visitor picks another."
+        },
+        "trialSessionThreshold": {
+          "label": "Trial session threshold",
+          "description": "Trial sessions after which a candidate is flagged to become a member."
+        },
+        "checklistStreakLength": {
+          "label": "Attendance streak length",
+          "description": "Sessions shown as streak dots on the checklist."
+        },
+        "attendanceLogPageSize": {
+          "label": "Attendance log page size",
+          "description": "Entries the member attendance log shows per step."
+        },
+        "attendanceGraphMonths": {
+          "label": "Attendance heatmap months",
+          "description": "Months of history in the member attendance heatmap."
+        },
+        "recentAchievementsLimit": {
+          "label": "Recent achievements shown",
+          "description": "Entries in the recent achievements list on the stats page."
+        },
+        "badgeCelebrationSeconds": {
+          "label": "Badge celebration duration",
+          "description": "Seconds until the badge celebration closes by itself."
+        }
+      },
+      "error": {
+        "invalidNumber": "{label} must be a whole number of at least {min}",
+        "emptyList": "{label} needs at least one entry"
+      },
+      "toast": {
+        "saved": "Settings saved"
       }
     },
     "trainings": {

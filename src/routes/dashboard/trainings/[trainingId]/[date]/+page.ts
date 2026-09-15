@@ -4,10 +4,12 @@ import type { MedalCounts, MemberSectionGrade, MemberTopBadge } from '$lib/model
 import { supabaseClient } from '$lib/supabase';
 import { error as err } from '@sveltejs/kit';
 import { buildMembersWithStreaks } from '$lib/trainingUtils';
-
-const STREAK_LENGTH = 9;
+import { displayConfig, loadAppSettings } from '$lib/appSettings';
 
 export const load = (async ({ params }) => {
+  // Page loads run concurrently with the root layout load, so make sure any
+  // admin-configured streak length is applied before querying.
+  await loadAppSettings();
   const [
     checklistResult,
     streakResult,
@@ -25,7 +27,7 @@ export const load = (async ({ params }) => {
     supabaseClient.rpc('get_checklist_member_streak', {
       tid: params.trainingId,
       before_date: params.date,
-      n: STREAK_LENGTH
+      n: displayConfig.checklistStreakLength
     }),
     supabaseClient.rpc('get_members_top_badges'),
     supabaseClient.rpc('get_members_current_grades'),

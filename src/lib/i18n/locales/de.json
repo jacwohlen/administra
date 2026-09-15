@@ -16,7 +16,8 @@
       "probetraining": "Probetraining",
       "stats": "Statistik",
       "users": "Benutzer",
-      "noTrainingsToday": "Heute findet kein Training statt!"
+      "noTrainingsToday": "Heute findet kein Training statt!",
+      "settings": "Einstellungen"
     },
     "pending": {
       "title": "Zugriff ausstehend",
@@ -58,6 +59,75 @@
         "disabled": "Benutzer deaktiviert",
         "roleChanged": "Rolle aktualisiert",
         "memberLinked": "Mitgliedsverknüpfung aktualisiert"
+      }
+    },
+    "settings": {
+      "title": "Einstellungen",
+      "intro": "Änderungen gelten sofort für alle. Ein leeres Feld verwendet den Standardwert aus der Umgebung des Deployments oder der App.",
+      "overridden": "Angepasst",
+      "save": "Speichern",
+      "defaultHint": "Standard: {value}",
+      "group": {
+        "club": "Verein",
+        "trial": "Probetraining",
+        "display": "Darstellung"
+      },
+      "field": {
+        "clubName": {
+          "label": "Vereinsname",
+          "description": "Wird auf öffentlichen Seiten und im Browser-Tab angezeigt."
+        },
+        "clubUrl": {
+          "label": "Website",
+          "description": "Die öffentliche Website des Vereins, verlinkt auf öffentlichen Seiten."
+        },
+        "clubLogo": {
+          "label": "Logo-URL",
+          "description": "Absolute URL oder ein Pfad unter static/."
+        },
+        "clubContactEmail": {
+          "label": "Kontakt-E-Mail",
+          "description": "Wird auf der öffentlichen Probetraining-Seite angezeigt; leer blendet sie aus."
+        },
+        "clubSections": {
+          "label": "Sektionen",
+          "description": "Kommagetrennt. Zur Auswahl, wo Trainings, Events oder Probetraining-Kandidaten einer Sektion zugeordnet werden."
+        },
+        "defaultLocale": {
+          "label": "Sprache öffentlicher Seiten",
+          "description": "Sprache öffentlicher Seiten, solange Besucher keine andere wählen."
+        },
+        "trialSessionThreshold": {
+          "label": "Probetraining-Schwelle",
+          "description": "Probetrainings, nach denen ein Kandidat zur Aufnahme vorgeschlagen wird."
+        },
+        "checklistStreakLength": {
+          "label": "Länge der Anwesenheitsserie",
+          "description": "Anzahl Trainings, die als Serienpunkte auf der Checkliste erscheinen."
+        },
+        "attendanceLogPageSize": {
+          "label": "Einträge pro Seite im Anwesenheitslog",
+          "description": "Einträge, die das Anwesenheitslog eines Mitglieds pro Schritt zeigt."
+        },
+        "attendanceGraphMonths": {
+          "label": "Monate in der Anwesenheits-Heatmap",
+          "description": "Monate Verlauf in der Anwesenheits-Heatmap eines Mitglieds."
+        },
+        "recentAchievementsLimit": {
+          "label": "Angezeigte neue Erfolge",
+          "description": "Einträge in der Liste der neuesten Erfolge auf der Statistikseite."
+        },
+        "badgeCelebrationSeconds": {
+          "label": "Dauer der Abzeichen-Feier",
+          "description": "Sekunden, bis sich die Abzeichen-Feier von selbst schliesst."
+        }
+      },
+      "error": {
+        "invalidNumber": "{label} muss eine ganze Zahl von mindestens {min} sein",
+        "emptyList": "{label} braucht mindestens einen Eintrag"
+      },
+      "toast": {
+        "saved": "Einstellungen gespeichert"
       }
     },
     "trainings": {

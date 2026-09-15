@@ -5,6 +5,7 @@
   import BadgeTile from './BadgeTile.svelte';
   import BadgeTooltip from './BadgeTooltip.svelte';
   import { supabaseClient } from '$lib/supabase';
+  import { displayConfig } from '$lib/appSettings';
   import { _ } from 'svelte-i18n';
   import dayjs from 'dayjs';
   import relativeTime from 'dayjs/plugin/relativeTime';
@@ -15,7 +16,9 @@
   let loading = $state(true);
 
   async function loadAchievements() {
-    const { data, error } = await supabaseClient.rpc('get_recent_achievements', { p_limit: 10 });
+    const { data, error } = await supabaseClient.rpc('get_recent_achievements', {
+      p_limit: displayConfig.recentAchievementsLimit
+    });
     if (!error && Array.isArray(data)) {
       achievements = data as RecentAchievement[];
     }
