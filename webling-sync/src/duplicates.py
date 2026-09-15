@@ -6,22 +6,22 @@ import json
 # Webling
 import requests
 SUPABASE_URL=os.environ.get('SUPABASE_URL')
-SUPABASE_ANON_KEY=os.environ.get('SUPABASE_ANON_KEY')
+SUPABASE_SERVICE_ROLE_KEY=os.environ.get('SUPABASE_SERVICE_ROLE_KEY')
 
 
 if not SUPABASE_URL:
   print('Please export SUPABASE_URL')
   sys.exit()
 
-if not SUPABASE_ANON_KEY:
-  print('Please export SUPABASE_ANON_KEY')
+if not SUPABASE_SERVICE_ROLE_KEY:
+  print('Please export SUPABASE_SERVICE_ROLE_KEY (the service_role key; RLS blocks the anon key)')
   sys.exit()
 
 
 # initialize client (supabase)
 HEADERS = {
-    'apikey': SUPABASE_ANON_KEY,
-    'Authorization': f"Bearer {SUPABASE_ANON_KEY}",
+    'apikey': SUPABASE_SERVICE_ROLE_KEY,
+    'Authorization': f"Bearer {SUPABASE_SERVICE_ROLE_KEY}",
     'Content-Type': 'application/json'
 }
 

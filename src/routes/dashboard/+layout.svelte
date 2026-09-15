@@ -8,6 +8,8 @@
     faChartSimple,
     faList,
     faUser,
+    faUserPlus,
+    faUsersGear,
     faCalendarDays,
     faSun,
     faMoon
@@ -22,6 +24,8 @@
 
   let { data, children }: { data: LayoutData; children: Snippet } = $props();
 
+  let isAdmin = $derived(data.userProfile?.role === 'admin');
+
   const submitLogout: SubmitFunction = async ({ cancel }) => {
     const { error } = await supabaseClient.auth.signOut();
     if (error) {
@@ -35,7 +39,9 @@
     if (page.route.id?.startsWith('/dashboard/trainings')) return 'trainings';
     if (page.route.id?.startsWith('/dashboard/events')) return 'events';
     if (page.route.id?.startsWith('/dashboard/members')) return 'members';
+    if (page.route.id?.startsWith('/dashboard/probetraining')) return 'probetraining';
     if (page.route.id?.startsWith('/dashboard/stats')) return 'stats';
+    if (page.route.id?.startsWith('/dashboard/users')) return 'users';
     return 'today';
   }
 
@@ -86,7 +92,9 @@
             trainings: '/dashboard/trainings',
             events: '/dashboard/events',
             members: '/dashboard/members',
-            stats: '/dashboard/stats'
+            probetraining: '/dashboard/probetraining',
+            stats: '/dashboard/stats',
+            users: '/dashboard/users'
           };
           if (e.value && routes[e.value]) goto(routes[e.value], { invalidateAll: true });
         }}
@@ -130,6 +138,16 @@
             <span class="hidden sm:inline">{$_('page.dashboard.members')}</span>
           </Tabs.Trigger>
           <Tabs.Trigger
+            value="probetraining"
+            onclick={() => {
+              if (getActiveTab() === 'probetraining')
+                goto('/dashboard/probetraining', { invalidateAll: true });
+            }}
+          >
+            <Fa icon={faUserPlus} class="nav-icon" />
+            <span class="hidden sm:inline">{$_('page.dashboard.probetraining')}</span>
+          </Tabs.Trigger>
+          <Tabs.Trigger
             value="stats"
             onclick={() => {
               if (getActiveTab() === 'stats') goto('/dashboard/stats', { invalidateAll: true });
@@ -146,9 +164,15 @@
     <div class="shrink-0 flex items-center pr-2 relative">
       <button
         type="button"
-        class="nav-avatar cursor-pointer flex items-center justify-center"
+        class="nav-avatar relative cursor-pointer flex items-center justify-center"
         onclick={() => (popoverOpen = !popoverOpen)}
       >
+        {#if isAdmin && data.pendingUsers > 0}
+          <span
+            class="absolute -top-1 -right-0 size-3 rounded-full bg-warning-500 ring-2 ring-surface-100-900"
+            aria-hidden="true"
+          ></span>
+        {/if}
         {#if data.session.user.user_metadata.avatar_url && !avatarError}
           <img
             src={data.session.user.user_metadata.avatar_url}
@@ -176,6 +200,27 @@
         <div
           class="absolute right-0 top-full mt-2 card p-4 w-64 shadow-xl z-50 bg-surface-50-950 border border-surface-300-700"
         >
+          {#if isAdmin}
+            <button
+              type="button"
+              class="btn preset-tonal-surface w-full mb-2"
+              onclick={() => {
+                popoverOpen = false;
+                goto('/dashboard/users', { invalidateAll: true });
+              }}
+            >
+              <Fa icon={faUsersGear} />
+              <span>{$_('page.dashboard.users')}</span>
+              {#if data.pendingUsers > 0}
+                <span
+                  class="badge preset-filled-warning-500 text-xs"
+                  title={$_('page.users.pendingCount', { values: { count: data.pendingUsers } })}
+                >
+                  {data.pendingUsers}
+                </span>
+              {/if}
+            </button>
+          {/if}
           <button
             type="button"
             class="btn preset-tonal-surface w-full mb-2"

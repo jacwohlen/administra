@@ -2,15 +2,63 @@
   "page": {
     "routes": {
       "welcomeMessage": "Welcome to Administra",
-      "hi": "Hi"
+      "hi": "Hi",
+      "devLoginTitle": "Test login (preview only)",
+      "email": "Email",
+      "password": "Password",
+      "devLoginButton": "Sign in with email"
     },
     "dashboard": {
       "today": "Today",
       "trainings": "Trainings",
       "events": "Events",
       "members": "Members",
+      "probetraining": "Trial",
       "stats": "Stats",
+      "users": "Users",
       "noTrainingsToday": "There are no trainings happening today!"
+    },
+    "pending": {
+      "title": "Access pending",
+      "message": "Your account is waiting for approval by an administrator. You will be granted access once an admin reviews your sign-up.",
+      "disabledTitle": "Account disabled",
+      "disabledMessage": "Your account has been disabled. Please contact an administrator."
+    },
+    "users": {
+      "title": "Users",
+      "searchPlaceholder": "Search users...",
+      "empty": "No users found",
+      "unlinked": "No member linked",
+      "roleLabel": "Role",
+      "memberLabel": "Linked member",
+      "you": "You",
+      "selfLocked": "You cannot change your own role or status",
+      "pendingCount": "{count} users waiting for approval",
+      "error": {
+        "lastAdmin": "The last administrator cannot be removed",
+        "memberTaken": "This member is already linked to another user"
+      },
+      "status": {
+        "pending": "Pending",
+        "approved": "Approved",
+        "disabled": "Disabled"
+      },
+      "role": {
+        "viewer": "Viewer",
+        "trainer": "Trainer",
+        "admin": "Administrator"
+      },
+      "action": {
+        "approve": "Approve",
+        "disable": "Disable",
+        "reEnable": "Re-enable"
+      },
+      "toast": {
+        "approved": "User approved",
+        "disabled": "User disabled",
+        "roleChanged": "Role updated",
+        "memberLinked": "Member link updated"
+      }
     },
     "trainings": {
       "title": "Trainings",
@@ -80,10 +128,14 @@
         "time_from": "Start Time",
         "time_to": "End Time",
         "section": "Section",
-        "select_section": "Select a section..."
+        "select_section": "Select a section...",
+        "age_from": "Age from",
+        "age_to": "Age to",
+        "age_placeholder": "e.g. 5"
       },
       "validation": {
-        "required_fields": "Please fill in all required fields"
+        "required_fields": "Please fill in all required fields",
+        "age_range_invalid": "\"Age from\" must be less than or equal to \"Age to\""
       },
       "createSuccess": "Training created successfully",
       "createError": "Error creating training",
@@ -101,6 +153,9 @@
       "firstName": "First Name",
       "birthday": "Birthday",
       "mobile": "Mobile",
+      "email": "Email",
+      "notes": "Notes",
+      "notesPlaceholder": "Free-form notes about this member...",
       "labels": "Labels",
       "addMember": "Add Member",
       "newMember": "New Member",
@@ -223,6 +278,59 @@
       "coach": "Coach",
       "make_coach": "Mark as Coach",
       "remove_coach": "Remove Coach"
+    },
+    "trialRegistration": {
+      "title": "Trial Training Registration",
+      "subtitle": "Sign up for a free trial training session.",
+      "firstName": "First Name",
+      "lastName": "Last Name",
+      "birthday": "Date of Birth",
+      "email": "Contact Email",
+      "emailHint": "For children, please enter a parent's email.",
+      "mobile": "Mobile",
+      "section": "Section / Interest",
+      "sectionPlaceholder": "Please choose...",
+      "notes": "Note",
+      "notesPlaceholder": "E.g. prior experience, preferred time, questions...",
+      "submit": "Send Registration",
+      "submitting": "Sending...",
+      "successTitle": "Thank you!",
+      "successMessage": "We've received your registration and will be in touch shortly to schedule your trial training.",
+      "validation": {
+        "required": "Please fill in first name, last name, date of birth, and email."
+      },
+      "metaDescription": "Sign up for a free, no-obligation trial training session – Judo and Aikido in Wohlen.",
+      "backToWebsite": "To the club website",
+      "contactHint": "Questions? Write to us:"
+    },
+    "probetraining": {
+      "title": "Trial Training",
+      "openPublicForm": "Public form",
+      "empty": "No trial training registrations at the moment.",
+      "yearsOld": "yrs",
+      "registeredOn": "registered",
+      "attended": "Trial sessions attended so far",
+      "convertHint": "Has reached the agreed number of trial sessions – time to discuss membership.",
+      "searchPlaceholder": "Search by name...",
+      "filterAll": "All",
+      "filterUnassigned": "No training",
+      "filterConvert": "Needs membership",
+      "noResults": "No candidates match this selection.",
+      "noAssignment": "no training",
+      "assignTraining": "Assign Training",
+      "manageTrainings": "Manage Trainings",
+      "manageTitle": "Manage Trainings",
+      "assignedTrainings": "Assigned",
+      "suggestedTrainings": "Suggested by age",
+      "noSuggestion": "No training matches this age. Set age ranges on your trainings to get suggestions.",
+      "noBirthday": "Without a date of birth no training can be suggested.",
+      "otherTrainings": "Other Trainings",
+      "noOtherTrainings": "No other trainings available.",
+      "assign": "Assign",
+      "assignSuccess": "Training assigned successfully",
+      "assignError": "Error assigning training",
+      "removeSuccess": "Assignment removed",
+      "removeError": "Error removing assignment"
     }
   },
   "components": {
@@ -254,6 +362,7 @@
     "edit": "Edit",
     "createNew": "Create New",
     "cancel": "Cancel",
+    "close": "Close",
     "confirm": "Confirm",
     "delete": "Delete",
     "deleting": "Deleting...",
@@ -261,7 +370,8 @@
     "creating": "Creating...",
     "download": "Download",
     "lightMode": "Light Mode",
-    "darkMode": "Dark Mode"
+    "darkMode": "Dark Mode",
+    "refresh": "Refresh"
   },
   "dialog": {
     "newMember": {
@@ -296,23 +406,153 @@
       "streak": "Streaks",
       "trainer": "Trainer",
       "event": "Events",
-      "top_performer": "Top Performer"
+      "season": "Season",
+      "grade": "Grade",
+      "medal": "Medals"
     },
-    "attendance_10": { "name": "Beginner", "description": "Attended 10 training sessions" },
-    "attendance_25": { "name": "Regular", "description": "Attended 25 training sessions" },
-    "attendance_50": { "name": "Dedicated", "description": "Attended 50 training sessions" },
-    "attendance_100": { "name": "Warrior", "description": "Attended 100 training sessions" },
-    "attendance_200": { "name": "Master", "description": "Attended 200 training sessions" },
-    "streak_5": { "name": "On Fire", "description": "5 consecutive training sessions" },
-    "streak_10": { "name": "Unstoppable", "description": "10 consecutive training sessions" },
-    "streak_20": { "name": "Iron Will", "description": "20 consecutive training sessions" },
-    "trainer_10": { "name": "Helper", "description": "Coached 10 training sessions" },
-    "trainer_50": { "name": "Sensei", "description": "Coached 50 training sessions" },
-    "trainer_100": { "name": "Grand Master", "description": "Coached 100 training sessions" },
-    "event_3": { "name": "Explorer", "description": "Attended 3 events" },
-    "event_10": { "name": "Competitor", "description": "Attended 10 events" },
-    "event_25": { "name": "Champion", "description": "Attended 25 events" },
-    "top_3": { "name": "Top Performer", "description": "Ranked in the top 3 of a section" }
+    "attendance_10": {
+      "name": "Beginner",
+      "description": "Attended 10 training sessions"
+    },
+    "attendance_25": {
+      "name": "Regular",
+      "description": "Attended 25 training sessions"
+    },
+    "attendance_50": {
+      "name": "Dedicated",
+      "description": "Attended 50 training sessions"
+    },
+    "attendance_100": {
+      "name": "Warrior",
+      "description": "Attended 100 training sessions"
+    },
+    "attendance_200": {
+      "name": "Master",
+      "description": "Attended 200 training sessions"
+    },
+    "streak_5": {
+      "name": "On Fire",
+      "description": "5 consecutive training sessions"
+    },
+    "streak_10": {
+      "name": "Unstoppable",
+      "description": "10 consecutive training sessions"
+    },
+    "streak_20": {
+      "name": "Iron Will",
+      "description": "20 consecutive training sessions"
+    },
+    "trainer_10": {
+      "name": "Helper",
+      "description": "Coached 10 training sessions"
+    },
+    "trainer_50": {
+      "name": "Sensei",
+      "description": "Coached 50 training sessions"
+    },
+    "trainer_100": {
+      "name": "Grand Master",
+      "description": "Coached 100 training sessions"
+    },
+    "event_3": {
+      "name": "Explorer",
+      "description": "Attended 3 events"
+    },
+    "event_10": {
+      "name": "Competitor",
+      "description": "Attended 10 events"
+    },
+    "event_25": {
+      "name": "Champion",
+      "description": "Attended 25 events"
+    },
+    "attendance_500": {
+      "name": "Legend",
+      "description": "Attended 500 training sessions"
+    },
+    "top_3": {
+      "name": "Top 3",
+      "description": "Among the three most active members of a section that year"
+    },
+    "most_improved": {
+      "name": "Most Improved",
+      "description": "Biggest increase in sessions over the previous year in a section"
+    },
+    "season_regular": {
+      "name": "Season Regular",
+      "description": "40 training sessions in one year"
+    },
+    "coach_of_year": {
+      "name": "Coach of the Year",
+      "description": "Led the most training sessions in a section that year"
+    },
+    "black_belt": {
+      "name": "Black Belt",
+      "description": "Passed the first Dan grading"
+    },
+    "medalist": {
+      "name": "Medalist",
+      "description": "Won a first medal"
+    },
+    "podium_5": {
+      "name": "Podium Regular",
+      "description": "Won five medals"
+    },
+    "first_gold": {
+      "name": "Gold",
+      "description": "Won a first gold medal"
+    },
+    "progress": {
+      "of": "of"
+    },
+    "recentAchievements": {
+      "title": "Recent Achievements",
+      "noAchievements": "No achievements yet",
+      "earned": "earned"
+    },
+    "celebration": {
+      "title": "New Badge Earned!",
+      "message": "{name} just earned {badge}!"
+    }
+  },
+  "grades": {
+    "title": "Grades",
+    "noGrades": "No grading recorded yet",
+    "addGrading": "Add grading",
+    "section": "Section",
+    "grade": "Grade",
+    "examDate": "Exam date",
+    "note": "Note",
+    "next": "Next",
+    "history": "Grading history",
+    "deleteConfirm": "Remove this grading?",
+    "saveSuccess": "Grading saved",
+    "saveError": "Error saving grading",
+    "deleteSuccess": "Grading removed",
+    "deleteError": "Error removing grading"
+  },
+  "medals": {
+    "title": "Medals",
+    "noMedals": "No medals recorded yet",
+    "addMedal": "Add medal",
+    "competition": "Competition",
+    "date": "Date",
+    "section": "Section",
+    "category": "Category",
+    "categoryPlaceholder": "e.g. U18 -66 kg",
+    "medal": "Medal",
+    "gold": "Gold",
+    "silver": "Silver",
+    "bronze": "Bronze",
+    "placement": "Placement",
+    "none": "None",
+    "fromEvent": "From event",
+    "noEvent": "Not linked to an event",
+    "deleteConfirm": "Remove this medal?",
+    "saveSuccess": "Medal saved",
+    "saveError": "Error saving medal",
+    "deleteSuccess": "Medal removed",
+    "deleteError": "Error removing medal"
   },
   "weekday": {
     "Monday": "Monday",

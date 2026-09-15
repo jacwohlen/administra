@@ -26,4 +26,11 @@ function getMostRecentDateByWeekday(weekday: number): Dayjs {
   return mostRecentWeekday;
 }
 
-export default { weekdayToNumber, getMostRecentDateByWeekday };
+export function calculateAge(birthday: string | undefined, refDate?: Dayjs): number | null {
+  if (!birthday) return null;
+  const birth = dayjs(birthday);
+  if (!birth.isValid()) return null;
+  return (refDate ?? dayjs()).diff(birth, 'year');
+}
+
+export default { weekdayToNumber, getMostRecentDateByWeekday, calculateAge };

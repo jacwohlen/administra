@@ -2,15 +2,63 @@
   "page": {
     "routes": {
       "welcomeMessage": "Willkommen bei Administra",
-      "hi": "Hallo"
+      "hi": "Hallo",
+      "devLoginTitle": "Test-Login (nur Preview)",
+      "email": "E-Mail",
+      "password": "Passwort",
+      "devLoginButton": "Mit E-Mail anmelden"
     },
     "dashboard": {
       "today": "Aktuell",
       "trainings": "Trainings",
       "events": "Events",
       "members": "Mitglieder",
+      "probetraining": "Probetraining",
       "stats": "Statistik",
+      "users": "Benutzer",
       "noTrainingsToday": "Heute findet kein Training statt!"
+    },
+    "pending": {
+      "title": "Zugriff ausstehend",
+      "message": "Dein Konto wartet auf die Freigabe durch einen Administrator. Du wirst benachrichtigt, sobald dein Zugriff aktiviert wurde.",
+      "disabledTitle": "Konto deaktiviert",
+      "disabledMessage": "Dein Konto wurde deaktiviert. Bitte wende dich an einen Administrator."
+    },
+    "users": {
+      "title": "Benutzer",
+      "searchPlaceholder": "Benutzer suchen...",
+      "empty": "Keine Benutzer gefunden",
+      "unlinked": "Kein Mitglied verknüpft",
+      "roleLabel": "Rolle",
+      "memberLabel": "Verknüpftes Mitglied",
+      "you": "Du",
+      "selfLocked": "Eigene Rolle und Status können nicht geändert werden",
+      "pendingCount": "{count} Benutzer warten auf Freigabe",
+      "error": {
+        "lastAdmin": "Der letzte Administrator kann nicht entfernt werden",
+        "memberTaken": "Dieses Mitglied ist bereits mit einem anderen Benutzer verknüpft"
+      },
+      "status": {
+        "pending": "Ausstehend",
+        "approved": "Freigegeben",
+        "disabled": "Deaktiviert"
+      },
+      "role": {
+        "viewer": "Betrachter",
+        "trainer": "Trainer",
+        "admin": "Administrator"
+      },
+      "action": {
+        "approve": "Freigeben",
+        "disable": "Deaktivieren",
+        "reEnable": "Wieder aktivieren"
+      },
+      "toast": {
+        "approved": "Benutzer freigegeben",
+        "disabled": "Benutzer deaktiviert",
+        "roleChanged": "Rolle aktualisiert",
+        "memberLinked": "Mitgliedsverknüpfung aktualisiert"
+      }
     },
     "trainings": {
       "title": "Trainings",
@@ -80,10 +128,14 @@
         "time_from": "Startzeit",
         "time_to": "Endzeit",
         "section": "Sektion",
-        "select_section": "Sektion auswählen..."
+        "select_section": "Sektion auswählen...",
+        "age_from": "Alter von",
+        "age_to": "Alter bis",
+        "age_placeholder": "z.B. 5"
       },
       "validation": {
-        "required_fields": "Bitte alle Pflichtfelder ausfüllen"
+        "required_fields": "Bitte alle Pflichtfelder ausfüllen",
+        "age_range_invalid": "„Alter von“ muss kleiner oder gleich „Alter bis“ sein"
       },
       "createSuccess": "Training erfolgreich erstellt",
       "createError": "Fehler beim Erstellen des Trainings",
@@ -101,6 +153,9 @@
       "firstName": "Vorname",
       "birthday": "Geburtstag",
       "mobile": "Mobiltelefon",
+      "email": "E-Mail",
+      "notes": "Notizen",
+      "notesPlaceholder": "Freie Notizen zum Mitglied...",
       "labels": "Labels",
       "addMember": "Mitglied hinzufügen",
       "newMember": "Neues Mitglied",
@@ -223,6 +278,59 @@
       "coach": "Coach",
       "make_coach": "Als Coach markieren",
       "remove_coach": "Coach entfernen"
+    },
+    "trialRegistration": {
+      "title": "Anmeldung Probetraining",
+      "subtitle": "Melde dich hier für ein unverbindliches Probetraining an.",
+      "firstName": "Vorname",
+      "lastName": "Nachname",
+      "birthday": "Geburtsdatum",
+      "email": "Kontakt-E-Mail",
+      "emailHint": "Bei Kindern bitte die E-Mail eines Elternteils angeben.",
+      "mobile": "Mobilnummer",
+      "section": "Sektion / Interesse",
+      "sectionPlaceholder": "Bitte wählen...",
+      "notes": "Anmerkung",
+      "notesPlaceholder": "Z.B. Vorerfahrung, gewünschter Zeitpunkt, Fragen...",
+      "submit": "Anmeldung absenden",
+      "submitting": "Sende...",
+      "successTitle": "Vielen Dank!",
+      "successMessage": "Deine Anmeldung ist bei uns eingegangen. Wir melden uns in Kürze mit einem Termin für dein Probetraining.",
+      "validation": {
+        "required": "Bitte Vorname, Nachname, Geburtsdatum und E-Mail ausfüllen."
+      },
+      "metaDescription": "Melde dich unverbindlich für ein Probetraining an – Judo und Aikido in Wohlen.",
+      "backToWebsite": "Zur Vereinswebsite",
+      "contactHint": "Fragen vorab? Schreib uns:"
+    },
+    "probetraining": {
+      "title": "Probetraining",
+      "openPublicForm": "Öffentliches Formular",
+      "empty": "Aktuell keine Anmeldungen für Probetrainings.",
+      "yearsOld": "Jahre",
+      "registeredOn": "angemeldet am",
+      "attended": "Bereits besuchte Probetrainings",
+      "convertHint": "Hat die vereinbarte Anzahl erreicht – Mitgliedschaft klären.",
+      "searchPlaceholder": "Name suchen...",
+      "filterAll": "Alle",
+      "filterUnassigned": "Ohne Training",
+      "filterConvert": "Mitgliedschaft klären",
+      "noResults": "Keine Kandidaten entsprechen dieser Auswahl.",
+      "noAssignment": "ohne Training",
+      "assignTraining": "Training zuweisen",
+      "manageTrainings": "Trainings verwalten",
+      "manageTitle": "Trainings verwalten",
+      "assignedTrainings": "Zugewiesen",
+      "suggestedTrainings": "Vorschlag anhand Alter",
+      "noSuggestion": "Kein Training passt zu diesem Alter. Trage bei den Trainings Altersbereiche ein, damit Vorschläge erscheinen.",
+      "noBirthday": "Ohne Geburtsdatum kann kein Training vorgeschlagen werden.",
+      "otherTrainings": "Weitere Trainings",
+      "noOtherTrainings": "Keine weiteren Trainings verfügbar.",
+      "assign": "Zuweisen",
+      "assignSuccess": "Training erfolgreich zugewiesen",
+      "assignError": "Fehler beim Zuweisen des Trainings",
+      "removeSuccess": "Zuweisung entfernt",
+      "removeError": "Fehler beim Entfernen der Zuweisung"
     }
   },
   "components": {
@@ -254,6 +362,7 @@
     "edit": "Bearbeiten",
     "createNew": "Neu Erstellen",
     "cancel": "Abbrechen",
+    "close": "Schliessen",
     "confirm": "Bestätigen",
     "delete": "Löschen",
     "deleting": "Lösche...",
@@ -261,7 +370,8 @@
     "creating": "Erstelle...",
     "download": "Herunterladen",
     "lightMode": "Heller Modus",
-    "darkMode": "Dunkler Modus"
+    "darkMode": "Dunkler Modus",
+    "refresh": "Aktualisieren"
   },
   "dialog": {
     "newMember": {
@@ -296,23 +406,153 @@
       "streak": "Serien",
       "trainer": "Trainer",
       "event": "Events",
-      "top_performer": "Top-Performer"
+      "season": "Saison",
+      "grade": "Graduierung",
+      "medal": "Medaillen"
     },
-    "attendance_10": { "name": "Anfänger", "description": "10 Trainings besucht" },
-    "attendance_25": { "name": "Stammgast", "description": "25 Trainings besucht" },
-    "attendance_50": { "name": "Engagiert", "description": "50 Trainings besucht" },
-    "attendance_100": { "name": "Krieger", "description": "100 Trainings besucht" },
-    "attendance_200": { "name": "Meister", "description": "200 Trainings besucht" },
-    "streak_5": { "name": "Am Brennen", "description": "5 Trainings in Folge" },
-    "streak_10": { "name": "Unaufhaltsam", "description": "10 Trainings in Folge" },
-    "streak_20": { "name": "Eiserner Wille", "description": "20 Trainings in Folge" },
-    "trainer_10": { "name": "Helfer", "description": "10 Trainings geleitet" },
-    "trainer_50": { "name": "Sensei", "description": "50 Trainings geleitet" },
-    "trainer_100": { "name": "Grossmeister", "description": "100 Trainings geleitet" },
-    "event_3": { "name": "Entdecker", "description": "3 Events besucht" },
-    "event_10": { "name": "Wettkämpfer", "description": "10 Events besucht" },
-    "event_25": { "name": "Champion", "description": "25 Events besucht" },
-    "top_3": { "name": "Top-Performer", "description": "Top 3 in einer Sektion" }
+    "attendance_10": {
+      "name": "Anfänger",
+      "description": "10 Trainings besucht"
+    },
+    "attendance_25": {
+      "name": "Stammgast",
+      "description": "25 Trainings besucht"
+    },
+    "attendance_50": {
+      "name": "Engagiert",
+      "description": "50 Trainings besucht"
+    },
+    "attendance_100": {
+      "name": "Krieger",
+      "description": "100 Trainings besucht"
+    },
+    "attendance_200": {
+      "name": "Meister",
+      "description": "200 Trainings besucht"
+    },
+    "streak_5": {
+      "name": "Am Brennen",
+      "description": "5 Trainings in Folge"
+    },
+    "streak_10": {
+      "name": "Unaufhaltsam",
+      "description": "10 Trainings in Folge"
+    },
+    "streak_20": {
+      "name": "Eiserner Wille",
+      "description": "20 Trainings in Folge"
+    },
+    "trainer_10": {
+      "name": "Helfer",
+      "description": "10 Trainings geleitet"
+    },
+    "trainer_50": {
+      "name": "Sensei",
+      "description": "50 Trainings geleitet"
+    },
+    "trainer_100": {
+      "name": "Grossmeister",
+      "description": "100 Trainings geleitet"
+    },
+    "event_3": {
+      "name": "Entdecker",
+      "description": "3 Events besucht"
+    },
+    "event_10": {
+      "name": "Wettkämpfer",
+      "description": "10 Events besucht"
+    },
+    "event_25": {
+      "name": "Champion",
+      "description": "25 Events besucht"
+    },
+    "attendance_500": {
+      "name": "Legende",
+      "description": "500 Trainings besucht"
+    },
+    "top_3": {
+      "name": "Top 3",
+      "description": "Unter den drei aktivsten Mitgliedern einer Sektion in diesem Jahr"
+    },
+    "most_improved": {
+      "name": "Aufsteiger",
+      "description": "Grösste Steigerung der Trainings gegenüber dem Vorjahr in einer Sektion"
+    },
+    "season_regular": {
+      "name": "Saison-Stammgast",
+      "description": "40 Trainings in einem Jahr"
+    },
+    "coach_of_year": {
+      "name": "Trainer des Jahres",
+      "description": "Die meisten Trainings einer Sektion in diesem Jahr geleitet"
+    },
+    "black_belt": {
+      "name": "Schwarzgurt",
+      "description": "Erste Dan-Prüfung bestanden"
+    },
+    "medalist": {
+      "name": "Medaillengewinner",
+      "description": "Erste Medaille gewonnen"
+    },
+    "podium_5": {
+      "name": "Podest-Stammgast",
+      "description": "Fünf Medaillen gewonnen"
+    },
+    "first_gold": {
+      "name": "Gold",
+      "description": "Erste Goldmedaille gewonnen"
+    },
+    "progress": {
+      "of": "von"
+    },
+    "recentAchievements": {
+      "title": "Letzte Errungenschaften",
+      "noAchievements": "Noch keine Errungenschaften",
+      "earned": "verdient"
+    },
+    "celebration": {
+      "title": "Neues Abzeichen!",
+      "message": "{name} hat {badge} verdient!"
+    }
+  },
+  "grades": {
+    "title": "Graduierungen",
+    "noGrades": "Noch keine Prüfung erfasst",
+    "addGrading": "Prüfung erfassen",
+    "section": "Sektion",
+    "grade": "Grad",
+    "examDate": "Prüfungsdatum",
+    "note": "Notiz",
+    "next": "Nächster",
+    "history": "Prüfungshistorie",
+    "deleteConfirm": "Diese Prüfung entfernen?",
+    "saveSuccess": "Prüfung gespeichert",
+    "saveError": "Fehler beim Speichern der Prüfung",
+    "deleteSuccess": "Prüfung entfernt",
+    "deleteError": "Fehler beim Entfernen der Prüfung"
+  },
+  "medals": {
+    "title": "Medaillen",
+    "noMedals": "Noch keine Medaillen erfasst",
+    "addMedal": "Medaille erfassen",
+    "competition": "Wettkampf",
+    "date": "Datum",
+    "section": "Sektion",
+    "category": "Kategorie",
+    "categoryPlaceholder": "z.B. U18 -66 kg",
+    "medal": "Medaille",
+    "gold": "Gold",
+    "silver": "Silber",
+    "bronze": "Bronze",
+    "placement": "Platzierung",
+    "none": "Keine",
+    "fromEvent": "Vom Event",
+    "noEvent": "Nicht mit einem Event verknüpft",
+    "deleteConfirm": "Diese Medaille entfernen?",
+    "saveSuccess": "Medaille gespeichert",
+    "saveError": "Fehler beim Speichern der Medaille",
+    "deleteSuccess": "Medaille entfernt",
+    "deleteError": "Fehler beim Entfernen der Medaille"
   },
   "weekday": {
     "Monday": "Montag",

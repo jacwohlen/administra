@@ -2,12 +2,33 @@ import type { Dayjs } from 'dayjs';
 
 export type TrainerRole = 'attendee' | 'main_trainer' | 'assistant';
 
+export type UserStatus = 'pending' | 'approved' | 'disabled';
+export type UserRole = 'viewer' | 'trainer' | 'admin';
+
+export interface UserProfile {
+  user_id: string;
+  email: string;
+  full_name?: string;
+  avatar_url?: string;
+  status: UserStatus;
+  role: UserRole;
+  member_id?: number;
+  approved_at?: string;
+  approved_by?: string;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface Member {
   id: string;
   firstname: string;
   lastname: string;
   birthday?: string;
   mobile?: string;
+  email?: string;
+  notes?: string;
+  trialSection?: string;
+  trialRegisteredAt?: string;
   labels?: string[];
   img?: string;
   imgUploaded?: string | Dayjs;
@@ -20,7 +41,23 @@ export interface Training {
   dateTo: string;
   weekday: string;
   section: string;
+  ageFrom?: number;
+  ageTo?: number;
   participants: Member[];
+}
+
+export interface TrialMember {
+  id: number;
+  firstname: string;
+  lastname: string;
+  birthday?: string;
+  email?: string;
+  mobile?: string;
+  notes?: string;
+  labels: string[];
+  trialSection?: string;
+  trialRegisteredAt?: string;
+  attendedCount: number;
 }
 
 export interface Log {
@@ -103,6 +140,19 @@ export interface Badge {
   emoji: string;
   sortOrder: number;
   earnedAt: string;
+  /** Calendar year for season badges, 0 for lifetime badges */
+  season: number;
+  /** Section for per-section season badges, empty otherwise */
+  context: string;
+}
+
+export interface BadgeDefinition {
+  id: string;
+  category: string;
+  emoji: string;
+  threshold: number | null;
+  sortOrder: number;
+  scope: string;
 }
 
 export interface BadgeLeaderboardEntry {
@@ -117,6 +167,94 @@ export interface MemberTopBadge {
   memberId: number;
   emoji: string;
   badgeId: string;
+}
+
+export interface BadgeProgress {
+  category: string;
+  current_count: number;
+  next_badge_id: string;
+  next_badge_emoji: string;
+  next_threshold: number;
+}
+
+export interface RecentAchievement {
+  memberId: number;
+  lastname: string;
+  firstname: string;
+  badgeId: string;
+  emoji: string;
+  category: string;
+  earnedAt: string;
+  season: number;
+  context: string;
+}
+
+export type Medal = 'gold' | 'silver' | 'bronze';
+
+/** One rung of a section's grade ladder */
+export interface GradeDefinition {
+  section: string;
+  grade: string;
+  gradeRank: number;
+  beltColor: string;
+  isDan: boolean;
+}
+
+/** One grading a member passed */
+export interface MemberGrade {
+  id: number;
+  memberId: number;
+  section: string;
+  grade: string;
+  examDate: string;
+  note?: string | null;
+}
+
+/** A member's current (highest) grade in one section */
+export interface MemberCurrentGrade {
+  section: string;
+  grade: string;
+  gradeRank: number;
+  beltColor: string;
+  isDan: boolean;
+  examDate: string;
+  nextGrade: string | null;
+}
+
+/** Current grade per member and section, for list views */
+export interface MemberSectionGrade {
+  memberId: number;
+  section: string;
+  grade: string;
+  gradeRank: number;
+  beltColor: string;
+  isDan: boolean;
+}
+
+export interface MemberMedal {
+  id: number;
+  memberId: number;
+  eventId: number | null;
+  competition: string;
+  date: string;
+  section?: string | null;
+  medal: Medal;
+  category?: string | null;
+}
+
+/** A past event a medal can be linked to */
+export interface PastEvent {
+  id: number;
+  title: string;
+  date: string;
+  section: string | null;
+}
+
+export interface MedalCounts {
+  memberId: number;
+  gold: number;
+  silver: number;
+  bronze: number;
 }
 
 export interface TrainerTrackingRecord {

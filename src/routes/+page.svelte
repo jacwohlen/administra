@@ -19,15 +19,38 @@
   import type { PageData } from './$types';
   import type { SignInWithOAuthCredentials } from '@supabase/supabase-js';
 
-  // supabase policy will prevent google accounts to log in if not using the
-  // proper domain (e.g. jacwohlen.ch). In such a case the error is passed
-  // via GET parameters. We catch it here and sign out the user at google.
-  // This way the user can start over loggign in with the right google account
+  // If the OAuth provider reports an error it is passed back via GET
+  // parameters. We surface it here and sign the user out so they can start
+  // over with a different Google account. Access itself is governed by the
+  // admin approval flow (see user_profiles), not by the login step.
   let { data, error = null }: { data: PageData; error: string | null } = $props();
   let signInError = page.url.searchParams.get('error');
   if (signInError) {
     error = 'Error: Could not log in: ' + page.url.searchParams.get('error_description');
     supabaseClient.auth.signOut();
+  }
+
+  // Email/password login for non-production environments only. Supabase
+  // preview branches have their own OAuth callback URL that the Google
+  // client does not know, so Google login cannot work on Deploy Previews;
+  // the seeded test user (see supabase/seed.sql) is used instead.
+  import { PUBLIC_MODE } from '$env/static/public';
+  let devEmail = $state('');
+  let devPassword = $state('');
+  let devLoginError = $state('');
+
+  async function devLogin(e: Event) {
+    e.preventDefault();
+    devLoginError = '';
+    const { error: pwError } = await supabaseClient.auth.signInWithPassword({
+      email: devEmail,
+      password: devPassword
+    });
+    if (pwError) {
+      devLoginError = pwError.message;
+      return;
+    }
+    window.location.href = '/dashboard';
   }
 </script>
 
@@ -50,5 +73,32 @@
     <button class="btn preset-filled-primary-500" onclick={login} color="primary">
       {$_('button.login')}
     </button>
+    {#if PUBLIC_MODE === 'DEV'}
+      <form class="card p-4 w-72 space-y-3" onsubmit={devLogin}>
+        <p class="text-sm text-center">{$_('page.routes.devLoginTitle')}</p>
+        <input
+          class="input"
+          type="email"
+          autocomplete="username"
+          placeholder={$_('page.routes.email')}
+          bind:value={devEmail}
+          required
+        />
+        <input
+          class="input"
+          type="password"
+          autocomplete="current-password"
+          placeholder={$_('page.routes.password')}
+          bind:value={devPassword}
+          required
+        />
+        {#if devLoginError}
+          <p class="text-sm text-error-500">{devLoginError}</p>
+        {/if}
+        <button class="btn preset-tonal w-full" type="submit">
+          {$_('page.routes.devLoginButton')}
+        </button>
+      </form>
+    {/if}
   {/if}
 </div>

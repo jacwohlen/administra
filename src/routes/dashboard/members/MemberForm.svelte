@@ -9,6 +9,8 @@
     firstname = '',
     birthday = '',
     mobile = '',
+    email = '',
+    notes = '',
     labels = ['new'] as string[],
     isSubmitting = false,
     isEditing = false,
@@ -20,6 +22,8 @@
     firstname?: string;
     birthday?: string;
     mobile?: string;
+    email?: string;
+    notes?: string;
     labels?: string[];
     isSubmitting?: boolean;
     isEditing?: boolean;
@@ -31,6 +35,8 @@
       firstname: string;
       birthday: string;
       mobile: string;
+      email: string;
+      notes: string;
       labels: string[];
     }) => void;
   } = $props();
@@ -43,6 +49,8 @@
     firstname,
     birthday,
     mobile,
+    email,
+    notes,
     labels: labels || ['new']
   });
 
@@ -103,6 +111,19 @@
   <label class="label">
     <span>{$_('page.members.mobile')}</span>
     <input class="input" bind:value={formData.mobile} type="tel" placeholder="+41 79 123 45 67" />
+  </label>
+  <label class="label">
+    <span>{$_('page.members.email')}</span>
+    <input class="input" bind:value={formData.email} type="email" placeholder="name@example.com" />
+  </label>
+  <label class="label">
+    <span>{$_('page.members.notes')}</span>
+    <textarea
+      class="textarea"
+      bind:value={formData.notes}
+      rows="3"
+      placeholder={$_('page.members.notesPlaceholder')}
+    ></textarea>
   </label>
   <div class="label">
     <span>{$_('page.members.labels')}</span>

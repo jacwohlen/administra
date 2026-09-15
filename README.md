@@ -8,7 +8,7 @@ A modern attendance tracking system designed specifically for martial arts clubs
 - **Training Sessions** - Create and manage recurring training classes with metadata (title, schedule, section)
 - **Attendance Tracking** - Quick and easy attendance marking for each training date
 - **Statistics & Leaderboards** - View comprehensive attendance statistics, top athletes, and trainer activity by year and section
-- **Secure Authentication** - Google OAuth integration with domain-restricted access
+- **Secure Authentication** - Google OAuth with admin approval and role-based access (viewer / trainer / admin)
 - **Multi-language Support** - Built-in internationalization (German/English)
 - **Responsive Design** - Works seamlessly across desktop and mobile devices
 
@@ -54,6 +54,11 @@ PUBLIC_SUPABASE_DATABASE_URL="your-supabase-project-url"
 PUBLIC_SUPABASE_ANON_KEY="your-supabase-anon-key"
 PUBLIC_MODE="DEV"  # Use "PROD" for production
 ```
+
+These are required. Club-specific settings (name, website, logo, sections,
+trial threshold, default language) are optional `PUBLIC_CLUB_*` variables
+with sensible defaults — see `.env.example` for the full list and
+`src/lib/clubConfig.ts` for how they are parsed.
 
 4. Set up the Supabase database (see [Database Setup](#database-setup) below)
 
@@ -140,6 +145,8 @@ src/
 │   ├── i18n/              # Internationalization files
 │   ├── test/              # Test setup and utilities
 │   ├── models.ts          # TypeScript type definitions
+│   ├── clubConfig.ts      # Club settings for the app (reads PUBLIC_CLUB_* env)
+│   ├── clubConfigParser.ts # Pure parsing and defaults, unit-tested
 │   ├── supabase.ts        # Supabase client configuration
 │   ├── utils.ts           # Shared utility functions
 │   ├── statsUtils.ts      # Statistics grouping and year param logic
@@ -228,7 +235,8 @@ supabase db push
 
 - Views for statistics aggregation (`view_logs_summary`)
 - Functions for generating checklists and leaderboards
-- Domain-restricted authentication trigger for `@jacwohlen.ch` emails
+- `user_profiles` with status (`pending` / `approved` / `disabled`) and role (`viewer` / `trainer` / `admin`); a trigger on `auth.users` creates and syncs the profile, admins approve new accounts under `/dashboard/users`
+- RLS helper functions `is_approved_user()`, `is_writer()`, `is_admin()` used by every table and storage policy
 
 All SQL schemas, functions, and policies are version-controlled in the `supabase/migrations/` directory. The initial schema is in `20250814155759_remote_schema.sql`.
 
@@ -248,6 +256,20 @@ npm run build
    - `PUBLIC_SUPABASE_DATABASE_URL`
    - `PUBLIC_SUPABASE_ANON_KEY`
    - `PUBLIC_MODE` (set to "PROD")
+
+   Optionally, to override a club setting for a specific deploy context
+   (production vs. deploy previews), add any of the `PUBLIC_CLUB_*` /
+   `PUBLIC_TRIAL_*` / `PUBLIC_DEFAULT_LOCALE` variables listed in
+   `.env.example`. Unset variables keep their defaults.
+
+### Preview branches and database deployments
+
+Pull requests get an isolated Supabase preview branch (with migrations and
+seed data applied) wired to the Netlify Deploy Preview. Merging to `main`
+deploys migrations to the dev environment (main.admin.jacwohlen.ch);
+promoting `main` into `prod` deploys them to production
+(admin.jacwohlen.ch). Environments and workflow are documented in
+[docs/SUPABASE_BRANCHING.md](docs/SUPABASE_BRANCHING.md).
 
 ## External Integrations
 

@@ -86,7 +86,7 @@ export WEBLING_DOMAIN=<your webling domain>  # e.g. jacwohlen
 
 # Supabase production configuration
 export SUPABASE_URL=<your production supabase url>
-export SUPABASE_ANON_KEY=<your production supabase anon key>
+export SUPABASE_SERVICE_ROLE_KEY=<your production supabase service_role key>
 
 # Required for events.py (participant sync)
 export WEBLING_EMAIL=<your webling email>
@@ -101,7 +101,7 @@ export WEBLING_DOMAIN=<your webling domain>  # e.g. jacwohlen
 
 # Supabase staging configuration
 export SUPABASE_URL=<your staging supabase url>
-export SUPABASE_ANON_KEY=<your staging supabase anon key>
+export SUPABASE_SERVICE_ROLE_KEY=<your staging supabase service_role key>
 
 # Required for events.py (participant sync)
 export WEBLING_EMAIL=<your webling email>

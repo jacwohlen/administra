@@ -9,6 +9,7 @@ export const load: LayoutLoad = async ({ data }) => {
   }
   await waitLocale();
   return {
-    session: data.session
+    session: data.session,
+    userProfile: data.userProfile
   };
 };

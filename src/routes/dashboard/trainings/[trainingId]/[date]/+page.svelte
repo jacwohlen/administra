@@ -1,9 +1,11 @@
 <script lang="ts">
   import type { PageData } from './$types';
   import type { MMember } from './types';
-  import type { Member } from '$lib/models';
+  import type { Badge, Member } from '$lib/models';
   import type { TrainerRole } from '$lib/models';
   import ParticipantCard from './ParticipantCard.svelte';
+  import BadgeCelebration from '$lib/components/BadgeCelebration.svelte';
+  import { badgeKey } from '$lib/badgeUtils';
   import Fa from 'svelte-fa';
   import {
     faArrowLeft,
@@ -27,6 +29,15 @@
   let searchterm = $state('');
   let animateList = $state(true);
   let showLessonPlan = $state(false);
+  let celebrationBadges: Badge[] = $state([]);
+  let celebrationMemberName = $state('');
+
+  async function fetchBadges(memberId: string): Promise<Badge[]> {
+    const { data: rows } = await supabaseClient.rpc('get_member_badges', {
+      p_member_id: parseInt(memberId)
+    });
+    return Array.isArray(rows) ? (rows as Badge[]) : [];
+  }
 
   let filteredData: MMember[] = $state([]);
   let presentParticipants = $derived(filteredData.filter((p) => p.isPresent));
@@ -79,6 +90,10 @@
     data.participants[index].trainerRole = trainerRole;
     clearSearch();
 
+    // Badges are awarded by a database trigger inside the log insert, so the
+    // badges present afterwards but not before are exactly the new ones.
+    const before = checked ? new Set((await fetchBadges(member.id)).map(badgeKey)) : null;
+
     const { error } = await supabaseClient
       .from('logs')
       .delete()
@@ -98,6 +113,12 @@
       });
       if (error) {
         console.log(error);
+      } else if (before) {
+        const fresh = (await fetchBadges(member.id)).filter((b) => !before.has(badgeKey(b)));
+        if (fresh.length > 0) {
+          celebrationMemberName = `${member.firstname} ${member.lastname}`;
+          celebrationBadges = fresh;
+        }
       }
     }
   }
@@ -272,6 +293,8 @@
         <ParticipantCard
           member={p}
           badgeEmoji={data.badgeMap[p.id]}
+          grade={data.gradeMap[p.id]?.find((g) => g.section === data.section)}
+          medals={data.medalMap[p.id]}
           onchange={changePresence}
           onremove={removeParticipant}
         />
@@ -288,3 +311,5 @@
 {:else}
   <LessonPlan trainingId={data.trainingId} date={data.date} />
 {/if}
+
+<BadgeCelebration badges={celebrationBadges} memberName={celebrationMemberName} />
