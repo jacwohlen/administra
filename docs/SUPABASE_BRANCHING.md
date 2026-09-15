@@ -73,6 +73,17 @@ create and `seed.sql` inserts. Seed data changes are never merged onward.
   with the dev-context env vars (Dev project data, `PUBLIC_MODE=DEV`
   banner). That is why deploy previews now run through the resolver
   script below.
+- Observed 2026-09-15 on PR #89: a freshly provisioned preview branch came
+  up with a **mangled default ACL** for postgres-created objects in
+  `public` (anon/authenticated had only TRUNCATE/REFERENCES/TRIGGER on
+  tables, nothing on sequences/functions), so every API read failed with
+  "permission denied" and login landed even the seeded approved admin on
+  the pending page. The Prod project's default ACLs are intact — only the
+  branch provisioning is affected. Since
+  `20260915130000_explicit_api_role_grants.sql` the schema grants the API
+  roles explicitly instead of relying on platform defaults; if a future
+  preview branch shows "permission denied" again, compare
+  `pg_default_acl` / `information_schema.role_table_grants` against Prod.
 
 ## Costs
 
