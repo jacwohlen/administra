@@ -1,11 +1,13 @@
 <script lang="ts">
   import Fa from 'svelte-fa';
-  import { faEllipsisVertical } from '@fortawesome/free-solid-svg-icons';
+  import { faEllipsisVertical, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
   import Labels from './Labels.svelte';
   import ParticipantFrequency from './ParticipantFrequency.svelte';
   import BeltStrip from '$lib/components/BeltStrip.svelte';
   import MedalTally from '$lib/components/MedalTally.svelte';
   import { beltRingColor } from '$lib/gradeUtils';
+  import { trialStatus } from '$lib/trialUtils';
+  import { clubConfig } from '$lib/clubConfig';
   import { _ } from 'svelte-i18n';
 
   import type { MMember } from './types';
@@ -16,6 +18,7 @@
     badgeEmoji,
     grade,
     medals,
+    trialAttendedCount,
     onchange,
     onremove
   }: {
@@ -23,11 +26,17 @@
     badgeEmoji?: string;
     grade?: MemberSectionGrade;
     medals?: MedalCounts;
+    /** Attended trial sessions, only set for trial members ("probetraining" label) */
+    trialAttendedCount?: number;
     onchange?: (data: { member: MMember; checked: boolean; trainerRole: TrainerRole }) => void;
     onremove?: (data: { member: MMember }) => void;
   } = $props();
 
   let ringColor = $derived(grade ? beltRingColor(grade.beltColor) : null);
+  let needsMembership = $derived(
+    trialAttendedCount !== undefined &&
+      trialStatus(trialAttendedCount, clubConfig.trialSessionThreshold) === 'convert'
+  );
   let tally = $derived(
     medals
       ? {
@@ -152,6 +161,15 @@
         {/if}
         {#if tally && tally.total > 0}
           <MedalTally {tally} compact />
+        {/if}
+        {#if needsMembership}
+          <span
+            class="chip preset-filled-warning-500 gap-1 text-xs px-1.5 py-0.5"
+            title={$_('page.probetraining.convertHint')}
+          >
+            <Fa icon={faTriangleExclamation} size="xs" />
+            {$_('page.probetraining.filterConvert')} · {trialAttendedCount}×
+          </span>
         {/if}
         <Labels labels={member.labels ? member.labels : []} />
         <ParticipantFrequency streak={member.streak} isPresent={member.isPresent} />
