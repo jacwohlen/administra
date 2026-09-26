@@ -227,6 +227,22 @@
       "notes": "Notes",
       "notesPlaceholder": "Free-form notes about this member...",
       "labels": "Labels",
+      "backToList": "Back to member list",
+      "age": "{age} years",
+      "photo": {
+        "change": "Change photo",
+        "upload": "Upload photo",
+        "take": "Take photo",
+        "remove": "Remove photo"
+      },
+      "attendance": {
+        "title": "Attendance",
+        "attended": "Attended",
+        "asTrainer": "As trainer",
+        "total": "Total",
+        "previousYear": "Previous year",
+        "nextYear": "Next year"
+      },
       "addMember": "Add Member",
       "newMember": "New Member",
       "createdSuccess": "Member created successfully",

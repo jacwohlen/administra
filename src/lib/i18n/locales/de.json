@@ -227,6 +227,22 @@
       "notes": "Notizen",
       "notesPlaceholder": "Freie Notizen zum Mitglied...",
       "labels": "Labels",
+      "backToList": "Zurück zur Mitgliederliste",
+      "age": "{age} Jahre",
+      "photo": {
+        "change": "Foto ändern",
+        "upload": "Foto hochladen",
+        "take": "Foto aufnehmen",
+        "remove": "Foto entfernen"
+      },
+      "attendance": {
+        "title": "Anwesenheit",
+        "attended": "Teilnahmen",
+        "asTrainer": "Als Trainer",
+        "total": "Total",
+        "previousYear": "Vorheriges Jahr",
+        "nextYear": "Nächstes Jahr"
+      },
       "addMember": "Mitglied hinzufügen",
       "newMember": "Neues Mitglied",
       "createdSuccess": "Mitglied erfolgreich erstellt",
