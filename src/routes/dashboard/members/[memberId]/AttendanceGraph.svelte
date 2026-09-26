@@ -9,6 +9,13 @@
   let startDate: Dayjs = $state(dayjs().subtract(displayConfig.attendanceGraphMonths, 'months'));
   let endDate: Dayjs = $state(dayjs());
 
+  // Same palette as the activity grid in the profile hero (ActivityOverview)
+  const palette = {
+    colors: ['var(--color-primary-300)', 'var(--color-primary-600)'],
+    emptyColor: 'var(--color-surface-200)',
+    cellRadius: 2
+  };
+
   interface HeatmapData {
     date: Date;
     value: number;
@@ -53,6 +60,7 @@
         endDate={endDate.toDate()}
         startDate={startDate.toDate()}
         view={'yearly'}
+        {...palette}
       />
     {:then l}
       <SvelteHeatmap
@@ -60,6 +68,7 @@
         endDate={endDate.toDate()}
         startDate={startDate.toDate()}
         view={'yearly'}
+        {...palette}
       />
     {:catch err}
       {err}
