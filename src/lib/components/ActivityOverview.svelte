@@ -3,6 +3,7 @@
   import { _, locale } from 'svelte-i18n';
   import { supabaseClient } from '$lib/supabase';
   import { activityStart, buildActivity, type ActivitySummary } from '$lib/activityUtils';
+  import ActivityGrid from './ActivityGrid.svelte';
 
   /**
    * At-a-glance activity for the profile hero: status, a GitHub-style grid
@@ -38,7 +39,6 @@
     paused: 'bg-warning-500',
     inactive: 'bg-surface-400-600'
   };
-  const cellColor = ['bg-surface-200-800', 'bg-primary-300-700', 'bg-primary-600-400'];
 
   let perWeek = $derived(
     activity
@@ -54,10 +54,6 @@
     if (a.daysSince === 0) return $_('activity.lastToday');
     if (a.daysSince === 1) return $_('activity.lastYesterday');
     return $_('activity.lastDaysAgo', { values: { n: a.daysSince } });
-  }
-
-  function cellTitle(date: string, count: number): string {
-    return $_('activity.cell', { values: { date: dayjs(date).format('DD.MM.YYYY'), n: count } });
   }
 </script>
 
@@ -78,36 +74,7 @@
     {/if}
   </div>
 
-  <!--
-    One column per week (month label + 7 days). Columns grow to fill wide
-    screens; below the minimum cell size the rtl wrapper clips the oldest
-    weeks on the left, so the newest stay visible.
-  -->
-  <div class="overflow-hidden" dir="rtl" role="img" aria-label={$_('activity.gridLabel')}>
-    <div
-      dir="ltr"
-      class="grid grid-flow-col gap-[3px] min-w-min"
-      class:animate-pulse={!activity}
-      style:grid-template-columns="repeat({grid.weeks.length}, minmax(9px, 1fr))"
-      style:grid-template-rows="auto repeat(7, auto)"
-    >
-      {#each grid.weeks as week, i (i)}
-        <span class="h-3.5 text-[10px] leading-none text-surface-600-400 whitespace-nowrap">
-          {week.monthStart !== null ? dayjs().date(1).month(week.monthStart).format('MMM') : ''}
-        </span>
-        {#each week.days as day (day.date)}
-          {#if day.future}
-            <span class="aspect-square"></span>
-          {:else}
-            <span
-              class="aspect-square rounded-[2px] {cellColor[Math.min(day.count, 2)]}"
-              title={activity ? cellTitle(day.date, day.count) : undefined}
-            ></span>
-          {/if}
-        {/each}
-      {/each}
-    </div>
-  </div>
+  <ActivityGrid weeks={grid.weeks} loading={!activity} />
 
   {#if activity}
     <p class="text-xs text-surface-600-400">
