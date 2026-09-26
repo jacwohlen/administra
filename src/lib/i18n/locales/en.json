@@ -299,6 +299,7 @@
       "create_first_event": "Create First Event",
       "edit_event": "Edit Event",
       "add_participant": "Add Participant",
+      "add_as_attended_hint": "Added participants are recorded as attended right away.",
       "select_member": "Select Member",
       "choose_member": "Choose a member...",
       "search_members_placeholder": "Search members...",

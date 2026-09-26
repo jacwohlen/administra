@@ -21,9 +21,10 @@
   import { invalidateAll, goto } from '$app/navigation';
   import AddEventParticipant from './AddEventParticipant.svelte';
   import {
-    isEventPast as _isEventPast,
     canTrackAttendance as _canTrackAttendance,
     isRegistrationOpen as _isRegistrationOpen,
+    canAddParticipants,
+    attendanceTimestamp,
     calculateAttendanceRate
   } from '$lib/eventUtils';
   import type { Medal } from '$lib/models';
@@ -42,10 +43,6 @@
 
   function formatTime(time: string | undefined) {
     return time || '';
-  }
-
-  function isEventPast() {
-    return _isEventPast(data.event.date);
   }
 
   function canTrackAttendance() {
@@ -129,7 +126,7 @@
     }
   }
 
-  async function markAttendance(memberId: string, attended: boolean, isCoach: boolean) {
+  async function markAttendance(memberId: string, attended: boolean, isCoach = false) {
     loading = true;
     try {
       if (attended) {
@@ -137,7 +134,8 @@
         const { error } = await supabaseClient.from('event_logs').insert({
           eventId: data.event.id,
           memberId: memberId,
-          isCoach: isCoach
+          isCoach: isCoach,
+          attendedAt: attendanceTimestamp(data.event.date, data.event.timeFrom)
         });
 
         if (error) {
@@ -243,6 +241,12 @@
   let registeredCount = $derived(data.participants.length);
   let attendedCount = $derived(data.logs.length);
   let attendanceRate = $derived(calculateAttendanceRate(registeredCount, attendedCount));
+  let isWriter = $derived(
+    data.userProfile?.role === 'trainer' || data.userProfile?.role === 'admin'
+  );
+  let showAddButton = $derived(canAddParticipants(data.event, registeredCount, isWriter));
+  // Participants added on or after the event day are directly recorded as attended
+  let addAsAttended = $derived(canTrackAttendance());
 </script>
 
 <div>
@@ -365,7 +369,7 @@
   <div>
     <div class="flex justify-between items-center mb-3">
       <h3>{$_('page.events.participants')}</h3>
-      {#if !isEventPast() && isRegistrationOpen() && (!data.event.maxParticipants || registeredCount < data.event.maxParticipants)}
+      {#if showAddButton}
         <button
           class="btn preset-filled-primary-500"
           onclick={() => (showAddParticipant = !showAddParticipant)}
@@ -385,6 +389,9 @@
             <AddEventParticipant
               eventId={data.event.id}
               existingParticipants={existingParticipantIds}
+              attendedAt={addAsAttended
+                ? () => attendanceTimestamp(data.event.date, data.event.timeFrom)
+                : undefined}
               onadded={onParticipantAdded}
             />
           </div>
@@ -392,6 +399,11 @@
             {$_('button.cancel')}
           </button>
         </div>
+        {#if addAsAttended}
+          <p class="text-xs text-surface-600-400 mt-2">
+            {$_('page.events.add_as_attended_hint')}
+          </p>
+        {/if}
       </div>
     {/if}
 
