@@ -1,14 +1,15 @@
 import { test, expect } from '@playwright/test';
 
 test.describe('Login page', () => {
-  test('shows welcome message and login button', async ({ page }) => {
+  test('shows welcome message and login options', async ({ page }) => {
     await page.goto('/');
 
     // Should show the welcome message
     await expect(page.getByText(/welcome/i)).toBeVisible();
 
-    // Should show a login button when not authenticated
-    await expect(page.getByRole('button', { name: /login/i })).toBeVisible();
+    // Should offer the email code and Google sign-in when not authenticated
+    await expect(page.getByRole('button', { name: /send code/i })).toBeVisible();
+    await expect(page.getByRole('button', { name: /google/i })).toBeVisible();
   });
 
   test('does not show dashboard link when not authenticated', async ({ page }) => {
@@ -26,6 +27,13 @@ test.describe('Login page', () => {
 });
 
 test.describe('Auth guard', () => {
+  test('redirects /club to login when not authenticated', async ({ page }) => {
+    await page.goto('/club');
+
+    await page.waitForURL('/');
+    expect(page.url()).toContain('/');
+  });
+
   test('redirects /dashboard to login when not authenticated', async ({ page }) => {
     await page.goto('/dashboard');
 

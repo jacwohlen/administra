@@ -1,5 +1,6 @@
 import { AuthApiError } from '@supabase/supabase-js';
 import { fail, redirect, type Actions } from '@sveltejs/kit';
+import { homePath } from '$lib/roles';
 import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ locals: { safeGetSession, supabase } }) => {
@@ -8,14 +9,11 @@ export const load: PageServerLoad = async ({ locals: { safeGetSession, supabase 
 
   const { data: profile } = await supabase
     .from('user_profiles')
-    .select('status')
+    .select('status, role')
     .eq('user_id', user.id)
     .maybeSingle();
 
-  if (profile?.status === 'approved') {
-    redirect(303, '/dashboard');
-  }
-  redirect(303, '/pending');
+  redirect(303, homePath(profile));
 };
 
 export const actions: Actions = {
