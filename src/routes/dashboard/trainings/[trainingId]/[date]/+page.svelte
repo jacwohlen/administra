@@ -295,6 +295,7 @@
           badgeEmoji={data.badgeMap[p.id]}
           grade={data.gradeMap[p.id]?.find((g) => g.section === data.section)}
           medals={data.medalMap[p.id]}
+          trialAttendedCount={data.trialCountMap[p.id]}
           onchange={changePresence}
           onremove={removeParticipant}
         />

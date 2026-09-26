@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { Badge } from '$lib/models';
   import { badgeKey, badgeSuffix } from '$lib/badgeUtils';
+  import { displayConfig } from '$lib/appSettings';
   import { _ } from 'svelte-i18n';
 
   let { badges, memberName }: { badges: Badge[]; memberName: string } = $props();
@@ -10,11 +11,14 @@
     visible = false;
   }
 
-  // Show on every new badge set and auto-dismiss after 6 seconds
+  // Show on every new badge set and auto-dismiss after the configured time
   $effect(() => {
     if (badges.length > 0) {
       visible = true;
-      const timeout = setTimeout(() => (visible = false), 6000);
+      const timeout = setTimeout(
+        () => (visible = false),
+        displayConfig.badgeCelebrationSeconds * 1000
+      );
       return () => clearTimeout(timeout);
     }
   });

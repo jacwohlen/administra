@@ -16,6 +16,12 @@ import { parseClubConfig } from './clubConfigParser';
  * available in unit tests. Keep this module to the one line that reads it;
  * everything testable lives in `./clubConfigParser` — import from there in
  * tests, never from here.
+ *
+ * Admins can additionally override every value at runtime from
+ * /dashboard/settings: `./appSettings` fetches the `app_settings` table in
+ * the root layout load and mutates this object in place, so always read
+ * properties off `clubConfig` when needed instead of copying them at
+ * import time.
  */
 export const clubConfig = parseClubConfig(env);
 

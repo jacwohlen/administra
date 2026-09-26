@@ -3,14 +3,15 @@
   import { faGripLines } from '@fortawesome/free-solid-svg-icons';
   import { _ } from 'svelte-i18n';
   import type { Log } from '$lib/models';
+  import { displayConfig } from '$lib/appSettings';
 
   let { logs }: { logs: Promise<Log[]> } = $props();
-  let currentItem = $state(10);
+  let currentItem = $state(displayConfig.attendanceLogPageSize);
 
   // Reset currentItem when logs changes
   $effect(() => {
     void logs;
-    currentItem = 10;
+    currentItem = displayConfig.attendanceLogPageSize;
   });
 </script>
 
@@ -52,7 +53,10 @@
   </ul>
   {#if currentItem < l.length}
     <span class="flex justify-center mt-3">
-      <button class="btn preset-tonal-primary" onclick={() => (currentItem = currentItem + 10)}>
+      <button
+        class="btn preset-tonal-primary"
+        onclick={() => (currentItem = currentItem + displayConfig.attendanceLogPageSize)}
+      >
         {$_('button.loadMore')}
       </button>
     </span>

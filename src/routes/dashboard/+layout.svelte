@@ -10,6 +10,7 @@
     faUser,
     faUserPlus,
     faUsersGear,
+    faGear,
     faCalendarDays,
     faSun,
     faMoon
@@ -42,6 +43,7 @@
     if (page.route.id?.startsWith('/dashboard/probetraining')) return 'probetraining';
     if (page.route.id?.startsWith('/dashboard/stats')) return 'stats';
     if (page.route.id?.startsWith('/dashboard/users')) return 'users';
+    if (page.route.id?.startsWith('/dashboard/settings')) return 'settings';
     return 'today';
   }
 
@@ -94,7 +96,8 @@
             members: '/dashboard/members',
             probetraining: '/dashboard/probetraining',
             stats: '/dashboard/stats',
-            users: '/dashboard/users'
+            users: '/dashboard/users',
+            settings: '/dashboard/settings'
           };
           if (e.value && routes[e.value]) goto(routes[e.value], { invalidateAll: true });
         }}
@@ -219,6 +222,17 @@
                   {data.pendingUsers}
                 </span>
               {/if}
+            </button>
+            <button
+              type="button"
+              class="btn preset-tonal-surface w-full mb-2"
+              onclick={() => {
+                popoverOpen = false;
+                goto('/dashboard/settings', { invalidateAll: true });
+              }}
+            >
+              <Fa icon={faGear} />
+              <span>{$_('page.dashboard.settings')}</span>
             </button>
           {/if}
           <button

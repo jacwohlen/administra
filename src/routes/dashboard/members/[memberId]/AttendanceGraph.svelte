@@ -2,10 +2,11 @@
   import dayjs, { type Dayjs } from 'dayjs';
   import SvelteHeatmap from 'svelte-heatmap';
   import type { Log } from '$lib/models';
+  import { displayConfig } from '$lib/appSettings';
 
   let { logs, year }: { logs: Promise<Log[]>; year: number } = $props();
 
-  let startDate: Dayjs = $state(dayjs().subtract(5, 'months'));
+  let startDate: Dayjs = $state(dayjs().subtract(displayConfig.attendanceGraphMonths, 'months'));
   let endDate: Dayjs = $state(dayjs());
 
   interface HeatmapData {

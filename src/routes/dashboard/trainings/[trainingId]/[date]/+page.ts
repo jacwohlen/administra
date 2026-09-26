@@ -4,16 +4,19 @@ import type { MedalCounts, MemberSectionGrade, MemberTopBadge } from '$lib/model
 import { supabaseClient } from '$lib/supabase';
 import { error as err } from '@sveltejs/kit';
 import { buildMembersWithStreaks } from '$lib/trainingUtils';
-
-const STREAK_LENGTH = 9;
+import { displayConfig, loadAppSettings } from '$lib/appSettings';
 
 export const load = (async ({ params }) => {
+  // Page loads run concurrently with the root layout load, so make sure any
+  // admin-configured streak length is applied before querying.
+  await loadAppSettings();
   const [
     checklistResult,
     streakResult,
     { data: topBadges },
     { data: grades },
-    { data: medalCounts }
+    { data: medalCounts },
+    { data: trialMembers }
   ] = await Promise.all([
     supabaseClient
       .rpc('get_checklist_members', {
@@ -25,11 +28,12 @@ export const load = (async ({ params }) => {
     supabaseClient.rpc('get_checklist_member_streak', {
       tid: params.trainingId,
       before_date: params.date,
-      n: STREAK_LENGTH
+      n: displayConfig.checklistStreakLength
     }),
     supabaseClient.rpc('get_members_top_badges'),
     supabaseClient.rpc('get_members_current_grades'),
-    supabaseClient.rpc('get_members_medal_counts')
+    supabaseClient.rpc('get_members_medal_counts'),
+    supabaseClient.from('view_trial_members').select('id, attendedCount')
   ]);
 
   if (checklistResult.error) {
@@ -58,6 +62,15 @@ export const load = (async ({ params }) => {
     }
   }
 
+  // Attended-session count per trial member ("probetraining" label), so the
+  // checklist can flag candidates who have reached the membership threshold.
+  const trialCountMap: Record<string, number> = {};
+  if (Array.isArray(trialMembers)) {
+    for (const t of trialMembers as { id: number; attendedCount: number }[]) {
+      trialCountMap[t.id] = t.attendedCount;
+    }
+  }
+
   return {
     trainingId: params.trainingId,
     date: params.date,
@@ -67,6 +80,7 @@ export const load = (async ({ params }) => {
     ) as MMember[],
     badgeMap,
     gradeMap,
-    medalMap
+    medalMap,
+    trialCountMap
   };
 }) satisfies PageLoad;
