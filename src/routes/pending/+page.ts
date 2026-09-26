@@ -1,4 +1,5 @@
 import { redirect } from '@sveltejs/kit';
+import { homePath, isApproved } from '$lib/roles';
 import type { PageLoad } from './$types';
 
 export const load: PageLoad = async ({ parent }) => {
@@ -6,8 +7,8 @@ export const load: PageLoad = async ({ parent }) => {
   if (!session) {
     redirect(303, '/');
   }
-  if (userProfile?.status === 'approved') {
-    redirect(303, '/dashboard');
+  if (isApproved(userProfile)) {
+    redirect(303, homePath(userProfile));
   }
   return {};
 };

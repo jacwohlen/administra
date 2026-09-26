@@ -14235,6 +14235,49 @@ INSERT INTO public.member_medals ("memberId", "eventId", competition, date, sect
   (103, NULL, 'Swiss Open Juniors', '2025-11-08', 'Judo', 'bronze', 'U18 -60 kg');
 
 --
+-- E2E member user (self sign-in): its email is on file for two siblings, so
+-- the account is approved automatically with the 'member' role and sees both
+-- profiles (see 20260926090100_member_self_service.sql).
+--
+INSERT INTO auth.users (
+  instance_id, id, aud, role, email, encrypted_password,
+  email_confirmed_at, created_at, updated_at,
+  confirmation_token, recovery_token,
+  email_change, email_change_token_new, email_change_token_current,
+  phone, phone_change, phone_change_token,
+  reauthentication_token,
+  raw_app_meta_data, raw_user_meta_data,
+  is_sso_user, is_anonymous
+) VALUES (
+  '00000000-0000-0000-0000-000000000000',
+  'b2c3d4e5-f6a7-8901-bcde-f12345678901',
+  'authenticated', 'authenticated',
+  'member@example.com',
+  crypt('testpass', gen_salt('bf')),
+  now(), now(), now(),
+  '', '',
+  '', '', '',
+  '', '', '',
+  '',
+  '{"provider":"email","providers":["email"]}',
+  '{}',
+  false, false
+);
+
+INSERT INTO auth.identities (
+  id, user_id, provider_id, identity_data, provider, last_sign_in_at, created_at, updated_at
+) VALUES (
+  'b2c3d4e5-f6a7-8901-bcde-f12345678901',
+  'b2c3d4e5-f6a7-8901-bcde-f12345678901',
+  'member@example.com',
+  jsonb_build_object('sub', 'b2c3d4e5-f6a7-8901-bcde-f12345678901', 'email', 'member@example.com'),
+  'email',
+  now(), now(), now()
+);
+
+UPDATE public.members SET email = 'member@example.com' WHERE id IN (103, 107);
+
+--
 -- Compute badges for all seeded members
 --
 RESET app.skip_badge_refresh;

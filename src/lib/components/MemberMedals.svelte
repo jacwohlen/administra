@@ -14,13 +14,16 @@
     medals,
     events = [],
     sections = [],
-    onchanged
+    onchanged,
+    readonly = false
   }: {
     memberId: number;
     medals: MemberMedal[];
     events?: PastEvent[];
     sections?: string[];
     onchanged?: () => void;
+    /** Hide the add/remove controls (club area) */
+    readonly?: boolean;
   } = $props();
 
   let sorted = $derived(sortMedals(medals));
@@ -101,10 +104,12 @@
 
 <div class="flex justify-between items-center mb-3">
   <h3>{$_('medals.title')}</h3>
-  <button class="btn preset-tonal-primary text-sm" onclick={openAdd}>
-    <Fa icon={faPlus} />
-    <span>{$_('medals.addMedal')}</span>
-  </button>
+  {#if !readonly}
+    <button class="btn preset-tonal-primary text-sm" onclick={openAdd}>
+      <Fa icon={faPlus} />
+      <span>{$_('medals.addMedal')}</span>
+    </button>
+  {/if}
 </div>
 
 {#if sorted.length === 0}
@@ -124,13 +129,15 @@
           </div>
         </div>
         <span class="text-xs text-surface-600-400 flex-none">{formatDate(m.date)}</span>
-        <button
-          class="p-1 text-surface-600-400 hover:text-error-600-400 flex-none"
-          title={$_('button.remove')}
-          onclick={() => (confirmDeleteId = m.id)}
-        >
-          <Fa icon={faTrash} size="xs" />
-        </button>
+        {#if !readonly}
+          <button
+            class="p-1 text-surface-600-400 hover:text-error-600-400 flex-none"
+            title={$_('button.remove')}
+            onclick={() => (confirmDeleteId = m.id)}
+          >
+            <Fa icon={faTrash} size="xs" />
+          </button>
+        {/if}
       </div>
     {/each}
   </div>

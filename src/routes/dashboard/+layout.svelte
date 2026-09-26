@@ -8,6 +8,7 @@
     faChartSimple,
     faList,
     faUser,
+    faIdCard,
     faUserPlus,
     faUsersGear,
     faGear,
@@ -48,9 +49,10 @@
   }
 
   function getInitials(): string {
-    let fullname = data.session.user.user_metadata.full_name;
-    if (fullname === null || fullname.length === 0) {
-      return '';
+    // Email-code accounts carry no full_name, fall back to the email.
+    let fullname: string = data.session.user.user_metadata?.full_name ?? '';
+    if (!fullname) {
+      return (data.session.user.email ?? '').charAt(0).toUpperCase();
     }
     const arr = fullname.split(' ');
     if (arr?.length >= 2) {
@@ -235,6 +237,14 @@
               <span>{$_('page.dashboard.settings')}</span>
             </button>
           {/if}
+          <a
+            href="/club"
+            class="btn preset-tonal-surface w-full mb-2"
+            onclick={() => (popoverOpen = false)}
+          >
+            <Fa icon={faIdCard} />
+            <span>{$_('page.dashboard.myProfile')}</span>
+          </a>
           <button
             type="button"
             class="btn preset-tonal-surface w-full mb-2"
