@@ -459,8 +459,7 @@
       "searchPlaceholder": "Search by name…",
       "filterSection": "Filter by section",
       "allSections": "All",
-      "noMatches": "Nobody found",
-      "backToMembers": "Members"
+      "noMatches": "Nobody found"
     }
   },
   "components": {

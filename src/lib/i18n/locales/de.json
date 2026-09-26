@@ -459,8 +459,7 @@
       "searchPlaceholder": "Name suchen…",
       "filterSection": "Nach Sektion filtern",
       "allSections": "Alle",
-      "noMatches": "Niemand gefunden",
-      "backToMembers": "Mitglieder"
+      "noMatches": "Niemand gefunden"
     }
   },
   "components": {

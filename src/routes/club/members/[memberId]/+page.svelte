@@ -12,9 +12,16 @@
   <title>{data.profile.member.firstname} {data.profile.member.lastname}</title>
 </svelte:head>
 
-<a href="/club/members" class="btn btn-sm preset-tonal-surface mb-3">
-  <Fa icon={faArrowLeft} />
-  <span>{$_('page.club.backToMembers')}</span>
-</a>
+<div class="page-header-back">
+  <a
+    href="/club/members"
+    class="btn preset-tonal-surface"
+    title={$_('page.members.backToList')}
+    aria-label={$_('page.members.backToList')}
+  >
+    <Fa icon={faArrowLeft} />
+  </a>
+  <span class="text-surface-600-400">{$_('page.club.members')}</span>
+</div>
 
 <MemberProfile profile={data.profile} />

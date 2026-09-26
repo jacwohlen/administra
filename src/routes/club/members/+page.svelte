@@ -68,7 +68,7 @@
   {#if visible.length === 0}
     <p class="empty-state">{$_('page.club.noMatches')}</p>
   {:else}
-    <ul class="card divide-y divide-surface-200-800 overflow-hidden">
+    <ul class="card border border-surface-200-800 divide-y divide-surface-200-800 overflow-hidden">
       {#each visible as m (m.id)}
         <li>
           <a

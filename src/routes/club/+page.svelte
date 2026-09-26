@@ -34,7 +34,7 @@
 {#if data.profile}
   <MemberProfile profile={data.profile} />
 {:else}
-  <div class="card p-8 text-center space-y-4">
+  <div class="card border border-surface-200-800 p-8 text-center space-y-4">
     <p class="text-4xl" aria-hidden="true">👋</p>
     <h1>{$_('page.club.noProfileTitle')}</h1>
     <p class="text-surface-600-400">{$_('page.club.noProfileMessage')}</p>
