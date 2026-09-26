@@ -29,7 +29,7 @@
   let isAdmin = $derived(data.userProfile?.role === 'admin');
 
   const submitLogout: SubmitFunction = async ({ cancel }) => {
-    const { error } = await supabaseClient.auth.signOut();
+    const { error } = await supabaseClient.auth.signOut({ scope: 'local' });
     if (error) {
       console.log(error);
     }

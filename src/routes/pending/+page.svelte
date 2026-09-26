@@ -9,7 +9,7 @@
   let { data }: { data: PageData } = $props();
 
   async function logout() {
-    await supabaseClient.auth.signOut();
+    await supabaseClient.auth.signOut({ scope: 'local' });
     await goto('/');
   }
 

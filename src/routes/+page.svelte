@@ -30,7 +30,7 @@
   let signInError = page.url.searchParams.get('error');
   if (signInError) {
     error = 'Error: Could not log in: ' + page.url.searchParams.get('error_description');
-    supabaseClient.auth.signOut();
+    supabaseClient.auth.signOut({ scope: 'local' });
   }
 
   // Passwordless sign-in: members enter the email the club has on file, get a

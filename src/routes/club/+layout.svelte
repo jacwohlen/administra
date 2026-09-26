@@ -59,7 +59,7 @@
 
   async function logout() {
     menuOpen = false;
-    await supabaseClient.auth.signOut();
+    await supabaseClient.auth.signOut({ scope: 'local' });
     await goto('/');
   }
 
