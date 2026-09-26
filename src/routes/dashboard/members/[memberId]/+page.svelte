@@ -7,6 +7,7 @@
   import MemberMedals from '$lib/components/MemberMedals.svelte';
   import MedalTally from '$lib/components/MedalTally.svelte';
   import BeltStrip from '$lib/components/BeltStrip.svelte';
+  import ActivityOverview from '$lib/components/ActivityOverview.svelte';
   import { beltRingColor, highestGrade, medalTally } from '$lib/gradeUtils';
   import {
     faArrowLeft,
@@ -437,6 +438,10 @@
           {/each}
         </div>
       {/if}
+
+      <div class="mt-4 pt-4 border-t border-surface-200-800">
+        <ActivityOverview memberId={data.id} />
+      </div>
 
       {#if data.currentGrades.length > 0 || tally.total > 0}
         <div

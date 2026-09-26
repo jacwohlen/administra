@@ -3,6 +3,7 @@
   import dayjs from 'dayjs';
   import Fa from 'svelte-fa';
   import { faCakeCandles, faEnvelope, faPhone } from '@fortawesome/free-solid-svg-icons';
+  import ActivityOverview from '$lib/components/ActivityOverview.svelte';
   import BeltStrip from '$lib/components/BeltStrip.svelte';
   import MedalTally from '$lib/components/MedalTally.svelte';
   import MemberBadges from '$lib/components/MemberBadges.svelte';
@@ -75,6 +76,12 @@
           {#each member.sections as section (section)}
             <span class="chip preset-tonal-secondary text-xs">{section}</span>
           {/each}
+        </div>
+      {/if}
+
+      {#if member.isMine}
+        <div class="mt-4 pt-4 border-t border-surface-200-800">
+          <ActivityOverview memberId={member.id} />
         </div>
       {/if}
 
