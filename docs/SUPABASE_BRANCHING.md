@@ -51,7 +51,11 @@ that project once the cutover is verified.
 5. Promote by opening/merging a PR from `main` into `prod`: Supabase
    applies the new migrations to the **Prod** project (plus Edge Functions
    and storage buckets declared in `config.toml`), and Netlify deploys
-   admin.jacwohlen.ch.
+   admin.jacwohlen.ch. Merge promotion PRs with **"Create a merge
+   commit"**, never "Squash and merge": a squash commit on `prod` is not
+   an ancestor of `main`, so the next promotion PR lists already-released
+   changes again and can conflict. If it happens anyway, merge `prod` back
+   into `main` with a merge commit.
 
 Preview branches contain **no production data** — only what migrations
 create and `seed.sql` inserts. Seed data changes are never merged onward.
