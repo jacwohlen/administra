@@ -8,10 +8,13 @@
   let {
     eventId,
     existingParticipants = [],
+    attendedAt,
     onadded
   }: {
     eventId: string;
     existingParticipants?: string[];
+    /** When set, the added member is directly recorded as attended at the returned time. */
+    attendedAt?: () => string;
     onadded?: (detail: { member: Member }) => void;
   } = $props();
 
@@ -86,12 +89,29 @@
       const { error } = await supabaseClient.from('event_participants').insert({
         eventId: eventId,
         memberId: member.id,
-        attendanceStatus: 'registered'
+        attendanceStatus: attendedAt ? 'attended' : 'registered'
       });
 
       if (error) {
         console.error('Error adding participant:', error);
         return;
+      }
+
+      if (attendedAt) {
+        const { error: logError } = await supabaseClient.from('event_logs').insert({
+          eventId: eventId,
+          memberId: member.id,
+          attendedAt: attendedAt()
+        });
+
+        if (logError) {
+          console.error('Error marking attendance:', logError);
+          await supabaseClient
+            .from('event_participants')
+            .update({ attendanceStatus: 'registered' })
+            .eq('eventId', eventId)
+            .eq('memberId', member.id);
+        }
       }
 
       onadded?.({ member });

@@ -299,6 +299,7 @@
       "create_first_event": "Erstes Event Erstellen",
       "edit_event": "Event Bearbeiten",
       "add_participant": "Teilnehmer Hinzufügen",
+      "add_as_attended_hint": "Hinzugefügte Teilnehmer werden direkt als anwesend erfasst.",
       "select_member": "Mitglied Auswählen",
       "choose_member": "Mitglied wählen...",
       "search_members_placeholder": "Mitglieder suchen...",
