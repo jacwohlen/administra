@@ -84,7 +84,7 @@
     await _changePresence(detail.member, detail.checked, detail.trainerRole);
   }
 
-  async function _changePresence(member: MMember, checked: boolean, trainerRole: TrainerRole) {
+  async function _changePresence(member: Member, checked: boolean, trainerRole: TrainerRole) {
     const index = data.participants.findIndex((m) => m.id === member.id);
     data.participants[index].isPresent = checked;
     data.participants[index].trainerRole = trainerRole;

@@ -1,4 +1,4 @@
-import { supabaseClient } from '$lib/supabase';
+import { rpcRows } from '$lib/supabase';
 import type { PageLoad } from './$types';
 import { error as err } from '@sveltejs/kit';
 import type { Athletes } from '$lib/models';
@@ -9,11 +9,9 @@ export const load = (async ({ params }) => {
 
   async function getTopAthletes(mode: 'YEAR' | 'ALL', y: number | '') {
     if (mode === 'ALL') y = '';
-    const { error, data } = await supabaseClient
-      .rpc('get_top_athletes_by_section', {
-        year: y
-      })
-      .returns<Athletes[]>();
+    const { error, data } = await rpcRows<Athletes>('get_top_athletes_by_section', {
+      year: y
+    });
 
     if (error) {
       throw err(404, error);

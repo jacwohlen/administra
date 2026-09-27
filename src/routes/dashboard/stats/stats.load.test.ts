@@ -24,7 +24,12 @@ const { mockSupabase } = vi.hoisted(() => ({
 }));
 
 vi.mock('$lib/supabase', () => ({
-  supabaseClient: mockSupabase
+  supabaseClient: mockSupabase,
+  // Same as the real helper, but on the mocked client
+  rpcRows: async (fn: string, args?: Record<string, unknown>) => {
+    const { data, error } = await mockSupabase.rpc(fn, args);
+    return { data: data ?? [], error };
+  }
 }));
 
 vi.mock('@sveltejs/kit', () => ({
