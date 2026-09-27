@@ -17,13 +17,17 @@
       "stats": "Stats",
       "users": "Users",
       "noTrainingsToday": "There are no trainings happening today!",
-      "settings": "Settings"
+      "settings": "Settings",
+      "myProfile": "My profile"
     },
     "pending": {
       "title": "Access pending",
-      "message": "Your account is waiting for approval by an administrator. You will be granted access once an admin reviews your sign-up.",
+      "message": "Trainers and board members are approved by an administrator.",
       "disabledTitle": "Account disabled",
-      "disabledMessage": "Your account has been disabled. Please contact an administrator."
+      "disabledMessage": "Your account has been disabled. Please contact an administrator.",
+      "signedInAs": "Signed in as",
+      "noMemberMatch": "This email address isn't on file for any member. Sign in with the email the club has for you – or ask your trainer to add it. You'll get in automatically afterwards.",
+      "otherEmail": "Use a different email"
     },
     "users": {
       "title": "Users",
@@ -45,6 +49,7 @@
         "disabled": "Disabled"
       },
       "role": {
+        "member": "Member",
         "viewer": "Viewer",
         "trainer": "Trainer",
         "admin": "Administrator"
@@ -227,6 +232,22 @@
       "notes": "Notes",
       "notesPlaceholder": "Free-form notes about this member...",
       "labels": "Labels",
+      "backToList": "Back to member list",
+      "age": "{age} years",
+      "photo": {
+        "change": "Change photo",
+        "upload": "Upload photo",
+        "take": "Take photo",
+        "remove": "Remove photo"
+      },
+      "attendance": {
+        "title": "Attendance",
+        "attended": "Attended",
+        "asTrainer": "As trainer",
+        "total": "Total",
+        "previousYear": "Previous year",
+        "nextYear": "Next year"
+      },
       "addMember": "Add Member",
       "newMember": "New Member",
       "createdSuccess": "Member created successfully",
@@ -249,7 +270,8 @@
       "trainingsHistory": {
         "title": "Trainings History",
         "noItems": "No trainings registered"
-      }
+      },
+      "moreActions": "More actions"
     },
     "stats": {
       "all": "All",
@@ -402,6 +424,43 @@
       "assignError": "Error assigning training",
       "removeSuccess": "Assignment removed",
       "removeError": "Error removing assignment"
+    },
+    "login": {
+      "title": "Sign in",
+      "subtitle": "Enter the email address the club has on file. We'll send you a code – no password needed.",
+      "emailPlaceholder": "you@example.com",
+      "sendCode": "Send code",
+      "or": "or",
+      "google": "Continue with Google",
+      "checkInbox": "Check your inbox",
+      "codeSent": "We sent a {length}-digit code to",
+      "codeLabel": "Sign-in code",
+      "verify": "Sign in",
+      "changeEmail": "Different email",
+      "noEmail": "Nothing arrived? Check your spam folder too.",
+      "resend": "Resend code",
+      "resendIn": "Resend in {seconds} s",
+      "errorSend": "We couldn't send the code. Please check the email address.",
+      "errorCode": "That code is wrong or has expired. Please try again.",
+      "errorRateLimit": "Too many attempts. Please wait a moment and try again."
+    },
+    "club": {
+      "myProfile": "My profile",
+      "members": "Members",
+      "accountMenu": "Account",
+      "toDashboard": "Open management",
+      "thatsYou": "Your profile",
+      "pickProfile": "Choose profile",
+      "myDetails": "My details",
+      "detailsHint": "Something wrong? Let your trainer know.",
+      "noProfileTitle": "No profile linked yet",
+      "noProfileMessage": "There is no member profile for your email address. Feel free to look around the club anyway.",
+      "browseMembers": "Browse members",
+      "memberCount": "{count, plural, one {# member} other {# members}}",
+      "searchPlaceholder": "Search by name…",
+      "filterSection": "Filter by section",
+      "allSections": "All",
+      "noMatches": "Nobody found"
     }
   },
   "components": {
@@ -642,5 +701,20 @@
     "Friday": "Fri",
     "Saturday": "Sat",
     "Sunday": "Sun"
+  },
+  "activity": {
+    "gridLabel": "Trainings in the last 12 months",
+    "status": {
+      "active": "Active",
+      "paused": "Paused",
+      "inactive": "Inactive"
+    },
+    "perWeek": "Avg. {n} × per week",
+    "never": "No training yet",
+    "lastToday": "Last trained today",
+    "lastYesterday": "Last trained yesterday",
+    "lastDaysAgo": "Last trained {n} days ago",
+    "last30": "{n, plural, one {# training} other {# trainings}} in the last 30 days",
+    "cell": "{date}: {n, plural, =0 {no training} one {# training} other {# trainings}}"
   }
 }

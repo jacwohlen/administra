@@ -51,7 +51,11 @@ that project once the cutover is verified.
 5. Promote by opening/merging a PR from `main` into `prod`: Supabase
    applies the new migrations to the **Prod** project (plus Edge Functions
    and storage buckets declared in `config.toml`), and Netlify deploys
-   admin.jacwohlen.ch.
+   admin.jacwohlen.ch. Merge promotion PRs with **"Create a merge
+   commit"**, never "Squash and merge": a squash commit on `prod` is not
+   an ancestor of `main`, so the next promotion PR lists already-released
+   changes again and can conflict. If it happens anyway, merge `prod` back
+   into `main` with a merge commit.
 
 Preview branches contain **no production data** — only what migrations
 create and `seed.sql` inserts. Seed data changes are never merged onward.
@@ -191,8 +195,9 @@ check directly.
 - **Google login on previews**: each preview branch has its own auth
   callback (`https://<branch-ref>.supabase.co/auth/v1/callback`), which the
   Google OAuth client does not know about, so Google login fails on Deploy
-  Previews wired to a preview branch. Use the seeded test user from
-  `seed.sql` (`test@example.com` / `testpass`) instead, or add the branch
+  Previews wired to a preview branch. Use the seeded test users from
+  `seed.sql` (`test@example.com` / `testpass` as admin,
+  `member@example.com` / `testpass` as member) instead, or add the branch
   callback to the Google Cloud OAuth client while testing.
 - **Never edit an already-merged migration** — the Dev/Prod databases have
   already run it. Always add a new migration file.

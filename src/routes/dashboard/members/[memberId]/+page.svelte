@@ -7,14 +7,20 @@
   import MemberMedals from '$lib/components/MemberMedals.svelte';
   import MedalTally from '$lib/components/MedalTally.svelte';
   import BeltStrip from '$lib/components/BeltStrip.svelte';
+  import ActivityOverview from '$lib/components/ActivityOverview.svelte';
   import { beltRingColor, highestGrade, medalTally } from '$lib/gradeUtils';
   import {
+    faArrowLeft,
+    faCakeCandles,
     faCamera,
     faEdit,
+    faEllipsisVertical,
+    faEnvelope,
+    faPhone,
     faTrash,
-    faUpload,
-    faUserMinus
+    faUpload
   } from '@fortawesome/free-solid-svg-icons';
+  import { calculateAge } from '$lib/utils';
   import { supabaseClient } from '$lib/supabase';
   import { error as err } from '@sveltejs/kit';
   import Fa from 'svelte-fa';
@@ -25,9 +31,9 @@
   import { toaster } from '$lib/toast';
 
   let { data }: { data: PageData } = $props();
-  let loadingImage = false;
-  let isDeleting = false;
-  let isEditing = false;
+  let loadingImage = $state(false);
+  let isDeleting = $state(false);
+  let isEditing = $state(false);
   let showEditFormDialog = $state(false);
   let showDeleteConfirm = $state(false);
 
@@ -35,6 +41,8 @@
   let ringColor = $derived(topGrade ? beltRingColor(topGrade.beltColor) : null);
   let tally = $derived(medalTally(data.medals));
   let gradeSections = $derived([...new Set(data.gradeDefinitions.map((d) => d.section))]);
+  let age = $derived(calculateAge(data.birthday));
+  let showPhotoMenu = $state(false);
 
   function refresh() {
     invalidate('app:member:' + data.id);
@@ -129,10 +137,37 @@
   }
 
   function selectFiles() {
+    showPhotoMenu = false;
     document.getElementById('selectFiles')?.click();
   }
   function takePhoto() {
+    showPhotoMenu = false;
     document.getElementById('takePhoto')?.click();
+  }
+  function removePhoto() {
+    showPhotoMenu = false;
+    resetImage();
+  }
+
+  // Delete sits behind the ⋮ menu, as on the training page
+  let menuOpen = $state(false);
+  let menuStyle = $state('');
+  let menuBtnEl: HTMLButtonElement;
+
+  function toggleMenu() {
+    if (menuOpen) {
+      menuOpen = false;
+      return;
+    }
+    const rect = menuBtnEl.getBoundingClientRect();
+    menuStyle = `position:fixed;top:${rect.bottom + 4}px;left:${rect.right - 192}px;z-index:9999;`;
+    menuOpen = true;
+  }
+
+  function handleWindowClick(e: MouseEvent) {
+    if (menuOpen && menuBtnEl && !menuBtnEl.contains(e.target as Node)) {
+      menuOpen = false;
+    }
   }
 
   function showEditForm() {
@@ -222,22 +257,57 @@
   }
 </script>
 
+<svelte:window onclick={handleWindowClick} />
+
 <div class="space-y-4">
-  <div class="page-header">
-    <h1>{data.firstname} {data.lastname}</h1>
-    <div class="flex gap-2">
-      <button class="btn preset-filled-primary-500" onclick={showEditForm}>
+  <div class="page-header-back">
+    <a
+      href="/dashboard/members"
+      class="btn preset-tonal-surface"
+      title={$_('page.members.backToList')}
+      aria-label={$_('page.members.backToList')}
+    >
+      <Fa icon={faArrowLeft} />
+    </a>
+    <span class="flex-1 min-w-0 truncate text-surface-600-400">{$_('page.members.title')}</span>
+    <div class="flex gap-2 flex-shrink-0">
+      <button
+        class="btn preset-tonal-surface"
+        onclick={showEditForm}
+        title={$_('button.edit')}
+        aria-label={$_('button.edit')}
+      >
         <Fa icon={faEdit} />
-        <span>{$_('button.edit')}</span>
       </button>
-      <button class="btn preset-tonal-error" onclick={confirmDelete} disabled={isDeleting}>
-        {#if isDeleting}
-          <span class="animate-spin">...</span>
-        {:else}
-          <Fa icon={faUserMinus} />
-          <span>{$_('button.delete')}</span>
+      <div class="relative">
+        <button
+          class="btn preset-tonal-surface"
+          bind:this={menuBtnEl}
+          onclick={toggleMenu}
+          aria-label={$_('page.members.moreActions')}
+          aria-expanded={menuOpen}
+        >
+          <Fa icon={faEllipsisVertical} />
+        </button>
+        {#if menuOpen}
+          <nav
+            class="card min-w-48 p-1 shadow-xl bg-surface-50-950 border border-surface-300-700"
+            style={menuStyle}
+          >
+            <button
+              class="btn w-full justify-start text-error-600-400"
+              onclick={() => {
+                menuOpen = false;
+                confirmDelete();
+              }}
+              disabled={isDeleting}
+            >
+              <Fa icon={faTrash} />
+              <span>{$_('button.delete')}</span>
+            </button>
+          </nav>
         {/if}
-      </button>
+      </div>
     </div>
   </div>
 
@@ -300,63 +370,126 @@
     </div>
   {/if}
 
-  <div class="card p-4">
-    <!-- Avatar + Photo buttons -->
-    <div class="flex flex-col items-center mb-6">
-      <div
-        class="relative rounded-full"
-        style:box-shadow={ringColor
-          ? `0 0 0 3px var(--color-surface-50-950), 0 0 0 6px ${ringColor}`
-          : undefined}
-        title={topGrade ? `${topGrade.grade} ${topGrade.section}` : undefined}
-      >
-        {#if data.img}
-          <img
-            src={data.img}
-            alt="{data.firstname} {data.lastname}"
-            class="size-32 rounded-full object-cover"
-          />
-        {:else}
+  <!-- Profile hero -->
+  <section class="card border border-surface-200-800 overflow-hidden">
+    <div class="h-20 sm:h-24 bg-linear-to-r from-primary-500/30 to-tertiary-500/20"></div>
+    <div class="px-4 pt-2 pb-4">
+      <div class="flex flex-col sm:flex-row sm:items-end gap-4 -mt-12 sm:-mt-14">
+        <!-- Avatar -->
+        <div class="relative self-center sm:self-auto flex-none">
           <div
-            class="size-32 rounded-full bg-surface-100-900 flex items-center justify-center text-3xl font-bold"
+            class="rounded-full"
+            style:box-shadow={ringColor
+              ? `0 0 0 3px var(--color-surface-50-950), 0 0 0 7px ${ringColor}`
+              : '0 0 0 4px var(--color-surface-50-950)'}
+            title={topGrade ? `${topGrade.grade} ${topGrade.section}` : undefined}
           >
-            {data.lastname.charAt(0)}{data.firstname.charAt(0)}
+            {#if data.img}
+              <img
+                src={data.img}
+                alt="{data.firstname} {data.lastname}"
+                class="size-24 sm:size-28 rounded-full object-cover"
+              />
+            {:else}
+              <div
+                class="size-24 sm:size-28 rounded-full bg-surface-200-800 flex items-center justify-center text-3xl font-bold"
+              >
+                {data.lastname.charAt(0)}{data.firstname.charAt(0)}
+              </div>
+            {/if}
+            {#if loadingImage}
+              <div
+                class="absolute inset-0 flex items-center justify-center rounded-full bg-black/30"
+              >
+                <span class="animate-spin text-2xl text-white">...</span>
+              </div>
+            {/if}
           </div>
-        {/if}
-        {#if loadingImage}
-          <div class="absolute inset-0 flex items-center justify-center rounded-full bg-black/30">
-            <span class="animate-spin text-2xl text-white">...</span>
+          <button
+            type="button"
+            class="absolute bottom-0 right-0 size-9 rounded-full preset-filled-surface-950-50 flex items-center justify-center shadow-lg ring-2 ring-surface-50-950"
+            title={$_('page.members.photo.change')}
+            aria-label={$_('page.members.photo.change')}
+            aria-expanded={showPhotoMenu}
+            onclick={() => (showPhotoMenu = !showPhotoMenu)}
+          >
+            <Fa icon={faCamera} size="sm" />
+          </button>
+          {#if showPhotoMenu}
+            <!-- svelte-ignore a11y_no_static_element_interactions -->
+            <div
+              class="fixed inset-0 z-40"
+              onclick={() => (showPhotoMenu = false)}
+              onkeydown={(e) => {
+                if (e.key === 'Escape') showPhotoMenu = false;
+              }}
+            ></div>
+            <div
+              class="absolute left-1/2 -translate-x-1/2 sm:left-0 sm:translate-x-0 top-full mt-2 z-50 card p-2 w-56 shadow-xl bg-surface-50-950 border border-surface-300-700 flex flex-col gap-1"
+            >
+              <button class="btn preset-tonal-surface justify-start" onclick={selectFiles}>
+                <Fa icon={faUpload} />
+                <span>{$_('page.members.photo.upload')}</span>
+              </button>
+              <button class="btn preset-tonal-surface justify-start" onclick={takePhoto}>
+                <Fa icon={faCamera} />
+                <span>{$_('page.members.photo.take')}</span>
+              </button>
+              {#if data.img}
+                <button class="btn preset-tonal-error justify-start" onclick={removePhoto}>
+                  <Fa icon={faTrash} />
+                  <span>{$_('page.members.photo.remove')}</span>
+                </button>
+              {/if}
+            </div>
+          {/if}
+          <input
+            type="file"
+            id="selectFiles"
+            class="hidden"
+            accept="image/*"
+            onchange={handlePhotoChange}
+          />
+          <input
+            type="file"
+            id="takePhoto"
+            class="hidden"
+            accept="image/*"
+            onchange={handlePhotoChange}
+            capture="user"
+          />
+        </div>
+
+        <!-- Name + actions -->
+        <div
+          class="flex-1 min-w-0 flex flex-col sm:flex-row sm:items-end gap-3 text-center sm:text-left"
+        >
+          <div class="flex-1 min-w-0">
+            <h1 class="truncate">{data.firstname} {data.lastname}</h1>
+            <p class="text-sm text-surface-600-400 tabular-nums">
+              #{data.id}{#if age !== null}
+                &middot; {$_('page.members.age', { values: { age } })}{/if}
+            </p>
           </div>
-        {/if}
+        </div>
       </div>
-      <div class="flex gap-1 mt-3">
-        <input
-          type="file"
-          id="selectFiles"
-          class="hidden"
-          accept="image/*"
-          onchange={handlePhotoChange}
-        />
-        <input
-          type="file"
-          id="takePhoto"
-          class="hidden"
-          accept="image/*"
-          onchange={handlePhotoChange}
-          capture="user"
-        />
-        <button class="btn btn-icon preset-tonal-surface" onclick={selectFiles} title="Upload">
-          <Fa icon={faUpload} />
-        </button>
-        <button class="btn btn-icon preset-tonal-surface" onclick={takePhoto} title="Photo">
-          <Fa icon={faCamera} />
-        </button>
-        <button class="btn btn-icon preset-tonal-error" onclick={resetImage} title="Remove">
-          <Fa icon={faTrash} />
-        </button>
+
+      {#if data.labels?.length}
+        <div class="flex flex-wrap justify-center sm:justify-start gap-1 mt-3">
+          {#each data.labels as l (l)}
+            <span class="chip preset-tonal-secondary text-xs">{l}</span>
+          {/each}
+        </div>
+      {/if}
+
+      <div class="mt-4 pt-4 border-t border-surface-200-800">
+        <ActivityOverview memberId={data.id} />
       </div>
+
       {#if data.currentGrades.length > 0 || tally.total > 0}
-        <div class="flex flex-col items-center gap-2 mt-4">
+        <div
+          class="flex flex-wrap items-center justify-center sm:justify-between gap-3 mt-4 pt-4 border-t border-surface-200-800"
+        >
           {#if data.currentGrades.length > 0}
             <div class="flex flex-wrap justify-center gap-x-4 gap-y-1">
               {#each data.currentGrades as g (g.section)}
@@ -374,77 +507,83 @@
         </div>
       {/if}
     </div>
+  </section>
 
-    <!-- Member details -->
-    <div class="space-y-3">
-      <div class="flex flex-col sm:flex-row border-b border-surface-300-700 pb-2">
-        <span class="sm:w-32 text-surface-600-400">{$_('page.members.id')}</span>
-        <span>{data.id}</span>
-      </div>
-      <div class="flex flex-col sm:flex-row border-b border-surface-300-700 pb-2">
-        <span class="sm:w-32 text-surface-600-400">{$_('page.members.lastName')}</span>
-        <span>{data.lastname}</span>
-      </div>
-      <div class="flex flex-col sm:flex-row border-b border-surface-300-700 pb-2">
-        <span class="sm:w-32 text-surface-600-400">{$_('page.members.firstName')}</span>
-        <span>{data.firstname}</span>
-      </div>
-      <div class="flex flex-col sm:flex-row border-b border-surface-300-700 pb-2">
-        <span class="sm:w-32 text-surface-600-400">{$_('page.members.birthday')}</span>
-        <span>{data.birthday || '-'}</span>
-      </div>
-      <div class="flex flex-col sm:flex-row border-b border-surface-300-700 pb-2">
-        <span class="sm:w-32 text-surface-600-400">{$_('page.members.mobile')}</span>
-        <span>{data.mobile || '-'}</span>
-      </div>
-      <div class="flex flex-col sm:flex-row border-b border-surface-300-700 pb-2">
-        <span class="sm:w-32 text-surface-600-400">{$_('page.members.email')}</span>
-        <span>{data.email || '-'}</span>
-      </div>
-      {#if data.notes}
-        <div class="flex flex-col sm:flex-row border-b border-surface-300-700 pb-2">
-          <span class="sm:w-32 text-surface-600-400">{$_('page.members.notes')}</span>
-          <span class="whitespace-pre-wrap">{data.notes}</span>
-        </div>
-      {/if}
-      <div class="flex flex-col sm:flex-row pb-2">
-        <span class="sm:w-32 text-surface-600-400">{$_('page.members.labels')}</span>
-        <div class="flex flex-wrap gap-1">
-          {#if data.labels}
-            {#each data.labels as l}
-              <span class="chip preset-tonal-secondary">{l}</span>
-            {/each}
+  <!-- Contact -->
+  <section class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+    {#snippet contactTile(
+      icon: typeof faPhone,
+      label: string,
+      value: string | undefined,
+      href?: string
+    )}
+      <div class="card border border-surface-200-800 p-3 flex items-center gap-3 min-w-0">
+        <div class="entity-badge text-primary-600-400"><Fa {icon} /></div>
+        <div class="min-w-0">
+          <div class="text-xs text-surface-600-400">{label}</div>
+          {#if value && href}
+            <a {href} class="anchor block truncate">{value}</a>
           {:else}
-            <span>-</span>
+            <div class="truncate" class:text-surface-600-400={!value}>{value || '–'}</div>
           {/if}
         </div>
       </div>
-    </div>
+    {/snippet}
+    {@render contactTile(
+      faPhone,
+      $_('page.members.mobile'),
+      data.mobile,
+      data.mobile ? `tel:${data.mobile.replace(/\s+/g, '')}` : undefined
+    )}
+    {@render contactTile(
+      faEnvelope,
+      $_('page.members.email'),
+      data.email,
+      data.email ? `mailto:${data.email}` : undefined
+    )}
+    {@render contactTile(
+      faCakeCandles,
+      $_('page.members.birthday'),
+      data.birthday ? dayjs(data.birthday).format('DD.MM.YYYY') : undefined
+    )}
+  </section>
+
+  {#if data.notes}
+    <section class="card border border-surface-200-800 p-4">
+      <h3 class="text-sm! font-semibold text-surface-600-400 mb-1!">{$_('page.members.notes')}</h3>
+      <p class="whitespace-pre-wrap">{data.notes}</p>
+    </section>
+  {/if}
+
+  <!-- Achievements -->
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <section class="card border border-surface-200-800 p-4">
+      <MemberGrades
+        memberId={parseInt(data.id)}
+        current={data.currentGrades}
+        history={data.gradeHistory}
+        definitions={data.gradeDefinitions}
+        onchanged={refresh}
+      />
+    </section>
+    <section class="card border border-surface-200-800 p-4">
+      <MemberMedals
+        memberId={parseInt(data.id)}
+        medals={data.medals}
+        events={data.pastEvents}
+        sections={gradeSections}
+        onchanged={refresh}
+      />
+    </section>
   </div>
-  <div class="card p-4">
-    <MemberGrades
-      memberId={parseInt(data.id)}
-      current={data.currentGrades}
-      history={data.gradeHistory}
-      definitions={data.gradeDefinitions}
-      onchanged={refresh}
-    />
-  </div>
-  <div class="card p-4">
-    <MemberMedals
-      memberId={parseInt(data.id)}
-      medals={data.medals}
-      events={data.pastEvents}
-      sections={gradeSections}
-      onchanged={refresh}
-    />
-  </div>
-  <div class="card p-4">
+  <section class="card border border-surface-200-800 p-4">
     <MemberBadges
       badges={data.badges}
       progress={data.badgeProgress}
       definitions={data.badgeDefinitions}
     />
-  </div>
+  </section>
+
+  <!-- Attendance -->
   <MemberLogs memberId={data.id} />
 </div>

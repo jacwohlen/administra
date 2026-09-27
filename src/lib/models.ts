@@ -3,7 +3,7 @@ import type { Dayjs } from 'dayjs';
 export type TrainerRole = 'attendee' | 'main_trainer' | 'assistant';
 
 export type UserStatus = 'pending' | 'approved' | 'disabled';
-export type UserRole = 'viewer' | 'trainer' | 'admin';
+export type UserRole = 'member' | 'viewer' | 'trainer' | 'admin';
 
 export interface UserProfile {
   user_id: string;
@@ -17,6 +17,19 @@ export interface UserProfile {
   approved_by?: string;
   created_at: string;
   updated_at: string;
+}
+
+/** A row of the member directory (get_member_directory): what every club member may see */
+export interface DirectoryMember {
+  id: number;
+  firstname: string;
+  lastname: string;
+  /** Small thumbnail as data URL */
+  img?: string | null;
+  imgUploaded?: string | null;
+  sections: string[];
+  /** One of the signed-in account's own members */
+  isMine: boolean;
 }
 
 export interface Member {

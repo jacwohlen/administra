@@ -8,7 +8,8 @@ A modern attendance tracking system designed specifically for martial arts clubs
 - **Training Sessions** - Create and manage recurring training classes with metadata (title, schedule, section)
 - **Attendance Tracking** - Quick and easy attendance marking for each training date
 - **Statistics & Leaderboards** - View comprehensive attendance statistics, top athletes, and trainer activity by year and section
-- **Secure Authentication** - Google OAuth with admin approval and role-based access (viewer / trainer / admin)
+- **Secure Authentication** - Google OAuth or passwordless email code, admin approval and role-based access (member / viewer / trainer / admin)
+- **Member Self-Service** - Members sign in with the email the club has on file and see their own profile and the member directory
 - **Multi-language Support** - Built-in internationalization (German/English)
 - **Responsive Design** - Works seamlessly across desktop and mobile devices
 
@@ -17,7 +18,7 @@ A modern attendance tracking system designed specifically for martial arts clubs
 - **Frontend**: SvelteKit with TypeScript
 - **Styling**: Tailwind CSS + Skeleton UI
 - **Backend**: Supabase (PostgreSQL)
-- **Authentication**: Supabase Auth with Google OAuth
+- **Authentication**: Supabase Auth with Google OAuth and email one-time codes
 - **Charts**: Carbon Charts
 - **Deployment**: Netlify
 - **Icons**: FontAwesome (via svelte-fa)

@@ -1,6 +1,7 @@
 export const ssr = false;
 import { redirect } from '@sveltejs/kit';
 import { supabaseClient } from '$lib/supabase';
+import { homePath, isStaff } from '$lib/roles';
 import type { LayoutLoad } from './$types';
 
 export const load: LayoutLoad = async ({ parent, depends }) => {
@@ -8,8 +9,8 @@ export const load: LayoutLoad = async ({ parent, depends }) => {
   if (!session) {
     redirect(303, '/');
   }
-  if (!userProfile || userProfile.status !== 'approved') {
-    redirect(303, '/pending');
+  if (!userProfile || !isStaff(userProfile)) {
+    redirect(303, homePath(userProfile));
   }
 
   depends('users:pending');

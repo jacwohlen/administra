@@ -148,6 +148,7 @@
               onchange={(e) =>
                 changeRole(p.user_id, (e.target as HTMLSelectElement).value as UserRole)}
             >
+              <option value="member">{$_('page.users.role.member')}</option>
               <option value="viewer">{$_('page.users.role.viewer')}</option>
               <option value="trainer">{$_('page.users.role.trainer')}</option>
               <option value="admin">{$_('page.users.role.admin')}</option>

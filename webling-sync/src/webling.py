@@ -79,6 +79,12 @@ def sync_members():
         u"mobile": prop["Mobile"],
         u"labels": labels
     }
+    # Members sign in to Administra with this address (see
+    # docs/MEMBER_SIGN_IN.md). Only send it when Webling has one, so an
+    # address entered in the app is not wiped by an empty Webling field.
+    email = (prop.get("E-Mail") or "").strip()
+    if email:
+      data[u"email"] = email
     upsert('members', data)
 
 def upsert(table_name, data):

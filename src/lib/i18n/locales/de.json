@@ -17,13 +17,17 @@
       "stats": "Statistik",
       "users": "Benutzer",
       "noTrainingsToday": "Heute findet kein Training statt!",
-      "settings": "Einstellungen"
+      "settings": "Einstellungen",
+      "myProfile": "Mein Profil"
     },
     "pending": {
       "title": "Zugriff ausstehend",
-      "message": "Dein Konto wartet auf die Freigabe durch einen Administrator. Du wirst benachrichtigt, sobald dein Zugriff aktiviert wurde.",
+      "message": "Trainer und Vorstand werden von einem Administrator freigeschaltet.",
       "disabledTitle": "Konto deaktiviert",
-      "disabledMessage": "Dein Konto wurde deaktiviert. Bitte wende dich an einen Administrator."
+      "disabledMessage": "Dein Konto wurde deaktiviert. Bitte wende dich an einen Administrator.",
+      "signedInAs": "Angemeldet als",
+      "noMemberMatch": "Diese E-Mail-Adresse ist bei keinem Mitglied hinterlegt. Melde dich mit der E-Mail an, die der Verein von dir hat – oder bitte deine Trainerin oder deinen Trainer, sie zu hinterlegen. Danach bist du automatisch drin.",
+      "otherEmail": "Mit anderer E-Mail anmelden"
     },
     "users": {
       "title": "Benutzer",
@@ -45,6 +49,7 @@
         "disabled": "Deaktiviert"
       },
       "role": {
+        "member": "Mitglied",
         "viewer": "Betrachter",
         "trainer": "Trainer",
         "admin": "Administrator"
@@ -227,6 +232,22 @@
       "notes": "Notizen",
       "notesPlaceholder": "Freie Notizen zum Mitglied...",
       "labels": "Labels",
+      "backToList": "Zurück zur Mitgliederliste",
+      "age": "{age} Jahre",
+      "photo": {
+        "change": "Foto ändern",
+        "upload": "Foto hochladen",
+        "take": "Foto aufnehmen",
+        "remove": "Foto entfernen"
+      },
+      "attendance": {
+        "title": "Anwesenheit",
+        "attended": "Teilnahmen",
+        "asTrainer": "Als Trainer",
+        "total": "Total",
+        "previousYear": "Vorheriges Jahr",
+        "nextYear": "Nächstes Jahr"
+      },
       "addMember": "Mitglied hinzufügen",
       "newMember": "Neues Mitglied",
       "createdSuccess": "Mitglied erfolgreich erstellt",
@@ -249,7 +270,8 @@
       "trainingsHistory": {
         "title": "Trainings Historie",
         "noItems": "Keine Trainings registriert"
-      }
+      },
+      "moreActions": "Weitere Aktionen"
     },
     "stats": {
       "all": "Alle",
@@ -402,6 +424,43 @@
       "assignError": "Fehler beim Zuweisen des Trainings",
       "removeSuccess": "Zuweisung entfernt",
       "removeError": "Fehler beim Entfernen der Zuweisung"
+    },
+    "login": {
+      "title": "Anmelden",
+      "subtitle": "Gib die E-Mail-Adresse ein, die beim Verein hinterlegt ist. Wir schicken dir einen Code – ganz ohne Passwort.",
+      "emailPlaceholder": "deine@email.ch",
+      "sendCode": "Code senden",
+      "or": "oder",
+      "google": "Mit Google anmelden",
+      "checkInbox": "Schau in dein Postfach",
+      "codeSent": "Wir haben dir einen {length}-stelligen Code geschickt an",
+      "codeLabel": "Anmeldecode",
+      "verify": "Anmelden",
+      "changeEmail": "Andere E-Mail",
+      "noEmail": "Nichts bekommen? Schau auch im Spam-Ordner nach.",
+      "resend": "Code erneut senden",
+      "resendIn": "Erneut senden in {seconds} s",
+      "errorSend": "Der Code konnte nicht gesendet werden. Bitte prüfe die E-Mail-Adresse.",
+      "errorCode": "Der Code ist falsch oder abgelaufen. Versuch es nochmals.",
+      "errorRateLimit": "Zu viele Versuche. Bitte warte einen Moment und versuch es dann nochmals."
+    },
+    "club": {
+      "myProfile": "Mein Profil",
+      "members": "Mitglieder",
+      "accountMenu": "Konto",
+      "toDashboard": "Zur Verwaltung",
+      "thatsYou": "Dein Profil",
+      "pickProfile": "Profil wählen",
+      "myDetails": "Meine Angaben",
+      "detailsHint": "Etwas stimmt nicht? Sag es deiner Trainerin oder deinem Trainer.",
+      "noProfileTitle": "Noch kein Profil verknüpft",
+      "noProfileMessage": "Zu deiner E-Mail-Adresse gibt es kein Mitgliederprofil. Schau dich trotzdem schon mal im Verein um.",
+      "browseMembers": "Mitglieder ansehen",
+      "memberCount": "{count, plural, one {# Mitglied} other {# Mitglieder}}",
+      "searchPlaceholder": "Name suchen…",
+      "filterSection": "Nach Sektion filtern",
+      "allSections": "Alle",
+      "noMatches": "Niemand gefunden"
     }
   },
   "components": {
@@ -642,5 +701,20 @@
     "Friday": "Fr",
     "Saturday": "Sa",
     "Sunday": "So"
+  },
+  "activity": {
+    "gridLabel": "Trainings der letzten 12 Monate",
+    "status": {
+      "active": "Aktiv",
+      "paused": "Pausiert",
+      "inactive": "Inaktiv"
+    },
+    "perWeek": "Ø {n} × pro Woche",
+    "never": "Noch kein Training",
+    "lastToday": "Zuletzt heute",
+    "lastYesterday": "Zuletzt gestern",
+    "lastDaysAgo": "Zuletzt vor {n} Tagen",
+    "last30": "{n, plural, one {# Training} other {# Trainings}} in den letzten 30 Tagen",
+    "cell": "{date}: {n, plural, =0 {kein Training} one {# Training} other {# Trainings}}"
   }
 }

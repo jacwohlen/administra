@@ -14,13 +14,16 @@
     current,
     history,
     definitions,
-    onchanged
+    onchanged,
+    readonly = false
   }: {
     memberId: number;
     current: MemberCurrentGrade[];
     history: MemberGrade[];
     definitions: GradeDefinition[];
     onchanged?: () => void;
+    /** Hide the add/remove controls (club area) */
+    readonly?: boolean;
   } = $props();
 
   let ladders = $derived(gradesBySection(definitions));
@@ -96,14 +99,16 @@
 
 <div class="flex justify-between items-center mb-3">
   <h3>{$_('grades.title')}</h3>
-  <button
-    class="btn preset-tonal-primary text-sm"
-    onclick={openAdd}
-    disabled={sections.length === 0}
-  >
-    <Fa icon={faPlus} />
-    <span>{$_('grades.addGrading')}</span>
-  </button>
+  {#if !readonly}
+    <button
+      class="btn preset-tonal-primary text-sm"
+      onclick={openAdd}
+      disabled={sections.length === 0}
+    >
+      <Fa icon={faPlus} />
+      <span>{$_('grades.addGrading')}</span>
+    </button>
+  {/if}
 </div>
 
 {#if current.length === 0}
@@ -143,13 +148,15 @@
         {#if h.note}
           <span class="text-surface-600-400 truncate hidden sm:inline">· {h.note}</span>
         {/if}
-        <button
-          class="ml-auto p-1 text-surface-600-400 hover:text-error-600-400"
-          title={$_('button.remove')}
-          onclick={() => (confirmDeleteId = h.id)}
-        >
-          <Fa icon={faTrash} size="xs" />
-        </button>
+        {#if !readonly}
+          <button
+            class="ml-auto p-1 text-surface-600-400 hover:text-error-600-400"
+            title={$_('button.remove')}
+            onclick={() => (confirmDeleteId = h.id)}
+          >
+            <Fa icon={faTrash} size="xs" />
+          </button>
+        {/if}
       </li>
     {/each}
   </ul>
