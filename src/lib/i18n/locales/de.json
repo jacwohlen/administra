@@ -320,7 +320,18 @@
         "ageGroup": "{group} Jahre",
         "ageUnknown": "Alter unbekannt",
         "ofActive": "{churned} von {active} abgewandert",
-        "none": "Niemand ist abgewandert"
+        "none": "Niemand ist abgewandert",
+        "members": "Abgewandert ({count})",
+        "lastSeen": "zuletzt {date}"
+      },
+      "details": "Details",
+      "retentionOverview": "Übersicht {year}",
+      "joined": {
+        "title": "Neue Mitglieder {year}",
+        "hint": "Zum ersten Mal {year} im Training. Training = das am häufigsten besuchte, Anteil = an allen Neuen.",
+        "members": "Neu dabei ({count})",
+        "since": "seit {date}",
+        "none": "Keine neuen Mitglieder"
       }
     },
     "events": {

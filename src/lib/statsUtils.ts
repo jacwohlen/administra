@@ -68,15 +68,35 @@ export function seriesColors(groups: Iterable<string>, dark: boolean): Record<st
   return Object.fromEntries(sorted.map((g, i) => [g, palette[i % palette.length]]));
 }
 
-export interface RetentionRow {
+/** Shared fields of the retention detail rows (see get_retention_breakdown). */
+interface MemberTrainingRow {
   memberId: number;
+  firstname: string;
+  lastname: string;
   age: number | null;
   trainingId: number;
   title: string;
   section: string;
   weekday: string | null;
   dateFrom: string | null;
+}
+
+/** A member who trained the previous year, and whether they stopped. */
+export interface RetentionRow extends MemberTrainingRow {
+  last_date: string;
   churned: boolean;
+}
+
+/** A member who trained for the first time in the selected year. */
+export interface NewMemberRow extends MemberTrainingRow {
+  first_date: string;
+}
+
+export interface CountGroup {
+  key: string;
+  count: number;
+  /** count / all rows, 0..1 */
+  share: number;
 }
 
 export interface ChurnGroup {
@@ -103,6 +123,12 @@ export function ageGroup(age: number | null): string {
   return AGE_GROUPS.find((g) => age <= g.max)!.key;
 }
 
+const AGE_ORDER = [...AGE_GROUPS.map((g) => g.key), 'unknown'];
+
+function byAgeOrder(a: { key: string }, b: { key: string }): number {
+  return AGE_ORDER.indexOf(a.key) - AGE_ORDER.indexOf(b.key);
+}
+
 function churnGroups(rows: RetentionRow[], keyOf: (r: RetentionRow) => string): ChurnGroup[] {
   const groups = new Map<string, ChurnGroup>();
   for (const r of rows) {
@@ -118,10 +144,7 @@ function churnGroups(rows: RetentionRow[], keyOf: (r: RetentionRow) => string): 
 
 /** Churn per age group, youngest first, members without birthday last. */
 export function churnByAge(rows: RetentionRow[]): ChurnGroup[] {
-  const order = [...AGE_GROUPS.map((g) => g.key), 'unknown'];
-  return churnGroups(rows, (r) => ageGroup(r.age)).sort(
-    (a, b) => order.indexOf(a.key) - order.indexOf(b.key)
-  );
+  return churnGroups(rows, (r) => ageGroup(r.age)).sort(byAgeOrder);
 }
 
 /**
@@ -132,4 +155,20 @@ export function churnByTraining(rows: RetentionRow[]): ChurnGroup[] {
   return churnGroups(rows, (r) => String(r.trainingId))
     .filter((g) => g.churned > 0)
     .sort((a, b) => b.churned - a.churned || b.rate - a.rate);
+}
+
+function countGroups<T>(rows: T[], keyOf: (r: T) => string): CountGroup[] {
+  const counts = new Map<string, number>();
+  for (const r of rows) counts.set(keyOf(r), (counts.get(keyOf(r)) ?? 0) + 1);
+  return [...counts].map(([key, count]) => ({ key, count, share: count / rows.length }));
+}
+
+/** New members per age group, youngest first, members without birthday last. */
+export function countByAge(rows: NewMemberRow[]): CountGroup[] {
+  return countGroups(rows, (r) => ageGroup(r.age)).sort(byAgeOrder);
+}
+
+/** New members per training (the one they attended most), biggest first. */
+export function countByTraining(rows: NewMemberRow[]): CountGroup[] {
+  return countGroups(rows, (r) => String(r.trainingId)).sort((a, b) => b.count - a.count);
 }

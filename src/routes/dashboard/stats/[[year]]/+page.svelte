@@ -12,7 +12,6 @@
   import AttendanceByTraining from './AttendanceByTraining.svelte';
   import TrainerWorkload from './TrainerWorkload.svelte';
   import MemberRetention from './MemberRetention.svelte';
-  import ChurnBreakdown from './ChurnBreakdown.svelte';
   import BadgeLeaderboard from './BadgeLeaderboard.svelte';
   import StatsSection from './StatsSection.svelte';
   import TopRankings from './TopRankings.svelte';
@@ -83,18 +82,17 @@
       <SectionDistribution {yearmode} {year} />
     </StatsSection>
     <StatsSection title={$_('page.stats.memberRetention')} hint={$_('page.stats.retentionHint')}>
+      {#snippet actions()}
+        {#if yearmode === 'YEAR'}
+          <a href="/dashboard/stats/{year}/retention" class="btn btn-sm preset-tonal-surface">
+            {$_('page.stats.details')}
+            <Fa icon={faChevronRight} size="xs" />
+          </a>
+        {/if}
+      {/snippet}
       <MemberRetention {yearmode} {year} />
     </StatsSection>
   </div>
-
-  {#if yearmode === 'YEAR'}
-    <StatsSection
-      title={$_('page.stats.churn.title', { values: { year } })}
-      hint={$_('page.stats.churn.hint', { values: { prev: year - 1, year } })}
-    >
-      <ChurnBreakdown {year} />
-    </StatsSection>
-  {/if}
 
   <StatsSection title={$_('page.stats.attendanceByTraining')}>
     <AttendanceByTraining {yearmode} {year} />

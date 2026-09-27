@@ -8,6 +8,9 @@ import {
   ageGroup,
   churnByAge,
   churnByTraining,
+  countByAge,
+  countByTraining,
+  type NewMemberRow,
   type RetentionRow
 } from './statsUtils';
 import type { Athletes } from '$lib/models';
@@ -132,12 +135,15 @@ describe('seriesColors', () => {
 function row(overrides: Partial<RetentionRow>): RetentionRow {
   return {
     memberId: 1,
+    firstname: 'Anna',
+    lastname: 'Muster',
     age: 10,
     trainingId: 1,
     title: 'Judo Kinder',
     section: 'Judo',
     weekday: 'Monday',
     dateFrom: '17:30',
+    last_date: '2025-12-01',
     churned: false,
     ...overrides
   };
@@ -176,6 +182,30 @@ describe('churnByTraining', () => {
     ]);
     expect(groups.map((g) => [g.key, g.churned])).toEqual([
       ['2', 2],
+      ['1', 1]
+    ]);
+  });
+});
+
+describe('countByAge / countByTraining', () => {
+  const rows: NewMemberRow[] = [
+    { ...row({ memberId: 1, age: 8, trainingId: 2 }), first_date: '2026-01-05' },
+    { ...row({ memberId: 2, age: 40, trainingId: 2 }), first_date: '2026-02-05' },
+    { ...row({ memberId: 3, age: 9, trainingId: 1 }), first_date: '2026-03-05' },
+    { ...row({ memberId: 4, age: 12, trainingId: 2 }), first_date: '2026-04-05' }
+  ];
+
+  it('counts new members per age group with their share', () => {
+    expect(countByAge(rows)).toEqual([
+      { key: '0-9', count: 2, share: 0.5 },
+      { key: '10-13', count: 1, share: 0.25 },
+      { key: '30-49', count: 1, share: 0.25 }
+    ]);
+  });
+
+  it('counts new members per training, biggest first', () => {
+    expect(countByTraining(rows).map((g) => [g.key, g.count])).toEqual([
+      ['2', 3],
       ['1', 1]
     ]);
   });
