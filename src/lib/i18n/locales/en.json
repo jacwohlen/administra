@@ -638,8 +638,7 @@
     },
     "recentAchievements": {
       "title": "Recent Achievements",
-      "noAchievements": "No achievements yet",
-      "earned": "earned"
+      "noAchievements": "No achievements yet"
     },
     "celebration": {
       "title": "New Badge Earned!",

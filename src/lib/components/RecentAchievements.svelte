@@ -34,10 +34,10 @@
 {:else if achievements.length === 0}
   <p class="text-surface-600-400">{$_('badges.recentAchievements.noAchievements')}</p>
 {:else}
-  <ul class="flex flex-col gap-2">
+  <ul class="flex flex-col">
     {#each achievements as a (a.memberId + ':' + badgeKey(a))}
       {@const key = a.memberId + ':' + badgeKey(a)}
-      <li class="list-item">
+      <li class="achievement-row">
         <button
           type="button"
           class="badge-btn"
@@ -47,24 +47,25 @@
           onmouseleave={leaveTip}
           onclick={(e) => tapTip(e.currentTarget, key, a.badgeId)}
         >
-          <BadgeTile emoji={a.emoji} pinned={isPinned(key)} />
+          <BadgeTile emoji={a.emoji} size="sm" pinned={isPinned(key)} />
         </button>
-        <span class="list-item-content">
-          <dt class="font-bold truncate">
-            <a href="/dashboard/members/{a.memberId}" class="hover:underline">
-              {a.firstname}
-              {a.lastname}
-            </a>
-          </dt>
-          <dd class="text-sm text-surface-600-400 truncate">
-            {$_('badges.recentAchievements.earned')}
-            {$_('badges.' + a.badgeId + '.name')}
+        <span class="flex-1 min-w-0 truncate">
+          <a href="/dashboard/members/{a.memberId}" class="font-bold hover:underline">
+            {a.firstname}
+            {a.lastname}</a
+          >
+          <span class="text-surface-600-400">
+            · {$_('badges.' + a.badgeId + '.name')}
             {badgeSuffix(a)}
-          </dd>
+          </span>
         </span>
-        <span class="text-xs text-surface-600-400 flex-none">
-          {dayjs(a.earnedAt).fromNow()}
-        </span>
+        <time
+          class="text-xs text-surface-600-400 flex-none"
+          datetime={a.earnedAt}
+          title={dayjs(a.earnedAt).format('DD.MM.YYYY HH:mm')}
+        >
+          {dayjs(a.earnedAt).fromNow(true)}
+        </time>
       </li>
     {/each}
   </ul>
@@ -73,6 +74,13 @@
 <BadgeTooltip />
 
 <style>
+  .achievement-row {
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+    padding-block: 0.3rem;
+    font-size: 0.925rem;
+  }
   .badge-btn {
     flex: none;
     background: none;

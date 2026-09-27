@@ -7,16 +7,18 @@
     emoji,
     status = 'done',
     pct = 0,
-    pinned = false
+    pinned = false,
+    size = 'md'
   }: {
     emoji: string;
     status?: 'done' | 'next' | 'lock';
     pct?: number;
     pinned?: boolean;
+    size?: 'sm' | 'md';
   } = $props();
 </script>
 
-<div class="tile {status}" class:pinned style:--pct="{pct}%">
+<div class="tile {status} {size}" class:pinned style:--pct="{pct}%">
   <span>{emoji}</span>
 </div>
 
@@ -32,6 +34,11 @@
     place-items: center;
     font-size: 1.15rem;
     line-height: 1;
+  }
+  .tile.sm {
+    width: 1.75rem;
+    height: 1.75rem;
+    font-size: 0.85rem;
   }
   .tile > span {
     width: 100%;
