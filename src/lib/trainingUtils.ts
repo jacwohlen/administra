@@ -71,6 +71,24 @@ export function buildMembersWithStreaks(
   }));
 }
 
+type ChecklistSortable = Pick<MemberWithStreak, 'firstname' | 'lastname' | 'isPresent' | 'streak'>;
+
+/**
+ * Comparator for the check-in list: present members first, then by how many of
+ * the previous sessions they attended (most frequent first), then by name.
+ * Frequency uses only past sessions so checking someone in does not reorder
+ * the absent members.
+ */
+export function compareChecklistMembers(a: ChecklistSortable, b: ChecklistSortable): number {
+  if (a.isPresent !== b.isPresent) return a.isPresent ? -1 : 1;
+  const frequency = (m: ChecklistSortable) => m.streak.filter(Boolean).length;
+  return (
+    frequency(b) - frequency(a) ||
+    a.lastname.localeCompare(b.lastname, 'de') ||
+    a.firstname.localeCompare(b.firstname, 'de')
+  );
+}
+
 /**
  * Minutes since midnight for a stored training time. Times are free text and
  * appear as "18:00" as well as "18.00"; unparsable values sort last.

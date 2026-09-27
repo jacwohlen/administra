@@ -6,6 +6,7 @@
   import ParticipantCard from './ParticipantCard.svelte';
   import BadgeCelebration from '$lib/components/BadgeCelebration.svelte';
   import { badgeKey } from '$lib/badgeUtils';
+  import { compareChecklistMembers } from '$lib/trainingUtils';
   import Fa from 'svelte-fa';
   import {
     faArrowLeft,
@@ -57,15 +58,7 @@
 
     hiIndex = filteredData.length > 0 && searchterm ? 0 : -1;
 
-    filteredData = filteredData.sort((a, b) => {
-      if (a.isPresent && !b.isPresent) {
-        return -1;
-      } else if (!a.isPresent && b.isPresent) {
-        return 1;
-      } else {
-        return 0;
-      }
-    });
+    filteredData = filteredData.sort(compareChecklistMembers);
   };
 
   function clearSearch() {

@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import {
   buildStreakMap,
   buildMembersWithStreaks,
+  compareChecklistMembers,
   compareTrainings,
   formatTime,
   timeToMinutes
@@ -259,5 +260,33 @@ describe('formatTime', () => {
   it('returns unparsable values unchanged', () => {
     expect(formatTime('abends')).toBe('abends');
     expect(formatTime(undefined)).toBe('');
+  });
+});
+
+describe('compareChecklistMembers', () => {
+  const m = (lastname: string, firstname: string, streak: boolean[], isPresent = false) => ({
+    lastname,
+    firstname,
+    streak,
+    isPresent
+  });
+
+  it('puts present members first, then sorts by frequency and name', () => {
+    const list = [
+      m('Zürcher', 'Anna', [true, false, false]),
+      m('Meier', 'Tom', [true, true, true]),
+      m('Arnold', 'Lea', [true, false, false]),
+      m('Arnold', 'Ben', [true, false, false]),
+      m('Keller', 'Eva', [false, false, false], true),
+      m('Bauer', 'Max', [true, true, false])
+    ];
+    expect(list.sort(compareChecklistMembers).map((x) => `${x.firstname} ${x.lastname}`)).toEqual([
+      'Eva Keller',
+      'Tom Meier',
+      'Max Bauer',
+      'Ben Arnold',
+      'Lea Arnold',
+      'Anna Zürcher'
+    ]);
   });
 });
