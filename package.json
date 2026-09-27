@@ -16,7 +16,7 @@
   },
   "devDependencies": {
     "@carbon/charts-svelte": "^1.22.18",
-    "@fortawesome/free-solid-svg-icons": "^6.5.2",
+    "@fortawesome/free-solid-svg-icons": "^7.2.0",
     "@playwright/test": "^1.59.1",
     "@skeletonlabs/skeleton": "^4.14.0",
     "@skeletonlabs/skeleton-svelte": "^4.14.0",
