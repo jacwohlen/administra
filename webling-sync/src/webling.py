@@ -13,20 +13,16 @@ SUPABASE_SERVICE_ROLE_KEY=os.environ.get('SUPABASE_SERVICE_ROLE_KEY')
 
 
 if not WEBLING_DOMAIN:
-  print('Please export WEBLING_DOMAIN')
-  sys.exit()
+  sys.exit('Please export WEBLING_DOMAIN')
 
 if not WEBLING_API_KEY:
-  print('Please export WEBLING_API_KEY')
-  sys.exit()
+  sys.exit('Please export WEBLING_API_KEY')
 
 if not SUPABASE_URL:
-  print('Please export SUPABASE_URL')
-  sys.exit()
+  sys.exit('Please export SUPABASE_URL')
 
 if not SUPABASE_SERVICE_ROLE_KEY:
-  print('Please export SUPABASE_SERVICE_ROLE_KEY (the service_role key; RLS blocks the anon key)')
-  sys.exit()
+  sys.exit('Please export SUPABASE_SERVICE_ROLE_KEY (the service_role key; RLS blocks the anon key)')
 
 
 # initialize client (supabase)
@@ -50,13 +46,18 @@ def transform_label(label):
     return "Probetraining"
   return label
 
+# Most members share a handful of groups, so fetch each group title only once
+group_titles = {}
+
 def get_label(membergroup_ids):
   labels = []
   for id in membergroup_ids:
-    api_url = f"https://{WEBLING_DOMAIN}.webling.ch/api/1/membergroup/{id}?apikey={WEBLING_API_KEY}&format=full"
-    response = requests.get(api_url)
-    label = transform_label(response.json()['properties']['title'])
-    labels.append(label)
+    if id not in group_titles:
+      api_url = f"https://{WEBLING_DOMAIN}.webling.ch/api/1/membergroup/{id}?apikey={WEBLING_API_KEY}&format=full"
+      response = requests.get(api_url)
+      response.raise_for_status()
+      group_titles[id] = transform_label(response.json()['properties']['title'])
+    labels.append(group_titles[id])
   return labels
 
 
@@ -66,7 +67,9 @@ def sync_members():
   api_url = f"https://{WEBLING_DOMAIN}.webling.ch/api/1/member?apikey={WEBLING_API_KEY}&format=full"
 
   response = requests.get(api_url)
+  response.raise_for_status()
 
+  failed = 0
   for e in response.json():
     prop = e["properties"]
     labels = get_label(e["parents"]) # membergroups -> titles
@@ -85,7 +88,9 @@ def sync_members():
     email = (prop.get("E-Mail") or "").strip()
     if email:
       data[u"email"] = email
-    upsert('members', data)
+    if not upsert('members', data):
+      failed += 1
+  return failed
 
 def upsert(table_name, data):
     headers = {
@@ -95,14 +100,17 @@ def upsert(table_name, data):
         'Prefer': 'resolution=merge-duplicates'
     }
     response = requests.post(f"{SUPABASE_URL}/rest/v1/{table_name}", headers=headers, data=json.dumps(data))
-    if response.status_code == 200:
+    if response.status_code in [200, 201, 204]:
         return f"Updated: {data}"
     else:
         print("Error:", response.status_code, response.text)
         return None
 
 #print(get_data("members?select=id,firstname,lastname,labels,birthday,mobile"))
-sync_members()
+failed = sync_members()
+if failed:
+  # Non-zero exit so the scheduler (GitHub Actions / systemd) reports the run as failed
+  sys.exit(f"{failed} member(s) failed to sync")
 
 # print("Now in Firebase: ")
 # members = db.collection(u'members').stream()

@@ -45,7 +45,7 @@ Fetches calendar events from Webling calendars and syncs them to Administra. Onl
 
 **Date Filtering:**
 
-- Only events from the current year (2025) and future years are synced
+- Only events from the current year and future years are synced
 - Past events are automatically skipped to keep the database current
 
 **Runtime:** Slower (~1-2 minutes, fetches participants for each event)
@@ -61,7 +61,51 @@ python src/duplicates.py search <lastname>  # Search for members by lastname
 python src/duplicates.py merge              # Merge duplicate members interactively
 ```
 
-## Initial Setup
+## Scheduled Sync (GitHub Actions)
+
+The sync runs daily from GitHub Actions (`.github/workflows/webling-sync.yml`),
+so it no longer depends on a personal machine being switched on.
+
+- **Schedule:** daily at 22:47 UTC (00:47 CEST / 23:47 CET) against **prod**.
+  GitHub may start scheduled runs a few minutes late.
+- **Order:** members first, then events + participants. The events step runs
+  even if the member step failed; the run is still marked failed.
+- **Manual run:** GitHub → Actions → _Webling Sync_ → _Run workflow_. Choose the
+  target (`prod` or `dev`) and what to sync (`all`, `members`, `events`).
+- **Failures:** both scripts exit non-zero on any error (missing variable,
+  Webling/Supabase HTTP error, failed upsert), so the run turns red and GitHub
+  emails whoever last changed the workflow's cron schedule (a manual run
+  notifies whoever started it). Logs are in the run's step output.
+
+### One-time setup
+
+Create a GitHub environment per target under **Settings → Environments**
+(`prod`, and `dev` if you want to sync the Dev project manually) with:
+
+| Name                        | Kind     | Value                                                  |
+| --------------------------- | -------- | ------------------------------------------------------ |
+| `WEBLING_DOMAIN`            | Variable | Webling subdomain, e.g. `jacwohlen`                    |
+| `SUPABASE_URL`              | Variable | Supabase project URL (`https://<ref>.supabase.co`)     |
+| `WEBLING_API_KEY`           | Secret   | Webling API key                                        |
+| `WEBLING_EMAIL`             | Secret   | Webling login, needed for the participant API          |
+| `WEBLING_PASSWORD`          | Secret   | Password of that login                                 |
+| `SUPABASE_SERVICE_ROLE_KEY` | Secret   | service_role key of that project (RLS blocks the anon) |
+
+Optionally restrict the `prod` environment to the `main` branch
+(_Deployment branches and tags_) so a workflow edit on another branch cannot
+read the prod secrets.
+
+Once the first scheduled run is green, stop the old systemd timers so the
+sync does not run twice:
+
+```bash
+systemctl --user disable --now webling-sync-events.timer webling-sync-members.timer
+```
+
+## Local Setup
+
+The steps below are for running the scripts by hand (e.g. `list`,
+`--calendar`, `duplicates.py`) or as a fallback scheduler with systemd.
 
 ### 1. Clone/Download this repository
 
@@ -71,7 +115,7 @@ python src/duplicates.py merge              # Merge duplicate members interactiv
 cd ~/work/jacwohlen.ch/administra/webling-sync
 python -m venv .env
 source .env/bin/activate
-pip install requests
+pip install -r requirements.txt
 ```
 
 ### 3. Configure environment variables
@@ -110,7 +154,9 @@ export WEBLING_PASSWORD=<your webling password>
 
 **Important:** These files contain sensitive credentials. Do not commit them to version control.
 
-### 4. Set up automated scheduling with systemd timers
+### 4. (Fallback) Set up automated scheduling with systemd timers
+
+Only needed if the GitHub Actions schedule is not used.
 
 The `systemd/` directory contains service and timer files for automated daily sync.
 
@@ -260,6 +306,7 @@ systemctl --user restart webling-sync-members.timer
 ```
 webling-sync/
 ├── README.md                 # This file
+├── requirements.txt          # Python dependencies (also used by GitHub Actions)
 ├── .env.prod                # Production environment variables (not in git)
 ├── .env.staging             # Staging environment variables (not in git)
 ├── install-systemd.sh       # Install script for systemd services

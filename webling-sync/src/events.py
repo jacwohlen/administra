@@ -43,29 +43,31 @@ SUPABASE_SERVICE_ROLE_KEY=os.environ.get('SUPABASE_SERVICE_ROLE_KEY')
 
 
 if not WEBLING_DOMAIN:
-  print('Please export WEBLING_DOMAIN')
-  sys.exit()
+  sys.exit('Please export WEBLING_DOMAIN')
 
 if not WEBLING_API_KEY:
-  print('Please export WEBLING_API_KEY')
-  sys.exit()
+  sys.exit('Please export WEBLING_API_KEY')
 
 if not WEBLING_EMAIL:
-  print('Please export WEBLING_EMAIL (for participant API authentication)')
-  sys.exit()
+  sys.exit('Please export WEBLING_EMAIL (for participant API authentication)')
 
 if not WEBLING_PASSWORD:
-  print('Please export WEBLING_PASSWORD (for participant API authentication)')
-  sys.exit()
+  sys.exit('Please export WEBLING_PASSWORD (for participant API authentication)')
 
 if not SUPABASE_URL:
-  print('Please export SUPABASE_URL')
-  sys.exit()
+  sys.exit('Please export SUPABASE_URL')
 
 if not SUPABASE_SERVICE_ROLE_KEY:
-  print('Please export SUPABASE_SERVICE_ROLE_KEY (the service_role key; RLS blocks the anon key)')
-  sys.exit()
+  sys.exit('Please export SUPABASE_SERVICE_ROLE_KEY (the service_role key; RLS blocks the anon key)')
 
+
+# Every failure is counted so main() can exit non-zero and the scheduler
+# (GitHub Actions / systemd) reports the run as failed
+errors = []
+
+def record_error(message):
+    print(message)
+    errors.append(message)
 
 # initialize client (supabase)
 HEADERS = {
@@ -91,7 +93,7 @@ def authenticate_webling():
         print("Successfully authenticated with Webling")
         return True
     else:
-        print(f"Authentication failed: {response.status_code} - {response.text}")
+        record_error(f"Authentication failed: {response.status_code} - {response.text}")
         return False
 
 def transform_section(calendar_title):
@@ -118,7 +120,7 @@ def get_calendars():
     if response.status_code == 200:
         return response.json().get("objects", [])
     else:
-        print(f"Error fetching calendars: {response.status_code} - {response.text}")
+        record_error(f"Error fetching calendars: {response.status_code} - {response.text}")
         return []
 
 def get_calendar_details(calendar_id):
@@ -129,7 +131,7 @@ def get_calendar_details(calendar_id):
     if response.status_code == 200:
         return response.json()
     else:
-        print(f"Error fetching calendar {calendar_id}: {response.status_code} - {response.text}")
+        record_error(f"Error fetching calendar {calendar_id}: {response.status_code} - {response.text}")
         return None
 
 def get_calendar_event(event_id):
@@ -140,7 +142,7 @@ def get_calendar_event(event_id):
     if response.status_code == 200:
         return response.json()
     else:
-        print(f"Error fetching event {event_id}: {response.status_code} - {response.text}")
+        record_error(f"Error fetching event {event_id}: {response.status_code} - {response.text}")
         return None
 
 def get_event_participants(event_id):
@@ -169,11 +171,11 @@ def get_event_participants(event_id):
             return participants_data
             
         except Exception as e:
-            print(f"      Error parsing participant response: {e}")
+            record_error(f"      Error parsing participant response: {e}")
             print(f"      Raw response: {response.text}")
             return []
     else:
-        print(f"Error fetching participants for event {event_id}: {response.status_code} - {response.text}")
+        record_error(f"Error fetching participants for event {event_id}: {response.status_code} - {response.text}")
         return []
 
 def get_participants_bulk(participant_ids):
@@ -194,13 +196,13 @@ def get_participants_bulk(participant_ids):
             if isinstance(data, list):
                 return data
             else:
-                print(f"        Unexpected bulk response format: {type(data)}")
+                record_error(f"        Unexpected bulk response format: {type(data)}")
                 return []
         except Exception as e:
-            print(f"        Error parsing bulk participant response: {e}")
+            record_error(f"        Error parsing bulk participant response: {e}")
             return []
     else:
-        print(f"        Error fetching bulk participants: {response.status_code} - {response.text}")
+        record_error(f"        Error fetching bulk participants: {response.status_code} - {response.text}")
         return []
 
 def parse_webling_datetime(datetime_str):
@@ -233,7 +235,7 @@ def sync_events(selected_calendars=None):
     all_calendar_ids = get_calendars()
     
     if not all_calendar_ids:
-        print("No calendars found")
+        record_error("No calendars found")
         return
     
     # Filter calendars if selection is specified
@@ -371,7 +373,7 @@ def sync_events(selected_calendars=None):
                         print(f"    No participants found for event {event_id}")
                     
             except Exception as e:
-                print(f"Error processing event {event_id}: {e}")
+                record_error(f"Error processing event {event_id}: {e}")
                 continue
     
     print(f"\nSync completed! Synced {synced_count} events total.")
@@ -385,7 +387,7 @@ def delete_all_event_participants(event_id):
         print(f"      Cleared existing participants for event {event_id}")
         return True
     else:
-        print(f"      Warning: Could not delete existing participants: {response.status_code} - {response.text}")
+        record_error(f"      Warning: Could not delete existing participants: {response.status_code} - {response.text}")
         return False
 
 def sync_event_participants(event_id, participants, event_date):
@@ -462,7 +464,7 @@ def sync_event_participants(event_id, participants, event_date):
                 synced_count += 1
                 
         except Exception as e:
-            print(f"      Error processing participant {participant.get('id', 'unknown')}: {e}")
+            record_error(f"      Error processing participant {participant.get('id', 'unknown')}: {e}")
             continue
     
     return synced_count
@@ -479,7 +481,7 @@ def upsert(table_name, data):
     if response.status_code in [200, 201]:
         return True
     else:
-        print(f"    ✗ Error: {response.status_code} - {response.text}")
+        record_error(f"    ✗ Error: {response.status_code} - {response.text}")
         return False
 
 def list_calendars():
@@ -539,3 +541,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+    if errors:
+        sys.exit(f"Sync finished with {len(errors)} error(s)")
