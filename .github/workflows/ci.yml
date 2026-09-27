@@ -40,8 +40,6 @@ jobs:
         run: npm run lint
 
       - name: Type check
-        # Pre-existing Skeleton UI v0.x type mismatches — tracked in TODO.md
-        continue-on-error: true
         run: npm run check
 
   unit-tests:

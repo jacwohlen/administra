@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { supabaseClient } from '$lib/supabase';
+  import { rpcRows } from '$lib/supabase';
   import { _ } from 'svelte-i18n';
   import type { Athletes } from '$lib/models';
   import TopList from './TopList.svelte';
@@ -16,12 +16,10 @@
 
     try {
       const yearParam = yearmode === 'ALL' ? null : year.toString();
-      const { error: rpcError, data } = await supabaseClient
-        .rpc('get_top_event_coaches', {
-          year_param: yearParam,
-          section_param: null
-        })
-        .returns<Athletes[]>();
+      const { error: rpcError, data } = await rpcRows<Athletes>('get_top_event_coaches', {
+        year_param: yearParam,
+        section_param: null
+      });
 
       if (rpcError) {
         error = rpcError.message;

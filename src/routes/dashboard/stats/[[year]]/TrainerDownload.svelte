@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { supabaseClient } from '$lib/supabase';
+  import { rpcRows } from '$lib/supabase';
   import type { TrainerTrackingRecord, TrainerRole } from '$lib/models';
   import Fa from 'svelte-fa';
   import { faDownload, faSpinner } from '@fortawesome/free-solid-svg-icons';
@@ -14,9 +14,9 @@
     try {
       const yearParam = yearmode === 'ALL' ? '' : year.toString();
 
-      const { error, data } = await supabaseClient
-        .rpc('get_trainer_tracking_data', { year_param: yearParam })
-        .returns<TrainerTrackingRecord[]>();
+      const { error, data } = await rpcRows<TrainerTrackingRecord>('get_trainer_tracking_data', {
+        year_param: yearParam
+      });
 
       if (error) {
         console.error('Error fetching trainer data:', error);
