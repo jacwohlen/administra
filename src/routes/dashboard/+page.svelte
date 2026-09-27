@@ -14,6 +14,7 @@
   import { supabaseClient } from '$lib/supabase';
   import { _ } from 'svelte-i18n';
   import RecentAchievements from '$lib/components/RecentAchievements.svelte';
+  import { compareTrainings, formatTime } from '$lib/trainingUtils';
 
   let date: Dayjs = utils.getMostRecentDateByWeekday(dayjs().day());
   const dateFormat = 'YYYY-MM-DD';
@@ -43,7 +44,7 @@
       .eq('weekday', date.locale('en').format('dddd'))
       .returns<Training[]>();
 
-    if (data) trainings = data;
+    if (data) trainings = [...data].sort(compareTrainings);
   }
 
   async function getTodayEvents() {
@@ -85,16 +86,26 @@
       {$_('page.dashboard.noTrainingsToday')}
     </div>
   {:else}
-    <ul class="flex flex-col gap-2">
+    <ul class="training-list">
       {#each trainings as t (t.id)}
         <li class="list-item">
+          <span class="training-time">
+            <span class="font-bold">{formatTime(t.dateFrom)}</span>
+            {#if t.dateTo}
+              <span class="text-xs text-surface-600-400">{formatTime(t.dateTo)}</span>
+            {/if}
+          </span>
           <span class="list-item-content">
             <dt class="font-bold truncate">{t.title}</dt>
+            {#if t.section}
+              <dd><span class="badge preset-tonal-surface text-xs">{t.section}</span></dd>
+            {/if}
           </span>
           <span class="flex-none">
             <a
-              class="btn preset-tonal-primary"
+              class="btn btn-sm preset-tonal-primary"
               href="/dashboard/trainings/{t.id}/{date.format(dateFormat)}"
+              aria-label={$_('button.trackAttendance')}
             >
               <Fa icon={faClipboardCheck} />
               <span class="hidden sm:inline">{$_('button.trackAttendance')}</span>
@@ -159,3 +170,17 @@
 <section>
   <RecentAchievements />
 </section>
+
+<style>
+  .training-list > li + li {
+    border-top: 1px solid var(--color-surface-200-800);
+  }
+  .training-time {
+    flex: none;
+    width: 3.25rem;
+    display: flex;
+    flex-direction: column;
+    line-height: 1.25;
+    font-variant-numeric: tabular-nums;
+  }
+</style>

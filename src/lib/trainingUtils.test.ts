@@ -1,5 +1,11 @@
 import { describe, it, expect } from 'vitest';
-import { buildStreakMap, buildMembersWithStreaks, compareTrainings } from './trainingUtils';
+import {
+  buildStreakMap,
+  buildMembersWithStreaks,
+  compareTrainings,
+  formatTime,
+  timeToMinutes
+} from './trainingUtils';
 import type { Training } from '$lib/models';
 
 describe('buildStreakMap', () => {
@@ -221,5 +227,37 @@ describe('compareTrainings', () => {
     const a = makeTraining('Wednesday', '07:00');
     const b = makeTraining('Wednesday', '19:30');
     expect(compareTrainings(a, b)).toBeLessThan(0);
+  });
+
+  it('sorts times written with a dot like times written with a colon', () => {
+    const a = makeTraining('Monday', '18.00');
+    const b = makeTraining('Monday', '20:00');
+    expect(compareTrainings(a, b)).toBeLessThan(0);
+    expect(compareTrainings(b, a)).toBeGreaterThan(0);
+  });
+});
+
+describe('timeToMinutes', () => {
+  it('parses colon, dot and hour-only times', () => {
+    expect(timeToMinutes('18:00')).toBe(1080);
+    expect(timeToMinutes('19.15')).toBe(1155);
+    expect(timeToMinutes('9')).toBe(540);
+  });
+
+  it('sorts missing or unparsable times last', () => {
+    expect(timeToMinutes(undefined)).toBe(Number.MAX_SAFE_INTEGER);
+    expect(timeToMinutes('abends')).toBe(Number.MAX_SAFE_INTEGER);
+  });
+});
+
+describe('formatTime', () => {
+  it('normalises to HH:mm', () => {
+    expect(formatTime('18.00')).toBe('18:00');
+    expect(formatTime('9:30')).toBe('09:30');
+  });
+
+  it('returns unparsable values unchanged', () => {
+    expect(formatTime('abends')).toBe('abends');
+    expect(formatTime(undefined)).toBe('');
   });
 });
