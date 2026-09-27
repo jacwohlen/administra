@@ -501,6 +501,7 @@
     "download": "Download",
     "lightMode": "Light Mode",
     "darkMode": "Dark Mode",
+    "language": "Language",
     "refresh": "Refresh"
   },
   "dialog": {
