@@ -270,7 +270,8 @@
       "trainingsHistory": {
         "title": "Trainings Historie",
         "noItems": "Keine Trainings registriert"
-      }
+      },
+      "moreActions": "Weitere Aktionen"
     },
     "stats": {
       "all": "Alle",
@@ -459,8 +460,7 @@
       "searchPlaceholder": "Name suchen…",
       "filterSection": "Nach Sektion filtern",
       "allSections": "Alle",
-      "noMatches": "Niemand gefunden",
-      "backToMembers": "Mitglieder"
+      "noMatches": "Niemand gefunden"
     }
   },
   "components": {
@@ -701,5 +701,20 @@
     "Friday": "Fr",
     "Saturday": "Sa",
     "Sunday": "So"
+  },
+  "activity": {
+    "gridLabel": "Trainings der letzten 12 Monate",
+    "status": {
+      "active": "Aktiv",
+      "paused": "Pausiert",
+      "inactive": "Inaktiv"
+    },
+    "perWeek": "Ø {n} × pro Woche",
+    "never": "Noch kein Training",
+    "lastToday": "Zuletzt heute",
+    "lastYesterday": "Zuletzt gestern",
+    "lastDaysAgo": "Zuletzt vor {n} Tagen",
+    "last30": "{n, plural, one {# Training} other {# Trainings}} in den letzten 30 Tagen",
+    "cell": "{date}: {n, plural, =0 {kein Training} one {# Training} other {# Trainings}}"
   }
 }
