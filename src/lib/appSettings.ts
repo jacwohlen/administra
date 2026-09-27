@@ -4,6 +4,7 @@ import {
   applyClubSettings,
   applyDisplaySettings,
   DEFAULT_DISPLAY_CONFIG,
+  trialMailDefaults,
   type DisplayConfig,
   type SettingValues
 } from './appSettingsParser';
@@ -27,6 +28,13 @@ const envClubConfig = { ...clubConfig, sections: [...clubConfig.sections] };
 
 export const displayConfig: DisplayConfig = { ...DEFAULT_DISPLAY_CONFIG };
 
+/**
+ * The raw `app_settings` rows of the last load, for settings that are read
+ * by key rather than through `clubConfig` / `displayConfig` (the trial
+ * e-mail templates, see `$lib/trialMail`).
+ */
+export const settingValues: SettingValues = {};
+
 /** Defaults per setting key, for placeholders on the settings page. */
 export function getSettingDefaults(): SettingValues {
   return {
@@ -41,7 +49,8 @@ export function getSettingDefaults(): SettingValues {
     'display.attendanceLogPageSize': DEFAULT_DISPLAY_CONFIG.attendanceLogPageSize,
     'display.attendanceGraphMonths': DEFAULT_DISPLAY_CONFIG.attendanceGraphMonths,
     'display.recentAchievementsLimit': DEFAULT_DISPLAY_CONFIG.recentAchievementsLimit,
-    'display.badgeCelebrationSeconds': DEFAULT_DISPLAY_CONFIG.badgeCelebrationSeconds
+    'display.badgeCelebrationSeconds': DEFAULT_DISPLAY_CONFIG.badgeCelebrationSeconds,
+    ...trialMailDefaults()
   };
 }
 
@@ -54,6 +63,8 @@ export async function loadAppSettings(): Promise<void> {
   const values: SettingValues = Object.fromEntries(data.map((row) => [row.key, row.value]));
   Object.assign(clubConfig, applyClubSettings(envClubConfig, values));
   Object.assign(displayConfig, applyDisplaySettings(DEFAULT_DISPLAY_CONFIG, values));
+  for (const key of Object.keys(settingValues)) delete settingValues[key];
+  Object.assign(settingValues, values);
   loaded = true;
 }
 

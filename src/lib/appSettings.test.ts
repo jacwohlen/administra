@@ -6,6 +6,7 @@ import {
   DEFAULT_DISPLAY_CONFIG,
   SETTING_FIELDS
 } from './appSettingsParser';
+import { trialMailTemplate, type TrialMailKind } from './trialMail';
 
 describe('applyClubSettings', () => {
   it('returns the base config when no rows exist', () => {
@@ -141,6 +142,18 @@ describe('SETTING_FIELDS', () => {
       'display.badgeCelebrationSeconds': 99
     };
     for (const field of SETTING_FIELDS) {
+      if (field.group === 'trialMail') {
+        // Templates are read by key through trialMailTemplate().
+        const { kind, locale } = field.labelValues as {
+          kind: TrialMailKind;
+          locale: 'de' | 'en';
+        };
+        const t = trialMailTemplate({ [field.key]: 'X' }, kind, locale);
+        expect(t, `${field.key} is ignored by trialMailTemplate`).toSatisfy(
+          (v: { subject: string; body: string }) => v.subject === 'X' || v.body === 'X'
+        );
+        continue;
+      }
       expect(sample, `missing sample for ${field.key}`).toHaveProperty(field.key);
       const club = applyClubSettings(DEFAULT_CLUB_CONFIG, { [field.key]: sample[field.key] });
       const display = applyDisplaySettings(DEFAULT_DISPLAY_CONFIG, {

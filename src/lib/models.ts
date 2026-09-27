@@ -59,6 +59,9 @@ export interface Training {
   participants: Member[];
 }
 
+/** Where a trial candidate stands in the club's intake process (members."trialStatus"). */
+export type TrialStatus = 'new' | 'waitlist' | 'assigned' | 'cancelled';
+
 export interface TrialMember {
   id: number;
   firstname: string;
@@ -71,6 +74,37 @@ export interface TrialMember {
   trialSection?: string;
   trialRegisteredAt?: string;
   attendedCount: number;
+  trialStatus: TrialStatus;
+  trialStatusChangedAt?: string;
+  /** Language the candidate registered in; mails go out in it. */
+  trialLocale?: 'de' | 'en' | null;
+  /** Key of the candidate's public status page, /probetraining/status/<token>. */
+  trialToken?: string | null;
+  /** Cancelled through the status page rather than by staff. */
+  trialSelfCancelled?: boolean;
+}
+
+/** Row of trial_emails: one mail to a trial candidate. */
+export interface TrialEmail {
+  id: number;
+  member_id: number;
+  kind: 'welcome' | 'waitlist' | 'assigned';
+  to_email: string;
+  subject: string | null;
+  status: 'pending' | 'sent' | 'failed' | 'skipped';
+  error: string | null;
+  created_at: string;
+  sent_at: string | null;
+}
+
+/** Row of view_training_activity: how full a training is. */
+export interface TrainingActivity {
+  trainingId: number;
+  /** Distinct attendees over the training's last 8 sessions */
+  activeCount: number;
+  participantCount: number;
+  /** Trial candidates on the participant list */
+  trialCount: number;
 }
 
 export interface Log {
