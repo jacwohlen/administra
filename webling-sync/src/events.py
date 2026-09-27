@@ -426,14 +426,13 @@ def sync_event_participants(event_id, participants, event_date):
             # Property 594 contains the confirmation state
             properties = participant.get('properties', {})
             confirmation_state = properties.get('594', None)
-            member_name = properties.get('-28', 'Unknown')
 
-            # Debug: print the participant structure
-            print(f"        Participant: {member_name}, member_id_raw = {member_id_raw}, confirmation = {confirmation_state}")
+            # Ids only: logs end up in GitHub Actions, which must not hold personal data
+            print(f"        Participant: member_id_raw = {member_id_raw}, confirmation = {confirmation_state}")
 
             # Only sync participants with "confirmed" state
             if confirmation_state != 'confirmed':
-                print(f"      Skipping participant {member_name} - not confirmed (state: {confirmation_state})")
+                print(f"      Skipping participant {participant_id} - not confirmed (state: {confirmation_state})")
                 continue
 
             # Handle member_id - it might be an array or single value

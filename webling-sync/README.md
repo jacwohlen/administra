@@ -75,7 +75,41 @@ so it no longer depends on a personal machine being switched on.
 - **Failures:** both scripts exit non-zero on any error (missing variable,
   Webling/Supabase HTTP error, failed upsert), so the run turns red and GitHub
   emails whoever last changed the workflow's cron schedule (a manual run
-  notifies whoever started it). Logs are in the run's step output.
+  notifies whoever started it). Logs are in the run's step output and list
+  members by id only, without names or contact data.
+
+### Anonymization (dev / staging)
+
+Only prod receives real member data. For every other target the member sync
+replaces the personal fields before writing them:
+
+| Field       | Written to dev / staging                                      |
+| ----------- | ------------------------------------------------------------- |
+| `firstname` | fake first name, e.g. `Felix`                                 |
+| `lastname`  | fake last name plus the Webling id, e.g. `Fiktiv 4711`        |
+| `birthday`  | real birth **year**, fake month/day (age groups, badges work) |
+| `mobile`    | empty                                                         |
+| `email`     | `member-<id>@example.invalid` (never deliverable, no sign-in) |
+| id, labels  | unchanged, so attendance, events and groups stay consistent   |
+
+The fake values are derived from the Webling id, so every run writes the same
+fake member. Events and participant registrations contain no personal data
+and are synced unchanged.
+
+The switch is the `ANONYMIZE` variable (`true`/`false`). It has no default, so
+`webling.py` refuses to run without it:
+
+- **GitHub Actions:** set by the workflow — `false` for `prod`, `true` for
+  anything else. It is not configurable per environment on purpose.
+- **`run-*.sh`:** `false` when `ENV=prod`, otherwise `true` (an exported
+  `ANONYMIZE` wins).
+- **Direct `python src/webling.py`:** export it yourself.
+
+Every synced member is overwritten completely, including an email address
+entered in the app — test member sign-in with a member created in the app.
+A dev database that already holds real data from an earlier sync is only
+cleaned for members that still exist in Webling; rows of members deleted in
+Webling keep their old values and must be cleaned by hand.
 
 ### One-time setup
 

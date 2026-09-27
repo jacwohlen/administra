@@ -2,6 +2,8 @@
 import os
 import sys
 import json
+import hashlib
+import re
 
 # Webling
 import requests
@@ -10,6 +12,10 @@ WEBLING_DOMAIN=os.environ.get('WEBLING_DOMAIN')
 
 SUPABASE_URL=os.environ.get('SUPABASE_URL')
 SUPABASE_SERVICE_ROLE_KEY=os.environ.get('SUPABASE_SERVICE_ROLE_KEY')
+
+# Every target except prod must get anonymized members. No default on purpose:
+# a forgotten setting must stop the run, not leak real data or overwrite prod.
+ANONYMIZE=os.environ.get('ANONYMIZE')
 
 
 if not WEBLING_DOMAIN:
@@ -23,6 +29,10 @@ if not SUPABASE_URL:
 
 if not SUPABASE_SERVICE_ROLE_KEY:
   sys.exit('Please export SUPABASE_SERVICE_ROLE_KEY (the service_role key; RLS blocks the anon key)')
+
+if ANONYMIZE not in ('true', 'false'):
+  sys.exit('Please export ANONYMIZE=true (dev/staging) or ANONYMIZE=false (prod only)')
+ANONYMIZE = ANONYMIZE == 'true'
 
 
 # initialize client (supabase)
@@ -61,9 +71,33 @@ def get_label(membergroup_ids):
   return labels
 
 
+FAKE_FIRSTNAMES = ["Anna", "Ben", "Clara", "David", "Elena", "Felix", "Gina", "Hugo", "Ines", "Jonas",
+                   "Katja", "Luca", "Mia", "Noah", "Olivia", "Paul", "Rosa", "Simon", "Tara", "Yann"]
+FAKE_LASTNAMES = ["Muster", "Beispiel", "Probst", "Tester", "Demo", "Sample", "Platzhalter", "Fiktiv",
+                  "Dummy", "Ersatz", "Modell", "Vorlage", "Entwurf", "Skizze", "Kopie", "Schema"]
+
+def anonymize(member_id, data):
+  """Replace personal fields with fake values derived from the Webling id.
+
+  Deterministic, so every run writes the same fake member and ids, labels and
+  attendance stay consistent. Nothing is derived from the real values except
+  the birth year, so age-based features (age groups, badges) still work.
+  """
+  h = int(hashlib.sha256(str(member_id).encode()).hexdigest(), 16)
+  data[u"firstname"] = FAKE_FIRSTNAMES[h % len(FAKE_FIRSTNAMES)]
+  data[u"lastname"] = f"{FAKE_LASTNAMES[(h >> 8) % len(FAKE_LASTNAMES)]} {member_id}"
+  year = re.search(r"\d{4}", data.get(u"birthday") or "")
+  data[u"birthday"] = f"{year.group()}-{(h >> 16) % 12 + 1:02d}-{(h >> 24) % 28 + 1:02d}" if year else None
+  data[u"mobile"] = None
+  # Always set, so a real address left over in the target is overwritten too.
+  # .invalid never resolves, so the app cannot mail (or sign in) real people
+  data[u"email"] = f"member-{member_id}@example.invalid"
+  return data
+
+
 """ Create member in firebase for every webling """
 def sync_members():
-  print("fetching webling")
+  print(f"fetching webling (anonymize: {ANONYMIZE})")
   api_url = f"https://{WEBLING_DOMAIN}.webling.ch/api/1/member?apikey={WEBLING_API_KEY}&format=full"
 
   response = requests.get(api_url)
@@ -73,7 +107,8 @@ def sync_members():
   for e in response.json():
     prop = e["properties"]
     labels = get_label(e["parents"]) # membergroups -> titles
-    print(f"ID: {e['id']}, Name: {prop['Name']}, Vorname: {prop['Vorname']}, Geburtstag: {prop['Geburtstag']}, Mobile: {prop['Mobile']}, Labels: {labels}")
+    # Only the id: logs end up in GitHub Actions, which must not hold personal data
+    print(f"ID: {e['id']}, Labels: {labels}")
     data = {
         u"id": e['id'],
         u"firstname": prop["Vorname"].strip(),
@@ -88,6 +123,8 @@ def sync_members():
     email = (prop.get("E-Mail") or "").strip()
     if email:
       data[u"email"] = email
+    if ANONYMIZE:
+      data = anonymize(e['id'], data)
     if not upsert('members', data):
       failed += 1
   return failed

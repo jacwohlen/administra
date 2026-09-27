@@ -43,6 +43,9 @@ jobs:
       WEBLING_PASSWORD: ${{ secrets.WEBLING_PASSWORD }}
       SUPABASE_URL: ${{ vars.SUPABASE_URL }}
       SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      # Real member data only goes to prod; every other target gets fake
+      # names, birthdays, phone numbers and emails (see anonymize() in webling.py)
+      ANONYMIZE: ${{ (inputs.environment || 'prod') == 'prod' && 'false' || 'true' }}
       # Show log lines as they happen instead of when the buffer flushes
       PYTHONUNBUFFERED: '1'
 
