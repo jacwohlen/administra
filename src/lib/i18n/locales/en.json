@@ -277,7 +277,6 @@
       "all": "All",
       "topAthletes": "Top Athletes",
       "topTrainers": "Top Trainers",
-      "topParticipants": "Top Participants Per Training",
       "topEventParticipants": "Top Event Participants",
       "topEventCoaches": "Top Event Coaches",
       "loading": "Loading...",
@@ -292,7 +291,7 @@
       "avgAttendanceEvent": "Avg. per Event",
       "monthlyTrend": "Monthly Attendance Trend",
       "sectionDistribution": "Attendance by Section",
-      "attendanceByTraining": "Average Attendance per Training",
+      "attendanceByTraining": "Attendance per Training",
       "trainerWorkload": "Trainer Workload",
       "memberRetention": "Member Retention",
       "newMembers": "New Members",
@@ -307,7 +306,33 @@
       "avgAttendance": "Avg. Attendance",
       "sessions": "Sessions",
       "totalAttendance": "Total",
-      "no_data": "No data available"
+      "no_data": "No data available",
+      "showAll": "Show all {count}",
+      "showLess": "Show less",
+      "sessionsCount": "{count} sessions",
+      "selectTrainingHint": "Avg. attendees per session – tap a training to see its history.",
+      "retentionHint": "Compared with earlier years",
+      "churn": {
+        "title": "Churn {year}",
+        "hint": "Share of members active in {prev} who did not train in {year}. Training = the one they attended most in {prev}.",
+        "byAge": "By age",
+        "byTraining": "By training",
+        "ageGroup": "{group} years",
+        "ageUnknown": "Age unknown",
+        "ofActive": "{churned} of {active} left",
+        "none": "Nobody left",
+        "members": "Left ({count})",
+        "lastSeen": "last {date}"
+      },
+      "details": "Details",
+      "retentionOverview": "Overview {year}",
+      "joined": {
+        "title": "New members {year}",
+        "hint": "Trained for the first time in {year}. Training = the one they attended most, share = of all new members.",
+        "members": "New ({count})",
+        "since": "since {date}",
+        "none": "No new members"
+      }
     },
     "events": {
       "title": "Events",
