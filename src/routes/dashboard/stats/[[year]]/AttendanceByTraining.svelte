@@ -16,6 +16,12 @@
     avg_attendance: number;
   }
 
+  interface TrainingSlot {
+    id: number;
+    weekday: string | null;
+    dateFrom: string | null;
+  }
+
   interface SessionCount {
     trainingId: number;
     date: string;
@@ -39,10 +45,32 @@
         .order('date')
         .returns<SessionCount[]>()
     ]);
-    const trainings = ((avg.data as TrainingAttendance[]) ?? [])
-      .map((t) => ({ ...t, avg_attendance: Number(t.avg_attendance) }))
+    const rows = (avg.data as TrainingAttendance[]) ?? [];
+    // Several trainings share a title ("Judo Kinder"); weekday and start
+    // time tell them apart
+    const { data: slots } = await supabaseClient
+      .from('trainings')
+      .select('id, weekday, dateFrom')
+      .in(
+        'id',
+        rows.map((t) => t.trainingId)
+      )
+      .returns<TrainingSlot[]>();
+    const slotById = new Map((slots ?? []).map((s) => [Number(s.id), s]));
+    const trainings = rows
+      .map((t) => ({
+        ...t,
+        avg_attendance: Number(t.avg_attendance),
+        slot: slotLabel(slotById.get(t.trainingId))
+      }))
       .sort((a, b) => b.avg_attendance - a.avg_attendance);
     return { trainings, sessions: sessions.data ?? [] };
+  }
+
+  function slotLabel(slot: TrainingSlot | undefined): string {
+    if (!slot) return '';
+    const day = slot.weekday ? $_('weekdayShort.' + slot.weekday) : '';
+    return [day, slot.dateFrom?.slice(0, 5)].filter(Boolean).join(' ');
   }
 
   let data = $derived(loadData(yearmode, year));
@@ -67,8 +95,13 @@
       .map((s) => ({ group: selected.title, date: s.date, value: s.count }))}
 
     <div class="rounded-container bg-surface-100-900/50 p-3 mb-4">
-      <div class="flex items-baseline justify-between gap-2 mb-1">
-        <span class="font-semibold truncate">{selected.title}</span>
+      <div class="flex items-start justify-between gap-2 mb-1">
+        <div class="min-w-0">
+          <div class="font-semibold truncate">{selected.title}</div>
+          <div class="text-xs text-surface-600-400 truncate">
+            {[selected.slot, selected.section].filter(Boolean).join(' · ')}
+          </div>
+        </div>
         <span class="text-xs text-surface-600-400 flex-none tabular-nums">
           {$_('page.stats.sessionsCount', { values: { count: series.length } })}
         </span>
@@ -122,14 +155,16 @@
         <li>
           <button
             type="button"
-            class="w-full grid grid-cols-[minmax(0,1fr)_minmax(0,8rem)_2.5rem] sm:grid-cols-[minmax(0,1fr)_minmax(0,16rem)_3rem] items-center gap-3 px-2 py-1.5 rounded text-left hover:bg-surface-100-900"
+            class="w-full grid grid-cols-[minmax(0,1fr)_5rem_2.5rem] sm:grid-cols-[minmax(0,1fr)_minmax(0,16rem)_3rem] items-center gap-3 px-2 py-1.5 rounded text-left hover:bg-surface-100-900"
             class:bg-surface-100-900={active}
             aria-pressed={active}
             onclick={() => (selectedId = t.trainingId)}
           >
             <span class="min-w-0">
               <span class="block truncate text-sm" class:font-semibold={active}>{t.title}</span>
-              <span class="block truncate text-xs text-surface-600-400">{t.section}</span>
+              <span class="block truncate text-xs text-surface-600-400"
+                >{[t.slot, t.section].filter(Boolean).join(' · ')}</span
+              >
             </span>
             <span class="h-3 rounded-sm bg-surface-200-800 overflow-hidden" aria-hidden="true">
               <span
