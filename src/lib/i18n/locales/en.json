@@ -311,7 +311,17 @@
       "showLess": "Show less",
       "sessionsCount": "{count} sessions",
       "selectTrainingHint": "Avg. attendees per session – tap a training to see its history.",
-      "retentionHint": "Compared with earlier years"
+      "retentionHint": "Compared with earlier years",
+      "churn": {
+        "title": "Churn {year}",
+        "hint": "Share of members active in {prev} who did not train in {year}. Training = the one they attended most in {prev}.",
+        "byAge": "By age",
+        "byTraining": "By training",
+        "ageGroup": "{group} years",
+        "ageUnknown": "Age unknown",
+        "ofActive": "{churned} of {active} left",
+        "none": "Nobody left"
+      }
     },
     "events": {
       "title": "Events",

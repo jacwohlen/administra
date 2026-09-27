@@ -311,7 +311,17 @@
       "showLess": "Weniger anzeigen",
       "sessionsCount": "{count} Einheiten",
       "selectTrainingHint": "Ø Teilnehmende pro Einheit – tippe auf ein Training, um seinen Verlauf zu sehen.",
-      "retentionHint": "Im Vergleich zu früheren Jahren"
+      "retentionHint": "Im Vergleich zu früheren Jahren",
+      "churn": {
+        "title": "Abwanderung {year}",
+        "hint": "Anteil der {prev} Aktiven, die {year} nicht mehr trainiert haben. Training = das {prev} am häufigsten besuchte.",
+        "byAge": "Nach Alter",
+        "byTraining": "Nach Training",
+        "ageGroup": "{group} Jahre",
+        "ageUnknown": "Alter unbekannt",
+        "ofActive": "{churned} von {active} abgewandert",
+        "none": "Niemand ist abgewandert"
+      }
     },
     "events": {
       "title": "Events",

@@ -67,3 +67,69 @@ export function seriesColors(groups: Iterable<string>, dark: boolean): Record<st
   const sorted = [...new Set(groups)].sort((a, b) => a.localeCompare(b));
   return Object.fromEntries(sorted.map((g, i) => [g, palette[i % palette.length]]));
 }
+
+export interface RetentionRow {
+  memberId: number;
+  age: number | null;
+  trainingId: number;
+  title: string;
+  section: string;
+  weekday: string | null;
+  dateFrom: string | null;
+  churned: boolean;
+}
+
+export interface ChurnGroup {
+  key: string;
+  /** Members of this group who trained the previous year */
+  active: number;
+  churned: number;
+  /** churned / active, 0..1 */
+  rate: number;
+}
+
+/** Age groups for the churn breakdown; the upper bound is inclusive. */
+export const AGE_GROUPS: { key: string; max: number }[] = [
+  { key: '0-9', max: 9 },
+  { key: '10-13', max: 13 },
+  { key: '14-17', max: 17 },
+  { key: '18-29', max: 29 },
+  { key: '30-49', max: 49 },
+  { key: '50+', max: Infinity }
+];
+
+export function ageGroup(age: number | null): string {
+  if (age === null || age < 0) return 'unknown';
+  return AGE_GROUPS.find((g) => age <= g.max)!.key;
+}
+
+function churnGroups(rows: RetentionRow[], keyOf: (r: RetentionRow) => string): ChurnGroup[] {
+  const groups = new Map<string, ChurnGroup>();
+  for (const r of rows) {
+    const key = keyOf(r);
+    const g = groups.get(key) ?? { key, active: 0, churned: 0, rate: 0 };
+    g.active++;
+    if (r.churned) g.churned++;
+    groups.set(key, g);
+  }
+  for (const g of groups.values()) g.rate = g.churned / g.active;
+  return [...groups.values()];
+}
+
+/** Churn per age group, youngest first, members without birthday last. */
+export function churnByAge(rows: RetentionRow[]): ChurnGroup[] {
+  const order = [...AGE_GROUPS.map((g) => g.key), 'unknown'];
+  return churnGroups(rows, (r) => ageGroup(r.age)).sort(
+    (a, b) => order.indexOf(a.key) - order.indexOf(b.key)
+  );
+}
+
+/**
+ * Churn per training (the one a member attended most), most churned members
+ * first. Keys are training ids as strings.
+ */
+export function churnByTraining(rows: RetentionRow[]): ChurnGroup[] {
+  return churnGroups(rows, (r) => String(r.trainingId))
+    .filter((g) => g.churned > 0)
+    .sort((a, b) => b.churned - a.churned || b.rate - a.rate);
+}

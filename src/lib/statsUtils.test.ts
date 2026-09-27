@@ -4,7 +4,11 @@ import {
   resolveYearParam,
   resolveYearForRpc,
   seriesColors,
-  SERIES_COLORS
+  SERIES_COLORS,
+  ageGroup,
+  churnByAge,
+  churnByTraining,
+  type RetentionRow
 } from './statsUtils';
 import type { Athletes } from '$lib/models';
 
@@ -122,5 +126,57 @@ describe('seriesColors', () => {
 
   it('uses the dark steps in dark mode', () => {
     expect(seriesColors(['Judo'], true)).toEqual({ Judo: SERIES_COLORS.dark[0] });
+  });
+});
+
+function row(overrides: Partial<RetentionRow>): RetentionRow {
+  return {
+    memberId: 1,
+    age: 10,
+    trainingId: 1,
+    title: 'Judo Kinder',
+    section: 'Judo',
+    weekday: 'Monday',
+    dateFrom: '17:30',
+    churned: false,
+    ...overrides
+  };
+}
+
+describe('ageGroup', () => {
+  it('puts ages into inclusive groups', () => {
+    expect(ageGroup(9)).toBe('0-9');
+    expect(ageGroup(10)).toBe('10-13');
+    expect(ageGroup(17)).toBe('14-17');
+    expect(ageGroup(65)).toBe('50+');
+    expect(ageGroup(null)).toBe('unknown');
+  });
+});
+
+describe('churnByAge', () => {
+  it('counts churned and active members per group, youngest first', () => {
+    const groups = churnByAge([
+      row({ memberId: 1, age: 30, churned: true }),
+      row({ memberId: 2, age: null, churned: true }),
+      row({ memberId: 3, age: 8, churned: true }),
+      row({ memberId: 4, age: 7 })
+    ]);
+    expect(groups.map((g) => g.key)).toEqual(['0-9', '30-49', 'unknown']);
+    expect(groups[0]).toEqual({ key: '0-9', active: 2, churned: 1, rate: 0.5 });
+  });
+});
+
+describe('churnByTraining', () => {
+  it('lists trainings with churn, most churned members first', () => {
+    const groups = churnByTraining([
+      row({ memberId: 1, trainingId: 1, churned: true }),
+      row({ memberId: 2, trainingId: 2, churned: true }),
+      row({ memberId: 3, trainingId: 2, churned: true }),
+      row({ memberId: 4, trainingId: 3 })
+    ]);
+    expect(groups.map((g) => [g.key, g.churned])).toEqual([
+      ['2', 2],
+      ['1', 1]
+    ]);
   });
 });
