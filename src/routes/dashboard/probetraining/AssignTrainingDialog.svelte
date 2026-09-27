@@ -91,13 +91,22 @@
 {/snippet}
 
 <div class="space-y-4">
-  <header>
-    <h3>{$_('page.probetraining.manageTitle')}</h3>
-    <p class="text-sm text-surface-600-400">
-      {member.firstname}
-      {member.lastname}{#if age !== null}
-        · {age} {$_('page.probetraining.yearsOld')}{/if}
-    </p>
+  <header class="flex items-center gap-3">
+    <span class="avatar-initials bg-primary-500/15! text-primary-700-300">
+      {member.lastname.charAt(0)}{member.firstname.charAt(0)}
+    </span>
+    <span class="min-w-0">
+      <h3 class="mb-0!">{$_('page.probetraining.manageTitle')}</h3>
+      <span class="block text-sm text-surface-600-400 truncate">
+        {[
+          `${member.firstname} ${member.lastname}`,
+          age !== null ? `${age} ${$_('page.probetraining.yearsOld')}` : null,
+          member.trialSection
+        ]
+          .filter(Boolean)
+          .join(' · ')}
+      </span>
+    </span>
   </header>
 
   <div class="max-h-[60vh] overflow-y-auto space-y-4 pr-1">
@@ -175,7 +184,7 @@
       {:else}
         <ul class="space-y-1">
           {#each split.others as t (t.id)}
-            <li class="flex items-center gap-2 px-3 py-2">
+            <li class="flex items-center gap-2 rounded-md border border-surface-200-800 px-3 py-2">
               <span class="flex-1 min-w-0">
                 <span class="font-medium block truncate">{t.title}</span>
                 <span class="text-xs text-surface-600-400">

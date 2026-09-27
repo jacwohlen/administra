@@ -169,7 +169,7 @@
             title={$_('page.probetraining.convertHint')}
           >
             <Fa icon={faTriangleExclamation} size="xs" />
-            {$_('page.probetraining.filterConvert')} · {trialAttendedCount}×
+            {$_('page.probetraining.tab.convert')} · {trialAttendedCount}×
           </span>
         {/if}
         <Labels labels={member.labels ? member.labels : []} />

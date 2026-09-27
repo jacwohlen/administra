@@ -406,7 +406,6 @@
       "convertHint": "Has reached the agreed number of trial sessions – time to discuss membership.",
       "searchPlaceholder": "Search by name...",
       "noResults": "No candidates match this selection.",
-      "noAssignment": "no training",
       "assignTraining": "Assign Training",
       "manageTrainings": "Manage Trainings",
       "manageTitle": "Manage Trainings",
@@ -434,11 +433,6 @@
         "waitlist": "Waiting list",
         "assigned": "Assigned",
         "cancelled": "Cancelled"
-      },
-      "statusSince": {
-        "waitlist": "on the waiting list since",
-        "assigned": "assigned since",
-        "cancelled": "cancelled on"
       },
       "registeredAgo": "registered {ago}",
       "ago": {
@@ -470,7 +464,28 @@
       "statusError": "Could not change the status",
       "activeCount": "{count} active",
       "trialCount": "{count} trial",
-      "activityHint": "Active: distinct attendees (excluding trainers) over the last 8 sessions. Trial: trial candidates on the participant list."
+      "activityHint": "Active: distinct attendees (excluding trainers) over the last 8 sessions. Trial: trial candidates on the participant list.",
+      "subtitle": "Registrations from the form – from sign-up to membership.",
+      "hint": {
+        "newest": "newest {ago}",
+        "longest": "longest {since}",
+        "convert": "from {count} sessions attended"
+      },
+      "emptyTab": {
+        "new": "No new registrations – all caught up.",
+        "waitlist": "Nobody is on the waiting list.",
+        "assigned": "Nobody is assigned to a training right now.",
+        "convert": "Nobody has reached the agreed number of sessions.",
+        "cancelled": "No cancelled registrations.",
+        "all": "No registrations."
+      },
+      "timeline": {
+        "registered": "Registered",
+        "waitlist": "Put on the waiting list",
+        "assigned": "Training assigned",
+        "cancelled": "Cancelled"
+      },
+      "attendedCount": "{count, plural, =0 {not attended yet} one {# session attended} other {# sessions attended}}"
     },
     "login": {
       "title": "Sign in",

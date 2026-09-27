@@ -406,7 +406,6 @@
       "convertHint": "Hat die vereinbarte Anzahl erreicht – Mitgliedschaft klären.",
       "searchPlaceholder": "Name suchen...",
       "noResults": "Keine Kandidaten entsprechen dieser Auswahl.",
-      "noAssignment": "ohne Training",
       "assignTraining": "Training zuweisen",
       "manageTrainings": "Trainings verwalten",
       "manageTitle": "Trainings verwalten",
@@ -434,11 +433,6 @@
         "waitlist": "Warteliste",
         "assigned": "Zugewiesen",
         "cancelled": "Abgesagt"
-      },
-      "statusSince": {
-        "waitlist": "auf der Warteliste seit",
-        "assigned": "zugewiesen seit",
-        "cancelled": "abgesagt am"
       },
       "registeredAgo": "angemeldet {ago}",
       "ago": {
@@ -470,7 +464,28 @@
       "statusError": "Status konnte nicht geändert werden",
       "activeCount": "{count} aktiv",
       "trialCount": "{count} Probe",
-      "activityHint": "Aktiv: verschiedene Teilnehmende (ohne Trainer) in den letzten 8 Trainings. Probe: Probetraining-Kandidaten auf der Teilnehmerliste."
+      "activityHint": "Aktiv: verschiedene Teilnehmende (ohne Trainer) in den letzten 8 Trainings. Probe: Probetraining-Kandidaten auf der Teilnehmerliste.",
+      "subtitle": "Anmeldungen vom Formular – vom Eingang bis zur Mitgliedschaft.",
+      "hint": {
+        "newest": "neueste {ago}",
+        "longest": "am längsten {since}",
+        "convert": "ab {count} besuchten Trainings"
+      },
+      "emptyTab": {
+        "new": "Keine neuen Anmeldungen – alles erledigt.",
+        "waitlist": "Niemand auf der Warteliste.",
+        "assigned": "Niemand ist aktuell einem Training zugewiesen.",
+        "convert": "Niemand hat die vereinbarte Anzahl Trainings erreicht.",
+        "cancelled": "Keine abgesagten Anmeldungen.",
+        "all": "Keine Anmeldungen."
+      },
+      "timeline": {
+        "registered": "Angemeldet",
+        "waitlist": "Auf die Warteliste gesetzt",
+        "assigned": "Training zugewiesen",
+        "cancelled": "Abgesagt"
+      },
+      "attendedCount": "{count, plural, =0 {noch nicht besucht} one {# Training besucht} other {# Trainings besucht}}"
     },
     "login": {
       "title": "Anmelden",
