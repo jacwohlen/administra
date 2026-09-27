@@ -75,7 +75,8 @@
       "group": {
         "club": "Club",
         "trial": "Trial training",
-        "display": "Display"
+        "display": "Display",
+        "trialMail": "E-mails to trial candidates"
       },
       "field": {
         "clubName": {
@@ -133,6 +134,25 @@
       },
       "toast": {
         "saved": "Settings saved"
+      },
+      "trialMail": {
+        "intro": "Templates for the mails to trial candidates. The thank-you mail goes out right after registration, the others only after the preview in the trial section. Placeholders:",
+        "subject": "{locale} – subject",
+        "body": "{locale} – text",
+        "subjectDescription": "Leave empty for the default text.",
+        "bodyDescription": "Leave empty for the default text. Plain text, no formatting.",
+        "subjectShort": "Subject",
+        "bodyShort": "Text",
+        "useDefault": "Copy the default text to edit it",
+        "kind": {
+          "welcome": "Thank you for registering",
+          "waitlist": "Waiting list",
+          "assigned": "Training assigned"
+        },
+        "locale": {
+          "de": "German",
+          "en": "English"
+        }
       }
     },
     "trainings": {
@@ -413,13 +433,15 @@
       "submit": "Send Registration",
       "submitting": "Sending...",
       "successTitle": "Thank you!",
-      "successMessage": "We've received your registration and will be in touch shortly to schedule your trial training.",
+      "successMessage": "We have received your registration – a confirmation e-mail is on its way. We will get back to you shortly with a date for your trial session.",
       "validation": {
-        "required": "Please fill in first name, last name, date of birth, and email."
+        "required": "Please fill in first name, last name, date of birth, and email.",
+        "invalid": "Please check your details, especially the e-mail address and date of birth."
       },
       "metaDescription": "Sign up for a free, no-obligation trial training session – Judo and Aikido in Wohlen.",
       "backToWebsite": "To the club website",
-      "contactHint": "Questions? Write to us:"
+      "contactHint": "Questions? Write to us:",
+      "submitError": "Your registration could not be sent right now. Please try again later."
     },
     "probetraining": {
       "title": "Trial Training",
@@ -510,7 +532,26 @@
         "assigned": "Training assigned",
         "cancelled": "Cancelled"
       },
-      "attendedCount": "{count, plural, =0 {not attended yet} one {# session attended} other {# sessions attended}}"
+      "attendedCount": "{count, plural, =0 {not attended yet} one {# session attended} other {# sessions attended}}",
+      "mail": {
+        "title": "E-mail to candidate",
+        "to": "To",
+        "notConfigured": "Sending e-mail is not set up in this environment. The mail is only logged, not sent.",
+        "kind": "Template",
+        "noTrainings": "No training assigned yet – the trainings placeholder stays empty.",
+        "sent": "E-mail sent",
+        "skipped": "Not sent: sending e-mail is not set up.",
+        "failed": "The e-mail could not be sent",
+        "skip": "Close without e-mail",
+        "send": "Send",
+        "write": "E-mail",
+        "status": {
+          "sent": "sent",
+          "pending": "pending",
+          "skipped": "not sent",
+          "failed": "failed"
+        }
+      }
     },
     "login": {
       "title": "Sign in",

@@ -20,13 +20,16 @@
     trainings,
     activityByTraining,
     assignedTrainingIds,
-    onclose
+    onclose,
+    onassigned
   }: {
     member: TrialMember;
     trainings: Training[];
     activityByTraining: Map<number, TrainingActivity>;
     assignedTrainingIds: Set<number>;
     onclose: () => void;
+    /** After a training was assigned; defaults to closing. */
+    onassigned?: () => void;
   } = $props();
 
   let age = $derived(calculateAge(member.birthday));
@@ -44,7 +47,7 @@
       if (error) throw error;
       toaster.success({ title: $_('page.probetraining.assignSuccess') });
       await invalidate('probetraining:list');
-      onclose();
+      (onassigned ?? onclose)();
     } catch (e) {
       console.error('Error assigning training:', e);
       toaster.error({ title: $_('page.probetraining.assignError') });

@@ -14294,6 +14294,24 @@ INSERT INTO public.participants ("trainingId", "memberId") VALUES (32, 198);
 UPDATE public.members SET "trialStatus" = 'cancelled' WHERE id = 199;
 -- Backdate the status changes so the waiting times look realistic
 UPDATE public.members SET "trialStatusChangedAt" = "trialRegisteredAt" + interval '3 days' WHERE id IN (196, 197, 198, 199);
+UPDATE public.members SET "trialLocale" = 'de' WHERE id BETWEEN 194 AND 199;
+UPDATE public.members SET "trialLocale" = 'en' WHERE id = 195;
+
+-- Mails the candidates received so far (see docs/TRIAL_EMAILS.md)
+INSERT INTO public.trial_emails (member_id, kind, to_email, subject, status, created_at, sent_at, error)
+SELECT m.id, 'welcome', m.email, 'Danke für deine Anmeldung zum Probetraining – JAC Wohlen',
+       'sent', m."trialRegisteredAt", m."trialRegisteredAt", NULL
+FROM public.members AS m WHERE m.id BETWEEN 194 AND 199 AND m.id <> 194
+UNION ALL
+SELECT 194, 'welcome', 'eltern.keller@example.com', 'Danke für deine Anmeldung zum Probetraining – JAC Wohlen',
+       'failed', now() - interval '2 days', NULL, '550 5.1.1 Mailbox unavailable'
+UNION ALL
+SELECT m.id, 'waitlist', m.email, 'Du bist auf der Warteliste – JAC Wohlen',
+       'sent', m."trialStatusChangedAt", m."trialStatusChangedAt", NULL
+FROM public.members AS m WHERE m.id IN (196, 197)
+UNION ALL
+SELECT 198, 'assigned', 'jonas.frei@example.com', 'Dein Probetraining beim JAC Wohlen',
+       'sent', now() - interval '18 days', now() - interval '18 days', NULL;
 
 --
 -- Compute badges for all seeded members

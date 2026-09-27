@@ -75,7 +75,8 @@
       "group": {
         "club": "Verein",
         "trial": "Probetraining",
-        "display": "Darstellung"
+        "display": "Darstellung",
+        "trialMail": "E-Mails an Probetraining-Kandidaten"
       },
       "field": {
         "clubName": {
@@ -133,6 +134,25 @@
       },
       "toast": {
         "saved": "Einstellungen gespeichert"
+      },
+      "trialMail": {
+        "intro": "Vorlagen für die Mails an Probetraining-Kandidaten. Die Danke-Mail geht direkt nach der Anmeldung raus, die anderen erst nach der Vorschau im Probetraining-Bereich. Platzhalter:",
+        "subject": "{locale} – Betreff",
+        "body": "{locale} – Text",
+        "subjectDescription": "Leer lassen für den Standardtext.",
+        "bodyDescription": "Leer lassen für den Standardtext. Nur Text, keine Formatierung.",
+        "subjectShort": "Betreff",
+        "bodyShort": "Text",
+        "useDefault": "Standardtext zum Bearbeiten übernehmen",
+        "kind": {
+          "welcome": "Danke für die Anmeldung",
+          "waitlist": "Warteliste",
+          "assigned": "Training zugewiesen"
+        },
+        "locale": {
+          "de": "Deutsch",
+          "en": "Englisch"
+        }
       }
     },
     "trainings": {
@@ -413,13 +433,15 @@
       "submit": "Anmeldung absenden",
       "submitting": "Sende...",
       "successTitle": "Vielen Dank!",
-      "successMessage": "Deine Anmeldung ist bei uns eingegangen. Wir melden uns in Kürze mit einem Termin für dein Probetraining.",
+      "successMessage": "Deine Anmeldung ist bei uns eingegangen – du erhältst gleich eine Bestätigung per E-Mail. Wir melden uns in Kürze mit einem Termin für dein Probetraining.",
       "validation": {
-        "required": "Bitte Vorname, Nachname, Geburtsdatum und E-Mail ausfüllen."
+        "required": "Bitte Vorname, Nachname, Geburtsdatum und E-Mail ausfüllen.",
+        "invalid": "Bitte prüfe deine Angaben, vor allem E-Mail-Adresse und Geburtsdatum."
       },
       "metaDescription": "Melde dich unverbindlich für ein Probetraining an – Judo und Aikido in Wohlen.",
       "backToWebsite": "Zur Vereinswebsite",
-      "contactHint": "Fragen vorab? Schreib uns:"
+      "contactHint": "Fragen vorab? Schreib uns:",
+      "submitError": "Die Anmeldung konnte gerade nicht gesendet werden. Bitte versuche es später noch einmal."
     },
     "probetraining": {
       "title": "Probetraining",
@@ -510,7 +532,26 @@
         "assigned": "Training zugewiesen",
         "cancelled": "Abgesagt"
       },
-      "attendedCount": "{count, plural, =0 {noch nicht besucht} one {# Training besucht} other {# Trainings besucht}}"
+      "attendedCount": "{count, plural, =0 {noch nicht besucht} one {# Training besucht} other {# Trainings besucht}}",
+      "mail": {
+        "title": "E-Mail an Kandidat",
+        "to": "An",
+        "notConfigured": "Der E-Mail-Versand ist in dieser Umgebung nicht eingerichtet. Die Mail wird nur protokolliert, nicht verschickt.",
+        "kind": "Vorlage",
+        "noTrainings": "Noch kein Training zugewiesen – der Platzhalter für die Trainings bleibt leer.",
+        "sent": "E-Mail gesendet",
+        "skipped": "Nicht gesendet: Der E-Mail-Versand ist nicht eingerichtet.",
+        "failed": "E-Mail konnte nicht gesendet werden",
+        "skip": "Ohne E-Mail schliessen",
+        "send": "Senden",
+        "write": "E-Mail",
+        "status": {
+          "sent": "gesendet",
+          "pending": "ausstehend",
+          "skipped": "nicht gesendet",
+          "failed": "fehlgeschlagen"
+        }
+      }
     },
     "login": {
       "title": "Anmelden",

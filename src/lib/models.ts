@@ -76,6 +76,21 @@ export interface TrialMember {
   attendedCount: number;
   trialStatus: TrialStatus;
   trialStatusChangedAt?: string;
+  /** Language the candidate registered in; mails go out in it. */
+  trialLocale?: 'de' | 'en' | null;
+}
+
+/** Row of trial_emails: one mail to a trial candidate. */
+export interface TrialEmail {
+  id: number;
+  member_id: number;
+  kind: 'welcome' | 'waitlist' | 'assigned';
+  to_email: string;
+  subject: string | null;
+  status: 'pending' | 'sent' | 'failed' | 'skipped';
+  error: string | null;
+  created_at: string;
+  sent_at: string | null;
 }
 
 /** Row of view_training_activity: how full a training is. */

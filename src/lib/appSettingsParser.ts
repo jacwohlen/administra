@@ -13,6 +13,12 @@
  */
 
 import type { ClubConfig, PublicLocale } from './clubConfigParser';
+import {
+  DEFAULT_TRIAL_MAIL_TEMPLATES,
+  TRIAL_MAIL_KINDS,
+  TRIAL_MAIL_LOCALES,
+  trialMailSettingKey
+} from './trialMail';
 
 /** Tunables for how much the dashboard shows, as opposed to whose club it shows. */
 export interface DisplayConfig {
@@ -39,8 +45,8 @@ export const DEFAULT_DISPLAY_CONFIG: DisplayConfig = {
 /** Raw `app_settings` rows: key → jsonb value. */
 export type SettingValues = Record<string, unknown>;
 
-export type SettingGroup = 'club' | 'trial' | 'display';
-export type SettingKind = 'text' | 'list' | 'int' | 'locale';
+export type SettingGroup = 'club' | 'trial' | 'trialMail' | 'display';
+export type SettingKind = 'text' | 'longtext' | 'list' | 'int' | 'locale';
 
 export interface SettingField {
   /** Row key in `app_settings`. */
@@ -51,6 +57,42 @@ export interface SettingField {
   kind: SettingKind;
   /** Lower bound for `int` fields. */
   min?: number;
+  /**
+   * Label and description come from these i18n keys instead of
+   * `page.settings.field.<id>.*`, with `labelValues` filled in. Used by
+   * generated fields such as the e-mail templates.
+   */
+  labelKey?: string;
+  descriptionKey?: string;
+  labelValues?: Record<string, string>;
+}
+
+/** Subject and body of every trial e-mail template, per language. */
+export const TRIAL_MAIL_FIELDS: SettingField[] = TRIAL_MAIL_KINDS.flatMap((kind) =>
+  TRIAL_MAIL_LOCALES.flatMap((locale) =>
+    (['subject', 'body'] as const).map((part): SettingField => ({
+      key: trialMailSettingKey(kind, locale, part),
+      id: `trialMail.${kind}.${locale}.${part}`,
+      group: 'trialMail',
+      kind: part === 'body' ? 'longtext' : 'text',
+      labelKey: `page.settings.trialMail.${part}`,
+      descriptionKey: `page.settings.trialMail.${part}Description`,
+      labelValues: { kind, locale }
+    }))
+  )
+);
+
+/** Built-in texts of the e-mail templates, keyed like their settings. */
+export function trialMailDefaults(): SettingValues {
+  const out: SettingValues = {};
+  for (const kind of TRIAL_MAIL_KINDS) {
+    for (const locale of TRIAL_MAIL_LOCALES) {
+      const t = DEFAULT_TRIAL_MAIL_TEMPLATES[kind][locale];
+      out[trialMailSettingKey(kind, locale, 'subject')] = t.subject;
+      out[trialMailSettingKey(kind, locale, 'body')] = t.body;
+    }
+  }
+  return out;
 }
 
 /** Every setting the admin settings page offers, in display order. */
@@ -68,6 +110,7 @@ export const SETTING_FIELDS: SettingField[] = [
     kind: 'int',
     min: 1
   },
+  ...TRIAL_MAIL_FIELDS,
   {
     key: 'display.checklistStreakLength',
     id: 'checklistStreakLength',

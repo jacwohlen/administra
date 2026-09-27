@@ -19,7 +19,8 @@
     faMagnifyingGlass,
     faBan,
     faRotateLeft,
-    faSpinner
+    faSpinner,
+    faPaperPlane
   } from '@fortawesome/free-solid-svg-icons';
   import { calculateAge } from '$lib/utils';
   import {
@@ -34,7 +35,15 @@
   import { toaster } from '$lib/toast';
   import { invalidate } from '$app/navigation';
   import AssignTrainingDialog from './AssignTrainingDialog.svelte';
-  import type { TrialMember, TrialStatus, Training, TrainingActivity } from '$lib/models';
+  import MailDialog from './MailDialog.svelte';
+  import type { TrialMailKind } from '$lib/trialMail';
+  import type {
+    TrialEmail,
+    TrialMember,
+    TrialStatus,
+    Training,
+    TrainingActivity
+  } from '$lib/models';
   import dayjs from 'dayjs';
 
   const TABS: TrialTab[] = ['new', 'waitlist', 'assigned', 'convert', 'cancelled', 'all'];
@@ -74,6 +83,8 @@
   let { data }: { data: PageData } = $props();
 
   let selectedMember = $state<TrialMember | null>(null);
+  /** Mail preview to show; opened after a status change or from the row. */
+  let mailRequest = $state<{ member: TrialMember; kind: TrialMailKind } | null>(null);
   let expandedId = $state<number | null>(null);
   let confirmCancelId = $state<number | null>(null);
   let busyId = $state<number | null>(null);
@@ -98,6 +109,30 @@
     }
     return map;
   });
+
+  let emailsByMember = $derived.by(() => {
+    const map = new Map<number, TrialEmail[]>();
+    for (const e of data.emails) {
+      const list = map.get(e.member_id) ?? [];
+      list.push(e);
+      map.set(e.member_id, list);
+    }
+    return map;
+  });
+
+  const MAIL_STATUS_CHIP: Record<TrialEmail['status'], string> = {
+    sent: 'preset-tonal-success',
+    pending: 'preset-tonal-surface',
+    skipped: 'preset-tonal-warning',
+    failed: 'preset-tonal-error'
+  };
+
+  /** The mail that fits the candidate's status. */
+  function defaultMailKind(m: TrialMember): TrialMailKind {
+    if (m.trialStatus === 'assigned') return 'assigned';
+    if (m.trialStatus === 'waitlist') return 'waitlist';
+    return 'welcome';
+  }
 
   let activityByTraining = $derived.by(() => {
     const map = new Map<number, TrainingActivity>();
@@ -176,6 +211,8 @@
       toaster.success({ title: $_('page.probetraining.statusChanged.' + status) });
       confirmCancelId = null;
       await invalidate('probetraining:list');
+      // Offer the waiting-list notice; it only goes out after the preview.
+      if (status === 'waitlist' && m.email) mailRequest = { member: m, kind: 'waitlist' };
     } catch (e) {
       console.error('Error changing trial status:', e);
       toaster.error({ title: $_('page.probetraining.statusError') });
@@ -502,6 +539,29 @@
                       </span>
                     </li>
                   {/if}
+                  {#each emailsByMember.get(m.id) ?? [] as mail (mail.id)}
+                    <li class="pl-4 relative">
+                      <span
+                        class="absolute -left-[7px] top-1 size-3 rounded-full ring-2 ring-surface-50-950 {mail.status ===
+                        'failed'
+                          ? 'bg-error-500'
+                          : 'bg-surface-300-700'}"
+                      ></span>
+                      <span class="flex items-center gap-1.5 font-medium">
+                        <Fa icon={faEnvelope} size="xs" class="text-surface-500" />
+                        {$_('page.settings.trialMail.kind.' + mail.kind)}
+                        <span class="chip text-[10px] py-0 px-1.5 {MAIL_STATUS_CHIP[mail.status]}">
+                          {$_('page.probetraining.mail.status.' + mail.status)}
+                        </span>
+                      </span>
+                      <span class="block text-xs text-surface-600-400" title={mail.error ?? ''}>
+                        {dayjs(mail.sent_at ?? mail.created_at).format('DD.MM.YYYY HH:mm')}
+                        {#if mail.status === 'failed' && mail.error}
+                          · <span class="text-error-600-400">{mail.error}</span>
+                        {/if}
+                      </span>
+                    </li>
+                  {/each}
                 </ol>
 
                 {#if m.notes}
@@ -568,6 +628,16 @@
                     <Fa icon={faSpinner} spin />
                   {/if}
                   <span class="flex-1"></span>
+                  {#if m.email}
+                    <button
+                      class="btn btn-sm preset-tonal-surface"
+                      disabled={busyId === m.id}
+                      onclick={() => (mailRequest = { member: m, kind: defaultMailKind(m) })}
+                    >
+                      <Fa icon={faPaperPlane} size="xs" />
+                      <span>{$_('page.probetraining.mail.write')}</span>
+                    </button>
+                  {/if}
                   {#if m.trialStatus === 'new'}
                     <button
                       class="btn btn-sm preset-tonal-warning"
@@ -619,6 +689,31 @@
         {activityByTraining}
         assignedTrainingIds={new Set(assignmentsByMember.get(selectedMember.id) ?? [])}
         onclose={() => (selectedMember = null)}
+        onassigned={() => {
+          const m = selectedMember;
+          selectedMember = null;
+          // Offer the training information; it only goes out after the preview.
+          if (m?.email) mailRequest = { member: m, kind: 'assigned' };
+        }}
+      />
+    </div>
+  </div>
+{/if}
+
+{#if mailRequest}
+  <!-- svelte-ignore a11y_no_static_element_interactions -->
+  <div
+    class="modal-overlay"
+    onkeydown={(e) => {
+      if (e.key === 'Escape') mailRequest = null;
+    }}
+  >
+    <div class="card modal-dialog modal-dialog-lg">
+      <MailDialog
+        member={mailRequest.member}
+        kind={mailRequest.kind}
+        trainings={assignedTrainings(mailRequest.member.id)}
+        onclose={() => (mailRequest = null)}
       />
     </div>
   </div>

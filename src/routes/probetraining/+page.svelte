@@ -2,7 +2,6 @@
   import { _, locale } from 'svelte-i18n';
   import Fa from 'svelte-fa';
   import { faSpinner, faCheck, faArrowUpRightFromSquare } from '@fortawesome/free-solid-svg-icons';
-  import { supabaseClient } from '$lib/supabase';
   import { clubConfig } from '$lib/clubConfig';
   import ClubLogo from '$lib/components/ClubLogo.svelte';
   import { setPublicLocale } from '$lib/publicLocale';
@@ -38,20 +37,28 @@
 
     submitting = true;
     try {
-      const { error: insertError } = await supabaseClient.from('members').insert({
-        firstname: firstname.trim(),
-        lastname: lastname.trim(),
-        birthday,
-        email: email.trim(),
-        mobile: mobile.trim() || null,
-        trialSection: section || null,
-        notes: notes.trim() || null,
-        labels: ['probetraining'],
-        trialRegisteredAt: new Date().toISOString()
+      // The server registers the candidate and sends the thank-you mail.
+      const response = await fetch('/api/probetraining/register', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          firstname,
+          lastname,
+          birthday,
+          email,
+          mobile,
+          section,
+          notes,
+          locale: $locale?.startsWith('en') ? 'en' : 'de',
+          website
+        })
       });
 
-      if (insertError) {
-        error = insertError.message;
+      if (!response.ok) {
+        error =
+          response.status === 400
+            ? $_('page.trialRegistration.validation.invalid')
+            : $_('page.trialRegistration.submitError');
         return;
       }
 
