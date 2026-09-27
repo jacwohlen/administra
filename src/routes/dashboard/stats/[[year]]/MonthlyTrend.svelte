@@ -1,11 +1,14 @@
 <script lang="ts">
   let { year, yearmode }: { year: number; yearmode: 'YEAR' | 'ALL' } = $props();
 
-  import '@carbon/charts/styles.css';
   import { BarChartStacked, type ChartTabularData } from '@carbon/charts-svelte';
   import { ScaleTypes } from '@carbon/charts/interfaces';
+  import dayjs from 'dayjs';
   import { supabaseClient } from '$lib/supabase';
+  import { seriesColors } from '$lib/statsUtils';
   import { _ } from 'svelte-i18n';
+  import ChartFrame from './ChartFrame.svelte';
+  import { baseChartOptions } from './chartOptions';
 
   interface MonthlyData {
     month: string;
@@ -13,51 +16,63 @@
     count: number;
   }
 
+  const HEIGHT = 300;
+
   async function loadMonthlyData(mode: 'ALL' | 'YEAR', y: number) {
     const yearParam = mode === 'ALL' ? '' : y.toString();
     const { data } = await supabaseClient.rpc('get_monthly_attendance', {
       year_param: yearParam
     });
-    return ((data as MonthlyData[]) ?? []).map((item: MonthlyData) => ({
+    return (data as MonthlyData[]) ?? [];
+  }
+
+  // Short month names; across all years the year is needed to tell them apart
+  function monthLabel(month: string, mode: 'ALL' | 'YEAR'): string {
+    return dayjs(month + '-01').format(mode === 'ALL' ? 'MMM YY' : 'MMM');
+  }
+
+  function toChart(rows: MonthlyData[], mode: 'ALL' | 'YEAR'): ChartTabularData {
+    return rows.map((item) => ({
       group: item.section,
-      key: item.month,
+      key: monthLabel(item.month, mode),
       value: item.count
-    })) as ChartTabularData;
+    }));
   }
 
   let data = $derived(loadMonthlyData(yearmode, year));
 </script>
 
-{#await data then items}
-  {#if items && items.length > 0}
-    <BarChartStacked
-      data={items}
-      options={{
-        height: '350px',
-        grid: {
-          x: { enabled: false },
-          y: { enabled: false }
-        },
-        axes: {
-          bottom: {
-            visible: true,
-            title: $_('page.stats.month'),
-            mapsTo: 'key',
-            scaleType: ScaleTypes.LABELS
-          },
-          left: {
-            visible: true,
-            mapsTo: 'value',
-            title: $_('page.stats.attendance'),
-            scaleType: ScaleTypes.LINEAR
-          }
-        },
-        legend: {
-          enabled: true
-        }
-      }}
-    ></BarChartStacked>
+{#await data}
+  <div class="placeholder animate-pulse w-full" style:height="{HEIGHT}px"></div>
+{:then rows}
+  {#if rows.length > 0}
+    <ChartFrame height={HEIGHT}>
+      {#snippet children(dark)}
+        <BarChartStacked
+          data={toChart(rows, yearmode)}
+          options={{
+            ...baseChartOptions(dark, HEIGHT),
+            axes: {
+              bottom: { mapsTo: 'key', scaleType: ScaleTypes.LABELS },
+              left: {
+                mapsTo: 'value',
+                title: $_('page.stats.attendance'),
+                stacked: true,
+                scaleType: ScaleTypes.LINEAR
+              }
+            },
+            color: {
+              scale: seriesColors(
+                rows.map((r) => r.section),
+                dark
+              )
+            },
+            bars: { maxWidth: 28 }
+          }}
+        />
+      {/snippet}
+    </ChartFrame>
   {:else}
-    <p class="text-surface-600-400 text-center py-4">{$_('page.stats.no_data')}</p>
+    <p class="empty-state">{$_('page.stats.no_data')}</p>
   {/if}
 {/await}

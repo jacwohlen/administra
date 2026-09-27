@@ -71,12 +71,49 @@ export function buildMembersWithStreaks(
   }));
 }
 
+type ChecklistSortable = Pick<MemberWithStreak, 'firstname' | 'lastname' | 'isPresent' | 'streak'>;
+
+/**
+ * Comparator for the check-in list: present members first, then by how many of
+ * the previous sessions they attended (most frequent first), then by name.
+ * Frequency uses only past sessions so checking someone in does not reorder
+ * the absent members.
+ */
+export function compareChecklistMembers(a: ChecklistSortable, b: ChecklistSortable): number {
+  if (a.isPresent !== b.isPresent) return a.isPresent ? -1 : 1;
+  const frequency = (m: ChecklistSortable) => m.streak.filter(Boolean).length;
+  return (
+    frequency(b) - frequency(a) ||
+    a.lastname.localeCompare(b.lastname, 'de') ||
+    a.firstname.localeCompare(b.firstname, 'de')
+  );
+}
+
+/**
+ * Minutes since midnight for a stored training time. Times are free text and
+ * appear as "18:00" as well as "18.00"; unparsable values sort last.
+ */
+export function timeToMinutes(time: string | null | undefined): number {
+  const match = /^\s*(\d{1,2})(?:[:.](\d{2}))?/.exec(time ?? '');
+  if (!match) return Number.MAX_SAFE_INTEGER;
+  return parseInt(match[1]) * 60 + parseInt(match[2] ?? '0');
+}
+
+/**
+ * Normalises a stored training time for display, e.g. "18.00" -> "18:00".
+ */
+export function formatTime(time: string | null | undefined): string {
+  const minutes = timeToMinutes(time);
+  if (minutes === Number.MAX_SAFE_INTEGER) return time ?? '';
+  const h = Math.floor(minutes / 60);
+  const m = minutes % 60;
+  return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+}
+
 /**
  * Comparator for sorting trainings by weekday first, then by start time.
  */
 export function compareTrainings(a: Training, b: Training): number {
   const result = utils.weekdayToNumber(a.weekday) - utils.weekdayToNumber(b.weekday);
-  return result !== 0
-    ? result
-    : parseInt(a.dateFrom.replace(':', '')) - parseInt(b.dateFrom.replace(':', ''));
+  return result !== 0 ? result : timeToMinutes(a.dateFrom) - timeToMinutes(b.dateFrom);
 }

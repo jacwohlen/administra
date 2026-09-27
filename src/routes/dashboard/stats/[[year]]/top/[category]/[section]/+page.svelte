@@ -1,7 +1,7 @@
 <script lang="ts">
   import type { PageData } from './$types';
   import Fa from 'svelte-fa';
-  import { faDownload, faGripLines } from '@fortawesome/free-solid-svg-icons';
+  import { faArrowLeft, faDownload } from '@fortawesome/free-solid-svg-icons';
   import { _ } from 'svelte-i18n';
   import type { Athletes } from '$lib/models';
 
@@ -38,51 +38,70 @@
   }
 </script>
 
-<span class="page-header">
-  <h1>
-    {#if data.category?.toLowerCase() == 'athletes'}
-      {$_('page.stats.topAthletes')}
-    {:else if data.category?.toLowerCase() == 'events'}
-      {$_('page.stats.topEventParticipants')}
-    {:else if data.category?.toLowerCase() == 'coaches'}
-      {$_('page.stats.topEventCoaches')}
-    {:else}
-      {$_('page.stats.topTrainers')}
-    {/if}
-    {data.section}
-  </h1>
-  <button type="button" class="btn btn-icon preset-tonal-surface" onclick={downloadCsv}
-    ><Fa icon={faDownload} /></button
-  >
-</span>
-<div class="mb-4">
+<div class="space-y-4">
+  <div class="page-header-back mb-0!">
+    <a
+      href="/dashboard/stats/{data.year ?? ''}"
+      class="btn preset-tonal-surface flex-shrink-0"
+      aria-label={$_('page.dashboard.stats')}
+    >
+      <Fa icon={faArrowLeft} />
+    </a>
+    <div class="flex-1 min-w-0">
+      <h1 class="truncate mb-0!">
+        {#if data.category?.toLowerCase() == 'athletes'}
+          {$_('page.stats.topAthletes')}
+        {:else if data.category?.toLowerCase() == 'events'}
+          {$_('page.stats.topEventParticipants')}
+        {:else if data.category?.toLowerCase() == 'coaches'}
+          {$_('page.stats.topEventCoaches')}
+        {:else}
+          {$_('page.stats.topTrainers')}
+        {/if}
+      </h1>
+      <p class="text-sm text-surface-600-400 truncate">
+        {data.section} &middot; {data.year === 'ALL' || !data.year
+          ? $_('page.stats.all')
+          : data.year}
+      </p>
+    </div>
+    <button
+      type="button"
+      class="btn preset-tonal-surface flex-shrink-0"
+      onclick={downloadCsv}
+      title={$_('button.download')}
+      aria-label={$_('button.download')}
+    >
+      <Fa icon={faDownload} />
+    </button>
+  </div>
+
   <input
     class="input"
     bind:value={searchTerm}
-    type="text"
+    type="search"
     placeholder={$_('page.trainings.searchMembersPlaceholder')}
   />
-</div>
 
-<ul class="flex flex-col gap-3">
-  {#each data.athletes as e (e.memberId)}
-    {#if search(e.firstname, e.lastname)}
-      <li class="card p-4 flex items-center gap-3">
-        <span>
-          {e.rank.toString()}.
-        </span>
-        <span class="flex-auto font-bold">
-          {e.lastname}
-          {e.firstname}
-          ({e.count})
-        </span>
-        <span>
-          <a class="btn preset-tonal-primary" href={'/dashboard/members/' + e.memberId}>
-            <Fa icon={faGripLines} />
-            <span class="hidden sm:inline">{$_('button.view')}</span>
-          </a>
-        </span>
-      </li>
-    {/if}
-  {/each}
-</ul>
+  <section class="card border border-surface-200-800 px-2 py-1">
+    <ol class="divide-y divide-surface-200-800">
+      {#each data.athletes as e (e.memberId)}
+        {#if search(e.firstname, e.lastname)}
+          <li>
+            <a
+              href="/dashboard/members/{e.memberId}"
+              class="list-item px-2 rounded hover:bg-surface-100-900"
+            >
+              <span class="w-8 text-right font-semibold tabular-nums text-surface-600-400">
+                {#if e.rank <= 3}{['🥇', '🥈', '🥉'][e.rank - 1]}{:else}{e.rank}{/if}
+              </span>
+              <span class="avatar-initials">{e.firstname.charAt(0)}{e.lastname.charAt(0)}</span>
+              <span class="list-item-content truncate">{e.firstname} {e.lastname}</span>
+              <span class="chip preset-tonal-surface tabular-nums">{e.count}</span>
+            </a>
+          </li>
+        {/if}
+      {/each}
+    </ol>
+  </section>
+</div>
