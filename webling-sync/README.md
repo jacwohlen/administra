@@ -116,14 +116,22 @@ Webling keep their old values and must be cleaned by hand.
 Create a GitHub environment per target under **Settings → Environments**
 (`prod`, and `dev` if you want to sync the Dev project manually) with:
 
-| Name                        | Kind     | Value                                                  |
-| --------------------------- | -------- | ------------------------------------------------------ |
-| `WEBLING_DOMAIN`            | Variable | Webling subdomain, e.g. `jacwohlen`                    |
-| `SUPABASE_URL`              | Variable | Supabase project URL (`https://<ref>.supabase.co`)     |
-| `WEBLING_API_KEY`           | Secret   | Webling API key                                        |
-| `WEBLING_EMAIL`             | Secret   | Webling login, needed for the participant API          |
-| `WEBLING_PASSWORD`          | Secret   | Password of that login                                 |
-| `SUPABASE_SERVICE_ROLE_KEY` | Secret   | service_role key of that project (RLS blocks the anon) |
+| Name                        | Kind     | Value                                              |
+| --------------------------- | -------- | -------------------------------------------------- |
+| `WEBLING_DOMAIN`            | Variable | Webling subdomain, e.g. `jacwohlen`                |
+| `SUPABASE_URL`              | Variable | Supabase project URL (`https://<ref>.supabase.co`) |
+| `WEBLING_API_KEY`           | Secret   | Webling API key                                    |
+| `WEBLING_EMAIL`             | Secret   | Webling login, needed for the participant API      |
+| `WEBLING_PASSWORD`          | Secret   | Password of that login                             |
+| `SUPABASE_SERVICE_ROLE_KEY` | Secret   | secret key of that project, see below              |
+
+`SUPABASE_SERVICE_ROLE_KEY` takes a secret key (`sb_secret_...`): Supabase
+Dashboard → project → **Settings → API Keys** → _Publishable and secret API
+keys_ → **Add new secret key** (e.g. named `webling-sync`), then copy it once.
+Use one key per project and do not reuse the app's keys, so the sync key can be
+revoked on its own. The legacy JWT `service_role` key still works but Supabase
+retires it at the end of 2026. Anything with this key bypasses RLS, so keep it in
+the environment secret only.
 
 Optionally restrict the `prod` environment to the `main` branch
 (_Deployment branches and tags_) so a workflow edit on another branch cannot

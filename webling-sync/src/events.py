@@ -69,10 +69,16 @@ def record_error(message):
     print(message)
     errors.append(message)
 
+# New secret keys (sb_secret_...) are not JWTs: Supabase rejects them in the
+# Authorization header, so they only go in apikey. Legacy service_role JWTs
+# (valid until end of 2026) are sent in both, as before.
+AUTH_HEADERS = {'apikey': SUPABASE_SERVICE_ROLE_KEY}
+if not SUPABASE_SERVICE_ROLE_KEY.startswith('sb_'):
+  AUTH_HEADERS['Authorization'] = f"Bearer {SUPABASE_SERVICE_ROLE_KEY}"
+
 # initialize client (supabase)
 HEADERS = {
-    'apikey': SUPABASE_SERVICE_ROLE_KEY,
-    'Authorization': f"Bearer {SUPABASE_SERVICE_ROLE_KEY}",
+    **AUTH_HEADERS,
     'Content-Type': 'application/json'
 }
 
@@ -471,8 +477,7 @@ def sync_event_participants(event_id, participants, event_date):
 def upsert(table_name, data):
     """Insert or update data in Supabase table"""
     headers = {
-        'apikey': SUPABASE_SERVICE_ROLE_KEY,
-        'Authorization': f"Bearer {SUPABASE_SERVICE_ROLE_KEY}",
+        **AUTH_HEADERS,
         'Content-Type': 'application/json',
         'Prefer': 'resolution=merge-duplicates'
     }
