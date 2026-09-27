@@ -18,8 +18,7 @@
     faEnvelope,
     faPhone,
     faTrash,
-    faUpload,
-    faUserMinus
+    faUpload
   } from '@fortawesome/free-solid-svg-icons';
   import { calculateAge } from '$lib/utils';
   import { supabaseClient } from '$lib/supabase';
@@ -303,7 +302,7 @@
               }}
               disabled={isDeleting}
             >
-              <Fa icon={faUserMinus} />
+              <Fa icon={faTrash} />
               <span>{$_('button.delete')}</span>
             </button>
           </nav>
