@@ -12,10 +12,9 @@
   } from '@fortawesome/free-solid-svg-icons';
   import { onMount, type Snippet } from 'svelte';
   import { _ } from 'svelte-i18n';
-  import { Toast } from '@skeletonlabs/skeleton-svelte';
+  import { Tabs, Toast } from '@skeletonlabs/skeleton-svelte';
   import { supabaseClient } from '$lib/supabase';
   import { toaster } from '$lib/toast';
-  import ClubLogo from '$lib/components/ClubLogo.svelte';
   import LanguageSwitcher from '$lib/components/LanguageSwitcher.svelte';
   import type { LayoutData } from './$types';
 
@@ -46,11 +45,9 @@
     { href: '/club/members', label: 'page.club.members', icon: faUsers }
   ];
 
-  function isActive(href: string): boolean {
-    const id = page.route.id ?? '';
-    if (href === '/club') return id === '/club';
-    return id.startsWith(href);
-  }
+  let activeTab = $derived(
+    (page.route.id ?? '').startsWith('/club/members') ? '/club/members' : '/club'
+  );
 
   function toggleDarkMode() {
     isDark = !isDark;
@@ -74,29 +71,34 @@
 </script>
 
 <div class="h-full flex flex-col overflow-hidden">
-  <header class="bg-surface-100-900 flex items-center gap-2 px-3 py-1.5">
-    <a href="/club" class="flex-none" aria-label={$_('page.club.myProfile')}>
-      <ClubLogo class="size-8 object-contain" />
-    </a>
-    <nav class="flex-1 flex gap-1 min-w-0">
-      {#each tabs as tab (tab.href)}
-        <a
-          href={tab.href}
-          class="btn btn-sm {isActive(tab.href)
-            ? 'preset-filled-primary-500'
-            : 'preset-tonal-surface'}"
-          aria-current={isActive(tab.href) ? 'page' : undefined}
-        >
-          <Fa icon={tab.icon} />
-          <span>{$_(tab.label)}</span>
-        </a>
-      {/each}
-    </nav>
+  <header class="bg-surface-100-900 flex items-center px-2">
+    <div class="flex-1 min-w-0 overflow-hidden">
+      <Tabs
+        value={activeTab}
+        onValueChange={(e) => {
+          if (e.value) goto(e.value, { invalidateAll: true });
+        }}
+      >
+        <Tabs.List>
+          {#each tabs as tab (tab.href)}
+            <Tabs.Trigger
+              value={tab.href}
+              onclick={() => {
+                if (activeTab === tab.href) goto(tab.href, { invalidateAll: true });
+              }}
+            >
+              <Fa icon={tab.icon} class="nav-icon" />
+              <span>{$_(tab.label)}</span>
+            </Tabs.Trigger>
+          {/each}
+        </Tabs.List>
+      </Tabs>
+    </div>
 
-    <div class="flex-none relative">
+    <div class="shrink-0 flex items-center pr-2 relative">
       <button
         type="button"
-        class="cursor-pointer flex items-center justify-center"
+        class="nav-avatar cursor-pointer flex items-center justify-center"
         aria-label={$_('page.club.accountMenu')}
         aria-expanded={menuOpen}
         onclick={() => (menuOpen = !menuOpen)}
@@ -105,12 +107,12 @@
           <img
             src={avatarUrl}
             alt=""
-            class="size-9 rounded-full object-cover hover:ring-2 ring-primary-600-400"
+            class="size-8 rounded-full object-cover hover:ring-2 ring-primary-600-400"
             onerror={() => (avatarError = true)}
           />
         {:else}
           <span
-            class="size-9 rounded-full bg-primary-100-900 text-primary-800-200 flex items-center justify-center text-xs font-bold hover:ring-2 ring-primary-600-400"
+            class="size-8 rounded-full bg-surface-200-800 flex items-center justify-center text-xs font-bold hover:ring-2 ring-primary-600-400"
           >
             {initials}
           </span>
