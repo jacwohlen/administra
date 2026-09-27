@@ -2,6 +2,10 @@
   command = "npm run build"
   publish = "build"
 
+# Node 22: current Supabase client libraries require it (Node 20 is EOL).
+[build.environment]
+  NODE_VERSION = "22"
+
 # Deploy Previews resolve the PR's Supabase preview branch credentials
 # before building — see docs/SUPABASE_BRANCHING.md.
 [context.deploy-preview]

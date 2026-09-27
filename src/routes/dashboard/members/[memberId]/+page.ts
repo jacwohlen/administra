@@ -11,7 +11,7 @@ import type {
 } from '$lib/models';
 import { supabaseClient } from '$lib/supabase';
 import { getBadgeDefinitions, getGradeDefinitions } from '$lib/referenceData';
-import { blobToURL } from 'image-resize-compress';
+import { blobToDataUrl } from '$lib/imageUtils';
 import dayjs from 'dayjs';
 
 export const load = (async ({ params, depends }) => {
@@ -38,7 +38,7 @@ export const load = (async ({ params, depends }) => {
       .download(member.id + '_' + member.imgUploaded.valueOf() + '.webp');
 
     if (avatarData) {
-      member.img = await blobToURL(avatarData);
+      member.img = await blobToDataUrl(avatarData);
     }
     if (avatarError) {
       throw err(404, avatarError);

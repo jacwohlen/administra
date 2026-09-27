@@ -24,7 +24,8 @@
   import { supabaseClient } from '$lib/supabase';
   import { error as err } from '@sveltejs/kit';
   import Fa from 'svelte-fa';
-  import { blobToURL, fromBlob } from 'image-resize-compress';
+  import { fromBlob } from 'image-resize-compress';
+  import { blobToDataUrl } from '$lib/imageUtils';
   import dayjs, { type Dayjs } from 'dayjs';
   import { goto, invalidate } from '$app/navigation';
   import MemberForm from '../MemberForm.svelte';
@@ -70,7 +71,7 @@
     const height = 'auto';
     const format = 'webp';
     const blob = await fromBlob(file, quality, width, height, format);
-    const url = await blobToURL(blob);
+    const url = await blobToDataUrl(blob);
 
     const { error } = await supabaseClient
       .from('members')
@@ -102,7 +103,7 @@
     const format = 'webp';
     const newFileName = data.id + '_' + timestamp.valueOf() + '.webp';
     const blob = await fromBlob(file, quality, width, height, format);
-    const url = await blobToURL(blob);
+    const url = await blobToDataUrl(blob);
 
     const { error: uploadError } = await supabaseClient.storage
       .from('avatars')

@@ -10,7 +10,7 @@ import type {
 } from '$lib/models';
 import { supabaseClient } from '$lib/supabase';
 import { getBadgeDefinitions, getGradeDefinitions } from '$lib/referenceData';
-import { blobToURL } from 'image-resize-compress';
+import { blobToDataUrl } from '$lib/imageUtils';
 import dayjs from 'dayjs';
 
 /** Contact details only the member themselves (and staff) may read */
@@ -45,7 +45,7 @@ async function loadPhoto(member: DirectoryMember): Promise<string | null> {
   const { data } = await supabaseClient.storage
     .from('avatars')
     .download(member.id + '_' + dayjs(member.imgUploaded).valueOf() + '.webp');
-  return data ? await blobToURL(data) : member.img;
+  return data ? await blobToDataUrl(data) : member.img;
 }
 
 async function loadDetails(member: DirectoryMember): Promise<PrivateDetails | null> {

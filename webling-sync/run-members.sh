@@ -15,5 +15,10 @@ fi
 
 source "$ENV_FILE"
 
+# Only prod gets real member data; every other target is anonymized
+if [ -z "${ANONYMIZE:-}" ]; then
+    if [ "$ENV" = "prod" ]; then export ANONYMIZE=false; else export ANONYMIZE=true; fi
+fi
+
 # Run the Python script
 exec "$(dirname "$0")/.env/bin/python" "$(dirname "$0")/src/webling.py"
