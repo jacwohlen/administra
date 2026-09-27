@@ -270,7 +270,8 @@
       "trainingsHistory": {
         "title": "Trainings History",
         "noItems": "No trainings registered"
-      }
+      },
+      "moreActions": "More actions"
     },
     "stats": {
       "all": "All",

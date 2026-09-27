@@ -270,7 +270,8 @@
       "trainingsHistory": {
         "title": "Trainings Historie",
         "noItems": "Keine Trainings registriert"
-      }
+      },
+      "moreActions": "Weitere Aktionen"
     },
     "stats": {
       "all": "Alle",

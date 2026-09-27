@@ -14,6 +14,7 @@
     faCakeCandles,
     faCamera,
     faEdit,
+    faEllipsisVertical,
     faEnvelope,
     faPhone,
     faTrash,
@@ -149,6 +150,27 @@
     resetImage();
   }
 
+  // Delete sits behind the ⋮ menu, as on the training page
+  let menuOpen = $state(false);
+  let menuStyle = $state('');
+  let menuBtnEl: HTMLButtonElement;
+
+  function toggleMenu() {
+    if (menuOpen) {
+      menuOpen = false;
+      return;
+    }
+    const rect = menuBtnEl.getBoundingClientRect();
+    menuStyle = `position:fixed;top:${rect.bottom + 4}px;left:${rect.right - 192}px;z-index:9999;`;
+    menuOpen = true;
+  }
+
+  function handleWindowClick(e: MouseEvent) {
+    if (menuOpen && menuBtnEl && !menuBtnEl.contains(e.target as Node)) {
+      menuOpen = false;
+    }
+  }
+
   function showEditForm() {
     showEditFormDialog = true;
   }
@@ -236,6 +258,8 @@
   }
 </script>
 
+<svelte:window onclick={handleWindowClick} />
+
 <div class="space-y-4">
   <div class="page-header-back">
     <a
@@ -246,7 +270,46 @@
     >
       <Fa icon={faArrowLeft} />
     </a>
-    <span class="text-surface-600-400">{$_('page.members.title')}</span>
+    <span class="flex-1 min-w-0 truncate text-surface-600-400">{$_('page.members.title')}</span>
+    <div class="flex gap-2 flex-shrink-0">
+      <button
+        class="btn preset-tonal-surface"
+        onclick={showEditForm}
+        title={$_('button.edit')}
+        aria-label={$_('button.edit')}
+      >
+        <Fa icon={faEdit} />
+      </button>
+      <div class="relative">
+        <button
+          class="btn preset-tonal-surface"
+          bind:this={menuBtnEl}
+          onclick={toggleMenu}
+          aria-label={$_('page.members.moreActions')}
+          aria-expanded={menuOpen}
+        >
+          <Fa icon={faEllipsisVertical} />
+        </button>
+        {#if menuOpen}
+          <nav
+            class="card min-w-48 p-1 shadow-xl bg-surface-50-950 border border-surface-300-700"
+            style={menuStyle}
+          >
+            <button
+              class="btn w-full justify-start text-error-600-400"
+              onclick={() => {
+                menuOpen = false;
+                confirmDelete();
+              }}
+              disabled={isDeleting}
+            >
+              <Fa icon={faUserMinus} />
+              <span>{$_('button.delete')}</span>
+            </button>
+          </nav>
+        {/if}
+      </div>
+    </div>
   </div>
 
   {#if showEditFormDialog}
@@ -408,25 +471,6 @@
               #{data.id}{#if age !== null}
                 &middot; {$_('page.members.age', { values: { age } })}{/if}
             </p>
-          </div>
-          <div class="flex gap-2 justify-center sm:justify-end flex-none">
-            <button class="btn preset-filled-primary-500" onclick={showEditForm}>
-              <Fa icon={faEdit} />
-              <span>{$_('button.edit')}</span>
-            </button>
-            <button
-              class="btn btn-icon preset-tonal-error"
-              onclick={confirmDelete}
-              disabled={isDeleting}
-              title={$_('button.delete')}
-              aria-label={$_('button.delete')}
-            >
-              {#if isDeleting}
-                <span class="animate-spin">...</span>
-              {:else}
-                <Fa icon={faUserMinus} />
-              {/if}
-            </button>
           </div>
         </div>
       </div>
