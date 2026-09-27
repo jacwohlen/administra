@@ -23,6 +23,7 @@
   import { _ } from 'svelte-i18n';
   import type { Snippet } from 'svelte';
   import { toaster } from '$lib/toast';
+  import LanguageSwitcher from '$lib/components/LanguageSwitcher.svelte';
 
   let { data, children }: { data: LayoutData; children: Snippet } = $props();
 
@@ -253,6 +254,9 @@
             <Fa icon={isDark ? faSun : faMoon} />
             <span>{isDark ? $_('button.lightMode') : $_('button.darkMode')}</span>
           </button>
+          <div class="mb-2">
+            <LanguageSwitcher />
+          </div>
           <form action="/logout" method="POST" use:enhance={submitLogout}>
             <button type="submit" class="btn preset-filled w-full">
               {$_('button.logout')}

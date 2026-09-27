@@ -3,6 +3,7 @@ import { createServerClient } from '@supabase/ssr';
 import type { Handle } from '@sveltejs/kit';
 import { locale } from 'svelte-i18n';
 import { clubConfig } from '$lib/clubConfig';
+import { parseUserLocale, USER_LOCALE_COOKIE } from '$lib/userLocale';
 
 export const handle: Handle = async ({ event, resolve }) => {
   event.locals.supabase = createServerClient(
@@ -37,7 +38,10 @@ export const handle: Handle = async ({ event, resolve }) => {
     return { session, user };
   };
 
-  const lang = event.request.headers.get('accept-language')?.split(',')[0];
+  // A language picked in the profile menu wins over the browser's.
+  const lang =
+    parseUserLocale(event.cookies.get(USER_LOCALE_COOKIE)) ??
+    event.request.headers.get('accept-language')?.split(',')[0];
   if (lang) {
     locale.set(lang);
   }

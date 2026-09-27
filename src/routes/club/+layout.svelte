@@ -15,6 +15,7 @@
   import { Tabs, Toast } from '@skeletonlabs/skeleton-svelte';
   import { supabaseClient } from '$lib/supabase';
   import { toaster } from '$lib/toast';
+  import LanguageSwitcher from '$lib/components/LanguageSwitcher.svelte';
   import type { LayoutData } from './$types';
 
   let { data, children }: { data: LayoutData; children: Snippet } = $props();
@@ -149,6 +150,7 @@
             <Fa icon={isDark ? faSun : faMoon} />
             <span>{isDark ? $_('button.lightMode') : $_('button.darkMode')}</span>
           </button>
+          <LanguageSwitcher />
           <button type="button" class="btn preset-filled w-full" onclick={logout}>
             <Fa icon={faArrowRightFromBracket} />
             <span>{$_('button.logout')}</span>

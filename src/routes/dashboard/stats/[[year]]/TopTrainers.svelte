@@ -1,7 +1,7 @@
 <script lang="ts">
   import { error as err } from '@sveltejs/kit';
   import { type Athletes } from '$lib/models';
-  import { supabaseClient } from '$lib/supabase';
+  import { rpcRows } from '$lib/supabase';
   import type { PageData } from './$types';
   import TopList from './TopList.svelte';
 
@@ -9,11 +9,9 @@
 
   async function getTopTrainers(mode: 'YEAR' | 'ALL', y: number | '') {
     if (mode === 'ALL') y = '';
-    const { error, data } = await supabaseClient
-      .rpc('get_top_trainers_by_section', {
-        year: y
-      })
-      .returns<Athletes[]>();
+    const { error, data } = await rpcRows<Athletes>('get_top_trainers_by_section', {
+      year: y
+    });
 
     if (error) {
       throw err(404, error);

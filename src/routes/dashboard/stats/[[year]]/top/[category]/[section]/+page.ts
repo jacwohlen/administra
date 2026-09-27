@@ -1,6 +1,6 @@
 import { error as err } from '@sveltejs/kit';
 import type { Athletes } from '$lib/models';
-import { supabaseClient } from '$lib/supabase';
+import { rpcRows } from '$lib/supabase';
 import { resolveYearForRpc } from '$lib/statsUtils';
 
 export async function load({ params }) {
@@ -9,12 +9,13 @@ export async function load({ params }) {
   const category = params.category?.toLowerCase();
   switch (category) {
     case 'athletes': {
-      const { error: athletesError, data: athletesData } = await supabaseClient
-        .rpc('get_top_athletes_from_section', {
+      const { error: athletesError, data: athletesData } = await rpcRows<Athletes>(
+        'get_top_athletes_from_section',
+        {
           sect: params.section,
           year: year
-        })
-        .returns<Athletes[]>();
+        }
+      );
 
       if (athletesError) {
         throw err(404, athletesError);
@@ -28,12 +29,13 @@ export async function load({ params }) {
     }
 
     case 'trainers': {
-      const { error: trainersError, data: trainersData } = await supabaseClient
-        .rpc('get_top_trainers_from_section', {
+      const { error: trainersError, data: trainersData } = await rpcRows<Athletes>(
+        'get_top_trainers_from_section',
+        {
           sect: params.section,
           year: year
-        })
-        .returns<Athletes[]>();
+        }
+      );
 
       if (trainersError) {
         throw err(404, trainersError);
@@ -48,12 +50,13 @@ export async function load({ params }) {
     }
 
     case 'events': {
-      const { error: eventsError, data: eventsData } = await supabaseClient
-        .rpc('get_top_event_participants', {
+      const { error: eventsError, data: eventsData } = await rpcRows<Athletes>(
+        'get_top_event_participants',
+        {
           year_param: year || null,
           section_param: params.section
-        })
-        .returns<Athletes[]>();
+        }
+      );
 
       if (eventsError) {
         throw err(404, eventsError);
@@ -68,12 +71,13 @@ export async function load({ params }) {
     }
 
     case 'coaches': {
-      const { error: coachesError, data: coachesData } = await supabaseClient
-        .rpc('get_top_event_coaches_from_section', {
+      const { error: coachesError, data: coachesData } = await rpcRows<Athletes>(
+        'get_top_event_coaches_from_section',
+        {
           sect: params.section,
           year: year
-        })
-        .returns<Athletes[]>();
+        }
+      );
 
       if (coachesError) {
         throw err(404, coachesError);
