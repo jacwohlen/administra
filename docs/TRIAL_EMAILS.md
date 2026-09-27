@@ -68,6 +68,32 @@ with seed data never mail anyone:
 | `PRIVATE_SMTP_PASSWORD` | mark as **secret** in Netlify                         |
 | `PRIVATE_SMTP_FROM`     | `JAC Wohlen <probetraining@jacwohlen.ch>`             |
 
+### Reusing the SMTP server of the sign-in codes
+
+No separate mail server is needed: the server already configured in the
+Supabase dashboard for the sign-in codes (Authentication → Emails → SMTP
+Settings, see `docs/MEMBER_SIGN_IN.md`) works here too. The app cannot read
+those settings — Supabase uses them internally and never returns the
+password — so enter the same values a second time in Netlify:
+
+| Supabase SMTP setting        | Netlify variable        |
+| ---------------------------- | ----------------------- |
+| Host                         | `PRIVATE_SMTP_HOST`     |
+| Port                         | `PRIVATE_SMTP_PORT`     |
+| Username                     | `PRIVATE_SMTP_USER`     |
+| Password                     | `PRIVATE_SMTP_PASSWORD` |
+| Sender name and sender email | `PRIVATE_SMTP_FROM`     |
+
+- **Sender address**: safest is the same one Supabase uses. A different
+  one (e.g. `probetraining@…`) only works if the mail provider allows that
+  sender for this login; otherwise mails are rejected or end up in spam.
+  Replies reach the club's contact address anyway (`Reply-To`), so a
+  `noreply@…` sender is fine.
+- **Password changes** have to be made in both places, Supabase and
+  Netlify (followed by a redeploy).
+- **Sending limits** of the mail provider, if any, are shared between
+  sign-in codes and trial mails.
+
 Replies go to the contact e-mail from the settings (`Reply-To`). The
 variables are read at runtime (`$env/dynamic/private`), so a deploy without
 them still builds; mails are then logged as _nicht gesendet_ and the preview
