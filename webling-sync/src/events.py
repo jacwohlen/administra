@@ -198,11 +198,16 @@ def get_participants_bulk(participant_ids):
     if response.status_code == 200:
         try:
             data = response.json()
-            # The bulk API returns a list of participant objects
+            # The bulk API returns a list of participant objects, but a
+            # single object (not wrapped in a list) when only one id is asked for
             if isinstance(data, list):
                 return data
+            elif isinstance(data, dict) and 'properties' in data:
+                return [data]
             else:
-                record_error(f"        Unexpected bulk response format: {type(data)}")
+                # Keys only: the values may hold personal data
+                keys = sorted(data.keys()) if isinstance(data, dict) else None
+                record_error(f"        Unexpected bulk response format: {type(data)} {keys}")
                 return []
         except Exception as e:
             record_error(f"        Error parsing bulk participant response: {e}")
