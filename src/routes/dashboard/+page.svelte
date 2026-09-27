@@ -86,7 +86,7 @@
       {$_('page.dashboard.noTrainingsToday')}
     </div>
   {:else}
-    <ul class="training-list">
+    <ul class="flex flex-col gap-2">
       {#each trainings as t (t.id)}
         <li class="list-item">
           <span class="training-time">
@@ -98,12 +98,12 @@
           <span class="list-item-content">
             <dt class="font-bold truncate">{t.title}</dt>
             {#if t.section}
-              <dd><span class="badge preset-tonal-surface text-xs">{t.section}</span></dd>
+              <dd class="text-surface-600-400 text-sm truncate">{t.section}</dd>
             {/if}
           </span>
           <span class="flex-none">
             <a
-              class="btn btn-sm preset-tonal-primary"
+              class="btn preset-tonal-primary"
               href="/dashboard/trainings/{t.id}/{date.format(dateFormat)}"
               aria-label={$_('button.trackAttendance')}
             >
@@ -172,9 +172,6 @@
 </section>
 
 <style>
-  .training-list > li + li {
-    border-top: 1px solid var(--color-surface-200-800);
-  }
   .training-time {
     flex: none;
     width: 3.25rem;
