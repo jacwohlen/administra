@@ -78,6 +78,10 @@ export interface TrialMember {
   trialStatusChangedAt?: string;
   /** Language the candidate registered in; mails go out in it. */
   trialLocale?: 'de' | 'en' | null;
+  /** Key of the candidate's public status page, /probetraining/status/<token>. */
+  trialToken?: string | null;
+  /** Cancelled through the status page rather than by staff. */
+  trialSelfCancelled?: boolean;
 }
 
 /** Row of trial_emails: one mail to a trial candidate. */

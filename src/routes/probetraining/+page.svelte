@@ -18,6 +18,8 @@
 
   let submitting = $state(false);
   let submitted = $state(false);
+  /** Link to the candidate's status page, returned by the server. */
+  let statusUrl = $state<string | null>(null);
   let error = $state('');
 
   const sections = clubConfig.sections;
@@ -62,6 +64,7 @@
         return;
       }
 
+      statusUrl = ((await response.json()) as { statusUrl?: string | null }).statusUrl ?? null;
       submitted = true;
     } catch (e) {
       error = e instanceof Error ? e.message : 'Unknown error';
@@ -123,6 +126,11 @@
         </div>
         <h1>{$_('page.trialRegistration.successTitle')}</h1>
         <p class="text-surface-600-400">{$_('page.trialRegistration.successMessage')}</p>
+        {#if statusUrl}
+          <a class="btn preset-filled-primary-500" href={statusUrl}>
+            {$_('page.trialRegistration.viewStatus')}
+          </a>
+        {/if}
         {#if clubConfig.contactEmail}
           <p class="text-sm text-surface-600-400">
             {$_('page.trialRegistration.contactHint')}

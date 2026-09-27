@@ -20,7 +20,8 @@
     faBan,
     faRotateLeft,
     faSpinner,
-    faPaperPlane
+    faPaperPlane,
+    faLink
   } from '@fortawesome/free-solid-svg-icons';
   import { calculateAge } from '$lib/utils';
   import {
@@ -36,7 +37,7 @@
   import { invalidate } from '$app/navigation';
   import AssignTrainingDialog from './AssignTrainingDialog.svelte';
   import MailDialog from './MailDialog.svelte';
-  import type { TrialMailKind } from '$lib/trialMail';
+  import { trialStatusUrl, type TrialMailKind } from '$lib/trialMail';
   import type {
     TrialEmail,
     TrialMember,
@@ -126,6 +127,22 @@
     skipped: 'preset-tonal-warning',
     failed: 'preset-tonal-error'
   };
+
+  async function copyStatusLink(m: TrialMember) {
+    try {
+      await navigator.clipboard.writeText(trialStatusUrl(window.location.origin, m.trialToken));
+      toaster.success({ title: $_('page.probetraining.statusLink.copied') });
+    } catch {
+      toaster.error({ title: $_('page.probetraining.statusLink.copyError') });
+    }
+  }
+
+  /** Status label, telling self-cancellations apart. */
+  function statusLabel(m: TrialMember): string {
+    return m.trialStatus === 'cancelled' && m.trialSelfCancelled
+      ? $_('page.probetraining.status.selfCancelled')
+      : $_('page.probetraining.status.' + m.trialStatus);
+  }
 
   /** The mail that fits the candidate's status. */
   function defaultMailKind(m: TrialMember): TrialMailKind {
@@ -366,9 +383,9 @@
                 {/if}
               </span>
               <span class="text-xs text-surface-600-400 flex items-center gap-1.5 min-w-0 mt-0.5">
-                {#if tab === 'all' || tab === 'convert'}
+                {#if tab === 'all' || tab === 'convert' || tab === 'cancelled'}
                   <span class="chip text-[10px] py-0 px-1.5 {style.chip}">
-                    {$_('page.probetraining.status.' + m.trialStatus)}
+                    {statusLabel(m)}
                   </span>
                 {/if}
                 {#if m.trialSection}
@@ -509,7 +526,9 @@
                         class="absolute -left-[7px] top-1 size-3 rounded-full ring-2 ring-surface-50-950 {style.dot}"
                       ></span>
                       <span class="block font-medium">
-                        {$_('page.probetraining.timeline.' + m.trialStatus)}
+                        {m.trialStatus === 'cancelled' && m.trialSelfCancelled
+                          ? $_('page.probetraining.timeline.selfCancelled')
+                          : $_('page.probetraining.timeline.' + m.trialStatus)}
                       </span>
                       <span class="text-xs text-surface-600-400">
                         {dayjs(m.trialStatusChangedAt).format('DD.MM.YYYY')}
@@ -628,6 +647,16 @@
                     <Fa icon={faSpinner} spin />
                   {/if}
                   <span class="flex-1"></span>
+                  {#if m.trialToken}
+                    <button
+                      class="btn btn-sm preset-tonal-surface"
+                      title={$_('page.probetraining.statusLink.hint')}
+                      onclick={() => copyStatusLink(m)}
+                    >
+                      <Fa icon={faLink} size="xs" />
+                      <span>{$_('page.probetraining.statusLink.copy')}</span>
+                    </button>
+                  {/if}
                   {#if m.email}
                     <button
                       class="btn btn-sm preset-tonal-surface"

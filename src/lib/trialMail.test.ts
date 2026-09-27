@@ -9,6 +9,8 @@ import {
   trialMailLocale,
   trialMailSettingKey,
   trialMailTemplate,
+  trialStatusUrl,
+  buildTrialMailVars,
   type TrialMailVars
 } from './trialMail';
 
@@ -18,7 +20,8 @@ const vars: TrialMailVars = {
   club: 'JAC Wohlen',
   clubUrl: 'https://jacwohlen.ch',
   contactEmail: 'info@jacwohlen.ch',
-  trainings: '- Donnerstag, 18:00–19:15: Judo Kinder'
+  trainings: '- Donnerstag, 18:00–19:15: Judo Kinder',
+  statusLink: 'https://admin.example/probetraining/status/abc'
 };
 
 describe('trialMailTemplate', () => {
@@ -115,5 +118,37 @@ describe('trialMailLocale', () => {
     expect(trialMailLocale('en', 'de')).toBe('en');
     expect(trialMailLocale(null, 'de')).toBe('de');
     expect(trialMailLocale('fr', 'en')).toBe('en');
+  });
+});
+
+describe('trialStatusUrl', () => {
+  it('builds the status page link', () => {
+    expect(trialStatusUrl('https://admin.example/', 'abc')).toBe(
+      'https://admin.example/probetraining/status/abc'
+    );
+  });
+
+  it('falls back to the site without a token', () => {
+    expect(trialStatusUrl('https://admin.example', null)).toBe('https://admin.example');
+  });
+});
+
+describe('buildTrialMailVars', () => {
+  const club = { name: 'JAC Wohlen', url: 'https://jacwohlen.ch', contactEmail: null };
+
+  it('points to the website without a contact address', () => {
+    const v = buildTrialMailVars({ firstname: 'A', lastname: 'B' }, club, [], 'de', 'L');
+    expect(v.contactEmail).toBe('https://jacwohlen.ch');
+    expect(v.statusLink).toBe('L');
+  });
+
+  it('puts the status link into every built-in template', () => {
+    for (const kind of TRIAL_MAIL_KINDS) {
+      for (const locale of TRIAL_MAIL_LOCALES) {
+        expect(DEFAULT_TRIAL_MAIL_TEMPLATES[kind][locale].body, `${kind}.${locale}`).toContain(
+          '{statusLink}'
+        );
+      }
+    }
   });
 });

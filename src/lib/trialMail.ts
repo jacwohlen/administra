@@ -27,7 +27,8 @@ export const TRIAL_MAIL_PLACEHOLDERS = [
   'club',
   'clubUrl',
   'contactEmail',
-  'trainings'
+  'trainings',
+  'statusLink'
 ] as const;
 
 export type TrialMailVars = Record<(typeof TRIAL_MAIL_PLACEHOLDERS)[number], string>;
@@ -45,6 +46,9 @@ Vielen Dank für deine Anmeldung zum Probetraining beim {club}! Wir haben sie er
 
 Sobald ein Platz in einem passenden Training frei ist, schicken wir dir alle Infos: wann und wo das Training stattfindet und was du mitbringen solltest.
 
+Den Stand deiner Anmeldung siehst du jederzeit hier – dort kannst du dich auch wieder abmelden:
+{statusLink}
+
 Bei Fragen erreichst du uns unter {contactEmail}.
 
 Sportliche Grüsse
@@ -57,6 +61,9 @@ Sportliche Grüsse
 Thank you for registering for a trial session at {club}! We have received your registration and will be in touch soon.
 
 As soon as there is a place in a suitable training, we will send you all the details: when and where it takes place and what to bring.
+
+You can check the status of your registration at any time here – and cancel it there if your plans change:
+{statusLink}
 
 If you have any questions, reach us at {contactEmail}.
 
@@ -73,6 +80,9 @@ Danke für dein Interesse am Probetraining beim {club}. Im Moment sind unsere Tr
 
 Meistens werden nach den Schulferien wieder Plätze frei. Wir schauen die Warteliste in den Ferien durch und melden uns, sobald wir dich einem Training zuteilen können – du musst nichts weiter tun.
 
+Den aktuellen Stand siehst du jederzeit hier. Falls du kein Interesse mehr hast, kannst du dich dort abmelden, damit dein Platz frei wird:
+{statusLink}
+
 Bei Fragen erreichst du uns unter {contactEmail}.
 
 Sportliche Grüsse
@@ -85,6 +95,9 @@ Sportliche Grüsse
 Thank you for your interest in a trial session at {club}. Unfortunately our trainings are full at the moment, so we have put you on the waiting list.
 
 Places usually open up again after the school holidays. We review the waiting list during the holidays and will get in touch as soon as we can assign you to a training – there is nothing else you need to do.
+
+You can check the current status at any time here. If you are no longer interested, you can cancel there so your place goes to someone else:
+{statusLink}
 
 If you have any questions, reach us at {contactEmail}.
 
@@ -103,6 +116,9 @@ Wir freuen uns, dich im Probetraining begrüssen zu dürfen! Du kannst ab sofort
 
 Bitte komm etwa 10 Minuten vor Beginn, damit wir dich in Ruhe empfangen können. Für die ersten Male reichen bequeme Sportkleidung und etwas zu trinken.
 
+Die Angaben zu deinem Training findest du jederzeit auch hier:
+{statusLink}
+
 Bei Fragen erreichst du uns unter {contactEmail}.
 
 Sportliche Grüsse
@@ -117,6 +133,9 @@ We look forward to welcoming you to a trial session! You are welcome to join the
 {trainings}
 
 Please arrive about 10 minutes early so we can welcome you properly. For the first few times, comfortable sportswear and something to drink are all you need.
+
+You can find the details of your training at any time here:
+{statusLink}
 
 If you have any questions, reach us at {contactEmail}.
 
@@ -222,14 +241,24 @@ export interface MailClub {
   contactEmail: string | null;
 }
 
-/** Placeholder values for one candidate. Without a contact address, mails point to the website. */
+/** Link to the candidate's public status page (/probetraining/status/<token>). */
+export function trialStatusUrl(origin: string, token: string | null | undefined): string {
+  return token ? `${origin.replace(/\/+$/, '')}/probetraining/status/${token}` : origin;
+}
+
+/**
+ * Placeholder values for one candidate. Without a contact address, mails
+ * point to the website; without a status link, to the site the mail came from.
+ */
 export function buildTrialMailVars(
   member: { firstname: string; lastname: string },
   club: MailClub,
   trainings: MailTraining[],
-  locale: PublicLocale
+  locale: PublicLocale,
+  statusLink = ''
 ): TrialMailVars {
   return {
+    statusLink,
     firstname: member.firstname,
     lastname: member.lastname,
     club: club.name,

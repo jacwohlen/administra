@@ -5,7 +5,8 @@ import {
   buildTrialMailVars,
   renderTrialMail,
   trialMailLocale,
-  trialMailTemplate
+  trialMailTemplate,
+  trialStatusUrl
 } from '$lib/trialMail';
 
 /**
@@ -32,7 +33,7 @@ interface RegistrationBody {
 
 const str = (value: unknown) => (typeof value === 'string' ? value.trim() : '');
 
-export const POST: RequestHandler = async ({ request, locals }) => {
+export const POST: RequestHandler = async ({ request, locals, url }) => {
   let body: RegistrationBody;
   try {
     body = await request.json();
@@ -69,7 +70,12 @@ export const POST: RequestHandler = async ({ request, locals }) => {
     error(rpcError.code?.startsWith('22') ? 400 : 500, rpcError.message);
   }
 
-  const { emailId, token } = (data ?? {}) as { emailId?: number; token?: string };
+  const { emailId, token, statusToken } = (data ?? {}) as {
+    emailId?: number;
+    token?: string;
+    statusToken?: string;
+  };
+  const statusUrl = trialStatusUrl(url.origin, statusToken);
   if (emailId && token) {
     const { club, values } = await loadMailSettings(locals.supabase);
     const locale = trialMailLocale(registration.p_locale, club.defaultLocale);
@@ -79,7 +85,8 @@ export const POST: RequestHandler = async ({ request, locals }) => {
         { firstname: registration.p_firstname, lastname: registration.p_lastname },
         club,
         [],
-        locale
+        locale,
+        statusUrl
       )
     );
     const result = await sendMail({
@@ -99,5 +106,5 @@ export const POST: RequestHandler = async ({ request, locals }) => {
     if (logError) console.error('complete_trial_email failed:', logError);
   }
 
-  return json({ ok: true });
+  return json({ ok: true, statusUrl: statusToken ? statusUrl : null });
 };

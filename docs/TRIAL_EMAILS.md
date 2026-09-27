@@ -34,6 +34,26 @@ built-in text from `src/lib/trialMail.ts`. Placeholders:
 The preview dialog shows the filled-in mail and can be edited before
 sending; edits there only affect that one mail.
 
+## Status page
+
+Every candidate has a personal, unguessable link,
+`/probetraining/status/<token>` (`members."trialToken"`). The built-in
+templates include it, the confirmation page after registering links to it,
+and staff can copy it from the candidate's row ("Status-Link").
+
+The page needs no account. It shows the first name, the current status
+(received, waiting list, training with day and time, cancelled, or member
+once the trial label is removed), the registration date and the section —
+nothing else about the candidate. While the registration is active, the
+candidate can cancel it there; that sets the status to _abgesagt_ with
+`"trialSelfCancelled"`, removes the training assignments, and shows up as
+"Selbst abgemeldet" in the dashboard. It is marked `noindex` and sends no
+referrer.
+
+Both actions go through SECURITY DEFINER functions keyed by the token,
+`get_trial_status(token)` and `cancel_trial(token)`
+(`supabase/migrations/20260928090000_trial_status_page.sql`).
+
 ## SMTP setup (Netlify)
 
 Set these environment variables for the **Production** and branch

@@ -441,7 +441,8 @@
       "metaDescription": "Melde dich unverbindlich für ein Probetraining an – Judo und Aikido in Wohlen.",
       "backToWebsite": "Zur Vereinswebsite",
       "contactHint": "Fragen vorab? Schreib uns:",
-      "submitError": "Die Anmeldung konnte gerade nicht gesendet werden. Bitte versuche es später noch einmal."
+      "submitError": "Die Anmeldung konnte gerade nicht gesendet werden. Bitte versuche es später noch einmal.",
+      "viewStatus": "Stand meiner Anmeldung ansehen"
     },
     "probetraining": {
       "title": "Probetraining",
@@ -479,7 +480,8 @@
         "new": "Neu",
         "waitlist": "Warteliste",
         "assigned": "Zugewiesen",
-        "cancelled": "Abgesagt"
+        "cancelled": "Abgesagt",
+        "selfCancelled": "Selbst abgemeldet"
       },
       "registeredAgo": "angemeldet {ago}",
       "ago": {
@@ -530,7 +532,8 @@
         "registered": "Angemeldet",
         "waitlist": "Auf die Warteliste gesetzt",
         "assigned": "Training zugewiesen",
-        "cancelled": "Abgesagt"
+        "cancelled": "Abgesagt",
+        "selfCancelled": "Selbst abgemeldet (über den Status-Link)"
       },
       "attendedCount": "{count, plural, =0 {noch nicht besucht} one {# Training besucht} other {# Trainings besucht}}",
       "mail": {
@@ -551,6 +554,12 @@
           "skipped": "nicht gesendet",
           "failed": "fehlgeschlagen"
         }
+      },
+      "statusLink": {
+        "copy": "Status-Link",
+        "copied": "Status-Link kopiert",
+        "copyError": "Link konnte nicht kopiert werden",
+        "hint": "Persönlicher Link zur Statusseite dieser Anmeldung kopieren"
       }
     },
     "login": {
@@ -589,6 +598,60 @@
       "filterSection": "Nach Sektion filtern",
       "allSections": "Alle",
       "noMatches": "Niemand gefunden"
+    },
+    "trialStatus": {
+      "title": "Dein Probetraining",
+      "greeting": "Hallo {name}",
+      "progress": "Stand der Anmeldung",
+      "registeredOn": "Angemeldet am",
+      "section": "Interesse",
+      "waitlistSince": "Auf der Warteliste seit {date}",
+      "assignedHint": "Bitte komm etwa 10 Minuten vor Beginn. Für die ersten Male reichen bequeme Sportkleidung und etwas zu trinken.",
+      "notFound": {
+        "title": "Link nicht gefunden",
+        "text": "Dieser Link ist ungültig oder die Anmeldung existiert nicht mehr. Bei Fragen schreib uns:"
+      },
+      "state": {
+        "new": {
+          "title": "Anmeldung eingegangen",
+          "text": "Danke für deine Anmeldung! Wir schauen gerade, in welchem Training es Platz für dich hat, und melden uns bald per E-Mail."
+        },
+        "waitlist": {
+          "title": "Du bist auf der Warteliste",
+          "text": "Im Moment sind unsere Trainings voll. Meistens werden nach den Schulferien wieder Plätze frei – wir melden uns, sobald wir dich einem Training zuteilen können. Du musst nichts weiter tun."
+        },
+        "assigned": {
+          "title": "Dein Training steht fest",
+          "text": "Du kannst ab sofort in folgendem Training vorbeikommen:"
+        },
+        "cancelled": {
+          "title": "Anmeldung nicht mehr aktiv",
+          "text": "Diese Anmeldung zum Probetraining ist abgeschlossen. Möchtest du doch vorbeikommen? Melde dich einfach bei uns."
+        },
+        "selfCancelled": {
+          "title": "Du hast dich abgemeldet",
+          "text": "Du bist vom Probetraining abgemeldet. Schade – falls du es dir anders überlegst, melde dich gern wieder an."
+        },
+        "member": {
+          "title": "Willkommen im Verein!",
+          "text": "Du bist jetzt Mitglied beim {club}. Wir freuen uns auf viele gemeinsame Trainings."
+        }
+      },
+      "step": {
+        "registered": "Angemeldet",
+        "searching": "Platz wird gesucht",
+        "waitlist": "Warteliste",
+        "training": "Training"
+      },
+      "cancel": {
+        "title": "Doch kein Probetraining?",
+        "text": "Wenn du nicht mehr kommen möchtest, kannst du dich hier abmelden. So wird dein Platz für andere frei.",
+        "button": "Vom Probetraining abmelden",
+        "confirm": "Möchtest du dich wirklich vom Probetraining abmelden? Das kann nicht rückgängig gemacht werden – du müsstest dich neu anmelden.",
+        "keep": "Nein, angemeldet bleiben",
+        "yes": "Ja, abmelden",
+        "error": "Die Abmeldung hat nicht geklappt. Bitte versuche es später noch einmal oder schreib uns."
+      }
     }
   },
   "components": {

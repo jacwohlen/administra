@@ -18,6 +18,7 @@
     renderTrialMail,
     trialMailLocale,
     trialMailTemplate,
+    trialStatusUrl,
     type TrialMailKind
   } from '$lib/trialMail';
   import type { Training, TrialMember } from '$lib/models';
@@ -51,7 +52,13 @@
   function fill(k: TrialMailKind) {
     const mail = renderTrialMail(
       trialMailTemplate(settingValues, k, locale),
-      buildTrialMailVars(member, clubConfig, trainings, locale)
+      buildTrialMailVars(
+        member,
+        clubConfig,
+        trainings,
+        locale,
+        trialStatusUrl(window.location.origin, member.trialToken)
+      )
     );
     subject = mail.subject;
     body = mail.body;
