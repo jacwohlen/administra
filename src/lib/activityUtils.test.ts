@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import dayjs from 'dayjs';
-import { activityStart, activityStatus, buildActivity } from './activityUtils';
+import {
+  activityStart,
+  activityStatus,
+  attendanceByTraining,
+  buildActivity
+} from './activityUtils';
 
 // Saturday
 const today = dayjs('2026-09-26');
@@ -57,5 +62,27 @@ describe('buildActivity', () => {
     expect(a.lastDate).toBeNull();
     expect(a.status).toBe('inactive');
     expect(a.perWeek).toBe(0);
+  });
+});
+
+describe('attendanceByTraining', () => {
+  const judo = { id: '1', title: 'Judo Kids', weekday: 'Tuesday', section: 'Judo' };
+  const aikido = { id: '2', title: 'Aikido', weekday: 'Thursday', section: 'Aikido' };
+
+  it('counts attendance and trainer roles per training, most attended first', () => {
+    const rows = attendanceByTraining([
+      { trainingId: aikido, trainerRole: 'attendee' },
+      { trainingId: judo, trainerRole: 'attendee' },
+      { trainingId: judo, trainerRole: 'main_trainer' },
+      { trainingId: judo, trainerRole: 'assistant' },
+      { trainingId: judo }
+    ]);
+    expect(rows.map((r) => r.id)).toEqual(['1', '2']);
+    expect(rows[0]).toMatchObject({ attended: 2, asTrainer: 2, total: 4 });
+    expect(rows[1]).toMatchObject({ attended: 1, asTrainer: 0, total: 1 });
+  });
+
+  it('handles no logs', () => {
+    expect(attendanceByTraining([])).toEqual([]);
   });
 });

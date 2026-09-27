@@ -107,3 +107,41 @@ export function buildActivity(
     perWeek: total / spanWeeks
   };
 }
+
+export interface TrainingAttendance {
+  id: string;
+  title: string;
+  weekday: string;
+  section: string;
+  attended: number;
+  asTrainer: number;
+  total: number;
+}
+
+interface LogLike {
+  trainingId: { id: string; title: string; weekday: string; section: string };
+  trainerRole?: string | null;
+}
+
+/** Attendance per training, most attended first (profile "Trainings Übersicht"). */
+export function attendanceByTraining(logs: LogLike[]): TrainingAttendance[] {
+  const byId = new Map<string, TrainingAttendance>();
+  for (const log of logs) {
+    const t = log.trainingId;
+    if (!t) continue;
+    const row = byId.get(t.id) ?? {
+      id: t.id,
+      title: t.title,
+      weekday: t.weekday,
+      section: t.section,
+      attended: 0,
+      asTrainer: 0,
+      total: 0
+    };
+    if (log.trainerRole === 'main_trainer' || log.trainerRole === 'assistant') row.asTrainer++;
+    else row.attended++;
+    row.total++;
+    byId.set(t.id, row);
+  }
+  return [...byId.values()].sort((a, b) => b.total - a.total || a.title.localeCompare(b.title));
+}

@@ -18,17 +18,17 @@
 <h3>{$_('page.members.trainingsHistory.title')}</h3>
 {#await logs}
   <div class="space-y-4">
-    <div class="placeholder" />
+    <div class="placeholder"></div>
     <div class="grid grid-cols-3 gap-8">
-      <div class="placeholder" />
-      <div class="placeholder" />
-      <div class="placeholder" />
+      <div class="placeholder"></div>
+      <div class="placeholder"></div>
+      <div class="placeholder"></div>
     </div>
     <div class="grid grid-cols-4 gap-4">
-      <div class="placeholder" />
-      <div class="placeholder" />
-      <div class="placeholder" />
-      <div class="placeholder" />
+      <div class="placeholder"></div>
+      <div class="placeholder"></div>
+      <div class="placeholder"></div>
+      <div class="placeholder"></div>
     </div>
   </div>
 {:then l}
@@ -40,9 +40,13 @@
           <dd class="text-sm text-surface-600-400">{i.trainingId.title}</dd>
         </span>
         <span class="chip preset-tonal-secondary text-sm">{i.trainingId.section}</span>
-        <a class="btn preset-tonal-primary" href="/dashboard/trainings/{i.trainingId.id}/{i.date}">
+        <a
+          class="btn preset-tonal-primary flex-shrink-0"
+          href="/dashboard/trainings/{i.trainingId.id}/{i.date}"
+          title={$_('button.view')}
+          aria-label={$_('button.view')}
+        >
           <Fa icon={faGripLines} />
-          <span>{$_('button.view')}</span>
         </a>
       </li>
     {:else}
