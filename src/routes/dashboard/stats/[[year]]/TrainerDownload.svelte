@@ -155,13 +155,12 @@
   }
 </script>
 
-<div class="flex items-center gap-2">
-  <button
-    class="btn preset-tonal-primary"
-    onclick={downloadTrainerTracking}
-    disabled={isDownloading}
-  >
-    <Fa icon={isDownloading ? faSpinner : faDownload} spin={isDownloading} />
-    <span>{$_('page.stats.downloadTrainerTracking')}</span>
-  </button>
-</div>
+<button
+  class="btn btn-sm preset-tonal-surface"
+  onclick={downloadTrainerTracking}
+  disabled={isDownloading}
+  title={$_('page.stats.downloadTrainerTracking')}
+>
+  <Fa icon={isDownloading ? faSpinner : faDownload} spin={isDownloading} />
+  <span class="hidden sm:inline">{$_('page.stats.downloadTrainerTracking')}</span>
+</button>

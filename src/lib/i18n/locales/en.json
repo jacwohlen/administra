@@ -277,7 +277,6 @@
       "all": "All",
       "topAthletes": "Top Athletes",
       "topTrainers": "Top Trainers",
-      "topParticipants": "Top Participants Per Training",
       "topEventParticipants": "Top Event Participants",
       "topEventCoaches": "Top Event Coaches",
       "loading": "Loading...",
@@ -292,7 +291,7 @@
       "avgAttendanceEvent": "Avg. per Event",
       "monthlyTrend": "Monthly Attendance Trend",
       "sectionDistribution": "Attendance by Section",
-      "attendanceByTraining": "Average Attendance per Training",
+      "attendanceByTraining": "Attendance per Training",
       "trainerWorkload": "Trainer Workload",
       "memberRetention": "Member Retention",
       "newMembers": "New Members",
@@ -307,7 +306,12 @@
       "avgAttendance": "Avg. Attendance",
       "sessions": "Sessions",
       "totalAttendance": "Total",
-      "no_data": "No data available"
+      "no_data": "No data available",
+      "showAll": "Show all {count}",
+      "showLess": "Show less",
+      "sessionsCount": "{count} sessions",
+      "selectTrainingHint": "Avg. attendees per session – tap a training to see its history.",
+      "retentionHint": "Compared with earlier years"
     },
     "events": {
       "title": "Events",

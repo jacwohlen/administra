@@ -3,6 +3,9 @@
   import { supabaseClient } from '$lib/supabase';
   import { _ } from 'svelte-i18n';
   import { toaster } from '$lib/toast';
+  import Fa from 'svelte-fa';
+  import { faRotate } from '@fortawesome/free-solid-svg-icons';
+  import StatsSection from './StatsSection.svelte';
 
   let leaderboard: BadgeLeaderboardEntry[] = $state([]);
   let loading = $state(true);
@@ -34,31 +37,44 @@
   loadLeaderboard();
 </script>
 
-<div class="flex justify-between items-center mb-3">
-  <h3>{$_('badges.leaderboard')}</h3>
-  <button class="btn preset-tonal-primary text-sm" onclick={refreshAllBadges} disabled={refreshing}>
-    {refreshing ? $_('badges.refreshing') : $_('badges.refreshAll')}
-  </button>
-</div>
+<StatsSection title={$_('badges.leaderboard')}>
+  {#snippet actions()}
+    <button
+      class="btn btn-sm preset-tonal-surface"
+      onclick={refreshAllBadges}
+      disabled={refreshing}
+      title={$_('badges.refreshAll')}
+    >
+      <Fa icon={faRotate} spin={refreshing} />
+      <span class="hidden sm:inline"
+        >{refreshing ? $_('badges.refreshing') : $_('badges.refreshAll')}</span
+      >
+    </button>
+  {/snippet}
 
-{#if loading}
-  <p class="text-surface-600-400">{$_('page.stats.loading')}</p>
-{:else if leaderboard.length === 0}
-  <p class="text-surface-600-400">{$_('badges.noBadgeData')}</p>
-{:else}
-  <ol class="space-y-2">
-    {#each leaderboard as entry, i}
-      <li class="flex items-center gap-3">
-        <span class="w-6 text-right text-surface-600-400 font-bold">{i + 1}.</span>
-        <span class="text-lg">{entry.topBadgeEmoji}</span>
-        <a href="/dashboard/members/{entry.memberId}" class="flex-1 hover:underline">
-          {entry.lastname}
-          {entry.firstname}
-        </a>
-        <span class="chip preset-tonal-secondary text-sm">
-          {entry.badgeCount}
-        </span>
-      </li>
-    {/each}
-  </ol>
-{/if}
+  {#if loading}
+    <div class="space-y-2">
+      {#each { length: 5 }, i (i)}
+        <div class="placeholder animate-pulse h-8"></div>
+      {/each}
+    </div>
+  {:else if leaderboard.length === 0}
+    <p class="empty-state">{$_('badges.noBadgeData')}</p>
+  {:else}
+    <ol class="grid gap-x-6 sm:grid-cols-2">
+      {#each leaderboard as entry, i (entry.memberId)}
+        <li>
+          <a
+            href="/dashboard/members/{entry.memberId}"
+            class="flex items-center gap-3 px-2 py-1.5 rounded hover:bg-surface-100-900"
+          >
+            <span class="w-6 text-right text-sm text-surface-600-400 tabular-nums">{i + 1}</span>
+            <span class="text-lg leading-none" aria-hidden="true">{entry.topBadgeEmoji}</span>
+            <span class="flex-1 min-w-0 truncate">{entry.firstname} {entry.lastname}</span>
+            <span class="chip preset-tonal-secondary text-xs tabular-nums">{entry.badgeCount}</span>
+          </a>
+        </li>
+      {/each}
+    </ol>
+  {/if}
+</StatsSection>

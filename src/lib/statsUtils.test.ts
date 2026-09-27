@@ -1,5 +1,11 @@
 import { describe, it, expect } from 'vitest';
-import { groupBySection, resolveYearParam, resolveYearForRpc } from './statsUtils';
+import {
+  groupBySection,
+  resolveYearParam,
+  resolveYearForRpc,
+  seriesColors,
+  SERIES_COLORS
+} from './statsUtils';
 import type { Athletes } from '$lib/models';
 
 function makeAthlete(overrides: Partial<Athletes> = {}): Athletes {
@@ -103,5 +109,18 @@ describe('resolveYearForRpc', () => {
 
   it('returns empty string for empty string', () => {
     expect(resolveYearForRpc('')).toBe('');
+  });
+});
+
+describe('seriesColors', () => {
+  it('assigns colors by sorted group name, independent of input order', () => {
+    const a = seriesColors(['Judo', 'Aikido', 'Judo'], false);
+    const b = seriesColors(['Aikido', 'Judo'], false);
+    expect(a).toEqual(b);
+    expect(a).toEqual({ Aikido: SERIES_COLORS.light[0], Judo: SERIES_COLORS.light[1] });
+  });
+
+  it('uses the dark steps in dark mode', () => {
+    expect(seriesColors(['Judo'], true)).toEqual({ Judo: SERIES_COLORS.dark[0] });
   });
 });

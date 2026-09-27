@@ -46,3 +46,24 @@ export function resolveYearForRpc(yearParam: string | undefined): string {
   }
   return yearParam;
 }
+
+/**
+ * Categorical chart colors, one set per color scheme. The dark steps are the
+ * same hues re-stepped for a dark surface, so a series keeps its identity
+ * when the theme is toggled.
+ */
+export const SERIES_COLORS = {
+  light: ['#2a78d6', '#eb6834', '#1baf7a', '#eda100', '#e87ba4', '#008300', '#4a3aa7', '#e34948'],
+  dark: ['#3987e5', '#d95926', '#199e70', '#c98500', '#d55181', '#008300', '#9085e9', '#e66767']
+} as const;
+
+/**
+ * Maps each group to a fixed chart color. Groups are sorted first, so the
+ * same set of sections gets the same colors in every chart, whatever order
+ * the data arrives in.
+ */
+export function seriesColors(groups: Iterable<string>, dark: boolean): Record<string, string> {
+  const palette = dark ? SERIES_COLORS.dark : SERIES_COLORS.light;
+  const sorted = [...new Set(groups)].sort((a, b) => a.localeCompare(b));
+  return Object.fromEntries(sorted.map((g, i) => [g, palette[i % palette.length]]));
+}

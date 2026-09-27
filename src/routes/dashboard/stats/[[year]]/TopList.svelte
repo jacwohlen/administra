@@ -3,162 +3,95 @@
   import { supabaseClient } from '$lib/supabase';
   import { faAngleRight } from '@fortawesome/free-solid-svg-icons';
   import Fa from 'svelte-fa';
+  import { _ } from 'svelte-i18n';
 
-  let {
-    year,
-    category,
-    section,
-    athletes
-  }: {
-    year: string;
-    category: string;
-    section: string;
-    athletes: { [key: string]: Athletes[] };
-  } = $props();
+  /** Podium for the top three of a section, followed by places 4 to 10. */
+  let { section, entries, href }: { section: string; entries: Athletes[]; href: string } = $props();
 
-  async function getImage(id: number) {
-    const { error, data } = await supabaseClient
+  let images: Record<number, string | null> = $state({});
+
+  $effect(() => {
+    const ids = entries.slice(0, 3).map((e) => e.memberId);
+    if (ids.length === 0) return;
+    supabaseClient
       .from('members')
-      .select('img')
-      .eq('id', id)
-      .single();
+      .select('id, img')
+      .in('id', ids)
+      .then(({ data }) => {
+        images = Object.fromEntries(
+          ((data ?? []) as { id: number; img: string | null }[]).map((m) => [m.id, m.img])
+        );
+      });
+  });
 
-    if (error) {
-      return null;
-    }
-
-    return data.img;
-  }
+  const medals = ['🥇', '🥈', '🥉'];
+  // Second place left, winner in the middle, third right
+  const podiumOrder = [1, 0, 2];
 </script>
 
-<div class="card p-4 pt-2 pb-4 min-w-72">
-  <div class="flex justify-between">
-    <h3 class="indent-2">{section}</h3>
-    <a class="btn" href={'/dashboard/stats/' + year + '/top/' + category + '/' + section}>
-      <Fa icon={faAngleRight} />
-    </a>
+<div class="rounded-container border border-surface-200-800 p-3 flex flex-col min-w-0">
+  <a
+    {href}
+    class="flex items-center justify-between gap-2 -mx-1 px-1 rounded hover:bg-surface-100-900"
+    title={$_('page.stats.showAll', { values: { count: entries.length } })}
+  >
+    <h3 class="text-sm! font-semibold text-surface-600-400 mb-0! truncate">{section}</h3>
+    <Fa icon={faAngleRight} class="text-surface-600-400" />
+  </a>
+
+  <div class="grid grid-cols-3 gap-2 items-end mt-3">
+    {#each podiumOrder as place (place)}
+      {@const e = entries[place]}
+      <div class="text-center min-w-0">
+        {#if e}
+          <a href="/dashboard/members/{e.memberId}" class="group block">
+            <div class="relative inline-block">
+              {#if images[e.memberId]}
+                <img
+                  src={images[e.memberId]}
+                  alt="{e.firstname} {e.lastname}"
+                  class="rounded-full object-cover {place === 0 ? 'size-16' : 'size-12'}"
+                  class:ring-2={place === 0}
+                  class:ring-primary-500={place === 0}
+                />
+              {:else}
+                <div
+                  class="rounded-full bg-surface-200-800 flex items-center justify-center font-bold {place ===
+                  0
+                    ? 'size-16 text-lg ring-2 ring-primary-500'
+                    : 'size-12 text-sm'}"
+                >
+                  {e.firstname.charAt(0)}{e.lastname.charAt(0)}
+                </div>
+              {/if}
+              <span class="absolute -bottom-1 -right-1 text-lg leading-none" aria-hidden="true"
+                >{medals[place]}</span
+              >
+            </div>
+            <p class="mt-1 text-xs leading-tight truncate group-hover:underline">
+              {e.firstname}<br />{e.lastname}
+            </p>
+            <p class="text-sm font-bold tabular-nums">{e.count}</p>
+          </a>
+        {/if}
+      </div>
+    {/each}
   </div>
-  <div class="grid grid-cols-3 gap-4">
-    <div class="text-center mt-4">
-      {#if athletes[section][1] != undefined}
-        <div class="relative inline-block">
-          <span class="badge-icon absolute -top-0 -right-0 z-10 bg-surface-300-700">2</span>
-          {#await getImage(athletes[section][1].memberId)}
-            <div
-              class="mx-auto size-16 rounded-full overflow-hidden border-4 border-surface-300-700 bg-surface-100-900 flex items-center justify-center text-sm font-bold"
-            >
-              {athletes[section][1].firstname.charAt(0)}{athletes[section][1].lastname.charAt(0)}
-            </div>
-          {:then img}
-            {#if img}
-              <img
-                src={img}
-                alt="{athletes[section][1].firstname} {athletes[section][1].lastname}"
-                class="mx-auto size-16 rounded-full overflow-hidden border-4 border-surface-300-700 object-cover"
-              />
-            {:else}
-              <div
-                class="mx-auto size-16 rounded-full overflow-hidden border-4 border-surface-300-700 bg-surface-100-900 flex items-center justify-center text-sm font-bold"
-              >
-                {athletes[section][1].firstname.charAt(0)}{athletes[section][1].lastname.charAt(0)}
-              </div>
-            {/if}
-          {/await}
-        </div>
-        <div>
-          <p class="text-center">
-            {athletes[section][1].firstname}
-            {athletes[section][1].lastname}
-            ({athletes[section][1].count})
-          </p>
-        </div>
-      {:else}
-        <div class="w-full" />
-      {/if}
-    </div>
-    <div class="text-center">
-      {#if athletes[section][0] != undefined}
-        <div class="relative inline-block">
-          <span class="badge-icon absolute -top-0 -right-0 z-10 bg-primary-400">1</span>
-          {#await getImage(athletes[section][0].memberId)}
-            <div
-              class="mx-auto size-20 rounded-full overflow-hidden border-4 border-primary-400 bg-surface-100-900 flex items-center justify-center text-sm font-bold"
-            >
-              {athletes[section][0].firstname.charAt(0)}{athletes[section][0].lastname.charAt(0)}
-            </div>
-          {:then img}
-            {#if img}
-              <img
-                src={img}
-                alt="{athletes[section][0].firstname} {athletes[section][0].lastname}"
-                class="mx-auto size-20 rounded-full overflow-hidden border-4 border-primary-400 object-cover"
-              />
-            {:else}
-              <div
-                class="mx-auto size-20 rounded-full overflow-hidden border-4 border-primary-400 bg-surface-100-900 flex items-center justify-center text-sm font-bold"
-              >
-                {athletes[section][0].firstname.charAt(0)}{athletes[section][0].lastname.charAt(0)}
-              </div>
-            {/if}
-          {/await}
-        </div>
-        <div>
-          <p class="text-center">
-            {athletes[section][0].firstname}
-            {athletes[section][0].lastname}
-            ({athletes[section][0].count})
-          </p>
-        </div>
-      {:else}
-        <div class="w-full" />
-      {/if}
-    </div>
-    <div class="text-center mt-4">
-      {#if athletes[section][2] != undefined}
-        <div class="relative inline-block">
-          <span class="badge-icon absolute -top-0 -right-0 z-10 bg-primary-700">3</span>
-          {#await getImage(athletes[section][2].memberId)}
-            <div
-              class="mx-auto size-16 rounded-full overflow-hidden border-4 border-primary-700 bg-surface-100-900 flex items-center justify-center text-sm font-bold"
-            >
-              {athletes[section][2].firstname.charAt(0)}{athletes[section][2].lastname.charAt(0)}
-            </div>
-          {:then img}
-            {#if img}
-              <img
-                src={img}
-                alt="{athletes[section][2].firstname} {athletes[section][2].lastname}"
-                class="mx-auto size-16 rounded-full overflow-hidden border-4 border-primary-700 object-cover"
-              />
-            {:else}
-              <div
-                class="mx-auto size-16 rounded-full overflow-hidden border-4 border-primary-700 bg-surface-100-900 flex items-center justify-center text-sm font-bold"
-              >
-                {athletes[section][2].firstname.charAt(0)}{athletes[section][2].lastname.charAt(0)}
-              </div>
-            {/if}
-          {/await}
-        </div>
-        <div>
-          <p class="text-center">
-            {athletes[section][2].firstname}
-            {athletes[section][2].lastname}
-            ({athletes[section][2].count})
-          </p>
-        </div>
-      {:else}
-        <div class="w-full" />
-      {/if}
-    </div>
-  </div>
-  <hr class="my-2" />
-  <div class="overflow-y-auto w-full mr-2">
-    <ol class="list-decimal list-inside mr-2" start="4">
-      {#each athletes[section].slice(3, 10) as item}
-        <li class="py-1">
-          <span class="text-nowrap">{item.lastname} {item.firstname} ({item.count})</span>
+
+  {#if entries.length > 3}
+    <ol class="mt-3 pt-2 border-t border-surface-200-800 text-sm">
+      {#each entries.slice(3, 10) as e (e.memberId)}
+        <li>
+          <a
+            href="/dashboard/members/{e.memberId}"
+            class="flex items-center gap-2 px-1 py-1 rounded hover:bg-surface-100-900"
+          >
+            <span class="w-5 text-right text-surface-600-400 tabular-nums">{e.rank}</span>
+            <span class="flex-1 min-w-0 truncate">{e.firstname} {e.lastname}</span>
+            <span class="tabular-nums text-surface-600-400">{e.count}</span>
+          </a>
         </li>
       {/each}
     </ol>
-  </div>
+  {/if}
 </div>

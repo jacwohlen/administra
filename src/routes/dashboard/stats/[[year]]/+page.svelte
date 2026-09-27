@@ -1,15 +1,10 @@
 <script lang="ts">
-  import TopAthletes from './TopAthletes.svelte';
   import Fa from 'svelte-fa';
-  import { faArrowRight, faArrowLeft } from '@fortawesome/free-solid-svg-icons';
+  import { faChevronLeft, faChevronRight } from '@fortawesome/free-solid-svg-icons';
   import { goto } from '$app/navigation';
   import type { PageData } from './$types';
-  import TopParticipantsStats from './TopParticipantsStats.svelte';
   import { SegmentedControl } from '@skeletonlabs/skeleton-svelte';
   import { _ } from 'svelte-i18n';
-  import TopTrainers from './TopTrainers.svelte';
-  import TopEventParticipants from './TopEventParticipants.svelte';
-  import TopEventCoaches from './TopEventCoaches.svelte';
   import TrainerDownload from './TrainerDownload.svelte';
   import SummaryKPIs from './SummaryKPIs.svelte';
   import MonthlyTrend from './MonthlyTrend.svelte';
@@ -18,112 +13,119 @@
   import TrainerWorkload from './TrainerWorkload.svelte';
   import MemberRetention from './MemberRetention.svelte';
   import BadgeLeaderboard from './BadgeLeaderboard.svelte';
+  import StatsSection from './StatsSection.svelte';
+  import TopRankings from './TopRankings.svelte';
+  import { loadTopEventCoaches, loadTopEventParticipants, loadTopTrainers } from './rankings';
 
   let { data }: { data: PageData } = $props();
 
   let yearmode = $derived(data.yearmode);
   let year = $derived(data.year);
+  let period = $derived(yearmode === 'ALL' ? 'ALL' : year.toString());
+  let currentYear = new Date().getFullYear();
 
-  async function previousYear() {
-    if (yearmode === 'YEAR') year = year - 1;
-    // FIXME: How to this more elegantly (not needing to put base path?
-    goto(`/dashboard/stats/${year.toString()}`);
-  }
-
-  async function nextYear() {
-    if (yearmode === 'YEAR') year = year + 1;
-    goto(`/dashboard/stats/${year.toString()}`);
-  }
+  let topTrainers = $derived(loadTopTrainers(yearmode, year));
+  let topEventParticipants = $derived(loadTopEventParticipants(yearmode, year));
+  let topEventCoaches = $derived(loadTopEventCoaches(yearmode, year));
 </script>
 
-<div class="page-header">
-  <div>
-    <button class="btn" onclick={previousYear}>
-      <Fa icon={faArrowLeft} /><span class="hidden sm:inline">{$_('button.year')}</span>
-    </button>
-  </div>
-  <div>
-    <SegmentedControl
-      name="yearmode"
-      defaultValue={yearmode}
-      onValueChange={(e) => {
-        if (e.value === 'YEAR') {
-          goto('/dashboard/stats/' + year);
-        } else {
-          goto('/dashboard/stats/ALL');
-        }
-      }}
-    >
-      <SegmentedControl.Item value="YEAR">
-        <SegmentedControl.ItemHiddenInput />
-        <SegmentedControl.ItemText>{year}</SegmentedControl.ItemText>
-      </SegmentedControl.Item>
-      <SegmentedControl.Item value="ALL">
-        <SegmentedControl.ItemHiddenInput />
-        <SegmentedControl.ItemText>{$_('page.stats.all')}</SegmentedControl.ItemText>
-      </SegmentedControl.Item>
-      <SegmentedControl.Indicator />
-    </SegmentedControl>
-  </div>
-  <div>
-    <button class="btn" onclick={nextYear}>
-      <span class="hidden sm:inline">{$_('button.year')}</span><Fa icon={faArrowRight} />
-    </button>
-  </div>
-</div>
-
 <div class="space-y-4">
+  <div class="flex flex-wrap items-center justify-between gap-3">
+    <h1 class="mb-0!">{$_('page.dashboard.stats')}</h1>
+    <div class="flex items-center gap-2">
+      {#if yearmode === 'YEAR'}
+        <div class="flex items-center">
+          <button
+            class="btn-icon preset-tonal-surface"
+            aria-label="{$_('button.year')} -1"
+            onclick={() => goto(`/dashboard/stats/${year - 1}`)}
+          >
+            <Fa icon={faChevronLeft} />
+          </button>
+          <span class="w-14 text-center font-semibold tabular-nums">{year}</span>
+          <button
+            class="btn-icon preset-tonal-surface"
+            aria-label="{$_('button.year')} +1"
+            disabled={year >= currentYear}
+            onclick={() => goto(`/dashboard/stats/${year + 1}`)}
+          >
+            <Fa icon={faChevronRight} />
+          </button>
+        </div>
+      {/if}
+      <SegmentedControl
+        name="yearmode"
+        value={yearmode}
+        onValueChange={(e) => goto('/dashboard/stats/' + (e.value === 'ALL' ? 'ALL' : year))}
+      >
+        <SegmentedControl.Item value="YEAR">
+          <SegmentedControl.ItemHiddenInput />
+          <SegmentedControl.ItemText>{$_('button.year')}</SegmentedControl.ItemText>
+        </SegmentedControl.Item>
+        <SegmentedControl.Item value="ALL">
+          <SegmentedControl.ItemHiddenInput />
+          <SegmentedControl.ItemText>{$_('page.stats.all')}</SegmentedControl.ItemText>
+        </SegmentedControl.Item>
+        <SegmentedControl.Indicator />
+      </SegmentedControl>
+    </div>
+  </div>
+
   <SummaryKPIs {year} {yearmode} />
 
-  <div class="card p-4">
-    <TopAthletes {data} />
-  </div>
-
-  <div class="card p-4">
-    <div class="page-header">
-      <h3>{$_('page.stats.topTrainers')}</h3>
-      <TrainerDownload {year} {yearmode} />
-    </div>
-    <TopTrainers {data} />
-  </div>
-
-  <div class="card p-4">
-    <h3>{$_('page.stats.trainerWorkload')}</h3>
-    <TrainerWorkload {yearmode} {year} />
-  </div>
-
-  <div class="card p-4">
-    <h3>{$_('page.stats.topParticipants')}</h3>
-    <TopParticipantsStats {yearmode} {year} />
-  </div>
-
-  <div class="card p-4">
-    <h3>{$_('page.stats.monthlyTrend')}</h3>
+  <StatsSection title={$_('page.stats.monthlyTrend')}>
     <MonthlyTrend {yearmode} {year} />
+  </StatsSection>
+
+  <div class="grid gap-4 md:grid-cols-2">
+    <StatsSection title={$_('page.stats.sectionDistribution')}>
+      <SectionDistribution {yearmode} {year} />
+    </StatsSection>
+    <StatsSection title={$_('page.stats.memberRetention')} hint={$_('page.stats.retentionHint')}>
+      <MemberRetention {yearmode} {year} />
+    </StatsSection>
   </div>
 
-  <div class="card p-4">
-    <h3>{$_('page.stats.attendanceByTraining')}</h3>
+  <StatsSection title={$_('page.stats.attendanceByTraining')}>
     <AttendanceByTraining {yearmode} {year} />
-  </div>
+  </StatsSection>
 
-  <div class="card p-4">
-    <h3>{$_('page.stats.sectionDistribution')}</h3>
-    <SectionDistribution {yearmode} {year} />
-  </div>
+  <TopRankings
+    title={$_('page.stats.topAthletes')}
+    category="athletes"
+    {period}
+    rankings={data.topAthletes}
+  />
 
-  <div class="card p-4">
-    <TopEventParticipants {yearmode} {year} />
-  </div>
-  <div class="card p-4">
-    <TopEventCoaches {yearmode} {year} />
-  </div>
+  <StatsSection title={$_('page.stats.trainerWorkload')}>
+    {#snippet actions()}
+      <TrainerDownload {year} {yearmode} />
+    {/snippet}
+    <TrainerWorkload {yearmode} {year} />
+  </StatsSection>
 
-  <div class="card p-4">
-    <h3>{$_('page.stats.memberRetention')}</h3>
-    <MemberRetention {yearmode} {year} />
-  </div>
-  <div class="card p-4">
-    <BadgeLeaderboard />
-  </div>
+  <TopRankings
+    title={$_('page.stats.topTrainers')}
+    category="trainers"
+    {period}
+    rankings={topTrainers}
+  />
+
+  <TopRankings
+    title={$_('page.stats.topEventParticipants')}
+    category="events"
+    {period}
+    rankings={topEventParticipants}
+    emptyText={$_('page.stats.no_event_data')}
+  />
+
+  <TopRankings
+    title={$_('page.stats.topEventCoaches')}
+    category="coaches"
+    {period}
+    rankings={topEventCoaches}
+    emptyText={$_('page.stats.no_event_data')}
+  />
+
+  <BadgeLeaderboard />
 </div>
