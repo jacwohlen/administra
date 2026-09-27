@@ -150,7 +150,7 @@
             <Fa icon={isDark ? faSun : faMoon} />
             <span>{isDark ? $_('button.lightMode') : $_('button.darkMode')}</span>
           </button>
-          <LanguageSwitcher />
+          <LanguageSwitcher onselect={() => (menuOpen = false)} />
           <button type="button" class="btn preset-filled w-full" onclick={logout}>
             <Fa icon={faArrowRightFromBracket} />
             <span>{$_('button.logout')}</span>

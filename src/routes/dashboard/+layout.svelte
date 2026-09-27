@@ -255,7 +255,7 @@
             <span>{isDark ? $_('button.lightMode') : $_('button.darkMode')}</span>
           </button>
           <div class="mb-2">
-            <LanguageSwitcher />
+            <LanguageSwitcher onselect={() => (popoverOpen = false)} />
           </div>
           <form action="/logout" method="POST" use:enhance={submitLogout}>
             <button type="submit" class="btn preset-filled w-full">
