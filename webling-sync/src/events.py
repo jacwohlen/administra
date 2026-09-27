@@ -203,6 +203,8 @@ def get_participants_bulk(participant_ids):
             if isinstance(data, list):
                 return data
             elif isinstance(data, dict) and 'properties' in data:
+                # That single object carries no id; it is the one we asked for
+                data.setdefault('id', participant_ids[0])
                 return [data]
             else:
                 # Keys only: the values may hold personal data
