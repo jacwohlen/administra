@@ -1,7 +1,7 @@
 import type { PageLoad } from './$types';
 import { error as err } from '@sveltejs/kit';
 import { supabaseClient } from '$lib/supabase';
-import type { TrialMember, Training } from '$lib/models';
+import type { TrialMember, Training, TrainingActivity } from '$lib/models';
 
 export const load = (async ({ depends }) => {
   depends('probetraining:list');
@@ -22,6 +22,13 @@ export const load = (async ({ depends }) => {
 
   if (trainingsErr) throw err(404, trainingsErr);
 
+  const { data: trainingActivity, error: activityErr } = await supabaseClient
+    .from('view_training_activity')
+    .select('*')
+    .returns<TrainingActivity[]>();
+
+  if (activityErr) throw err(404, activityErr);
+
   const memberIds = (trialMembers ?? []).map((m) => m.id);
   let assignments: { memberId: number; trainingId: number }[] = [];
   if (memberIds.length) {
@@ -36,6 +43,7 @@ export const load = (async ({ depends }) => {
   return {
     trialMembers: trialMembers ?? [],
     trainings: trainings ?? [],
+    trainingActivity: trainingActivity ?? [],
     assignments
   };
 }) satisfies PageLoad;

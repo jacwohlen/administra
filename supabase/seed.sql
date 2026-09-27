@@ -14278,6 +14278,24 @@ INSERT INTO auth.identities (
 UPDATE public.members SET email = 'member@example.com' WHERE id IN (103, 107);
 
 --
+-- Trial candidates from the public registration form, one per intake status
+-- (the status trigger starts every candidate as 'new')
+--
+INSERT INTO public.members (id, labels, birthday, lastname, firstname, email, mobile, "trialSection", notes, "trialRegisteredAt") VALUES
+	(194, '["probetraining"]', '2016-04-12', 'Keller', 'Noah', 'eltern.keller@example.com', '0791234567', 'Judo', 'Hat schon ein Jahr Judo in einem anderen Verein gemacht.', now() - interval '2 days'),
+	(195, '["probetraining"]', '1990-11-03', 'Meier', 'Lara', 'lara.meier@example.com', NULL, 'Aikido', NULL, now() - interval '5 hours'),
+	(196, '["probetraining"]', '2014-07-21', 'Huber', 'Elias', 'familie.huber@example.com', '0797654321', 'Judo', NULL, now() - interval '9 weeks'),
+	(197, '["probetraining"]', '2012-02-28', 'Brunner', 'Mia', 'mia.brunner@example.com', NULL, 'Judo', NULL, now() - interval '5 weeks'),
+	(198, '["probetraining"]', '1985-05-17', 'Frei', 'Jonas', 'jonas.frei@example.com', NULL, 'Aikido', 'Kann nur dienstags.', now() - interval '3 weeks'),
+	(199, '["probetraining"]', '2010-09-09', 'Steiner', 'Lea', 'lea.steiner@example.com', NULL, 'Judo', NULL, now() - interval '6 weeks');
+
+UPDATE public.members SET "trialStatus" = 'waitlist' WHERE id IN (196, 197);
+INSERT INTO public.participants ("trainingId", "memberId") VALUES (32, 198);
+UPDATE public.members SET "trialStatus" = 'cancelled' WHERE id = 199;
+-- Backdate the status changes so the waiting times look realistic
+UPDATE public.members SET "trialStatusChangedAt" = "trialRegisteredAt" + interval '3 days' WHERE id IN (196, 197, 198, 199);
+
+--
 -- Compute badges for all seeded members
 --
 RESET app.skip_badge_refresh;

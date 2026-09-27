@@ -1,6 +1,13 @@
 import { describe, it, expect } from 'vitest';
-import { trialStatus, trainingMatchesAge, splitTrainingsByAge } from './trialUtils';
-import type { Training } from './models';
+import {
+  trialProgress,
+  trainingMatchesAge,
+  splitTrainingsByAge,
+  matchesTrialTab,
+  sortTrialMembers,
+  elapsedSince
+} from './trialUtils';
+import type { Training, TrialMember } from './models';
 
 function training(partial: Partial<Training> & { id: string }): Training {
   return {
@@ -14,27 +21,27 @@ function training(partial: Partial<Training> & { id: string }): Training {
   };
 }
 
-describe('trialStatus', () => {
+describe('trialProgress', () => {
   const threshold = 3;
 
   it('reports no attendance yet', () => {
-    expect(trialStatus(0, threshold)).toBe('none');
+    expect(trialProgress(0, threshold)).toBe('none');
   });
 
   it('reports an ongoing trial below the threshold', () => {
-    expect(trialStatus(1, threshold)).toBe('active');
-    expect(trialStatus(threshold - 1, threshold)).toBe('active');
+    expect(trialProgress(1, threshold)).toBe('active');
+    expect(trialProgress(threshold - 1, threshold)).toBe('active');
   });
 
   it('flags conversion once the threshold is reached', () => {
-    expect(trialStatus(threshold, threshold)).toBe('convert');
-    expect(trialStatus(threshold + 5, threshold)).toBe('convert');
+    expect(trialProgress(threshold, threshold)).toBe('convert');
+    expect(trialProgress(threshold + 5, threshold)).toBe('convert');
   });
 
   it('respects whatever threshold is configured', () => {
-    expect(trialStatus(3, 5)).toBe('active');
-    expect(trialStatus(5, 5)).toBe('convert');
-    expect(trialStatus(1, 1)).toBe('convert');
+    expect(trialProgress(3, 5)).toBe('active');
+    expect(trialProgress(5, 5)).toBe('convert');
+    expect(trialProgress(1, 1)).toBe('convert');
   });
 });
 
@@ -90,5 +97,88 @@ describe('splitTrainingsByAge', () => {
     const alsoKids = training({ id: '5', ageFrom: 6, ageTo: 9 });
     const { suggested } = splitTrainingsByAge([kids, alsoKids, youth], 6);
     expect(suggested.map((t) => t.id)).toEqual(['1', '5']);
+  });
+});
+
+function candidate(partial: Partial<TrialMember> & { id: number }): TrialMember {
+  return {
+    firstname: 'Max',
+    lastname: 'Muster',
+    labels: ['probetraining'],
+    attendedCount: 0,
+    trialStatus: 'new',
+    ...partial
+  };
+}
+
+describe('matchesTrialTab', () => {
+  const threshold = 3;
+
+  it('filters by status', () => {
+    const m = candidate({ id: 1, trialStatus: 'waitlist' });
+    expect(matchesTrialTab(m, 'waitlist', threshold)).toBe(true);
+    expect(matchesTrialTab(m, 'new', threshold)).toBe(false);
+    expect(matchesTrialTab(m, 'all', threshold)).toBe(true);
+  });
+
+  it('lists candidates due to sign up unless they cancelled', () => {
+    const due = candidate({ id: 1, trialStatus: 'assigned', attendedCount: 3 });
+    const cancelled = candidate({ id: 2, trialStatus: 'cancelled', attendedCount: 5 });
+    const early = candidate({ id: 3, trialStatus: 'assigned', attendedCount: 1 });
+    expect(matchesTrialTab(due, 'convert', threshold)).toBe(true);
+    expect(matchesTrialTab(cancelled, 'convert', threshold)).toBe(false);
+    expect(matchesTrialTab(early, 'convert', threshold)).toBe(false);
+  });
+});
+
+describe('sortTrialMembers', () => {
+  const members = [
+    candidate({ id: 1, lastname: 'B', trialRegisteredAt: '2026-09-01T10:00:00Z' }),
+    candidate({ id: 2, lastname: 'A', trialRegisteredAt: '2026-09-20T10:00:00Z' }),
+    candidate({ id: 3, lastname: 'C' }),
+    candidate({ id: 4, lastname: 'D', trialRegisteredAt: '2026-08-15T10:00:00Z' })
+  ];
+
+  it('shows the newest registration first', () => {
+    expect(sortTrialMembers(members, 'new').map((m) => m.id)).toEqual([2, 1, 4, 3]);
+  });
+
+  it('serves the waiting list first come, first served', () => {
+    expect(sortTrialMembers(members, 'waitlist').map((m) => m.id)).toEqual([4, 1, 2, 3]);
+  });
+
+  it('does not reorder its input', () => {
+    sortTrialMembers(members, 'waitlist');
+    expect(members.map((m) => m.id)).toEqual([1, 2, 3, 4]);
+  });
+});
+
+describe('elapsedSince', () => {
+  const now = new Date(2026, 8, 27, 12, 0);
+
+  it('reports today', () => {
+    expect(elapsedSince(new Date(2026, 8, 27, 8, 0).toISOString(), now)).toEqual({
+      unit: 'today',
+      count: 0
+    });
+  });
+
+  it('counts days, then weeks, then months', () => {
+    expect(elapsedSince(new Date(2026, 8, 24).toISOString(), now)).toEqual({
+      unit: 'days',
+      count: 3
+    });
+    expect(elapsedSince(new Date(2026, 8, 6).toISOString(), now)).toEqual({
+      unit: 'weeks',
+      count: 3
+    });
+    expect(elapsedSince(new Date(2026, 5, 27).toISOString(), now)).toEqual({
+      unit: 'months',
+      count: 3
+    });
+  });
+
+  it('never goes negative', () => {
+    expect(elapsedSince(new Date(2026, 8, 30).toISOString(), now).unit).toBe('today');
   });
 });

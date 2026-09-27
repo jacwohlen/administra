@@ -6,7 +6,7 @@
   import BeltStrip from '$lib/components/BeltStrip.svelte';
   import MedalTally from '$lib/components/MedalTally.svelte';
   import { beltRingColor } from '$lib/gradeUtils';
-  import { trialStatus } from '$lib/trialUtils';
+  import { trialProgress } from '$lib/trialUtils';
   import { clubConfig } from '$lib/clubConfig';
   import { _ } from 'svelte-i18n';
 
@@ -35,7 +35,7 @@
   let ringColor = $derived(grade ? beltRingColor(grade.beltColor) : null);
   let needsMembership = $derived(
     trialAttendedCount !== undefined &&
-      trialStatus(trialAttendedCount, clubConfig.trialSessionThreshold) === 'convert'
+      trialProgress(trialAttendedCount, clubConfig.trialSessionThreshold) === 'convert'
   );
   let tally = $derived(
     medals

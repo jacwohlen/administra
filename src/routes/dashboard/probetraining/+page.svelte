@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { PageData } from './$types';
+  import { untrack } from 'svelte';
   import { _ } from 'svelte-i18n';
   import Fa from 'svelte-fa';
   import {
@@ -9,23 +10,42 @@
     faTriangleExclamation,
     faCalendarPlus,
     faChevronDown,
-    faNoteSticky
+    faNoteSticky,
+    faHourglassHalf,
+    faBan,
+    faRotateLeft,
+    faSpinner
   } from '@fortawesome/free-solid-svg-icons';
   import { calculateAge } from '$lib/utils';
-  import { trialStatus, type TrialStatus } from '$lib/trialUtils';
+  import {
+    trialProgress,
+    matchesTrialTab,
+    sortTrialMembers,
+    elapsedSince,
+    type TrialProgress,
+    type TrialTab
+  } from '$lib/trialUtils';
   import { clubConfig } from '$lib/clubConfig';
+  import { supabaseClient } from '$lib/supabase';
+  import { toaster } from '$lib/toast';
+  import { invalidate } from '$app/navigation';
   import AssignTrainingDialog from './AssignTrainingDialog.svelte';
-  import type { TrialMember, Training } from '$lib/models';
+  import type { TrialMember, TrialStatus, Training, TrainingActivity } from '$lib/models';
   import dayjs from 'dayjs';
 
-  type Filter = 'all' | 'unassigned' | 'convert';
+  const TABS: TrialTab[] = ['new', 'waitlist', 'assigned', 'convert', 'cancelled', 'all'];
 
   let { data }: { data: PageData } = $props();
 
   let selectedMember = $state<TrialMember | null>(null);
   let expandedId = $state<number | null>(null);
+  let confirmCancelId = $state<number | null>(null);
+  let busyId = $state<number | null>(null);
   let searchTerm = $state('');
-  let filter = $state<Filter>('all');
+  // Open on the work queue; fall back to everyone when nothing new came in.
+  let tab = $state<TrialTab>(
+    untrack(() => data.trialMembers.some((m) => m.trialStatus === 'new')) ? 'new' : 'all'
+  );
 
   let trainingById = $derived.by(() => {
     const map = new Map<number, Training>();
@@ -43,24 +63,29 @@
     return map;
   });
 
-  let unassignedCount = $derived(
-    data.trialMembers.filter((m) => (assignmentsByMember.get(m.id) ?? []).length === 0).length
-  );
-  let convertCount = $derived(
-    data.trialMembers.filter(
-      (m) => trialStatus(m.attendedCount, clubConfig.trialSessionThreshold) === 'convert'
-    ).length
-  );
+  let activityByTraining = $derived.by(() => {
+    const map = new Map<number, TrainingActivity>();
+    for (const a of data.trainingActivity) map.set(Number(a.trainingId), a);
+    return map;
+  });
+
+  let tabCounts = $derived.by(() => {
+    const counts = {} as Record<TrialTab, number>;
+    for (const t of TABS) {
+      counts[t] = data.trialMembers.filter((m) =>
+        matchesTrialTab(m, t, clubConfig.trialSessionThreshold)
+      ).length;
+    }
+    return counts;
+  });
 
   let visibleMembers = $derived.by(() => {
     const q = searchTerm.toLowerCase().trim();
-    return data.trialMembers.filter((m) => {
+    const matching = data.trialMembers.filter((m) => {
       if (q && !`${m.firstname} ${m.lastname}`.toLowerCase().includes(q)) return false;
-      if (filter === 'unassigned') return (assignmentsByMember.get(m.id) ?? []).length === 0;
-      if (filter === 'convert')
-        return trialStatus(m.attendedCount, clubConfig.trialSessionThreshold) === 'convert';
-      return true;
+      return matchesTrialTab(m, tab, clubConfig.trialSessionThreshold);
     });
+    return sortTrialMembers(matching, tab);
   });
 
   function assignedTrainings(memberId: number): Training[] {
@@ -69,12 +94,44 @@
       .filter((t): t is Training => t !== undefined);
   }
 
-  function countChipClass(status: TrialStatus): string {
-    return status === 'convert' ? 'preset-filled-warning-500' : 'preset-tonal-surface';
+  function countChipClass(progress: TrialProgress): string {
+    return progress === 'convert' ? 'preset-filled-warning-500' : 'preset-tonal-surface';
+  }
+
+  const STATUS_CHIP: Record<TrialStatus, string> = {
+    new: 'preset-tonal-primary',
+    waitlist: 'preset-tonal-warning',
+    assigned: 'preset-tonal-success',
+    cancelled: 'preset-tonal-surface'
+  };
+
+  function ago(iso: string, kind: 'ago' | 'waiting' = 'ago'): string {
+    const { unit, count } = elapsedSince(iso);
+    return $_(`page.probetraining.${kind}.${unit}`, { values: { count } });
   }
 
   function toggle(id: number) {
     expandedId = expandedId === id ? null : id;
+    confirmCancelId = null;
+  }
+
+  async function setStatus(m: TrialMember, status: TrialStatus) {
+    busyId = m.id;
+    try {
+      const { error } = await supabaseClient
+        .from('members')
+        .update({ trialStatus: status })
+        .eq('id', m.id);
+      if (error) throw error;
+      toaster.success({ title: $_('page.probetraining.statusChanged.' + status) });
+      confirmCancelId = null;
+      await invalidate('probetraining:list');
+    } catch (e) {
+      console.error('Error changing trial status:', e);
+      toaster.error({ title: $_('page.probetraining.statusError') });
+    } finally {
+      busyId = null;
+    }
   }
 </script>
 
@@ -102,29 +159,17 @@
       type="search"
       placeholder={$_('page.probetraining.searchPlaceholder')}
     />
-    <div class="flex gap-1 flex-wrap">
-      <button
-        class="btn btn-sm {filter === 'all' ? 'preset-filled-primary-500' : 'preset-tonal-surface'}"
-        onclick={() => (filter = 'all')}
-      >
-        {$_('page.probetraining.filterAll')} ({data.trialMembers.length})
-      </button>
-      <button
-        class="btn btn-sm {filter === 'unassigned'
-          ? 'preset-filled-primary-500'
-          : 'preset-tonal-surface'}"
-        onclick={() => (filter = 'unassigned')}
-      >
-        {$_('page.probetraining.filterUnassigned')} ({unassignedCount})
-      </button>
-      <button
-        class="btn btn-sm {filter === 'convert'
-          ? 'preset-filled-primary-500'
-          : 'preset-tonal-surface'}"
-        onclick={() => (filter = 'convert')}
-      >
-        {$_('page.probetraining.filterConvert')} ({convertCount})
-      </button>
+    <div class="flex gap-1 flex-wrap" role="tablist">
+      {#each TABS as t (t)}
+        <button
+          role="tab"
+          aria-selected={tab === t}
+          class="btn btn-sm {tab === t ? 'preset-filled-primary-500' : 'preset-tonal-surface'}"
+          onclick={() => (tab = t)}
+        >
+          {$_('page.probetraining.tab.' + t)} ({tabCounts[t]})
+        </button>
+      {/each}
     </div>
   </div>
 
@@ -135,10 +180,11 @@
       {#each visibleMembers as m (m.id)}
         {@const age = calculateAge(m.birthday)}
         {@const assigned = assignedTrainings(m.id)}
-        {@const status = trialStatus(m.attendedCount, clubConfig.trialSessionThreshold)}
+        {@const progress = trialProgress(m.attendedCount, clubConfig.trialSessionThreshold)}
+        {@const showProgress = m.trialStatus !== 'cancelled' && progress === 'convert'}
         {@const isOpen = expandedId === m.id}
         <li
-          class="border-b border-surface-300-700 last:border-b-0 border-l-4 {status === 'convert'
+          class="border-b border-surface-300-700 last:border-b-0 border-l-4 {showProgress
             ? 'border-l-warning-500'
             : 'border-l-transparent'}"
         >
@@ -169,10 +215,38 @@
                   />
                 {/if}
               </span>
+              <span class="text-xs text-surface-600-400 flex items-center gap-2 min-w-0">
+                {#if tab === 'all' || tab === 'convert'}
+                  <span class="chip text-[10px] py-0 px-1.5 {STATUS_CHIP[m.trialStatus]}">
+                    {$_('page.probetraining.status.' + m.trialStatus)}
+                  </span>
+                {/if}
+                {#if m.trialRegisteredAt}
+                  <span
+                    class="truncate"
+                    title="{$_('page.probetraining.registeredOn')} {dayjs(
+                      m.trialRegisteredAt
+                    ).format('DD.MM.YYYY HH:mm')}"
+                  >
+                    {$_('page.probetraining.registeredAgo', {
+                      values: { ago: ago(m.trialRegisteredAt) }
+                    })}
+                  </span>
+                {/if}
+              </span>
             </span>
 
             <span class="hidden sm:flex items-center gap-1 min-w-0 max-w-[38%] flex-shrink-0">
-              {#if assigned.length === 0}
+              {#if m.trialStatus === 'waitlist' && m.trialStatusChangedAt}
+                <span class="chip preset-tonal-warning text-xs gap-1">
+                  <Fa icon={faHourglassHalf} size="xs" />
+                  {ago(m.trialStatusChangedAt, 'waiting')}
+                </span>
+              {:else if m.trialStatus === 'cancelled'}
+                <span class="text-xs text-surface-600-400 italic">
+                  {$_('page.probetraining.status.cancelled')}
+                </span>
+              {:else if assigned.length === 0}
                 <span class="text-xs text-surface-600-400 italic">
                   {$_('page.probetraining.noAssignment')}
                 </span>
@@ -187,10 +261,12 @@
             </span>
 
             <span
-              class="chip gap-1 flex-shrink-0 text-xs {countChipClass(status)}"
+              class="chip gap-1 flex-shrink-0 text-xs {countChipClass(
+                showProgress ? progress : 'none'
+              )}"
               title={$_('page.probetraining.attended')}
             >
-              {#if status === 'convert'}
+              {#if showProgress}
                 <Fa icon={faTriangleExclamation} size="xs" />
               {/if}
               {m.attendedCount}×
@@ -207,7 +283,7 @@
 
           {#if isOpen}
             <div class="px-3 sm:pl-14 pb-3 space-y-2 text-sm">
-              {#if status === 'convert'}
+              {#if showProgress}
                 <p class="text-xs text-warning-600-400">
                   {$_('page.probetraining.convertHint')}
                 </p>
@@ -220,7 +296,13 @@
                 {#if m.trialRegisteredAt}
                   <span>
                     {$_('page.probetraining.registeredOn')}
-                    {dayjs(m.trialRegisteredAt).format('DD.MM.YYYY')}
+                    {dayjs(m.trialRegisteredAt).format('DD.MM.YYYY HH:mm')}
+                  </span>
+                {/if}
+                {#if m.trialStatusChangedAt && m.trialStatus !== 'new'}
+                  <span>
+                    {$_('page.probetraining.statusSince.' + m.trialStatus)}
+                    {dayjs(m.trialStatusChangedAt).format('DD.MM.YYYY')}
                   </span>
                 {/if}
                 {#if m.email}
@@ -262,8 +344,41 @@
                 <a href="/dashboard/members/{m.id}" class="btn btn-sm preset-tonal-surface">
                   {$_('button.view')}
                 </a>
+                {#if m.trialStatus === 'cancelled'}
+                  <button
+                    class="btn btn-sm preset-tonal-surface"
+                    disabled={busyId === m.id}
+                    onclick={() => setStatus(m, 'new')}
+                  >
+                    <Fa icon={faRotateLeft} size="xs" />
+                    <span>{$_('page.probetraining.action.reactivate')}</span>
+                  </button>
+                {:else}
+                  {#if m.trialStatus === 'new'}
+                    <button
+                      class="btn btn-sm preset-tonal-warning"
+                      disabled={busyId === m.id}
+                      onclick={() => setStatus(m, 'waitlist')}
+                    >
+                      <Fa icon={faHourglassHalf} size="xs" />
+                      <span>{$_('page.probetraining.action.waitlist')}</span>
+                    </button>
+                  {/if}
+                  <button
+                    class="btn btn-sm preset-tonal-surface"
+                    disabled={busyId === m.id}
+                    onclick={() => (confirmCancelId = m.id)}
+                  >
+                    <Fa icon={faBan} size="xs" />
+                    <span>{$_('page.probetraining.action.cancel')}</span>
+                  </button>
+                {/if}
+                {#if busyId === m.id}
+                  <Fa icon={faSpinner} spin />
+                {/if}
                 <button
                   class="btn btn-sm preset-tonal-primary ml-auto"
+                  disabled={busyId === m.id}
                   onclick={() => (selectedMember = m)}
                 >
                   <Fa icon={faCalendarPlus} size="xs" />
@@ -274,6 +389,34 @@
                   </span>
                 </button>
               </div>
+
+              {#if confirmCancelId === m.id}
+                <div
+                  class="flex flex-wrap items-center gap-2 rounded-md bg-surface-100-900 px-3 py-2"
+                  role="alertdialog"
+                  aria-label={$_('page.probetraining.action.cancel')}
+                >
+                  <p class="flex-1 min-w-48 text-xs">
+                    {assigned.length
+                      ? $_('page.probetraining.cancelConfirmAssigned')
+                      : $_('page.probetraining.cancelConfirm')}
+                  </p>
+                  <button
+                    class="btn btn-sm preset-tonal-surface"
+                    disabled={busyId === m.id}
+                    onclick={() => (confirmCancelId = null)}
+                  >
+                    {$_('button.cancel')}
+                  </button>
+                  <button
+                    class="btn btn-sm preset-filled-error-500"
+                    disabled={busyId === m.id}
+                    onclick={() => setStatus(m, 'cancelled')}
+                  >
+                    {$_('page.probetraining.action.confirmCancel')}
+                  </button>
+                </div>
+              {/if}
             </div>
           {/if}
         </li>
@@ -296,6 +439,7 @@
       <AssignTrainingDialog
         member={selectedMember}
         trainings={data.trainings}
+        {activityByTraining}
         assignedTrainingIds={new Set(assignmentsByMember.get(selectedMember.id) ?? [])}
         onclose={() => (selectedMember = null)}
       />

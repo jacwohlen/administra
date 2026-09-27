@@ -59,6 +59,9 @@ export interface Training {
   participants: Member[];
 }
 
+/** Where a trial candidate stands in the club's intake process (members."trialStatus"). */
+export type TrialStatus = 'new' | 'waitlist' | 'assigned' | 'cancelled';
+
 export interface TrialMember {
   id: number;
   firstname: string;
@@ -71,6 +74,18 @@ export interface TrialMember {
   trialSection?: string;
   trialRegisteredAt?: string;
   attendedCount: number;
+  trialStatus: TrialStatus;
+  trialStatusChangedAt?: string;
+}
+
+/** Row of view_training_activity: how full a training is. */
+export interface TrainingActivity {
+  trainingId: number;
+  /** Distinct attendees over the training's last 8 sessions */
+  activeCount: number;
+  participantCount: number;
+  /** Trial candidates on the participant list */
+  trialCount: number;
 }
 
 export interface Log {

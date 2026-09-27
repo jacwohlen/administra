@@ -405,9 +405,6 @@
       "attended": "Bereits besuchte Probetrainings",
       "convertHint": "Hat die vereinbarte Anzahl erreicht – Mitgliedschaft klären.",
       "searchPlaceholder": "Name suchen...",
-      "filterAll": "Alle",
-      "filterUnassigned": "Ohne Training",
-      "filterConvert": "Mitgliedschaft klären",
       "noResults": "Keine Kandidaten entsprechen dieser Auswahl.",
       "noAssignment": "ohne Training",
       "assignTraining": "Training zuweisen",
@@ -423,7 +420,57 @@
       "assignSuccess": "Training erfolgreich zugewiesen",
       "assignError": "Fehler beim Zuweisen des Trainings",
       "removeSuccess": "Zuweisung entfernt",
-      "removeError": "Fehler beim Entfernen der Zuweisung"
+      "removeError": "Fehler beim Entfernen der Zuweisung",
+      "tab": {
+        "new": "Neu",
+        "waitlist": "Warteliste",
+        "assigned": "Zugewiesen",
+        "convert": "Mitgliedschaft klären",
+        "cancelled": "Abgesagt",
+        "all": "Alle"
+      },
+      "status": {
+        "new": "Neu",
+        "waitlist": "Warteliste",
+        "assigned": "Zugewiesen",
+        "cancelled": "Abgesagt"
+      },
+      "statusSince": {
+        "waitlist": "auf der Warteliste seit",
+        "assigned": "zugewiesen seit",
+        "cancelled": "abgesagt am"
+      },
+      "registeredAgo": "angemeldet {ago}",
+      "ago": {
+        "today": "heute",
+        "days": "vor {count, plural, one {# Tag} other {# Tagen}}",
+        "weeks": "vor {count, plural, one {# Woche} other {# Wochen}}",
+        "months": "vor {count, plural, one {# Monat} other {# Monaten}}"
+      },
+      "waiting": {
+        "today": "seit heute",
+        "days": "seit {count, plural, one {# Tag} other {# Tagen}}",
+        "weeks": "seit {count, plural, one {# Woche} other {# Wochen}}",
+        "months": "seit {count, plural, one {# Monat} other {# Monaten}}"
+      },
+      "action": {
+        "waitlist": "Auf Warteliste",
+        "cancel": "Absagen",
+        "confirmCancel": "Ja, absagen",
+        "reactivate": "Wieder aufnehmen"
+      },
+      "cancelConfirm": "Anmeldung als abgesagt markieren?",
+      "cancelConfirmAssigned": "Anmeldung als abgesagt markieren? Die Person wird aus den zugewiesenen Trainings entfernt.",
+      "statusChanged": {
+        "new": "Anmeldung wieder aufgenommen",
+        "waitlist": "Auf die Warteliste gesetzt",
+        "assigned": "Training zugewiesen",
+        "cancelled": "Als abgesagt markiert"
+      },
+      "statusError": "Status konnte nicht geändert werden",
+      "activeCount": "{count} aktiv",
+      "trialCount": "{count} Probe",
+      "activityHint": "Aktiv: verschiedene Teilnehmende (ohne Trainer) in den letzten 8 Trainings. Probe: Probetraining-Kandidaten auf der Teilnehmerliste."
     },
     "login": {
       "title": "Anmelden",

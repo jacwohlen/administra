@@ -405,9 +405,6 @@
       "attended": "Trial sessions attended so far",
       "convertHint": "Has reached the agreed number of trial sessions – time to discuss membership.",
       "searchPlaceholder": "Search by name...",
-      "filterAll": "All",
-      "filterUnassigned": "No training",
-      "filterConvert": "Needs membership",
       "noResults": "No candidates match this selection.",
       "noAssignment": "no training",
       "assignTraining": "Assign Training",
@@ -423,7 +420,57 @@
       "assignSuccess": "Training assigned successfully",
       "assignError": "Error assigning training",
       "removeSuccess": "Assignment removed",
-      "removeError": "Error removing assignment"
+      "removeError": "Error removing assignment",
+      "tab": {
+        "new": "New",
+        "waitlist": "Waiting list",
+        "assigned": "Assigned",
+        "convert": "Membership due",
+        "cancelled": "Cancelled",
+        "all": "All"
+      },
+      "status": {
+        "new": "New",
+        "waitlist": "Waiting list",
+        "assigned": "Assigned",
+        "cancelled": "Cancelled"
+      },
+      "statusSince": {
+        "waitlist": "on the waiting list since",
+        "assigned": "assigned since",
+        "cancelled": "cancelled on"
+      },
+      "registeredAgo": "registered {ago}",
+      "ago": {
+        "today": "today",
+        "days": "{count, plural, one {# day} other {# days}} ago",
+        "weeks": "{count, plural, one {# week} other {# weeks}} ago",
+        "months": "{count, plural, one {# month} other {# months}} ago"
+      },
+      "waiting": {
+        "today": "since today",
+        "days": "for {count, plural, one {# day} other {# days}}",
+        "weeks": "for {count, plural, one {# week} other {# weeks}}",
+        "months": "for {count, plural, one {# month} other {# months}}"
+      },
+      "action": {
+        "waitlist": "Waiting list",
+        "cancel": "Cancel",
+        "confirmCancel": "Yes, cancel",
+        "reactivate": "Reopen"
+      },
+      "cancelConfirm": "Mark this registration as cancelled?",
+      "cancelConfirmAssigned": "Mark this registration as cancelled? The candidate is removed from their assigned trainings.",
+      "statusChanged": {
+        "new": "Registration reopened",
+        "waitlist": "Put on the waiting list",
+        "assigned": "Training assigned",
+        "cancelled": "Marked as cancelled"
+      },
+      "statusError": "Could not change the status",
+      "activeCount": "{count} active",
+      "trialCount": "{count} trial",
+      "activityHint": "Active: distinct attendees (excluding trainers) over the last 8 sessions. Trial: trial candidates on the participant list."
     },
     "login": {
       "title": "Sign in",

@@ -5,23 +5,26 @@
     faSpinner,
     faWandMagicSparkles,
     faXmark,
-    faPlus
+    faPlus,
+    faUsers
   } from '@fortawesome/free-solid-svg-icons';
   import { supabaseClient } from '$lib/supabase';
   import { toaster } from '$lib/toast';
   import { invalidate } from '$app/navigation';
   import { calculateAge } from '$lib/utils';
   import { splitTrainingsByAge } from '$lib/trialUtils';
-  import type { Training, TrialMember } from '$lib/models';
+  import type { Training, TrainingActivity, TrialMember } from '$lib/models';
 
   let {
     member,
     trainings,
+    activityByTraining,
     assignedTrainingIds,
     onclose
   }: {
     member: TrialMember;
     trainings: Training[];
+    activityByTraining: Map<number, TrainingActivity>;
     assignedTrainingIds: Set<number>;
     onclose: () => void;
   } = $props();
@@ -71,6 +74,22 @@
   }
 </script>
 
+{#snippet activity(t: Training)}
+  {@const a = activityByTraining.get(Number(t.id))}
+  {#if a}
+    <span
+      class="flex items-center gap-1 text-xs text-surface-600-400"
+      title={$_('page.probetraining.activityHint')}
+    >
+      <Fa icon={faUsers} size="xs" />
+      {$_('page.probetraining.activeCount', { values: { count: a.activeCount } })}
+      {#if a.trialCount > 0}
+        · {$_('page.probetraining.trialCount', { values: { count: a.trialCount } })}
+      {/if}
+    </span>
+  {/if}
+{/snippet}
+
 <div class="space-y-4">
   <header>
     <h3>{$_('page.probetraining.manageTitle')}</h3>
@@ -93,6 +112,7 @@
                 <span class="text-xs text-surface-600-400">
                   {$_('weekday.' + t.weekday)} · {t.dateFrom} · {t.section}
                 </span>
+                {@render activity(t)}
               </span>
               <button
                 class="btn-icon preset-tonal-error flex-shrink-0"
@@ -132,6 +152,7 @@
                   {$_('weekday.' + t.weekday)} · {t.dateFrom} · {t.section} · {t.ageFrom}–{t.ageTo}
                   {$_('page.probetraining.yearsOld')}
                 </span>
+                {@render activity(t)}
               </span>
               <button
                 class="btn btn-sm preset-filled-primary-500 flex-shrink-0"
@@ -162,6 +183,7 @@
                     · {t.ageFrom}–{t.ageTo}
                     {$_('page.probetraining.yearsOld')}{/if}
                 </span>
+                {@render activity(t)}
               </span>
               <button
                 class="btn btn-sm preset-tonal-primary flex-shrink-0"
