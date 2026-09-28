@@ -14278,6 +14278,42 @@ INSERT INTO auth.identities (
 UPDATE public.members SET email = 'member@example.com' WHERE id IN (103, 107);
 
 --
+-- Trial candidates from the public registration form, one per intake status
+-- (the status trigger starts every candidate as 'new')
+--
+INSERT INTO public.members (id, labels, birthday, lastname, firstname, email, mobile, "trialSection", notes, "trialRegisteredAt") VALUES
+	(194, '["probetraining"]', '2016-04-12', 'Keller', 'Noah', 'eltern.keller@example.com', '0791234567', 'Judo', 'Hat schon ein Jahr Judo in einem anderen Verein gemacht.', now() - interval '2 days'),
+	(195, '["probetraining"]', '1990-11-03', 'Meier', 'Lara', 'lara.meier@example.com', NULL, 'Aikido', NULL, now() - interval '5 hours'),
+	(196, '["probetraining"]', '2014-07-21', 'Huber', 'Elias', 'familie.huber@example.com', '0797654321', 'Judo', NULL, now() - interval '9 weeks'),
+	(197, '["probetraining"]', '2012-02-28', 'Brunner', 'Mia', 'mia.brunner@example.com', NULL, 'Judo', NULL, now() - interval '5 weeks'),
+	(198, '["probetraining"]', '1985-05-17', 'Frei', 'Jonas', 'jonas.frei@example.com', NULL, 'Aikido', 'Kann nur dienstags.', now() - interval '3 weeks'),
+	(199, '["probetraining"]', '2010-09-09', 'Steiner', 'Lea', 'lea.steiner@example.com', NULL, 'Judo', NULL, now() - interval '6 weeks');
+
+UPDATE public.members SET "trialStatus" = 'waitlist' WHERE id IN (196, 197);
+INSERT INTO public.participants ("trainingId", "memberId") VALUES (32, 198);
+UPDATE public.members SET "trialStatus" = 'cancelled' WHERE id = 199;
+-- Backdate the status changes so the waiting times look realistic
+UPDATE public.members SET "trialStatusChangedAt" = "trialRegisteredAt" + interval '3 days' WHERE id IN (196, 197, 198, 199);
+UPDATE public.members SET "trialLocale" = 'de' WHERE id BETWEEN 194 AND 199;
+UPDATE public.members SET "trialLocale" = 'en' WHERE id = 195;
+
+-- Mails the candidates received so far (see docs/TRIAL_EMAILS.md)
+INSERT INTO public.trial_emails (member_id, kind, to_email, subject, status, created_at, sent_at, error)
+SELECT m.id, 'welcome', m.email, 'Danke für deine Anmeldung zum Probetraining – JAC Wohlen',
+       'sent', m."trialRegisteredAt", m."trialRegisteredAt", NULL
+FROM public.members AS m WHERE m.id BETWEEN 194 AND 199 AND m.id <> 194
+UNION ALL
+SELECT 194, 'welcome', 'eltern.keller@example.com', 'Danke für deine Anmeldung zum Probetraining – JAC Wohlen',
+       'failed', now() - interval '2 days', NULL, '550 5.1.1 Mailbox unavailable'
+UNION ALL
+SELECT m.id, 'waitlist', m.email, 'Du bist auf der Warteliste – JAC Wohlen',
+       'sent', m."trialStatusChangedAt", m."trialStatusChangedAt", NULL
+FROM public.members AS m WHERE m.id IN (196, 197)
+UNION ALL
+SELECT 198, 'assigned', 'jonas.frei@example.com', 'Dein Probetraining beim JAC Wohlen',
+       'sent', now() - interval '18 days', now() - interval '18 days', NULL;
+
+--
 -- Compute badges for all seeded members
 --
 RESET app.skip_badge_refresh;

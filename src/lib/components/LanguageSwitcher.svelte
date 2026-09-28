@@ -5,6 +5,8 @@
   import { setUserLocale } from '$lib/userLocale';
   import type { PublicLocale } from '$lib/clubConfigParser';
 
+  let { onselect }: { onselect?: (value: PublicLocale) => void } = $props();
+
   const options: { value: PublicLocale; label: string }[] = [
     { value: 'de', label: 'Deutsch' },
     { value: 'en', label: 'English' }
@@ -21,7 +23,10 @@
         class="btn btn-sm {active ? 'preset-filled-primary-500' : 'preset-tonal-surface'}"
         aria-pressed={active}
         lang={option.value}
-        onclick={() => setUserLocale(option.value)}
+        onclick={() => {
+          setUserLocale(option.value);
+          onselect?.(option.value);
+        }}
       >
         {option.label}
       </button>
