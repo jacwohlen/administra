@@ -9,6 +9,14 @@
 -- removed when it is not. Badges that stay keep their original earnedAt.
 -- Grade, medal and season badges are maintained by their own functions and
 -- are not touched here.
+--
+-- A streak also depends on the other members: it counts consecutive dates on
+-- which a training ran. A check-in that adds a date to a training in the past
+-- (backfilling) can split another member's run, and removing the last
+-- check-in of a past date can join two runs. In those cases the trigger on
+-- logs now refreshes every member of that training, not only the one whose
+-- check-in changed. Adding or removing the latest date cannot change anyone
+-- else's longest streak, so the usual check-in on the day stays cheap.
 
 CREATE OR REPLACE FUNCTION public.refresh_member_badges(p_member_id int)
 RETURNS void LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
@@ -95,7 +103,67 @@ $$;
 
 REVOKE EXECUTE ON FUNCTION public.refresh_member_badges(int) FROM PUBLIC, anon, authenticated;
 
--- Clean up badges that were left behind by removed check-ins.
+-- Trigger for training check-ins. event_logs keeps trigger_refresh_badges_on_log,
+-- since event attendance has no training dates.
+CREATE OR REPLACE FUNCTION public.trigger_refresh_badges_on_training_log()
+RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+DECLARE
+    v_member int;
+    v_training int;
+    v_date text;
+    v_date_changed boolean;
+    v_other record;
+BEGIN
+    IF current_setting('app.skip_badge_refresh', true) = 'true' THEN
+        IF TG_OP = 'DELETE' THEN RETURN OLD; ELSE RETURN NEW; END IF;
+    END IF;
+
+    IF TG_OP = 'DELETE' THEN
+        v_member := OLD."memberId"; v_training := OLD."trainingId"; v_date := OLD.date;
+    ELSE
+        v_member := NEW."memberId"; v_training := NEW."trainingId"; v_date := NEW.date;
+    END IF;
+
+    IF v_member IS NOT NULL THEN
+        PERFORM public.refresh_member_badges(v_member);
+    END IF;
+
+    -- Did this change add the date to the training (first check-in) or remove
+    -- it (last check-in gone)?
+    v_date_changed := NOT EXISTS (
+        SELECT 1 FROM public.logs
+        WHERE "trainingId" = v_training
+          AND date = v_date
+          AND (TG_OP = 'DELETE' OR "memberId" IS DISTINCT FROM v_member)
+    );
+
+    -- Only a date before the training's latest one can change other streaks
+    IF v_training IS NOT NULL AND v_date_changed AND EXISTS (
+        SELECT 1 FROM public.logs WHERE "trainingId" = v_training AND date > v_date
+    ) THEN
+        FOR v_other IN
+            SELECT DISTINCT "memberId" AS id
+            FROM public.logs
+            WHERE "trainingId" = v_training
+              AND "memberId" IS NOT NULL
+              AND "memberId" IS DISTINCT FROM v_member
+        LOOP
+            PERFORM public.refresh_member_badges(v_other.id);
+        END LOOP;
+    END IF;
+
+    IF TG_OP = 'DELETE' THEN RETURN OLD; ELSE RETURN NEW; END IF;
+END;
+$$;
+
+REVOKE EXECUTE ON FUNCTION public.trigger_refresh_badges_on_training_log() FROM PUBLIC, anon, authenticated;
+
+DROP TRIGGER IF EXISTS trg_badges_on_log ON public.logs;
+CREATE TRIGGER trg_badges_on_log
+    AFTER INSERT OR DELETE ON public.logs
+    FOR EACH ROW EXECUTE FUNCTION public.trigger_refresh_badges_on_training_log();
+
+-- Clean up badges that were left behind by removed check-ins or broken streaks.
 DO $$
 DECLARE
     v_member record;
