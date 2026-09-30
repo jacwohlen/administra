@@ -94,7 +94,12 @@
               </p>
               <p class="text-sm text-surface-600-400 flex items-center gap-2 min-w-0">
                 {#if m.topGrade}
-                  <BeltStrip color={m.topGrade.beltColor} isDan={m.topGrade.isDan} size="sm" />
+                  <BeltStrip
+                    color={m.topGrade.beltColor}
+                    isDan={m.topGrade.isDan}
+                    grade={m.topGrade.grade}
+                    size="sm"
+                  />
                   <span class="truncate">{m.topGrade.grade}</span>
                   {#if m.sections.length > 0}<span aria-hidden="true">·</span>{/if}
                 {/if}

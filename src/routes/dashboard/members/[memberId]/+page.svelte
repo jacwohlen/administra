@@ -495,7 +495,7 @@
             <div class="flex flex-wrap justify-center gap-x-4 gap-y-1">
               {#each data.currentGrades as g (g.section)}
                 <span class="inline-flex items-center gap-2 text-sm" title={g.grade}>
-                  <BeltStrip color={g.beltColor} isDan={g.isDan} />
+                  <BeltStrip color={g.beltColor} isDan={g.isDan} grade={g.grade} />
                   <span class="font-semibold">{g.grade}</span>
                   <span class="text-surface-600-400">{g.section}</span>
                 </span>
