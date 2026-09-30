@@ -156,7 +156,7 @@
         <ParticipantFrequency streak={member.streak} isPresent={member.isPresent} />
         {#if grade}
           <span class="inline-flex items-center gap-1 text-xs text-surface-600-400">
-            <BeltStrip color={grade.beltColor} isDan={grade.isDan} size="sm" />
+            <BeltStrip color={grade.beltColor} isDan={grade.isDan} grade={grade.grade} size="sm" />
             {grade.grade}
           </span>
         {/if}
