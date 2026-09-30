@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   beltRingColor,
+  danLevel,
   gradesBySection,
   highestGrade,
   medalEmoji,
@@ -94,5 +95,19 @@ describe('sortMedals', () => {
       medal(3, '2026-03-15', 'gold')
     ]);
     expect(sorted.map((m) => m.id)).toEqual([3, 2, 1]);
+  });
+});
+
+describe('danLevel', () => {
+  it('reads the dan number from the grade name', () => {
+    expect(danLevel('1. Dan')).toBe(1);
+    expect(danLevel('6. Dan')).toBe(6);
+    expect(danLevel('3 Dan')).toBe(3);
+  });
+
+  it('gives null for kyu grades and levels beyond 6', () => {
+    expect(danLevel('1. Kyu')).toBeNull();
+    expect(danLevel('7. Dan')).toBeNull();
+    expect(danLevel('')).toBeNull();
   });
 });

@@ -45,6 +45,17 @@ export function beltRingColor(beltColor: string): string {
   return beltColor;
 }
 
+/**
+ * Dan level (1–6) from a grade name such as "2. Dan", used for the stripes on a black
+ * belt. Anything else — kyu grades, levels beyond 6, unparseable names — gives null.
+ */
+export function danLevel(grade: string): number | null {
+  const m = /(\d+)\.?\s*dan\b/i.exec(grade);
+  if (!m) return null;
+  const n = Number(m[1]);
+  return n >= 1 && n <= 6 ? n : null;
+}
+
 /** Ladder per section, lowest grade first. */
 export function gradesBySection(definitions: GradeDefinition[]): Map<string, GradeDefinition[]> {
   const map = new Map<string, GradeDefinition[]>();

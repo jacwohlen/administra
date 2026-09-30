@@ -117,7 +117,7 @@
   <div class="divide-y divide-surface-300-700">
     {#each current as g (g.section)}
       <div class="flex items-center gap-3 py-2">
-        <BeltStrip color={g.beltColor} isDan={g.isDan} size="lg" title={g.grade} />
+        <BeltStrip color={g.beltColor} isDan={g.isDan} grade={g.grade} size="lg" title={g.grade} />
         <div class="flex-1 min-w-0">
           <p class="text-sm text-surface-600-400">{g.section}</p>
           <div class="font-semibold leading-tight">{g.grade}</div>
@@ -142,7 +142,12 @@
     {#each historySorted as h (h.id)}
       {@const d = definitionOf(h.section, h.grade)}
       <li class="flex items-center gap-2 text-sm">
-        <BeltStrip color={d?.beltColor ?? '#999'} isDan={d?.isDan ?? false} size="sm" />
+        <BeltStrip
+          color={d?.beltColor ?? '#999'}
+          isDan={d?.isDan ?? false}
+          grade={h.grade}
+          size="sm"
+        />
         <span class="font-semibold">{h.grade}</span>
         <span class="text-surface-600-400 truncate">{h.section} · {formatDate(h.examDate)}</span>
         {#if h.note}
