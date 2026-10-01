@@ -15,7 +15,11 @@ export const load: PageLoad = async ({ parent }) => {
       .select('*')
       .order('status', { ascending: true })
       .order('created_at', { ascending: false }),
-    supabaseClient.from('members').select('id, firstname, lastname').order('lastname')
+    supabaseClient
+      .from('members')
+      .select('id, firstname, lastname')
+      .is('archivedAt', null)
+      .order('lastname')
   ]);
 
   if (profilesRes.error) {

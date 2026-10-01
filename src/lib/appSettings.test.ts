@@ -27,6 +27,7 @@ describe('applyClubSettings', () => {
       'club.contactEmail': 'info@example.org',
       'club.sections': ['Judo', ' Karate '],
       'trial.sessionThreshold': 5,
+      'trial.inactiveDays': 90,
       'locale.default': 'en'
     });
     expect(c).toEqual({
@@ -36,6 +37,7 @@ describe('applyClubSettings', () => {
       contactEmail: 'info@example.org',
       sections: ['Judo', 'Karate'],
       trialSessionThreshold: 5,
+      trialInactiveDays: 90,
       defaultLocale: 'en'
     });
   });
@@ -135,6 +137,7 @@ describe('SETTING_FIELDS', () => {
       'club.sections': ['X'],
       'locale.default': DEFAULT_CLUB_CONFIG.defaultLocale === 'de' ? 'en' : 'de',
       'trial.sessionThreshold': 99,
+      'trial.inactiveDays': 99,
       'display.checklistStreakLength': 99,
       'display.attendanceLogPageSize': 99,
       'display.attendanceGraphMonths': 99,

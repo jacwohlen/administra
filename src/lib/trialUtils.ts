@@ -43,14 +43,49 @@ export function splitTrainingsByAge(
   return { suggested, others };
 }
 
-/** Tabs of the trial overview: one per status, plus everyone and the candidates due to sign up. */
-export type TrialTab = 'all' | TrialStatus | 'convert';
+/** Last sign of life: the last attended session, else the last status change or the registration. */
+export function lastTrialActivity(member: TrialMember): string | null {
+  return member.lastAttendedAt ?? member.trialStatusChangedAt ?? member.trialRegisteredAt ?? null;
+}
 
-export function matchesTrialTab(member: TrialMember, tab: TrialTab, threshold: number): boolean {
+/**
+ * An assigned candidate who has not been to training for `inactiveDays`
+ * (configured as `clubConfig.trialInactiveDays`) — they most likely stopped
+ * coming and can be archived. New and waiting candidates are not flagged:
+ * they are not expected to attend yet.
+ */
+export function isTrialInactive(
+  member: TrialMember,
+  inactiveDays: number,
+  now: Date = new Date()
+): boolean {
+  if (member.archivedAt || member.trialStatus !== 'assigned') return false;
+  const last = lastTrialActivity(member);
+  if (!last) return false;
+  return now.getTime() - Date.parse(last) >= inactiveDays * 86_400_000;
+}
+
+/**
+ * Tabs of the trial overview: one per status, the candidates due to sign up,
+ * the ones who stopped coming, the archive and everyone not archived.
+ */
+export type TrialTab = 'all' | TrialStatus | 'convert' | 'inactive' | 'archived';
+
+export function matchesTrialTab(
+  member: TrialMember,
+  tab: TrialTab,
+  threshold: number,
+  inactiveDays: number,
+  now: Date = new Date()
+): boolean {
+  if (tab === 'archived') return !!member.archivedAt;
+  if (member.archivedAt) return false;
   if (tab === 'all') return true;
+  if (tab === 'inactive') return isTrialInactive(member, inactiveDays, now);
   if (tab === 'convert') {
     return (
       member.trialStatus !== 'cancelled' &&
+      !isTrialInactive(member, inactiveDays, now) &&
       trialProgress(member.attendedCount, threshold) === 'convert'
     );
   }

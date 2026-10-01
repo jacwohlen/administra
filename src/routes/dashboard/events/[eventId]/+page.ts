@@ -44,7 +44,11 @@ export async function load({ params, parent }) {
     // Medals recorded for this event (tournament placements)
     supabaseClient.from('member_medals').select('*').eq('eventId', params.eventId),
     // All members for adding new participants
-    supabaseClient.from('members').select('*').order('lastname', { ascending: true })
+    supabaseClient
+      .from('members')
+      .select('*')
+      .is('archivedAt', null)
+      .order('lastname', { ascending: true })
   ]);
 
   if (participantsError) {

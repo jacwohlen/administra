@@ -107,6 +107,10 @@
           "label": "Probetraining-Schwelle",
           "description": "Probetrainings, nach denen ein Kandidat zur Aufnahme vorgeschlagen wird."
         },
+        "trialInactiveDays": {
+          "label": "Probetraining: inaktiv nach (Tagen)",
+          "description": "Tage ohne Trainingsbesuch, nach denen ein zugewiesener Kandidat als inaktiv gilt und archiviert werden kann."
+        },
         "checklistStreakLength": {
           "label": "Länge der Anwesenheitsserie",
           "description": "Anzahl Trainings, die als Serienpunkte auf der Checkliste erscheinen."
@@ -291,7 +295,9 @@
         "title": "Trainings Historie",
         "noItems": "Keine Trainings registriert"
       },
-      "moreActions": "Weitere Aktionen"
+      "moreActions": "Weitere Aktionen",
+      "archived": "Archiviert am {date} – erscheint nicht in der Mitgliederliste und der Suche.",
+      "archivedLink": "Im Probetraining-Archiv wiederherstellen"
     },
     "stats": {
       "all": "Alle",
@@ -474,7 +480,9 @@
         "assigned": "Zugewiesen",
         "convert": "Mitgliedschaft klären",
         "cancelled": "Abgesagt",
-        "all": "Alle"
+        "all": "Alle",
+        "inactive": "Inaktiv",
+        "archived": "Archiv"
       },
       "status": {
         "new": "Neu",
@@ -502,8 +510,8 @@
         "confirmCancel": "Ja, absagen",
         "reactivate": "Wieder aufnehmen"
       },
-      "cancelConfirm": "Anmeldung als abgesagt markieren?",
-      "cancelConfirmAssigned": "Anmeldung als abgesagt markieren? Die Person wird aus den zugewiesenen Trainings entfernt.",
+      "cancelConfirm": "Anmeldung als abgesagt markieren? Die Person bleibt gespeichert; um sie auch aus Mitgliederliste und Suche zu entfernen, archivieren.",
+      "cancelConfirmAssigned": "Anmeldung als abgesagt markieren? Die Person wird aus den zugewiesenen Trainings entfernt, bleibt aber gespeichert; um sie auch aus Mitgliederliste und Suche zu entfernen, archivieren.",
       "statusChanged": {
         "new": "Anmeldung wieder aufgenommen",
         "waitlist": "Auf die Warteliste gesetzt",
@@ -526,14 +534,18 @@
         "assigned": "Niemand ist aktuell einem Training zugewiesen.",
         "convert": "Niemand hat die vereinbarte Anzahl Trainings erreicht.",
         "cancelled": "Keine abgesagten Anmeldungen.",
-        "all": "Keine Anmeldungen."
+        "all": "Keine Anmeldungen.",
+        "inactive": "Niemand ist seit längerem ausgeblieben.",
+        "archived": "Noch nichts archiviert."
       },
       "timeline": {
         "registered": "Angemeldet",
         "waitlist": "Auf die Warteliste gesetzt",
         "assigned": "Training zugewiesen",
         "cancelled": "Abgesagt",
-        "selfCancelled": "Selbst abgemeldet (über den Status-Link)"
+        "selfCancelled": "Selbst abgemeldet (über den Status-Link)",
+        "lastAttended": "Zuletzt im Training",
+        "archived": "Archiviert"
       },
       "attendedCount": "{count, plural, =0 {noch nicht besucht} one {# Training besucht} other {# Trainings besucht}}",
       "mail": {
@@ -560,6 +572,24 @@
         "copied": "Status-Link kopiert",
         "copyError": "Link konnte nicht kopiert werden",
         "hint": "Persönlicher Link zur Statusseite dieser Anmeldung kopieren"
+      },
+      "inactiveHint": "Zugewiesen, aber seit mindestens {days} Tagen nicht mehr im Training.",
+      "lastAttendedAgo": "zuletzt {ago}",
+      "neverAttended": "nie erschienen",
+      "archive": {
+        "action": "Archivieren",
+        "hint": "Aus Mitgliederliste und Suche entfernen; besuchte Trainings bleiben in der Statistik.",
+        "confirmOne": "Archivieren? Die Person wird als abgesagt markiert und erscheint nicht mehr in der Mitgliederliste und der Suche. Besuchte Trainings und E-Mails bleiben erhalten; im Archiv lässt sie sich wiederherstellen.",
+        "confirm": "Archivieren",
+        "bulk": "Alle archivieren ({count})",
+        "bulkHint": "Wer hier steht, kann archiviert werden: weg aus Mitgliederliste und Suche, besuchte Trainings bleiben in der Statistik.",
+        "confirmBulk": "{count, plural, one {# Person} other {# Personen}} archivieren? Sie erscheinen nicht mehr in der Mitgliederliste und der Suche; besuchte Trainings bleiben erhalten.",
+        "done": "{count, plural, one {Archiviert} other {# Personen archiviert}}",
+        "restored": "Wiederhergestellt",
+        "restore": "Wiederherstellen",
+        "error": "Archivieren fehlgeschlagen",
+        "chip": "archiviert",
+        "summary": "{count, plural, one {# archivierte Person} other {# archivierte Personen}} mit zusammen {sessions, plural, one {# besuchten Probetraining} other {# besuchten Probetrainings}}. Archivierte erscheinen nicht in Mitgliederliste und Suche."
       }
     },
     "login": {

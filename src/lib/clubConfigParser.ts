@@ -21,6 +21,8 @@ export interface ClubConfig {
   sections: string[];
   /** Trial sessions after which a candidate is flagged to become a member. */
   trialSessionThreshold: number;
+  /** Days without attendance after which an assigned trial candidate counts as inactive. */
+  trialInactiveDays: number;
   /** Language of public-facing pages unless the visitor picks another. */
   defaultLocale: PublicLocale;
 }
@@ -32,6 +34,7 @@ export const DEFAULT_CLUB_CONFIG: ClubConfig = {
   contactEmail: null,
   sections: ['Judo', 'Aikido'],
   trialSessionThreshold: 3,
+  trialInactiveDays: 60,
   defaultLocale: 'de'
 };
 
@@ -83,6 +86,7 @@ export function parseClubConfig(
       raw.PUBLIC_TRIAL_SESSION_THRESHOLD,
       defaults.trialSessionThreshold
     ),
+    trialInactiveDays: positiveInt(raw.PUBLIC_TRIAL_INACTIVE_DAYS, defaults.trialInactiveDays),
     defaultLocale: publicLocale(raw.PUBLIC_DEFAULT_LOCALE, defaults.defaultLocale)
   };
 }
