@@ -10,6 +10,7 @@ export async function load({ depends }) {
     supabaseClient
       .from('members')
       .select('id, lastname, firstname, labels')
+      .is('archivedAt', null)
       .order('lastname', { ascending: true })
       .order('firstname', { ascending: true })
       .returns<Member[]>(),

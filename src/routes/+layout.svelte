@@ -7,10 +7,11 @@
   import 'dayjs/locale/de';
   import { locale } from 'svelte-i18n';
   import type { Snippet } from 'svelte';
+  import type { LayoutData } from './$types';
 
   import '../app.css';
 
-  let { children }: { children: Snippet } = $props();
+  let { data, children }: { data: LayoutData; children: Snippet } = $props();
 
   $effect(() => {
     if ($locale) {
@@ -21,9 +22,14 @@
   onMount(() => {
     const {
       data: { subscription }
-    } = supabaseClient.auth.onAuthStateChange(() => {
-      console.log('Auth state change detected');
-      invalidateAll();
+    } = supabaseClient.auth.onAuthStateChange((_event, session) => {
+      // Supabase reports the current session right after subscribing
+      // (INITIAL_SESSION), and again when another tab refreshes it. Reload
+      // only when it differs from the one the page was loaded with;
+      // otherwise every page would load all of its data twice.
+      if (session?.expires_at !== data.session?.expires_at) {
+        invalidateAll();
+      }
     });
     return () => {
       subscription.unsubscribe();

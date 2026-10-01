@@ -21,7 +21,10 @@
     faRotateLeft,
     faSpinner,
     faPaperPlane,
-    faLink
+    faLink,
+    faBoxArchive,
+    faBoxOpen,
+    faBed
   } from '@fortawesome/free-solid-svg-icons';
   import { calculateAge } from '$lib/utils';
   import {
@@ -29,6 +32,8 @@
     matchesTrialTab,
     sortTrialMembers,
     elapsedSince,
+    isTrialInactive,
+    lastTrialActivity,
     type TrialTab
   } from '$lib/trialUtils';
   import { clubConfig } from '$lib/clubConfig';
@@ -47,9 +52,22 @@
   } from '$lib/models';
   import dayjs from 'dayjs';
 
-  const TABS: TrialTab[] = ['new', 'waitlist', 'assigned', 'convert', 'cancelled', 'all'];
+  const TABS: TrialTab[] = [
+    'new',
+    'waitlist',
+    'assigned',
+    'convert',
+    'inactive',
+    'cancelled',
+    'archived',
+    'all'
+  ];
+  /** Secondary filters next to the search: clean-up lists, the archive and everyone. */
+  const FILTER_TABS = ['inactive', 'cancelled', 'archived', 'all'] as const;
+  /** Tabs offering to archive everyone listed at once. */
+  const BULK_ARCHIVE_TABS: TrialTab[] = ['inactive', 'cancelled'];
 
-  /** The work queues get a tile each; 'cancelled' and 'all' are secondary filters. */
+  /** The work queues get a tile each; the rest are secondary filters. */
   const TILES = [
     { tab: 'new', icon: faInbox, badge: 'bg-primary-500/15 text-primary-700-300' },
     { tab: 'waitlist', icon: faHourglassHalf, badge: 'bg-warning-500/20 text-warning-800-200' },
@@ -88,11 +106,15 @@
   let mailRequest = $state<{ member: TrialMember; kind: TrialMailKind } | null>(null);
   let expandedId = $state<number | null>(null);
   let confirmCancelId = $state<number | null>(null);
+  let confirmArchiveId = $state<number | null>(null);
+  let confirmBulkArchive = $state(false);
   let busyId = $state<number | null>(null);
   let searchTerm = $state('');
   // Open on the work queue; fall back to everyone when nothing new came in.
   let tab = $state<TrialTab>(
-    untrack(() => data.trialMembers.some((m) => m.trialStatus === 'new')) ? 'new' : 'all'
+    untrack(() => data.trialMembers.some((m) => m.trialStatus === 'new' && !m.archivedAt))
+      ? 'new'
+      : 'all'
   );
 
   let trainingById = $derived.by(() => {
@@ -161,7 +183,7 @@
     const counts = {} as Record<TrialTab, number>;
     for (const t of TABS) {
       counts[t] = data.trialMembers.filter((m) =>
-        matchesTrialTab(m, t, clubConfig.trialSessionThreshold)
+        matchesTrialTab(m, t, clubConfig.trialSessionThreshold, clubConfig.trialInactiveDays)
       ).length;
     }
     return counts;
@@ -171,7 +193,12 @@
     const q = searchTerm.toLowerCase().trim();
     const matching = data.trialMembers.filter((m) => {
       if (q && !`${m.firstname} ${m.lastname}`.toLowerCase().includes(q)) return false;
-      return matchesTrialTab(m, tab, clubConfig.trialSessionThreshold);
+      return matchesTrialTab(
+        m,
+        tab,
+        clubConfig.trialSessionThreshold,
+        clubConfig.trialInactiveDays
+      );
     });
     return sortTrialMembers(matching, tab);
   });
@@ -182,16 +209,26 @@
       .filter((t): t is Training => t !== undefined);
   }
 
+  /** Everyone archived, with the trial sessions they attended — kept for the statistics. */
+  let archiveSummary = $derived.by(() => {
+    const archived = data.trialMembers.filter((m) => m.archivedAt);
+    return {
+      count: archived.length,
+      sessions: archived.reduce((sum, m) => sum + m.attendedCount, 0)
+    };
+  });
+
   /** Newest registration, longest wait: a hint under the tile's count. */
   let tileHints = $derived.by(() => {
     const hints: Partial<Record<TrialTab, string>> = {};
-    const fresh = data.trialMembers
+    const active = data.trialMembers.filter((m) => !m.archivedAt);
+    const fresh = active
       .filter((m) => m.trialStatus === 'new' && m.trialRegisteredAt)
       .map((m) => m.trialRegisteredAt as string)
       .sort()
       .at(-1);
     if (fresh) hints.new = $_('page.probetraining.hint.newest', { values: { ago: ago(fresh) } });
-    const waiting = data.trialMembers
+    const waiting = active
       .filter((m) => m.trialStatus === 'waitlist' && m.trialStatusChangedAt)
       .map((m) => m.trialStatusChangedAt as string)
       .sort()
@@ -215,6 +252,60 @@
   function toggle(id: number) {
     expandedId = expandedId === id ? null : id;
     confirmCancelId = null;
+    confirmArchiveId = null;
+  }
+
+  function selectTab(t: TrialTab) {
+    tab = t;
+    confirmBulkArchive = false;
+  }
+
+  /**
+   * Archived candidates disappear from the member list and searches but keep
+   * their attendance. Archiving also cancels them, which removes their
+   * training assignments (database trigger).
+   */
+  async function archive(ids: number[]) {
+    if (!ids.length) return;
+    busyId = ids.length === 1 ? ids[0] : -1;
+    try {
+      const { error } = await supabaseClient
+        .from('members')
+        .update({ archivedAt: new Date().toISOString(), trialStatus: 'cancelled' })
+        .in('id', ids);
+      if (error) throw error;
+      toaster.success({
+        title: $_('page.probetraining.archive.done', { values: { count: ids.length } })
+      });
+      confirmArchiveId = null;
+      confirmBulkArchive = false;
+      expandedId = null;
+      await invalidate('probetraining:list');
+    } catch (e) {
+      console.error('Error archiving trial candidates:', e);
+      toaster.error({ title: $_('page.probetraining.archive.error') });
+    } finally {
+      busyId = null;
+    }
+  }
+
+  async function restore(m: TrialMember) {
+    busyId = m.id;
+    try {
+      const { error } = await supabaseClient
+        .from('members')
+        .update({ archivedAt: null })
+        .eq('id', m.id);
+      if (error) throw error;
+      toaster.success({ title: $_('page.probetraining.archive.restored') });
+      expandedId = null;
+      await invalidate('probetraining:list');
+    } catch (e) {
+      console.error('Error restoring trial candidate:', e);
+      toaster.error({ title: $_('page.probetraining.archive.error') });
+    } finally {
+      busyId = null;
+    }
   }
 
   async function setStatus(m: TrialMember, status: TrialStatus) {
@@ -277,7 +368,7 @@
         class="card border p-3 flex items-start gap-3 min-w-0 text-left transition-colors {active
           ? 'border-primary-500 bg-primary-500/5 ring-1 ring-primary-500'
           : 'border-surface-200-800 hover:bg-surface-100-900'}"
-        onclick={() => (tab = tile.tab)}
+        onclick={() => selectTab(tile.tab)}
       >
         <span
           class="hidden sm:flex size-10 rounded-md items-center justify-center flex-shrink-0 {tile.badge}"
@@ -314,13 +405,13 @@
         placeholder={$_('page.probetraining.searchPlaceholder')}
       />
     </label>
-    <div class="flex gap-1" role="tablist">
-      {#each ['cancelled', 'all'] as const as t (t)}
+    <div class="flex flex-wrap gap-1" role="tablist">
+      {#each FILTER_TABS as t (t)}
         <button
           role="tab"
           aria-selected={tab === t}
           class="btn btn-sm {tab === t ? 'preset-filled-primary-500' : 'preset-tonal-surface'}"
-          onclick={() => (tab = t)}
+          onclick={() => selectTab(t)}
         >
           {$_('page.probetraining.tab.' + t)}
           <span class="tabular-nums opacity-70">{tabCounts[t]}</span>
@@ -328,6 +419,64 @@
       {/each}
     </div>
   </div>
+
+  {#if tab === 'inactive' || tab === 'archived'}
+    <p class="text-xs text-surface-600-400 mb-2">
+      {tab === 'inactive'
+        ? $_('page.probetraining.inactiveHint', { values: { days: clubConfig.trialInactiveDays } })
+        : $_('page.probetraining.archive.summary', {
+            values: { count: archiveSummary.count, sessions: archiveSummary.sessions }
+          })}
+    </p>
+  {/if}
+
+  {#if BULK_ARCHIVE_TABS.includes(tab) && visibleMembers.length > 0 && data.canWrite}
+    <div
+      class="flex flex-wrap items-center gap-2 mb-3 rounded-md border px-3 py-2 {confirmBulkArchive
+        ? 'border-warning-500/40 bg-warning-500/5'
+        : 'border-surface-200-800'}"
+    >
+      <p class="flex-1 min-w-48 text-xs">
+        {confirmBulkArchive
+          ? $_('page.probetraining.archive.confirmBulk', {
+              values: { count: visibleMembers.length }
+            })
+          : $_('page.probetraining.archive.bulkHint')}
+      </p>
+      {#if confirmBulkArchive}
+        <button
+          class="btn btn-sm preset-tonal-surface"
+          disabled={busyId !== null}
+          onclick={() => (confirmBulkArchive = false)}
+        >
+          {$_('button.cancel')}
+        </button>
+        <button
+          class="btn btn-sm preset-filled-warning-500"
+          disabled={busyId !== null}
+          onclick={() => archive(visibleMembers.map((m) => m.id))}
+        >
+          {#if busyId === -1}
+            <Fa icon={faSpinner} spin size="xs" />
+          {:else}
+            <Fa icon={faBoxArchive} size="xs" />
+          {/if}
+          <span>{$_('page.probetraining.archive.confirm')}</span>
+        </button>
+      {:else}
+        <button
+          class="btn btn-sm preset-tonal-warning"
+          disabled={busyId !== null}
+          onclick={() => (confirmBulkArchive = true)}
+        >
+          <Fa icon={faBoxArchive} size="xs" />
+          <span>
+            {$_('page.probetraining.archive.bulk', { values: { count: visibleMembers.length } })}
+          </span>
+        </button>
+      {/if}
+    </div>
+  {/if}
 
   {#if visibleMembers.length === 0}
     <section
@@ -345,7 +494,10 @@
         {@const age = calculateAge(m.birthday)}
         {@const assigned = assignedTrainings(m.id)}
         {@const progress = trialProgress(m.attendedCount, clubConfig.trialSessionThreshold)}
-        {@const showProgress = m.trialStatus !== 'cancelled' && progress === 'convert'}
+        {@const inactive = isTrialInactive(m, clubConfig.trialInactiveDays)}
+        {@const lastActivity = lastTrialActivity(m)}
+        {@const showProgress =
+          m.trialStatus !== 'cancelled' && !m.archivedAt && !inactive && progress === 'convert'}
         {@const style = STATUS_STYLE[m.trialStatus]}
         {@const isOpen = expandedId === m.id}
         <li class={isOpen ? 'bg-surface-100-900/60' : ''}>
@@ -383,7 +535,12 @@
                 {/if}
               </span>
               <span class="text-xs text-surface-600-400 flex items-center gap-1.5 min-w-0 mt-0.5">
-                {#if tab === 'all' || tab === 'convert' || tab === 'cancelled'}
+                {#if m.archivedAt}
+                  <span class="chip text-[10px] py-0 px-1.5 preset-tonal-surface gap-1">
+                    <Fa icon={faBoxArchive} size="xs" />
+                    {$_('page.probetraining.archive.chip')}
+                  </span>
+                {:else if tab !== 'new' && tab !== 'waitlist' && tab !== 'assigned'}
                   <span class="chip text-[10px] py-0 px-1.5 {style.chip}">
                     {statusLabel(m)}
                   </span>
@@ -408,7 +565,21 @@
             </span>
 
             <span class="hidden sm:flex items-center gap-1 min-w-0 max-w-[38%] flex-shrink-0">
-              {#if m.trialStatus === 'waitlist' && m.trialStatusChangedAt}
+              {#if inactive && lastActivity}
+                <span
+                  class="chip preset-tonal-warning text-xs gap-1"
+                  title={$_('page.probetraining.inactiveHint', {
+                    values: { days: clubConfig.trialInactiveDays }
+                  })}
+                >
+                  <Fa icon={faBed} size="xs" />
+                  {m.lastAttendedAt
+                    ? $_('page.probetraining.lastAttendedAgo', {
+                        values: { ago: ago(m.lastAttendedAt) }
+                      })
+                    : $_('page.probetraining.neverAttended')}
+                </span>
+              {:else if m.trialStatus === 'waitlist' && m.trialStatusChangedAt}
                 <span class="chip preset-tonal-warning text-xs gap-1">
                   <Fa icon={faHourglassHalf} size="xs" />
                   {ago(m.trialStatusChangedAt, 'waiting')}
@@ -558,6 +729,21 @@
                       </span>
                     </li>
                   {/if}
+                  {#if m.lastAttendedAt}
+                    <li class="pl-4 relative">
+                      <span
+                        class="absolute -left-[7px] top-1 size-3 rounded-full ring-2 ring-surface-50-950 {inactive
+                          ? 'bg-warning-500'
+                          : 'bg-surface-300-700'}"
+                      ></span>
+                      <span class="block font-medium"
+                        >{$_('page.probetraining.timeline.lastAttended')}</span
+                      >
+                      <span class="text-xs text-surface-600-400">
+                        {dayjs(m.lastAttendedAt).format('DD.MM.YYYY')} · {ago(m.lastAttendedAt)}
+                      </span>
+                    </li>
+                  {/if}
                   {#each emailsByMember.get(m.id) ?? [] as mail (mail.id)}
                     <li class="pl-4 relative">
                       <span
@@ -581,6 +767,19 @@
                       </span>
                     </li>
                   {/each}
+                  {#if m.archivedAt}
+                    <li class="pl-4 relative">
+                      <span
+                        class="absolute -left-[7px] top-1 size-3 rounded-full bg-surface-400-600 ring-2 ring-surface-50-950"
+                      ></span>
+                      <span class="block font-medium"
+                        >{$_('page.probetraining.timeline.archived')}</span
+                      >
+                      <span class="text-xs text-surface-600-400">
+                        {dayjs(m.archivedAt).format('DD.MM.YYYY')}
+                      </span>
+                    </li>
+                  {/if}
                 </ol>
 
                 {#if m.notes}
@@ -593,7 +792,50 @@
                 {/if}
               </div>
 
-              {#if confirmCancelId === m.id}
+              {#if confirmArchiveId === m.id}
+                <div
+                  class="flex flex-wrap items-center gap-2 rounded-md border border-warning-500/40 bg-warning-500/5 px-3 py-2"
+                  role="alertdialog"
+                  aria-label={$_('page.probetraining.archive.action')}
+                >
+                  <p class="flex-1 min-w-48 text-xs">
+                    {$_('page.probetraining.archive.confirmOne')}
+                  </p>
+                  <button
+                    class="btn btn-sm preset-tonal-surface"
+                    disabled={busyId === m.id}
+                    onclick={() => (confirmArchiveId = null)}
+                  >
+                    {$_('button.cancel')}
+                  </button>
+                  <button
+                    class="btn btn-sm preset-filled-warning-500"
+                    disabled={busyId === m.id}
+                    onclick={() => archive([m.id])}
+                  >
+                    {$_('page.probetraining.archive.confirm')}
+                  </button>
+                </div>
+              {:else if m.archivedAt}
+                <div class="flex flex-wrap items-center gap-2 pt-3 border-t border-surface-200-800">
+                  <a href="/dashboard/members/{m.id}" class="btn btn-sm preset-tonal-surface">
+                    {$_('button.view')}
+                  </a>
+                  {#if data.canWrite}
+                    <button
+                      class="btn btn-sm preset-tonal-surface"
+                      disabled={busyId === m.id}
+                      onclick={() => restore(m)}
+                    >
+                      <Fa icon={faBoxOpen} size="xs" />
+                      <span>{$_('page.probetraining.archive.restore')}</span>
+                    </button>
+                  {/if}
+                  {#if busyId === m.id}
+                    <Fa icon={faSpinner} spin />
+                  {/if}
+                </div>
+              {:else if confirmCancelId === m.id}
                 <div
                   class="flex flex-wrap items-center gap-2 rounded-md border border-error-500/40 bg-error-500/5 px-3 py-2"
                   role="alertdialog"
@@ -624,23 +866,39 @@
                   <a href="/dashboard/members/{m.id}" class="btn btn-sm preset-tonal-surface">
                     {$_('button.view')}
                   </a>
-                  {#if m.trialStatus === 'cancelled'}
+                  {#if data.canWrite}
+                    {#if m.trialStatus === 'cancelled'}
+                      <button
+                        class="btn btn-sm preset-tonal-surface"
+                        disabled={busyId === m.id}
+                        onclick={() => setStatus(m, 'new')}
+                      >
+                        <Fa icon={faRotateLeft} size="xs" />
+                        <span>{$_('page.probetraining.action.reactivate')}</span>
+                      </button>
+                    {:else}
+                      <button
+                        class="btn btn-sm preset-tonal-error"
+                        disabled={busyId === m.id}
+                        onclick={() => (confirmCancelId = m.id)}
+                      >
+                        <Fa icon={faBan} size="xs" />
+                        <span>{$_('page.probetraining.action.cancel')}</span>
+                      </button>
+                    {/if}
+                  {/if}
+                  {#if data.canWrite}
                     <button
                       class="btn btn-sm preset-tonal-surface"
                       disabled={busyId === m.id}
-                      onclick={() => setStatus(m, 'new')}
+                      title={$_('page.probetraining.archive.hint')}
+                      onclick={() => {
+                        confirmCancelId = null;
+                        confirmArchiveId = m.id;
+                      }}
                     >
-                      <Fa icon={faRotateLeft} size="xs" />
-                      <span>{$_('page.probetraining.action.reactivate')}</span>
-                    </button>
-                  {:else}
-                    <button
-                      class="btn btn-sm preset-tonal-error"
-                      disabled={busyId === m.id}
-                      onclick={() => (confirmCancelId = m.id)}
-                    >
-                      <Fa icon={faBan} size="xs" />
-                      <span>{$_('page.probetraining.action.cancel')}</span>
+                      <Fa icon={faBoxArchive} size="xs" />
+                      <span>{$_('page.probetraining.archive.action')}</span>
                     </button>
                   {/if}
                   {#if busyId === m.id}
@@ -657,7 +915,7 @@
                       <span>{$_('page.probetraining.statusLink.copy')}</span>
                     </button>
                   {/if}
-                  {#if m.email}
+                  {#if m.email && data.canWrite}
                     <button
                       class="btn btn-sm preset-tonal-surface"
                       disabled={busyId === m.id}
@@ -667,7 +925,7 @@
                       <span>{$_('page.probetraining.mail.write')}</span>
                     </button>
                   {/if}
-                  {#if m.trialStatus === 'new'}
+                  {#if m.trialStatus === 'new' && data.canWrite}
                     <button
                       class="btn btn-sm preset-tonal-warning"
                       disabled={busyId === m.id}
@@ -677,7 +935,7 @@
                       <span>{$_('page.probetraining.action.waitlist')}</span>
                     </button>
                   {/if}
-                  {#if m.trialStatus !== 'cancelled'}
+                  {#if m.trialStatus !== 'cancelled' && data.canWrite}
                     <button
                       class="btn btn-sm preset-filled-primary-500"
                       disabled={busyId === m.id}

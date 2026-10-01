@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { homePath, isApproved, isStaff } from './roles';
+import { homePath, isApproved, isStaff, isWriter } from './roles';
 
 describe('roles', () => {
   it('sends staff to the dashboard', () => {
@@ -21,5 +21,14 @@ describe('roles', () => {
     expect(homePath({ status: 'disabled', role: 'admin' })).toBe('/pending');
     expect(homePath(null)).toBe('/pending');
     expect(isStaff({ status: 'disabled', role: 'admin' })).toBe(false);
+  });
+
+  it('lets only approved trainers and admins write', () => {
+    expect(isWriter({ status: 'approved', role: 'trainer' })).toBe(true);
+    expect(isWriter({ status: 'approved', role: 'admin' })).toBe(true);
+    expect(isWriter({ status: 'approved', role: 'viewer' })).toBe(false);
+    expect(isWriter({ status: 'approved', role: 'member' })).toBe(false);
+    expect(isWriter({ status: 'pending', role: 'admin' })).toBe(false);
+    expect(isWriter(null)).toBe(false);
   });
 });

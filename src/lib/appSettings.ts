@@ -45,6 +45,7 @@ export function getSettingDefaults(): SettingValues {
     'club.sections': envClubConfig.sections,
     'locale.default': envClubConfig.defaultLocale,
     'trial.sessionThreshold': envClubConfig.trialSessionThreshold,
+    'trial.inactiveDays': envClubConfig.trialInactiveDays,
     'display.checklistStreakLength': DEFAULT_DISPLAY_CONFIG.checklistStreakLength,
     'display.attendanceLogPageSize': DEFAULT_DISPLAY_CONFIG.attendanceLogPageSize,
     'display.attendanceGraphMonths': DEFAULT_DISPLAY_CONFIG.attendanceGraphMonths,

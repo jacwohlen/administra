@@ -1,7 +1,6 @@
 <script lang="ts">
   let { year, yearmode }: { year: number; yearmode: 'YEAR' | 'ALL' } = $props();
 
-  import { LineChart } from '@carbon/charts-svelte';
   import { ScaleTypes } from '@carbon/charts/interfaces';
   import { supabaseClient } from '$lib/supabase';
   import { seriesColors } from '$lib/statsUtils';
@@ -108,7 +107,7 @@
       </div>
       {#if series.length > 0}
         <ChartFrame height={HEIGHT}>
-          {#snippet children(dark)}
+          {#snippet children(dark, { LineChart })}
             <LineChart
               data={series}
               options={{

@@ -32,6 +32,24 @@ export interface DirectoryMember {
   isMine: boolean;
 }
 
+/** Contact details only the member themselves (and staff) may read */
+export interface PrivateDetails {
+  birthday?: string | null;
+  mobile?: string | null;
+  email?: string | null;
+}
+
+/** Grades, medals and badges shown on every member profile */
+export interface MemberAchievements {
+  badges: Badge[];
+  badgeProgress: BadgeProgress[];
+  badgeDefinitions: BadgeDefinition[];
+  currentGrades: MemberCurrentGrade[];
+  gradeHistory: MemberGrade[];
+  medals: MemberMedal[];
+  gradeDefinitions: GradeDefinition[];
+}
+
 export interface Member {
   id: string;
   firstname: string;
@@ -45,6 +63,8 @@ export interface Member {
   labels?: string[];
   img?: string;
   imgUploaded?: string | Dayjs;
+  /** Archived trial candidates are hidden from member lists and searches. */
+  archivedAt?: string | null;
 }
 
 export interface Training {
@@ -82,6 +102,10 @@ export interface TrialMember {
   trialToken?: string | null;
   /** Cancelled through the status page rather than by staff. */
   trialSelfCancelled?: boolean;
+  /** Date (YYYY-MM-DD) of the last attended session, null when never attended. */
+  lastAttendedAt?: string | null;
+  /** Set when the candidate was archived: hidden from member lists and searches. */
+  archivedAt?: string | null;
 }
 
 /** Row of trial_emails: one mail to a trial candidate. */

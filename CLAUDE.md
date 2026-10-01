@@ -38,6 +38,7 @@ Attendance tracking app for martial arts clubs. SvelteKit frontend + Supabase (P
 - Routes: kebab-case directories
 - Environment variables: `PUBLIC_*` for client-accessible, `PRIVATE_*` for server-only
 - Formatting: Prettier (spaces, single quotes, no trailing commas, 100 char width)
+- Dashboard pages show add/edit/delete controls only when `data.canWrite` (trainer/admin, from `src/routes/dashboard/+layout.ts`); create/edit routes redirect viewers in their `+page.ts`. RLS stays the real guard.
 
 ## Database Migrations
 
@@ -51,3 +52,10 @@ merging to `main` applies new migrations to the Dev project
 (main.admin.jacwohlen.ch), and promoting `main` into `prod` applies them
 to production (admin.jacwohlen.ch). Never edit an already-merged
 migration — add a new one. Manual `supabase db push` is only a fallback.
+
+## Production Releases
+
+A prod release is a promotion PR `main` → `prod`, merged with a merge
+commit (never squash). The PR body and the merge commit message list the
+release's high-level features, fixes and included migrations — see the
+`prod-release` skill (`.claude/skills/prod-release/SKILL.md`).

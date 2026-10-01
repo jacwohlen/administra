@@ -7,6 +7,9 @@
   import { faRotate } from '@fortawesome/free-solid-svg-icons';
   import StatsSection from './StatsSection.svelte';
 
+  /** Recalculating badges needs write access (refresh_all_member_badges) */
+  let { canRefresh = false }: { canRefresh?: boolean } = $props();
+
   let leaderboard: BadgeLeaderboardEntry[] = $state([]);
   let loading = $state(true);
   let refreshing = $state(false);
@@ -39,17 +42,19 @@
 
 <StatsSection title={$_('badges.leaderboard')}>
   {#snippet actions()}
-    <button
-      class="btn btn-sm preset-tonal-surface"
-      onclick={refreshAllBadges}
-      disabled={refreshing}
-      title={$_('badges.refreshAll')}
-    >
-      <Fa icon={faRotate} spin={refreshing} />
-      <span class="hidden sm:inline"
-        >{refreshing ? $_('badges.refreshing') : $_('badges.refreshAll')}</span
+    {#if canRefresh}
+      <button
+        class="btn btn-sm preset-tonal-surface"
+        onclick={refreshAllBadges}
+        disabled={refreshing}
+        title={$_('badges.refreshAll')}
       >
-    </button>
+        <Fa icon={faRotate} spin={refreshing} />
+        <span class="hidden sm:inline"
+          >{refreshing ? $_('badges.refreshing') : $_('badges.refreshAll')}</span
+        >
+      </button>
+    {/if}
   {/snippet}
 
   {#if loading}

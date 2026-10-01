@@ -22,13 +22,14 @@
   let showDeleteConfirm = $state(false);
   let menuOpen = $state(false);
   let menuStyle = $state('');
-  let menuBtnEl: HTMLButtonElement;
+  let menuBtnEl = $state<HTMLButtonElement>();
 
   function toggleMenu() {
     if (menuOpen) {
       menuOpen = false;
       return;
     }
+    if (!menuBtnEl) return;
     const rect = menuBtnEl.getBoundingClientRect();
     const top = rect.bottom + 4;
     const left = rect.right - 192;
@@ -88,34 +89,36 @@
     <Fa icon={faArrowLeft} />
   </a>
   <h1 class="flex-1 min-w-0 truncate">{data.title}</h1>
-  <div class="flex gap-2 flex-shrink-0">
-    <a href="/dashboard/trainings/{data.id}/edit" class="btn preset-tonal-surface">
-      <Fa icon={faEdit} />
-    </a>
-    <div class="relative">
-      <button class="btn preset-tonal-surface" bind:this={menuBtnEl} onclick={toggleMenu}>
-        <Fa icon={faEllipsisVertical} />
-      </button>
-      {#if menuOpen}
-        <nav
-          class="card min-w-48 p-1 shadow-xl bg-surface-50-950 border border-surface-300-700"
-          style={menuStyle}
-        >
-          <button
-            class="btn w-full justify-start text-error-600-400"
-            onclick={() => {
-              menuOpen = false;
-              confirmDelete();
-            }}
-            disabled={isDeleting}
+  {#if data.canWrite}
+    <div class="flex gap-2 flex-shrink-0">
+      <a href="/dashboard/trainings/{data.id}/edit" class="btn preset-tonal-surface">
+        <Fa icon={faEdit} />
+      </a>
+      <div class="relative">
+        <button class="btn preset-tonal-surface" bind:this={menuBtnEl} onclick={toggleMenu}>
+          <Fa icon={faEllipsisVertical} />
+        </button>
+        {#if menuOpen}
+          <nav
+            class="card min-w-48 p-1 shadow-xl bg-surface-50-950 border border-surface-300-700"
+            style={menuStyle}
           >
-            <Fa icon={faTrash} />
-            <span>{$_('button.delete')}</span>
-          </button>
-        </nav>
-      {/if}
+            <button
+              class="btn w-full justify-start text-error-600-400"
+              onclick={() => {
+                menuOpen = false;
+                confirmDelete();
+              }}
+              disabled={isDeleting}
+            >
+              <Fa icon={faTrash} />
+              <span>{$_('button.delete')}</span>
+            </button>
+          </nav>
+        {/if}
+      </div>
     </div>
-  </div>
+  {/if}
 </div>
 <div class="flex items-center gap-2 mb-6 flex-wrap text-sm">
   <span class="chip preset-tonal-secondary">{data.section}</span>
@@ -130,13 +133,15 @@
 </div>
 
 <!-- Track Attendance -->
-<a
-  class="btn preset-filled-primary-500 w-full mb-6"
-  href="/dashboard/trainings/{data.id}/{getDateString()}"
->
-  <Fa icon={faClipboardCheck} />
-  <span>{$_('button.trackAttendance')}</span>
-</a>
+{#if data.canWrite}
+  <a
+    class="btn preset-filled-primary-500 w-full mb-6"
+    href="/dashboard/trainings/{data.id}/{getDateString()}"
+  >
+    <Fa icon={faClipboardCheck} />
+    <span>{$_('button.trackAttendance')}</span>
+  </a>
+{/if}
 
 {#if showDeleteConfirm}
   <!-- svelte-ignore a11y_no_static_element_interactions -->

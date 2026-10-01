@@ -4,6 +4,7 @@ import {
   trainingMatchesAge,
   splitTrainingsByAge,
   matchesTrialTab,
+  isTrialInactive,
   sortTrialMembers,
   elapsedSince
 } from './trialUtils';
@@ -116,18 +117,85 @@ describe('matchesTrialTab', () => {
 
   it('filters by status', () => {
     const m = candidate({ id: 1, trialStatus: 'waitlist' });
-    expect(matchesTrialTab(m, 'waitlist', threshold)).toBe(true);
-    expect(matchesTrialTab(m, 'new', threshold)).toBe(false);
-    expect(matchesTrialTab(m, 'all', threshold)).toBe(true);
+    expect(matchesTrialTab(m, 'waitlist', threshold, 60)).toBe(true);
+    expect(matchesTrialTab(m, 'new', threshold, 60)).toBe(false);
+    expect(matchesTrialTab(m, 'all', threshold, 60)).toBe(true);
   });
 
   it('lists candidates due to sign up unless they cancelled', () => {
     const due = candidate({ id: 1, trialStatus: 'assigned', attendedCount: 3 });
     const cancelled = candidate({ id: 2, trialStatus: 'cancelled', attendedCount: 5 });
     const early = candidate({ id: 3, trialStatus: 'assigned', attendedCount: 1 });
-    expect(matchesTrialTab(due, 'convert', threshold)).toBe(true);
-    expect(matchesTrialTab(cancelled, 'convert', threshold)).toBe(false);
-    expect(matchesTrialTab(early, 'convert', threshold)).toBe(false);
+    expect(matchesTrialTab(due, 'convert', threshold, 60)).toBe(true);
+    expect(matchesTrialTab(cancelled, 'convert', threshold, 60)).toBe(false);
+    expect(matchesTrialTab(early, 'convert', threshold, 60)).toBe(false);
+  });
+});
+
+describe('isTrialInactive', () => {
+  const now = new Date('2026-10-01T12:00:00Z');
+
+  it('flags assigned candidates who stopped coming', () => {
+    const gone = candidate({ id: 1, trialStatus: 'assigned', lastAttendedAt: '2026-07-01' });
+    const recent = candidate({ id: 2, trialStatus: 'assigned', lastAttendedAt: '2026-09-20' });
+    expect(isTrialInactive(gone, 60, now)).toBe(true);
+    expect(isTrialInactive(recent, 60, now)).toBe(false);
+  });
+
+  it('uses the configured number of days', () => {
+    const m = candidate({ id: 1, trialStatus: 'assigned', lastAttendedAt: '2026-09-01' });
+    expect(isTrialInactive(m, 60, now)).toBe(false);
+    expect(isTrialInactive(m, 30, now)).toBe(true);
+  });
+
+  it('falls back to the status change for candidates who never came', () => {
+    const never = candidate({
+      id: 1,
+      trialStatus: 'assigned',
+      trialStatusChangedAt: '2026-06-01T10:00:00Z'
+    });
+    expect(isTrialInactive(never, 60, now)).toBe(true);
+  });
+
+  it('ignores new, waiting, cancelled and archived candidates', () => {
+    const old = { lastAttendedAt: '2026-01-01' };
+    expect(isTrialInactive(candidate({ id: 1, trialStatus: 'new', ...old }), 60, now)).toBe(false);
+    expect(isTrialInactive(candidate({ id: 2, trialStatus: 'waitlist', ...old }), 60, now)).toBe(
+      false
+    );
+    expect(isTrialInactive(candidate({ id: 3, trialStatus: 'cancelled', ...old }), 60, now)).toBe(
+      false
+    );
+    const archived = candidate({
+      id: 4,
+      trialStatus: 'assigned',
+      archivedAt: '2026-09-01T10:00:00Z',
+      ...old
+    });
+    expect(isTrialInactive(archived, 60, now)).toBe(false);
+  });
+});
+
+describe('matchesTrialTab with archive and inactivity', () => {
+  const now = new Date('2026-10-01T12:00:00Z');
+
+  it('shows archived candidates only in the archive', () => {
+    const m = candidate({ id: 1, trialStatus: 'cancelled', archivedAt: '2026-09-01T10:00:00Z' });
+    expect(matchesTrialTab(m, 'archived', 3, 60, now)).toBe(true);
+    expect(matchesTrialTab(m, 'cancelled', 3, 60, now)).toBe(false);
+    expect(matchesTrialTab(m, 'all', 3, 60, now)).toBe(false);
+  });
+
+  it('moves inactive candidates out of the sign-up queue', () => {
+    const m = candidate({
+      id: 1,
+      trialStatus: 'assigned',
+      attendedCount: 4,
+      lastAttendedAt: '2026-05-01'
+    });
+    expect(matchesTrialTab(m, 'inactive', 3, 60, now)).toBe(true);
+    expect(matchesTrialTab(m, 'convert', 3, 60, now)).toBe(false);
+    expect(matchesTrialTab(m, 'assigned', 3, 60, now)).toBe(true);
   });
 });
 
