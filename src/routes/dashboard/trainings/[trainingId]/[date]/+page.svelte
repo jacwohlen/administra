@@ -18,7 +18,7 @@
     faChalkboardTeacher
   } from '@fortawesome/free-solid-svg-icons';
   import dayjs from 'dayjs';
-  import { goto } from '$app/navigation';
+  import { goto, preloadData } from '$app/navigation';
   import AddParticipantInputBox from './AddParticipantInputBox.svelte';
   import { supabaseClient } from '$lib/supabase';
   import { _ } from 'svelte-i18n';
@@ -148,17 +148,25 @@
     }
   }
 
+  function weekPath(offset: number): string {
+    return dayjs(data.date, 'YYYY-MM-DD')
+      .add(offset * 7, 'days')
+      .format('YYYY-MM-DD');
+  }
+
+  // Start loading the neighbouring week while the pointer is on its button,
+  // like links do (data-sveltekit-preload-data), so switching feels instant.
+  function preloadWeek(offset: number) {
+    preloadData(weekPath(offset));
+  }
+
   async function nextWeek() {
-    let d = dayjs(data.date, 'YYYY-MM-DD');
-    d = d.add(7, 'days');
-    await goto(d.format('YYYY-MM-DD'));
+    await goto(weekPath(1));
     filterData();
   }
 
   async function previousWeek() {
-    let d = dayjs(data.date, 'YYYY-MM-DD');
-    d = d.subtract(7, 'days');
-    await goto(d.format('YYYY-MM-DD'));
+    await goto(weekPath(-1));
     filterData();
   }
 
@@ -195,12 +203,24 @@
 
 <!-- Date navigation -->
 <div class="page-header">
-  <button class="btn preset-tonal-surface" onclick={previousWeek}>
+  <button
+    class="btn preset-tonal-surface"
+    onclick={previousWeek}
+    onpointerenter={() => preloadWeek(-1)}
+    ontouchstart={() => preloadWeek(-1)}
+    onfocus={() => preloadWeek(-1)}
+  >
     <Fa icon={faArrowLeft} />
     <span class="hidden sm:inline">{$_('button.week')}</span>
   </button>
   <h3>{formattedDate}</h3>
-  <button class="btn preset-tonal-surface" onclick={nextWeek}>
+  <button
+    class="btn preset-tonal-surface"
+    onclick={nextWeek}
+    onpointerenter={() => preloadWeek(1)}
+    ontouchstart={() => preloadWeek(1)}
+    onfocus={() => preloadWeek(1)}
+  >
     <span class="hidden sm:inline">{$_('button.week')}</span>
     <Fa icon={faArrowRight} />
   </button>
