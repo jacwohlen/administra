@@ -13,6 +13,13 @@ export function isStaff(profile: ProfileAccess): boolean {
   return isApproved(profile) && STAFF_ROLES.includes(profile!.role);
 }
 
+/** Roles that may change club data; mirrors is_writer() in the database. */
+export const WRITER_ROLES: readonly UserRole[] = ['trainer', 'admin'];
+
+export function isWriter(profile: ProfileAccess): boolean {
+  return isApproved(profile) && WRITER_ROLES.includes(profile!.role);
+}
+
 /** Where a signed-in account belongs: dashboard for staff, club area for members. */
 export function homePath(profile: ProfileAccess): '/dashboard' | '/club' | '/pending' {
   if (isStaff(profile)) return '/dashboard';

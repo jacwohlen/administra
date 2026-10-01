@@ -2,6 +2,7 @@
   import type { PageData } from './$types';
   import { _ } from 'svelte-i18n';
   import MemberProfile from '$lib/components/memberProfile/MemberProfile.svelte';
+  import { isWriter } from '$lib/roles';
   import {
     faArrowLeft,
     faCamera,
@@ -28,6 +29,8 @@
   let showDeleteConfirm = $state(false);
 
   let memberId = $derived(Number(data.id));
+  // Viewers get the profile read-only; the database enforces the same
+  let canWrite = $derived(isWriter(data.userProfile));
   let showPhotoMenu = $state(false);
 
   function refresh() {
@@ -138,13 +141,14 @@
   // Delete sits behind the ⋮ menu, as on the training page
   let menuOpen = $state(false);
   let menuStyle = $state('');
-  let menuBtnEl: HTMLButtonElement;
+  let menuBtnEl = $state<HTMLButtonElement>();
 
   function toggleMenu() {
     if (menuOpen) {
       menuOpen = false;
       return;
     }
+    if (!menuBtnEl) return;
     const rect = menuBtnEl.getBoundingClientRect();
     menuStyle = `position:fixed;top:${rect.bottom + 4}px;left:${rect.right - 192}px;z-index:9999;`;
     menuOpen = true;
@@ -256,45 +260,47 @@
       <Fa icon={faArrowLeft} />
     </a>
     <span class="flex-1 min-w-0 truncate text-surface-600-400">{$_('page.members.title')}</span>
-    <div class="flex gap-2 flex-shrink-0">
-      <button
-        class="btn preset-tonal-surface"
-        onclick={showEditForm}
-        title={$_('button.edit')}
-        aria-label={$_('button.edit')}
-      >
-        <Fa icon={faEdit} />
-      </button>
-      <div class="relative">
+    {#if canWrite}
+      <div class="flex gap-2 flex-shrink-0">
         <button
           class="btn preset-tonal-surface"
-          bind:this={menuBtnEl}
-          onclick={toggleMenu}
-          aria-label={$_('page.members.moreActions')}
-          aria-expanded={menuOpen}
+          onclick={showEditForm}
+          title={$_('button.edit')}
+          aria-label={$_('button.edit')}
         >
-          <Fa icon={faEllipsisVertical} />
+          <Fa icon={faEdit} />
         </button>
-        {#if menuOpen}
-          <nav
-            class="card min-w-48 p-1 shadow-xl bg-surface-50-950 border border-surface-300-700"
-            style={menuStyle}
+        <div class="relative">
+          <button
+            class="btn preset-tonal-surface"
+            bind:this={menuBtnEl}
+            onclick={toggleMenu}
+            aria-label={$_('page.members.moreActions')}
+            aria-expanded={menuOpen}
           >
-            <button
-              class="btn w-full justify-start text-error-600-400"
-              onclick={() => {
-                menuOpen = false;
-                confirmDelete();
-              }}
-              disabled={isDeleting}
+            <Fa icon={faEllipsisVertical} />
+          </button>
+          {#if menuOpen}
+            <nav
+              class="card min-w-48 p-1 shadow-xl bg-surface-50-950 border border-surface-300-700"
+              style={menuStyle}
             >
-              <Fa icon={faTrash} />
-              <span>{$_('button.delete')}</span>
-            </button>
-          </nav>
-        {/if}
+              <button
+                class="btn w-full justify-start text-error-600-400"
+                onclick={() => {
+                  menuOpen = false;
+                  confirmDelete();
+                }}
+                disabled={isDeleting}
+              >
+                <Fa icon={faTrash} />
+                <span>{$_('button.delete')}</span>
+              </button>
+            </nav>
+          {/if}
+        </div>
       </div>
-    </div>
+    {/if}
   </div>
 
   {#if showEditFormDialog}
@@ -367,67 +373,69 @@
     notes={data.notes}
     showAttendance
     achievements={data}
-    editing={{ events: data.pastEvents, onchanged: refresh }}
+    editing={canWrite ? { events: data.pastEvents, onchanged: refresh } : null}
   >
     {#snippet photoAction()}
-      {#if loadingImage}
-        <div class="absolute inset-0 flex items-center justify-center rounded-full bg-black/30">
-          <span class="animate-spin text-2xl text-white">...</span>
-        </div>
-      {/if}
-      <button
-        type="button"
-        class="absolute bottom-0 right-0 size-9 rounded-full preset-filled-surface-950-50 flex items-center justify-center shadow-lg ring-2 ring-surface-50-950"
-        title={$_('page.members.photo.change')}
-        aria-label={$_('page.members.photo.change')}
-        aria-expanded={showPhotoMenu}
-        onclick={() => (showPhotoMenu = !showPhotoMenu)}
-      >
-        <Fa icon={faCamera} size="sm" />
-      </button>
-      {#if showPhotoMenu}
-        <!-- svelte-ignore a11y_no_static_element_interactions -->
-        <div
-          class="fixed inset-0 z-40"
-          onclick={() => (showPhotoMenu = false)}
-          onkeydown={(e) => {
-            if (e.key === 'Escape') showPhotoMenu = false;
-          }}
-        ></div>
-        <div
-          class="absolute left-1/2 -translate-x-1/2 sm:left-0 sm:translate-x-0 top-full mt-2 z-50 card p-2 w-56 shadow-xl bg-surface-50-950 border border-surface-300-700 flex flex-col gap-1"
+      {#if canWrite}
+        {#if loadingImage}
+          <div class="absolute inset-0 flex items-center justify-center rounded-full bg-black/30">
+            <span class="animate-spin text-2xl text-white">...</span>
+          </div>
+        {/if}
+        <button
+          type="button"
+          class="absolute bottom-0 right-0 size-9 rounded-full preset-filled-surface-950-50 flex items-center justify-center shadow-lg ring-2 ring-surface-50-950"
+          title={$_('page.members.photo.change')}
+          aria-label={$_('page.members.photo.change')}
+          aria-expanded={showPhotoMenu}
+          onclick={() => (showPhotoMenu = !showPhotoMenu)}
         >
-          <button class="btn preset-tonal-surface justify-start" onclick={selectFiles}>
-            <Fa icon={faUpload} />
-            <span>{$_('page.members.photo.upload')}</span>
-          </button>
-          <button class="btn preset-tonal-surface justify-start" onclick={takePhoto}>
-            <Fa icon={faCamera} />
-            <span>{$_('page.members.photo.take')}</span>
-          </button>
-          {#if data.img}
-            <button class="btn preset-tonal-error justify-start" onclick={removePhoto}>
-              <Fa icon={faTrash} />
-              <span>{$_('page.members.photo.remove')}</span>
+          <Fa icon={faCamera} size="sm" />
+        </button>
+        {#if showPhotoMenu}
+          <!-- svelte-ignore a11y_no_static_element_interactions -->
+          <div
+            class="fixed inset-0 z-40"
+            onclick={() => (showPhotoMenu = false)}
+            onkeydown={(e) => {
+              if (e.key === 'Escape') showPhotoMenu = false;
+            }}
+          ></div>
+          <div
+            class="absolute left-1/2 -translate-x-1/2 sm:left-0 sm:translate-x-0 top-full mt-2 z-50 card p-2 w-56 shadow-xl bg-surface-50-950 border border-surface-300-700 flex flex-col gap-1"
+          >
+            <button class="btn preset-tonal-surface justify-start" onclick={selectFiles}>
+              <Fa icon={faUpload} />
+              <span>{$_('page.members.photo.upload')}</span>
             </button>
-          {/if}
-        </div>
+            <button class="btn preset-tonal-surface justify-start" onclick={takePhoto}>
+              <Fa icon={faCamera} />
+              <span>{$_('page.members.photo.take')}</span>
+            </button>
+            {#if data.img}
+              <button class="btn preset-tonal-error justify-start" onclick={removePhoto}>
+                <Fa icon={faTrash} />
+                <span>{$_('page.members.photo.remove')}</span>
+              </button>
+            {/if}
+          </div>
+        {/if}
+        <input
+          type="file"
+          id="selectFiles"
+          class="hidden"
+          accept="image/*"
+          onchange={handlePhotoChange}
+        />
+        <input
+          type="file"
+          id="takePhoto"
+          class="hidden"
+          accept="image/*"
+          onchange={handlePhotoChange}
+          capture="user"
+        />
       {/if}
-      <input
-        type="file"
-        id="selectFiles"
-        class="hidden"
-        accept="image/*"
-        onchange={handlePhotoChange}
-      />
-      <input
-        type="file"
-        id="takePhoto"
-        class="hidden"
-        accept="image/*"
-        onchange={handlePhotoChange}
-        capture="user"
-      />
     {/snippet}
   </MemberProfile>
 </div>

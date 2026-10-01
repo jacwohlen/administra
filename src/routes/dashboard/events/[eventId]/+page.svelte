@@ -29,6 +29,7 @@
   } from '$lib/eventUtils';
   import type { Medal } from '$lib/models';
   import { MEDALS, medalEmoji } from '$lib/gradeUtils';
+  import { isWriter } from '$lib/roles';
 
   let { data }: { data: PageData } = $props();
 
@@ -241,10 +242,9 @@
   let registeredCount = $derived(data.participants.length);
   let attendedCount = $derived(data.logs.length);
   let attendanceRate = $derived(calculateAttendanceRate(registeredCount, attendedCount));
-  let isWriter = $derived(
-    data.userProfile?.role === 'trainer' || data.userProfile?.role === 'admin'
+  let showAddButton = $derived(
+    canAddParticipants(data.event, registeredCount, isWriter(data.userProfile))
   );
-  let showAddButton = $derived(canAddParticipants(data.event, registeredCount, isWriter));
   // Participants added on or after the event day are directly recorded as attended
   let addAsAttended = $derived(canTrackAttendance());
 </script>
