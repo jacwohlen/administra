@@ -172,6 +172,7 @@
       "searchMembersPlaceholder": "Mitglied Suchen...",
       "memberNotFound": "Mitglied nicht gefunden",
       "addMemberPlaceholder": "Mitglied Hinzufügen...",
+      "attendanceSaveError": "Die Anwesenheit von {name} konnte nicht gespeichert werden. Bitte nochmals versuchen.",
       "noMainTrainerWarning": {
         "title": "Haupttrainer fehlt:",
         "message": "Bitte markieren Sie mindestens einen Haupttrainer für diese Session."

@@ -1,7 +1,7 @@
 <script lang="ts">
   let { year, yearmode }: { year: number; yearmode: 'YEAR' | 'ALL' } = $props();
 
-  import { BarChartStacked, type ChartTabularData } from '@carbon/charts-svelte';
+  import type { ChartTabularData } from '@carbon/charts-svelte';
   import { ScaleTypes } from '@carbon/charts/interfaces';
   import dayjs from 'dayjs';
   import { supabaseClient } from '$lib/supabase';
@@ -47,7 +47,7 @@
 {:then rows}
   {#if rows.length > 0}
     <ChartFrame height={HEIGHT}>
-      {#snippet children(dark)}
+      {#snippet children(dark, { BarChartStacked })}
         <BarChartStacked
           data={toChart(rows, yearmode)}
           options={{

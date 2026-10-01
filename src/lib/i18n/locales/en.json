@@ -172,6 +172,7 @@
       "searchMembersPlaceholder": "Search Member...",
       "memberNotFound": "Member not found",
       "addMemberPlaceholder": "Add Member...",
+      "attendanceSaveError": "Could not save the attendance of {name}. Please try again.",
       "noMainTrainerWarning": {
         "title": "Main trainer missing:",
         "message": "Please mark at least one main trainer for this session."
