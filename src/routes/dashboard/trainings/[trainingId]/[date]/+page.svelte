@@ -5,7 +5,6 @@
   import type { TrainerRole } from '$lib/models';
   import ParticipantCard from './ParticipantCard.svelte';
   import BadgeCelebration from '$lib/components/BadgeCelebration.svelte';
-  import { badgeKey } from '$lib/badgeUtils';
   import { compareChecklistMembers } from '$lib/trainingUtils';
   import Fa from 'svelte-fa';
   import {
@@ -21,6 +20,7 @@
   import { goto, preloadData } from '$app/navigation';
   import AddParticipantInputBox from './AddParticipantInputBox.svelte';
   import { supabaseClient } from '$lib/supabase';
+  import { toaster } from '$lib/toast';
   import { _ } from 'svelte-i18n';
   import { flip } from 'svelte/animate';
   import { quintInOut } from 'svelte/easing';
@@ -32,13 +32,6 @@
   let showLessonPlan = $state(false);
   let celebrationBadges: Badge[] = $state([]);
   let celebrationMemberName = $state('');
-
-  async function fetchBadges(memberId: string): Promise<Badge[]> {
-    const { data: rows } = await supabaseClient.rpc('get_member_badges', {
-      p_member_id: parseInt(memberId)
-    });
-    return Array.isArray(rows) ? (rows as Badge[]) : [];
-  }
 
   let filteredData: MMember[] = $state([]);
   let presentParticipants = $derived(filteredData.filter((p) => p.isPresent));
@@ -77,42 +70,63 @@
     await _changePresence(detail.member, detail.checked, detail.trainerRole);
   }
 
+  // Latest request per member, so a slow answer to an earlier click cannot
+  // undo a later one, and the last state the database confirmed, to fall back
+  // to when saving fails.
+  const pendingChange = new Map<string, number>();
+  const confirmed = new Map<string, { isPresent: boolean; trainerRole: TrainerRole }>();
+  let changeCounter = 0;
+
   async function _changePresence(member: Member, checked: boolean, trainerRole: TrainerRole) {
-    const index = data.participants.findIndex((m) => m.id === member.id);
-    data.participants[index].isPresent = checked;
-    data.participants[index].trainerRole = trainerRole;
-    clearSearch();
-
-    // Badges are awarded by a database trigger inside the log insert, so the
-    // badges present afterwards but not before are exactly the new ones.
-    const before = checked ? new Set((await fetchBadges(member.id)).map(badgeKey)) : null;
-
-    const { error } = await supabaseClient
-      .from('logs')
-      .delete()
-      .eq('date', data.date)
-      .eq('trainingId', data.trainingId)
-      .eq('memberId', member.id);
-    if (error) {
-      console.log(error);
+    const participant = data.participants.find((m) => m.id === member.id);
+    if (!participant) return;
+    if (!confirmed.has(member.id)) {
+      confirmed.set(member.id, {
+        isPresent: participant.isPresent,
+        trainerRole: participant.trainerRole
+      });
     }
 
-    if (checked) {
-      const { error } = await supabaseClient.from('logs').insert({
-        date: data.date,
-        trainingId: data.trainingId,
-        memberId: member.id,
-        trainerRole
+    // Show the change right away; the request runs in the background.
+    participant.isPresent = checked;
+    participant.trainerRole = trainerRole;
+    clearSearch();
+
+    const request = ++changeCounter;
+    pendingChange.set(member.id, request);
+
+    // One transaction: writes the log row and returns the badges the check-in
+    // earned (awarded by triggers on logs).
+    const { data: rows, error } = await supabaseClient.rpc('set_attendance', {
+      p_date: data.date,
+      p_training_id: parseInt(data.trainingId),
+      p_member_id: parseInt(member.id),
+      p_present: checked,
+      p_trainer_role: trainerRole
+    });
+
+    if (pendingChange.get(member.id) !== request) return;
+    pendingChange.delete(member.id);
+
+    if (error) {
+      console.error('Error saving attendance:', error);
+      const last = confirmed.get(member.id)!;
+      participant.isPresent = last.isPresent;
+      participant.trainerRole = last.trainerRole;
+      filterData();
+      toaster.error({
+        title: $_('page.trainings.attendanceSaveError', {
+          values: { name: `${member.firstname} ${member.lastname}` }
+        })
       });
-      if (error) {
-        console.log(error);
-      } else if (before) {
-        const fresh = (await fetchBadges(member.id)).filter((b) => !before.has(badgeKey(b)));
-        if (fresh.length > 0) {
-          celebrationMemberName = `${member.firstname} ${member.lastname}`;
-          celebrationBadges = fresh;
-        }
-      }
+      return;
+    }
+    confirmed.set(member.id, { isPresent: checked, trainerRole });
+
+    const fresh = Array.isArray(rows) ? (rows as Badge[]) : [];
+    if (fresh.length > 0) {
+      celebrationMemberName = `${member.firstname} ${member.lastname}`;
+      celebrationBadges = fresh;
     }
   }
 
