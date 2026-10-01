@@ -14,7 +14,8 @@
   import MemberLogs from '../dashboard/members/[memberId]/MemberLogs.svelte';
   import type { MemberProfileData } from './memberProfile';
 
-  // Read-only counterpart of /dashboard/members/[memberId]: same layout, no
+  // Read-only counterpart of /dashboard/members/[memberId]: same layout (the club
+  // area uses the dashboard's page width so both render identically), no
   // editing, and contact data / attendance only for the member's own profile.
   let { profile }: { profile: MemberProfileData } = $props();
 
