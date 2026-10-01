@@ -1,14 +1,20 @@
 <script lang="ts">
-  import '@carbon/charts/styles.css';
   import type { Snippet } from 'svelte';
+  import { loadCharts, type Charts } from './charts';
 
   /**
    * Hosts a Carbon chart so it blends into the app: transparent background,
    * the app's font and text colors, and the Carbon theme that matches the
    * current light/dark mode. The chart is re-created when the mode is
    * toggled, because Carbon only reads its theme on mount.
+   *
+   * Carbon (JS and CSS) is loaded on demand, so the rest of the stats page
+   * shows up without waiting for it; the children get the loaded module.
    */
-  let { height = 300, children }: { height?: number; children: Snippet<[boolean]> } = $props();
+  let { height = 300, children }: { height?: number; children: Snippet<[boolean, Charts]> } =
+    $props();
+
+  const charts = loadCharts();
 
   let dark = $state(false);
 
@@ -23,9 +29,13 @@
 </script>
 
 <div class="stats-chart" style:min-height="{height}px">
-  {#key dark}
-    {@render children(dark)}
-  {/key}
+  {#await charts}
+    <div class="placeholder animate-pulse w-full" style:height="{height}px"></div>
+  {:then lib}
+    {#key dark}
+      {@render children(dark, lib)}
+    {/key}
+  {/await}
 </div>
 
 <style>

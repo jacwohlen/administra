@@ -1,7 +1,6 @@
 <script lang="ts">
   let { year, yearmode }: { year: number; yearmode: 'YEAR' | 'ALL' } = $props();
 
-  import { DonutChart } from '@carbon/charts-svelte';
   import { supabaseClient } from '$lib/supabase';
   import { seriesColors } from '$lib/statsUtils';
   import { _ } from 'svelte-i18n';
@@ -31,7 +30,7 @@
 {:then rows}
   {#if rows.length > 0}
     <ChartFrame height={HEIGHT}>
-      {#snippet children(dark)}
+      {#snippet children(dark, { DonutChart })}
         <DonutChart
           data={rows.map((r) => ({ group: r.section, value: r.count }))}
           options={{
