@@ -291,7 +291,9 @@
         "title": "Trainings History",
         "noItems": "No trainings registered"
       },
-      "moreActions": "More actions"
+      "moreActions": "More actions",
+      "archived": "Archived on {date} – not shown in the member list and search.",
+      "archivedLink": "Restore from the trial archive"
     },
     "stats": {
       "all": "All",
@@ -474,7 +476,9 @@
         "assigned": "Assigned",
         "convert": "Membership due",
         "cancelled": "Cancelled",
-        "all": "All"
+        "all": "All",
+        "inactive": "Inactive",
+        "archived": "Archive"
       },
       "status": {
         "new": "New",
@@ -502,8 +506,8 @@
         "confirmCancel": "Yes, cancel",
         "reactivate": "Reopen"
       },
-      "cancelConfirm": "Mark this registration as cancelled?",
-      "cancelConfirmAssigned": "Mark this registration as cancelled? The candidate is removed from their assigned trainings.",
+      "cancelConfirm": "Mark this registration as cancelled? The candidate stays on record; archive them to also remove them from the member list and search.",
+      "cancelConfirmAssigned": "Mark this registration as cancelled? The candidate is removed from their assigned trainings but stays on record; archive them to also remove them from the member list and search.",
       "statusChanged": {
         "new": "Registration reopened",
         "waitlist": "Put on the waiting list",
@@ -526,14 +530,18 @@
         "assigned": "Nobody is assigned to a training right now.",
         "convert": "Nobody has reached the agreed number of sessions.",
         "cancelled": "No cancelled registrations.",
-        "all": "No registrations."
+        "all": "No registrations.",
+        "inactive": "Nobody has stayed away for long.",
+        "archived": "Nothing archived yet."
       },
       "timeline": {
         "registered": "Registered",
         "waitlist": "Put on the waiting list",
         "assigned": "Training assigned",
         "cancelled": "Cancelled",
-        "selfCancelled": "Cancelled by the candidate (status link)"
+        "selfCancelled": "Cancelled by the candidate (status link)",
+        "lastAttended": "Last attended",
+        "archived": "Archived"
       },
       "attendedCount": "{count, plural, =0 {not attended yet} one {# session attended} other {# sessions attended}}",
       "mail": {
@@ -560,6 +568,24 @@
         "copied": "Status link copied",
         "copyError": "Could not copy the link",
         "hint": "Copy the personal link to this registration's status page"
+      },
+      "inactiveHint": "Assigned, but not at training for at least {days} days.",
+      "lastAttendedAgo": "last {ago}",
+      "neverAttended": "never came",
+      "archive": {
+        "action": "Archive",
+        "hint": "Remove from the member list and search; attended sessions stay in the statistics.",
+        "confirmOne": "Archive? The candidate is marked as cancelled and no longer shows up in the member list and search. Attended sessions and e-mails are kept; they can be restored from the archive.",
+        "confirm": "Archive",
+        "bulk": "Archive all ({count})",
+        "bulkHint": "Everyone listed here can be archived: gone from the member list and search, attended sessions stay in the statistics.",
+        "confirmBulk": "Archive {count, plural, one {# candidate} other {# candidates}}? They no longer show up in the member list and search; attended sessions are kept.",
+        "done": "{count, plural, one {Archived} other {# candidates archived}}",
+        "restored": "Restored",
+        "restore": "Restore",
+        "error": "Archiving failed",
+        "chip": "archived",
+        "summary": "{count, plural, one {# archived candidate} other {# archived candidates}} with {sessions, plural, one {# trial session} other {# trial sessions}} attended in total. Archived candidates do not show up in the member list and search."
       }
     },
     "login": {
