@@ -54,10 +54,12 @@
 
 <div class="page-header">
   <h1>{$_('page.events.title')}</h1>
-  <a href="/dashboard/events/new" class="btn preset-filled-primary-500">
-    <Fa icon={faPlus} />
-    <span>{$_('page.events.create_event')}</span>
-  </a>
+  {#if data.canWrite}
+    <a href="/dashboard/events/new" class="btn preset-filled-primary-500">
+      <Fa icon={faPlus} />
+      <span>{$_('page.events.create_event')}</span>
+    </a>
+  {/if}
 </div>
 
 <!-- Search Input -->

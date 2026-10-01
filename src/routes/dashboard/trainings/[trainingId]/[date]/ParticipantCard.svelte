@@ -20,7 +20,8 @@
     medals,
     trialAttendedCount,
     onchange,
-    onremove
+    onremove,
+    readonly = false
   }: {
     member: MMember;
     badgeEmoji?: string;
@@ -30,6 +31,8 @@
     trialAttendedCount?: number;
     onchange?: (data: { member: MMember; checked: boolean; trainerRole: TrainerRole }) => void;
     onremove?: (data: { member: MMember }) => void;
+    /** Viewers see attendance but cannot change it */
+    readonly?: boolean;
   } = $props();
 
   let ringColor = $derived(grade ? beltRingColor(grade.beltColor) : null);
@@ -112,6 +115,7 @@
       value={member.id}
       checked={member.isPresent}
       onchange={change}
+      disabled={readonly}
     />
     <div
       class="relative inline-block flex-shrink-0 rounded-full"
@@ -201,40 +205,43 @@
                 {$_('components.ParticipantCard.View')}
               </a>
             </li>
-            <li class="border-t border-surface-300-700 pt-1 mt-1">
-              <button
-                class="btn w-full text-left justify-start"
-                onclick={() => setTrainerRole('attendee')}
-              >
-                {$_('components.ParticipantCard.SetAsAttendee')}
-              </button>
-            </li>
-            <li>
-              <button
-                class="btn w-full text-left justify-start gap-2"
-                onclick={() => setTrainerRole('main_trainer')}
-              >
-                <img class="w-4 flex-shrink-0" src="/judo-icon.svg" alt="judo-icon" />
-                {$_('components.ParticipantCard.SetAsMainTrainer')}
-              </button>
-            </li>
-            <li>
-              <button
-                class="btn w-full text-left justify-start gap-2"
-                onclick={() => setTrainerRole('assistant')}
-              >
-                <span class="w-4 flex-shrink-0 text-center font-bold text-surface-600-400">A</span>
-                {$_('components.ParticipantCard.SetAsAssistant')}
-              </button>
-            </li>
-            <li class="border-t border-surface-300-700 pt-1 mt-1">
-              <button
-                class="btn w-full text-left justify-start text-error-600-400"
-                onclick={triggerConfirm}
-              >
-                {$_('components.ParticipantCard.Remove')}
-              </button>
-            </li>
+            {#if !readonly}
+              <li class="border-t border-surface-300-700 pt-1 mt-1">
+                <button
+                  class="btn w-full text-left justify-start"
+                  onclick={() => setTrainerRole('attendee')}
+                >
+                  {$_('components.ParticipantCard.SetAsAttendee')}
+                </button>
+              </li>
+              <li>
+                <button
+                  class="btn w-full text-left justify-start gap-2"
+                  onclick={() => setTrainerRole('main_trainer')}
+                >
+                  <img class="w-4 flex-shrink-0" src="/judo-icon.svg" alt="judo-icon" />
+                  {$_('components.ParticipantCard.SetAsMainTrainer')}
+                </button>
+              </li>
+              <li>
+                <button
+                  class="btn w-full text-left justify-start gap-2"
+                  onclick={() => setTrainerRole('assistant')}
+                >
+                  <span class="w-4 flex-shrink-0 text-center font-bold text-surface-600-400">A</span
+                  >
+                  {$_('components.ParticipantCard.SetAsAssistant')}
+                </button>
+              </li>
+              <li class="border-t border-surface-300-700 pt-1 mt-1">
+                <button
+                  class="btn w-full text-left justify-start text-error-600-400"
+                  onclick={triggerConfirm}
+                >
+                  {$_('components.ParticipantCard.Remove')}
+                </button>
+              </li>
+            {/if}
           </ul>
         </nav>
       {/if}

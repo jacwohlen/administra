@@ -38,6 +38,7 @@ Attendance tracking app for martial arts clubs. SvelteKit frontend + Supabase (P
 - Routes: kebab-case directories
 - Environment variables: `PUBLIC_*` for client-accessible, `PRIVATE_*` for server-only
 - Formatting: Prettier (spaces, single quotes, no trailing commas, 100 char width)
+- Dashboard pages show add/edit/delete controls only when `data.canWrite` (trainer/admin, from `src/routes/dashboard/+layout.ts`); create/edit routes redirect viewers in their `+page.ts`. RLS stays the real guard.
 
 ## Database Migrations
 

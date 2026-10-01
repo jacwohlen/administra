@@ -167,7 +167,7 @@
       hiIndex = hiIndex === filteredData.length - 1 ? 0 : hiIndex + 1;
     } else if (e.key === 'ArrowUp' && hiIndex !== -1) {
       hiIndex = hiIndex === 0 ? filteredData.length - 1 : hiIndex - 1;
-    } else if (e.key === 'Enter') {
+    } else if (e.key === 'Enter' && data.canWrite) {
       _changePresence(filteredData[hiIndex], !filteredData[hiIndex].isPresent, 'attendee');
       clearSearch();
     } else {
@@ -291,19 +291,22 @@
           trialAttendedCount={data.trialCountMap[p.id]}
           onchange={changePresence}
           onremove={removeParticipant}
+          readonly={!data.canWrite}
         />
       </div>
     {/each}
-    <li>
-      <div
-        class="flex items-center gap-4 p-4 rounded-lg preset-tonal-tertiary w-full justify-items-center"
-      >
-        <AddParticipantInputBox onadd={addParticipant} />
-      </div>
-    </li>
+    {#if data.canWrite}
+      <li>
+        <div
+          class="flex items-center gap-4 p-4 rounded-lg preset-tonal-tertiary w-full justify-items-center"
+        >
+          <AddParticipantInputBox onadd={addParticipant} />
+        </div>
+      </li>
+    {/if}
   </ul>
 {:else}
-  <LessonPlan trainingId={data.trainingId} date={data.date} />
+  <LessonPlan trainingId={data.trainingId} date={data.date} readonly={!data.canWrite} />
 {/if}
 
 <BadgeCelebration badges={celebrationBadges} memberName={celebrationMemberName} />

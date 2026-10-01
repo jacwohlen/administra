@@ -2,7 +2,6 @@
   import type { PageData } from './$types';
   import { _ } from 'svelte-i18n';
   import MemberProfile from '$lib/components/memberProfile/MemberProfile.svelte';
-  import { isWriter } from '$lib/roles';
   import {
     faArrowLeft,
     faCamera,
@@ -30,7 +29,7 @@
 
   let memberId = $derived(Number(data.id));
   // Viewers get the profile read-only; the database enforces the same
-  let canWrite = $derived(isWriter(data.userProfile));
+  let canWrite = $derived(data.canWrite);
   let showPhotoMenu = $state(false);
 
   function refresh() {

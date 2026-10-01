@@ -135,5 +135,5 @@
     emptyText={$_('page.stats.no_event_data')}
   />
 
-  <BadgeLeaderboard />
+  <BadgeLeaderboard canRefresh={data.canWrite} />
 </div>

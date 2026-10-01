@@ -16,7 +16,16 @@
   } from '@fortawesome/free-solid-svg-icons';
   import { _ } from 'svelte-i18n';
 
-  let { trainingId, date }: { trainingId: string; date: string } = $props();
+  let {
+    trainingId,
+    date,
+    readonly = false
+  }: {
+    trainingId: string;
+    date: string;
+    /** Viewers can read and download the plan but not change it */
+    readonly?: boolean;
+  } = $props();
 
   let lessonPlan: LessonPlan | null = $state(null);
   let isEditing = $state(false);
@@ -388,33 +397,35 @@
 <div class="card">
   <header class="card-header flex justify-between items-center mb-4">
     <h3>{$_('page.trainings.lessonPlanTitle')}</h3>
-    <div class="flex gap-2">
-      {#if isEditing}
-        <button
-          class="btn preset-filled-primary-500"
-          onclick={saveLessonPlan}
-          disabled={isLoading ||
-            (tabSet === 0 && !content.trim()) ||
-            (tabSet === 1 && !selectedFile && !lessonPlan?.filePath)}
-        >
-          <Fa icon={faSave} />
-          <span>{$_('button.save')}</span>
-        </button>
-        <button class="btn preset-tonal-surface" onclick={cancelEditing} disabled={isLoading}>
-          {$_('button.cancel')}
-        </button>
-      {:else if lessonPlan}
-        <button class="btn preset-tonal-primary" onclick={startEditing} disabled={isLoading}>
-          <Fa icon={faEdit} />
-          <span>{$_('button.edit')}</span>
-        </button>
-      {:else}
-        <button class="btn preset-filled-primary-500" onclick={startEditing} disabled={isLoading}>
-          <Fa icon={faPlus} />
-          <span>{$_('page.trainings.createLessonPlan')}</span>
-        </button>
-      {/if}
-    </div>
+    {#if !readonly}
+      <div class="flex gap-2">
+        {#if isEditing}
+          <button
+            class="btn preset-filled-primary-500"
+            onclick={saveLessonPlan}
+            disabled={isLoading ||
+              (tabSet === 0 && !content.trim()) ||
+              (tabSet === 1 && !selectedFile && !lessonPlan?.filePath)}
+          >
+            <Fa icon={faSave} />
+            <span>{$_('button.save')}</span>
+          </button>
+          <button class="btn preset-tonal-surface" onclick={cancelEditing} disabled={isLoading}>
+            {$_('button.cancel')}
+          </button>
+        {:else if lessonPlan}
+          <button class="btn preset-tonal-primary" onclick={startEditing} disabled={isLoading}>
+            <Fa icon={faEdit} />
+            <span>{$_('button.edit')}</span>
+          </button>
+        {:else}
+          <button class="btn preset-filled-primary-500" onclick={startEditing} disabled={isLoading}>
+            <Fa icon={faPlus} />
+            <span>{$_('page.trainings.createLessonPlan')}</span>
+          </button>
+        {/if}
+      </div>
+    {/if}
   </header>
 
   <section class="card-section px-4">

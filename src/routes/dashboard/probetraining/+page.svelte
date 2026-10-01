@@ -624,24 +624,26 @@
                   <a href="/dashboard/members/{m.id}" class="btn btn-sm preset-tonal-surface">
                     {$_('button.view')}
                   </a>
-                  {#if m.trialStatus === 'cancelled'}
-                    <button
-                      class="btn btn-sm preset-tonal-surface"
-                      disabled={busyId === m.id}
-                      onclick={() => setStatus(m, 'new')}
-                    >
-                      <Fa icon={faRotateLeft} size="xs" />
-                      <span>{$_('page.probetraining.action.reactivate')}</span>
-                    </button>
-                  {:else}
-                    <button
-                      class="btn btn-sm preset-tonal-error"
-                      disabled={busyId === m.id}
-                      onclick={() => (confirmCancelId = m.id)}
-                    >
-                      <Fa icon={faBan} size="xs" />
-                      <span>{$_('page.probetraining.action.cancel')}</span>
-                    </button>
+                  {#if data.canWrite}
+                    {#if m.trialStatus === 'cancelled'}
+                      <button
+                        class="btn btn-sm preset-tonal-surface"
+                        disabled={busyId === m.id}
+                        onclick={() => setStatus(m, 'new')}
+                      >
+                        <Fa icon={faRotateLeft} size="xs" />
+                        <span>{$_('page.probetraining.action.reactivate')}</span>
+                      </button>
+                    {:else}
+                      <button
+                        class="btn btn-sm preset-tonal-error"
+                        disabled={busyId === m.id}
+                        onclick={() => (confirmCancelId = m.id)}
+                      >
+                        <Fa icon={faBan} size="xs" />
+                        <span>{$_('page.probetraining.action.cancel')}</span>
+                      </button>
+                    {/if}
                   {/if}
                   {#if busyId === m.id}
                     <Fa icon={faSpinner} spin />
@@ -657,7 +659,7 @@
                       <span>{$_('page.probetraining.statusLink.copy')}</span>
                     </button>
                   {/if}
-                  {#if m.email}
+                  {#if m.email && data.canWrite}
                     <button
                       class="btn btn-sm preset-tonal-surface"
                       disabled={busyId === m.id}
@@ -667,7 +669,7 @@
                       <span>{$_('page.probetraining.mail.write')}</span>
                     </button>
                   {/if}
-                  {#if m.trialStatus === 'new'}
+                  {#if m.trialStatus === 'new' && data.canWrite}
                     <button
                       class="btn btn-sm preset-tonal-warning"
                       disabled={busyId === m.id}
@@ -677,7 +679,7 @@
                       <span>{$_('page.probetraining.action.waitlist')}</span>
                     </button>
                   {/if}
-                  {#if m.trialStatus !== 'cancelled'}
+                  {#if m.trialStatus !== 'cancelled' && data.canWrite}
                     <button
                       class="btn btn-sm preset-filled-primary-500"
                       disabled={busyId === m.id}
