@@ -85,6 +85,18 @@ describe('parseClubConfig', () => {
     });
   });
 
+  describe('trialInactiveDays', () => {
+    it('accepts a positive whole number', () => {
+      expect(parseClubConfig({ PUBLIC_TRIAL_INACTIVE_DAYS: '90' }).trialInactiveDays).toBe(90);
+    });
+
+    it.each(['0', '-1', '2.5', 'abc', ''])('falls back for %j', (value) => {
+      expect(parseClubConfig({ PUBLIC_TRIAL_INACTIVE_DAYS: value }).trialInactiveDays).toBe(
+        DEFAULT_CLUB_CONFIG.trialInactiveDays
+      );
+    });
+  });
+
   describe('defaultLocale', () => {
     it('accepts de and en, case-insensitively', () => {
       expect(parseClubConfig({ PUBLIC_DEFAULT_LOCALE: 'en' }).defaultLocale).toBe('en');

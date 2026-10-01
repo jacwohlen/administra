@@ -34,7 +34,6 @@
     elapsedSince,
     isTrialInactive,
     lastTrialActivity,
-    TRIAL_INACTIVE_DAYS,
     type TrialTab
   } from '$lib/trialUtils';
   import { clubConfig } from '$lib/clubConfig';
@@ -184,7 +183,7 @@
     const counts = {} as Record<TrialTab, number>;
     for (const t of TABS) {
       counts[t] = data.trialMembers.filter((m) =>
-        matchesTrialTab(m, t, clubConfig.trialSessionThreshold)
+        matchesTrialTab(m, t, clubConfig.trialSessionThreshold, clubConfig.trialInactiveDays)
       ).length;
     }
     return counts;
@@ -194,7 +193,12 @@
     const q = searchTerm.toLowerCase().trim();
     const matching = data.trialMembers.filter((m) => {
       if (q && !`${m.firstname} ${m.lastname}`.toLowerCase().includes(q)) return false;
-      return matchesTrialTab(m, tab, clubConfig.trialSessionThreshold);
+      return matchesTrialTab(
+        m,
+        tab,
+        clubConfig.trialSessionThreshold,
+        clubConfig.trialInactiveDays
+      );
     });
     return sortTrialMembers(matching, tab);
   });
@@ -419,7 +423,7 @@
   {#if tab === 'inactive' || tab === 'archived'}
     <p class="text-xs text-surface-600-400 mb-2">
       {tab === 'inactive'
-        ? $_('page.probetraining.inactiveHint', { values: { days: TRIAL_INACTIVE_DAYS } })
+        ? $_('page.probetraining.inactiveHint', { values: { days: clubConfig.trialInactiveDays } })
         : $_('page.probetraining.archive.summary', {
             values: { count: archiveSummary.count, sessions: archiveSummary.sessions }
           })}
@@ -490,7 +494,7 @@
         {@const age = calculateAge(m.birthday)}
         {@const assigned = assignedTrainings(m.id)}
         {@const progress = trialProgress(m.attendedCount, clubConfig.trialSessionThreshold)}
-        {@const inactive = isTrialInactive(m)}
+        {@const inactive = isTrialInactive(m, clubConfig.trialInactiveDays)}
         {@const lastActivity = lastTrialActivity(m)}
         {@const showProgress =
           m.trialStatus !== 'cancelled' && !m.archivedAt && !inactive && progress === 'convert'}
@@ -565,7 +569,7 @@
                 <span
                   class="chip preset-tonal-warning text-xs gap-1"
                   title={$_('page.probetraining.inactiveHint', {
-                    values: { days: TRIAL_INACTIVE_DAYS }
+                    values: { days: clubConfig.trialInactiveDays }
                   })}
                 >
                   <Fa icon={faBed} size="xs" />

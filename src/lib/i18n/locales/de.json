@@ -107,6 +107,10 @@
           "label": "Probetraining-Schwelle",
           "description": "Probetrainings, nach denen ein Kandidat zur Aufnahme vorgeschlagen wird."
         },
+        "trialInactiveDays": {
+          "label": "Probetraining: inaktiv nach (Tagen)",
+          "description": "Tage ohne Trainingsbesuch, nach denen ein zugewiesener Kandidat als inaktiv gilt und archiviert werden kann."
+        },
         "checklistStreakLength": {
           "label": "Länge der Anwesenheitsserie",
           "description": "Anzahl Trainings, die als Serienpunkte auf der Checkliste erscheinen."

@@ -43,27 +43,26 @@ export function splitTrainingsByAge(
   return { suggested, others };
 }
 
-/**
- * Days without attendance after which an assigned candidate counts as
- * inactive — they most likely stopped coming and can be archived.
- */
-export const TRIAL_INACTIVE_DAYS = 60;
-
 /** Last sign of life: the last attended session, else the last status change or the registration. */
 export function lastTrialActivity(member: TrialMember): string | null {
   return member.lastAttendedAt ?? member.trialStatusChangedAt ?? member.trialRegisteredAt ?? null;
 }
 
 /**
- * An assigned candidate who has not been to training for
- * `TRIAL_INACTIVE_DAYS`. New and waiting candidates are not flagged: they are
- * not expected to attend yet.
+ * An assigned candidate who has not been to training for `inactiveDays`
+ * (configured as `clubConfig.trialInactiveDays`) — they most likely stopped
+ * coming and can be archived. New and waiting candidates are not flagged:
+ * they are not expected to attend yet.
  */
-export function isTrialInactive(member: TrialMember, now: Date = new Date()): boolean {
+export function isTrialInactive(
+  member: TrialMember,
+  inactiveDays: number,
+  now: Date = new Date()
+): boolean {
   if (member.archivedAt || member.trialStatus !== 'assigned') return false;
   const last = lastTrialActivity(member);
   if (!last) return false;
-  return now.getTime() - Date.parse(last) >= TRIAL_INACTIVE_DAYS * 86_400_000;
+  return now.getTime() - Date.parse(last) >= inactiveDays * 86_400_000;
 }
 
 /**
@@ -76,16 +75,17 @@ export function matchesTrialTab(
   member: TrialMember,
   tab: TrialTab,
   threshold: number,
+  inactiveDays: number,
   now: Date = new Date()
 ): boolean {
   if (tab === 'archived') return !!member.archivedAt;
   if (member.archivedAt) return false;
   if (tab === 'all') return true;
-  if (tab === 'inactive') return isTrialInactive(member, now);
+  if (tab === 'inactive') return isTrialInactive(member, inactiveDays, now);
   if (tab === 'convert') {
     return (
       member.trialStatus !== 'cancelled' &&
-      !isTrialInactive(member, now) &&
+      !isTrialInactive(member, inactiveDays, now) &&
       trialProgress(member.attendedCount, threshold) === 'convert'
     );
   }

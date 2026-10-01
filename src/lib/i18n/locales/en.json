@@ -107,6 +107,10 @@
           "label": "Trial session threshold",
           "description": "Trial sessions after which a candidate is flagged to become a member."
         },
+        "trialInactiveDays": {
+          "label": "Trial inactive after (days)",
+          "description": "Days without attendance after which an assigned candidate counts as inactive and can be archived."
+        },
         "checklistStreakLength": {
           "label": "Attendance streak length",
           "description": "Sessions shown as streak dots on the checklist."
