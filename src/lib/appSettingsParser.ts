@@ -110,6 +110,13 @@ export const SETTING_FIELDS: SettingField[] = [
     kind: 'int',
     min: 1
   },
+  {
+    key: 'trial.inactiveDays',
+    id: 'trialInactiveDays',
+    group: 'trial',
+    kind: 'int',
+    min: 1
+  },
   ...TRIAL_MAIL_FIELDS,
   {
     key: 'display.checklistStreakLength',
@@ -188,6 +195,7 @@ export function applyClubSettings(base: ClubConfig, values: SettingValues): Club
       values['trial.sessionThreshold'],
       base.trialSessionThreshold
     ),
+    trialInactiveDays: positiveInt(values['trial.inactiveDays'], base.trialInactiveDays),
     defaultLocale: publicLocale(values['locale.default'], base.defaultLocale)
   };
 }

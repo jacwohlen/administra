@@ -4,6 +4,7 @@
   import MemberProfile from '$lib/components/memberProfile/MemberProfile.svelte';
   import {
     faArrowLeft,
+    faBoxArchive,
     faCamera,
     faEdit,
     faEllipsisVertical,
@@ -301,6 +302,20 @@
       </div>
     {/if}
   </div>
+
+  {#if data.archivedAt}
+    <p
+      class="flex items-center gap-2 rounded-md border border-surface-300-700 bg-surface-100-900 px-3 py-2 text-sm"
+    >
+      <Fa icon={faBoxArchive} class="text-surface-500" />
+      <span>
+        {$_('page.members.archived', {
+          values: { date: dayjs(data.archivedAt).format('DD.MM.YYYY') }
+        })}
+        <a href="/dashboard/probetraining" class="anchor">{$_('page.members.archivedLink')}</a>
+      </span>
+    </p>
+  {/if}
 
   {#if showEditFormDialog}
     <!-- svelte-ignore a11y_no_static_element_interactions -->
