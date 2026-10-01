@@ -430,7 +430,7 @@
     </p>
   {/if}
 
-  {#if BULK_ARCHIVE_TABS.includes(tab) && visibleMembers.length > 0}
+  {#if BULK_ARCHIVE_TABS.includes(tab) && visibleMembers.length > 0 && data.canWrite}
     <div
       class="flex flex-wrap items-center gap-2 mb-3 rounded-md border px-3 py-2 {confirmBulkArchive
         ? 'border-warning-500/40 bg-warning-500/5'
@@ -821,14 +821,16 @@
                   <a href="/dashboard/members/{m.id}" class="btn btn-sm preset-tonal-surface">
                     {$_('button.view')}
                   </a>
-                  <button
-                    class="btn btn-sm preset-tonal-surface"
-                    disabled={busyId === m.id}
-                    onclick={() => restore(m)}
-                  >
-                    <Fa icon={faBoxOpen} size="xs" />
-                    <span>{$_('page.probetraining.archive.restore')}</span>
-                  </button>
+                  {#if data.canWrite}
+                    <button
+                      class="btn btn-sm preset-tonal-surface"
+                      disabled={busyId === m.id}
+                      onclick={() => restore(m)}
+                    >
+                      <Fa icon={faBoxOpen} size="xs" />
+                      <span>{$_('page.probetraining.archive.restore')}</span>
+                    </button>
+                  {/if}
                   {#if busyId === m.id}
                     <Fa icon={faSpinner} spin />
                   {/if}
@@ -864,37 +866,41 @@
                   <a href="/dashboard/members/{m.id}" class="btn btn-sm preset-tonal-surface">
                     {$_('button.view')}
                   </a>
-                  {#if m.trialStatus === 'cancelled'}
+                  {#if data.canWrite}
+                    {#if m.trialStatus === 'cancelled'}
+                      <button
+                        class="btn btn-sm preset-tonal-surface"
+                        disabled={busyId === m.id}
+                        onclick={() => setStatus(m, 'new')}
+                      >
+                        <Fa icon={faRotateLeft} size="xs" />
+                        <span>{$_('page.probetraining.action.reactivate')}</span>
+                      </button>
+                    {:else}
+                      <button
+                        class="btn btn-sm preset-tonal-error"
+                        disabled={busyId === m.id}
+                        onclick={() => (confirmCancelId = m.id)}
+                      >
+                        <Fa icon={faBan} size="xs" />
+                        <span>{$_('page.probetraining.action.cancel')}</span>
+                      </button>
+                    {/if}
+                  {/if}
+                  {#if data.canWrite}
                     <button
                       class="btn btn-sm preset-tonal-surface"
                       disabled={busyId === m.id}
-                      onclick={() => setStatus(m, 'new')}
+                      title={$_('page.probetraining.archive.hint')}
+                      onclick={() => {
+                        confirmCancelId = null;
+                        confirmArchiveId = m.id;
+                      }}
                     >
-                      <Fa icon={faRotateLeft} size="xs" />
-                      <span>{$_('page.probetraining.action.reactivate')}</span>
-                    </button>
-                  {:else}
-                    <button
-                      class="btn btn-sm preset-tonal-error"
-                      disabled={busyId === m.id}
-                      onclick={() => (confirmCancelId = m.id)}
-                    >
-                      <Fa icon={faBan} size="xs" />
-                      <span>{$_('page.probetraining.action.cancel')}</span>
+                      <Fa icon={faBoxArchive} size="xs" />
+                      <span>{$_('page.probetraining.archive.action')}</span>
                     </button>
                   {/if}
-                  <button
-                    class="btn btn-sm preset-tonal-surface"
-                    disabled={busyId === m.id}
-                    title={$_('page.probetraining.archive.hint')}
-                    onclick={() => {
-                      confirmCancelId = null;
-                      confirmArchiveId = m.id;
-                    }}
-                  >
-                    <Fa icon={faBoxArchive} size="xs" />
-                    <span>{$_('page.probetraining.archive.action')}</span>
-                  </button>
                   {#if busyId === m.id}
                     <Fa icon={faSpinner} spin />
                   {/if}
@@ -909,7 +915,7 @@
                       <span>{$_('page.probetraining.statusLink.copy')}</span>
                     </button>
                   {/if}
-                  {#if m.email}
+                  {#if m.email && data.canWrite}
                     <button
                       class="btn btn-sm preset-tonal-surface"
                       disabled={busyId === m.id}
@@ -919,7 +925,7 @@
                       <span>{$_('page.probetraining.mail.write')}</span>
                     </button>
                   {/if}
-                  {#if m.trialStatus === 'new'}
+                  {#if m.trialStatus === 'new' && data.canWrite}
                     <button
                       class="btn btn-sm preset-tonal-warning"
                       disabled={busyId === m.id}
@@ -929,7 +935,7 @@
                       <span>{$_('page.probetraining.action.waitlist')}</span>
                     </button>
                   {/if}
-                  {#if m.trialStatus !== 'cancelled'}
+                  {#if m.trialStatus !== 'cancelled' && data.canWrite}
                     <button
                       class="btn btn-sm preset-filled-primary-500"
                       disabled={busyId === m.id}

@@ -76,10 +76,12 @@
 
 <div class="page-header">
   <h1>{$_('page.members.title')}</h1>
-  <button class="btn preset-filled-primary-500" onclick={showMemberForm}>
-    <Fa icon={faPlus} />
-    <span>{$_('page.members.addMember')}</span>
-  </button>
+  {#if data.canWrite}
+    <button class="btn preset-filled-primary-500" onclick={showMemberForm}>
+      <Fa icon={faPlus} />
+      <span>{$_('page.members.addMember')}</span>
+    </button>
+  {/if}
 </div>
 
 {#if showMemberFormDialog}

@@ -2,7 +2,7 @@
   import { _ } from 'svelte-i18n';
   import Fa from 'svelte-fa';
   import { faArrowLeft } from '@fortawesome/free-solid-svg-icons';
-  import MemberProfile from '../../MemberProfile.svelte';
+  import ClubProfile from '../../ClubProfile.svelte';
   import type { PageData } from './$types';
 
   let { data }: { data: PageData } = $props();
@@ -24,4 +24,4 @@
   <span class="text-surface-600-400">{$_('page.club.members')}</span>
 </div>
 
-<MemberProfile profile={data.profile} />
+<ClubProfile profile={data.profile} />

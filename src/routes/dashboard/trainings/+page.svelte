@@ -9,10 +9,12 @@
 
 <div class="page-header">
   <h1>{$_('page.trainings.title')}</h1>
-  <a href="/dashboard/trainings/new" class="btn preset-filled-primary-500">
-    <Fa icon={faPlus} />
-    <span>{$_('page.trainings.create_training')}</span>
-  </a>
+  {#if data.canWrite}
+    <a href="/dashboard/trainings/new" class="btn preset-filled-primary-500">
+      <Fa icon={faPlus} />
+      <span>{$_('page.trainings.create_training')}</span>
+    </a>
+  {/if}
 </div>
 <ul class="flex flex-col gap-2">
   {#each data.trainings as t, index (t.id)}

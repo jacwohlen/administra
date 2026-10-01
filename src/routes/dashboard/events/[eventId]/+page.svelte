@@ -241,10 +241,7 @@
   let registeredCount = $derived(data.participants.length);
   let attendedCount = $derived(data.logs.length);
   let attendanceRate = $derived(calculateAttendanceRate(registeredCount, attendedCount));
-  let isWriter = $derived(
-    data.userProfile?.role === 'trainer' || data.userProfile?.role === 'admin'
-  );
-  let showAddButton = $derived(canAddParticipants(data.event, registeredCount, isWriter));
+  let showAddButton = $derived(canAddParticipants(data.event, registeredCount, data.canWrite));
   // Participants added on or after the event day are directly recorded as attended
   let addAsAttended = $derived(canTrackAttendance());
 </script>
@@ -256,14 +253,16 @@
       <Fa icon={faArrowLeft} />
     </a>
     <h1 class="flex-1 min-w-0 truncate">{data.event.title}</h1>
-    <div class="flex gap-2 flex-shrink-0">
-      <a href="/dashboard/events/{data.event.id}/edit" class="btn preset-tonal-surface">
-        <Fa icon={faEdit} />
-      </a>
-      <button class="btn preset-tonal-error" onclick={confirmDelete} disabled={isDeleting}>
-        <Fa icon={faTrash} />
-      </button>
-    </div>
+    {#if data.canWrite}
+      <div class="flex gap-2 flex-shrink-0">
+        <a href="/dashboard/events/{data.event.id}/edit" class="btn preset-tonal-surface">
+          <Fa icon={faEdit} />
+        </a>
+        <button class="btn preset-tonal-error" onclick={confirmDelete} disabled={isDeleting}>
+          <Fa icon={faTrash} />
+        </button>
+      </div>
+    {/if}
   </div>
 
   <!-- Metadata -->
@@ -465,63 +464,67 @@
                   </div>
                 </div>
               </div>
-              <div class="flex items-center gap-2">
-                {#if canTrackAttendance()}
-                  <!-- Placement: record a medal for this event, once the participant has attended -->
-                  {#if hasAttended}
-                    <div
-                      class="flex rounded-lg overflow-hidden border border-surface-300-700"
-                      title={$_('medals.placement')}
-                    >
-                      {#each MEDALS as m (m)}
-                        <button
-                          class="px-2 min-h-[44px] {placement?.medal === m
-                            ? 'preset-filled-primary-500'
-                            : 'preset-tonal-surface'}"
-                          onclick={() =>
-                            setMedal(participant.memberId, placement?.medal === m ? null : m)}
-                          disabled={loading}
-                          title={$_('medals.' + m)}
-                        >
-                          {medalEmoji(m)}
-                        </button>
-                      {/each}
-                    </div>
-                  {/if}
-                  <!-- Coach toggle button - only show if participant has attended -->
-                  {#if hasAttended}
+              {#if data.canWrite}
+                <div class="flex items-center gap-2">
+                  {#if canTrackAttendance()}
+                    <!-- Placement: record a medal for this event, once the participant has attended -->
+                    {#if hasAttended}
+                      <div
+                        class="flex rounded-lg overflow-hidden border border-surface-300-700"
+                        title={$_('medals.placement')}
+                      >
+                        {#each MEDALS as m (m)}
+                          <button
+                            class="px-2 min-h-[44px] {placement?.medal === m
+                              ? 'preset-filled-primary-500'
+                              : 'preset-tonal-surface'}"
+                            onclick={() =>
+                              setMedal(participant.memberId, placement?.medal === m ? null : m)}
+                            disabled={loading}
+                            title={$_('medals.' + m)}
+                          >
+                            {medalEmoji(m)}
+                          </button>
+                        {/each}
+                      </div>
+                    {/if}
+                    <!-- Coach toggle button - only show if participant has attended -->
+                    {#if hasAttended}
+                      <button
+                        class="btn {log && log.isCoach
+                          ? 'preset-filled-primary-500'
+                          : 'preset-tonal-primary'}"
+                        onclick={() => toggleCoach(participant.memberId)}
+                        disabled={loading}
+                        title={log && log.isCoach
+                          ? $_('page.events.remove_coach')
+                          : $_('page.events.make_coach')}
+                      >
+                        <Fa icon={faChalkboardTeacher} />
+                      </button>
+                    {/if}
+                    <!-- Event day or past - show attendance buttons -->
                     <button
-                      class="btn {log && log.isCoach
-                        ? 'preset-filled-primary-500'
-                        : 'preset-tonal-primary'}"
-                      onclick={() => toggleCoach(participant.memberId)}
+                      class="btn {hasAttended
+                        ? 'preset-filled-success-500'
+                        : 'preset-tonal-success'}"
+                      onclick={() => markAttendance(participant.memberId, !hasAttended)}
                       disabled={loading}
-                      title={log && log.isCoach
-                        ? $_('page.events.remove_coach')
-                        : $_('page.events.make_coach')}
                     >
-                      <Fa icon={faChalkboardTeacher} />
+                      <Fa icon={faCheck} />
+                    </button>
+                  {:else}
+                    <!-- Future event - show remove button -->
+                    <button
+                      class="btn preset-tonal-error"
+                      onclick={() => removeParticipant(participant.memberId)}
+                      disabled={loading}
+                    >
+                      <Fa icon={faTimes} />
                     </button>
                   {/if}
-                  <!-- Event day or past - show attendance buttons -->
-                  <button
-                    class="btn {hasAttended ? 'preset-filled-success-500' : 'preset-tonal-success'}"
-                    onclick={() => markAttendance(participant.memberId, !hasAttended)}
-                    disabled={loading}
-                  >
-                    <Fa icon={faCheck} />
-                  </button>
-                {:else}
-                  <!-- Future event - show remove button -->
-                  <button
-                    class="btn preset-tonal-error"
-                    onclick={() => removeParticipant(participant.memberId)}
-                    disabled={loading}
-                  >
-                    <Fa icon={faTimes} />
-                  </button>
-                {/if}
-              </div>
+                </div>
+              {/if}
             </div>
           {/if}
         {/each}
