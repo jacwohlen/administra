@@ -32,6 +32,24 @@ export interface DirectoryMember {
   isMine: boolean;
 }
 
+/** Contact details only the member themselves (and staff) may read */
+export interface PrivateDetails {
+  birthday?: string | null;
+  mobile?: string | null;
+  email?: string | null;
+}
+
+/** Grades, medals and badges shown on every member profile */
+export interface MemberAchievements {
+  badges: Badge[];
+  badgeProgress: BadgeProgress[];
+  badgeDefinitions: BadgeDefinition[];
+  currentGrades: MemberCurrentGrade[];
+  gradeHistory: MemberGrade[];
+  medals: MemberMedal[];
+  gradeDefinitions: GradeDefinition[];
+}
+
 export interface Member {
   id: string;
   firstname: string;

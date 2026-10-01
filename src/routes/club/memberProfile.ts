@@ -1,37 +1,23 @@
 import type {
   Badge,
-  BadgeDefinition,
   BadgeProgress,
   DirectoryMember,
-  GradeDefinition,
+  MemberAchievements,
   MemberCurrentGrade,
   MemberGrade,
-  MemberMedal
+  MemberMedal,
+  PrivateDetails
 } from '$lib/models';
 import { supabaseClient } from '$lib/supabase';
 import { getBadgeDefinitions, getGradeDefinitions } from '$lib/referenceData';
 import { blobToDataUrl } from '$lib/imageUtils';
 import dayjs from 'dayjs';
 
-/** Contact details only the member themselves (and staff) may read */
-export interface PrivateDetails {
-  birthday?: string | null;
-  mobile?: string | null;
-  email?: string | null;
-}
-
-export interface MemberProfileData {
+export interface MemberProfileData extends MemberAchievements {
   member: DirectoryMember;
   /** Full-size photo if one was uploaded, else the thumbnail */
   photo: string | null;
   details: PrivateDetails | null;
-  badges: Badge[];
-  badgeProgress: BadgeProgress[];
-  badgeDefinitions: BadgeDefinition[];
-  currentGrades: MemberCurrentGrade[];
-  gradeHistory: MemberGrade[];
-  medals: MemberMedal[];
-  gradeDefinitions: GradeDefinition[];
 }
 
 /** The signed-in account's own members (a parent may have several). */
