@@ -23,7 +23,7 @@ Prod Supabase project and deploys admin.jacwohlen.ch.
 3. Write the release notes (below) as the PR body.
 4. Merge with **"Create a merge commit"** — never squash or rebase. Use the
    release notes as the merge commit message body, so `git log origin/prod
-   --merges` reads as a changelog.
+--merges` reads as a changelog.
 
 ## Release notes (PR body and merge commit body)
 
