@@ -28,7 +28,7 @@
     "@tailwindcss/vite": "^4.3.3",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/svelte": "^5.4.2",
-    "@types/node": "^20.19.43",
+    "@types/node": "^26.6.3",
     "@types/nodemailer": "^8.0.2",
     "d3": "^7.9.0",
     "dayjs": "^1.11.23",
