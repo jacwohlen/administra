@@ -125,3 +125,48 @@ export function elapsedSince(
   if (days < 61) return { unit: 'weeks', count: Math.floor(days / 7) };
   return { unit: 'months', count: Math.floor(days / 30) };
 }
+
+const WEEKDAY_INDEX: Record<string, number> = {
+  Sunday: 0,
+  Monday: 1,
+  Tuesday: 2,
+  Wednesday: 3,
+  Thursday: 4,
+  Friday: 5,
+  Saturday: 6
+};
+
+function isoDate(d: Date): string {
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+}
+
+/**
+ * The next `count` sessions of a weekly training (YYYY-MM-DD), to pick a
+ * candidate's first trial session from. Today counts while the training
+ * (`startTime`, "HH:MM") has not begun yet. Empty for an unknown weekday.
+ */
+export function upcomingTrainingDates(
+  weekday: string,
+  startTime: string | null | undefined,
+  count: number,
+  now: Date = new Date()
+): string[] {
+  const target = WEEKDAY_INDEX[weekday];
+  if (target === undefined || count <= 0) return [];
+  const day = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  let offset = (target - day.getDay() + 7) % 7;
+  if (offset === 0) {
+    // Without a start time, today is treated as already started.
+    const match = /^(\d{1,2}):(\d{2})/.exec(startTime ?? '');
+    const start = match ? Number(match[1]) * 60 + Number(match[2]) : -1;
+    if (now.getHours() * 60 + now.getMinutes() >= start) offset = 7;
+  }
+  const dates: string[] = [];
+  for (let i = 0; i < count; i++) {
+    dates.push(
+      isoDate(new Date(day.getFullYear(), day.getMonth(), day.getDate() + offset + i * 7))
+    );
+  }
+  return dates;
+}

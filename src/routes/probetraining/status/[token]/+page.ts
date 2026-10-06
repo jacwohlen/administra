@@ -18,6 +18,7 @@ export interface TrialStatusView {
     dateFrom: string;
     dateTo: string;
     section: string;
+    startDate: string | null;
   }[];
 }
 

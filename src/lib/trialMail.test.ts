@@ -5,6 +5,7 @@ import {
   TRIAL_MAIL_LOCALES,
   TRIAL_MAIL_PLACEHOLDERS,
   formatTrainingLines,
+  formatTrialDate,
   renderTrialMail,
   trialMailLocale,
   trialMailSettingKey,
@@ -110,6 +111,34 @@ describe('formatTrainingLines', () => {
         'en'
       )
     ).toBe('- Tuesday, 19:00: Aikido');
+  });
+
+  it('adds the first session while it is still ahead', () => {
+    const t = {
+      title: 'Judo Kids',
+      weekday: 'Friday',
+      dateFrom: '17:00',
+      dateTo: '18:00',
+      startDate: '2026-10-16'
+    };
+    const now = new Date(2026, 9, 6);
+    expect(formatTrainingLines([t], 'de', now)).toBe(
+      '- Freitag, 17:00–18:00: Judo Kids – erstes Training am Freitag, 16.10.2026'
+    );
+    expect(formatTrainingLines([t], 'en', now)).toBe(
+      '- Friday, 17:00–18:00: Judo Kids – first session on Friday, 16 October 2026'
+    );
+    expect(formatTrainingLines([t], 'de', new Date(2026, 9, 17))).toBe(
+      '- Freitag, 17:00–18:00: Judo Kids'
+    );
+  });
+});
+
+describe('formatTrialDate', () => {
+  it('formats a date with its weekday', () => {
+    expect(formatTrialDate('2026-10-11', 'de')).toBe('Sonntag, 11.10.2026');
+    expect(formatTrialDate('2026-10-05', 'en')).toBe('Monday, 5 October 2026');
+    expect(formatTrialDate('nope', 'de')).toBeNull();
   });
 });
 

@@ -110,7 +110,7 @@ Best regards
       subject: 'Dein Probetraining beim {club}',
       body: `Hallo {firstname}
 
-Wir freuen uns, dich im Probetraining begrüssen zu dürfen! Du kannst ab sofort in folgendem Training vorbeikommen:
+Wir freuen uns, dich im Probetraining begrüssen zu dürfen! Du kannst in folgendem Training vorbeikommen:
 
 {trainings}
 
@@ -128,7 +128,7 @@ Sportliche Grüsse
       subject: 'Your trial session at {club}',
       body: `Hi {firstname}
 
-We look forward to welcoming you to a trial session! You are welcome to join the following training from now on:
+We look forward to welcoming you to a trial session! You are welcome to join the following training:
 
 {trainings}
 
@@ -213,16 +213,65 @@ export interface MailTraining {
   dateFrom: string;
   dateTo: string;
   section?: string;
+  /** First trial session (YYYY-MM-DD), picked when the training was assigned. */
+  startDate?: string | null;
 }
 
-/** One line per training: "Donnerstag, 18:00–19:15: Judo Kinder (Judo)". */
-export function formatTrainingLines(trainings: MailTraining[], locale: PublicLocale): string {
+const MONTHS_EN = [
+  'January',
+  'February',
+  'March',
+  'April',
+  'May',
+  'June',
+  'July',
+  'August',
+  'September',
+  'October',
+  'November',
+  'December'
+];
+
+/** "Freitag, 17.10.2026" / "Friday, 17 October 2026"; null for anything but YYYY-MM-DD. */
+export function formatTrialDate(iso: string, locale: PublicLocale): string | null {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso);
+  if (!match) return null;
+  const [, y, m, d] = match;
+  const weekday = Object.keys(WEEKDAYS.en)[(new Date(+y, +m - 1, +d).getDay() + 6) % 7];
+  const day = WEEKDAYS[locale][weekday];
+  return locale === 'de'
+    ? `${day}, ${d}.${m}.${y}`
+    : `${day}, ${Number(d)} ${MONTHS_EN[Number(m) - 1]} ${y}`;
+}
+
+function localIsoDate(d: Date): string {
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+}
+
+/**
+ * One line per training: "Donnerstag, 18:00–19:15: Judo Kinder (Judo)",
+ * followed by the first session when one was picked and it is still ahead.
+ */
+export function formatTrainingLines(
+  trainings: MailTraining[],
+  locale: PublicLocale,
+  now: Date = new Date()
+): string {
+  const today = localIsoDate(now);
   return trainings
     .map((t) => {
       const day = WEEKDAYS[locale][t.weekday] ?? t.weekday;
       const time = [t.dateFrom, t.dateTo].filter(Boolean).join('–');
       const section = t.section && !t.title.includes(t.section) ? ` (${t.section})` : '';
-      return `- ${day}, ${time}: ${t.title}${section}`;
+      const start =
+        t.startDate && t.startDate >= today ? formatTrialDate(t.startDate, locale) : null;
+      const first = start
+        ? locale === 'de'
+          ? ` – erstes Training am ${start}`
+          : ` – first session on ${start}`
+        : '';
+      return `- ${day}, ${time}: ${t.title}${section}${first}`;
     })
     .join('\n');
 }

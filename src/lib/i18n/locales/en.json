@@ -475,6 +475,12 @@
       "assignError": "Error assigning training",
       "removeSuccess": "Assignment removed",
       "removeError": "Error removing assignment",
+      "startDate": "First session",
+      "startDateHint": "When the candidate can start. The date goes into the e-mail and onto the status page.",
+      "startDateFrom": "from {date}",
+      "startDateNone": "no date",
+      "startDateSaved": "Date saved",
+      "startDateError": "Error saving the date",
       "tab": {
         "new": "New",
         "waitlist": "Waiting list",
@@ -653,7 +659,7 @@
         },
         "assigned": {
           "title": "Your training is set",
-          "text": "You are welcome to join the following training from now on:"
+          "text": "You are welcome to join the following training:"
         },
         "cancelled": {
           "title": "Registration no longer active",

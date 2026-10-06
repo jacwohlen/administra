@@ -21,7 +21,7 @@
     trialStatusUrl,
     type TrialMailKind
   } from '$lib/trialMail';
-  import type { Training, TrialMember } from '$lib/models';
+  import type { AssignedTraining, TrialMember } from '$lib/models';
 
   /**
    * Preview of a mail to a trial candidate: the template for the chosen
@@ -36,7 +36,7 @@
     member: TrialMember;
     kind: TrialMailKind;
     /** The candidate's assigned trainings, for the {trainings} placeholder. */
-    trainings: Training[];
+    trainings: AssignedTraining[];
     onclose: () => void;
   } = $props();
 

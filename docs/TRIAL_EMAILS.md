@@ -24,15 +24,25 @@ Admins edit the texts under **Einstellungen → E-Mails an
 Probetraining-Kandidaten**, per mail and language. An empty field keeps the
 built-in text from `src/lib/trialMail.ts`. Placeholders:
 
-| Placeholder                 | Value                                                     |
-| --------------------------- | --------------------------------------------------------- |
-| `{firstname}`, `{lastname}` | the candidate                                             |
-| `{club}`, `{clubUrl}`       | club name and website (settings → Verein)                 |
-| `{contactEmail}`            | the club's contact address, or the website if none is set |
-| `{trainings}`               | one line per assigned training: weekday, time, title      |
+| Placeholder                 | Value                                                                                           |
+| --------------------------- | ----------------------------------------------------------------------------------------------- |
+| `{firstname}`, `{lastname}` | the candidate                                                                                   |
+| `{club}`, `{clubUrl}`       | club name and website (settings → Verein)                                                       |
+| `{contactEmail}`            | the club's contact address, or the website if none is set                                       |
+| `{trainings}`               | one line per assigned training: weekday, time, title, and the first session when one was picked |
 
 The preview dialog shows the filled-in mail and can be edited before
 sending; edits there only affect that one mail.
+
+## First session
+
+When a training is assigned, the dialog offers the next eight sessions of
+that training as the candidate's first one; the next session is selected,
+so a click on "Zuweisen" keeps it. Pick a later one when the group is full
+this week. The date is stored per assignment (`participants."trialStartDate"`),
+can be changed or cleared later in the same dialog, and shows up in the
+overview, in `{trainings}` ("– erstes Training am Freitag, 16.10.2026") and on
+the status page. Once it has passed, it is left out of mails and the status page.
 
 ## Status page
 

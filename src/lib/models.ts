@@ -79,6 +79,9 @@ export interface Training {
   participants: Member[];
 }
 
+/** A trial candidate's training, with the first session picked when it was assigned. */
+export type AssignedTraining = Training & { startDate: string | null };
+
 /** Where a trial candidate stands in the club's intake process (members."trialStatus"). */
 export type TrialStatus = 'new' | 'waitlist' | 'assigned' | 'cancelled';
 

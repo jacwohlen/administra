@@ -30,12 +30,12 @@ export const load = (async ({ depends }) => {
   if (activityErr) throw err(404, activityErr);
 
   const memberIds = (trialMembers ?? []).map((m) => m.id);
-  let assignments: { memberId: number; trainingId: number }[] = [];
+  let assignments: { memberId: number; trainingId: number; trialStartDate: string | null }[] = [];
   let emails: TrialEmail[] = [];
   if (memberIds.length) {
     const { data: participantRows, error: partErr } = await supabaseClient
       .from('participants')
-      .select('memberId, trainingId')
+      .select('memberId, trainingId, trialStartDate')
       .in('memberId', memberIds);
     if (partErr) throw err(404, partErr);
     assignments = participantRows ?? [];
