@@ -6,13 +6,15 @@
     faWandMagicSparkles,
     faXmark,
     faPlus,
-    faUsers
+    faUsers,
+    faUserTie
   } from '@fortawesome/free-solid-svg-icons';
   import { supabaseClient } from '$lib/supabase';
   import { toaster } from '$lib/toast';
   import { invalidate } from '$app/navigation';
+  import dayjs from 'dayjs';
   import { calculateAge } from '$lib/utils';
-  import { splitTrainingsByAge } from '$lib/trialUtils';
+  import { splitTrainingsByAge, upcomingTrainingDates } from '$lib/trialUtils';
   import type { Training, TrainingActivity, TrialMember } from '$lib/models';
 
   let {
@@ -20,6 +22,7 @@
     trainings,
     activityByTraining,
     assignedTrainingIds,
+    startDates,
     onclose,
     onassigned
   }: {
@@ -27,6 +30,8 @@
     trainings: Training[];
     activityByTraining: Map<number, TrainingActivity>;
     assignedTrainingIds: Set<number>;
+    /** First trial session per assigned training (participants."trialStartDate"). */
+    startDates: Map<number, string | null>;
     onclose: () => void;
     /** After a training was assigned; defaults to closing. */
     onassigned?: () => void;
@@ -38,12 +43,32 @@
 
   let busy = $state(false);
 
-  async function assign(trainingId: string | number) {
+  /** How many upcoming sessions to offer as the first trial session. */
+  const DATE_CHOICES = 8;
+
+  function upcoming(t: Training): string[] {
+    return upcomingTrainingDates(t.weekday, t.dateFrom, DATE_CHOICES);
+  }
+
+  /** First session picked per not yet assigned training; the next session unless changed. */
+  let picked = $state<Record<string, string>>({});
+
+  function pickedDate(t: Training): string | null {
+    return picked[t.id] ?? upcoming(t)[0] ?? null;
+  }
+
+  function formatDate(iso: string): string {
+    return dayjs(iso).format('dd, DD.MM.YYYY');
+  }
+
+  async function assign(t: Training) {
     busy = true;
     try {
-      const { error } = await supabaseClient
-        .from('participants')
-        .insert({ trainingId: Number(trainingId), memberId: member.id });
+      const { error } = await supabaseClient.from('participants').insert({
+        trainingId: Number(t.id),
+        memberId: member.id,
+        trialStartDate: pickedDate(t)
+      });
       if (error) throw error;
       toaster.success({ title: $_('page.probetraining.assignSuccess') });
       await invalidate('probetraining:list');
@@ -51,6 +76,25 @@
     } catch (e) {
       console.error('Error assigning training:', e);
       toaster.error({ title: $_('page.probetraining.assignError') });
+    } finally {
+      busy = false;
+    }
+  }
+
+  async function changeStartDate(trainingId: string | number, value: string) {
+    busy = true;
+    try {
+      const { error } = await supabaseClient
+        .from('participants')
+        .update({ trialStartDate: value || null })
+        .eq('trainingId', Number(trainingId))
+        .eq('memberId', member.id);
+      if (error) throw error;
+      toaster.success({ title: $_('page.probetraining.startDateSaved') });
+      await invalidate('probetraining:list');
+    } catch (e) {
+      console.error('Error saving the trial start date:', e);
+      toaster.error({ title: $_('page.probetraining.startDateError') });
     } finally {
       busy = false;
     }
@@ -77,6 +121,16 @@
   }
 </script>
 
+{#snippet trainer(t: Training)}
+  {#if t.mainTrainer}
+    <span class="flex items-center gap-1 text-xs text-surface-600-400">
+      <Fa icon={faUserTie} size="xs" />
+      {t.mainTrainer.firstname}
+      {t.mainTrainer.lastname}
+    </span>
+  {/if}
+{/snippet}
+
 {#snippet activity(t: Training)}
   {@const a = activityByTraining.get(Number(t.id))}
   {#if a}
@@ -90,6 +144,24 @@
         · {$_('page.probetraining.trialCount', { values: { count: a.trialCount } })}
       {/if}
     </span>
+  {/if}
+{/snippet}
+
+{#snippet firstSession(t: Training)}
+  {@const dates = upcoming(t)}
+  {#if dates.length > 0}
+    <select
+      class="select w-auto text-xs py-1 flex-shrink-0"
+      title={$_('page.probetraining.startDateHint')}
+      aria-label="{$_('page.probetraining.startDate')}: {t.title}"
+      disabled={busy}
+      value={pickedDate(t)}
+      onchange={(e) => (picked[t.id] = e.currentTarget.value)}
+    >
+      {#each dates as d (d)}
+        <option value={d}>{formatDate(d)}</option>
+      {/each}
+    </select>
   {/if}
 {/snippet}
 
@@ -118,14 +190,33 @@
         <h4 class="text-sm font-semibold mb-2">{$_('page.probetraining.assignedTrainings')}</h4>
         <ul class="space-y-1">
           {#each assignedList as t (t.id)}
-            <li class="flex items-center gap-2 rounded-md bg-surface-100-900 px-3 py-2">
-              <span class="flex-1 min-w-0">
+            {@const current = startDates.get(Number(t.id)) ?? null}
+            {@const dates = upcoming(t)}
+            <li class="flex flex-wrap items-center gap-2 rounded-md bg-surface-100-900 px-3 py-2">
+              <span class="flex-1 min-w-48">
                 <span class="font-medium block truncate">{t.title}</span>
                 <span class="text-xs text-surface-600-400">
                   {$_('weekday.' + t.weekday)} · {t.dateFrom} · {t.section}
                 </span>
+                {@render trainer(t)}
                 {@render activity(t)}
               </span>
+              <select
+                class="select w-auto text-xs py-1 flex-shrink-0"
+                title={$_('page.probetraining.startDateHint')}
+                aria-label="{$_('page.probetraining.startDate')}: {t.title}"
+                disabled={busy}
+                value={current ?? ''}
+                onchange={(e) => changeStartDate(t.id, e.currentTarget.value)}
+              >
+                <option value="">{$_('page.probetraining.startDateNone')}</option>
+                {#if current && !dates.includes(current)}
+                  <option value={current}>{formatDate(current)}</option>
+                {/if}
+                {#each dates as d (d)}
+                  <option value={d}>{formatDate(d)}</option>
+                {/each}
+              </select>
               <button
                 class="btn-icon preset-tonal-error flex-shrink-0"
                 disabled={busy}
@@ -156,20 +247,22 @@
         <ul class="space-y-1">
           {#each split.suggested as t (t.id)}
             <li
-              class="flex items-center gap-2 rounded-md border border-primary-500/50 bg-primary-500/5 px-3 py-2"
+              class="flex flex-wrap items-center gap-2 rounded-md border border-primary-500/50 bg-primary-500/5 px-3 py-2"
             >
-              <span class="flex-1 min-w-0">
+              <span class="flex-1 min-w-48">
                 <span class="font-medium block truncate">{t.title}</span>
                 <span class="text-xs text-surface-600-400">
                   {$_('weekday.' + t.weekday)} · {t.dateFrom} · {t.section} · {t.ageFrom}–{t.ageTo}
                   {$_('page.probetraining.yearsOld')}
                 </span>
+                {@render trainer(t)}
                 {@render activity(t)}
               </span>
+              {@render firstSession(t)}
               <button
                 class="btn btn-sm preset-filled-primary-500 flex-shrink-0"
                 disabled={busy}
-                onclick={() => assign(t.id)}
+                onclick={() => assign(t)}
               >
                 <Fa icon={faPlus} size="xs" />
                 <span>{$_('page.probetraining.assign')}</span>
@@ -187,20 +280,24 @@
       {:else}
         <ul class="space-y-1">
           {#each split.others as t (t.id)}
-            <li class="flex items-center gap-2 rounded-md border border-surface-200-800 px-3 py-2">
-              <span class="flex-1 min-w-0">
+            <li
+              class="flex flex-wrap items-center gap-2 rounded-md border border-surface-200-800 px-3 py-2"
+            >
+              <span class="flex-1 min-w-48">
                 <span class="font-medium block truncate">{t.title}</span>
                 <span class="text-xs text-surface-600-400">
                   {$_('weekday.' + t.weekday)} · {t.dateFrom} · {t.section}{#if t.ageFrom != null && t.ageTo != null}
                     · {t.ageFrom}–{t.ageTo}
                     {$_('page.probetraining.yearsOld')}{/if}
                 </span>
+                {@render trainer(t)}
                 {@render activity(t)}
               </span>
+              {@render firstSession(t)}
               <button
                 class="btn btn-sm preset-tonal-primary flex-shrink-0"
                 disabled={busy}
-                onclick={() => assign(t.id)}
+                onclick={() => assign(t)}
               >
                 <Fa icon={faPlus} size="xs" />
                 <span>{$_('page.probetraining.assign')}</span>

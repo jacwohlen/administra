@@ -6,7 +6,9 @@ import { supabaseClient } from '$lib/supabase';
 export const load = (async ({ params }) => {
   const { error, data } = await supabaseClient
     .from('trainings')
-    .select(`*, participants (*)`)
+    .select(
+      `*, participants (*), mainTrainer:members!trainings_main_trainer_id_fkey (id, firstname, lastname, mobile, email)`
+    )
     .eq('id', params.trainingId)
     .single();
 

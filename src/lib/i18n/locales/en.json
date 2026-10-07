@@ -231,7 +231,12 @@
         "select_section": "Select a section...",
         "age_from": "Age from",
         "age_to": "Age to",
-        "age_placeholder": "e.g. 5"
+        "age_placeholder": "e.g. 5",
+        "main_trainer": "Main trainer",
+        "no_main_trainer": "None (trainers rotate)",
+        "main_trainer_participants": "On the participant list",
+        "main_trainer_others": "Other members",
+        "main_trainer_hint": "Usually leads the training. Name, phone and e-mail go into the mail to assigned trial candidates."
       },
       "validation": {
         "required_fields": "Please fill in all required fields",
@@ -475,6 +480,12 @@
       "assignError": "Error assigning training",
       "removeSuccess": "Assignment removed",
       "removeError": "Error removing assignment",
+      "startDate": "First session",
+      "startDateHint": "When the candidate can start. The date goes into the e-mail and onto the status page.",
+      "startDateFrom": "from {date}",
+      "startDateNone": "no date",
+      "startDateSaved": "Date saved",
+      "startDateError": "Error saving the date",
       "tab": {
         "new": "New",
         "waitlist": "Waiting list",
@@ -653,7 +664,7 @@
         },
         "assigned": {
           "title": "Your training is set",
-          "text": "You are welcome to join the following training from now on:"
+          "text": "You are welcome to join the following training:"
         },
         "cancelled": {
           "title": "Registration no longer active",

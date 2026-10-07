@@ -12,7 +12,8 @@
     faArrowLeft,
     faEdit,
     faTrash,
-    faEllipsisVertical
+    faEllipsisVertical,
+    faUserTie
   } from '@fortawesome/free-solid-svg-icons';
   import { supabaseClient } from '$lib/supabase';
   import { goto } from '$app/navigation';
@@ -130,6 +131,12 @@
     <Fa icon={faUsers} size="xs" class="inline mr-1" />{data.participants.length}
     {$_('page.trainings.participants')}
   </span>
+  {#if data.mainTrainer}
+    <span class="text-surface-600-400" title={$_('page.trainings.form.main_trainer')}>
+      <Fa icon={faUserTie} size="xs" class="inline mr-1" />{data.mainTrainer.firstname}
+      {data.mainTrainer.lastname}
+    </span>
+  {/if}
 </div>
 
 <!-- Track Attendance -->

@@ -76,8 +76,24 @@ export interface Training {
   section: string;
   ageFrom?: number;
   ageTo?: number;
+  /** Member who usually leads the training; empty when the trainers rotate. */
+  mainTrainerId?: number | null;
+  /** Embedded where loaded with `mainTrainer:members!trainings_main_trainer_id_fkey(...)`. */
+  mainTrainer?: TrainerContact | null;
   participants: Member[];
 }
+
+/** A training's main trainer, as named to trial candidates. */
+export interface TrainerContact {
+  id: number;
+  firstname: string;
+  lastname: string;
+  mobile?: string | null;
+  email?: string | null;
+}
+
+/** A trial candidate's training, with the first session picked when it was assigned. */
+export type AssignedTraining = Training & { startDate: string | null };
 
 /** Where a trial candidate stands in the club's intake process (members."trialStatus"). */
 export type TrialStatus = 'new' | 'waitlist' | 'assigned' | 'cancelled';
