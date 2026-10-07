@@ -215,6 +215,13 @@ export interface MailTraining {
   section?: string;
   /** First trial session (YYYY-MM-DD), picked when the training was assigned. */
   startDate?: string | null;
+  /** The training's main trainer, the candidate's contact from now on. */
+  mainTrainer?: {
+    firstname: string;
+    lastname: string;
+    mobile?: string | null;
+    email?: string | null;
+  } | null;
 }
 
 const MONTHS_EN = [
@@ -251,7 +258,8 @@ function localIsoDate(d: Date): string {
 
 /**
  * One line per training: "Donnerstag, 18:00–19:15: Judo Kinder (Judo)",
- * followed by the first session when one was picked and it is still ahead.
+ * followed by the first session when one was picked and it is still ahead,
+ * and an indented line with the main trainer's contact when one is set.
  */
 export function formatTrainingLines(
   trainings: MailTraining[],
@@ -271,7 +279,19 @@ export function formatTrainingLines(
           ? ` – erstes Training am ${start}`
           : ` – first session on ${start}`
         : '';
-      return `- ${day}, ${time}: ${t.title}${section}${first}`;
+      const trainer = t.mainTrainer
+        ? [
+            `${t.mainTrainer.firstname} ${t.mainTrainer.lastname}`.trim(),
+            t.mainTrainer.mobile?.trim(),
+            t.mainTrainer.email?.trim()
+          ]
+            .filter(Boolean)
+            .join(', ')
+        : '';
+      const contact = trainer
+        ? `\n  ${locale === 'de' ? 'Ansprechperson' : 'Your contact'}: ${trainer}`
+        : '';
+      return `- ${day}, ${time}: ${t.title}${section}${first}${contact}`;
     })
     .join('\n');
 }

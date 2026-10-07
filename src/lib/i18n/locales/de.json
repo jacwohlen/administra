@@ -231,7 +231,12 @@
         "select_section": "Sektion auswählen...",
         "age_from": "Alter von",
         "age_to": "Alter bis",
-        "age_placeholder": "z.B. 5"
+        "age_placeholder": "z.B. 5",
+        "main_trainer": "Haupttrainer/in",
+        "no_main_trainer": "Keine/r (Trainer wechseln)",
+        "main_trainer_participants": "Auf der Teilnehmerliste",
+        "main_trainer_others": "Weitere Mitglieder",
+        "main_trainer_hint": "Leitet das Training in der Regel. Name, Telefon und E-Mail stehen im E-Mail an zugewiesene Probetraining-Kandidaten."
       },
       "validation": {
         "required_fields": "Bitte alle Pflichtfelder ausfüllen",

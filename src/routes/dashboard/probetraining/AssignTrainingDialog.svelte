@@ -6,7 +6,8 @@
     faWandMagicSparkles,
     faXmark,
     faPlus,
-    faUsers
+    faUsers,
+    faUserTie
   } from '@fortawesome/free-solid-svg-icons';
   import { supabaseClient } from '$lib/supabase';
   import { toaster } from '$lib/toast';
@@ -120,6 +121,16 @@
   }
 </script>
 
+{#snippet trainer(t: Training)}
+  {#if t.mainTrainer}
+    <span class="flex items-center gap-1 text-xs text-surface-600-400">
+      <Fa icon={faUserTie} size="xs" />
+      {t.mainTrainer.firstname}
+      {t.mainTrainer.lastname}
+    </span>
+  {/if}
+{/snippet}
+
 {#snippet activity(t: Training)}
   {@const a = activityByTraining.get(Number(t.id))}
   {#if a}
@@ -187,6 +198,7 @@
                 <span class="text-xs text-surface-600-400">
                   {$_('weekday.' + t.weekday)} · {t.dateFrom} · {t.section}
                 </span>
+                {@render trainer(t)}
                 {@render activity(t)}
               </span>
               <select
@@ -243,6 +255,7 @@
                   {$_('weekday.' + t.weekday)} · {t.dateFrom} · {t.section} · {t.ageFrom}–{t.ageTo}
                   {$_('page.probetraining.yearsOld')}
                 </span>
+                {@render trainer(t)}
                 {@render activity(t)}
               </span>
               {@render firstSession(t)}
@@ -277,6 +290,7 @@
                     · {t.ageFrom}–{t.ageTo}
                     {$_('page.probetraining.yearsOld')}{/if}
                 </span>
+                {@render trainer(t)}
                 {@render activity(t)}
               </span>
               {@render firstSession(t)}

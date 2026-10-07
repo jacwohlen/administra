@@ -17,7 +17,9 @@ export const load = (async ({ depends }) => {
 
   const { data: trainings, error: trainingsErr } = await supabaseClient
     .from('trainings')
-    .select('*')
+    .select(
+      '*, mainTrainer:members!trainings_main_trainer_id_fkey(id, firstname, lastname, mobile, email)'
+    )
     .returns<Training[]>();
 
   if (trainingsErr) throw err(404, trainingsErr);

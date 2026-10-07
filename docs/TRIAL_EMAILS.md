@@ -24,12 +24,12 @@ Admins edit the texts under **Einstellungen → E-Mails an
 Probetraining-Kandidaten**, per mail and language. An empty field keeps the
 built-in text from `src/lib/trialMail.ts`. Placeholders:
 
-| Placeholder                 | Value                                                                                           |
-| --------------------------- | ----------------------------------------------------------------------------------------------- |
-| `{firstname}`, `{lastname}` | the candidate                                                                                   |
-| `{club}`, `{clubUrl}`       | club name and website (settings → Verein)                                                       |
-| `{contactEmail}`            | the club's contact address, or the website if none is set                                       |
-| `{trainings}`               | one line per assigned training: weekday, time, title, and the first session when one was picked |
+| Placeholder                 | Value                                                                                                                       |
+| --------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| `{firstname}`, `{lastname}` | the candidate                                                                                                               |
+| `{club}`, `{clubUrl}`       | club name and website (settings → Verein)                                                                                   |
+| `{contactEmail}`            | the club's contact address, or the website if none is set                                                                   |
+| `{trainings}`               | one line per assigned training: weekday, time, title, the first session when one was picked, and the main trainer's contact |
 
 The preview dialog shows the filled-in mail and can be edited before
 sending; edits there only affect that one mail.
@@ -43,6 +43,18 @@ this week. The date is stored per assignment (`participants."trialStartDate"`),
 can be changed or cleared later in the same dialog, and shows up in the
 overview, in `{trainings}` ("– erstes Training am Freitag, 16.10.2026") and on
 the status page. Once it has passed, it is left out of mails and the status page.
+
+## Main trainer
+
+A training can have a main trainer (**Trainings → Bearbeiten →
+Haupttrainer/in**, `trainings."mainTrainerId"`), for trainings that are
+always led by the same person, such as the kids' trainings. Leave it empty
+when the trainers rotate. Trainers are members, so name, mobile and e-mail
+come from their member record. In `{trainings}` the training then gets an
+indented line, e.g. "Ansprechperson: Anna Muster, 079 123 45 67,
+anna@example.ch", so the candidate contacts the trainer directly from then
+on. The status page does not show it: it needs no account, and the
+trainer's details stay in the mail.
 
 ## Status page
 

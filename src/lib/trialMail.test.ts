@@ -134,6 +134,34 @@ describe('formatTrainingLines', () => {
   });
 });
 
+describe('formatTrainingLines with a main trainer', () => {
+  const t = { title: 'Judo Kids', weekday: 'Friday', dateFrom: '17:00', dateTo: '18:00' };
+
+  it('adds the trainer contact on an indented line', () => {
+    const mainTrainer = {
+      firstname: 'Anna',
+      lastname: 'Muster',
+      mobile: '079 123 45 67',
+      email: 'anna@example.ch'
+    };
+    expect(formatTrainingLines([{ ...t, mainTrainer }], 'de')).toBe(
+      '- Freitag, 17:00–18:00: Judo Kids\n  Ansprechperson: Anna Muster, 079 123 45 67, anna@example.ch'
+    );
+    expect(formatTrainingLines([{ ...t, mainTrainer }], 'en')).toBe(
+      '- Friday, 17:00–18:00: Judo Kids\n  Your contact: Anna Muster, 079 123 45 67, anna@example.ch'
+    );
+  });
+
+  it('leaves out missing contact details', () => {
+    expect(
+      formatTrainingLines(
+        [{ ...t, mainTrainer: { firstname: 'Anna', lastname: 'Muster', mobile: null, email: '' } }],
+        'de'
+      )
+    ).toBe('- Freitag, 17:00–18:00: Judo Kids\n  Ansprechperson: Anna Muster');
+  });
+});
+
 describe('formatTrialDate', () => {
   it('formats a date with its weekday', () => {
     expect(formatTrialDate('2026-10-11', 'de')).toBe('Sonntag, 11.10.2026');

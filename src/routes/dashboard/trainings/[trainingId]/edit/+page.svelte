@@ -16,10 +16,14 @@
   let section = $state(data.section);
   let ageFrom = $state<number | null>(data.ageFrom ?? null);
   let ageTo = $state<number | null>(data.ageTo ?? null);
+  let mainTrainerId = $state<number | null>(data.mainTrainerId ?? null);
   let loading = $state(false);
   let error = $state('');
 
   const sections = clubConfig.sections;
+  let participantTrainers = $derived(data.trainerOptions.filter((o) => o.participant));
+  let otherTrainers = $derived(data.trainerOptions.filter((o) => !o.participant));
+
   const weekdays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
   async function updateTraining() {
@@ -46,7 +50,8 @@
           dateTo: dateTo || null,
           section,
           ageFrom,
-          ageTo
+          ageTo,
+          mainTrainerId
         })
         .eq('id', data.id);
 
@@ -167,6 +172,31 @@
         bind:value={ageTo}
         placeholder={$_('page.trainings.form.age_placeholder')}
       />
+    </div>
+
+    <!-- Main trainer -->
+    <div class="md:col-span-2">
+      <label class="label" for="mainTrainer">
+        <span>{$_('page.trainings.form.main_trainer')}</span>
+      </label>
+      <select id="mainTrainer" class="select" bind:value={mainTrainerId}>
+        <option value={null}>{$_('page.trainings.form.no_main_trainer')}</option>
+        {#if participantTrainers.length > 0}
+          <optgroup label={$_('page.trainings.form.main_trainer_participants')}>
+            {#each participantTrainers as o (o.id)}
+              <option value={o.id}>{o.lastname} {o.firstname}</option>
+            {/each}
+          </optgroup>
+        {/if}
+        <optgroup label={$_('page.trainings.form.main_trainer_others')}>
+          {#each otherTrainers as o (o.id)}
+            <option value={o.id}>{o.lastname} {o.firstname}</option>
+          {/each}
+        </optgroup>
+      </select>
+      <p class="text-xs text-surface-600-400 mt-1">
+        {$_('page.trainings.form.main_trainer_hint')}
+      </p>
     </div>
   </div>
 

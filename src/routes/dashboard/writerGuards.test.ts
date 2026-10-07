@@ -1,5 +1,19 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { isRedirect } from '@sveltejs/kit';
+
+// The edit training page loads its main trainer options; every query comes
+// back empty here.
+vi.mock('$lib/supabase', () => {
+  const handler: ProxyHandler<object> = {
+    get(_target, prop) {
+      if (prop === 'then') {
+        return (resolve: (v: unknown) => void) => resolve({ data: [], error: null });
+      }
+      return () => new Proxy({}, handler);
+    }
+  };
+  return { supabaseClient: new Proxy({}, handler) };
+});
 import { load as newTraining } from './trainings/new/+page';
 import { load as editTraining } from './trainings/[trainingId]/edit/+page';
 import { load as newEvent } from './events/new/+page';
