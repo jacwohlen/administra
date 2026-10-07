@@ -6,7 +6,8 @@ import {
   matchesTrialTab,
   isTrialInactive,
   sortTrialMembers,
-  elapsedSince
+  elapsedSince,
+  upcomingTrainingDates
 } from './trialUtils';
 import type { Training, TrialMember } from './models';
 
@@ -248,5 +249,38 @@ describe('elapsedSince', () => {
 
   it('never goes negative', () => {
     expect(elapsedSince(new Date(2026, 8, 30).toISOString(), now).unit).toBe('today');
+  });
+});
+
+describe('upcomingTrainingDates', () => {
+  // Tuesday, 6 October 2026, 17:00 local time
+  const now = new Date(2026, 9, 6, 17, 0);
+
+  it('lists the next sessions of the weekday', () => {
+    expect(upcomingTrainingDates('Friday', '18:00', 3, now)).toEqual([
+      '2026-10-09',
+      '2026-10-16',
+      '2026-10-23'
+    ]);
+  });
+
+  it('includes today while the training has not started', () => {
+    expect(upcomingTrainingDates('Tuesday', '18:00', 2, now)).toEqual(['2026-10-06', '2026-10-13']);
+  });
+
+  it('skips today once the training has started', () => {
+    expect(upcomingTrainingDates('Tuesday', '17:00', 1, now)).toEqual(['2026-10-13']);
+    expect(upcomingTrainingDates('Tuesday', null, 1, now)).toEqual(['2026-10-13']);
+  });
+
+  it('crosses month and year ends', () => {
+    expect(upcomingTrainingDates('Monday', '18:00', 2, new Date(2026, 11, 27))).toEqual([
+      '2026-12-28',
+      '2027-01-04'
+    ]);
+  });
+
+  it('returns nothing for an unknown weekday', () => {
+    expect(upcomingTrainingDates('Montag', '18:00', 3, now)).toEqual([]);
   });
 });

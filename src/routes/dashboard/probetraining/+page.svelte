@@ -44,6 +44,7 @@
   import MailDialog from './MailDialog.svelte';
   import { trialStatusUrl, type TrialMailKind } from '$lib/trialMail';
   import type {
+    AssignedTraining,
     TrialEmail,
     TrialMember,
     TrialStatus,
@@ -133,6 +134,17 @@
     return map;
   });
 
+  /** First trial session per assignment, keyed by member, then training. */
+  let startDatesByMember = $derived.by(() => {
+    const map = new Map<number, Map<number, string | null>>();
+    for (const a of data.assignments) {
+      const byTraining = map.get(a.memberId) ?? new Map<number, string | null>();
+      byTraining.set(a.trainingId, a.trialStartDate);
+      map.set(a.memberId, byTraining);
+    }
+    return map;
+  });
+
   let emailsByMember = $derived.by(() => {
     const map = new Map<number, TrialEmail[]>();
     for (const e of data.emails) {
@@ -203,10 +215,20 @@
     return sortTrialMembers(matching, tab);
   });
 
-  function assignedTrainings(memberId: number): Training[] {
-    return (assignmentsByMember.get(memberId) ?? [])
-      .map((id) => trainingById.get(id))
-      .filter((t): t is Training => t !== undefined);
+  function assignedTrainings(memberId: number): AssignedTraining[] {
+    const startDates = startDatesByMember.get(memberId);
+    return (assignmentsByMember.get(memberId) ?? []).flatMap((id) => {
+      const t = trainingById.get(id);
+      return t ? [{ ...t, startDate: startDates?.get(id) ?? null }] : [];
+    });
+  }
+
+  /** "ab Fr, 17.10." for a first session still ahead, else nothing. */
+  function startLabel(t: AssignedTraining): string {
+    if (!t.startDate || t.startDate < dayjs().format('YYYY-MM-DD')) return '';
+    return $_('page.probetraining.startDateFrom', {
+      values: { date: dayjs(t.startDate).format('dd, DD.MM.') }
+    });
   }
 
   /** Everyone archived, with the trial sessions they attended — kept for the statistics. */
@@ -587,6 +609,7 @@
               {:else if assigned.length > 0}
                 <span class="chip preset-tonal-secondary text-xs truncate">
                   {assigned[0].title} · {$_('weekdayShort.' + assigned[0].weekday)}
+                  {#if startLabel(assigned[0])}· {startLabel(assigned[0])}{/if}
                 </span>
                 {#if assigned.length > 1}
                   <span class="text-xs text-surface-600-400">+{assigned.length - 1}</span>
@@ -719,6 +742,7 @@
                           <span class="chip preset-tonal-secondary text-xs">
                             {t.title} · {$_('weekdayShort.' + t.weekday)}
                             {t.dateFrom}
+                            {#if startLabel(t)}· {startLabel(t)}{/if}
                           </span>
                         {/each}
                       </span>
@@ -975,6 +999,7 @@
         trainings={data.trainings}
         {activityByTraining}
         assignedTrainingIds={new Set(assignmentsByMember.get(selectedMember.id) ?? [])}
+        startDates={startDatesByMember.get(selectedMember.id) ?? new Map()}
         onclose={() => (selectedMember = null)}
         onassigned={() => {
           const m = selectedMember;
