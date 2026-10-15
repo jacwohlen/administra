@@ -1,5 +1,5 @@
 @import 'tailwindcss';
-@import '@skeletonlabs/skeleton/themes/nosh';
+@import './lib/themes/pink.css';
 @import '@skeletonlabs/skeleton';
 
 @custom-variant dark (&:where(.dark, .dark *));
