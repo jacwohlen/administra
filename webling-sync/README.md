@@ -124,6 +124,7 @@ Create a GitHub environment per target under **Settings → Environments**
 | `WEBLING_EMAIL`             | Secret   | Webling login, needed for the participant API      |
 | `WEBLING_PASSWORD`          | Secret   | Password of that login                             |
 | `SUPABASE_SERVICE_ROLE_KEY` | Secret   | secret key of that project, see below              |
+| `HEALTHCHECK_URL`           | Secret   | `prod` only: healthchecks.io ping URL (optional)   |
 
 `SUPABASE_SERVICE_ROLE_KEY` takes a secret key (`sb_secret_...`): Supabase
 Dashboard → project → **Settings → API Keys** → _Publishable and secret API
@@ -132,6 +133,11 @@ Use one key per project and do not reuse the app's keys, so the sync key can be
 revoked on its own. The legacy JWT `service_role` key still works but Supabase
 retires it at the end of 2026. Anything with this key bypasses RLS, so keep it in
 the environment secret only.
+
+`HEALTHCHECK_URL` reports every run to healthchecks.io, which e-mails when a
+run fails or when no run arrives (e.g. GitHub disabled the schedule after 60
+days without commits). Set it in `prod` only, so manual `dev` runs don't count;
+see `docs/UPTIME_MONITORING.md`.
 
 Optionally restrict the `prod` environment to the `main` branch
 (_Deployment branches and tags_) so a workflow edit on another branch cannot
