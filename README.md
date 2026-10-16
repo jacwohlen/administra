@@ -267,6 +267,9 @@ npm run build
    `SENTRY_ORG`, `SENTRY_PROJECT` for readable stack traces), see
    [docs/ERROR_MONITORING.md](docs/ERROR_MONITORING.md).
 
+   An external uptime monitor calls `/api/health` every 5 minutes, see
+   [docs/UPTIME_MONITORING.md](docs/UPTIME_MONITORING.md).
+
 ### Preview branches and database deployments
 
 Pull requests get an isolated Supabase preview branch (with migrations and
