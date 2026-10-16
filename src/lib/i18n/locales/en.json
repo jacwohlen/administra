@@ -694,6 +694,14 @@
         "yes": "Yes, cancel",
         "error": "Cancelling did not work. Please try again later or write to us."
       }
+    },
+    "error": {
+      "title": "That didn't work",
+      "unexpectedTitle": "Something went wrong",
+      "unexpectedMessage": "The error has been reported automatically. Please try again in a few minutes.",
+      "notFound": "This page does not exist.",
+      "errorId": "If you contact us, please mention this error ID:",
+      "home": "Go to the start page"
     }
   },
   "components": {

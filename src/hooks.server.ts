@@ -1,25 +1,41 @@
+import * as Sentry from '@sentry/sveltekit';
+import { env } from '$env/dynamic/public';
 import { PUBLIC_SUPABASE_ANON_KEY, PUBLIC_SUPABASE_DATABASE_URL } from '$env/static/public';
 import { createServerClient } from '@supabase/ssr';
+import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Handle } from '@sveltejs/kit';
+import { sequence } from '@sveltejs/kit/hooks';
 import { locale } from 'svelte-i18n';
 import { clubConfig } from '$lib/clubConfig';
+import { sentryOptions } from '$lib/sentry';
 import { parseUserLocale, USER_LOCALE_COOKIE } from '$lib/userLocale';
 
-export const handle: Handle = async ({ event, resolve }) => {
-  event.locals.supabase = createServerClient(
-    PUBLIC_SUPABASE_DATABASE_URL,
-    PUBLIC_SUPABASE_ANON_KEY,
-    {
-      cookies: {
-        getAll: () => event.cookies.getAll(),
-        setAll: (cookiesToSet) => {
-          cookiesToSet.forEach(({ name, value, options }) => {
-            event.cookies.set(name, value, { ...options, path: '/' });
-          });
+// Error reports from the server, see docs/ERROR_MONITORING.md.
+Sentry.init(sentryOptions(env.PUBLIC_SENTRY_DSN, __NETLIFY_CONTEXT__));
+
+const setup: Handle = async ({ event, resolve }) => {
+  // Created on first use: as soon as it exists, the Supabase client checks the
+  // session cookie in the background and refreshes an expired token. On a
+  // request that never awaits the session, that refresh finishes after the
+  // response is sent, and the cookie write throws as an unhandled rejection.
+  // That crashes the Netlify function and a later request gets a 502.
+  let supabase: SupabaseClient | undefined;
+  let responded = false;
+  Object.defineProperty(event.locals, 'supabase', {
+    get: () =>
+      (supabase ??= createServerClient(PUBLIC_SUPABASE_DATABASE_URL, PUBLIC_SUPABASE_ANON_KEY, {
+        cookies: {
+          getAll: () => event.cookies.getAll(),
+          setAll: (cookiesToSet) => {
+            // A refresh that lands after the response can no longer set cookies
+            if (responded) return;
+            cookiesToSet.forEach(({ name, value, options }) => {
+              event.cookies.set(name, value, { ...options, path: '/' });
+            });
+          }
         }
-      }
-    }
-  );
+      }))
+  });
 
   event.locals.safeGetSession = async () => {
     const {
@@ -52,10 +68,19 @@ export const handle: Handle = async ({ event, resolve }) => {
     ? clubConfig.defaultLocale
     : (lang?.split('-')[0] ?? 'en');
 
-  return resolve(event, {
+  const response = await resolve(event, {
     transformPageChunk: ({ html }) => html.replace('%lang%', documentLang),
     filterSerializedResponseHeaders(name) {
       return name === 'content-range' || name === 'x-supabase-api-version';
     }
   });
+  responded = true;
+  return response;
 };
+
+export const handle = sequence(Sentry.sentryHandle(), setup);
+
+export const handleError = Sentry.handleErrorWithSentry(({ message }) => ({
+  message,
+  errorId: Sentry.lastEventId()
+}));
