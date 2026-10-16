@@ -694,6 +694,14 @@
         "yes": "Ja, abmelden",
         "error": "Die Abmeldung hat nicht geklappt. Bitte versuche es später noch einmal oder schreib uns."
       }
+    },
+    "error": {
+      "title": "Das hat nicht geklappt",
+      "unexpectedTitle": "Da ist etwas schiefgelaufen",
+      "unexpectedMessage": "Der Fehler wurde automatisch gemeldet. Bitte versuch es in ein paar Minuten nochmals.",
+      "notFound": "Diese Seite gibt es nicht.",
+      "errorId": "Wenn du uns schreibst, nenn bitte diese Fehler-ID:",
+      "home": "Zur Startseite"
     }
   },
   "components": {

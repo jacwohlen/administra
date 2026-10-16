@@ -1,12 +1,19 @@
+import * as Sentry from '@sentry/sveltekit';
+import { env } from '$env/dynamic/public';
 import { PUBLIC_SUPABASE_ANON_KEY, PUBLIC_SUPABASE_DATABASE_URL } from '$env/static/public';
 import { createServerClient } from '@supabase/ssr';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Handle } from '@sveltejs/kit';
+import { sequence } from '@sveltejs/kit/hooks';
 import { locale } from 'svelte-i18n';
 import { clubConfig } from '$lib/clubConfig';
+import { sentryOptions } from '$lib/sentry';
 import { parseUserLocale, USER_LOCALE_COOKIE } from '$lib/userLocale';
 
-export const handle: Handle = async ({ event, resolve }) => {
+// Error reports from the server, see docs/ERROR_MONITORING.md.
+Sentry.init(sentryOptions(env.PUBLIC_SENTRY_DSN, __NETLIFY_CONTEXT__));
+
+const setup: Handle = async ({ event, resolve }) => {
   // Created on first use: as soon as it exists, the Supabase client checks the
   // session cookie in the background and refreshes an expired token. On a
   // request that never awaits the session, that refresh finishes after the
@@ -70,3 +77,10 @@ export const handle: Handle = async ({ event, resolve }) => {
   responded = true;
   return response;
 };
+
+export const handle = sequence(Sentry.sentryHandle(), setup);
+
+export const handleError = Sentry.handleErrorWithSentry(({ message }) => ({
+  message,
+  errorId: Sentry.lastEventId()
+}));

@@ -1,5 +1,6 @@
 <script lang="ts">
   import { PUBLIC_MODE } from '$env/static/public';
+  import { setUser } from '@sentry/sveltekit';
   import { invalidateAll } from '$app/navigation';
   import { supabaseClient } from '$lib/supabase';
   import { onMount } from 'svelte';
@@ -17,6 +18,13 @@
     if ($locale) {
       dayjs.locale($locale.startsWith('de') ? 'de' : 'en');
     }
+  });
+
+  // Error reports carry the account ID only (no name or e-mail), so a report
+  // can be matched to a user_profiles row if needed.
+  $effect(() => {
+    const id = data.session?.user.id;
+    setUser(id ? { id } : null);
   });
 
   onMount(() => {

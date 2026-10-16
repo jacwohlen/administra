@@ -263,6 +263,10 @@ npm run build
    `PUBLIC_TRIAL_*` / `PUBLIC_DEFAULT_LOCALE` variables listed in
    `.env.example`. Unset variables keep their defaults.
 
+   For error monitoring add `PUBLIC_SENTRY_DSN` (and `SENTRY_AUTH_TOKEN`,
+   `SENTRY_ORG`, `SENTRY_PROJECT` for readable stack traces), see
+   [docs/ERROR_MONITORING.md](docs/ERROR_MONITORING.md).
+
 ### Preview branches and database deployments
 
 Pull requests get an isolated Supabase preview branch (with migrations and
