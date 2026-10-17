@@ -64,7 +64,7 @@ jobs:
         working-directory: .
         run: curl -fsS -m 10 --retry 3 -o /dev/null "$HEALTHCHECK_URL/start" || true
 
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - uses: actions/setup-python@v6
         with:
