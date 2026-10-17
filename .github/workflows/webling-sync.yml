@@ -48,12 +48,22 @@ jobs:
       ANONYMIZE: ${{ (inputs.environment || 'prod') == 'prod' && 'false' || 'true' }}
       # Show log lines as they happen instead of when the buffer flushes
       PYTHONUNBUFFERED: '1'
+      # healthchecks.io ping URL, set in the prod environment only (see
+      # docs/UPTIME_MONITORING.md); without it the run is not reported
+      HEALTHCHECK_URL: ${{ secrets.HEALTHCHECK_URL }}
 
     defaults:
       run:
         working-directory: webling-sync
 
     steps:
+      # healthchecks.io alerts when a run fails or no run arrives in time.
+      # A failed ping never fails the sync.
+      - name: Report start to healthchecks.io
+        if: ${{ env.HEALTHCHECK_URL != '' }}
+        working-directory: .
+        run: curl -fsS -m 10 --retry 3 -o /dev/null "$HEALTHCHECK_URL/start" || true
+
       - uses: actions/checkout@v6
 
       - uses: actions/setup-python@v6
@@ -75,3 +85,12 @@ jobs:
       - name: Sync events
         if: ${{ !cancelled() && (inputs.sync || 'all') != 'members' }}
         run: python src/events.py
+
+      - name: Report result to healthchecks.io
+        if: ${{ always() && env.HEALTHCHECK_URL != '' }}
+        working-directory: .
+        run: |
+          if [ "$JOB_STATUS" = "success" ]; then suffix=""; else suffix="/fail"; fi
+          curl -fsS -m 10 --retry 3 -o /dev/null "$HEALTHCHECK_URL$suffix" || true
+        env:
+          JOB_STATUS: ${{ job.status }}
