@@ -58,7 +58,8 @@ Setup (once):
 
 1. At healthchecks.io (same account as for Club-News), add a check
    "Webling sync": schedule **Cron** `47 22 * * *`, time zone UTC, grace time
-   **1 hour** (a run takes a few minutes; GitHub may start it late).
+   **4 hours**. GitHub starts scheduled runs late: in October 2026 they began
+   1.5–2 hours after 22:47 UTC. A shorter grace time means false alerts.
 2. Copy its ping URL into the GitHub environment **prod** as secret
    `HEALTHCHECK_URL` (Settings → Environments → prod). Not in `dev`, so manual
    dev runs don't count.
