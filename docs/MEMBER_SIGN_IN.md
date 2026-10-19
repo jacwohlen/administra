@@ -21,7 +21,9 @@ profile via the avatar menu → _Mein Profil_.
 2. After the code is verified Supabase marks the email as confirmed. The
    `handle_auth_user_change` trigger then calls `grant_member_access`: if a
    member record carries that email (case-insensitive, trial candidates
-   excluded), the account is approved with role `member`.
+   excluded), the account is approved with role `member`. The bootstrap
+   admin email (`is_bootstrap_admin()`) likewise only becomes admin once it
+   is confirmed.
 3. No match → the account stays `pending` and the pending page explains why.
    As soon as a trainer adds the email to a member (or Webling syncs it), the
    `grant_member_access_on_member_change` trigger lets the person in; they
@@ -60,7 +62,13 @@ projects set this once in the Supabase dashboard:
    _Confirm signup_ (subject: `Dein Anmeldecode für Administra`). The
    default templates only contain a link, not the code.
 3. **Email OTP length** stays at 6 digits (the app expects 6).
-4. **Webling**: `webling-sync` now also syncs the member's `E-Mail`
+4. **Confirm email** (Authentication → Sign In / Providers → Email) must be
+   **on**. Automatic approval trusts `auth.users.email_confirmed_at`: with
+   confirmations off, Supabase sets it on a password sign-up without any
+   proof, so anyone could sign up with a member's address (or the bootstrap
+   admin's) and get in. `config.toml` sets `enable_confirmations = true` for
+   local and preview branches.
+5. **Webling**: `webling-sync` now also syncs the member's `E-Mail`
    property, so members can sign in with the address stored there.
 
 ## Testing
