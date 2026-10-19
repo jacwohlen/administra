@@ -27,15 +27,12 @@ describe('frameAncestors', () => {
 
   it('lets only the app and the Webling portal frame internal pages', () => {
     for (const path of ['/', '/dashboard', '/club', '/probetraining-admin', '/api/health']) {
-      expect(frameAncestors(path, club)).toBe(
-        "frame-ancestors 'self' https://jacwohlen.webling.ch"
-      );
+      expect(frameAncestors(path, club)).toBe("frame-ancestors 'self'");
     }
   });
 
   it('lets the club website embed the trial form and status page', () => {
-    const expected =
-      "frame-ancestors 'self' https://jacwohlen.webling.ch https://jacwohlen.ch https://www.jacwohlen.ch";
+    const expected = "frame-ancestors 'self' https://jacwohlen.ch https://www.jacwohlen.ch";
     expect(frameAncestors('/probetraining', club)).toBe(expected);
     expect(frameAncestors('/probetraining/status/abc', club)).toBe(expected);
   });
@@ -48,8 +45,6 @@ describe('addSecurityHeaders', () => {
     expect(headers.get('X-Content-Type-Options')).toBe('nosniff');
     expect(headers.get('Referrer-Policy')).toBe('no-referrer');
     expect(headers.get('Permissions-Policy')).toContain('camera=()');
-    expect(headers.get('Content-Security-Policy')).toBe(
-      "frame-ancestors 'self' https://jacwohlen.webling.ch"
-    );
+    expect(headers.get('Content-Security-Policy')).toBe("frame-ancestors 'self'");
   });
 });

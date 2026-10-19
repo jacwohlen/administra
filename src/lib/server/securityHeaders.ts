@@ -7,13 +7,6 @@
  */
 
 /**
- * The club's Webling member portal. Its "Administra" page
- * (supabase/config.toml, additional_redirect_urls) may show the app in a
- * frame, so it may embed every page.
- */
-export const WEBLING_PORTAL = 'https://jacwohlen.webling.ch';
-
-/**
  * Public pages the club website may embed (e.g. the trial registration
  * form in an iframe), together with their status page.
  */
@@ -52,7 +45,7 @@ export function clubSiteOrigins(clubUrl: string | null | undefined): string[] {
 
 /** Who may show `pathname` in a frame (CSP frame-ancestors). */
 export function frameAncestors(pathname: string, clubUrl: string | null | undefined): string {
-  const sources = ["'self'", WEBLING_PORTAL];
+  const sources = ["'self'"];
   if (EMBEDDABLE_BY_CLUB_SITE.test(pathname)) {
     for (const origin of clubSiteOrigins(clubUrl)) {
       if (!sources.includes(origin)) sources.push(origin);

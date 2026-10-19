@@ -19,17 +19,15 @@ and injected code do with the app.
 `frame-ancestors` (in `src/lib/server/securityHeaders.ts`) protects against
 clickjacking:
 
-- Every page: the app itself and the club's Webling portal
-  (`https://jacwohlen.webling.ch`, `WEBLING_PORTAL`). The portal has an
-  "Administra" page (see `additional_redirect_urls` in
-  `supabase/config.toml`) that may show the app in a frame.
+- Every page: only the app itself. The Webling portal links to the app
+  but does not embed it.
 - `/probetraining` and `/probetraining/status/…` additionally: the club
   website (`PUBLIC_CLUB_URL`, with and without `www.`), so the trial form
   can be embedded there.
 
-Neither embedding is confirmed. If the portal page only links to the app,
-remove `WEBLING_PORTAL`; to embed another page, extend
-`EMBEDDABLE_BY_CLUB_SITE`.
+Whether the club website embeds the trial form is not confirmed; if it
+only links to it, `EMBEDDABLE_BY_CLUB_SITE` can go. To embed another page,
+extend it.
 
 ## Content Security Policy
 
