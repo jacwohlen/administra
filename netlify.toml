@@ -10,3 +10,14 @@
 # before building — see docs/SUPABASE_BRANCHING.md.
 [context.deploy-preview]
   command = "bash scripts/netlify-preview-supabase-env.sh npm run build"
+
+# Security headers for static files (served by the CDN). Pages and API
+# responses get the same values, plus frame-ancestors, from
+# src/hooks.server.ts; see docs/SECURITY_HEADERS.md.
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Permissions-Policy = "camera=(), microphone=(), geolocation=(), payment=(), usb=(), browsing-topics=()"
+    X-Frame-Options = "SAMEORIGIN"

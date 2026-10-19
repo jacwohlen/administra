@@ -8,6 +8,7 @@ import { sequence } from '@sveltejs/kit/hooks';
 import { locale } from 'svelte-i18n';
 import { clubConfig } from '$lib/clubConfig';
 import { sentryOptions } from '$lib/sentry';
+import { addSecurityHeaders } from '$lib/server/securityHeaders';
 import { parseUserLocale, USER_LOCALE_COOKIE } from '$lib/userLocale';
 
 // Error reports from the server, see docs/ERROR_MONITORING.md.
@@ -78,7 +79,21 @@ const setup: Handle = async ({ event, resolve }) => {
   return response;
 };
 
-export const handle = sequence(Sentry.sentryHandle(), setup);
+// X-Content-Type-Options, Referrer-Policy, Permissions-Policy and who may
+// frame the page, see src/lib/server/securityHeaders.ts.
+const securityHeaders: Handle = async ({ event, resolve }) => {
+  const response = await resolve(event);
+  addSecurityHeaders(response.headers);
+  return response;
+};
+
+export const handle = sequence(
+  // No inline fetch proxy script: SvelteKit >= 2.16 does not need it, and it
+  // would violate the Content Security Policy (svelte.config.js).
+  Sentry.sentryHandle({ injectFetchProxyScript: false }),
+  securityHeaders,
+  setup
+);
 
 export const handleError = Sentry.handleErrorWithSentry(({ message }) => ({
   message,
