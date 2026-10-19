@@ -83,7 +83,7 @@ const setup: Handle = async ({ event, resolve }) => {
 // frame the page, see src/lib/server/securityHeaders.ts.
 const securityHeaders: Handle = async ({ event, resolve }) => {
   const response = await resolve(event);
-  addSecurityHeaders(response.headers, event.url.pathname, clubConfig.url);
+  addSecurityHeaders(response.headers);
   return response;
 };
 
