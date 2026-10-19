@@ -454,6 +454,7 @@
       "backToWebsite": "Zur Vereinswebsite",
       "contactHint": "Fragen vorab? Schreib uns:",
       "submitError": "Die Anmeldung konnte gerade nicht gesendet werden. Bitte versuche es später noch einmal.",
+      "tooManyRequests": "Es sind gerade zu viele Anmeldungen eingegangen, oder du hast dich mit dieser E-Mail-Adresse schon angemeldet. Bitte versuche es später noch einmal oder melde dich direkt beim Verein.",
       "viewStatus": "Stand meiner Anmeldung ansehen"
     },
     "probetraining": {

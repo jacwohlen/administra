@@ -277,10 +277,13 @@ backend = "postgres"
 [remotes.dev]
 project_id = "kbnnwrazgeuqlizjqqgb"
 
-# Persistent branches only run seed files when explicitly enabled.
+# Never seed the persistent dev branch: seed.sql contains test logins with a
+# public password (test@example.com is an admin), and main.admin.jacwohlen.ch
+# is reachable from the internet. Dev gets its data from the anonymized Webling
+# sync instead. Ephemeral preview branches and local `supabase db reset` still
+# use [db.seed] above. See docs/SUPABASE_BRANCHING.md.
 [remotes.dev.db.seed]
-enabled = true
-sql_paths = ["./seed.sql"]
+enabled = false
 
 # Auth overrides for the dev environment (main.admin.jacwohlen.ch).
 # The branch's own OAuth callback must be registered in the Google

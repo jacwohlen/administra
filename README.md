@@ -256,7 +256,10 @@ npm run build
 3. Set environment variables in Netlify dashboard:
    - `PUBLIC_SUPABASE_DATABASE_URL`
    - `PUBLIC_SUPABASE_ANON_KEY`
-   - `PUBLIC_MODE` (set to "PROD")
+   - `PUBLIC_MODE` (set to "PROD"). Only `DEV` builds offer the
+     email/password test login, which works only where `seed.sql` created
+     the test users (local and preview branches, see
+     [docs/SUPABASE_BRANCHING.md](docs/SUPABASE_BRANCHING.md#seed-data-and-test-logins)).
 
    Optionally, to override a club setting for a specific deploy context
    (production vs. deploy previews), add any of the `PUBLIC_CLUB_*` /

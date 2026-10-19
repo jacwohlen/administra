@@ -67,4 +67,5 @@ projects set this once in the Supabase dashboard:
 
 `supabase/seed.sql` contains `member@example.com` / `testpass`, whose
 email is on file for two siblings (Leo Scott, Brandon Guzman). Use the
-preview test login with it to see the member area.
+preview test login with it to see the member area (local and Deploy
+Previews only; the dev environment is not seeded).
