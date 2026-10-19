@@ -14,7 +14,10 @@ export function sentryOptions(dsn: string | undefined, deployContext: string | u
     environment: sentryEnvironment(deployContext),
     // No IP addresses, cookies or request bodies
     sendDefaultPii: false,
-    beforeSend: scrubEvent
+    beforeSend: scrubEvent,
+    // Not sent today (no tracesSampleRate), but scrubbed should tracing be
+    // turned on: transaction names and spans contain URLs too.
+    beforeSendTransaction: scrubEvent
   };
 }
 

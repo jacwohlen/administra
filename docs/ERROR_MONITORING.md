@@ -18,7 +18,10 @@ Without `PUBLIC_SENTRY_DSN` nothing is sent (local development, tests, CI).
 - `sendDefaultPii: false`: no IP addresses, cookies or request bodies.
 - `src/lib/sentryScrub.ts` removes from every report, before it leaves the
   app: values of sensitive query parameters (`?code=` from the OAuth
-  callback, `?email=` on the login page, tokens) and e-mail addresses.
+  callback, `?email=` on the login page, OAuth and provider tokens), the
+  token in `/probetraining/status/<token>` (it gives access to a trial
+  registration) and e-mail addresses. Add any new route with a secret in
+  its path to `TOKEN_PATH` there.
 - Browser reports carry the account ID (`auth.users.id`) only, never a name
   or e-mail, so a report can be matched to a `user_profiles` row if needed.
 - Error messages can still contain other data, e.g. a member's name in a

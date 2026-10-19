@@ -273,6 +273,9 @@ npm run build
    An external uptime monitor calls `/api/health` every 5 minutes, see
    [docs/UPTIME_MONITORING.md](docs/UPTIME_MONITORING.md).
 
+   Security headers (Content Security Policy, who may embed the app in a
+   frame) are described in [docs/SECURITY_HEADERS.md](docs/SECURITY_HEADERS.md).
+
 ### Preview branches and database deployments
 
 Pull requests get an isolated Supabase preview branch (with migrations and
