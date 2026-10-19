@@ -30,6 +30,7 @@ from datetime import datetime, date
 
 # Webling
 import requests
+from safe_log import postgrest_error, webling_get
 WEBLING_API_KEY=os.environ.get('WEBLING_API_KEY')
 WEBLING_DOMAIN=os.environ.get('WEBLING_DOMAIN')
 WEBLING_EMAIL=os.environ.get('WEBLING_EMAIL')
@@ -99,7 +100,7 @@ def authenticate_webling():
         print("Successfully authenticated with Webling")
         return True
     else:
-        record_error(f"Authentication failed: {response.status_code} - {response.text}")
+        record_error(f"Authentication failed: HTTP {response.status_code}")
         return False
 
 def transform_section(calendar_title):
@@ -120,35 +121,32 @@ def transform_section(calendar_title):
 
 def get_calendars():
     """Fetch list of calendars from Webling"""
-    api_url = f"https://{WEBLING_DOMAIN}.webling.ch/api/1/calendar?apikey={WEBLING_API_KEY}"
-    response = requests.get(api_url)
+    response = webling_get(WEBLING_DOMAIN, WEBLING_API_KEY, "calendar")
     
     if response.status_code == 200:
         return response.json().get("objects", [])
     else:
-        record_error(f"Error fetching calendars: {response.status_code} - {response.text}")
+        record_error(f"Error fetching calendars: HTTP {response.status_code}")
         return []
 
 def get_calendar_details(calendar_id):
     """Fetch details for a specific calendar"""
-    api_url = f"https://{WEBLING_DOMAIN}.webling.ch/api/1/calendar/{calendar_id}?apikey={WEBLING_API_KEY}&format=full"
-    response = requests.get(api_url)
+    response = webling_get(WEBLING_DOMAIN, WEBLING_API_KEY, f"calendar/{calendar_id}", format='full')
     
     if response.status_code == 200:
         return response.json()
     else:
-        record_error(f"Error fetching calendar {calendar_id}: {response.status_code} - {response.text}")
+        record_error(f"Error fetching calendar {calendar_id}: HTTP {response.status_code}")
         return None
 
 def get_calendar_event(event_id):
     """Fetch a specific calendar event"""
-    api_url = f"https://{WEBLING_DOMAIN}.webling.ch/api/1/calendarevent/{event_id}?apikey={WEBLING_API_KEY}&format=full"
-    response = requests.get(api_url)
+    response = webling_get(WEBLING_DOMAIN, WEBLING_API_KEY, f"calendarevent/{event_id}", format='full')
     
     if response.status_code == 200:
         return response.json()
     else:
-        record_error(f"Error fetching event {event_id}: {response.status_code} - {response.text}")
+        record_error(f"Error fetching event {event_id}: HTTP {response.status_code}")
         return None
 
 def get_event_participants(event_id):
@@ -177,11 +175,11 @@ def get_event_participants(event_id):
             return participants_data
             
         except Exception as e:
-            record_error(f"      Error parsing participant response: {e}")
-            print(f"      Raw response: {response.text}")
+            # Never the raw response: it holds participant data
+            record_error(f"      Error parsing participant response for event {event_id}: {type(e).__name__}")
             return []
     else:
-        record_error(f"Error fetching participants for event {event_id}: {response.status_code} - {response.text}")
+        record_error(f"Error fetching participants for event {event_id}: HTTP {response.status_code}")
         return []
 
 def get_participants_bulk(participant_ids):
@@ -212,10 +210,10 @@ def get_participants_bulk(participant_ids):
                 record_error(f"        Unexpected bulk response format: {type(data)} {keys}")
                 return []
         except Exception as e:
-            record_error(f"        Error parsing bulk participant response: {e}")
+            record_error(f"        Error parsing bulk participant response: {type(e).__name__}")
             return []
     else:
-        record_error(f"        Error fetching bulk participants: {response.status_code} - {response.text}")
+        record_error(f"        Error fetching bulk participants: HTTP {response.status_code}")
         return []
 
 def parse_webling_datetime(datetime_str):
@@ -400,7 +398,7 @@ def delete_all_event_participants(event_id):
         print(f"      Cleared existing participants for event {event_id}")
         return True
     else:
-        record_error(f"      Warning: Could not delete existing participants: {response.status_code} - {response.text}")
+        record_error(f"      Warning: Could not delete existing participants of event {event_id}: {postgrest_error(response)}")
         return False
 
 def sync_event_participants(event_id, participants, event_date):
@@ -492,7 +490,8 @@ def upsert(table_name, data):
     if response.status_code in [200, 201]:
         return True
     else:
-        record_error(f"    ✗ Error: {response.status_code} - {response.text}")
+        # Never the response body: constraint errors contain the whole row
+        record_error(f"    ✗ Error: {table_name}: {postgrest_error(response)}")
         return False
 
 def list_calendars():

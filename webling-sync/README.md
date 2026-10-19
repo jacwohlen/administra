@@ -77,6 +77,11 @@ so it no longer depends on a personal machine being switched on.
   emails whoever last changed the workflow's cron schedule (a manual run
   notifies whoever started it). Logs are in the run's step output and list
   members by id only, without names or contact data.
+- **Logs are public** (the repository is public). The scripts never log a
+  response body or a Webling URL (the API key is a query parameter): errors
+  show the HTTP status, ids and, for Supabase, the PostgREST error code and
+  message without the row data. Use the helpers in `src/safe_log.py` for any
+  new request.
 
 ### Anonymization (dev / staging)
 
@@ -363,6 +368,7 @@ webling-sync/
 ├── src/                     # Python source files
 │   ├── webling.py           # Member sync script
 │   ├── events.py            # Events & participants sync script
+│   ├── safe_log.py          # Webling requests and error messages without personal data or keys
 │   └── duplicates.py        # Duplicate management tool
 ├── .env/                    # Python virtual environment
 ├── logs/                    # Log files

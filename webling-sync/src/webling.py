@@ -7,6 +7,7 @@ import re
 
 # Webling
 import requests
+from safe_log import postgrest_error, webling_check, webling_get
 WEBLING_API_KEY=os.environ.get('WEBLING_API_KEY')
 WEBLING_DOMAIN=os.environ.get('WEBLING_DOMAIN')
 
@@ -54,7 +55,7 @@ def get_data(table_name):
     if response.status_code == 200:
         return response.json()
     else:
-        print("Error:", response.status_code, response.text)
+        print("Error:", postgrest_error(response))
         return None
 
 def transform_label(label):
@@ -69,9 +70,9 @@ def get_label(membergroup_ids):
   labels = []
   for id in membergroup_ids:
     if id not in group_titles:
-      api_url = f"https://{WEBLING_DOMAIN}.webling.ch/api/1/membergroup/{id}?apikey={WEBLING_API_KEY}&format=full"
-      response = requests.get(api_url)
-      response.raise_for_status()
+      path = f"membergroup/{id}"
+      response = webling_get(WEBLING_DOMAIN, WEBLING_API_KEY, path, format='full')
+      webling_check(response, path)
       group_titles[id] = transform_label(response.json()['properties']['title'])
     labels.append(group_titles[id])
   return labels
@@ -104,10 +105,8 @@ def anonymize(member_id, data):
 """ Create member in firebase for every webling """
 def sync_members():
   print(f"fetching webling (anonymize: {ANONYMIZE})")
-  api_url = f"https://{WEBLING_DOMAIN}.webling.ch/api/1/member?apikey={WEBLING_API_KEY}&format=full"
-
-  response = requests.get(api_url)
-  response.raise_for_status()
+  response = webling_get(WEBLING_DOMAIN, WEBLING_API_KEY, "member", format='full')
+  webling_check(response, "member")
 
   failed = 0
   for e in response.json():
@@ -145,7 +144,8 @@ def upsert(table_name, data):
     if response.status_code in [200, 201, 204]:
         return f"Updated: {data}"
     else:
-        print("Error:", response.status_code, response.text)
+        # Never the response body: constraint errors contain the whole row
+        print(f"Error: member {data.get('id')}: {postgrest_error(response)}")
         return None
 
 #print(get_data("members?select=id,firstname,lastname,labels,birthday,mobile"))
