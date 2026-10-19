@@ -60,6 +60,32 @@ that project once the cutover is verified.
 Preview branches contain **no production data** — only what migrations
 create and `seed.sql` inserts. Seed data changes are never merged onward.
 
+## Seed data and test logins
+
+`seed.sql` creates test logins whose password is public in this repository
+(`test@example.com` as approved admin, `member@example.com` as member, both
+`testpass`). It is therefore only loaded where nobody else can reach the
+data that matters:
+
+- **Local** (`supabase db reset`) and **ephemeral preview branches**: seeded
+  (`[db.seed]` in `config.toml`). Seeding always runs after all migrations.
+- **Dev** (persistent branch, main.admin.jacwohlen.ch): **never seeded**
+  (`[remotes.dev.db.seed] enabled = false`). Its data comes from the
+  anonymized Webling sync (`webling-sync/README.md`); sign in with Google or
+  the email code. Dev used to be seeded; migration
+  `20261019120000_remove_seeded_test_users.sql` deleted both test users
+  there (a no-op on Prod and, because the seed runs afterwards, harmless on
+  previews and locally). Do not turn dev seeding back on: the main deploy
+  can send real mail through the club's SMTP server.
+- **Prod**: never seeded.
+
+The email/password form on the login page (and the `?/login` form action
+in `src/routes/+page.server.ts`) only exist in builds with
+`PUBLIC_MODE=DEV`; builds with `PUBLIC_MODE=PROD` hide the form and answer
+the action with 404. Supabase itself still accepts password logins for any
+account that has a password, so the real protection is that no persistent
+environment has an account with a known password.
+
 ## Current state (verified via the Management API, 2026-09-05)
 
 - The GitHub integration with **automatic branching is enabled** on the
@@ -198,7 +224,9 @@ check directly.
   Previews wired to a preview branch. Use the seeded test users from
   `seed.sql` (`test@example.com` / `testpass` as admin,
   `member@example.com` / `testpass` as member) instead, or add the branch
-  callback to the Google Cloud OAuth client while testing.
+  callback to the Google Cloud OAuth client while testing. These users
+  exist only on preview branches and locally, not on dev or prod (see
+  [Seed data and test logins](#seed-data-and-test-logins)).
 - **Never edit an already-merged migration** — the Dev/Prod databases have
   already run it. Always add a new migration file.
 - **Rolling back on a PR**: if you amend/replace a migration that the

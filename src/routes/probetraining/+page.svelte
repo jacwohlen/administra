@@ -60,7 +60,9 @@
         error =
           response.status === 400
             ? $_('page.trialRegistration.validation.invalid')
-            : $_('page.trialRegistration.submitError');
+            : response.status === 429
+              ? $_('page.trialRegistration.tooManyRequests')
+              : $_('page.trialRegistration.submitError');
         return;
       }
 

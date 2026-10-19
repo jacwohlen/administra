@@ -42,6 +42,30 @@ the site is completely down.
    notifications.
 4. Optional: a public status page (Status Pages → add the monitors).
 
+## Scheduled jobs (healthchecks.io)
+
+The daily Webling sync (`.github/workflows/webling-sync.yml`) runs without
+anyone watching. [healthchecks.io](https://healthchecks.io) (free plan, EU)
+expects a ping after every run and e-mails us when a run fails **or when no
+ping arrives in time**. The second case matters: GitHub disables scheduled
+workflows after 60 days without commits, and nobody would notice otherwise.
+
+The workflow pings `<url>/start` before and `<url>` (success) or
+`<url>/fail` after the run. The pings carry no data, and a failed ping never
+fails the sync.
+
+Setup (once):
+
+1. At healthchecks.io (same account as for Club-News), add a check
+   "Webling sync": schedule **Cron** `47 22 * * *`, time zone UTC, grace time
+   **4 hours**. GitHub starts scheduled runs late: in October 2026 they began
+   1.5–2 hours after 22:47 UTC. A shorter grace time means false alerts.
+2. Copy its ping URL into the GitHub environment **prod** as secret
+   `HEALTHCHECK_URL` (Settings → Environments → prod). Not in `dev`, so manual
+   dev runs don't count.
+3. Run the workflow once by hand (Actions → Webling Sync → Run workflow,
+   `prod`) and check that the check turns green.
+
 ## When an alert arrives
 
 1. Open the URL in a browser. `{"status":"error"}` means the app runs but
@@ -52,3 +76,7 @@ the site is completely down.
 3. Netlify → Logs → Functions shows the "Health check failed" line with the
    reason.
 4. Sentry may show the same problem from real users' requests.
+
+For a healthchecks.io alert about the Webling sync: open the latest run under
+GitHub → Actions → Webling Sync. No run at all means the schedule stopped
+(re-enable it on the workflow page); a red run shows the failing step.

@@ -130,6 +130,17 @@ dialog says so. Changing them takes effect with the next deploy.
   records the outcome with `complete_trial_email(id, token, …)`. Anonymous
   clients can neither read `trial_emails` nor insert into `members`
   directly.
+- Because the form is public and every registration mails the given
+  address, `register_trial()` limits abuse
+  (`supabase/migrations/20261019120100_limit_trial_registrations.sql`): at
+  most 3 registrations per e-mail address in 24 hours (siblings share an
+  address), at most 20 registrations per hour overall, and no links or
+  markup (`://`, `www.`, `@`, `<`, `>`) in names. A hit limit raises
+  SQLSTATE `PT429`; the endpoint answers 429 and the form asks the visitor
+  to try again later or contact the club. The limits are constants at the
+  top of the function — change them with a new migration. There is no
+  per-IP limit (the endpoint runs in stateless Netlify functions). The
+  form also has a honeypot field; bots that fill it get a fake success.
 - Staff mails go through `/api/probetraining/mail` with the signed-in
   user's session, so row-level security applies: viewers can see the log,
   trainers and admins (`is_writer()`) can send. The recipient is always the
