@@ -33,6 +33,24 @@ interface RegistrationBody {
 
 const str = (value: unknown) => (typeof value === 'string' ? value.trim() : '');
 
+/**
+ * HTTP status for a failed register_trial() call. The function raises
+ * 'PT429' when a rate limit is hit (PostgREST answers those with 429) and
+ * 22xxx for invalid input; everything else is our fault.
+ */
+function registrationErrorStatus(code: string | undefined, status?: number) {
+  if (code === 'PT429' || status === 429) return 429;
+  if (code?.startsWith('22')) return 400;
+  return 500;
+}
+
+/** Generic message per status; details only go to the server log. */
+const registrationErrorMessages: Record<number, string> = {
+  400: 'Invalid registration',
+  429: 'Too many registrations, please try again later',
+  500: 'Registration failed'
+};
+
 export const POST: RequestHandler = async ({ request, locals, url }) => {
   let body: RegistrationBody;
   try {
@@ -63,11 +81,15 @@ export const POST: RequestHandler = async ({ request, locals, url }) => {
     error(400, 'Missing required fields');
   }
 
-  const { data, error: rpcError } = await locals.supabase.rpc('register_trial', registration);
+  const {
+    data,
+    error: rpcError,
+    status
+  } = await locals.supabase.rpc('register_trial', registration);
   if (rpcError) {
     console.error('register_trial failed:', rpcError);
-    // Validation errors from the function (22xxx) are the caller's fault.
-    error(rpcError.code?.startsWith('22') ? 400 : 500, rpcError.message);
+    const httpStatus = registrationErrorStatus(rpcError.code, status);
+    error(httpStatus, registrationErrorMessages[httpStatus]);
   }
 
   const { emailId, token, statusToken } = (data ?? {}) as {

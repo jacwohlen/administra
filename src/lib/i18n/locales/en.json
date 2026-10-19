@@ -454,6 +454,7 @@
       "backToWebsite": "To the club website",
       "contactHint": "Questions? Write to us:",
       "submitError": "Your registration could not be sent right now. Please try again later.",
+      "tooManyRequests": "We have received too many registrations right now, or you have already registered with this e-mail address. Please try again later or contact the club directly.",
       "viewStatus": "View the status of my registration"
     },
     "probetraining": {
