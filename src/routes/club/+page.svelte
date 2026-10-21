@@ -4,6 +4,7 @@
   import { faUsers } from '@fortawesome/free-solid-svg-icons';
   import MemberAvatar from './MemberAvatar.svelte';
   import ClubProfile from './ClubProfile.svelte';
+  import ClubExams from './ClubExams.svelte';
   import type { PageData } from './$types';
 
   let { data }: { data: PageData } = $props();
@@ -32,7 +33,16 @@
 {/if}
 
 {#if data.profile}
-  <ClubProfile profile={data.profile} />
+  <ClubProfile profile={data.profile}>
+    {#if data.exams}
+      <ClubExams
+        member={data.profile.member}
+        exams={data.exams}
+        currentGrades={data.profile.currentGrades}
+        gradeDefinitions={data.profile.gradeDefinitions}
+      />
+    {/if}
+  </ClubProfile>
 {:else}
   <div class="card border border-surface-200-800 p-8 text-center space-y-4">
     <p class="text-4xl" aria-hidden="true">👋</p>

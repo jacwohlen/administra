@@ -79,7 +79,9 @@
               src={m.img}
               firstname={m.firstname}
               lastname={m.lastname}
-              ringColor={m.topGrade ? beltRingColor(m.topGrade.beltColor) : null}
+              ringColor={m.topGrade
+                ? beltRingColor(m.topGrade.beltColor, m.topGrade.beltColor2)
+                : null}
             />
             <div class="flex-1 min-w-0">
               <p class="font-semibold truncate">
@@ -96,6 +98,7 @@
                 {#if m.topGrade}
                   <BeltStrip
                     color={m.topGrade.beltColor}
+                    color2={m.topGrade.beltColor2}
                     isDan={m.topGrade.isDan}
                     grade={m.topGrade.grade}
                     size="sm"

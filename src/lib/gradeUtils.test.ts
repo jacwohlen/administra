@@ -73,6 +73,11 @@ describe('beltRingColor', () => {
   it('keeps coloured belts as they are', () => {
     expect(beltRingColor('#27ae60')).toBe('#27ae60');
   });
+
+  it('shows the colour a half belt leads to', () => {
+    expect(beltRingColor('#f5f5f5', '#f4d03f')).toBe('#f4d03f');
+    expect(beltRingColor('#f4d03f', null)).toBe('#f4d03f');
+  });
 });
 
 describe('gradesBySection', () => {

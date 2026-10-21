@@ -284,6 +284,8 @@ export interface GradeDefinition {
   grade: string;
   gradeRank: number;
   beltColor: string;
+  /** Second colour of a two-coloured (half) belt */
+  beltColor2?: string | null;
   isDan: boolean;
 }
 
@@ -303,6 +305,7 @@ export interface MemberCurrentGrade {
   grade: string;
   gradeRank: number;
   beltColor: string;
+  beltColor2?: string | null;
   isDan: boolean;
   examDate: string;
   nextGrade: string | null;
@@ -315,7 +318,111 @@ export interface MemberSectionGrade {
   grade: string;
   gradeRank: number;
   beltColor: string;
+  beltColor2?: string | null;
   isDan: boolean;
+}
+
+/** One task on an exam sheet, e.g. a throw */
+export interface ExamItem {
+  /** Stable within the program; scores are stored under it */
+  key: string;
+  name: string;
+  description?: string;
+  /** 2: left and right are scored separately, 1: one score */
+  sides: 1 | 2;
+}
+
+/** A block of an exam sheet, e.g. Nage-waza */
+export interface ExamPart {
+  key: string;
+  title: string;
+  subtitle?: string;
+  /** Points needed in this part, on top of the overall minimum */
+  minPoints?: number;
+  items: ExamItem[];
+}
+
+/** Row of exam_programs: what a candidate shows for a grade */
+export interface ExamProgram {
+  id: number;
+  section: string;
+  grade: string;
+  /** Belt name, e.g. "Gelbgurt" */
+  title: string;
+  min_points: number;
+  parts: ExamPart[];
+  updated_at: string;
+}
+
+/** Row of exams: an exam day */
+export interface Exam {
+  id: number;
+  section: string;
+  title: string;
+  date: string;
+  location?: string | null;
+  registration_deadline?: string | null;
+  /** Shown to members with the registration (fee, what to bring) */
+  notes?: string | null;
+  event_id?: number | null;
+  created_at: string;
+}
+
+export type ExamCandidateStatus = 'registered' | 'invited' | 'withdrawn';
+export type ExamResult = 'passed' | 'failed';
+
+/** Row of exam_examiners */
+export interface ExamExaminer {
+  candidate_id: number;
+  user_id: string;
+  name: string;
+}
+
+/** Row of exam_candidates: one member on one exam day */
+export interface ExamCandidate {
+  id: number;
+  exam_id: number;
+  member_id: number;
+  section: string;
+  grade: string;
+  belt_length_cm?: number | null;
+  trainer?: string | null;
+  note?: string | null;
+  status: ExamCandidateStatus;
+  group_name?: string | null;
+  call_time?: string | null;
+  /** Snapshot of the program, taken when grading starts (only loaded for sheets) */
+  program?: ExamPart[] | null;
+  min_points: number | null;
+  started_at: string | null;
+  result: ExamResult | null;
+  total_points: number | null;
+  max_points: number | null;
+  feedback?: string | null;
+  completed_at: string | null;
+  registered_at: string;
+  /** Embedded where loaded with `member:members(...)` */
+  member?: ExamCandidateMember;
+  /** Embedded where loaded with `examiners:exam_examiners(...)` */
+  examiners?: ExamExaminer[];
+}
+
+export interface ExamCandidateMember {
+  id: number;
+  firstname: string;
+  lastname: string;
+  birthday?: string | null;
+  img?: string | null;
+}
+
+/** Row of exam_scores: the points for one item */
+export interface ExamScore {
+  candidate_id: number;
+  item_key: string;
+  left_points: number | null;
+  right_points: number | null;
+  points: number | null;
+  note: string | null;
 }
 
 export interface MemberMedal {

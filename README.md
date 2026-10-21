@@ -10,6 +10,7 @@ A modern attendance tracking system designed specifically for martial arts clubs
 - **Statistics & Leaderboards** - View comprehensive attendance statistics, top athletes, and trainer activity by year and section
 - **Secure Authentication** - Google OAuth or passwordless email code, admin approval and role-based access (member / viewer / trainer / admin)
 - **Member Self-Service** - Members sign in with the email the club has on file and see their own profile and the member directory
+- **Q-Prüfungen (Kyu Gradings)** - Members register for exam days, examiners score candidates on their phone, passing records the new belt (see `docs/Q_EXAMS.md`)
 - **Multi-language Support** - Built-in internationalization (German/English)
 - **Responsive Design** - Works seamlessly across desktop and mobile devices
 
@@ -161,6 +162,7 @@ src/
 │   │   ├── members/       # Member management
 │   │   ├── trainings/     # Training session management
 │   │   ├── events/        # Event management
+│   │   ├── exams/         # Q-Prüfungen: exam days, scoring sheets, programs
 │   │   └── stats/         # Statistics and reports
 │   └── +layout.svelte     # Root layout with auth
 e2e/                       # Playwright E2E tests
@@ -231,6 +233,7 @@ supabase db push
 - `participants` - Member enrollment in training sessions
 - `logs` - Attendance records with date and trainer status
 - `events` - General events and activities
+- `exams`, `exam_candidates`, `exam_scores`, `exam_programs` - Kyu gradings (`docs/Q_EXAMS.md`)
 
 **Views and Functions:**
 

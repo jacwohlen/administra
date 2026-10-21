@@ -4,6 +4,7 @@
   import { page } from '$app/state';
   import Fa from 'svelte-fa';
   import {
+    faAward,
     faCalendarCheck,
     faChartSimple,
     faList,
@@ -41,6 +42,7 @@
     if (page.route.id == '/dashboard') return 'today';
     if (page.route.id?.startsWith('/dashboard/trainings')) return 'trainings';
     if (page.route.id?.startsWith('/dashboard/events')) return 'events';
+    if (page.route.id?.startsWith('/dashboard/exams')) return 'exams';
     if (page.route.id?.startsWith('/dashboard/members')) return 'members';
     if (page.route.id?.startsWith('/dashboard/probetraining')) return 'probetraining';
     if (page.route.id?.startsWith('/dashboard/stats')) return 'stats';
@@ -85,9 +87,9 @@
   });
 </script>
 
-<div class="h-full flex flex-col overflow-hidden">
+<div class="h-full flex flex-col overflow-hidden print:h-auto print:overflow-visible">
   <!-- Header -->
-  <header class="bg-surface-100-900 flex items-center px-2">
+  <header class="bg-surface-100-900 flex items-center px-2 print:hidden">
     <div class="flex-1 min-w-0 overflow-hidden">
       <Tabs
         value={getActiveTab()}
@@ -96,6 +98,7 @@
             today: '/dashboard',
             trainings: '/dashboard/trainings',
             events: '/dashboard/events',
+            exams: '/dashboard/exams',
             members: '/dashboard/members',
             probetraining: '/dashboard/probetraining',
             stats: '/dashboard/stats',
@@ -133,6 +136,15 @@
           >
             <Fa icon={faCalendarDays} class="nav-icon" />
             <span class="hidden sm:inline">{$_('page.dashboard.events')}</span>
+          </Tabs.Trigger>
+          <Tabs.Trigger
+            value="exams"
+            onclick={() => {
+              if (getActiveTab() === 'exams') goto('/dashboard/exams', { invalidateAll: true });
+            }}
+          >
+            <Fa icon={faAward} class="nav-icon" />
+            <span class="hidden sm:inline">{$_('page.dashboard.exams')}</span>
           </Tabs.Trigger>
           <Tabs.Trigger
             value="members"
@@ -268,7 +280,7 @@
   </header>
 
   <!-- Main content -->
-  <main class="flex-1 overflow-auto">
+  <main class="flex-1 overflow-auto print:overflow-visible">
     <div class="max-w-4xl px-3 sm:px-4 py-2 mx-auto">
       {@render children()}
     </div>

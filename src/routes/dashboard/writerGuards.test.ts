@@ -18,12 +18,17 @@ import { load as newTraining } from './trainings/new/+page';
 import { load as editTraining } from './trainings/[trainingId]/edit/+page';
 import { load as newEvent } from './events/new/+page';
 import { load as editEvent } from './events/[eventId]/edit/+page';
+import { load as newExam } from './exams/new/+page';
+import { load as editExam } from './exams/[examId]/edit/+page';
 
 // Create/edit pages send viewers back to the read-only page they came from.
 type Load = (event: never) => unknown;
 
 function event(canWrite: boolean, params: Record<string, string> = {}) {
-  return { parent: async () => ({ canWrite }), params } as never;
+  return {
+    parent: async () => ({ canWrite, exam: { id: 7, event_id: null } }),
+    params
+  } as never;
 }
 
 async function redirectTarget(load: Load, canWrite: boolean, params?: Record<string, string>) {
@@ -41,7 +46,9 @@ describe('writer-only dashboard pages', () => {
     ['new training', newTraining as Load, {}, '/dashboard/trainings'],
     ['edit training', editTraining as Load, { trainingId: '3' }, '/dashboard/trainings/3'],
     ['new event', newEvent as Load, {}, '/dashboard/events'],
-    ['edit event', editEvent as Load, { eventId: '5' }, '/dashboard/events/5']
+    ['edit event', editEvent as Load, { eventId: '5' }, '/dashboard/events/5'],
+    ['new exam day', newExam as Load, {}, '/dashboard/exams'],
+    ['edit exam day', editExam as Load, { examId: '7' }, '/dashboard/exams/7']
   ];
 
   for (const [name, load, params, target] of cases) {

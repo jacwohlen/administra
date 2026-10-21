@@ -36,13 +36,14 @@ export function highestGrade<T extends { gradeRank: number }>(grades: T[]): T | 
 
 /**
  * A white belt is invisible as a ring on a light page and a black belt vanishes on a
- * dark one, so both get a neutral that reads on either ground.
+ * dark one, so both get a neutral that reads on either ground. A half belt shows the
+ * colour it leads to.
  */
-export function beltRingColor(beltColor: string): string {
-  const c = beltColor.trim().toLowerCase();
+export function beltRingColor(beltColor: string, beltColor2?: string | null): string {
+  const c = (beltColor2 || beltColor).trim().toLowerCase();
   if (c === '#f5f5f5' || c === '#fff' || c === '#ffffff' || c === 'white') return '#c8c8c8';
   if (c === '#111111' || c === '#000' || c === '#000000' || c === 'black') return '#5a5a5a';
-  return beltColor;
+  return beltColor2 || beltColor;
 }
 
 /**
