@@ -16,6 +16,7 @@ Fetches all members from Webling and syncs them to Administra.
 - Birthday
 - Groups (as labels)
 - Cell Phone
+- J+S person number (Webling field "Lizenznummer", for the J+S export, see `docs/JS_EXPORT.md`)
 
 **Runtime:** Fast (~1-2 seconds)
 

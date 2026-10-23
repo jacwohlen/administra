@@ -16,13 +16,14 @@ Attendance tracking app for martial arts clubs. SvelteKit frontend + Supabase (P
 - **Frontend:** SvelteKit 2 + Svelte 4, Tailwind CSS + Skeleton UI, svelte-i18n (de/en)
 - **Backend:** Supabase (PostgreSQL with RLS), Google OAuth. Members can also sign in with a one-time email code. New accounts land in `user_profiles` with status `pending`; accounts whose confirmed email matches a member record are approved automatically with role `member` (own profile + member directory in `/club`, see `docs/MEMBER_SIGN_IN.md`), all others must be approved by an admin. Staff roles are `viewer` (read), `trainer` (write) and `admin` (write + user management). RLS policies use `is_approved_user()` (any approved account), `is_staff()` (viewer and up), `is_writer()` and `is_admin()`; members reach their own rows through `my_member_ids()`.
 - **Trial e-mails:** thank-you, waiting-list and training mails to trial candidates go through the club's SMTP server (`PRIVATE_SMTP_*`, `src/lib/server/mailer.ts`), logged in `trial_emails`; see `docs/TRIAL_EMAILS.md`
+- **J+S export:** attendance of J+S courses as CSV files for the NDS import (`/dashboard/js`, `src/lib/jsExport.ts`); the person file reads AHV numbers and addresses from Webling at download time (`PRIVATE_WEBLING_*`, admins only); see `docs/JS_EXPORT.md`
 - **Error monitoring:** Sentry (`@sentry/sveltekit`, EU region) in `hooks.server.ts` / `hooks.client.ts`; reports are scrubbed by `src/lib/sentryScrub.ts` (no e-mails, OAuth codes, IPs). Off without `PUBLIC_SENTRY_DSN`; see `docs/ERROR_MONITORING.md`. Uptime: an external monitor calls `/api/health`; the Webling sync reports each run to healthchecks.io (`docs/UPTIME_MONITORING.md`)
 - **Deployment:** Netlify via `@sveltejs/adapter-netlify`
 - **External sync:** Python scripts in `/webling-sync/` sync members/events from Webling API, scheduled daily by `.github/workflows/webling-sync.yml`
 
 ## Project Structure
 
-- `src/routes/` - SvelteKit file-based routing (dashboard, members, trainings, events, stats; `club/` is the member self-service area)
+- `src/routes/` - SvelteKit file-based routing (dashboard, members, trainings, events, stats, js; `club/` is the member self-service area)
 - `src/lib/models.ts` - TypeScript interfaces for all data types
 - `src/lib/utils.ts` - Shared utility functions
 - `src/lib/supabase.ts` - Supabase client setup

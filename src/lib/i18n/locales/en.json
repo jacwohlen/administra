@@ -18,7 +18,8 @@
       "users": "Users",
       "noTrainingsToday": "There are no trainings happening today!",
       "settings": "Settings",
-      "myProfile": "My profile"
+      "myProfile": "My profile",
+      "js": "J+S export"
     },
     "pending": {
       "title": "Access pending",
@@ -703,6 +704,56 @@
       "notFound": "This page does not exist.",
       "errorId": "If you contact us, please mention this error ID:",
       "home": "Go to the start page"
+    },
+    "js": {
+      "title": "J+S export",
+      "intro": "Attendance of J+S courses as CSV files for the import into the NDS. Courses are entered here by hand; the NDS has no interface for youth courses.",
+      "create_course": "New J+S course",
+      "edit_course": "Edit J+S course",
+      "no_courses": "No J+S courses yet.",
+      "training_count": "{count, plural, one {# training} other {# trainings}}",
+      "period": "Course period",
+      "form": {
+        "title": "Name",
+        "title_placeholder": "e.g. Judo youth 2026",
+        "course_number": "Course number (NDS)",
+        "date_from": "Course start",
+        "date_to": "Course end",
+        "location": "Location",
+        "location_placeholder": "e.g. Turnhalle Halde, Wohlen",
+        "durations": "Allowed training durations (minutes)",
+        "durations_hint": "Depends on user group and main sport. NG 1, Judo/Aikido: 60, 75, 90. Longer trainings are shortened to the next lower value.",
+        "trainings": "Trainings of the course",
+        "trainings_hint": "All attendance of these trainings within the course period is exported."
+      },
+      "validation": {
+        "required_fields": "Please fill in name, course start, course end and location.",
+        "date_range": "The course start must be before the course end.",
+        "durations": "Please enter at least one training duration in minutes."
+      },
+      "delete_title": "Delete J+S course",
+      "delete_message": "Delete the J+S course “{title}”? Trainings and attendance are kept.",
+      "delete_success": "J+S course deleted",
+      "replace_hint": "Note: the import in the NDS replaces all activities or attendance already recorded for the course, so the files always contain the whole course. Keep the order: persons, activities, attendance.",
+      "step_persons": "Persons",
+      "step_persons_hint": "{participants} participants and {leaders} leaders. Only needed for persons not yet in the NDS course. The data (AHV number, address, ...) comes straight from Webling.",
+      "download_participants": "Participants (CSV)",
+      "download_leaders": "Leaders (CSV)",
+      "persons_admin_only": "Only admins can download the person export (it contains AHV numbers).",
+      "persons_error": "Person export failed",
+      "persons_incomplete": "Incomplete in Webling (please complete there):",
+      "step_activities": "Activities",
+      "step_activities_hint": "{count, plural, one {# training} other {# trainings}} with date, time, duration and location.",
+      "download_activities": "Activities (CSV)",
+      "step_attendance": "Attendance",
+      "step_attendance_hint": "{count} attendance entries of persons with a J+S person number (Webling: Lizenznummer).",
+      "download_attendance": "Attendance (CSV)",
+      "warnings": "Notes",
+      "warning_without_number": "Without J+S person number, missing from the attendance file (enter as Lizenznummer in Webling; synced nightly):",
+      "warning_both_roles": "Recorded both as leader and as participant:",
+      "warning_without_time": "“{title}” has no valid start or end time and is not exported.",
+      "warning_too_short": "“{title}” lasts only {minutes} minutes and is not exported.",
+      "warning_shortened": "“{title}” lasts {minutes} minutes and is exported as {exported} minutes."
     }
   },
   "components": {

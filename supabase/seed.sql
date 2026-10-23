@@ -14313,6 +14313,16 @@ UNION ALL
 SELECT 198, 'assigned', 'jonas.frei@example.com', 'Dein Probetraining beim JAC Wohlen',
        'sent', now() - interval '18 days', now() - interval '18 days', NULL;
 
+-- J+S course for the export at /dashboard/js (see docs/JS_EXPORT.md); fake
+-- person numbers for every second member who trained in it
+INSERT INTO public.js_courses (title, course_number, date_from, date_to, location)
+VALUES ('Judo Kinder 2024 (Beispiel)', '', '2024-01-01', '2024-12-31', 'Turnhalle Beispiel');
+INSERT INTO public.js_course_trainings (course_id, training_id)
+SELECT id, 30 FROM public.js_courses WHERE title = 'Judo Kinder 2024 (Beispiel)';
+UPDATE public.members SET "jsPersonNumber" = (900000000 + id)::text
+WHERE id % 2 = 0
+  AND id IN (SELECT "memberId" FROM public.logs WHERE "trainingId" = 30 AND date LIKE '2024%');
+
 --
 -- Compute badges for all seeded members
 --
