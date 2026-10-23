@@ -802,7 +802,8 @@
         "notesHint": "Shown with the registration in the member area.",
         "required": "Title, date and section are required.",
         "deadlineAfterDate": "The registration deadline is after the grading day.",
-        "saveError": "Error saving the grading day"
+        "saveError": "Error saving the grading day",
+        "sectionLocked": "The section can no longer change because candidates are registered."
       },
       "candidate": {
         "add": "Add candidate",
@@ -849,7 +850,8 @@
         "againstSuggestion": "The points do not reach the minimum – record as passed anyway?",
         "saved": "Result saved",
         "reopened": "Sheet reopened",
-        "saveError": "Error saving – please try again"
+        "saveError": "Error saving – please try again",
+        "changedMeanwhile": "The sheet was changed meanwhile – please check and try again."
       },
       "print": {
         "title": "Registration list",

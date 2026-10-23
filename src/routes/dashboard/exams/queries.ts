@@ -4,7 +4,7 @@ import type { ExamCandidate } from '$lib/models';
 /** Candidate columns for lists: everything but the program snapshot. */
 export const CANDIDATE_COLUMNS =
   'id, exam_id, member_id, section, grade, belt_length_cm, trainer, note, status, group_name, ' +
-  'call_time, min_points, started_at, result, total_points, max_points, feedback, completed_at, ' +
+  'call_time, min_points, started_at, result, total_points, max_points, completed_at, ' +
   'registered_at, member:members(id, firstname, lastname, birthday, img), ' +
   'examiners:exam_examiners(candidate_id, user_id, name)';
 

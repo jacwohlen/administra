@@ -26,12 +26,27 @@ export function medalTally(medals: Pick<MemberMedal, 'medal'>[]): MedalTally {
   return tally;
 }
 
-/** The grade with the highest rank, used for the ring around an avatar. */
-export function highestGrade<T extends { gradeRank: number }>(grades: T[]): T | undefined {
-  return grades.reduce<T | undefined>(
-    (best, g) => (best === undefined || g.gradeRank > best.gradeRank ? g : best),
-    undefined
-  );
+/**
+ * How high a grade is, comparable across sections whose ladders have different
+ * lengths (Judo has half belts, Aikido does not): any dan above any kyu, a higher
+ * dan above a lower one, a lower kyu number above a higher one ("5.5 Kyu" reads
+ * as 5.5). Grades without a number fall back to their rank.
+ */
+function crossSectionLevel(g: { gradeRank: number; grade?: string; isDan?: boolean }): number {
+  const n = parseFloat(g.grade ?? '');
+  if (Number.isNaN(n)) return g.gradeRank;
+  return g.isDan ? 100 + n : 10 - n;
+}
+
+/** The highest of a member's grades (one per section), used for the ring around an avatar. */
+export function highestGrade<T extends { gradeRank: number; grade?: string; isDan?: boolean }>(
+  grades: T[]
+): T | undefined {
+  return grades.reduce<T | undefined>((best, g) => {
+    if (best === undefined) return g;
+    const d = crossSectionLevel(g) - crossSectionLevel(best);
+    return d > 0 || (d === 0 && g.gradeRank > best.gradeRank) ? g : best;
+  }, undefined);
 }
 
 /**

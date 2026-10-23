@@ -35,12 +35,15 @@
 {#if data.profile}
   <ClubProfile profile={data.profile}>
     {#if data.exams}
-      <ClubExams
-        member={data.profile.member}
-        exams={data.exams}
-        currentGrades={data.profile.currentGrades}
-        gradeDefinitions={data.profile.gradeDefinitions}
-      />
+      <!-- A fresh card per child, so an open form never carries over -->
+      {#key data.profile.member.id}
+        <ClubExams
+          member={data.profile.member}
+          exams={data.exams}
+          currentGrades={data.profile.currentGrades}
+          gradeDefinitions={data.profile.gradeDefinitions}
+        />
+      {/key}
     {/if}
   </ClubProfile>
 {:else}

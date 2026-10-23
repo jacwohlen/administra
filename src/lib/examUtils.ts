@@ -7,6 +7,13 @@ import type {
   GradeDefinition
 } from '$lib/models';
 
+/**
+ * The sheet's general feedback is stored as an exam_scores row under this key, so
+ * members can read it only once the result is in, like the scores. Program item
+ * keys never start with an underscore.
+ */
+export const FEEDBACK_KEY = '_feedback';
+
 /** Points per scored side, as in the legend of the TK's sheets. */
 export const SCORE_VALUES = [0, 1, 2] as const;
 export const MAX_SIDE_POINTS = 2;
@@ -167,6 +174,21 @@ export function registrableGrades(
   return sorted.filter((g) => !g.isDan && g.gradeRank > currentRank);
 }
 
+/**
+ * The grade to suggest for a registration: the next one after the current grade.
+ * Without a grade in the section, the first one with a program, which skips the
+ * white belt everybody starts with in Judo.
+ */
+export function suggestedGrade(
+  ladder: GradeDefinition[],
+  currentGrade: string | null | undefined,
+  hasProgram: (grade: string) => boolean
+): GradeDefinition | undefined {
+  const grades = registrableGrades(ladder, currentGrade);
+  if (currentGrade) return grades[0];
+  return grades.find((g) => hasProgram(g.grade)) ?? grades[0];
+}
+
 export interface CandidateGroup {
   /** Exam group from the call-up, null for candidates not yet assigned */
   name: string | null;
@@ -198,24 +220,49 @@ export function groupCandidates(candidates: ExamCandidate[]): CandidateGroup[] {
 }
 
 /**
- * Candidates graded side by side on one sheet: those sharing a grade go
- * together (same program, same items), different grades get their own sheet.
+ * Candidates graded side by side on one sheet must be scored on the same items:
+ * those sharing a grade go together, and among started sheets only those with the
+ * same program snapshot. Candidates not started yet join the first sheet of their
+ * grade and get its snapshot when they are first scored.
  */
 export function sheetGroups(candidates: ExamCandidate[]): ExamCandidate[][] {
   const groups = new Map<string, ExamCandidate[]>();
+  const firstOfGrade = new Map<string, string>();
+  const waiting: [string, ExamCandidate][] = [];
   for (const c of candidates) {
-    const key = `${c.section}\u0000${c.grade}`;
+    const grade = `${c.section}\u0000${c.grade}`;
+    if (!c.program) {
+      waiting.push([grade, c]);
+      continue;
+    }
+    const key = `${grade}\u0000${JSON.stringify(c.program)}`;
+    if (!firstOfGrade.has(grade)) firstOfGrade.set(grade, key);
     groups.set(key, [...(groups.get(key) ?? []), c]);
   }
-  return [...groups.values()];
+  for (const [grade, c] of waiting) {
+    const key = firstOfGrade.get(grade) ?? grade;
+    if (!firstOfGrade.has(grade)) firstOfGrade.set(grade, key);
+    groups.set(key, [...(groups.get(key) ?? []), c]);
+  }
+  // In the order the candidates were picked
+  const order = (c: ExamCandidate) => candidates.indexOf(c);
+  return [...groups.values()]
+    .map((g) => g.sort((a, b) => order(a) - order(b)))
+    .sort((a, b) => order(a[0]) - order(b[0]));
 }
 
-/** A key for a new item that no other item of the program uses. */
+/**
+ * A key for a new item. Random rather than counted, so a deleted item's key is
+ * never handed to a different technique: sheets started with the old program
+ * still hold scores under it.
+ */
 export function newItemKey(part: Pick<ExamPart, 'key'>, parts: ExamPart[]): string {
   const used = new Set(parts.flatMap((p) => p.items.map((i) => i.key)));
-  let n = 1;
-  while (used.has(`${part.key}-${n}`)) n += 1;
-  return `${part.key}-${n}`;
+  let key: string;
+  do {
+    key = `${part.key}-${crypto.randomUUID().slice(0, 8)}`;
+  } while (used.has(key));
+  return key;
 }
 
 /** A key for a new part, derived from its title and unique within the program. */

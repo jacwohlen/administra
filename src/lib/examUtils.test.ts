@@ -12,7 +12,8 @@ import {
   programMaxPoints,
   programProblems,
   registrableGrades,
-  sheetGroups
+  sheetGroups,
+  suggestedGrade
 } from './examUtils';
 import type { ExamCandidate, ExamPart, ExamScore, GradeDefinition } from './models';
 
@@ -145,6 +146,30 @@ describe('candidateState', () => {
   });
 });
 
+describe('suggestedGrade', () => {
+  const def = (grade: string, gradeRank: number): GradeDefinition => ({
+    section: 'Judo',
+    grade,
+    gradeRank,
+    beltColor: '#000',
+    isDan: false
+  });
+  const ladder = [def('6. Kyu', 1), def('5.5 Kyu', 2), def('5. Kyu', 3)];
+  const withProgram = (g: string) => g !== '6. Kyu';
+
+  it('suggests the next grade after the current one', () => {
+    expect(suggestedGrade(ladder, '5.5 Kyu', withProgram)?.grade).toBe('5. Kyu');
+  });
+
+  it('skips the white belt for members without a grade', () => {
+    expect(suggestedGrade(ladder, null, withProgram)?.grade).toBe('5.5 Kyu');
+  });
+
+  it('falls back to the first grade where no grade has a program', () => {
+    expect(suggestedGrade(ladder, undefined, () => false)?.grade).toBe('6. Kyu');
+  });
+});
+
 describe('registrableGrades', () => {
   const def = (grade: string, gradeRank: number, isDan = false): GradeDefinition => ({
     section: 'Judo',
@@ -209,11 +234,27 @@ describe('sheetGroups', () => {
     ]);
     expect(groups.map((g) => g.map((c) => c.id))).toEqual([[1, 3], [2]]);
   });
+
+  it('keeps started sheets with different program snapshots apart', () => {
+    const before = [parts[0]];
+    const after = parts;
+    const groups = sheetGroups([
+      candidate(1, 'A', { program: before, started_at: 't' }),
+      candidate(2, 'B', { program: after, started_at: 't' }),
+      candidate(3, 'C'),
+      candidate(4, 'D', { program: before, started_at: 't' })
+    ]);
+    // C, not started yet, joins the first started sheet and will get its snapshot
+    expect(groups.map((g) => g.map((c) => c.id))).toEqual([[1, 3, 4], [2]]);
+  });
 });
 
 describe('program editing', () => {
-  it('finds a free item key', () => {
-    expect(newItemKey({ key: 'nage' }, parts)).toBe('nage-3');
+  it('hands out item keys that were never used, not the next number', () => {
+    const key = newItemKey({ key: 'nage' }, parts);
+    expect(key).toMatch(/^nage-[0-9a-f]{8}$/);
+    expect(parts.flatMap((p) => p.items.map((i) => i.key))).not.toContain(key);
+    expect(newItemKey({ key: 'nage' }, parts)).not.toBe(key);
   });
 
   it('derives part keys from titles', () => {

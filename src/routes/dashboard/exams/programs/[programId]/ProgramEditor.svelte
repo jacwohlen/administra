@@ -50,7 +50,11 @@
   function addPart() {
     const partTitle = $_('page.exams.programs.newPart');
     const key = newPartKey(partTitle, parts);
-    parts.push({ key, title: partTitle, items: [{ key: `${key}-1`, name: '', sides: 1 }] });
+    parts.push({
+      key,
+      title: partTitle,
+      items: [{ key: newItemKey({ key }, parts), name: '', sides: 1 }]
+    });
   }
 
   function addItem(part: ExamPart) {

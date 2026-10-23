@@ -48,7 +48,10 @@ decide.
 
 Trainers and admins edit programs in the app. A sheet keeps the program it
 was started with (snapshot in `exam_candidates.program`), so editing never
-changes running or finished exams. Grades without a program (e.g. Aikido)
+changes running or finished exams. Candidates scored side by side share one
+snapshot; a candidate not started yet takes the snapshot of the sheet they
+are scored on. New items get random keys, so a deleted item's key is never
+handed to another technique. Grades without a program (e.g. Aikido)
 can still be graded: the sheet then only records the result and feedback.
 
 The half belts (5.5 Kyu Halbgelb, 4.5 Kyu Halborange, 3.5 Kyu Halbgrün) are
@@ -56,22 +59,30 @@ rungs of the Judo grade ladder with two colours (`grade_definitions."beltColor2"
 
 ## Data and access
 
-`supabase/migrations/20261021120000_q_exams.sql`:
+`supabase/migrations/20261021120000_q_exams.sql` and
+`20261023090000_q_exams_review_fixes.sql`:
 
-| Table             | Content                                                   | Members                      | Staff        |
-| ----------------- | --------------------------------------------------------- | ---------------------------- | ------------ |
-| `exam_programs`   | parts and items per grade (jsonb), minimum points         | read                         | writers edit |
-| `exams`           | exam days, optionally linked to an event                  | read                         | writers edit |
-| `exam_candidates` | registration, call-up, program snapshot, result, feedback | own rows (`my_member_ids()`) | writers edit |
-| `exam_examiners`  | who graded a candidate (examiners add only themselves)    | own finished sheets          | writers add  |
-| `exam_scores`     | points left / right / single and the note, per item       | own finished sheets          | writers edit |
+| Table             | Content                                                  | Members                      | Staff        |
+| ----------------- | -------------------------------------------------------- | ---------------------------- | ------------ |
+| `exam_programs`   | parts and items per grade (jsonb), minimum points        | read                         | writers edit |
+| `exams`           | exam days, optionally linked to an event                 | read                         | writers edit |
+| `exam_candidates` | registration, call-up, program snapshot, result, total   | own rows (`my_member_ids()`) | writers edit |
+| `exam_examiners`  | who graded a candidate (examiners add only themselves)   | own finished sheets          | writers add  |
+| `exam_scores`     | points and note per item; the feedback (`_feedback` row) | own finished sheets          | writers edit |
 
 - Members register and withdraw only through `register_for_exam()` and
   `withdraw_exam_registration()`, which check that the member is theirs,
-  the deadline and the grade. Once called up, changes go through the
-  trainers; withdrawing is possible until grading starts.
-- Scores can only change while the sheet is open (`result` is null).
-- `sync_exam_candidate_result` / `remove_exam_candidate_grade` record and
-  remove the grade when the result changes. An already recorded grade is
-  left alone (and not removed on reopening).
+  the deadline and the grade. Members change only registrations that are
+  still _Angemeldet_; once called up or withdrawn, changes (and a new
+  registration) go through the trainers. Withdrawing is possible until
+  grading starts.
+- Scores, notes and the feedback can only change while the sheet is open
+  (`result` is null), and members read them only once the result is in.
+- `sync_exam_candidate_result` adds up the points from `exam_scores` and the
+  snapshot when the result is set, and records the grade on a pass;
+  `remove_exam_candidate_grade` removes that grade when the sheet is
+  reopened. An already recorded grade is left alone (and not removed on
+  reopening).
+- Once a sheet is started its grade is fixed, and an exam day's section is
+  fixed once candidates are registered.
 - Deleting an exam day deletes registrations and sheets, not the grades.

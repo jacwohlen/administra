@@ -41,6 +41,7 @@
 <ExamForm
   exam={data.exam}
   events={data.events}
+  sectionLocked={data.sectionLocked}
   cancelHref="/dashboard/exams/{data.exam.id}"
   onsaved={async (id) => {
     await invalidate('app:exam');

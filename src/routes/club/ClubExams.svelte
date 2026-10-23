@@ -13,7 +13,7 @@
   import { supabaseClient } from '$lib/supabase';
   import { toaster } from '$lib/toast';
   import BeltStrip from '$lib/components/BeltStrip.svelte';
-  import { registrableGrades } from '$lib/examUtils';
+  import { registrableGrades, suggestedGrade } from '$lib/examUtils';
   import { gradesBySection } from '$lib/gradeUtils';
   import type { DirectoryMember, Exam, GradeDefinition, MemberCurrentGrade } from '$lib/models';
   import type { MemberExams, MemberRegistration } from './memberExams';
@@ -59,25 +59,45 @@
     return exams.programs.find((p) => p.section === section && p.grade === grade);
   }
 
+  /** The registration for an exam day, also a withdrawn one (only trainers revive those). */
   function registrationFor(exam: Exam): MemberRegistration | undefined {
-    return exams.registrations.find((r) => r.exam_id === exam.id && r.status !== 'withdrawn');
+    return exams.registrations.find((r) => r.exam_id === exam.id);
+  }
+
+  function hasProgram(section: string) {
+    return (grade: string) => !!programFor(section, grade);
   }
 
   function isOpen(exam: Exam): boolean {
     return (exam.registration_deadline ?? exam.date) >= today && exam.date >= today;
   }
 
-  /** The program for the next belt, to prepare with even before an exam is announced. */
+  /**
+   * The program for the next belt, to prepare with even before an exam is
+   * announced: the first of the member's sections that has one.
+   */
   let nextProgram = $derived.by(() => {
-    const section = currentGrades[0]?.section ?? member.sections[0];
-    if (!section) return undefined;
-    const next = registrableGrades(ladders.get(section) ?? [], currentGrade(section))[0];
-    return next ? programFor(section, next.grade) : undefined;
+    const sections = [...new Set([...currentGrades.map((g) => g.section), ...member.sections])];
+    for (const section of sections) {
+      const next = suggestedGrade(
+        ladders.get(section) ?? [],
+        currentGrade(section),
+        hasProgram(section)
+      );
+      const program = next ? programFor(section, next.grade) : undefined;
+      if (program) return program;
+    }
+    return undefined;
   });
 
   function openForm(exam: Exam, reg?: MemberRegistration) {
+    const suggested = suggestedGrade(
+      ladders.get(exam.section) ?? [],
+      currentGrade(exam.section),
+      hasProgram(exam.section)
+    );
     form = {
-      grade: reg?.grade ?? options(exam)[0]?.grade ?? '',
+      grade: reg?.grade ?? suggested?.grade ?? '',
       belt: reg?.belt_length_cm ?? null,
       note: reg?.note ?? ''
     };
@@ -160,12 +180,18 @@
           <div class="flex items-center gap-2">
             {#if def}<BeltStrip color={def.beltColor} color2={def.beltColor2} />{/if}
             <span class="font-medium">{reg.grade}</span>
-            <span class="chip text-xs preset-tonal-success">
+            <span
+              class="chip text-xs {reg.status === 'withdrawn'
+                ? 'preset-tonal-surface'
+                : 'preset-tonal-success'}"
+            >
               {$_('page.exams.state.' + (reg.started_at ? 'grading' : reg.status))}
             </span>
           </div>
           <p class="text-sm">
-            {#if reg.status === 'invited' && (reg.group_name || reg.call_time)}
+            {#if reg.status === 'withdrawn'}
+              {$_('page.club.exams.askTrainer')}
+            {:else if reg.status === 'invited' && (reg.group_name || reg.call_time)}
               {$_('page.club.exams.callUp', {
                 values: {
                   group: reg.group_name ?? '–',
@@ -188,7 +214,7 @@
                 {$_('button.edit')}
               </button>
             {/if}
-            {#if !reg.started_at && !reg.result}
+            {#if reg.status !== 'withdrawn' && !reg.started_at && !reg.result}
               <button
                 class="btn btn-sm preset-tonal-error"
                 onclick={() => (confirmWithdraw = reg)}

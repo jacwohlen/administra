@@ -802,7 +802,8 @@
         "notesHint": "Erscheint bei der Anmeldung im Mitgliederbereich.",
         "required": "Titel, Datum und Sektion sind Pflichtfelder.",
         "deadlineAfterDate": "Der Anmeldeschluss liegt nach dem Prüfungstag.",
-        "saveError": "Fehler beim Speichern des Prüfungstags"
+        "saveError": "Fehler beim Speichern des Prüfungstags",
+        "sectionLocked": "Die Sektion lässt sich nicht mehr ändern, weil schon Kandidaten angemeldet sind."
       },
       "candidate": {
         "add": "Kandidat hinzufügen",
@@ -849,7 +850,8 @@
         "againstSuggestion": "Die Punkte erreichen das Minimum nicht – trotzdem als bestanden erfassen?",
         "saved": "Ergebnis gespeichert",
         "reopened": "Blatt wieder geöffnet",
-        "saveError": "Fehler beim Speichern – bitte nochmals versuchen"
+        "saveError": "Fehler beim Speichern – bitte nochmals versuchen",
+        "changedMeanwhile": "Das Blatt wurde inzwischen geändert – bitte prüfen und nochmals versuchen."
       },
       "print": {
         "title": "Anmeldeliste",

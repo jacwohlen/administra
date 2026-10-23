@@ -14325,12 +14325,10 @@ INSERT INTO public.exams (section, title, date, location, registration_deadline,
 
 INSERT INTO public.exam_candidates (
   exam_id, member_id, section, grade, belt_length_cm, status, group_name, call_time,
-  program, min_points, started_at, result, feedback, completed_at, member_grade_id
+  program, min_points, started_at, result, completed_at, member_grade_id
 )
 SELECT e.id, 107, 'Judo', '5. Kyu', 240, 'invited', 'Kinder Gelb, Orange, Halbgrün', '10:15',
-       p.parts, p.min_points, '2025-12-06 10:30+01', 'passed',
-       'Sehr saubere Fallschule! Bei O-uchi-gari noch mehr Kuzushi – weiter so.',
-       '2025-12-06 11:30+01',
+       p.parts, p.min_points, '2025-12-06 10:30+01', 'passed', '2025-12-06 11:30+01',
        (SELECT id FROM public.member_grades WHERE "memberId" = 107 AND grade = '5. Kyu')
 FROM public.exams e
 JOIN public.exam_programs p ON p.section = 'Judo' AND p.grade = '5. Kyu'
@@ -14350,10 +14348,15 @@ CROSS JOIN LATERAL (
 ) i
 WHERE c.member_id = 107 AND c.result = 'passed';
 
+-- The feedback round, stored as the sheet's '_feedback' row
+INSERT INTO public.exam_scores (candidate_id, item_key, note)
+SELECT id, '_feedback', 'Sehr saubere Fallschule! Bei O-uchi-gari noch mehr Kuzushi – weiter so.'
+FROM public.exam_candidates WHERE member_id = 107 AND result = 'passed';
+
 UPDATE public.exam_candidates c
 SET total_points = (
       SELECT sum(coalesce(left_points, 0) + coalesce(right_points, 0) + coalesce(points, 0))
-      FROM public.exam_scores s WHERE s.candidate_id = c.id
+      FROM public.exam_scores s WHERE s.candidate_id = c.id AND s.item_key <> '_feedback'
     ),
     max_points = 66
 WHERE c.member_id = 107 AND c.result = 'passed';

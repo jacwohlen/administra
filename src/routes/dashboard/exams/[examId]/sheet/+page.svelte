@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { invalidate } from '$app/navigation';
+  import { beforeNavigate, invalidate } from '$app/navigation';
   import { _ } from 'svelte-i18n';
   import Fa from 'svelte-fa';
   import {
@@ -17,6 +17,7 @@
   import { toaster } from '$lib/toast';
   import BeltStrip from '$lib/components/BeltStrip.svelte';
   import {
+    FEEDBACK_KEY,
     applyScore,
     candidateState,
     evaluateExam,
@@ -50,6 +51,13 @@
   let confirm = $state<{ candidate: ExamCandidate; result: ExamResult | null } | null>(null);
   let busy = $state(false);
 
+  // Notes and feedback save on change; leaving the page (also with the
+  // browser's or the phone's back button) must not drop what was typed.
+  beforeNavigate(() => {
+    const el = document.activeElement;
+    if (el instanceof HTMLTextAreaElement) el.blur();
+  });
+
   interface Sheet {
     parts: ExamPart[];
     minPoints: number;
@@ -62,12 +70,30 @@
     return program ? { parts: program.parts, minPoints: program.min_points } : null;
   }
 
+  // The rows on screen: a started sheet's snapshot if the group has one (the
+  // group shares it, see sheetGroups), else the current program. Candidates
+  // not started yet are scored on, evaluated against and frozen to these rows.
+  let layout = $derived.by(() => {
+    const started = group.find((c) => c.program);
+    return (
+      (started ? sheetOf(started) : null) ?? group.map(sheetOf).find((s) => s !== null) ?? null
+    );
+  });
+
+  function sheetFor(c: ExamCandidate): Sheet | null {
+    return c.program ? sheetOf(c) : (layout ?? sheetOf(c));
+  }
+
   function scoresOf(c: ExamCandidate): Map<string, ExamScore> {
     return scoresByItem(scores.filter((s) => s.candidate_id === c.id));
   }
 
+  function feedbackOf(c: ExamCandidate): string | null {
+    return scoresOf(c).get(FEEDBACK_KEY)?.note ?? null;
+  }
+
   function evaluationOf(c: ExamCandidate) {
-    const sheet = sheetOf(c);
+    const sheet = sheetFor(c);
     return sheet ? evaluateExam(sheet.parts, sheet.minPoints, scoresOf(c)) : null;
   }
 
@@ -87,17 +113,20 @@
     candidates = candidates.map((c) => (c.id === id ? { ...c, ...patch } : c));
   }
 
-  // The layout comes from the first candidate with a sheet; everybody in a
-  // group shares the grade, so the items line up.
-  let layout = $derived(group.map(sheetOf).find((s) => s !== null) ?? null);
-  let sheets = $derived(group.map((c) => ({ c, sheet: sheetOf(c), evaluation: evaluationOf(c) })));
+  let sheets = $derived(group.map((c) => ({ c, sheet: sheetFor(c), evaluation: evaluationOf(c) })));
 
-  /** First score on a sheet: freeze the program for it and sign as examiner. */
+  /** Somebody else changed the sheet in the meantime: say so and show their state. */
+  async function changedMeanwhile() {
+    toaster.error({ title: $_('page.exams.sheet.changedMeanwhile') });
+    await invalidate('app:exam-sheet');
+  }
+
+  /** First score on a sheet: freeze the rows on screen for it and sign as examiner. */
   async function ensureStarted(c: ExamCandidate): Promise<boolean> {
     if (!c.started_at) {
-      const sheet = sheetOf(c);
+      const sheet = sheetFor(c);
       const startedAt = new Date().toISOString();
-      const { error } = await supabaseClient
+      const { data: rows, error } = await supabaseClient
         .from('exam_candidates')
         .update({
           program: sheet?.parts ?? null,
@@ -105,10 +134,16 @@
           started_at: startedAt
         })
         .eq('id', c.id)
-        .is('started_at', null);
+        .is('started_at', null)
+        .select('id');
       if (error) {
         console.error('Error starting sheet:', error);
         toaster.error({ title: $_('page.exams.sheet.saveError') });
+        return false;
+      }
+      if (!rows?.length) {
+        // Another examiner started it first: score on their snapshot instead
+        await changedMeanwhile();
         return false;
       }
       patchCandidate(c.id, {
@@ -153,64 +188,60 @@
     }
   }
 
-  async function setNote(c: ExamCandidate, item: ExamItem, text: string) {
+  /** An item's note, or the sheet's feedback under FEEDBACK_KEY. */
+  async function setNote(c: ExamCandidate, key: string, text: string) {
     const note = text.trim() || null;
-    if ((scoresOf(c).get(item.key)?.note ?? null) === note) return;
+    const previous = scoresOf(c).get(key)?.note ?? null;
+    if (previous === note) return;
     if (!(await ensureStarted(c))) return;
-    scores = applyScore(scores, c.id, item.key, 'note', note);
+    scores = applyScore(scores, c.id, key, 'note', note);
     const { error } = await supabaseClient
       .from('exam_scores')
-      .upsert(
-        { candidate_id: c.id, item_key: item.key, note },
-        { onConflict: 'candidate_id,item_key' }
-      );
+      .upsert({ candidate_id: c.id, item_key: key, note }, { onConflict: 'candidate_id,item_key' });
     if (error) {
       console.error('Error saving note:', error);
+      scores = applyScore(scores, c.id, key, 'note', previous);
       toaster.error({ title: $_('page.exams.sheet.saveError') });
     }
   }
 
-  async function setFeedback(c: ExamCandidate, text: string) {
-    const feedback = text.trim() || null;
-    if ((c.feedback ?? null) === feedback) return;
-    patchCandidate(c.id, { feedback });
-    const { error } = await supabaseClient
-      .from('exam_candidates')
-      .update({ feedback })
-      .eq('id', c.id);
-    if (error) {
-      console.error('Error saving feedback:', error);
-      toaster.error({ title: $_('page.exams.sheet.saveError') });
-    }
-  }
-
-  /** Finish (passed/failed) or reopen (null) a sheet. */
-  async function setResult(candidate: ExamCandidate, result: ExamResult | null) {
+  /** Reload first, so the dialog shows every examiner's scores. */
+  async function askResult(candidate: ExamCandidate, result: ExamResult | null) {
     busy = true;
-    const c = candidates.find((x) => x.id === candidate.id) ?? candidate;
-    const evaluation = evaluationOf(c);
-    const patch =
-      result === null
-        ? { result: null }
-        : {
-            result,
-            total_points: evaluation?.points ?? null,
-            max_points: evaluation?.max ?? null,
-            feedback: c.feedback ?? null
-          };
+    await invalidate('app:exam-sheet');
+    busy = false;
+    const fresh = candidates.find((x) => x.id === candidate.id);
+    if (!fresh || !!fresh.result === (result !== null)) {
+      toaster.error({ title: $_('page.exams.sheet.changedMeanwhile') });
+      return;
+    }
+    confirm = { candidate: fresh, result };
+  }
+
+  /** Finish (passed/failed) or reopen (null) a sheet. The database adds up the points. */
+  async function setResult(c: ExamCandidate, result: ExamResult | null) {
+    busy = true;
     if (result !== null && !c.started_at) {
       // A result without scores (no program for this grade) still needs a start
       if (!(await ensureStarted(c))) {
         busy = false;
+        confirm = null;
         return;
       }
     }
-    const { error } = await supabaseClient.from('exam_candidates').update(patch).eq('id', c.id);
+    const update = supabaseClient.from('exam_candidates').update({ result }).eq('id', c.id);
+    const { data: rows, error } = await (
+      result === null ? update.not('result', 'is', null) : update.is('result', null)
+    ).select('id');
     busy = false;
     confirm = null;
     if (error) {
       console.error('Error saving result:', error);
       toaster.error({ title: $_('page.exams.sheet.saveError') });
+      return;
+    }
+    if (!rows?.length) {
+      await changedMeanwhile();
       return;
     }
     toaster.success({
@@ -446,7 +477,7 @@
                             ? `${c.member?.firstname}: ${$_('page.exams.sheet.notePlaceholder')}`
                             : $_('page.exams.sheet.notePlaceholder')}
                           value={score?.note ?? ''}
-                          onchange={(e) => setNote(c, item, e.currentTarget.value)}
+                          onchange={(e) => setNote(c, item.key, e.currentTarget.value)}
                         ></textarea>
                       {/if}
                     </div>
@@ -491,7 +522,7 @@
         </p>
         <ul class="text-sm space-y-0.5">
           {#each evaluation.parts as pe (pe.key)}
-            {@const part = sheetOf(c)?.parts.find((p) => p.key === pe.key)}
+            {@const part = sheetFor(c)?.parts.find((p) => p.key === pe.key)}
             <li class="flex justify-between gap-2" class:text-error-600-400={!pe.met}>
               <span class="truncate">{part?.title}</span>
               <span class="tabular-nums flex-none">
@@ -523,10 +554,10 @@
       {/if}
 
       {#if readonly(c)}
-        {#if c.feedback}
+        {#if feedbackOf(c)}
           <div>
             <p class="text-xs text-surface-600-400">{$_('page.exams.sheet.feedback')}</p>
-            <p class="text-sm whitespace-pre-wrap">{c.feedback}</p>
+            <p class="text-sm whitespace-pre-wrap">{feedbackOf(c)}</p>
           </div>
         {/if}
       {:else}
@@ -536,8 +567,8 @@
             class="textarea text-sm"
             rows="3"
             placeholder={$_('page.exams.sheet.feedbackPlaceholder')}
-            value={c.feedback ?? ''}
-            onchange={(e) => setFeedback(c, e.currentTarget.value)}
+            value={feedbackOf(c) ?? ''}
+            onchange={(e) => setNote(c, FEEDBACK_KEY, e.currentTarget.value)}
           ></textarea>
           <span class="text-xs text-surface-600-400">{$_('page.exams.sheet.feedbackHint')}</span>
         </label>
@@ -548,7 +579,7 @@
           {#if c.result}
             <button
               class="btn preset-tonal-surface"
-              onclick={() => (confirm = { candidate: c, result: null })}
+              onclick={() => askResult(c, null)}
               disabled={busy}
             >
               <Fa icon={faRotateLeft} />
@@ -557,7 +588,7 @@
           {:else}
             <button
               class="btn preset-filled-success-500"
-              onclick={() => (confirm = { candidate: c, result: 'passed' })}
+              onclick={() => askResult(c, 'passed')}
               disabled={busy}
             >
               <Fa icon={faCircleCheck} />
@@ -565,7 +596,7 @@
             </button>
             <button
               class="btn preset-tonal-error"
-              onclick={() => (confirm = { candidate: c, result: 'failed' })}
+              onclick={() => askResult(c, 'failed')}
               disabled={busy}
             >
               <Fa icon={faCircleXmark} />

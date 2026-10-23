@@ -22,6 +22,7 @@
   let {
     exam = null,
     events,
+    sectionLocked = false,
     cancelHref,
     onsaved
   }: {
@@ -29,6 +30,8 @@
     exam?: Exam | null;
     /** Events to link, newest relevant first */
     events: EventOption[];
+    /** Candidates are registered for grades of the section */
+    sectionLocked?: boolean;
     cancelHref: string;
     onsaved: (id: number) => void;
   } = $props();
@@ -53,7 +56,9 @@
     if (!ev) return;
     form.title = ev.title;
     form.date = ev.date;
-    if (ev.section && clubConfig.sections.includes(ev.section)) form.section = ev.section;
+    if (!sectionLocked && ev.section && clubConfig.sections.includes(ev.section)) {
+      form.section = ev.section;
+    }
     if (ev.location) form.location = ev.location;
     if (ev.registrationDeadline) form.registration_deadline = ev.registrationDeadline;
   }
@@ -133,11 +138,14 @@
 
     <label class="label">
       <span>{$_('page.exams.form.section')} *</span>
-      <select class="select" bind:value={form.section} required>
+      <select class="select" bind:value={form.section} required disabled={sectionLocked}>
         {#each clubConfig.sections as s (s)}
           <option value={s}>{s}</option>
         {/each}
       </select>
+      {#if sectionLocked}
+        <span class="text-xs text-surface-600-400">{$_('page.exams.form.sectionLocked')}</span>
+      {/if}
     </label>
 
     <label class="label">

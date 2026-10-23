@@ -5,7 +5,7 @@
   import Fa from 'svelte-fa';
   import { faMagnifyingGlass, faSpinner, faTrash } from '@fortawesome/free-solid-svg-icons';
   import BeltStrip from '$lib/components/BeltStrip.svelte';
-  import { registrableGrades } from '$lib/examUtils';
+  import { registrableGrades, suggestedGrade } from '$lib/examUtils';
   import type {
     Exam,
     ExamCandidate,
@@ -19,6 +19,7 @@
     ladder,
     candidate = null,
     existingMemberIds,
+    programGrades,
     groups,
     trainers,
     onclose,
@@ -30,6 +31,8 @@
     /** The candidate to edit; null adds a new one */
     candidate?: ExamCandidate | null;
     existingMemberIds: number[];
+    /** Grades of the exam's section that have a program */
+    programGrades: string[];
     /** Group names and trainers already in use, offered as suggestions */
     groups: string[];
     trainers: string[];
@@ -103,7 +106,8 @@
     });
     const current = ((data ?? []) as MemberCurrentGrade[]).find((g) => g.section === exam.section);
     currentGrade = current?.grade ?? null;
-    form.grade = registrableGrades(ladder, currentGrade)[0]?.grade ?? '';
+    form.grade =
+      suggestedGrade(ladder, currentGrade, (g) => programGrades.includes(g))?.grade ?? '';
   }
 
   async function save() {
@@ -118,14 +122,42 @@
       trainer: form.trainer.trim() || null,
       note: form.note.trim() || null
     };
-    const { error } = candidate
-      ? await supabaseClient.from('exam_candidates').update(row).eq('id', candidate.id)
-      : await supabaseClient.from('exam_candidates').insert({
-          ...row,
-          exam_id: exam.id,
-          member_id: member.id,
-          section: exam.section
+    if (candidate) {
+      // Only what was changed here: the list may be older than the row, e.g. a
+      // member withdrew or an examiner started the sheet meanwhile
+      const before = candidate as unknown as Record<string, unknown>;
+      const patch = Object.fromEntries(
+        Object.entries(row).filter(([key, value]) => value !== (before[key] ?? null))
+      );
+      if (Object.keys(patch).length === 0) {
+        saving = false;
+        onclose();
+        return;
+      }
+      let update = supabaseClient.from('exam_candidates').update(patch).eq('id', candidate.id);
+      // The sheet keeps the grade it was started with (the database enforces it too)
+      if ('grade' in patch) update = update.is('started_at', null);
+      const { data: rows, error } = await update.select('id');
+      saving = false;
+      if (error || !rows?.length) {
+        console.error('Error saving candidate:', error);
+        toaster.error({
+          title: error
+            ? $_('page.exams.candidate.saveError')
+            : $_('page.exams.candidate.gradeLocked')
         });
+        if (!error) onsaved();
+        return;
+      }
+      onsaved();
+      return;
+    }
+    const { error } = await supabaseClient.from('exam_candidates').insert({
+      ...row,
+      exam_id: exam.id,
+      member_id: member.id,
+      section: exam.section
+    });
     saving = false;
     if (error) {
       console.error('Error saving candidate:', error);

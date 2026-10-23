@@ -396,9 +396,9 @@ export interface ExamCandidate {
   min_points: number | null;
   started_at: string | null;
   result: ExamResult | null;
+  /** Computed by the database when the result is set */
   total_points: number | null;
   max_points: number | null;
-  feedback?: string | null;
   completed_at: string | null;
   registered_at: string;
   /** Embedded where loaded with `member:members(...)` */
@@ -415,7 +415,7 @@ export interface ExamCandidateMember {
   img?: string | null;
 }
 
-/** Row of exam_scores: the points for one item */
+/** Row of exam_scores: the points for one item (or the feedback, FEEDBACK_KEY) */
 export interface ExamScore {
   candidate_id: number;
   item_key: string;

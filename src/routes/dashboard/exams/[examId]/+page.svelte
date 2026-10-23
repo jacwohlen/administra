@@ -356,6 +356,7 @@
     ladder={data.ladder}
     candidate={dialog.candidate}
     existingMemberIds={data.candidates.map((c) => c.member_id)}
+    programGrades={data.programs.map((p) => p.grade)}
     groups={groupNames}
     trainers={trainerNames}
     onclose={() => (dialog = null)}
