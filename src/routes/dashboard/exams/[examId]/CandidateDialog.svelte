@@ -134,21 +134,34 @@
         onclose();
         return;
       }
-      let update = supabaseClient.from('exam_candidates').update(patch).eq('id', candidate.id);
-      // The sheet keeps the grade it was started with (the database enforces it too)
-      if ('grade' in patch) update = update.is('started_at', null);
-      const { data: rows, error } = await update.select('id');
+      const id = candidate.id;
+      const save = (fields: Record<string, unknown>) => {
+        let update = supabaseClient.from('exam_candidates').update(fields).eq('id', id);
+        // The sheet keeps the grade it was started with (the database enforces it too)
+        if ('grade' in fields) update = update.is('started_at', null);
+        return update.select('id');
+      };
+      let { data: rows, error } = await save(patch);
+      let gradeRefused = false;
+      if (!error && !rows?.length && 'grade' in patch) {
+        // Scoring started meanwhile: keep the other changes, only the grade stays
+        gradeRefused = true;
+        const rest = Object.fromEntries(Object.entries(patch).filter(([key]) => key !== 'grade'));
+        if (Object.keys(rest).length > 0) {
+          ({ data: rows, error } = await save(rest));
+        } else {
+          rows = [{ id }];
+        }
+      }
       saving = false;
       if (error || !rows?.length) {
+        // An error, or the registration is gone
         console.error('Error saving candidate:', error);
-        toaster.error({
-          title: error
-            ? $_('page.exams.candidate.saveError')
-            : $_('page.exams.candidate.gradeLocked')
-        });
+        toaster.error({ title: $_('page.exams.candidate.saveError') });
         if (!error) onsaved();
         return;
       }
+      if (gradeRefused) toaster.error({ title: $_('page.exams.candidate.gradeLocked') });
       onsaved();
       return;
     }

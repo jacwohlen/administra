@@ -59,8 +59,9 @@ rungs of the Judo grade ladder with two colours (`grade_definitions."beltColor2"
 
 ## Data and access
 
-`supabase/migrations/20261021120000_q_exams.sql` and
-`20261023090000_q_exams_review_fixes.sql`:
+`supabase/migrations/20261021120000_q_exams.sql`,
+`20261023090000_q_exams_review_fixes.sql` and
+`20261023150000_q_exams_score_lock.sql`:
 
 | Table             | Content                                                  | Members                      | Staff        |
 | ----------------- | -------------------------------------------------------- | ---------------------------- | ------------ |
@@ -78,11 +79,16 @@ rungs of the Judo grade ladder with two colours (`grade_definitions."beltColor2"
   grading starts.
 - Scores, notes and the feedback can only change while the sheet is open
   (`result` is null), and members read them only once the result is in.
+  Each score write locks the open candidate row (`lock_open_exam_sheet`),
+  so closing a sheet waits for a score saved in the same moment and counts
+  it, and nothing is written into a closed sheet.
 - `sync_exam_candidate_result` adds up the points from `exam_scores` and the
   snapshot when the result is set, and records the grade on a pass;
   `remove_exam_candidate_grade` removes that grade when the sheet is
   reopened. An already recorded grade is left alone (and not removed on
   reopening).
-- Once a sheet is started its grade is fixed, and an exam day's section is
-  fixed once candidates are registered.
+- A sheet is started (program frozen, grade fixed) with its first score or
+  note, and only for the grade the examiner sees; a candidate whose grade has
+  no program is never started, so the grade can still be corrected. An exam
+  day's section is fixed once candidates are registered.
 - Deleting an exam day deletes registrations and sheets, not the grades.

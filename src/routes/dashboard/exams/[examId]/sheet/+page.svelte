@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { tick } from 'svelte';
   import { beforeNavigate, invalidate } from '$app/navigation';
   import { _ } from 'svelte-i18n';
   import Fa from 'svelte-fa';
@@ -43,8 +44,9 @@
   let me = $derived(data.session.user.id);
   let myName = $derived(examinerName(data.userProfile));
   let groups = $derived(sheetGroups(candidates));
-  let groupIndex = $state(0);
-  let group = $derived(groups[Math.min(groupIndex, groups.length - 1)] ?? []);
+  // The sheet on screen follows a candidate, not a position: a reload can split groups
+  let selectedId = $state<number | null>(null);
+  let group = $derived(groups.find((g) => g.some((c) => c.id === selectedId)) ?? groups[0] ?? []);
 
   let collapsed = $state<Record<string, boolean>>({});
   let openNotes = $state<Record<string, boolean>>({});
@@ -70,18 +72,25 @@
     return program ? { parts: program.parts, minPoints: program.min_points } : null;
   }
 
-  // The rows on screen: a started sheet's snapshot if the group has one (the
-  // group shares it, see sheetGroups), else the current program. Candidates
-  // not started yet are scored on, evaluated against and frozen to these rows.
-  let layout = $derived.by(() => {
-    const started = group.find((c) => c.program);
-    return (
-      (started ? sheetOf(started) : null) ?? group.map(sheetOf).find((s) => s !== null) ?? null
-    );
-  });
+  // A group's rows: a started sheet's snapshot if the group has one (the group
+  // shares it, see sheetGroups), else the current program. Candidates not
+  // started yet are scored on, evaluated against and frozen to these rows.
+  function layoutOf(g: ExamCandidate[]): Sheet | null {
+    const started = g.find((c) => c.program);
+    return (started ? sheetOf(started) : null) ?? g.map(sheetOf).find((s) => s !== null) ?? null;
+  }
+
+  let layout = $derived(layoutOf(group));
 
   function sheetFor(c: ExamCandidate): Sheet | null {
-    return c.program ? sheetOf(c) : (layout ?? sheetOf(c));
+    if (c.program) return sheetOf(c);
+    const own = groups.find((g) => g.some((x) => x.id === c.id));
+    return (own ? layoutOf(own) : null) ?? sheetOf(c);
+  }
+
+  /** The candidate as this page knows it now (a passed-in object may be older). */
+  function live(c: ExamCandidate): ExamCandidate {
+    return candidates.find((x) => x.id === c.id) ?? c;
   }
 
   function scoresOf(c: ExamCandidate): Map<string, ExamScore> {
@@ -121,39 +130,56 @@
     await invalidate('app:exam-sheet');
   }
 
-  /** First score on a sheet: freeze the rows on screen for it and sign as examiner. */
-  async function ensureStarted(c: ExamCandidate): Promise<boolean> {
-    if (!c.started_at) {
-      const sheet = sheetFor(c);
-      const startedAt = new Date().toISOString();
-      const { data: rows, error } = await supabaseClient
-        .from('exam_candidates')
-        .update({
-          program: sheet?.parts ?? null,
-          min_points: sheet?.minPoints ?? null,
-          started_at: startedAt
-        })
-        .eq('id', c.id)
-        .is('started_at', null)
-        .select('id');
-      if (error) {
-        console.error('Error starting sheet:', error);
-        toaster.error({ title: $_('page.exams.sheet.saveError') });
-        return false;
-      }
-      if (!rows?.length) {
-        // Another examiner started it first: score on their snapshot instead
-        await changedMeanwhile();
-        return false;
-      }
-      patchCandidate(c.id, {
-        started_at: startedAt,
-        program: sheet?.parts ?? null,
-        min_points: sheet?.minPoints ?? null
-      });
+  /** Freeze the rows on screen for a candidate, for the grade on screen. */
+  async function startSheet(c: ExamCandidate, sheet: Sheet): Promise<boolean> {
+    const startedAt = new Date().toISOString();
+    const { data: rows, error } = await supabaseClient
+      .from('exam_candidates')
+      .update({ program: sheet.parts, min_points: sheet.minPoints, started_at: startedAt })
+      .eq('id', c.id)
+      .eq('section', c.section)
+      .eq('grade', c.grade)
+      .is('started_at', null)
+      .select('id');
+    if (error) {
+      console.error('Error starting sheet:', error);
+      toaster.error({ title: $_('page.exams.sheet.saveError') });
+      return false;
     }
-    if (!c.examiners?.some((e) => e.user_id === me)) {
-      await joinAsExaminer(c);
+    if (!rows?.length) {
+      // Another examiner started it first, or the grade changed: show their state
+      await changedMeanwhile();
+      return false;
+    }
+    patchCandidate(c.id, {
+      started_at: startedAt,
+      program: sheet.parts,
+      min_points: sheet.minPoints
+    });
+    return true;
+  }
+
+  // One start per candidate, however many taps and notes arrive while it runs
+  const pendingStarts = new Map<number, Promise<boolean>>();
+
+  /**
+   * Before the first score or note: freeze the program for the candidate and
+   * sign as examiner. Without a program there is nothing to freeze, and
+   * starting would only lock the grade.
+   */
+  async function ensureStarted(c: ExamCandidate): Promise<boolean> {
+    const now = live(c);
+    const sheet = sheetFor(now);
+    if (!now.started_at && sheet) {
+      let start = pendingStarts.get(c.id);
+      if (!start) {
+        start = startSheet(now, sheet).finally(() => pendingStarts.delete(c.id));
+        pendingStarts.set(c.id, start);
+      }
+      if (!(await start)) return false;
+    }
+    if (!live(c).examiners?.some((e) => e.user_id === me)) {
+      await joinAsExaminer(live(c));
     }
     return true;
   }
@@ -165,9 +191,12 @@
       toaster.error({ title: $_('page.exams.assignError') });
       return;
     }
-    patchCandidate(c.id, {
-      examiners: [...(c.examiners ?? []), { candidate_id: c.id, user_id: me, name: myName }]
-    });
+    const examiners = live(c).examiners ?? [];
+    if (!examiners.some((e) => e.user_id === me)) {
+      patchCandidate(c.id, {
+        examiners: [...examiners, { candidate_id: c.id, user_id: me, name: myName }]
+      });
+    }
   }
 
   async function setScore(c: ExamCandidate, item: ExamItem, side: ScoreSide, value: number | null) {
@@ -188,12 +217,21 @@
     }
   }
 
-  /** An item's note, or the sheet's feedback under FEEDBACK_KEY. */
-  async function setNote(c: ExamCandidate, key: string, text: string) {
+  /** An item's note, or the sheet's feedback under FEEDBACK_KEY, from its text field. */
+  async function setNote(c: ExamCandidate, key: string, field: HTMLTextAreaElement) {
+    const text = field.value;
     const note = text.trim() || null;
     const previous = scoresOf(c).get(key)?.note ?? null;
     if (previous === note) return;
-    if (!(await ensureStarted(c))) return;
+    // A failed save keeps what was typed in the field, so a later edit saves it again
+    const keepTyped = async () => {
+      await tick();
+      field.value = text;
+    };
+    if (!(await ensureStarted(c))) {
+      await keepTyped();
+      return;
+    }
     scores = applyScore(scores, c.id, key, 'note', note);
     const { error } = await supabaseClient
       .from('exam_scores')
@@ -201,6 +239,7 @@
     if (error) {
       console.error('Error saving note:', error);
       scores = applyScore(scores, c.id, key, 'note', previous);
+      await keepTyped();
       toaster.error({ title: $_('page.exams.sheet.saveError') });
     }
   }
@@ -221,13 +260,11 @@
   /** Finish (passed/failed) or reopen (null) a sheet. The database adds up the points. */
   async function setResult(c: ExamCandidate, result: ExamResult | null) {
     busy = true;
-    if (result !== null && !c.started_at) {
-      // A result without scores (no program for this grade) still needs a start
-      if (!(await ensureStarted(c))) {
-        busy = false;
-        confirm = null;
-        return;
-      }
+    // Whoever decides signs the sheet (and an untouched sheet gets its program)
+    if (result !== null && !(await ensureStarted(c))) {
+      busy = false;
+      confirm = null;
+      return;
     }
     const update = supabaseClient.from('exam_candidates').update({ result }).eq('id', c.id);
     const { data: rows, error } = await (
@@ -284,12 +321,10 @@
 
 {#if groups.length > 1}
   <div class="flex gap-2 overflow-x-auto pb-2">
-    {#each groups as g, i (g[0].id)}
+    {#each groups as g (g[0].id)}
       <button
-        class="chip flex-none {i === groupIndex
-          ? 'preset-filled-primary-500'
-          : 'preset-tonal-surface'}"
-        onclick={() => (groupIndex = i)}
+        class="chip flex-none {g === group ? 'preset-filled-primary-500' : 'preset-tonal-surface'}"
+        onclick={() => (selectedId = g[0].id)}
       >
         {g[0].grade} · {g.map((c) => c.member?.firstname).join(', ')}
       </button>
@@ -477,7 +512,8 @@
                             ? `${c.member?.firstname}: ${$_('page.exams.sheet.notePlaceholder')}`
                             : $_('page.exams.sheet.notePlaceholder')}
                           value={score?.note ?? ''}
-                          onchange={(e) => setNote(c, item.key, e.currentTarget.value)}
+                          maxlength="2000"
+                          onchange={(e) => setNote(c, item.key, e.currentTarget)}
                         ></textarea>
                       {/if}
                     </div>
@@ -568,7 +604,8 @@
             rows="3"
             placeholder={$_('page.exams.sheet.feedbackPlaceholder')}
             value={feedbackOf(c) ?? ''}
-            onchange={(e) => setNote(c, FEEDBACK_KEY, e.currentTarget.value)}
+            maxlength="2000"
+            onchange={(e) => setNote(c, FEEDBACK_KEY, e.currentTarget)}
           ></textarea>
           <span class="text-xs text-surface-600-400">{$_('page.exams.sheet.feedbackHint')}</span>
         </label>
