@@ -12,9 +12,9 @@
   } from '@fortawesome/free-solid-svg-icons';
   import { onMount, type Snippet } from 'svelte';
   import { _ } from 'svelte-i18n';
-  import { Tabs, Toast } from '@skeletonlabs/skeleton-svelte';
+  import { Tabs } from '@skeletonlabs/skeleton-svelte';
   import { supabaseClient } from '$lib/supabase';
-  import { toaster } from '$lib/toast';
+  import AppToaster from '$lib/components/AppToaster.svelte';
   import LanguageSwitcher from '$lib/components/LanguageSwitcher.svelte';
   import type { LayoutData } from './$types';
 
@@ -167,4 +167,4 @@
   </main>
 </div>
 
-<Toast.Group {toaster} />
+<AppToaster />
