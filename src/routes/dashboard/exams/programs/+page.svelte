@@ -90,7 +90,7 @@
                   <div class="font-semibold">{g.grade}</div>
                   <div class="text-xs text-surface-600-400">{$_('page.exams.programs.none')}</div>
                 </div>
-                {#if data.canWrite}
+                {#if data.canManageExams}
                   <button
                     class="btn btn-sm preset-tonal-primary flex-none"
                     onclick={() => create(g)}

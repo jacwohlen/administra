@@ -276,7 +276,9 @@
           </select>
         </div>
         {#if gradeLocked}
-          <span class="text-xs text-surface-600-400">{$_('page.exams.candidate.gradeLocked')}</span>
+          <span class="block text-xs text-surface-600-400"
+            >{$_('page.exams.candidate.gradeLocked')}</span
+          >
         {/if}
       </label>
 

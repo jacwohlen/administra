@@ -22,7 +22,8 @@
     this={heading ? 'h3' : 'span'}
     class="block flex-1 min-w-0 text-base! font-semibold mb-0!"
   >
-    {title}{#if subtitle}<span class="font-normal text-surface-600-400">{` · ${subtitle}`}</span
+    {title}{#if subtitle}<span class="font-normal text-surface-600-400"
+        >{` ·\u00a0${subtitle}`}</span
       >{/if}
   </svelte:element>
   {#if children}

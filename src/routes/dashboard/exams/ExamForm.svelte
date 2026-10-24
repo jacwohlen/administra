@@ -116,7 +116,7 @@
             </option>
           {/each}
         </select>
-        <span class="text-xs text-surface-600-400">{$_('page.exams.form.eventHint')}</span>
+        <span class="block text-xs text-surface-600-400">{$_('page.exams.form.eventHint')}</span>
       </label>
     {/if}
 
@@ -144,14 +144,15 @@
         {/each}
       </select>
       {#if sectionLocked}
-        <span class="text-xs text-surface-600-400">{$_('page.exams.form.sectionLocked')}</span>
+        <span class="block text-xs text-surface-600-400">{$_('page.exams.form.sectionLocked')}</span
+        >
       {/if}
     </label>
 
     <label class="label">
       <span>{$_('page.exams.form.deadline')}</span>
       <input class="input" type="date" bind:value={form.registration_deadline} />
-      <span class="text-xs text-surface-600-400">{$_('page.exams.form.deadlineHint')}</span>
+      <span class="block text-xs text-surface-600-400">{$_('page.exams.form.deadlineHint')}</span>
     </label>
 
     <label class="label">
@@ -167,7 +168,7 @@
         bind:value={form.notes}
         placeholder={$_('page.exams.form.notesPlaceholder')}
       ></textarea>
-      <span class="text-xs text-surface-600-400">{$_('page.exams.form.notesHint')}</span>
+      <span class="block text-xs text-surface-600-400">{$_('page.exams.form.notesHint')}</span>
     </label>
   </div>
 

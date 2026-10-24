@@ -3,9 +3,7 @@
   import { _ } from 'svelte-i18n';
   import Fa from 'svelte-fa';
   import {
-    faBookOpen,
     faCalendarDays,
-    faChevronRight,
     faEdit,
     faLocationDot,
     faSpinner,
@@ -16,14 +14,14 @@
   import { toaster } from '$lib/toast';
   import BeltStrip from '$lib/components/BeltStrip.svelte';
   import ExamStateChip from '$lib/components/exams/ExamStateChip.svelte';
-  import { candidateState, registrableGrades, suggestedGrade } from '$lib/examUtils';
+  import { registrableGrades, suggestedGrade, type CandidateState } from '$lib/examUtils';
   import { gradesBySection } from '$lib/gradeUtils';
   import type { DirectoryMember, Exam, GradeDefinition, MemberCurrentGrade } from '$lib/models';
   import type { MemberExams, MemberRegistration } from './memberExams';
 
   // Q-Prüfung on the member's own profile: register for the next exam day
-  // (replacing the sheet in the dojo), see the call-up, read the result sheet
-  // and the program to prepare with.
+  // (replacing the sheet in the dojo) and see the call-up. Sheets, points and
+  // programs stay with the club; a passed exam shows up as the new grade.
   let {
     member,
     exams,
@@ -42,9 +40,7 @@
   let formFor = $state<number | null>(null);
   let form = $state({ grade: '', belt: null as number | null, note: '' });
   let busy = $state(false);
-  let confirmWithdraw = $state<MemberRegistration | null>(null);
-
-  let results = $derived(exams.registrations.filter((r) => r.result));
+  let confirmWithdraw = $state<{ reg: MemberRegistration; exam: Exam } | null>(null);
 
   function currentGrade(section: string): string | undefined {
     return currentGrades.find((g) => g.section === section)?.grade;
@@ -58,40 +54,25 @@
     return gradeDefinitions.find((g) => g.section === section && g.grade === grade);
   }
 
-  function programFor(section: string, grade: string) {
-    return exams.programs.find((p) => p.section === section && p.grade === grade);
-  }
-
   /** The registration for an exam day, also a withdrawn one (only trainers revive those). */
   function registrationFor(exam: Exam): MemberRegistration | undefined {
     return exams.registrations.find((r) => r.exam_id === exam.id);
   }
 
   function hasProgram(section: string) {
-    return (grade: string) => !!programFor(section, grade);
+    return (grade: string) =>
+      exams.programGrades.some((p) => p.section === section && p.grade === grade);
+  }
+
+  /** Where the registration stands; the result is not shown here. */
+  function stateOf(reg: MemberRegistration): CandidateState {
+    if (reg.status === 'withdrawn') return 'withdrawn';
+    return reg.started ? 'grading' : reg.status;
   }
 
   function isOpen(exam: Exam): boolean {
     return (exam.registration_deadline ?? exam.date) >= today && exam.date >= today;
   }
-
-  /**
-   * The program for the next belt, to prepare with even before an exam is
-   * announced: the first of the member's sections that has one.
-   */
-  let nextProgram = $derived.by(() => {
-    const sections = [...new Set([...currentGrades.map((g) => g.section), ...member.sections])];
-    for (const section of sections) {
-      const next = suggestedGrade(
-        ladders.get(section) ?? [],
-        currentGrade(section),
-        hasProgram(section)
-      );
-      const program = next ? programFor(section, next.grade) : undefined;
-      if (program) return program;
-    }
-    return undefined;
-  });
 
   function openForm(exam: Exam, reg?: MemberRegistration) {
     const suggested = suggestedGrade(
@@ -145,7 +126,7 @@
   }
 </script>
 
-{#if exams.upcoming.length > 0 || results.length > 0 || nextProgram}
+{#if exams.upcoming.length > 0}
   <section class="card border border-surface-200-800 p-4">
     <h3>{$_('page.club.exams.title')}</h3>
 
@@ -181,13 +162,12 @@
 
           {#if reg && formFor !== exam.id}
             {@const def = gradeDef(reg.section, reg.grade)}
-            {@const program = programFor(reg.section, reg.grade)}
             <!-- Outlined, not filled, so the neutral "registered" chip stays visible -->
             <div class="rounded-md border border-surface-200-800 bg-surface-50-950 p-3 space-y-2">
               <div class="flex items-center gap-2">
                 {#if def}<BeltStrip color={def.beltColor} color2={def.beltColor2} />{/if}
                 <span class="font-semibold">{reg.grade}</span>
-                <span class="ml-auto"><ExamStateChip state={candidateState(reg)} /></span>
+                <span class="ml-auto"><ExamStateChip state={stateOf(reg)} /></span>
               </div>
               <p class="text-sm">
                 {#if reg.status === 'withdrawn'}
@@ -205,13 +185,7 @@
               </p>
             </div>
             <div class="flex flex-wrap gap-2">
-              {#if program}
-                <a href="/club/programs/{program.id}" class="btn preset-tonal-primary text-sm">
-                  <Fa icon={faBookOpen} />
-                  <span>{$_('page.club.exams.program')}</span>
-                </a>
-              {/if}
-              {#if open && reg.status === 'registered' && !reg.started_at}
+              {#if open && reg.status === 'registered' && !reg.started}
                 <button
                   class="btn preset-tonal-surface text-sm"
                   onclick={() => openForm(exam, reg)}
@@ -220,10 +194,10 @@
                   <span>{$_('button.edit')}</span>
                 </button>
               {/if}
-              {#if reg.status !== 'withdrawn' && !reg.started_at && !reg.result}
+              {#if reg.status !== 'withdrawn' && !reg.started}
                 <button
                   class="btn preset-tonal-error text-sm"
-                  onclick={() => (confirmWithdraw = reg)}
+                  onclick={() => (confirmWithdraw = { reg, exam })}
                   disabled={busy}
                 >
                   {$_('page.club.exams.withdraw')}
@@ -293,58 +267,13 @@
             <p class="text-sm text-surface-600-400">{$_('page.club.exams.askTrainer')}</p>
           {/if}
         </div>
-      {:else}
-        <p class="text-surface-600-400 pb-3">{$_('page.club.exams.noneAnnounced')}</p>
       {/each}
     </div>
-
-    {#if nextProgram && exams.upcoming.length === 0}
-      <a href="/club/programs/{nextProgram.id}" class="btn preset-tonal-primary text-sm">
-        <Fa icon={faBookOpen} />
-        <span>
-          {$_('page.club.exams.nextProgram', {
-            values: { grade: nextProgram.grade, title: nextProgram.title }
-          })}
-        </span>
-      </a>
-    {/if}
-
-    {#if results.length > 0}
-      <p class="text-sm font-medium text-surface-600-400 mt-4 mb-1.5">
-        {$_('page.club.exams.results')}
-      </p>
-      <ul class="divide-y divide-surface-300-700">
-        {#each results as r (r.id)}
-          {@const def = gradeDef(r.section, r.grade)}
-          <li>
-            <a
-              href="/club/exams/{r.id}"
-              class="flex items-center gap-2 py-2 px-2 -mx-2 rounded text-sm hover:bg-surface-100-900 transition-colors"
-            >
-              {#if def}<BeltStrip color={def.beltColor} color2={def.beltColor2} size="sm" />{/if}
-              <span class="font-semibold">{r.grade}</span>
-              <span class="text-surface-600-400 truncate">
-                {r.exam ? dayjs(r.exam.date).format('DD.MM.YYYY') : ''}
-              </span>
-              <span class="ml-auto inline-flex items-center gap-1.5 flex-none">
-                {#if r.total_points !== null}
-                  <span class="text-xs tabular-nums text-surface-600-400">
-                    {r.total_points}/{r.max_points}
-                  </span>
-                {/if}
-                <ExamStateChip state={candidateState(r)} />
-              </span>
-              <Fa icon={faChevronRight} class="text-surface-400-600 flex-none" />
-            </a>
-          </li>
-        {/each}
-      </ul>
-    {/if}
   </section>
 {/if}
 
 {#if confirmWithdraw}
-  {@const reg = confirmWithdraw}
+  {@const { reg, exam } = confirmWithdraw}
   <!-- svelte-ignore a11y_no_static_element_interactions -->
   <div
     class="modal-overlay"
@@ -358,7 +287,7 @@
       <h3>{$_('dialog.confirm.title')}</h3>
       <p class="mb-4">
         {$_('page.club.exams.withdrawConfirm', {
-          values: { name: member.firstname, title: reg.exam?.title ?? '' }
+          values: { name: member.firstname, title: exam.title }
         })}
       </p>
       <div class="flex justify-end gap-2">

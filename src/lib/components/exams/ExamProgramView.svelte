@@ -37,7 +37,7 @@
             <div class="flex-1 min-w-0">
               <span class="font-medium">{item.name}</span>
               {#if item.description}
-                <span class="text-surface-600-400">{` · ${item.description}`}</span>
+                <span class="text-surface-600-400">{` ·\u00a0${item.description}`}</span>
               {/if}
             </div>
             <span

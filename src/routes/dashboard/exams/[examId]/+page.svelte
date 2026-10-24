@@ -33,6 +33,9 @@
   let { data }: { data: PageData } = $props();
 
   let me = $derived(data.session.user.id);
+  // Candidates are kept by trainers and the TK, sheets by examiners
+  let canManageCandidates = $derived(data.canWrite || data.canManageExams);
+  let canSelect = $derived(canManageCandidates || data.canGrade);
   let filter = $state<'all' | 'mine'>('all');
   let selected = $state<number[]>([]);
   let dialog = $state<{ candidate: ExamCandidate | null } | null>(null);
@@ -134,7 +137,7 @@
     >
       <Fa icon={faPrint} />
     </a>
-    {#if data.canWrite}
+    {#if data.canManageExams}
       <a
         href="/dashboard/exams/{data.exam.id}/edit"
         class="btn preset-tonal-surface"
@@ -203,7 +206,7 @@
 
 <div class="flex justify-between items-center gap-2 mb-3">
   <h3 class="mb-0!">{$_('page.exams.stats.candidates')}</h3>
-  {#if data.canWrite}
+  {#if canManageCandidates}
     <button
       class="btn preset-filled-primary-500 flex-shrink-0"
       onclick={() => (dialog = { candidate: null })}
@@ -237,8 +240,14 @@
   </button>
 </div>
 
-{#if data.canWrite && active.length > 0}
-  <p class="text-xs text-surface-600-400 mb-3">{$_('page.exams.selectHint')}</p>
+{#if canSelect && active.length > 0}
+  <p class="text-xs text-surface-600-400 mb-3">
+    {!data.canGrade
+      ? $_('page.exams.selectHintAssign')
+      : !canManageCandidates
+        ? $_('page.exams.selectHintGrade')
+        : $_('page.exams.selectHint')}
+  </p>
 {/if}
 
 {#if shown.length === 0}
@@ -265,7 +274,7 @@
             {@const def = gradeDef(c.grade)}
             {@const prog = programFor(c.grade)}
             <li class="flex items-center gap-3 px-3 py-2.5">
-              {#if data.canWrite}
+              {#if canSelect}
                 <!-- 44 px tap area around the box, so a near miss selects instead of
                      opening the dialog; the negative margin keeps the row as it was -->
                 <label class="flex flex-none -m-3 p-3 cursor-pointer">
@@ -280,11 +289,14 @@
                   />
                 </label>
               {/if}
+              <!-- Trainers and the TK open the registration; examiners select the
+                   candidate for grading; read-only accounts just read -->
               <button
                 type="button"
-                class="flex-1 min-w-0 text-left"
-                onclick={() => (data.canWrite ? (dialog = { candidate: c }) : null)}
-                disabled={!data.canWrite}
+                class="flex-1 min-w-0 text-left disabled:opacity-100 disabled:cursor-default"
+                onclick={() =>
+                  canManageCandidates ? (dialog = { candidate: c }) : canSelect && toggle(c.id)}
+                disabled={!canSelect}
               >
                 <span class="block font-semibold truncate leading-tight">
                   {c.member?.firstname}
@@ -376,7 +388,7 @@
             {c.member?.firstname}
             {c.member?.lastname} · {c.grade}
           </span>
-          {#if data.canWrite}
+          {#if canManageCandidates}
             <button
               class="btn btn-sm preset-tonal-surface flex-none"
               title={$_('button.edit')}
@@ -406,20 +418,24 @@
       <span class="flex-1 min-w-0 truncate text-sm tabular-nums">
         {$_('page.exams.selectedShort', { values: { count: selected.length } })}
       </span>
-      <button
-        class="btn preset-tonal-primary flex-none"
-        title={$_('page.exams.assignGroup')}
-        aria-label={$_('page.exams.assignGroup')}
-        onclick={() => (assignOpen = true)}
-        disabled={busy}
-      >
-        <Fa icon={faPeopleGroup} />
-        <span class="hidden sm:inline">{$_('page.exams.assignGroup')}</span>
-      </button>
-      <button class="btn preset-filled-primary-500 flex-none" onclick={grade} disabled={busy}>
-        <Fa icon={faClipboardCheck} />
-        <span>{$_('page.exams.grade')}</span>
-      </button>
+      {#if canManageCandidates}
+        <button
+          class="btn preset-tonal-primary flex-none"
+          title={$_('page.exams.assignGroup')}
+          aria-label={$_('page.exams.assignGroup')}
+          onclick={() => (assignOpen = true)}
+          disabled={busy}
+        >
+          <Fa icon={faPeopleGroup} />
+          <span class="hidden sm:inline">{$_('page.exams.assignGroup')}</span>
+        </button>
+      {/if}
+      {#if data.canGrade}
+        <button class="btn preset-filled-primary-500 flex-none" onclick={grade} disabled={busy}>
+          <Fa icon={faClipboardCheck} />
+          <span>{$_('page.exams.grade')}</span>
+        </button>
+      {/if}
     </div>
   </div>
 {/if}

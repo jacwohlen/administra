@@ -35,7 +35,7 @@
 
 <div class="page-header gap-2">
   <h1 class="whitespace-nowrap">{$_('page.exams.title')}</h1>
-  {#if data.canWrite}
+  {#if data.canManageExams}
     <a href="/dashboard/exams/new" class="btn preset-filled-primary-500 flex-shrink-0">
       <Fa icon={faPlus} />
       <span>{$_('page.exams.create')}</span>

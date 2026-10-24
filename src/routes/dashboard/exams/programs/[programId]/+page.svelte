@@ -25,7 +25,7 @@
     <Fa icon={faArrowLeft} />
   </a>
   <h1 class="flex-1 min-w-0 truncate">{data.program.grade} · {data.program.title}</h1>
-  {#if data.canWrite && !editing}
+  {#if data.canManageExams && !editing}
     <button
       class="btn preset-tonal-surface flex-shrink-0"
       title={$_('button.edit')}

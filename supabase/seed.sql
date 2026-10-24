@@ -14380,6 +14380,50 @@ CROSS JOIN (VALUES
 WHERE e.title = 'Q-Prüfung Frühling';
 
 --
+-- Examiner (Q-Prüfungen): a read-only viewer who grades on the sheet
+-- (user_profiles.exam_role, see docs/Q_EXAMS.md)
+--
+INSERT INTO auth.users (
+  instance_id, id, aud, role, email, encrypted_password,
+  email_confirmed_at, created_at, updated_at,
+  confirmation_token, recovery_token,
+  email_change, email_change_token_new, email_change_token_current,
+  phone, phone_change, phone_change_token,
+  reauthentication_token,
+  raw_app_meta_data, raw_user_meta_data,
+  is_sso_user, is_anonymous
+) VALUES (
+  '00000000-0000-0000-0000-000000000000',
+  'c3d4e5f6-a7b8-9012-cdef-123456789012',
+  'authenticated', 'authenticated',
+  'examiner@example.com',
+  crypt('testpass', gen_salt('bf')),
+  now(), now(), now(),
+  '', '',
+  '', '', '',
+  NULL, '', '',
+  '',
+  '{"provider":"email","providers":["email"]}',
+  '{"full_name":"Erika Prüfer"}',
+  false, false
+);
+
+INSERT INTO auth.identities (
+  id, user_id, provider_id, identity_data, provider, last_sign_in_at, created_at, updated_at
+) VALUES (
+  'c3d4e5f6-a7b8-9012-cdef-123456789012',
+  'c3d4e5f6-a7b8-9012-cdef-123456789012',
+  'examiner@example.com',
+  jsonb_build_object('sub', 'c3d4e5f6-a7b8-9012-cdef-123456789012', 'email', 'examiner@example.com'),
+  'email',
+  now(), now(), now()
+);
+
+UPDATE public.user_profiles
+SET status = 'approved', role = 'viewer', exam_role = 'examiner', approved_at = now()
+WHERE user_id = 'c3d4e5f6-a7b8-9012-cdef-123456789012';
+
+--
 -- Compute badges for all seeded members
 --
 RESET app.skip_badge_refresh;

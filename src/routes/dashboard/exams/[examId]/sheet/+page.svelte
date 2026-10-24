@@ -113,7 +113,7 @@
   }
 
   function readonly(c: ExamCandidate): boolean {
-    return !data.canWrite || !!c.result || c.status === 'withdrawn';
+    return !data.canGrade || !!c.result || c.status === 'withdrawn';
   }
 
   function gradeDef(grade: string) {
@@ -362,9 +362,12 @@
           <span class="font-semibold truncate">{c.member?.firstname} {c.member?.lastname}</span>
           {#if c.result || state === 'withdrawn'}<ExamStateChip {state} />{/if}
         </div>
-        <p class="flex items-center gap-1.5 text-xs text-surface-600-400 min-w-0">
+        <p
+          class="flex items-center gap-1.5 text-xs text-surface-600-400 min-w-0"
+          title={programTitle(c)}
+        >
           {#if def}<BeltStrip color={def.beltColor} color2={def.beltColor2} size="sm" />{/if}
-          <span class="truncate">{[c.grade, programTitle(c)].filter(Boolean).join(' · ')}</span>
+          <span class="truncate">{c.grade}</span>
         </p>
         <p class="meta-item text-xs text-surface-600-400 min-w-0">
           <Fa icon={faUserCheck} size="xs" class="flex-none" />
@@ -406,10 +409,7 @@
 {#if joinable.length > 0}
   <!-- Optional (the first score signs the sheet anyway), hence tonal -->
   <div class="mb-3">
-    <button
-      class="btn preset-tonal-primary w-full sm:w-auto"
-      onclick={() => joinAsExaminer(joinable)}
-    >
+    <button class="btn preset-tonal-primary" onclick={() => joinAsExaminer(joinable)}>
       <Fa icon={faUserPlus} />
       <span>{$_('page.exams.sheet.join')}</span>
     </button>
@@ -480,10 +480,10 @@
                   <span class="w-4 flex-none text-xs text-surface-500 tabular-nums text-right"
                     >{i + 1}</span
                   >
-                  <div class="flex-1 min-w-0">
+                  <div class="flex-1 min-w-0 leading-snug">
                     <span class="font-semibold">{item.name}</span>
                     {#if item.description}
-                      <span class="text-sm text-surface-600-400">· {item.description}</span>
+                      <span class="text-sm text-surface-600-400">·&nbsp;{item.description}</span>
                     {/if}
                   </div>
                   {#if writable || hasNote}
@@ -493,7 +493,7 @@
                       type="button"
                       class="group btn-icon size-11 p-0 -my-2.5 -mr-1 flex-none self-start {hasNote
                         ? 'text-warning-800-200'
-                        : 'text-surface-400-600'}"
+                        : 'text-surface-500'}"
                       title={$_('page.exams.sheet.note')}
                       aria-label={$_('page.exams.sheet.note')}
                       aria-expanded={!!openNotes[key]}
@@ -651,11 +651,13 @@
             maxlength="2000"
             onchange={(e) => setNote(c, FEEDBACK_KEY, e.currentTarget)}
           ></textarea>
-          <span class="text-xs text-surface-600-400">{$_('page.exams.sheet.feedbackHint')}</span>
+          <span class="block text-xs text-surface-600-400">
+            {$_('page.exams.sheet.feedbackHint')}
+          </span>
         </label>
       {/if}
 
-      {#if data.canWrite && c.status !== 'withdrawn'}
+      {#if data.canGrade && c.status !== 'withdrawn'}
         {#if c.result}
           <button
             class="btn preset-tonal-surface"

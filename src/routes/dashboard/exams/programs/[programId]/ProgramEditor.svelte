@@ -123,13 +123,15 @@
         <input class="input" type="number" min="0" {max} bind:value={minPoints} />
         <button
           type="button"
-          class="btn preset-tonal-surface whitespace-nowrap"
+          class="btn preset-tonal-primary whitespace-nowrap"
+          title={$_('page.exams.programs.useDefaultMin')}
+          aria-label={$_('page.exams.programs.useDefaultMin')}
           onclick={() => (minPoints = defaultMinPoints(max))}
         >
           75 % = {defaultMinPoints(max)}
         </button>
       </div>
-      <span class="text-xs text-surface-600-400">
+      <span class="block text-xs text-surface-600-400">
         {$_('page.exams.programs.maxPoints', { values: { max } })}
       </span>
     </label>
