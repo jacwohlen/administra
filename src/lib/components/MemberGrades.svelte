@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { modalDialog } from '$lib/modalDialog';
   import type { GradeDefinition, MemberCurrentGrade, MemberGrade } from '$lib/models';
   import { gradesBySection } from '$lib/gradeUtils';
   import { supabaseClient } from '$lib/supabase';
@@ -185,7 +186,7 @@
     }}
   >
     <!-- svelte-ignore a11y_no_static_element_interactions -->
-    <div class="card modal-dialog" onclick={(e) => e.stopPropagation()}>
+    <div use:modalDialog class="card modal-dialog" onclick={(e) => e.stopPropagation()}>
       <h3>{$_('grades.addGrading')}</h3>
       <form class="space-y-4" onsubmit={(e) => e.preventDefault()}>
         <label class="label">
@@ -244,7 +245,7 @@
     }}
   >
     <!-- svelte-ignore a11y_no_static_element_interactions -->
-    <div class="card modal-dialog" onclick={(e) => e.stopPropagation()}>
+    <div use:modalDialog class="card modal-dialog" onclick={(e) => e.stopPropagation()}>
       <h3>{$_('dialog.confirm.title')}</h3>
       <p class="mb-4">{$_('grades.deleteConfirm')}</p>
       <div class="flex justify-end gap-2">

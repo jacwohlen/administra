@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { modalDialog } from '$lib/modalDialog';
   import type { PageData } from './$types';
   import { supabaseClient } from '$lib/supabase';
   import { _ } from 'svelte-i18n';
@@ -20,6 +21,7 @@
   import dayjs from 'dayjs';
   import { invalidateAll, goto } from '$app/navigation';
   import AddEventParticipant from './AddEventParticipant.svelte';
+  import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
   import {
     canTrackAttendance as _canTrackAttendance,
     isRegistrationOpen as _isRegistrationOpen,
@@ -36,6 +38,7 @@
   let loading = $state(false);
   let isDeleting = $state(false);
   let showDeleteConfirm = $state(false);
+  let confirmRemoveId = $state<string | null>(null);
 
   function formatEventDate(date: string) {
     return dayjs(date).format('DD.MM.YYYY');
@@ -117,6 +120,7 @@
 
       if (error) {
         console.error('Error removing participant:', error);
+        toaster.error({ title: $_('page.events.removeParticipantError') });
         return;
       }
 
@@ -140,6 +144,7 @@
 
         if (error) {
           console.error('Error marking attendance:', error);
+          toaster.error({ title: $_('page.events.attendanceError') });
           return;
         }
 
@@ -159,6 +164,7 @@
 
         if (error) {
           console.error('Error removing attendance:', error);
+          toaster.error({ title: $_('page.events.attendanceError') });
           return;
         }
 
@@ -191,6 +197,7 @@
 
       if (error) {
         console.error('Error toggling coach status:', error);
+        toaster.error({ title: $_('page.events.coachError') });
         return;
       }
 
@@ -302,7 +309,7 @@
       }}
     >
       <!-- svelte-ignore a11y_no_static_element_interactions -->
-      <div class="card modal-dialog" onclick={(e) => e.stopPropagation()}>
+      <div use:modalDialog class="card modal-dialog" onclick={(e) => e.stopPropagation()}>
         <h3>{$_('page.events.deleteConfirmTitle')}</h3>
         <p class="mb-4">{$_('page.events.deleteConfirmMessage')} "{data.event.title}"?</p>
         <div class="flex justify-end gap-2">
@@ -418,11 +425,11 @@
           {@const placement = getMedalByMemberId(participant.memberId)}
           {#if member}
             <div
-              class="flex items-center justify-between py-2 {hasAttended
+              class="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 py-2 {hasAttended
                 ? 'opacity-100'
                 : 'opacity-70'}"
             >
-              <div class="flex items-center gap-3">
+              <div class="flex items-center gap-3 min-w-0">
                 <div class="relative">
                   {#if member.img}
                     <img
@@ -437,7 +444,7 @@
                   {/if}
                   {#if log && log.isCoach}
                     <span class="badge-icon absolute -bottom-0 -right-0 z-10">
-                      <img src="/judo-icon.svg" alt="Coach" class="w-4 h-4" />
+                      <img src="/judo-icon.svg" alt={$_('page.events.coach')} class="w-4 h-4" />
                     </span>
                   {/if}
                 </div>
@@ -457,15 +464,16 @@
                     {/if}
                   </div>
                   <div class="text-sm text-surface-600-400">
-                    {$_('page.events.status.' + participant.attendanceStatus)}
                     {#if log}
-                      - {$_('page.events.attended_at')} {dayjs(log.attendedAt).format('HH:mm')}
+                      {$_('page.events.attended_at')} {dayjs(log.attendedAt).format('HH:mm')}
+                    {:else}
+                      {$_('page.events.status.' + participant.attendanceStatus)}
                     {/if}
                   </div>
                 </div>
               </div>
               {#if data.canWrite}
-                <div class="flex items-center gap-2">
+                <div class="flex items-center gap-2 ml-auto">
                   {#if canTrackAttendance()}
                     <!-- Placement: record a medal for this event, once the participant has attended -->
                     {#if hasAttended}
@@ -499,6 +507,9 @@
                         title={log && log.isCoach
                           ? $_('page.events.remove_coach')
                           : $_('page.events.make_coach')}
+                        aria-label={log && log.isCoach
+                          ? $_('page.events.remove_coach')
+                          : $_('page.events.make_coach')}
                       >
                         <Fa icon={faChalkboardTeacher} />
                       </button>
@@ -510,6 +521,9 @@
                         : 'preset-tonal-success'}"
                       onclick={() => markAttendance(participant.memberId, !hasAttended)}
                       disabled={loading}
+                      title={$_('page.events.mark_attended')}
+                      aria-label={$_('page.events.mark_attended')}
+                      aria-pressed={hasAttended}
                     >
                       <Fa icon={faCheck} />
                     </button>
@@ -517,8 +531,10 @@
                     <!-- Future event - show remove button -->
                     <button
                       class="btn preset-tonal-error"
-                      onclick={() => removeParticipant(participant.memberId)}
+                      onclick={() => (confirmRemoveId = participant.memberId)}
                       disabled={loading}
+                      title={$_('page.events.removeParticipant')}
+                      aria-label={$_('page.events.removeParticipant')}
                     >
                       <Fa icon={faTimes} />
                     </button>
@@ -532,3 +548,20 @@
     {/if}
   </div>
 </div>
+
+{#if confirmRemoveId}
+  {@const member = getMemberById(confirmRemoveId)}
+  <ConfirmDialog
+    title={$_('page.events.removeParticipant')}
+    message={$_('page.events.removeParticipantConfirm', {
+      values: { name: member ? `${member.lastname} ${member.firstname}` : '' }
+    })}
+    confirmLabel={$_('button.remove')}
+    oncancel={() => (confirmRemoveId = null)}
+    onconfirm={() => {
+      const memberId = confirmRemoveId!;
+      confirmRemoveId = null;
+      removeParticipant(memberId);
+    }}
+  />
+{/if}

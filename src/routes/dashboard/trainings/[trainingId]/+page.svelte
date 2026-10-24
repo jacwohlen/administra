@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { modalDialog } from '$lib/modalDialog';
   import type { PageData } from './$types';
   let { data }: { data: PageData } = $props();
   import LogList from './LogList.svelte';
@@ -160,7 +161,7 @@
     }}
   >
     <!-- svelte-ignore a11y_no_static_element_interactions -->
-    <div class="card modal-dialog" onclick={(e) => e.stopPropagation()}>
+    <div use:modalDialog class="card modal-dialog" onclick={(e) => e.stopPropagation()}>
       <h3>{$_('page.trainings.deleteConfirmTitle')}</h3>
       <p class="mb-4">{$_('page.trainings.deleteConfirmMessage')} "{data.title}"?</p>
       <div class="flex justify-end gap-2">

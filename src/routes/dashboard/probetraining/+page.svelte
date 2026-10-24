@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { modalDialog } from '$lib/modalDialog';
   import type { PageData } from './$types';
   import { untrack } from 'svelte';
   import { _ } from 'svelte-i18n';
@@ -993,7 +994,11 @@
     }}
   >
     <!-- svelte-ignore a11y_no_static_element_interactions -->
-    <div class="card modal-dialog modal-dialog-lg" onclick={(e) => e.stopPropagation()}>
+    <div
+      use:modalDialog
+      class="card modal-dialog modal-dialog-lg"
+      onclick={(e) => e.stopPropagation()}
+    >
       <AssignTrainingDialog
         member={selectedMember}
         trainings={data.trainings}
@@ -1020,7 +1025,7 @@
       if (e.key === 'Escape') mailRequest = null;
     }}
   >
-    <div class="card modal-dialog modal-dialog-lg">
+    <div use:modalDialog class="card modal-dialog modal-dialog-lg">
       <MailDialog
         member={mailRequest.member}
         kind={mailRequest.kind}

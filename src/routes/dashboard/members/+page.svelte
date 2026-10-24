@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { modalDialog } from '$lib/modalDialog';
   import type { PageData } from './$types';
   import Fa from 'svelte-fa';
   import { faGripLines, faPlus } from '@fortawesome/free-solid-svg-icons';
@@ -94,7 +95,11 @@
     }}
   >
     <!-- svelte-ignore a11y_no_static_element_interactions -->
-    <div class="card modal-dialog modal-dialog-lg" onclick={(e) => e.stopPropagation()}>
+    <div
+      use:modalDialog
+      class="card modal-dialog modal-dialog-lg"
+      onclick={(e) => e.stopPropagation()}
+    >
       <h3>{$_('page.members.addMember')}</h3>
       <MemberForm
         {isSubmitting}

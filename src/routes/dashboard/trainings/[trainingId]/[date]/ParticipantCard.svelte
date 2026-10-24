@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { modalDialog } from '$lib/modalDialog';
   import Fa from 'svelte-fa';
   import { faEllipsisVertical, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
   import Labels from './Labels.svelte';
@@ -128,7 +129,7 @@
         <span
           class="absolute -bottom-0 -right-0 z-10 bg-primary-600-400 rounded-full w-4 h-4 flex items-center justify-center"
         >
-          <img class="w-2.5" src="/judo-icon.svg" alt="main-trainer" />
+          <img class="w-2.5" src="/judo-icon.svg" alt={$_('page.stats.mainTrainer')} />
         </span>
       {:else if member.trainerRole === 'assistant'}
         <span
@@ -225,7 +226,7 @@
                   class="btn w-full text-left justify-start gap-2"
                   onclick={() => setTrainerRole('main_trainer')}
                 >
-                  <img class="w-4 flex-shrink-0" src="/judo-icon.svg" alt="judo-icon" />
+                  <img class="w-4 flex-shrink-0" src="/judo-icon.svg" alt="" />
                   {$_('components.ParticipantCard.SetAsMainTrainer')}
                 </button>
               </li>
@@ -263,7 +264,7 @@
         }}
       >
         <!-- svelte-ignore a11y_no_static_element_interactions -->
-        <div class="card modal-dialog" onclick={(e) => e.stopPropagation()}>
+        <div use:modalDialog class="card modal-dialog" onclick={(e) => e.stopPropagation()}>
           <h4>{$_('dialog.confirm.title')}</h4>
           <p class="mb-4">{$_('dialog.confirm.body')}</p>
           <div class="flex justify-end gap-2">

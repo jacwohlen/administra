@@ -7,10 +7,12 @@
   import { supabaseClient } from '$lib/supabase';
   import { toaster } from '$lib/toast';
   import { invalidateAll } from '$app/navigation';
+  import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 
   let { data }: { data: PageData } = $props();
   let busyId = $state<string | null>(null);
   let searchTerm = $state('');
+  let confirmDisable = $state<UserProfile | null>(null);
 
   const STATUS_ORDER: UserStatus[] = ['pending', 'approved', 'disabled'];
 
@@ -198,9 +200,9 @@
           </button>
         {:else if p.status === 'approved'}
           <button
-            class="btn preset-tonal-primary flex-shrink-0"
+            class="btn preset-tonal-error flex-shrink-0"
             disabled={busyId === p.user_id || isSelf(p.user_id)}
-            onclick={() => disable(p.user_id)}
+            onclick={() => (confirmDisable = p)}
             title={isSelf(p.user_id)
               ? $_('page.users.selfLocked')
               : $_('page.users.action.disable')}
@@ -223,3 +225,19 @@
     {/each}
   {/each}
 </ul>
+
+{#if confirmDisable}
+  <ConfirmDialog
+    title={$_('page.users.disableConfirm.title')}
+    message={$_('page.users.disableConfirm.message', {
+      values: { name: confirmDisable.full_name || confirmDisable.email }
+    })}
+    confirmLabel={$_('page.users.action.disable')}
+    oncancel={() => (confirmDisable = null)}
+    onconfirm={() => {
+      const userId = confirmDisable!.user_id;
+      confirmDisable = null;
+      disable(userId);
+    }}
+  />
+{/if}

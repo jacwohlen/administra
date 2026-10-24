@@ -4,6 +4,7 @@
   import Fa from 'svelte-fa';
   import { faDownload, faSpinner } from '@fortawesome/free-solid-svg-icons';
   import { _ } from 'svelte-i18n';
+  import { toaster } from '$lib/toast';
 
   let { year, yearmode }: { year: number | string; yearmode: 'YEAR' | 'ALL' } = $props();
 
@@ -20,12 +21,12 @@
 
       if (error) {
         console.error('Error fetching trainer data:', error);
-        alert($_('page.stats.downloadError'));
+        toaster.error({ title: $_('page.stats.downloadError') });
         return;
       }
 
       if (!data || data.length === 0) {
-        alert($_('page.stats.noTrainerData'));
+        toaster.info({ title: $_('page.stats.noTrainerData') });
         return;
       }
 
@@ -45,7 +46,7 @@
       window.URL.revokeObjectURL(url);
     } catch (err) {
       console.error('Download error:', err);
-      alert($_('page.stats.downloadError'));
+      toaster.error({ title: $_('page.stats.downloadError') });
     } finally {
       isDownloading = false;
     }

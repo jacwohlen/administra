@@ -49,13 +49,15 @@
         .single();
 
       if (insertError) {
-        error = insertError.message;
+        console.error('Error creating training:', insertError);
+        error = $_('page.trainings.createError');
         return;
       }
 
       await goto(`/dashboard/trainings/${data.id}`);
     } catch (e) {
-      error = e instanceof Error ? e.message : 'Unknown error occurred';
+      console.error('Error creating training:', e);
+      error = $_('page.trainings.createError');
     } finally {
       loading = false;
     }

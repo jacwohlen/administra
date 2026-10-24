@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { modalDialog } from '$lib/modalDialog';
   import { invalidate } from '$app/navigation';
   import { _ } from 'svelte-i18n';
   import Fa from 'svelte-fa';
@@ -286,7 +287,7 @@
     }}
   >
     <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
-    <div class="card modal-dialog" onclick={(e) => e.stopPropagation()}>
+    <div use:modalDialog class="card modal-dialog" onclick={(e) => e.stopPropagation()}>
       <h3>{$_('dialog.confirm.title')}</h3>
       <p class="mb-4">
         {$_('page.club.exams.withdrawConfirm', {

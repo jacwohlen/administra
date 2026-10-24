@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { modalDialog } from '$lib/modalDialog';
   import { goto, invalidate } from '$app/navigation';
   import { _ } from 'svelte-i18n';
   import Fa from 'svelte-fa';
@@ -525,7 +526,7 @@
     }}
   >
     <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
-    <div class="card modal-dialog" onclick={(e) => e.stopPropagation()}>
+    <div use:modalDialog class="card modal-dialog" onclick={(e) => e.stopPropagation()}>
       <h3>{$_('page.exams.assignGroup')}</h3>
       <p class="text-sm text-surface-600-400 mb-3">
         {$_('page.exams.selected', { values: { count: selected.length } })}

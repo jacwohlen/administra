@@ -45,7 +45,7 @@
 
 {#await getLogs() then logs}
   {#if logs.length === 0}
-    <p class="text-center text-surface-600-400 py-4">{$_('page.trainings.noLessonPlanMessage')}</p>
+    <p class="empty-state">{$_('page.trainings.noLogsMessage')}</p>
   {:else}
     <div class="flex flex-col gap-1">
       {#each logs as i (i.date)}
@@ -66,7 +66,11 @@
 
             {#if i.totalTrainerCount > 0}
               <span class="chip preset-tonal-success text-xs">
-                <img class="inline-block w-3" src="/judo-icon.svg" alt="trainer" />
+                <img
+                  class="inline-block w-3"
+                  src="/judo-icon.svg"
+                  alt={$_('page.users.role.trainer')}
+                />
                 <span class="ml-0.5">{i.totalTrainerCount}</span>
               </span>
             {:else}

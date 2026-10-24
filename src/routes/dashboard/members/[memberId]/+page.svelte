@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { modalDialog } from '$lib/modalDialog';
   import type { PageData } from './$types';
   import { _ } from 'svelte-i18n';
   import MemberProfile from '$lib/components/memberProfile/MemberProfile.svelte';
@@ -327,7 +328,11 @@
       }}
     >
       <!-- svelte-ignore a11y_no_static_element_interactions -->
-      <div class="card modal-dialog modal-dialog-lg" onclick={(e) => e.stopPropagation()}>
+      <div
+        use:modalDialog
+        class="card modal-dialog modal-dialog-lg"
+        onclick={(e) => e.stopPropagation()}
+      >
         <h3>{$_('dialog.editMember.title')}</h3>
         <MemberForm
           isEditing={true}
@@ -357,7 +362,7 @@
       }}
     >
       <!-- svelte-ignore a11y_no_static_element_interactions -->
-      <div class="card modal-dialog" onclick={(e) => e.stopPropagation()}>
+      <div use:modalDialog class="card modal-dialog" onclick={(e) => e.stopPropagation()}>
         <h3>{$_('page.members.deleteConfirmTitle')}</h3>
         <p class="mb-4">
           {$_('page.members.deleteConfirmMessage')}

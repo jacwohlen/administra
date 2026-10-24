@@ -47,13 +47,15 @@
         .single();
 
       if (insertError) {
-        error = insertError.message;
+        console.error('Error creating event:', insertError);
+        error = $_('page.events.createError');
         return;
       }
 
       await goto(`/dashboard/events/${data.id}`);
     } catch (e) {
-      error = e instanceof Error ? e.message : 'Unknown error occurred';
+      console.error('Error creating event:', e);
+      error = $_('page.events.createError');
     } finally {
       loading = false;
     }

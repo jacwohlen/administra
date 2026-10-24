@@ -271,7 +271,7 @@
     </span>
     {#if mainTrainers.length > 0}
       <span class="chip bg-surface-100-900 text-surface-900-50">
-        <img class="inline-block w-3.5" src="/judo-icon.svg" alt="trainer" />
+        <img class="inline-block w-3.5" src="/judo-icon.svg" alt={$_('page.stats.mainTrainer')} />
         <span>{mainTrainers.length}</span>
       </span>
     {/if}
