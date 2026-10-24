@@ -95,7 +95,11 @@ every phone.
   then show after _Aktualisieren_. After a reconnect, and when a phone comes
   back from standby, the sheet reloads once to catch up.
 - Realtime applies row level security per subscriber, so members receive
-  nothing. Deletes, which Postgres cannot check, carry only the primary key.
+  no content (checked on a preview branch with a member account subscribing
+  on its own): at most an empty notice that a score row was added, and for
+  deletes, which Postgres cannot check, the primary key (candidate id, item
+  key, examiner account id), never points, notes, feedback or names. The app
+  itself subscribes only on the staff pages.
 
 ## Data and access
 
