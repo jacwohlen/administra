@@ -1,8 +1,10 @@
 # Administra brand
 
 The design of Administra, extracted from the app so it can be reused outside it
-(e-mails, slides, print, a landing page, a sister app). Open
-[`index.html`](index.html) in a browser for the visual style sheet.
+(e-mails, slides, print, a landing page, a sister app). The visual style
+sheet [`index.html`](index.html) is served by the app at
+[admin.jacwohlen.ch/brand/](https://admin.jacwohlen.ch/brand/) (Dev:
+[main.admin.jacwohlen.ch/brand/](https://main.admin.jacwohlen.ch/brand/)).
 
 | File                                                   | What                                                       |
 | ------------------------------------------------------ | ---------------------------------------------------------- |
@@ -14,7 +16,7 @@ The design of Administra, extracted from the app so it can be reused outside it
 | [`index.html`](index.html)                             | Visual style sheet: logo, palette, type, components, belts |
 
 **Source of truth is the app.** The app does not import anything from
-`/brand`; it uses Skeleton's built-in **nosh** theme (`data-theme="nosh"` in
+`static/brand`; it uses Skeleton's built-in **nosh** theme (`data-theme="nosh"` in
 `src/app.html`, imported in `src/app.css`) plus the overrides in `src/app.css`.
 If the theme or those overrides change, regenerate these files.
 
