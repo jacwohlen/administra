@@ -865,7 +865,8 @@
         "saveError": "Fehler beim Speichern – bitte nochmals versuchen",
         "changedMeanwhile": "Das Blatt wurde inzwischen geändert – bitte prüfen und nochmals versuchen.",
         "leave": "Nicht mehr prüfen",
-        "leaveError": "Fehler beim Abgeben der Kandidaten"
+        "leaveError": "Fehler beim Abgeben der Kandidaten",
+        "candidatesLabel": "Kandidaten auf diesem Blatt"
       },
       "print": {
         "title": "Anmeldeliste",

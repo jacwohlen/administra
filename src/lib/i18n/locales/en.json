@@ -865,7 +865,8 @@
         "saveError": "Error saving – please try again",
         "changedMeanwhile": "The sheet was changed meanwhile – please check and try again.",
         "leave": "Stop examining",
-        "leaveError": "Error handing the candidates back"
+        "leaveError": "Error handing the candidates back",
+        "candidatesLabel": "Candidates on this sheet"
       },
       "print": {
         "title": "Registration list",

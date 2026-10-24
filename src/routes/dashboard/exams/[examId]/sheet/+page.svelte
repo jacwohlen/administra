@@ -1,5 +1,6 @@
 <script lang="ts">
   import { tick } from 'svelte';
+  import { fly } from 'svelte/transition';
   import { beforeNavigate, invalidate } from '$app/navigation';
   import { _ } from 'svelte-i18n';
   import Fa from 'svelte-fa';
@@ -54,6 +55,69 @@
   // The sheet on screen follows a candidate, not a position: a reload can split groups
   let selectedId = $state<number | null>(null);
   let group = $derived(groups.find((g) => g.some((c) => c.id === selectedId)) ?? groups[0] ?? []);
+
+  // Several sheets (different grades): swipe the candidate cards, tap a dot
+  // or a button above to switch. Each sheet keeps its own scroll position,
+  // so an examiner alternating between candidates lands on the same item.
+  let groupIndex = $derived(groups.indexOf(group));
+  let stickyEl = $state<HTMLElement>();
+  let sheetStart = $state<HTMLElement>();
+  let slideFrom = $state(0);
+  let dragX = $state(0);
+  let swipe: { x: number; y: number; axis: 'x' | 'y' | null } | null = null;
+  const scrollTops = new Map<number, number>();
+  const SWIPE_DISTANCE = 60;
+
+  async function showGroup(index: number) {
+    const target = groups[index];
+    if (!target || target === group) return;
+    const scroller = stickyEl?.closest('main');
+    if (scroller && group[0]) scrollTops.set(group[0].id, scroller.scrollTop);
+    slideFrom = index > groupIndex ? 1 : -1;
+    selectedId = target[0].id;
+    await tick();
+    if (!scroller || !sheetStart) return;
+    // Back where this sheet was left; a sheet seen for the first time starts
+    // at its first item (or stays put when the page is not scrolled that far)
+    const top =
+      scroller.scrollTop +
+      sheetStart.getBoundingClientRect().top -
+      scroller.getBoundingClientRect().top;
+    scroller.scrollTop = scrollTops.get(target[0].id) ?? Math.min(scroller.scrollTop, top);
+  }
+
+  function swipeStart(e: TouchEvent) {
+    if (groups.length < 2 || e.touches.length !== 1) return;
+    swipe = { x: e.touches[0].clientX, y: e.touches[0].clientY, axis: null };
+  }
+
+  function swipeMove(e: TouchEvent) {
+    if (!swipe) return;
+    const dx = e.touches[0].clientX - swipe.x;
+    const dy = e.touches[0].clientY - swipe.y;
+    if (!swipe.axis && Math.hypot(dx, dy) > 10) {
+      swipe.axis = Math.abs(dx) > Math.abs(dy) ? 'x' : 'y';
+    }
+    if (swipe.axis !== 'x') return;
+    // Resists at the first and last sheet
+    const end = (dx > 0 && groupIndex === 0) || (dx < 0 && groupIndex === groups.length - 1);
+    dragX = end ? dx / 4 : dx;
+  }
+
+  function swipeEnd() {
+    if (!swipe) return;
+    const dx = swipe.axis === 'x' ? dragX : 0;
+    swipe = null;
+    dragX = 0;
+    if (Math.abs(dx) > SWIPE_DISTANCE) showGroup(groupIndex + (dx < 0 ? 1 : -1));
+  }
+
+  const reducedMotion =
+    typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  function names(g: ExamCandidate[]): string {
+    return `${g[0].grade} · ${g.map((c) => c.member?.firstname).join(', ')}`;
+  }
 
   let collapsed = $state<Record<string, boolean>>({});
   let openNotes = $state<Record<string, boolean>>({});
@@ -379,71 +443,112 @@
           ? 'preset-filled-primary-500'
           : 'preset-tonal-surface'}"
         aria-pressed={g === group}
-        onclick={() => (selectedId = g[0].id)}
+        onclick={() => showGroup(groups.indexOf(g))}
       >
-        {g[0].grade} · {g.map((c) => c.member?.firstname).join(', ')}
+        {names(g)}
       </button>
     {/each}
   </div>
 {/if}
 
-<!-- Candidates with their running totals, kept in view while scrolling -->
-<div class="sticky top-0 z-10 bg-surface-50-950 pt-1 pb-3">
-  <div class="grid gap-2 {pair ? 'grid-cols-2' : 'grid-cols-1'}">
-    {#each sheets as { c, evaluation } (c.id)}
-      {@const def = gradeDef(c.grade)}
-      {@const state = candidateState(c)}
-      <div class="card border border-surface-200-800 p-3 min-w-0">
-        <!-- In a pair the chip takes its own line, so the name keeps its room -->
-        <div class="flex items-center justify-between gap-x-2 gap-y-0.5 {pair ? 'flex-wrap' : ''}">
-          <span class="font-semibold truncate max-w-full">
-            {c.member?.firstname}
-            {c.member?.lastname}
-          </span>
-          {#if c.result || state === 'withdrawn'}<ExamStateChip {state} />{/if}
-        </div>
-        <p
-          class="flex items-center gap-1.5 text-xs text-surface-600-400 min-w-0"
-          title={programTitle(c)}
-        >
-          {#if def}<BeltStrip color={def.beltColor} color2={def.beltColor2} size="sm" />{/if}
-          <span class="truncate">{c.grade}</span>
-        </p>
-        <p class="meta-item text-xs text-surface-600-400 min-w-0">
-          <Fa icon={faUserCheck} size="xs" class="flex-none" />
-          <span class="truncate">
-            {c.examiners?.length
-              ? c.examiners.map((e) => e.name).join(', ')
-              : $_('page.exams.sheet.noExaminer')}
-          </span>
-        </p>
-        {#if evaluation}
-          <p class="flex items-baseline gap-1 mt-1 whitespace-nowrap tabular-nums">
-            <span
-              class="text-xl font-bold leading-tight {evaluation.passed
-                ? 'text-success-600-400'
-                : ''}"
-            >
-              {evaluation.points}
+<div bind:this={sheetStart}></div>
+<!-- Candidates with their running totals, kept in view while scrolling; with
+     several sheets a horizontal swipe here switches between them -->
+<div
+  bind:this={stickyEl}
+  role="region"
+  aria-label={$_('page.exams.sheet.candidatesLabel')}
+  class="sticky top-0 z-10 bg-surface-50-950 pt-1 pb-3 overflow-x-clip touch-pan-y"
+  ontouchstart={swipeStart}
+  ontouchmove={swipeMove}
+  ontouchend={swipeEnd}
+  ontouchcancel={swipeEnd}
+>
+  {#key group[0]?.id}
+    <div
+      class="grid gap-2 {pair ? 'grid-cols-2' : 'grid-cols-1'} {dragX
+        ? ''
+        : 'transition-transform duration-150'}"
+      style:transform={dragX ? `translateX(${dragX}px)` : undefined}
+      in:fly={{ x: slideFrom * 80, duration: reducedMotion || !slideFrom ? 0 : 200 }}
+    >
+      {#each sheets as { c, evaluation } (c.id)}
+        {@const def = gradeDef(c.grade)}
+        {@const state = candidateState(c)}
+        <div class="card border border-surface-200-800 p-3 min-w-0">
+          <!-- In a pair the chip takes its own line, so the name keeps its room -->
+          <div
+            class="flex items-center justify-between gap-x-2 gap-y-0.5 {pair ? 'flex-wrap' : ''}"
+          >
+            <span class="font-semibold truncate max-w-full">
+              {c.member?.firstname}
+              {c.member?.lastname}
             </span>
-            <span class="text-xs text-surface-600-400">
-              / {evaluation.max} · {$_('page.exams.sheet.min', {
-                values: { points: evaluation.minPoints }
-              })}
+            {#if c.result || state === 'withdrawn'}<ExamStateChip {state} />{/if}
+          </div>
+          <p
+            class="flex items-center gap-1.5 text-xs text-surface-600-400 min-w-0"
+            title={programTitle(c)}
+          >
+            {#if def}<BeltStrip color={def.beltColor} color2={def.beltColor2} size="sm" />{/if}
+            <span class="truncate">{c.grade}</span>
+          </p>
+          <p class="meta-item text-xs text-surface-600-400 min-w-0">
+            <Fa icon={faUserCheck} size="xs" class="flex-none" />
+            <span class="truncate">
+              {c.examiners?.length
+                ? c.examiners.map((e) => e.name).join(', ')
+                : $_('page.exams.sheet.noExaminer')}
             </span>
           </p>
-          <div class="h-1.5 rounded-full bg-surface-200-800 overflow-hidden mt-1">
-            <div
-              class="h-full rounded-full transition-all duration-500 {evaluation.complete
-                ? 'bg-success-500'
-                : 'bg-primary-500'}"
-              style:width="{evaluation.sides ? (evaluation.scored / evaluation.sides) * 100 : 0}%"
-            ></div>
-          </div>
-        {/if}
-      </div>
-    {/each}
-  </div>
+          {#if evaluation}
+            <p class="flex items-baseline gap-1 mt-1 whitespace-nowrap tabular-nums">
+              <span
+                class="text-xl font-bold leading-tight {evaluation.passed
+                  ? 'text-success-600-400'
+                  : ''}"
+              >
+                {evaluation.points}
+              </span>
+              <span class="text-xs text-surface-600-400">
+                / {evaluation.max} · {$_('page.exams.sheet.min', {
+                  values: { points: evaluation.minPoints }
+                })}
+              </span>
+            </p>
+            <div class="h-1.5 rounded-full bg-surface-200-800 overflow-hidden mt-1">
+              <div
+                class="h-full rounded-full transition-all duration-500 {evaluation.complete
+                  ? 'bg-success-500'
+                  : 'bg-primary-500'}"
+                style:width="{evaluation.sides ? (evaluation.scored / evaluation.sides) * 100 : 0}%"
+              ></div>
+            </div>
+          {/if}
+        </div>
+      {/each}
+    </div>
+  {/key}
+  {#if groups.length > 1}
+    <div class="flex justify-center mt-1.5 -mb-1.5">
+      {#each groups as g, i (g[0].id)}
+        <button
+          type="button"
+          class="p-1.5"
+          title={names(g)}
+          aria-label={names(g)}
+          aria-current={g === group}
+          onclick={() => showGroup(i)}
+        >
+          <span
+            class="block size-2 rounded-full transition-colors {g === group
+              ? 'bg-primary-500'
+              : 'bg-surface-300-700'}"
+          ></span>
+        </button>
+      {/each}
+    </div>
+  {/if}
 </div>
 
 {#if joinable.length > 0 || leavable.length > 0}
