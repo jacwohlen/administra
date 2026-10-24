@@ -14315,8 +14315,9 @@ SELECT 198, 'assigned', 'jonas.frei@example.com', 'Dein Probetraining beim JAC W
 
 --
 -- Q-Prüfungen (see docs/Q_EXAMS.md): a past exam day with a finished sheet
--- that the E2E member account can read (Brandon's yellow belt), and an
--- upcoming one with registrations, open for the member account to register.
+-- (Brandon's yellow belt, which his parent's member account sees as a grade
+-- only), and an upcoming one with registrations, open for the member account
+-- to register.
 --
 INSERT INTO public.exams (section, title, date, location, registration_deadline, notes) VALUES
   ('Judo', 'Q-Prüfung Herbst 2025', '2025-12-06', 'Turnhalle Jac Wohlen', '2025-11-14', NULL),

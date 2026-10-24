@@ -58,7 +58,7 @@
       },
       "examRole": {
         "none": "Keine Prüfungsrolle",
-        "examiner": "Prüfer:in",
+        "examiner": "Prüfende",
         "manager": "TK (Prüfungen leiten)"
       },
       "action": {
@@ -667,7 +667,8 @@
         "withdraw": "Abmelden",
         "withdrawConfirm": "{name} von «{title}» abmelden?",
         "withdrawn": "Abgemeldet",
-        "withdrawError": "Die Abmeldung hat nicht geklappt. Bitte melde dich bei deiner Trainerin oder deinem Trainer."
+        "withdrawError": "Die Abmeldung hat nicht geklappt. Bitte melde dich bei deiner Trainerin oder deinem Trainer.",
+        "examined": "Die Prüfung ist abgeschlossen."
       }
     },
     "trialStatus": {
@@ -734,7 +735,7 @@
     },
     "exams": {
       "title": "Q-Prüfungen",
-      "intro": "Prüfungstage, Anmeldungen und Bewertung der Kyu-Prüfungen. Experten wählen ihre Kandidaten aus und bewerten sie direkt auf dem Handy.",
+      "intro": "Prüfungstage, Anmeldungen und Bewertung der Kyu-Prüfungen. Prüfende wählen ihre Kandidaten aus und bewerten sie direkt auf dem Handy.",
       "create": "Neuer Prüfungstag",
       "edit": "Prüfungstag bearbeiten",
       "empty": "Noch keine Prüfungstage erfasst",
@@ -772,8 +773,8 @@
       "grade": "Bewerten",
       "assignGroup": "Einteilen",
       "markInvited": "Als aufgeboten markieren",
-      "assignError": "Fehler beim Zuteilen als Experte",
-      "examiners": "Experten",
+      "assignError": "Fehler beim Zuteilen als Prüfende",
+      "examiners": "Prüfende",
       "openSheet": "Blatt",
       "withdrawn": "{count, plural, one {# Abmeldung} other {# Abmeldungen}}",
       "state": {
@@ -782,7 +783,8 @@
         "withdrawn": "Abgemeldet",
         "grading": "Läuft",
         "passed": "Bestanden",
-        "failed": "Nicht bestanden"
+        "failed": "Nicht bestanden",
+        "examined": "Geprüft"
       },
       "legend": {
         "title": "Bewertung",
@@ -822,10 +824,14 @@
         "beltLength": "Gürtellänge (cm)",
         "status": "Status",
         "trainer": "Verantwortliche Trainerin / verantwortlicher Trainer",
-        "note": "Notiz",
+        "note": "Bemerkung",
         "removeConfirm": "Wirklich entfernen",
         "saveError": "Fehler beim Speichern der Anmeldung",
-        "removeError": "Fehler beim Entfernen der Anmeldung"
+        "removeError": "Fehler beim Entfernen der Anmeldung",
+        "noteHint": "Die Bemerkung bei der Anmeldung; das Mitglied sieht sie.",
+        "staffNote": "Interne Notiz",
+        "staffNoteHint": "Nur für Trainer, TK und Prüfende.",
+        "statusLocked": "Das Resultat ist erfasst. Für Änderungen zuerst das Blatt wieder öffnen."
       },
       "sheet": {
         "title": "Prüfungsblatt",
@@ -835,7 +841,7 @@
         "min": "mind. {points}",
         "note": "Notiz",
         "notePlaceholder": "Beobachtung, Hinweis für die Feedbackrunde…",
-        "noExaminer": "noch kein Experte",
+        "noExaminer": "noch keine Prüfenden",
         "join": "Ich prüfe mit",
         "noProgram": "Für {grade} ist kein Prüfungsprogramm hinterlegt. Das Ergebnis kann trotzdem erfasst werden.",
         "result": "Ergebnis",
@@ -855,7 +861,9 @@
         "saved": "Ergebnis gespeichert",
         "reopened": "Blatt wieder geöffnet",
         "saveError": "Fehler beim Speichern – bitte nochmals versuchen",
-        "changedMeanwhile": "Das Blatt wurde inzwischen geändert – bitte prüfen und nochmals versuchen."
+        "changedMeanwhile": "Das Blatt wurde inzwischen geändert – bitte prüfen und nochmals versuchen.",
+        "leave": "Nicht mehr prüfen",
+        "leaveError": "Fehler beim Abgeben der Kandidaten"
       },
       "print": {
         "title": "Anmeldeliste",
@@ -910,7 +918,11 @@
           "duplicateKey": "Zwei Aufgaben haben denselben Schlüssel.",
           "partMinTooHigh": "Das Minimum eines Teils ist höher als seine Maximalpunktzahl.",
           "minTooHigh": "Die Mindestpunktzahl ist höher als die Maximalpunktzahl."
-        }
+        },
+        "delete": "Programm löschen",
+        "deleteConfirm": "Wirklich löschen?",
+        "deleteError": "Fehler beim Löschen des Programms",
+        "deleted": "Programm gelöscht"
       }
     }
   },

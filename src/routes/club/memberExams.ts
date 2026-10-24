@@ -18,8 +18,10 @@ export interface MemberRegistration {
   status: ExamCandidateStatus;
   group_name: string | null;
   call_time: string | null;
-  /** Grading has started: the registration can no longer change */
+  /** Grading has started (or is done): the registration can no longer change */
   started: boolean;
+  /** Grading is done; how it went shows only as the new grade */
+  finished: boolean;
   registered_at: string;
 }
 
@@ -32,14 +34,23 @@ export interface MemberExams {
   programGrades: Pick<ExamProgram, 'section' | 'grade'>[];
 }
 
-/** What the club area shows about Q-Prüfungen on one of the account's own members. */
-export async function loadMemberExams(member: DirectoryMember): Promise<MemberExams> {
+/**
+ * What the club area shows about Q-Prüfungen on one of the account's own members;
+ * null when it cannot be loaded (rather than offering a registration that exists).
+ */
+export async function loadMemberExams(member: DirectoryMember): Promise<MemberExams | null> {
   const today = dayjs().format('YYYY-MM-DD');
   const [examResult, registrationResult, gradeResult] = await Promise.all([
     supabaseClient.from('exams').select('*').gte('date', today).order('date').returns<Exam[]>(),
     supabaseClient.rpc('get_my_exam_registrations').eq('member_id', member.id),
     supabaseClient.rpc('get_exam_program_grades')
   ]);
+
+  const failed = examResult.error ?? registrationResult.error ?? gradeResult.error;
+  if (failed) {
+    console.error('Error loading exams:', failed);
+    return null;
+  }
 
   const exams = examResult.data ?? [];
   const registrations = ((registrationResult.data ?? []) as MemberRegistration[]).filter((r) =>

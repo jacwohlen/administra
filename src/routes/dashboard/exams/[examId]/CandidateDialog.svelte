@@ -22,6 +22,7 @@
     programGrades,
     groups,
     trainers,
+    canManageExams,
     onclose,
     onsaved
   }: {
@@ -36,6 +37,8 @@
     /** Group names and trainers already in use, offered as suggestions */
     groups: string[];
     trainers: string[];
+    /** The TK may also remove examined candidates; trainers only unstarted ones */
+    canManageExams: boolean;
     onclose: () => void;
     onsaved: () => void;
   } = $props();
@@ -57,7 +60,8 @@
     call_time: candidate?.call_time ?? '',
     belt_length_cm: candidate?.belt_length_cm ?? (null as number | null),
     trainer: candidate?.trainer ?? '',
-    note: candidate?.note ?? ''
+    note: candidate?.note ?? '',
+    staff_note: candidate?.staff_note ?? ''
   });
   // svelte-ignore state_referenced_locally
   let member = $state<SearchHit | null>(
@@ -79,8 +83,11 @@
     candidate ? ladder.filter((g) => !g.isDan) : registrableGrades(ladder, currentGrade)
   );
   let selectedGrade = $derived(ladder.find((g) => g.grade === form.grade));
-  // The sheet keeps the program of the grade it was started with
-  let gradeLocked = $derived(!!candidate?.started_at);
+  // Examined (sheet started or result in): the candidate stays as examined,
+  // a result is changed on the sheet by reopening it (the database enforces it)
+  let examined = $derived(!!candidate?.started_at || !!candidate?.result);
+  let gradeLocked = $derived(examined);
+  let statusLocked = $derived(!!candidate?.result);
 
   async function search() {
     const term = searchTerm.trim();
@@ -120,7 +127,8 @@
       call_time: form.call_time || null,
       belt_length_cm: form.belt_length_cm || null,
       trainer: form.trainer.trim() || null,
-      note: form.note.trim() || null
+      note: form.note.trim() || null,
+      staff_note: form.staff_note.trim() || null
     };
     if (candidate) {
       // Only what was changed here: the list may be older than the row, e.g. a
@@ -138,7 +146,7 @@
       const save = (fields: Record<string, unknown>) => {
         let update = supabaseClient.from('exam_candidates').update(fields).eq('id', id);
         // The sheet keeps the grade it was started with (the database enforces it too)
-        if ('grade' in fields) update = update.is('started_at', null);
+        if ('grade' in fields) update = update.is('started_at', null).is('result', null);
         return update.select('id');
       };
       let { data: rows, error } = await save(patch);
@@ -313,12 +321,17 @@
         </label>
         <label class="label">
           <span>{$_('page.exams.candidate.status')}</span>
-          <select class="select" bind:value={form.status}>
+          <select class="select" bind:value={form.status} disabled={statusLocked}>
             {#each STATUSES as s (s)}
               <option value={s}>{$_('page.exams.state.' + s)}</option>
             {/each}
           </select>
         </label>
+        {#if statusLocked}
+          <p class="col-span-2 -mt-2 text-xs text-surface-600-400">
+            {$_('page.exams.candidate.statusLocked')}
+          </p>
+        {/if}
       </div>
 
       <label class="label">
@@ -331,12 +344,23 @@
 
       <label class="label">
         <span>{$_('page.exams.candidate.note')}</span>
-        <textarea class="textarea" rows="2" bind:value={form.note}></textarea>
+        <textarea class="textarea" rows="2" maxlength="500" bind:value={form.note}></textarea>
+        <span class="block text-xs text-surface-600-400">{$_('page.exams.candidate.noteHint')}</span
+        >
+      </label>
+
+      <label class="label">
+        <span>{$_('page.exams.candidate.staffNote')}</span>
+        <textarea class="textarea" rows="2" maxlength="2000" bind:value={form.staff_note}
+        ></textarea>
+        <span class="block text-xs text-surface-600-400">
+          {$_('page.exams.candidate.staffNoteHint')}
+        </span>
       </label>
 
       <footer class="flex flex-wrap justify-between gap-2 pt-2">
         <div>
-          {#if candidate}
+          {#if candidate && (!examined || canManageExams)}
             {#if confirmRemove}
               <button
                 type="button"

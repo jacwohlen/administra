@@ -667,7 +667,8 @@
         "withdraw": "Withdraw",
         "withdrawConfirm": "Withdraw {name} from \"{title}\"?",
         "withdrawn": "Withdrawn",
-        "withdrawError": "The withdrawal did not work. Please talk to your trainer."
+        "withdrawError": "The withdrawal did not work. Please talk to your trainer.",
+        "examined": "The grading is done."
       }
     },
     "trialStatus": {
@@ -782,7 +783,8 @@
         "withdrawn": "Withdrawn",
         "grading": "In progress",
         "passed": "Passed",
-        "failed": "Not passed"
+        "failed": "Not passed",
+        "examined": "Examined"
       },
       "legend": {
         "title": "Scoring",
@@ -822,10 +824,14 @@
         "beltLength": "Belt length (cm)",
         "status": "Status",
         "trainer": "Responsible trainer",
-        "note": "Note",
+        "note": "Remark",
         "removeConfirm": "Really remove",
         "saveError": "Error saving the registration",
-        "removeError": "Error removing the registration"
+        "removeError": "Error removing the registration",
+        "noteHint": "The remark from the registration; the member sees it.",
+        "staffNote": "Internal note",
+        "staffNoteHint": "Only for trainers, the technical committee and examiners.",
+        "statusLocked": "The result is recorded. Reopen the sheet first to change it."
       },
       "sheet": {
         "title": "Grading sheet",
@@ -855,7 +861,9 @@
         "saved": "Result saved",
         "reopened": "Sheet reopened",
         "saveError": "Error saving – please try again",
-        "changedMeanwhile": "The sheet was changed meanwhile – please check and try again."
+        "changedMeanwhile": "The sheet was changed meanwhile – please check and try again.",
+        "leave": "Stop examining",
+        "leaveError": "Error handing the candidates back"
       },
       "print": {
         "title": "Registration list",
@@ -910,7 +918,11 @@
           "duplicateKey": "Two tasks share the same key.",
           "partMinTooHigh": "A part's minimum is higher than its maximum.",
           "minTooHigh": "The points to pass are higher than the maximum."
-        }
+        },
+        "delete": "Delete program",
+        "deleteConfirm": "Really delete?",
+        "deleteError": "Error deleting the program",
+        "deleted": "Program deleted"
       }
     }
   },

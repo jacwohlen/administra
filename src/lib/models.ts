@@ -390,7 +390,10 @@ export interface ExamCandidate {
   grade: string;
   belt_length_cm?: number | null;
   trainer?: string | null;
+  /** The member's remark at registration; the member sees it */
   note?: string | null;
+  /** Internal note of trainers and the TK; never shown to the member */
+  staff_note?: string | null;
   status: ExamCandidateStatus;
   group_name?: string | null;
   call_time?: string | null;

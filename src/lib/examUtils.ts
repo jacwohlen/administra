@@ -9,8 +9,8 @@ import type {
 
 /**
  * The sheet's general feedback is stored as an exam_scores row under this key, so
- * members can read it only once the result is in, like the scores. Program item
- * keys never start with an underscore.
+ * it follows the sheet's rules like the scores (internal, locked once the result
+ * is in). Program item keys never start with an underscore.
  */
 export const FEEDBACK_KEY = '_feedback';
 
@@ -148,7 +148,9 @@ export function applyScore(
   return [...scores, { ...fresh, [column]: value }];
 }
 
-export type CandidateState = ExamResult | 'registered' | 'invited' | 'withdrawn' | 'grading';
+/** 'examined' is the member's view of a result: done, without saying how it went */
+export type CandidateState =
+  ExamResult | 'registered' | 'invited' | 'withdrawn' | 'grading' | 'examined';
 
 /** One label for where a candidate stands, from registration to result. */
 export function candidateState(

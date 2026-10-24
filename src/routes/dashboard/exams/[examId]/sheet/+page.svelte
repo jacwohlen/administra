@@ -14,6 +14,7 @@
     faRotateLeft,
     faTriangleExclamation,
     faUserCheck,
+    faUserMinus,
     faUserPlus,
     faXmark
   } from '@fortawesome/free-solid-svg-icons';
@@ -215,6 +216,31 @@
   let joinable = $derived(
     group.filter((c) => !readonly(c) && !c.examiners?.some((e) => e.user_id === me))
   );
+  /** The group's open sheets I sign: handed back in one tap, e.g. after a mis-tap. */
+  let leavable = $derived(
+    group.filter((c) => !readonly(c) && c.examiners?.some((e) => e.user_id === me))
+  );
+
+  async function leave(list: ExamCandidate[]) {
+    const { error } = await supabaseClient
+      .from('exam_examiners')
+      .delete()
+      .eq('user_id', me)
+      .in(
+        'candidate_id',
+        list.map((c) => c.id)
+      );
+    if (error) {
+      console.error('Error handing candidates back:', error);
+      toaster.error({ title: $_('page.exams.sheet.leaveError') });
+      return;
+    }
+    for (const c of list) {
+      patchCandidate(c.id, {
+        examiners: (live(c).examiners ?? []).filter((e) => e.user_id !== me)
+      });
+    }
+  }
 
   async function setScore(c: ExamCandidate, item: ExamItem, side: ScoreSide, value: number | null) {
     if (!(await ensureStarted(c))) return;
@@ -358,8 +384,12 @@
       {@const def = gradeDef(c.grade)}
       {@const state = candidateState(c)}
       <div class="card border border-surface-200-800 p-3 min-w-0">
-        <div class="flex items-center justify-between gap-2">
-          <span class="font-semibold truncate">{c.member?.firstname} {c.member?.lastname}</span>
+        <!-- In a pair the chip takes its own line, so the name keeps its room -->
+        <div class="flex items-center justify-between gap-x-2 gap-y-0.5 {pair ? 'flex-wrap' : ''}">
+          <span class="font-semibold truncate max-w-full">
+            {c.member?.firstname}
+            {c.member?.lastname}
+          </span>
           {#if c.result || state === 'withdrawn'}<ExamStateChip {state} />{/if}
         </div>
         <p
@@ -414,9 +444,17 @@
       <span>{$_('page.exams.sheet.join')}</span>
     </button>
   </div>
+{:else if leavable.length > 0}
+  <div class="mb-3">
+    <button class="btn preset-tonal-surface" onclick={() => leave(leavable)}>
+      <Fa icon={faUserMinus} />
+      <span>{$_('page.exams.sheet.leave')}</span>
+    </button>
+  </div>
 {/if}
 
-{#if layout && !anyScored}
+<!-- The legend helps whoever scores; a read-only sheet does without -->
+{#if layout && !anyScored && sheets.some(({ c }) => !readonly(c))}
   <ScoreLegend class="mb-3" />
 {/if}
 
@@ -616,7 +654,8 @@
             </li>
           {/each}
         </ul>
-        {#if !c.result}
+        <!-- The suggestion is for the examiners; a sheet not started reads as nothing yet -->
+        {#if !c.result && (!readonly(c) || c.started_at)}
           {#if !evaluation.complete}
             <p class="flex items-center gap-2 text-sm text-surface-700-300">
               <Fa icon={faTriangleExclamation} class="text-warning-800-200 flex-none" />

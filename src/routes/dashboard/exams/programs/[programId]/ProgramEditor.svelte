@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { goto } from '$app/navigation';
   import { _ } from 'svelte-i18n';
   import Fa from 'svelte-fa';
   import {
@@ -100,6 +101,22 @@
     }
     toaster.success({ title: $_('page.exams.programs.saved') });
     onsaved();
+  }
+
+  // Running and finished sheets keep their snapshot, so a program can go any time
+  let confirmRemove = $state(false);
+
+  async function remove() {
+    saving = true;
+    const { error } = await supabaseClient.from('exam_programs').delete().eq('id', program.id);
+    saving = false;
+    if (error) {
+      console.error('Error deleting program:', error);
+      toaster.error({ title: $_('page.exams.programs.deleteError') });
+      return;
+    }
+    toaster.success({ title: $_('page.exams.programs.deleted') });
+    await goto('/dashboard/exams/programs');
   }
 </script>
 
@@ -269,6 +286,28 @@
   {/if}
 
   <div class="flex justify-end gap-2 sticky bottom-0 bg-surface-50-950 py-2">
+    <div class="mr-auto">
+      {#if confirmRemove}
+        <button
+          type="button"
+          class="btn preset-filled-error-500"
+          onclick={remove}
+          disabled={saving}
+        >
+          {$_('page.exams.programs.deleteConfirm')}
+        </button>
+      {:else}
+        <button
+          type="button"
+          class="btn preset-tonal-error"
+          title={$_('page.exams.programs.delete')}
+          aria-label={$_('page.exams.programs.delete')}
+          onclick={() => (confirmRemove = true)}
+        >
+          <Fa icon={faTrash} />
+        </button>
+      {/if}
+    </div>
     <button type="button" class="btn preset-tonal-surface" onclick={oncancel}>
       {$_('button.cancel')}
     </button>

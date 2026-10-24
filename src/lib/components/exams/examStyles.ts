@@ -10,7 +10,8 @@ export const EXAM_STATE_CLASS: Record<CandidateState, string> = {
   grading: 'preset-tonal-warning',
   passed: 'preset-tonal-success',
   failed: 'preset-tonal-error',
-  withdrawn: 'bg-surface-100-900 text-surface-600-400'
+  withdrawn: 'bg-surface-100-900 text-surface-600-400',
+  examined: 'bg-surface-100-900 text-surface-900-50'
 };
 
 /** A given score 0 / 1 / 2 (red, yellow, teal); the same on the keys, chips and legend. */

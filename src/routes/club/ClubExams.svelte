@@ -64,8 +64,9 @@
       exams.programGrades.some((p) => p.section === section && p.grade === grade);
   }
 
-  /** Where the registration stands; the result is not shown here. */
+  /** Where the registration stands; how the exam went is not shown here. */
   function stateOf(reg: MemberRegistration): CandidateState {
+    if (reg.finished) return 'examined';
     if (reg.status === 'withdrawn') return 'withdrawn';
     return reg.started ? 'grading' : reg.status;
   }
@@ -169,20 +170,22 @@
                 <span class="font-semibold">{reg.grade}</span>
                 <span class="ml-auto"><ExamStateChip state={stateOf(reg)} /></span>
               </div>
-              <p class="text-sm">
-                {#if reg.status === 'withdrawn'}
-                  {$_('page.club.exams.askTrainer')}
-                {:else if reg.status === 'invited' && (reg.group_name || reg.call_time)}
+              {#if reg.finished}
+                <p class="text-sm">{$_('page.club.exams.examined')}</p>
+              {:else if reg.status === 'withdrawn'}
+                <p class="text-sm">{$_('page.club.exams.askTrainer')}</p>
+              {:else if reg.status === 'invited' && (reg.group_name || reg.call_time)}
+                <p class="text-sm">
                   {$_('page.club.exams.callUp', {
                     values: {
                       group: reg.group_name ?? '–',
                       time: reg.call_time ?? '–'
                     }
                   })}
-                {:else}
-                  {$_('page.club.exams.waitForCallUp')}
-                {/if}
-              </p>
+                </p>
+              {:else if !reg.started}
+                <p class="text-sm">{$_('page.club.exams.waitForCallUp')}</p>
+              {/if}
             </div>
             <div class="flex flex-wrap gap-2">
               {#if open && reg.status === 'registered' && !reg.started}

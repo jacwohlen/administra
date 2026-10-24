@@ -9,7 +9,7 @@ The grading process from registration to the new belt, without paper:
    registration.
 2. **Registration** – members (parents) register in the club area (`/club`,
    card _Q-Prüfung_) until the deadline: target grade (defaults to the next
-   belt), belt length for the new belt and a remark. Trainers can add
+   belt), belt length for the new belt and a remark. Trainers and the TK can add
    candidates in the dashboard at any time. The _Anmeldeliste_ (print icon)
    is the sheet for the dojo wall, with empty rows for late entries.
 3. **Call-up** – trainers or the TK select candidates and tap _Einteilen_ (the group icon on a
@@ -78,7 +78,8 @@ rungs of the Judo grade ladder with two colours (`grade_definitions."beltColor2"
 
 `supabase/migrations/20261021120000_q_exams.sql`,
 `20261023090000_q_exams_review_fixes.sql`,
-`20261023150000_q_exams_score_lock.sql` and `20261024120000_exam_roles.sql`:
+`20261023150000_q_exams_score_lock.sql`, `20261024120000_exam_roles.sql` and
+`20261024170000_exam_roles_review_fixes.sql`:
 
 | Table             | Content                                                  | Members        | Staff (read all)                        |
 | ----------------- | -------------------------------------------------------- | -------------- | --------------------------------------- |
@@ -96,15 +97,29 @@ the registration columns only through trainers and the TK, and the total,
 completion and recorded grade only through the result trigger.
 
 - Members see their registrations through `get_my_exam_registrations()`
-  (status and call-up, whether grading started, no result columns) and
-  which grades have a program through `get_exam_program_grades()`, so the
-  registration suggests a grade that is examined. A pass reaches them as
-  the grade on their profile (note _Q-Prüfung_, no points).
+  (status, call-up, their remark, whether grading started or is done, no
+  result columns) and which grades have a program through
+  `get_exam_program_grades()`, so the registration suggests a grade that is
+  examined. A pass reaches them as the grade on their profile (note
+  _Q-Prüfung_, no points). `note` is the member's remark and visible to
+  them; `staff_note` is the internal note of trainers and the TK.
+- An examined candidate (sheet started or result in) stays as examined:
+  member, exam day, section, grade, program snapshot and start are fixed,
+  and the status changes only after reopening the sheet. Trainers remove
+  only candidates whose sheet has not started; the TK can remove any.
+  Staff-side candidates are checked against the exam day's section and
+  kyu grades, since the result trigger records the grade with its own
+  rights.
+- Examiners sign on to and off open sheets only; the name on the sheet is
+  taken from their profile. The TK can take anyone off a sheet.
+- An exam role is cleared when the account becomes a member or an admin
+  (`clear_exam_role`), so it never comes back unnoticed.
 
 - Members register and withdraw only through `register_for_exam()` and
   `withdraw_exam_registration()`, which check that the member is theirs,
-  the deadline and the grade. Members change only registrations that are
-  still _Angemeldet_; once called up or withdrawn, changes (and a new
+  the deadline and the grade (a kyu above the member's current grade in the
+  section). Members change only registrations that are still _Angemeldet_
+  and not examined; once called up or withdrawn, changes (and a new
   registration) go through the trainers. Withdrawing is possible until
   grading starts.
 - Scores, notes and the feedback can only change while the sheet is open

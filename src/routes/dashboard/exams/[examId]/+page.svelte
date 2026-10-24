@@ -10,6 +10,7 @@
     faClock,
     faEdit,
     faHourglassHalf,
+    faLock,
     faLocationDot,
     faPeopleGroup,
     faPrint,
@@ -79,12 +80,14 @@
     await invalidate('app:exam-candidates');
   }
 
-  /** Take the selected candidates on as examiner and open their sheet. */
+  /** Take the selected open sheets on as examiner and open the sheet. */
   async function grade() {
     const picked = data.candidates.filter((c) => selected.includes(c.id));
     if (picked.length === 0) return;
     busy = true;
-    const { error } = await assignExaminer(picked, me, examinerName(data.userProfile));
+    // Finished sheets open read-only; nobody signs on to them afterwards
+    const open = picked.filter((c) => !c.result && c.status !== 'withdrawn');
+    const { error } = await assignExaminer(open, me, examinerName(data.userProfile));
     busy = false;
     if (error) {
       console.error('Error assigning examiner:', error);
@@ -217,28 +220,31 @@
   {/if}
 </div>
 
-<div class="flex rounded-lg overflow-hidden border border-surface-300-700 mb-3" role="group">
-  <button
-    class="btn flex-1 rounded-none {filter === 'all'
-      ? 'preset-filled-primary-500'
-      : 'preset-tonal-surface'}"
-    aria-pressed={filter === 'all'}
-    onclick={() => (filter = 'all')}
-  >
-    <Fa icon={faUsers} />
-    <span>{$_('page.exams.filter.all')} ({active.length})</span>
-  </button>
-  <button
-    class="btn flex-1 rounded-none {filter === 'mine'
-      ? 'preset-filled-primary-500'
-      : 'preset-tonal-surface'}"
-    aria-pressed={filter === 'mine'}
-    onclick={() => (filter = 'mine')}
-  >
-    <Fa icon={faUserCheck} />
-    <span>{$_('page.exams.filter.mine')} ({mine.length})</span>
-  </button>
-</div>
+<!-- Only examiners have candidates of their own -->
+{#if data.canGrade}
+  <div class="flex rounded-lg overflow-hidden border border-surface-300-700 mb-3" role="group">
+    <button
+      class="btn flex-1 rounded-none {filter === 'all'
+        ? 'preset-filled-primary-500'
+        : 'preset-tonal-surface'}"
+      aria-pressed={filter === 'all'}
+      onclick={() => (filter = 'all')}
+    >
+      <Fa icon={faUsers} />
+      <span>{$_('page.exams.filter.all')} ({active.length})</span>
+    </button>
+    <button
+      class="btn flex-1 rounded-none {filter === 'mine'
+        ? 'preset-filled-primary-500'
+        : 'preset-tonal-surface'}"
+      aria-pressed={filter === 'mine'}
+      onclick={() => (filter = 'mine')}
+    >
+      <Fa icon={faUserCheck} />
+      <span>{$_('page.exams.filter.mine')} ({mine.length})</span>
+    </button>
+  </div>
+{/if}
 
 {#if canSelect && active.length > 0}
   <p class="text-xs text-surface-600-400 mb-3">
@@ -346,6 +352,15 @@
                 {#if c.note}
                   <span class="block text-xs text-surface-600-400 truncate italic">{c.note}</span>
                 {/if}
+                {#if c.staff_note}
+                  <span
+                    class="meta-item text-xs text-surface-600-400 min-w-0"
+                    title={$_('page.exams.candidate.staffNote')}
+                  >
+                    <Fa icon={faLock} size="xs" class="flex-none" />
+                    <span class="truncate italic">{c.staff_note}</span>
+                  </span>
+                {/if}
               </button>
               <div class="flex flex-col items-end gap-1.5 flex-none">
                 <span class="inline-flex items-center gap-1.5">
@@ -449,6 +464,7 @@
     programGrades={data.programs.map((p) => p.grade)}
     groups={groupNames}
     trainers={trainerNames}
+    canManageExams={data.canManageExams}
     onclose={() => (dialog = null)}
     onsaved={async () => {
       dialog = null;
