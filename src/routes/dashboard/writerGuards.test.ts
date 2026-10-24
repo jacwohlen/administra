@@ -18,6 +18,8 @@ import { load as newTraining } from './trainings/new/+page';
 import { load as editTraining } from './trainings/[trainingId]/edit/+page';
 import { load as newEvent } from './events/new/+page';
 import { load as editEvent } from './events/[eventId]/edit/+page';
+import { load as newJsCourse } from './js/new/+page';
+import { load as editJsCourse } from './js/[courseId]/edit/+page';
 
 // Create/edit pages send viewers back to the read-only page they came from.
 type Load = (event: never) => unknown;
@@ -41,7 +43,9 @@ describe('writer-only dashboard pages', () => {
     ['new training', newTraining as Load, {}, '/dashboard/trainings'],
     ['edit training', editTraining as Load, { trainingId: '3' }, '/dashboard/trainings/3'],
     ['new event', newEvent as Load, {}, '/dashboard/events'],
-    ['edit event', editEvent as Load, { eventId: '5' }, '/dashboard/events/5']
+    ['edit event', editEvent as Load, { eventId: '5' }, '/dashboard/events/5'],
+    ['new J+S course', newJsCourse as Load, {}, '/dashboard/js'],
+    ['edit J+S course', editJsCourse as Load, { courseId: '7' }, '/dashboard/js/7']
   ];
 
   for (const [name, load, params, target] of cases) {

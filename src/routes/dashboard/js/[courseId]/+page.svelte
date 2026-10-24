@@ -1,0 +1,217 @@
+<script lang="ts">
+  import type { PageData } from './$types';
+  import { _ } from 'svelte-i18n';
+  import Fa from 'svelte-fa';
+  import {
+    faArrowLeft,
+    faDownload,
+    faPenToSquare,
+    faTriangleExclamation
+  } from '@fortawesome/free-solid-svg-icons';
+  import { toaster } from '$lib/toast';
+  import {
+    ACTIVITY_HEADER,
+    ATTENDANCE_HEADER,
+    PERSON_HEADER,
+    activityRows,
+    attendanceRows,
+    fileSlug,
+    formatDate,
+    toCsv,
+    type CourseMember
+  } from '$lib/jsExport';
+
+  let { data }: { data: PageData } = $props();
+
+  let isAdmin = $derived(data.userProfile?.role === 'admin');
+  let course = $derived(data.course);
+  let result = $derived(data.result);
+  let warnings = $derived(result.warnings);
+  let hasWarnings = $derived(Object.values(warnings).some((list) => list.length > 0));
+
+  type Role = 'participants' | 'leaders';
+  let personLoading = $state<Role | null>(null);
+  let personProblems = $state<{ id: number; name: string; missing: string[] }[]>([]);
+
+  function download(name: string, csv: string) {
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${name}_${fileSlug(course)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  async function downloadPersons(role: Role) {
+    personLoading = role;
+    personProblems = [];
+    try {
+      const response = await fetch(`/api/js/persons?courseId=${course.id}&role=${role}`);
+      if (!response.ok) {
+        const body = await response.json().catch(() => null);
+        throw new Error(body?.message ?? `HTTP ${response.status}`);
+      }
+      const { rows, problems } = (await response.json()) as {
+        rows: string[][];
+        problems: typeof personProblems;
+      };
+      download(role === 'leaders' ? 'personen_leitende' : 'personen', toCsv(PERSON_HEADER, rows));
+      personProblems = problems;
+    } catch (e) {
+      toaster.error({
+        title: $_('page.js.persons_error'),
+        description: e instanceof Error ? e.message : String(e)
+      });
+    } finally {
+      personLoading = null;
+    }
+  }
+
+  const names = (members: CourseMember[]) =>
+    members.map((m) => `${m.lastname} ${m.firstname}`).join(', ');
+</script>
+
+<div class="page-header-back">
+  <a href="/dashboard/js" class="btn preset-tonal-surface">
+    <Fa icon={faArrowLeft} />
+  </a>
+  <h1 class="flex-1">{course.title}</h1>
+  {#if data.canWrite}
+    <a href="/dashboard/js/{course.id}/edit" class="btn preset-tonal-surface">
+      <Fa icon={faPenToSquare} />
+      <span class="hidden sm:inline">{$_('button.edit')}</span>
+    </a>
+  {/if}
+</div>
+
+<dl class="card p-4 mb-4 grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-sm">
+  <dt class="text-surface-600-400">{$_('page.js.form.course_number')}</dt>
+  <dd>{course.course_number || '–'}</dd>
+  <dt class="text-surface-600-400">{$_('page.js.period')}</dt>
+  <dd>{formatDate(course.date_from)} – {formatDate(course.date_to)}</dd>
+  <dt class="text-surface-600-400">{$_('page.js.form.location')}</dt>
+  <dd>{course.location || '–'}</dd>
+  <dt class="text-surface-600-400">{$_('page.js.form.durations')}</dt>
+  <dd>{course.durations.join(', ')}</dd>
+  <dt class="text-surface-600-400">{$_('page.js.form.trainings')}</dt>
+  <dd>{data.trainings.map((t) => t.title).join(', ') || '–'}</dd>
+</dl>
+
+<p class="p-3 mb-4 rounded-lg preset-tonal-warning text-sm">{$_('page.js.replace_hint')}</p>
+
+<ol class="space-y-4 mb-6">
+  <li class="card p-4">
+    <h3>1. {$_('page.js.step_persons')}</h3>
+    <p class="text-sm text-surface-600-400 mb-3">
+      {$_('page.js.step_persons_hint', {
+        values: { participants: result.participants.length, leaders: result.leaders.length }
+      })}
+    </p>
+    {#if isAdmin}
+      <div class="flex flex-wrap gap-2">
+        <button
+          class="btn preset-tonal-primary"
+          onclick={() => downloadPersons('participants')}
+          disabled={personLoading !== null || result.participants.length === 0}
+        >
+          <Fa icon={faDownload} />
+          <span>{$_('page.js.download_participants')}</span>
+        </button>
+        <button
+          class="btn preset-tonal-primary"
+          onclick={() => downloadPersons('leaders')}
+          disabled={personLoading !== null || result.leaders.length === 0}
+        >
+          <Fa icon={faDownload} />
+          <span>{$_('page.js.download_leaders')}</span>
+        </button>
+      </div>
+      {#if personProblems.length}
+        <div class="mt-3 text-sm">
+          <p class="font-bold">{$_('page.js.persons_incomplete')}</p>
+          <ul class="list-disc pl-5">
+            {#each personProblems as problem (problem.id)}
+              <li>{problem.name}: {problem.missing.join(', ')}</li>
+            {/each}
+          </ul>
+        </div>
+      {/if}
+    {:else}
+      <p class="text-sm italic">{$_('page.js.persons_admin_only')}</p>
+    {/if}
+  </li>
+
+  <li class="card p-4">
+    <h3>2. {$_('page.js.step_activities')}</h3>
+    <p class="text-sm text-surface-600-400 mb-3">
+      {$_('page.js.step_activities_hint', { values: { count: result.activities.length } })}
+    </p>
+    <button
+      class="btn preset-tonal-primary"
+      disabled={result.activities.length === 0}
+      onclick={() =>
+        download(
+          'aktivitaeten',
+          toCsv(ACTIVITY_HEADER, activityRows(result.activities, course.location))
+        )}
+    >
+      <Fa icon={faDownload} />
+      <span>{$_('page.js.download_activities')}</span>
+    </button>
+  </li>
+
+  <li class="card p-4">
+    <h3>3. {$_('page.js.step_attendance')}</h3>
+    <p class="text-sm text-surface-600-400 mb-3">
+      {$_('page.js.step_attendance_hint', { values: { count: result.attendance.length } })}
+    </p>
+    <button
+      class="btn preset-tonal-primary"
+      disabled={result.attendance.length === 0}
+      onclick={() =>
+        download(
+          'anwesenheitskontrolle',
+          toCsv(ATTENDANCE_HEADER, attendanceRows(result.attendance, course.location))
+        )}
+    >
+      <Fa icon={faDownload} />
+      <span>{$_('page.js.download_attendance')}</span>
+    </button>
+  </li>
+</ol>
+
+{#if hasWarnings}
+  <section class="mb-6">
+    <h3 class="flex items-center gap-2">
+      <Fa icon={faTriangleExclamation} class="text-warning-500" />
+      {$_('page.js.warnings')}
+    </h3>
+    <ul class="list-disc pl-5 space-y-1 text-sm">
+      {#if warnings.membersWithoutNumber.length}
+        <li>
+          {$_('page.js.warning_without_number')}
+          {names(warnings.membersWithoutNumber)}
+        </li>
+      {/if}
+      {#if warnings.membersInBothRoles.length}
+        <li>{$_('page.js.warning_both_roles')} {names(warnings.membersInBothRoles)}</li>
+      {/if}
+      {#each warnings.trainingsWithoutTime as training (training.id)}
+        <li>{$_('page.js.warning_without_time', { values: { title: training.title } })}</li>
+      {/each}
+      {#each warnings.trainingsTooShort as { training, minutes } (training.id)}
+        <li>
+          {$_('page.js.warning_too_short', { values: { title: training.title, minutes } })}
+        </li>
+      {/each}
+      {#each warnings.trainingsShortened as { training, minutes, exported } (training.id)}
+        <li>
+          {$_('page.js.warning_shortened', {
+            values: { title: training.title, minutes, exported }
+          })}
+        </li>
+      {/each}
+    </ul>
+  </section>
+{/if}

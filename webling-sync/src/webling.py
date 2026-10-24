@@ -96,10 +96,32 @@ def anonymize(member_id, data):
   year = re.search(r"\d{4}", data.get(u"birthday") or "")
   data[u"birthday"] = f"{year.group()}-{(h >> 16) % 12 + 1:02d}-{(h >> 24) % 28 + 1:02d}" if year else None
   data[u"mobile"] = None
+  if u"jsPersonNumber" in data:
+    data[u"jsPersonNumber"] = None
   # Always set, so a real address left over in the target is overwritten too.
   # .invalid never resolves, so the app cannot mail (or sign in) real people
   data[u"email"] = f"member-{member_id}@example.invalid"
   return data
+
+
+def has_column(table_name, column):
+  """Whether the target already has the column.
+
+  The scheduled sync runs the code on main against prod, which only gets a
+  new migration when main is promoted. Until then, sending the column would
+  make every upsert fail.
+  """
+  response = requests.get(f"{SUPABASE_URL}/rest/v1/{table_name}",
+                          params={'select': column, 'limit': 1}, headers=HEADERS)
+  if not response.ok:
+    print(f"{table_name}.{column} not synced: {postgrest_error(response)}")
+  return response.ok
+
+
+def js_person_number(value):
+  """Webling's "Lizenznummer" as digits only, None when empty."""
+  digits = re.sub(r"\D", "", str(value or ""))
+  return digits or None
 
 
 """ Create member in firebase for every webling """
@@ -108,6 +130,7 @@ def sync_members():
   response = webling_get(WEBLING_DOMAIN, WEBLING_API_KEY, "member", format='full')
   webling_check(response, "member")
 
+  with_js_number = has_column('members', 'jsPersonNumber')
   failed = 0
   for e in response.json():
     prop = e["properties"]
@@ -122,6 +145,9 @@ def sync_members():
         u"mobile": prop["Mobile"],
         u"labels": labels
     }
+    if with_js_number:
+      # J+S person number, for the attendance export to the NDS (docs/JS_EXPORT.md)
+      data[u"jsPersonNumber"] = js_person_number(prop.get("Lizenznummer"))
     # Members sign in to Administra with this address (see
     # docs/MEMBER_SIGN_IN.md). Only send it when Webling has one, so an
     # address entered in the app is not wiped by an empty Webling field.
