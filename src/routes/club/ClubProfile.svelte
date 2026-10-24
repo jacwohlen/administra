@@ -1,10 +1,11 @@
 <script lang="ts">
+  import type { Snippet } from 'svelte';
   import MemberProfile from '$lib/components/memberProfile/MemberProfile.svelte';
   import type { MemberProfileData } from './memberProfile';
 
   // A member profile as members see it: read-only, contact data and
   // attendance only on their own profile (the database enforces the same).
-  let { profile }: { profile: MemberProfileData } = $props();
+  let { profile, children }: { profile: MemberProfileData; children?: Snippet } = $props();
 </script>
 
 <MemberProfile
@@ -18,4 +19,5 @@
   detailsHint
   showAttendance={profile.member.isMine}
   achievements={profile}
+  {children}
 />

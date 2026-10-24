@@ -3,12 +3,15 @@
 
   let {
     color,
+    color2 = null,
     isDan = false,
     grade = '',
     size = 'md',
     title = ''
   }: {
     color: string;
+    /** Second colour of a half belt, drawn as the lower half */
+    color2?: string | null;
     isDan?: boolean;
     grade?: string;
     size?: 'sm' | 'md' | 'lg';
@@ -21,7 +24,13 @@
   let stripes = $derived(isDan ? (danLevel(grade) ?? 0) : 0);
 </script>
 
-<span class="belt-strip {dims[size]} {size}" style:--bc={color} {title}>
+<span
+  class="belt-strip {dims[size]} {size}"
+  class:half={!!color2}
+  style:--bc={color}
+  style:--bc2={color2}
+  {title}
+>
   {#if stripes > 0}
     <span class="stripes" aria-hidden="true">
       {#each Array.from({ length: stripes }, (_, i) => i) as i (i)}
@@ -41,6 +50,10 @@
     position: relative;
     overflow: hidden;
     vertical-align: middle;
+  }
+  /* Half belts are two-coloured along their length */
+  .half {
+    background: linear-gradient(to bottom, var(--bc) 50%, var(--bc2) 50%);
   }
   /* Dan stripes: one light bar per dan near the tip of the black belt */
   .stripes {

@@ -63,7 +63,8 @@ create and `seed.sql` inserts. Seed data changes are never merged onward.
 ## Seed data and test logins
 
 `seed.sql` creates test logins whose password is public in this repository
-(`test@example.com` as approved admin, `member@example.com` as member, both
+(`test@example.com` as approved admin, `member@example.com` as member,
+`examiner@example.com` as viewer with the Q-Prüfungen examiner role, all
 `testpass`). It is therefore only loaded where nobody else can reach the
 data that matters:
 
@@ -223,7 +224,8 @@ check directly.
   Google OAuth client does not know about, so Google login fails on Deploy
   Previews wired to a preview branch. Use the seeded test users from
   `seed.sql` (`test@example.com` / `testpass` as admin,
-  `member@example.com` / `testpass` as member) instead, or add the branch
+  `member@example.com` / `testpass` as member, `examiner@example.com` /
+  `testpass` as examiner) instead, or add the branch
   callback to the Google Cloud OAuth client while testing. These users
   exist only on preview branches and locally, not on dev or prod (see
   [Seed data and test logins](#seed-data-and-test-logins)).

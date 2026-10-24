@@ -44,6 +44,7 @@ _Benutzer_; disabled accounts are never re-enabled automatically.
 | Other members: name, photo, sections                               | via `get_member_directory` | yes     |
 | Grades, medals, badges                                             | yes                        | yes     |
 | Trainings, events (no participant lists)                           | yes                        | yes     |
+| Exam days, own registrations (results only as the new grade)       | yes (`docs/Q_EXAMS.md`)    | yes     |
 | Contact data, attendance of others, lesson plans, trial candidates | no                         | yes     |
 
 Implemented in `supabase/migrations/20260926090100_member_self_service.sql`
