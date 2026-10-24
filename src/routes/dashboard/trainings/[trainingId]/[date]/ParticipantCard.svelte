@@ -35,7 +35,7 @@
     readonly?: boolean;
   } = $props();
 
-  let ringColor = $derived(grade ? beltRingColor(grade.beltColor) : null);
+  let ringColor = $derived(grade ? beltRingColor(grade.beltColor, grade.beltColor2) : null);
   let needsMembership = $derived(
     trialAttendedCount !== undefined &&
       trialProgress(trialAttendedCount, clubConfig.trialSessionThreshold) === 'convert'
@@ -160,7 +160,13 @@
         <ParticipantFrequency streak={member.streak} isPresent={member.isPresent} />
         {#if grade}
           <span class="inline-flex items-center gap-1 text-xs text-surface-600-400">
-            <BeltStrip color={grade.beltColor} isDan={grade.isDan} grade={grade.grade} size="sm" />
+            <BeltStrip
+              color={grade.beltColor}
+              color2={grade.beltColor2}
+              isDan={grade.isDan}
+              grade={grade.grade}
+              size="sm"
+            />
             {grade.grade}
           </span>
         {/if}
