@@ -1039,6 +1039,15 @@
         "run": "Import {count} dates",
         "done": "{sessions} dates and {breaks} holidays imported",
         "error": "Error importing the sheet"
+      },
+      "view": {
+        "list": "Overview",
+        "table": "Per training"
+      },
+      "grid": {
+        "date": "Date",
+        "hint": "Type right in, every cell saves on its own. Enter or the arrow keys move to the next row; a column copied from Excel or Google Sheets fills the rows below when pasted.",
+        "pasted": "{count, plural, one {# row} other {# rows}} pasted"
       }
     }
   },

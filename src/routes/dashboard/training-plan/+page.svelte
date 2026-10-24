@@ -6,6 +6,8 @@
     faBookOpen,
     faCalendarDays,
     faGear,
+    faList,
+    faTableCells,
     faPen,
     faPrint,
     faRotate,
@@ -26,6 +28,7 @@
   } from '$lib/trainingPlanUtils';
   import type { TrainingPlanBreak } from '$lib/models';
   import SessionDialog from './SessionDialog.svelte';
+  import PlanGrid from './PlanGrid.svelte';
   import RotationDialog from './RotationDialog.svelte';
   import type { PageData } from './$types';
 
@@ -39,6 +42,34 @@
   let selected = $state<string[]>([]);
   let dialogRows = $state<PlanRow[] | null>(null);
   let rotationOpen = $state(false);
+
+  // The chosen view and training stay for the next visit (this browser only)
+  function stored(key: string): string | null {
+    try {
+      return localStorage.getItem(key);
+    } catch {
+      return null;
+    }
+  }
+  function store(key: string, value: string) {
+    try {
+      localStorage.setItem(key, value);
+    } catch {
+      // private mode: the choice is just not kept
+    }
+  }
+  let view = $state<'list' | 'table'>(stored('trainingPlan.view') === 'table' ? 'table' : 'list');
+  let gridTrainingId = $state<number | null>(Number(stored('trainingPlan.training')) || null);
+
+  function setView(v: 'list' | 'table') {
+    view = v;
+    selected = [];
+    store('trainingPlan.view', v);
+  }
+  function setGridTraining(id: number) {
+    gridTrainingId = id;
+    store('trainingPlan.training', String(id));
+  }
 
   let rows = $derived(
     buildPlan(data.trainings, data.sessions, data.breaks, data.events, data.from, data.to)
@@ -101,6 +132,14 @@
       groups.at(-1)!.items.push(item);
     }
     return groups;
+  });
+
+  let gridTraining = $derived(
+    data.trainings.find((t) => t.id === gridTrainingId) ?? data.trainings[0]
+  );
+  let gridRows = $derived.by(() => {
+    const start = showPast || data.year !== dayjs().year() ? data.from : today;
+    return rows.filter((r) => r.training.id === gridTraining?.id && r.date >= start);
   });
 
   let selectedRows = $derived(rows.filter((r) => selected.includes(key(r))));
@@ -195,205 +234,257 @@
     {/if}
   </div>
 {:else}
-  <!-- Filters -->
-  <div class="flex flex-wrap gap-2 mb-3 print:hidden">
-    {#each data.trainings as t (t.id)}
+  <!-- View: overview of all trainings, or one training as a table to fill in quickly -->
+  <div class="flex rounded-lg overflow-hidden border border-surface-300-700 mb-3 print:hidden">
+    {#each ['list', 'table'] as const as v (v)}
       <button
-        class="chip {hidden.includes(t.id)
-          ? 'preset-tonal-surface opacity-60'
-          : 'preset-filled-secondary-500'}"
-        onclick={() => toggleTraining(t.id)}
-        aria-pressed={!hidden.includes(t.id)}
+        class="btn flex-1 rounded-none {view === v
+          ? 'preset-filled-primary-500'
+          : 'preset-tonal-surface'}"
+        onclick={() => setView(v)}
       >
-        {$_('weekdayShort.' + t.weekday)} · {t.title}
+        <Fa icon={v === 'list' ? faList : faTableCells} />
+        <span>{$_('page.trainingPlan.view.' + v)}</span>
       </button>
     {/each}
-    <button
-      class="chip {onlyOpen ? 'preset-filled-warning-500' : 'preset-tonal-surface'}"
-      onclick={() => (onlyOpen = !onlyOpen)}
-      aria-pressed={onlyOpen}
-    >
-      <Fa icon={faUserSlash} size="sm" />
-      {$_('page.trainingPlan.onlyOpen', { values: { count: openCount } })}
-    </button>
-    {#if data.year === dayjs().year()}
-      <button
-        class="chip {showPast ? 'preset-filled-surface-500' : 'preset-tonal-surface'}"
-        onclick={() => (showPast = !showPast)}
-        aria-pressed={showPast}
-      >
-        {$_('page.trainingPlan.showPast')}
-      </button>
-    {/if}
   </div>
 
-  {#if counts.length > 0}
-    <details class="card border border-surface-200-800 px-3 py-2 mb-4 print:hidden">
-      <summary class="cursor-pointer text-sm font-semibold">
-        {$_('page.trainingPlan.trainerCounts')}
-      </summary>
-      <div class="flex flex-wrap gap-2 mt-2">
-        {#each counts as c (c.id)}
-          <span class="chip bg-surface-100-900 text-surface-900-50">
-            {c.name} <span class="font-bold">{c.count}</span>
-          </span>
-        {/each}
-      </div>
-    </details>
-  {/if}
-
-  {#if data.canPlanTrainings && selected.length > 0}
-    <div
-      class="sticky top-0 z-30 flex items-center justify-between gap-2 p-2 mb-3 rounded-lg preset-filled-primary-500 print:hidden"
-    >
-      <span class="text-sm font-semibold">
-        {$_('page.trainingPlan.selectedCount', { values: { count: selected.length } })}
-      </span>
-      <div class="flex gap-2">
-        <button class="btn btn-sm preset-tonal-surface" onclick={() => (selected = [])}>
-          {$_('button.cancel')}
-        </button>
+  {#if view === 'table'}
+    <div class="flex flex-wrap gap-2 mb-3 print:hidden">
+      {#each data.trainings as t (t.id)}
         <button
-          class="btn btn-sm preset-filled-surface-50-950"
-          onclick={() => (dialogRows = selectedRows)}
+          class="chip {gridTraining?.id === t.id
+            ? 'preset-filled-secondary-500'
+            : 'preset-tonal-surface'}"
+          onclick={() => setGridTraining(t.id)}
+          aria-pressed={gridTraining?.id === t.id}
         >
-          <Fa icon={faPen} />
-          <span>{$_('button.edit')}</span>
+          {$_('weekdayShort.' + t.weekday)} · {t.title}
         </button>
+      {/each}
+      {#if data.year === dayjs().year()}
+        <button
+          class="chip {showPast ? 'preset-filled-surface-500' : 'preset-tonal-surface'}"
+          onclick={() => (showPast = !showPast)}
+          aria-pressed={showPast}
+        >
+          {$_('page.trainingPlan.showPast')}
+        </button>
+      {/if}
+    </div>
+    {#if gridTraining}
+      {#key `${gridTraining.id}|${data.year}|${showPast}`}
+        <PlanGrid
+          training={gridTraining}
+          rows={gridRows}
+          members={data.members}
+          {topics}
+          canEdit={data.canPlanTrainings}
+          onchanged={() => invalidate('training-plan:year')}
+        />
+      {/key}
+    {/if}
+  {:else}
+    <!-- Filters -->
+    <div class="flex flex-wrap gap-2 mb-3 print:hidden">
+      {#each data.trainings as t (t.id)}
+        <button
+          class="chip {hidden.includes(t.id)
+            ? 'preset-tonal-surface opacity-60'
+            : 'preset-filled-secondary-500'}"
+          onclick={() => toggleTraining(t.id)}
+          aria-pressed={!hidden.includes(t.id)}
+        >
+          {$_('weekdayShort.' + t.weekday)} · {t.title}
+        </button>
+      {/each}
+      <button
+        class="chip {onlyOpen ? 'preset-filled-warning-500' : 'preset-tonal-surface'}"
+        onclick={() => (onlyOpen = !onlyOpen)}
+        aria-pressed={onlyOpen}
+      >
+        <Fa icon={faUserSlash} size="sm" />
+        {$_('page.trainingPlan.onlyOpen', { values: { count: openCount } })}
+      </button>
+      {#if data.year === dayjs().year()}
+        <button
+          class="chip {showPast ? 'preset-filled-surface-500' : 'preset-tonal-surface'}"
+          onclick={() => (showPast = !showPast)}
+          aria-pressed={showPast}
+        >
+          {$_('page.trainingPlan.showPast')}
+        </button>
+      {/if}
+    </div>
+
+    {#if counts.length > 0}
+      <details class="card border border-surface-200-800 px-3 py-2 mb-4 print:hidden">
+        <summary class="cursor-pointer text-sm font-semibold">
+          {$_('page.trainingPlan.trainerCounts')}
+        </summary>
+        <div class="flex flex-wrap gap-2 mt-2">
+          {#each counts as c (c.id)}
+            <span class="chip bg-surface-100-900 text-surface-900-50">
+              {c.name} <span class="font-bold">{c.count}</span>
+            </span>
+          {/each}
+        </div>
+      </details>
+    {/if}
+
+    {#if data.canPlanTrainings && selected.length > 0}
+      <div
+        class="sticky top-0 z-30 flex items-center justify-between gap-2 p-2 mb-3 rounded-lg preset-filled-primary-500 print:hidden"
+      >
+        <span class="text-sm font-semibold">
+          {$_('page.trainingPlan.selectedCount', { values: { count: selected.length } })}
+        </span>
+        <div class="flex gap-2">
+          <button class="btn btn-sm preset-tonal-surface" onclick={() => (selected = [])}>
+            {$_('button.cancel')}
+          </button>
+          <button
+            class="btn btn-sm preset-filled-surface-50-950"
+            onclick={() => (dialogRows = selectedRows)}
+          >
+            <Fa icon={faPen} />
+            <span>{$_('button.edit')}</span>
+          </button>
+        </div>
       </div>
+    {/if}
+
+    {#if months.length === 0}
+      <div class="empty-state"><p>{$_('page.trainingPlan.nothingShown')}</p></div>
+    {/if}
+
+    <div class="space-y-6">
+      {#each months as group (group.month)}
+        <section class="break-inside-avoid-page">
+          <h3>{monthLabel(group.month)}</h3>
+          <ul class="flex flex-col gap-1.5">
+            {#each group.items as item (item.kind + item.date + (item.kind === 'row' ? key(item.row) : item.kind === 'event' ? item.event.id : item.brk.id))}
+              {#if item.kind === 'break'}
+                <li
+                  class="flex flex-wrap items-center gap-x-2 px-3 py-1.5 rounded-lg text-sm {item
+                    .brk.cancels_training
+                    ? 'preset-tonal-warning'
+                    : 'preset-tonal-surface'}"
+                >
+                  <Fa icon={item.brk.cancels_training ? faDoorClosed : faUmbrellaBeach} />
+                  <span class="font-semibold">{item.brk.title}</span>
+                  <span>{range(item.brk)}</span>
+                  <span class="text-xs opacity-80">
+                    {item.brk.cancels_training
+                      ? $_('page.trainingPlan.breakClosed')
+                      : $_('page.trainingPlan.breakOpen')}
+                  </span>
+                </li>
+              {:else if item.kind === 'event'}
+                <li
+                  class="flex items-center gap-2 px-3 py-1.5 rounded-lg preset-tonal-secondary text-sm"
+                >
+                  <Fa icon={faCalendarDays} />
+                  <span class="w-16 flex-none">{dayjs(item.date).format('DD.MM.')}</span>
+                  <a href="/dashboard/events/{item.event.id}" class="truncate hover:underline">
+                    {item.event.title}
+                  </a>
+                </li>
+              {:else}
+                {@const r = item.row}
+                {@const trainer = r.trainerId}
+                <li
+                  class="list-item py-2 {r.cancelled ? 'opacity-60' : ''} {r.date === today
+                    ? 'ring-2 ring-primary-500'
+                    : ''}"
+                >
+                  {#if data.canPlanTrainings}
+                    <input
+                      type="checkbox"
+                      class="checkbox print:hidden"
+                      checked={selected.includes(key(r))}
+                      onchange={() => toggleSelected(r)}
+                      aria-label={$_('page.trainingPlan.select')}
+                    />
+                  {/if}
+                  <div class="w-14 flex-none text-center leading-tight">
+                    <div class="text-xs text-surface-600-400">
+                      {$_('weekdayShort.' + r.training.weekday)}
+                    </div>
+                    <div class="font-bold">{dayjs(r.date).format('DD.MM.')}</div>
+                  </div>
+                  <a href="/dashboard/trainings/{r.training.id}/{r.date}" class="list-item-content">
+                    <div class="font-semibold truncate {r.cancelled ? 'line-through' : ''}">
+                      {r.training.title}
+                      <span class="font-normal text-sm text-surface-600-400"
+                        >{r.training.dateFrom}</span
+                      >
+                    </div>
+                    {#if r.cancelled}
+                      <div class="text-sm">
+                        {r.session?.cancelled
+                          ? $_('page.trainingPlan.cancelled')
+                          : $_('page.trainingPlan.cancelledBreak', {
+                              values: { title: r.break?.title ?? '' }
+                            })}
+                        {#if r.session?.notes}· {r.session.notes}{/if}
+                      </div>
+                    {:else}
+                      <div class="flex flex-wrap items-center gap-x-3 text-sm">
+                        <span
+                          class="meta-item {trainer == null
+                            ? 'text-warning-700-300 font-semibold'
+                            : ''}"
+                        >
+                          <Fa icon={faUser} size="sm" />
+                          {trainer != null
+                            ? (memberName.get(trainer) ?? '?')
+                            : $_('page.trainingPlan.trainerOpen')}
+                          {#if r.defaultTrainer}
+                            <span class="text-xs text-surface-600-400"
+                              >({$_('page.trainingPlan.mainTrainer')})</span
+                            >
+                          {/if}
+                        </span>
+                        {#if r.session?.topic}
+                          <span class="meta-item">
+                            <Fa icon={faBookOpen} size="sm" />
+                            {r.session.topic}
+                          </span>
+                        {/if}
+                      </div>
+                      {#if r.session?.notes}
+                        <div class="text-xs text-surface-600-400 truncate">{r.session.notes}</div>
+                      {/if}
+                    {/if}
+                    {#if r.events.length > 0}
+                      <div class="flex flex-wrap gap-1 mt-1">
+                        {#each r.events as e (e.id)}
+                          <span class="badge preset-tonal-secondary text-xs">
+                            <Fa icon={faCalendarDays} size="xs" />
+                            {e.title}
+                          </span>
+                        {/each}
+                      </div>
+                    {/if}
+                  </a>
+                  {#if data.canPlanTrainings}
+                    <button
+                      class="btn-icon btn-icon-sm preset-tonal-primary flex-none print:hidden"
+                      onclick={() => (dialogRows = [r])}
+                      aria-label="{$_('button.edit')}: {r.training.title} {r.date}"
+                    >
+                      <Fa icon={faPen} />
+                    </button>
+                  {/if}
+                </li>
+              {/if}
+            {/each}
+          </ul>
+        </section>
+      {/each}
     </div>
   {/if}
-
-  {#if months.length === 0}
-    <div class="empty-state"><p>{$_('page.trainingPlan.nothingShown')}</p></div>
-  {/if}
-
-  <div class="space-y-6">
-    {#each months as group (group.month)}
-      <section class="break-inside-avoid-page">
-        <h3>{monthLabel(group.month)}</h3>
-        <ul class="flex flex-col gap-1.5">
-          {#each group.items as item (item.kind + item.date + (item.kind === 'row' ? key(item.row) : item.kind === 'event' ? item.event.id : item.brk.id))}
-            {#if item.kind === 'break'}
-              <li
-                class="flex flex-wrap items-center gap-x-2 px-3 py-1.5 rounded-lg text-sm {item.brk
-                  .cancels_training
-                  ? 'preset-tonal-warning'
-                  : 'preset-tonal-surface'}"
-              >
-                <Fa icon={item.brk.cancels_training ? faDoorClosed : faUmbrellaBeach} />
-                <span class="font-semibold">{item.brk.title}</span>
-                <span>{range(item.brk)}</span>
-                <span class="text-xs opacity-80">
-                  {item.brk.cancels_training
-                    ? $_('page.trainingPlan.breakClosed')
-                    : $_('page.trainingPlan.breakOpen')}
-                </span>
-              </li>
-            {:else if item.kind === 'event'}
-              <li
-                class="flex items-center gap-2 px-3 py-1.5 rounded-lg preset-tonal-secondary text-sm"
-              >
-                <Fa icon={faCalendarDays} />
-                <span class="w-16 flex-none">{dayjs(item.date).format('DD.MM.')}</span>
-                <a href="/dashboard/events/{item.event.id}" class="truncate hover:underline">
-                  {item.event.title}
-                </a>
-              </li>
-            {:else}
-              {@const r = item.row}
-              {@const trainer = r.trainerId}
-              <li
-                class="list-item py-2 {r.cancelled ? 'opacity-60' : ''} {r.date === today
-                  ? 'ring-2 ring-primary-500'
-                  : ''}"
-              >
-                {#if data.canPlanTrainings}
-                  <input
-                    type="checkbox"
-                    class="checkbox print:hidden"
-                    checked={selected.includes(key(r))}
-                    onchange={() => toggleSelected(r)}
-                    aria-label={$_('page.trainingPlan.select')}
-                  />
-                {/if}
-                <div class="w-14 flex-none text-center leading-tight">
-                  <div class="text-xs text-surface-600-400">
-                    {$_('weekdayShort.' + r.training.weekday)}
-                  </div>
-                  <div class="font-bold">{dayjs(r.date).format('DD.MM.')}</div>
-                </div>
-                <a href="/dashboard/trainings/{r.training.id}/{r.date}" class="list-item-content">
-                  <div class="font-semibold truncate {r.cancelled ? 'line-through' : ''}">
-                    {r.training.title}
-                    <span class="font-normal text-sm text-surface-600-400"
-                      >{r.training.dateFrom}</span
-                    >
-                  </div>
-                  {#if r.cancelled}
-                    <div class="text-sm">
-                      {r.session?.cancelled
-                        ? $_('page.trainingPlan.cancelled')
-                        : $_('page.trainingPlan.cancelledBreak', {
-                            values: { title: r.break?.title ?? '' }
-                          })}
-                      {#if r.session?.notes}· {r.session.notes}{/if}
-                    </div>
-                  {:else}
-                    <div class="flex flex-wrap items-center gap-x-3 text-sm">
-                      <span
-                        class="meta-item {trainer == null
-                          ? 'text-warning-700-300 font-semibold'
-                          : ''}"
-                      >
-                        <Fa icon={faUser} size="sm" />
-                        {trainer != null
-                          ? (memberName.get(trainer) ?? '?')
-                          : $_('page.trainingPlan.trainerOpen')}
-                        {#if r.defaultTrainer}
-                          <span class="text-xs text-surface-600-400"
-                            >({$_('page.trainingPlan.mainTrainer')})</span
-                          >
-                        {/if}
-                      </span>
-                      {#if r.session?.topic}
-                        <span class="meta-item">
-                          <Fa icon={faBookOpen} size="sm" />
-                          {r.session.topic}
-                        </span>
-                      {/if}
-                    </div>
-                    {#if r.session?.notes}
-                      <div class="text-xs text-surface-600-400 truncate">{r.session.notes}</div>
-                    {/if}
-                  {/if}
-                  {#if r.events.length > 0}
-                    <div class="flex flex-wrap gap-1 mt-1">
-                      {#each r.events as e (e.id)}
-                        <span class="badge preset-tonal-secondary text-xs">
-                          <Fa icon={faCalendarDays} size="xs" />
-                          {e.title}
-                        </span>
-                      {/each}
-                    </div>
-                  {/if}
-                </a>
-                {#if data.canPlanTrainings}
-                  <button
-                    class="btn-icon btn-icon-sm preset-tonal-primary flex-none print:hidden"
-                    onclick={() => (dialogRows = [r])}
-                    aria-label="{$_('button.edit')}: {r.training.title} {r.date}"
-                  >
-                    <Fa icon={faPen} />
-                  </button>
-                {/if}
-              </li>
-            {/if}
-          {/each}
-        </ul>
-      </section>
-    {/each}
-  </div>
 {/if}
 
 {#if dialogRows}

@@ -1039,6 +1039,15 @@
         "run": "{count} Termine übernehmen",
         "done": "{sessions} Termine und {breaks} Ferien übernommen",
         "error": "Fehler beim Übernehmen des Sheets"
+      },
+      "view": {
+        "list": "Übersicht",
+        "table": "Pro Training"
+      },
+      "grid": {
+        "date": "Datum",
+        "hint": "Direkt eintippen, jede Zelle speichert sofort. Enter oder Pfeiltasten springen zur nächsten Zeile; eine aus Excel oder Google Sheets kopierte Spalte füllt beim Einfügen die Zeilen nach unten.",
+        "pasted": "{count, plural, one {# Zeile} other {# Zeilen}} eingefügt"
       }
     }
   },
