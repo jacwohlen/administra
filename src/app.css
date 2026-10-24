@@ -248,6 +248,71 @@ body {
   border-bottom-color: var(--color-primary-500);
 }
 
+/* Toast - Skeleton v4 is headless; zag-js places the group and stacks the
+   toasts through these variables (see src/lib/components/AppToaster.svelte) */
+[data-scope='toast'][data-part='group'] {
+  z-index: 60;
+}
+
+[data-scope='toast'][data-part='root'] {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  width: min(24rem, calc(100vw - 2rem));
+  padding: 0.75rem 0.5rem 0.75rem 1rem;
+  translate: var(--x) var(--y);
+  scale: var(--scale);
+  z-index: var(--z-index);
+  height: var(--height);
+  opacity: var(--opacity);
+  overflow-wrap: anywhere;
+  will-change: translate, opacity, scale;
+  transition:
+    translate 400ms,
+    scale 400ms,
+    opacity 400ms,
+    height 400ms;
+  transition-timing-function: cubic-bezier(0.21, 1.02, 0.73, 1);
+}
+
+[data-scope='toast'][data-part='root'][data-state='closed'] {
+  transition:
+    translate 400ms,
+    scale 400ms,
+    opacity 200ms;
+  transition-timing-function: cubic-bezier(0.06, 0.71, 0.55, 1);
+}
+
+[data-scope='toast'][data-part='message'] {
+  flex: 1;
+  min-width: 0;
+  align-self: center;
+}
+
+[data-scope='toast'][data-part='title'] {
+  font-weight: 600;
+}
+
+[data-scope='toast'][data-part='description'] {
+  font-size: 0.875rem;
+}
+
+[data-scope='toast'][data-part='close-trigger'] {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  margin-block: -0.6rem;
+  border-radius: 9999px;
+  opacity: 0.7;
+}
+
+[data-scope='toast'][data-part='close-trigger']:hover {
+  opacity: 1;
+}
+
 /* SegmentedControl - pill toggle */
 [data-scope='radio-group'][data-part='root'] {
   display: inline-flex;

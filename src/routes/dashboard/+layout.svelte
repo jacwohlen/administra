@@ -1,6 +1,6 @@
 <script lang="ts">
   import { goto } from '$app/navigation';
-  import { Tabs, Toast } from '@skeletonlabs/skeleton-svelte';
+  import { Tabs } from '@skeletonlabs/skeleton-svelte';
   import { page } from '$app/state';
   import Fa from 'svelte-fa';
   import {
@@ -22,7 +22,7 @@
   import type { LayoutData } from './$types';
   import { _ } from 'svelte-i18n';
   import type { Snippet } from 'svelte';
-  import { toaster } from '$lib/toast';
+  import AppToaster from '$lib/components/AppToaster.svelte';
   import LanguageSwitcher from '$lib/components/LanguageSwitcher.svelte';
 
   let { data, children }: { data: LayoutData; children: Snippet } = $props();
@@ -275,4 +275,4 @@
   </main>
 </div>
 
-<Toast.Group {toaster} />
+<AppToaster />
