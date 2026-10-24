@@ -270,7 +270,7 @@
             <LanguageSwitcher onselect={() => (popoverOpen = false)} />
           </div>
           <form action="/logout" method="POST" use:enhance={submitLogout}>
-            <button type="submit" class="btn preset-filled w-full">
+            <button type="submit" class="btn preset-tonal-surface w-full">
               {$_('button.logout')}
             </button>
           </form>

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { modalDialog } from '$lib/modalDialog';
+  import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
   import type { PageData } from './$types';
   let { data }: { data: PageData } = $props();
   import LogList from './LogList.svelte';
@@ -87,17 +87,33 @@
 
 <!-- Header -->
 <div class="page-header-back">
-  <a href="/dashboard/trainings" class="btn preset-tonal-surface flex-shrink-0">
+  <a
+    href="/dashboard/trainings"
+    class="btn preset-tonal-surface flex-shrink-0"
+    title={$_('page.trainings.backToList')}
+    aria-label={$_('page.trainings.backToList')}
+  >
     <Fa icon={faArrowLeft} />
   </a>
   <h1 class="flex-1 min-w-0 truncate">{data.title}</h1>
   {#if data.canWrite}
     <div class="flex gap-2 flex-shrink-0">
-      <a href="/dashboard/trainings/{data.id}/edit" class="btn preset-tonal-surface">
+      <a
+        href="/dashboard/trainings/{data.id}/edit"
+        class="btn preset-tonal-surface"
+        title={$_('button.edit')}
+        aria-label={$_('button.edit')}
+      >
         <Fa icon={faEdit} />
       </a>
       <div class="relative">
-        <button class="btn preset-tonal-surface" bind:this={menuBtnEl} onclick={toggleMenu}>
+        <button
+          class="btn preset-tonal-surface"
+          bind:this={menuBtnEl}
+          onclick={toggleMenu}
+          title={$_('page.members.moreActions')}
+          aria-label={$_('page.members.moreActions')}
+        >
           <Fa icon={faEllipsisVertical} />
         </button>
         {#if menuOpen}
@@ -152,28 +168,13 @@
 {/if}
 
 {#if showDeleteConfirm}
-  <!-- svelte-ignore a11y_no_static_element_interactions -->
-  <div
-    class="modal-overlay"
-    onclick={() => handleDeleteResponse(false)}
-    onkeydown={(e) => {
-      if (e.key === 'Escape') handleDeleteResponse(false);
-    }}
-  >
-    <!-- svelte-ignore a11y_no_static_element_interactions -->
-    <div use:modalDialog class="card modal-dialog" onclick={(e) => e.stopPropagation()}>
-      <h3>{$_('page.trainings.deleteConfirmTitle')}</h3>
-      <p class="mb-4">{$_('page.trainings.deleteConfirmMessage')} "{data.title}"?</p>
-      <div class="flex justify-end gap-2">
-        <button class="btn preset-tonal-surface" onclick={() => handleDeleteResponse(false)}>
-          {$_('button.cancel')}
-        </button>
-        <button class="btn preset-filled-error-500" onclick={() => handleDeleteResponse(true)}>
-          {$_('button.delete')}
-        </button>
-      </div>
-    </div>
-  </div>
+  <ConfirmDialog
+    title={$_('page.trainings.deleteConfirmTitle')}
+    message={`${$_('page.trainings.deleteConfirmMessage')} "${data.title}"?`}
+    confirmLabel={$_('button.delete')}
+    oncancel={() => handleDeleteResponse(false)}
+    onconfirm={() => handleDeleteResponse(true)}
+  />
 {/if}
 
 <!-- Logs section -->

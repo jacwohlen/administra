@@ -120,17 +120,32 @@ Skeleton v4 is headless, so `src/app.css` styles these directly:
 
 - **Buttons:** `btn preset-filled-primary-500` (one primary action per view),
   `btn preset-tonal-surface` (everything else), `btn preset-filled-error-500` /
-  `preset-tonal-error` (destructive).
+  `preset-tonal-error` (destructive). Never the uncoloured `preset-filled` /
+  `preset-tonal`. Icon-only buttons carry `title` and `aria-label`.
 - **Navigation:** a tab bar with an icon per section; icon-only on mobile
   (icons 1.4em), icon + label from 640px. Active tab = primary text and a 2px
   primary underline. Profile avatar on the right.
 - **Segmented control:** grey pill track (`surface-200-800`), selected item is
   a white pill with a soft shadow.
-- **Avatars:** round; fallback initials in white on primary red.
+- **Avatars:** round; fallback initials in bold on `surface-100-900`
+  (`.avatar-initials`), last name first. Only the trial-training list tints
+  them by status.
 - **Entity badge:** 2.5rem rounded square with bold initials on `surface-100`.
 - **Modals:** 50% black overlay, card `max-width: 24rem` (`32rem` large),
-  `shadow-2xl`.
-- **Empty states:** centred, muted (`surface-600-400`), 2rem vertical padding.
+  `shadow-2xl`. Put `use:modalDialog` (`src/lib/modalDialog.ts`) on the
+  `.modal-dialog` box: it moves focus in so Escape and Tab work. Escape and a
+  click on the overlay close it.
+- **Confirmations:** every delete, remove, disable or withdraw asks first
+  with `ConfirmDialog` (`src/lib/components/ConfirmDialog.svelte`): a short
+  title, a sentence naming the thing, Cancel then the red action.
+- **Forms:** label above the field, `*` after the label of required fields,
+  Cancel (tonal) then Save (primary) at the bottom right.
+- **Detail pages:** `.page-header-back` with an icon-only back button, the
+  entity name as `h1`, actions on the right.
+- **Empty states:** `p.empty-state`: centred, muted (`surface-600-400`), 2rem
+  vertical padding. Lists show one when empty and when a search finds nothing.
+- **Errors:** a toast with a translated message; never raw database text,
+  `alert()` or only `console.error`.
 - **Icons:** Font Awesome solid (`@fortawesome/free-solid-svg-icons` via
   `svelte-fa`). Medals use emoji 🥇🥈🥉.
 
@@ -140,4 +155,5 @@ German first (Swiss club context), English second (`src/lib/i18n/locales`).
 Short, friendly, informal **du**: "Heute findet kein Training statt!",
 "Dein Konto wurde deaktiviert. Bitte wende dich an einen Administrator."
 Gender-inclusive where it matters ("deine Trainerin oder deinen Trainer").
-Sentence case for labels and buttons.
+Sentence case for labels and buttons ("Training erstellen", not "Training
+Erstellen"); one ellipsis character (…), never three dots.

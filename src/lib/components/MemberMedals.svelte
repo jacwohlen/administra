@@ -1,4 +1,5 @@
 <script lang="ts">
+  import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
   import { modalDialog } from '$lib/modalDialog';
   import type { Medal, MemberMedal, PastEvent } from '$lib/models';
   import { MEDALS, medalEmoji, medalTally, sortMedals } from '$lib/gradeUtils';
@@ -119,7 +120,7 @@
   <div class="mb-2">
     <MedalTally {tally} />
   </div>
-  <div class="divide-y divide-surface-300-700">
+  <div class="divide-y divide-surface-200-800">
     {#each sorted as m (m.id)}
       <div class="flex items-center gap-3 py-2">
         <span class="text-2xl leading-none flex-none">{medalEmoji(m.medal)}</span>
@@ -132,9 +133,10 @@
         <span class="text-xs text-surface-600-400 flex-none">{formatDate(m.date)}</span>
         {#if !readonly}
           <button
-            class="p-1 text-surface-600-400 hover:text-error-600-400 flex-none"
+            class="btn-icon text-surface-600-400 hover:text-error-600-400 flex-none"
             title={$_('button.remove')}
             onclick={() => (confirmDeleteId = m.id)}
+            aria-label={$_('button.remove')}
           >
             <Fa icon={faTrash} size="xs" />
           </button>
@@ -169,12 +171,12 @@
           </label>
         {/if}
         <label class="label">
-          <span>{$_('medals.competition')}</span>
+          <span>{$_('medals.competition')} *</span>
           <input class="input" type="text" bind:value={form.competition} required />
         </label>
         <div class="grid grid-cols-2 gap-3">
           <label class="label">
-            <span>{$_('medals.date')}</span>
+            <span>{$_('medals.date')} *</span>
             <input class="input" type="date" bind:value={form.date} required />
           </label>
           <label class="label">
@@ -236,26 +238,11 @@
 
 {#if confirmDeleteId !== null}
   {@const id = confirmDeleteId}
-  <!-- svelte-ignore a11y_no_static_element_interactions -->
-  <div
-    class="modal-overlay"
-    onclick={() => (confirmDeleteId = null)}
-    onkeydown={(e) => {
-      if (e.key === 'Escape') confirmDeleteId = null;
-    }}
-  >
-    <!-- svelte-ignore a11y_no_static_element_interactions -->
-    <div use:modalDialog class="card modal-dialog" onclick={(e) => e.stopPropagation()}>
-      <h3>{$_('dialog.confirm.title')}</h3>
-      <p class="mb-4">{$_('medals.deleteConfirm')}</p>
-      <div class="flex justify-end gap-2">
-        <button class="btn preset-tonal-surface" onclick={() => (confirmDeleteId = null)}>
-          {$_('button.cancel')}
-        </button>
-        <button class="btn preset-filled-error-500" onclick={() => remove(id)}>
-          {$_('button.delete')}
-        </button>
-      </div>
-    </div>
-  </div>
+  <ConfirmDialog
+    title={$_('dialog.confirm.title')}
+    message={$_('medals.deleteConfirm')}
+    confirmLabel={$_('button.delete')}
+    oncancel={() => (confirmDeleteId = null)}
+    onconfirm={() => remove(id)}
+  />
 {/if}

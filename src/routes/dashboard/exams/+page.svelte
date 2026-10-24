@@ -99,9 +99,7 @@
 {/snippet}
 
 {#if data.exams.length === 0}
-  <div class="empty-state">
-    <p>{$_('page.exams.empty')}</p>
-  </div>
+  <p class="empty-state">{$_('page.exams.empty')}</p>
 {:else}
   <div class="space-y-6">
     {#if upcoming.length > 0}

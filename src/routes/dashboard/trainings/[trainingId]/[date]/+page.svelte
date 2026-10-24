@@ -9,7 +9,8 @@
   import Fa from 'svelte-fa';
   import {
     faArrowLeft,
-    faArrowRight,
+    faChevronLeft,
+    faChevronRight,
     faExclamationTriangle,
     faClipboardList,
     faUsers,
@@ -200,19 +201,21 @@
   let formattedDate = $derived(dayjs(data.date, 'YYYY-MM-DD').format('DD. MMMM YYYY'));
 </script>
 
-<!-- Header card -->
-<div class="card p-4 mb-4">
-  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-    <div>
-      <h1>{data.title}</h1>
-      <div class="flex items-center gap-2 mt-1">
-        <span class="badge preset-tonal-secondary">{data.section}</span>
-        <span class="text-sm opacity-70">
-          {$_('weekday.' + data.weekday)} | {data.dateFrom}
-        </span>
-      </div>
-    </div>
-  </div>
+<!-- Header: back to the training + title -->
+<div class="page-header-back">
+  <a
+    href="/dashboard/trainings/{data.trainingId}"
+    class="btn preset-tonal-surface flex-shrink-0"
+    title={$_('page.trainings.backToTraining')}
+    aria-label={$_('page.trainings.backToTraining')}
+  >
+    <Fa icon={faArrowLeft} />
+  </a>
+  <h1 class="flex-1 min-w-0 truncate">{data.title}</h1>
+</div>
+<div class="flex flex-wrap items-center gap-2 mb-4 text-sm">
+  <span class="chip preset-tonal-secondary">{data.section}</span>
+  <span class="text-surface-600-400">{$_('weekday.' + data.weekday)} | {data.dateFrom}</span>
 </div>
 
 <!-- Date navigation -->
@@ -224,7 +227,7 @@
     ontouchstart={() => preloadWeek(-1)}
     onfocus={() => preloadWeek(-1)}
   >
-    <Fa icon={faArrowLeft} />
+    <Fa icon={faChevronLeft} />
     <span class="hidden sm:inline">{$_('button.week')}</span>
   </button>
   <h3>{formattedDate}</h3>
@@ -236,7 +239,7 @@
     onfocus={() => preloadWeek(1)}
   >
     <span class="hidden sm:inline">{$_('button.week')}</span>
-    <Fa icon={faArrowRight} />
+    <Fa icon={faChevronRight} />
   </button>
 </div>
 

@@ -16,6 +16,9 @@
     </a>
   {/if}
 </div>
+{#if data.trainings.length === 0}
+  <p class="empty-state">{$_('page.trainings.empty')}</p>
+{/if}
 <ul class="flex flex-col gap-2">
   {#each data.trainings as t, index (t.id)}
     {#if index === 0 || t.weekday !== data.trainings[index - 1].weekday}

@@ -73,13 +73,9 @@
 </div>
 
 {#if data.events.length === 0}
-  <div class="empty-state">
-    <p class="text-surface-600-400">{$_('page.events.no_events')}</p>
-  </div>
+  <p class="empty-state">{$_('page.events.no_events')}</p>
 {:else if filteredEvents.length === 0 && searchTerm.trim()}
-  <div class="empty-state">
-    <p class="text-surface-600-400">{$_('page.events.no_events_found')}</p>
-  </div>
+  <p class="empty-state">{$_('page.events.no_events_found')}</p>
 {:else}
   <div class="space-y-6">
     <!-- Today's Events -->

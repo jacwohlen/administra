@@ -265,7 +265,11 @@
       "noLogsMessage": "Für dieses Training wurde noch keine Anwesenheit erfasst.",
       "supportedFormatsList": "PDF, Bilder, Word-Dokumente, Textdateien",
       "attachment": "Anhang",
-      "pdfPreview": "PDF-Vorschau"
+      "pdfPreview": "PDF-Vorschau",
+      "backToList": "Zurück zu den Trainings",
+      "backToTraining": "Zurück zum Training",
+      "empty": "Noch keine Trainings erfasst.",
+      "removeParticipantConfirm": "{name} aus diesem Training entfernen?"
     },
     "members": {
       "title": "Mitglieder",
@@ -319,7 +323,9 @@
       },
       "moreActions": "Weitere Aktionen",
       "archived": "Archiviert am {date} – erscheint nicht in der Mitgliederliste und der Suche.",
-      "archivedLink": "Im Probetraining-Archiv wiederherstellen"
+      "archivedLink": "Im Probetraining-Archiv wiederherstellen",
+      "empty": "Noch keine Mitglieder erfasst.",
+      "noResults": "Keine Mitglieder entsprechen deiner Suche"
     },
     "stats": {
       "all": "Alle",
@@ -453,7 +459,9 @@
       "coachError": "Coach-Status konnte nicht gespeichert werden",
       "addParticipantError": "Teilnehmer konnte nicht hinzugefügt werden",
       "createError": "Fehler beim Erstellen des Events",
-      "updateError": "Fehler beim Aktualisieren des Events"
+      "updateError": "Fehler beim Aktualisieren des Events",
+      "backToList": "Zurück zu den Events",
+      "backToEvent": "Zurück zum Event"
     },
     "trialRegistration": {
       "title": "Anmeldung Probetraining",

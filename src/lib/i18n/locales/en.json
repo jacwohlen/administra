@@ -265,7 +265,11 @@
       "noLogsMessage": "No attendance recorded for this training yet.",
       "supportedFormatsList": "PDF, images, Word documents, text files",
       "attachment": "Attachment",
-      "pdfPreview": "PDF preview"
+      "pdfPreview": "PDF preview",
+      "backToList": "Back to trainings",
+      "backToTraining": "Back to training",
+      "empty": "No trainings yet.",
+      "removeParticipantConfirm": "Remove {name} from this training?"
     },
     "members": {
       "title": "Members",
@@ -319,7 +323,9 @@
       },
       "moreActions": "More actions",
       "archived": "Archived on {date} – not shown in the member list and search.",
-      "archivedLink": "Restore from the trial archive"
+      "archivedLink": "Restore from the trial archive",
+      "empty": "No members yet.",
+      "noResults": "No members match your search"
     },
     "stats": {
       "all": "All",
@@ -453,7 +459,9 @@
       "coachError": "Could not save coach status",
       "addParticipantError": "Could not add participant",
       "createError": "Error creating event",
-      "updateError": "Error updating event"
+      "updateError": "Error updating event",
+      "backToList": "Back to events",
+      "backToEvent": "Back to event"
     },
     "trialRegistration": {
       "title": "Trial Training Registration",

@@ -152,3 +152,8 @@
     {/if}
   {/each}
 </ul>
+{#if !data.members.some((m) => search(m.firstname, m.lastname))}
+  <p class="empty-state">
+    {searchTerm.trim() ? $_('page.members.noResults') : $_('page.members.empty')}
+  </p>
+{/if}

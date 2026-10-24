@@ -63,7 +63,12 @@
 </script>
 
 <div class="page-header-back">
-  <a href="/dashboard/events" class="btn preset-tonal-surface">
+  <a
+    href="/dashboard/events"
+    class="btn preset-tonal-surface"
+    title={$_('page.events.backToList')}
+    aria-label={$_('page.events.backToList')}
+  >
     <Fa icon={faArrowLeft} />
   </a>
   <h1>{$_('page.events.create_event')}</h1>

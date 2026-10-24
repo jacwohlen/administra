@@ -1,4 +1,5 @@
 <script lang="ts">
+  import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
   import { modalDialog } from '$lib/modalDialog';
   import type { PageData } from './$types';
   import { _ } from 'svelte-i18n';
@@ -353,32 +354,13 @@
   {/if}
 
   {#if showDeleteConfirm}
-    <!-- svelte-ignore a11y_no_static_element_interactions -->
-    <div
-      class="modal-overlay"
-      onclick={() => handleDeleteResponse(false)}
-      onkeydown={(e) => {
-        if (e.key === 'Escape') handleDeleteResponse(false);
-      }}
-    >
-      <!-- svelte-ignore a11y_no_static_element_interactions -->
-      <div use:modalDialog class="card modal-dialog" onclick={(e) => e.stopPropagation()}>
-        <h3>{$_('page.members.deleteConfirmTitle')}</h3>
-        <p class="mb-4">
-          {$_('page.members.deleteConfirmMessage')}
-          {data.firstname}
-          {data.lastname}?
-        </p>
-        <div class="flex justify-end gap-2">
-          <button class="btn preset-tonal-surface" onclick={() => handleDeleteResponse(false)}>
-            {$_('button.cancel')}
-          </button>
-          <button class="btn preset-filled-error-500" onclick={() => handleDeleteResponse(true)}>
-            {$_('button.delete')}
-          </button>
-        </div>
-      </div>
-    </div>
+    <ConfirmDialog
+      title={$_('page.members.deleteConfirmTitle')}
+      message={`${$_('page.members.deleteConfirmMessage')} ${data.firstname} ${data.lastname}?`}
+      confirmLabel={$_('button.delete')}
+      oncancel={() => handleDeleteResponse(false)}
+      onconfirm={() => handleDeleteResponse(true)}
+    />
   {/if}
 
   <MemberProfile

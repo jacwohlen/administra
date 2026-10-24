@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { modalDialog } from '$lib/modalDialog';
   import type { PageData } from './$types';
   import { supabaseClient } from '$lib/supabase';
   import { _ } from 'svelte-i18n';
@@ -256,16 +255,32 @@
 <div>
   <!-- Header: back + title + actions -->
   <div class="page-header-back">
-    <a href="/dashboard/events" class="btn preset-tonal-surface flex-shrink-0">
+    <a
+      href="/dashboard/events"
+      class="btn preset-tonal-surface flex-shrink-0"
+      title={$_('page.events.backToList')}
+      aria-label={$_('page.events.backToList')}
+    >
       <Fa icon={faArrowLeft} />
     </a>
     <h1 class="flex-1 min-w-0 truncate">{data.event.title}</h1>
     {#if data.canWrite}
       <div class="flex gap-2 flex-shrink-0">
-        <a href="/dashboard/events/{data.event.id}/edit" class="btn preset-tonal-surface">
+        <a
+          href="/dashboard/events/{data.event.id}/edit"
+          class="btn preset-tonal-surface"
+          title={$_('button.edit')}
+          aria-label={$_('button.edit')}
+        >
           <Fa icon={faEdit} />
         </a>
-        <button class="btn preset-tonal-error" onclick={confirmDelete} disabled={isDeleting}>
+        <button
+          class="btn preset-tonal-error"
+          onclick={confirmDelete}
+          disabled={isDeleting}
+          title={$_('button.delete')}
+          aria-label={$_('button.delete')}
+        >
           <Fa icon={faTrash} />
         </button>
       </div>
@@ -300,28 +315,13 @@
   </div>
 
   {#if showDeleteConfirm}
-    <!-- svelte-ignore a11y_no_static_element_interactions -->
-    <div
-      class="modal-overlay"
-      onclick={() => handleDeleteResponse(false)}
-      onkeydown={(e) => {
-        if (e.key === 'Escape') handleDeleteResponse(false);
-      }}
-    >
-      <!-- svelte-ignore a11y_no_static_element_interactions -->
-      <div use:modalDialog class="card modal-dialog" onclick={(e) => e.stopPropagation()}>
-        <h3>{$_('page.events.deleteConfirmTitle')}</h3>
-        <p class="mb-4">{$_('page.events.deleteConfirmMessage')} "{data.event.title}"?</p>
-        <div class="flex justify-end gap-2">
-          <button class="btn preset-tonal-surface" onclick={() => handleDeleteResponse(false)}>
-            {$_('button.cancel')}
-          </button>
-          <button class="btn preset-filled-error-500" onclick={() => handleDeleteResponse(true)}>
-            {$_('button.delete')}
-          </button>
-        </div>
-      </div>
-    </div>
+    <ConfirmDialog
+      title={$_('page.events.deleteConfirmTitle')}
+      message={`${$_('page.events.deleteConfirmMessage')} "${data.event.title}"?`}
+      confirmLabel={$_('button.delete')}
+      oncancel={() => handleDeleteResponse(false)}
+      onconfirm={() => handleDeleteResponse(true)}
+    />
   {/if}
 
   <!-- Event Description -->
@@ -434,7 +434,7 @@
                   {#if member.img}
                     <img
                       src={member.img}
-                      alt="{member.firstname} {member.lastname}"
+                      alt="{member.lastname} {member.firstname}"
                       class="size-10 rounded-full object-cover"
                     />
                   {:else}
@@ -450,8 +450,8 @@
                 </div>
                 <div>
                   <div class="font-medium">
-                    {member.firstname}
                     {member.lastname}
+                    {member.firstname}
                     {#if placement}
                       <span class="ml-1" title={$_('medals.' + placement.medal)}>
                         {medalEmoji(placement.medal)}
