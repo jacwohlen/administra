@@ -70,6 +70,8 @@
   let connection = $state<'connecting' | 'live' | 'lost'>('connecting');
   // Notes someone else changed while this examiner was typing in the same field
   let noteConflicts = $state<Record<string, string>>({});
+  // Primitives, so a reload (new data) does not renew the subscription
+  let examId = $derived(data.exam.id);
   let candidateIds = $derived(data.candidates.map((c) => c.id).join(','));
 
   function noteKey(candidateId: number | undefined, itemKey: string | undefined): string {
@@ -104,7 +106,7 @@
     const reload = () => invalidate('app:exam-sheet');
     const channel = supabaseClient
       // Own name per subscription: the previous one may still be leaving
-      .channel(`exam-sheet:${data.exam.id}:${crypto.randomUUID()}`)
+      .channel(`exam-sheet:${examId}:${crypto.randomUUID()}`)
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'exam_scores', filter: `candidate_id=in.(${ids})` },

@@ -82,9 +82,10 @@
 
   // Live: registrations, call-ups, sheets started or finished and examiners
   // signing on elsewhere show up here (one reload for a burst of changes)
+  // Primitives, so a reload (new data) does not renew the subscription
+  let examId = $derived(data.exam.id);
   let candidateIds = $derived(data.candidates.map((c) => c.id).join(','));
   $effect(() => {
-    const examId = data.exam.id;
     const ids = candidateIds;
     let timer: ReturnType<typeof setTimeout> | undefined;
     const reload = () => {
