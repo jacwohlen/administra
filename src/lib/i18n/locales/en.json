@@ -657,7 +657,7 @@
       "errorSend": "We couldn't send the code. Please check the email address.",
       "errorCode": "That code is wrong or has expired. Please try again.",
       "errorRateLimit": "Too many attempts. Please wait a moment and try again.",
-      "errorOAuth": "Sign-in failed: {reason}"
+      "errorOAuth": "Could not log in: {reason}"
     },
     "club": {
       "myProfile": "My profile",
