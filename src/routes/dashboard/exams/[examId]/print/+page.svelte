@@ -20,11 +20,16 @@
 </svelte:head>
 
 <div class="page-header-back print:hidden">
-  <a href="/dashboard/exams/{data.exam.id}" class="btn preset-tonal-surface">
+  <a
+    href="/dashboard/exams/{data.exam.id}"
+    class="btn preset-tonal-surface flex-shrink-0"
+    title={$_('page.exams.backToDay')}
+    aria-label={$_('page.exams.backToDay')}
+  >
     <Fa icon={faArrowLeft} />
   </a>
-  <h1 class="flex-1">{$_('page.exams.print.title')}</h1>
-  <button class="btn preset-filled-primary-500" onclick={() => window.print()}>
+  <h1 class="flex-1 min-w-0 truncate">{$_('page.exams.print.title')}</h1>
+  <button class="btn preset-filled-primary-500 flex-shrink-0" onclick={() => window.print()}>
     <Fa icon={faPrint} />
     <span>{$_('page.exams.print.print')}</span>
   </button>
@@ -42,40 +47,43 @@
     <p class="mb-3 whitespace-pre-wrap">{data.exam.notes}</p>
   {/if}
 
-  <table class="w-full text-sm border-collapse">
-    <thead>
-      <tr>
-        <th>{$_('page.exams.print.nr')}</th>
-        <th>{$_('page.exams.print.lastname')}</th>
-        <th>{$_('page.exams.print.firstname')}</th>
-        <th>{$_('page.exams.print.year')}</th>
-        <th>{$_('page.exams.print.grade')}</th>
-        <th>{$_('page.exams.print.beltLength')}</th>
-        <th>{$_('page.exams.print.trainer')}</th>
-        <th>{$_('page.exams.print.group')}</th>
-      </tr>
-    </thead>
-    <tbody>
-      {#each rows as c, i (c.id)}
+  <!-- On a phone the table scrolls sideways; on paper it fits the page -->
+  <div class="overflow-x-auto print:overflow-visible">
+    <table class="w-full text-sm border-collapse">
+      <thead>
         <tr>
-          <td>{i + 1}</td>
-          <td>{c.member?.lastname}</td>
-          <td>{c.member?.firstname}</td>
-          <td>{c.member?.birthday?.slice(0, 4) ?? ''}</td>
-          <td>{c.grade}</td>
-          <td>{c.belt_length_cm ?? ''}</td>
-          <td>{c.trainer ?? ''}</td>
-          <td>{[c.group_name, c.call_time].filter(Boolean).join(' · ')}</td>
+          <th>{$_('page.exams.print.nr')}</th>
+          <th>{$_('page.exams.print.lastname')}</th>
+          <th>{$_('page.exams.print.firstname')}</th>
+          <th>{$_('page.exams.print.year')}</th>
+          <th>{$_('page.exams.print.grade')}</th>
+          <th>{$_('page.exams.print.beltLength')}</th>
+          <th>{$_('page.exams.print.trainer')}</th>
+          <th>{$_('page.exams.print.group')}</th>
         </tr>
-      {/each}
-      {#each Array.from({ length: EMPTY_ROWS }, (_, i) => i) as i (i)}
-        <tr class="h-8">
-          <td>{rows.length + i + 1}</td>
-          <td></td><td></td><td></td><td></td><td></td><td></td><td></td>
-        </tr>
-      {/each}
-    </tbody>
-  </table>
+      </thead>
+      <tbody>
+        {#each rows as c, i (c.id)}
+          <tr>
+            <td>{i + 1}</td>
+            <td>{c.member?.lastname}</td>
+            <td>{c.member?.firstname}</td>
+            <td>{c.member?.birthday?.slice(0, 4) ?? ''}</td>
+            <td>{c.grade}</td>
+            <td>{c.belt_length_cm ?? ''}</td>
+            <td>{c.trainer ?? ''}</td>
+            <td>{[c.group_name, c.call_time].filter(Boolean).join(' · ')}</td>
+          </tr>
+        {/each}
+        {#each Array.from({ length: EMPTY_ROWS }, (_, i) => i) as i (i)}
+          <tr class="h-8">
+            <td>{rows.length + i + 1}</td>
+            <td></td><td></td><td></td><td></td><td></td><td></td><td></td>
+          </tr>
+        {/each}
+      </tbody>
+    </table>
+  </div>
 </article>
 
 <style>
@@ -87,6 +95,13 @@
   }
   th {
     font-weight: 600;
+    white-space: nowrap;
+  }
+  /* On screen the list scrolls sideways instead of wrapping every cell */
+  @media screen {
+    td {
+      white-space: nowrap;
+    }
   }
   @media print {
     .print-sheet {

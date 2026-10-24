@@ -12,9 +12,9 @@ The grading process from registration to the new belt, without paper:
    belt), belt length for the new belt and a remark. Trainers can add
    candidates in the dashboard at any time. The _Anmeldeliste_ (print icon)
    is the sheet for the dojo wall, with empty rows for late entries.
-3. **Call-up** – select candidates and tap _Einteilen_ to give them a group
-   (e.g. "Kinder Halbgelb") and a time, and mark them as called up. Members
-   see group and time on their profile.
+3. **Call-up** – select candidates and tap _Einteilen_ (the group icon on a
+   phone) to give them a group (e.g. "Kinder Halbgelb") and a time, and mark
+   them as called up. Members see group and time on their profile.
 4. **Exam day** – each examiner opens the exam day on the phone, ticks the
    pair (or two pairs) they take over and taps _Bewerten_. That puts them on
    the candidates as examiner and opens one sheet with the candidates side

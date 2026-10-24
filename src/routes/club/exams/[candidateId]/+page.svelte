@@ -20,12 +20,13 @@
 <div class="page-header-back">
   <a
     href="/club?m={c.member_id}"
-    class="btn preset-tonal-surface"
+    class="btn preset-tonal-surface flex-shrink-0"
+    title={$_('page.club.myProfile')}
     aria-label={$_('page.club.myProfile')}
   >
     <Fa icon={faArrowLeft} />
   </a>
-  <div class="min-w-0">
+  <div class="flex-1 min-w-0">
     <h1 class="truncate">{c.member?.firstname} {c.member?.lastname} · {c.grade}</h1>
     {#if c.exam}
       <p class="text-sm text-surface-600-400">

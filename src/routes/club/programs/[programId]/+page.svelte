@@ -16,7 +16,8 @@
 <div class="page-header-back">
   <a
     href="/club"
-    class="btn preset-tonal-surface"
+    class="btn preset-tonal-surface flex-shrink-0"
+    title={$_('page.club.myProfile')}
     aria-label={$_('page.club.myProfile')}
     onclick={(e) => {
       // Back to whichever child's profile the program was opened from
@@ -28,12 +29,17 @@
   >
     <Fa icon={faArrowLeft} />
   </a>
-  {#if data.grade}
-    <BeltStrip color={data.grade.beltColor} color2={data.grade.beltColor2} size="lg" />
-  {/if}
   <h1 class="flex-1 min-w-0 truncate">{data.program.grade} · {data.program.title}</h1>
 </div>
 
-<p class="text-sm text-surface-600-400 mb-3">{$_('page.club.exams.programIntro')}</p>
+<div class="mb-4">
+  {#if data.grade}
+    <p class="flex items-center gap-2 text-sm text-surface-600-400 mb-1">
+      <BeltStrip color={data.grade.beltColor} color2={data.grade.beltColor2} size="md" />
+      <span>{data.program.section}</span>
+    </p>
+  {/if}
+  <p class="text-sm text-surface-600-400">{$_('page.club.exams.programIntro')}</p>
+</div>
 
 <ExamProgramView parts={data.program.parts} minPoints={data.program.min_points} />

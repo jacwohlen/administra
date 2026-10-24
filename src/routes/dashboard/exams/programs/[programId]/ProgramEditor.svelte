@@ -20,6 +20,7 @@
     programProblems
   } from '$lib/examUtils';
   import type { ExamPart, ExamProgram } from '$lib/models';
+  import RowMenu from './RowMenu.svelte';
 
   let {
     program,
@@ -136,16 +137,41 @@
 
   {#each parts as part, pi (part.key)}
     <section class="card border border-surface-200-800 p-3 space-y-2">
-      <div class="flex flex-wrap items-end gap-2">
-        <label class="label flex-1 min-w-40">
+      <div class="flex items-end gap-2">
+        <label class="label flex-1 min-w-0">
           <span class="text-xs">{$_('page.exams.programs.partTitle')}</span>
-          <input class="input" type="text" bind:value={part.title} />
+          <input class="input font-semibold" type="text" bind:value={part.title} />
         </label>
-        <label class="label flex-1 min-w-40">
+        <RowMenu
+          label="{$_('page.members.moreActions')}: {part.title}"
+          actions={[
+            {
+              label: $_('page.exams.programs.moveUp'),
+              icon: faArrowUp,
+              disabled: pi === 0,
+              onclick: () => (parts = move(parts, pi, -1))
+            },
+            {
+              label: $_('page.exams.programs.moveDown'),
+              icon: faArrowDown,
+              disabled: pi === parts.length - 1,
+              onclick: () => (parts = move(parts, pi, 1))
+            },
+            {
+              label: $_('page.exams.programs.removePart'),
+              icon: faTrash,
+              danger: true,
+              onclick: () => (parts = parts.filter((p) => p !== part))
+            }
+          ]}
+        />
+      </div>
+      <div class="flex items-end gap-2">
+        <label class="label flex-1 min-w-0">
           <span class="text-xs">{$_('page.exams.programs.partSubtitle')}</span>
           <input class="input" type="text" bind:value={part.subtitle} />
         </label>
-        <label class="label w-28">
+        <label class="label w-24 flex-none">
           <span class="text-xs">{$_('page.exams.programs.partMin')}</span>
           <input
             class="input"
@@ -156,98 +182,78 @@
             onchange={(e) => setPartMin(part, e.currentTarget.value)}
           />
         </label>
-        <div class="flex gap-1">
-          <button
-            type="button"
-            class="btn-icon preset-tonal-surface"
-            title={$_('page.exams.programs.moveUp')}
-            disabled={pi === 0}
-            onclick={() => (parts = move(parts, pi, -1))}
-          >
-            <Fa icon={faArrowUp} />
-          </button>
-          <button
-            type="button"
-            class="btn-icon preset-tonal-surface"
-            title={$_('page.exams.programs.moveDown')}
-            disabled={pi === parts.length - 1}
-            onclick={() => (parts = move(parts, pi, 1))}
-          >
-            <Fa icon={faArrowDown} />
-          </button>
-          <button
-            type="button"
-            class="btn-icon preset-tonal-error"
-            title={$_('page.exams.programs.removePart')}
-            onclick={() => (parts = parts.filter((p) => p !== part))}
-          >
-            <Fa icon={faTrash} />
-          </button>
-        </div>
       </div>
       <p class="text-xs text-surface-600-400">
         {$_('page.exams.programs.points', { values: { points: partMaxPoints(part) } })}
       </p>
 
-      <ol class="space-y-2">
+      <ol class="divide-y divide-surface-200-800 border-t border-surface-200-800">
         {#each part.items as item, ii (item.key)}
-          <li class="flex flex-wrap items-center gap-2 border-t border-surface-200-800 pt-2">
-            <span class="w-5 text-xs text-surface-500 tabular-nums">{ii + 1}</span>
-            <input
-              class="input flex-1 min-w-40"
-              type="text"
-              placeholder={$_('page.exams.programs.itemName')}
-              bind:value={item.name}
-            />
-            <input
-              class="input flex-1 min-w-40"
-              type="text"
-              placeholder={$_('page.exams.programs.itemDescription')}
-              bind:value={item.description}
-            />
-            <select class="select w-auto" bind:value={item.sides}>
-              <option value={2}>{$_('page.exams.programs.bothSides')}</option>
-              <option value={1}>{$_('page.exams.programs.oneSide')}</option>
-            </select>
-            <div class="flex gap-1">
-              <button
-                type="button"
-                class="btn-icon btn-icon-sm preset-tonal-surface"
-                title={$_('page.exams.programs.moveUp')}
-                disabled={ii === 0}
-                onclick={() => (part.items = move(part.items, ii, -1))}
+          <li class="py-2 space-y-2">
+            <div class="flex items-center gap-2">
+              <span class="w-5 flex-none text-xs text-surface-500 tabular-nums text-right"
+                >{ii + 1}</span
               >
-                <Fa icon={faArrowUp} size="xs" />
-              </button>
-              <button
-                type="button"
-                class="btn-icon btn-icon-sm preset-tonal-surface"
-                title={$_('page.exams.programs.moveDown')}
-                disabled={ii === part.items.length - 1}
-                onclick={() => (part.items = move(part.items, ii, 1))}
+              <input
+                class="input flex-1 min-w-0"
+                type="text"
+                placeholder={$_('page.exams.programs.itemName')}
+                aria-label={$_('page.exams.programs.itemName')}
+                bind:value={item.name}
+              />
+              <RowMenu
+                label="{$_('page.members.moreActions')}: {item.name}"
+                actions={[
+                  {
+                    label: $_('page.exams.programs.moveUp'),
+                    icon: faArrowUp,
+                    disabled: ii === 0,
+                    onclick: () => (part.items = move(part.items, ii, -1))
+                  },
+                  {
+                    label: $_('page.exams.programs.moveDown'),
+                    icon: faArrowDown,
+                    disabled: ii === part.items.length - 1,
+                    onclick: () => (part.items = move(part.items, ii, 1))
+                  },
+                  {
+                    label: $_('button.remove'),
+                    icon: faTrash,
+                    danger: true,
+                    onclick: () => (part.items = part.items.filter((i) => i !== item))
+                  }
+                ]}
+              />
+            </div>
+            <!-- Stretch keeps the select as tall as the input next to it -->
+            <div class="flex items-stretch gap-2 pl-7">
+              <input
+                class="input flex-1 min-w-0"
+                type="text"
+                placeholder={$_('page.exams.programs.itemDescription')}
+                aria-label={$_('page.exams.programs.itemDescription')}
+                bind:value={item.description}
+              />
+              <select
+                class="select w-auto flex-none"
+                aria-label={$_('page.exams.programs.sides')}
+                bind:value={item.sides}
               >
-                <Fa icon={faArrowDown} size="xs" />
-              </button>
-              <button
-                type="button"
-                class="btn-icon btn-icon-sm preset-tonal-error"
-                title={$_('button.remove')}
-                onclick={() => (part.items = part.items.filter((i) => i !== item))}
-              >
-                <Fa icon={faTrash} size="xs" />
-              </button>
+                <option value={2}>{$_('page.exams.programs.bothSides')}</option>
+                <option value={1}>{$_('page.exams.programs.oneSide')}</option>
+              </select>
             </div>
           </li>
         {/each}
       </ol>
-      <button type="button" class="btn btn-sm preset-tonal-primary" onclick={() => addItem(part)}>
+      <button type="button" class="btn preset-tonal-primary text-sm" onclick={() => addItem(part)}>
         <Fa icon={faPlus} />
         <span>{$_('page.exams.programs.addItem')}</span>
       </button>
     </section>
   {/each}
 
-  <button type="button" class="btn preset-tonal-primary" onclick={addPart}>
+  <button type="button" class="btn preset-tonal-primary text-sm" onclick={addPart}>
     <Fa icon={faPlus} />
     <span>{$_('page.exams.programs.addPart')}</span>
   </button>

@@ -6,17 +6,23 @@
   import {
     faArrowLeft,
     faArrowsRotate,
+    faCheck,
     faChevronDown,
-    faChevronRight,
     faCircleCheck,
     faCircleXmark,
     faNoteSticky,
     faRotateLeft,
-    faUserPlus
+    faTriangleExclamation,
+    faUserCheck,
+    faUserPlus,
+    faXmark
   } from '@fortawesome/free-solid-svg-icons';
   import { supabaseClient } from '$lib/supabase';
   import { toaster } from '$lib/toast';
   import BeltStrip from '$lib/components/BeltStrip.svelte';
+  import ExamPartHeader from '$lib/components/exams/ExamPartHeader.svelte';
+  import ExamStateChip from '$lib/components/exams/ExamStateChip.svelte';
+  import ScoreLegend from '$lib/components/exams/ScoreLegend.svelte';
   import {
     FEEDBACK_KEY,
     applyScore,
@@ -123,6 +129,9 @@
   }
 
   let sheets = $derived(group.map((c) => ({ c, sheet: sheetFor(c), evaluation: evaluationOf(c) })));
+  let pair = $derived(group.length > 1);
+  // The legend helps until the first score is in; the keys carry it from then on
+  let anyScored = $derived(sheets.some(({ evaluation }) => (evaluation?.scored ?? 0) > 0));
 
   /** Somebody else changed the sheet in the meantime: say so and show their state. */
   async function changedMeanwhile() {
@@ -179,25 +188,33 @@
       if (!(await start)) return false;
     }
     if (!live(c).examiners?.some((e) => e.user_id === me)) {
-      await joinAsExaminer(live(c));
+      await joinAsExaminer([live(c)]);
     }
     return true;
   }
 
-  async function joinAsExaminer(c: ExamCandidate) {
-    const { error } = await assignExaminer([c], me, myName);
+  async function joinAsExaminer(list: ExamCandidate[]) {
+    if (list.length === 0) return;
+    const { error } = await assignExaminer(list, me, myName);
     if (error) {
       console.error('Error assigning examiner:', error);
       toaster.error({ title: $_('page.exams.assignError') });
       return;
     }
-    const examiners = live(c).examiners ?? [];
-    if (!examiners.some((e) => e.user_id === me)) {
-      patchCandidate(c.id, {
-        examiners: [...examiners, { candidate_id: c.id, user_id: me, name: myName }]
-      });
+    for (const c of list) {
+      const examiners = live(c).examiners ?? [];
+      if (!examiners.some((e) => e.user_id === me)) {
+        patchCandidate(c.id, {
+          examiners: [...examiners, { candidate_id: c.id, user_id: me, name: myName }]
+        });
+      }
     }
   }
+
+  /** The group's open sheets I do not sign yet; one tap joins them all. */
+  let joinable = $derived(
+    group.filter((c) => !readonly(c) && !c.examiners?.some((e) => e.user_id === me))
+  );
 
   async function setScore(c: ExamCandidate, item: ExamItem, side: ScoreSide, value: number | null) {
     if (!(await ensureStarted(c))) return;
@@ -292,13 +309,6 @@
     if (side === 'right') return $_('page.exams.sheet.right');
     return '';
   }
-
-  function stateClass(state: string): string {
-    if (state === 'passed') return 'preset-filled-success-500';
-    if (state === 'failed') return 'preset-filled-error-500';
-    if (state === 'grading') return 'preset-filled-warning-500';
-    return 'preset-tonal-surface';
-  }
 </script>
 
 <svelte:head>
@@ -306,13 +316,19 @@
 </svelte:head>
 
 <div class="page-header-back">
-  <a href="/dashboard/exams/{data.exam.id}" class="btn preset-tonal-surface flex-shrink-0">
+  <a
+    href="/dashboard/exams/{data.exam.id}"
+    class="btn preset-tonal-surface flex-shrink-0"
+    title={$_('page.exams.backToDay')}
+    aria-label={$_('page.exams.backToDay')}
+  >
     <Fa icon={faArrowLeft} />
   </a>
-  <h1 class="flex-1 min-w-0 truncate text-lg!">{data.exam.title}</h1>
+  <h1 class="flex-1 min-w-0 truncate">{data.exam.title}</h1>
   <button
-    class="btn preset-tonal-surface"
+    class="btn preset-tonal-surface flex-shrink-0"
     title={$_('button.refresh')}
+    aria-label={$_('button.refresh')}
     onclick={() => invalidate('app:exam-sheet')}
   >
     <Fa icon={faArrowsRotate} />
@@ -320,10 +336,13 @@
 </div>
 
 {#if groups.length > 1}
-  <div class="flex gap-2 overflow-x-auto pb-2">
+  <div class="flex gap-2 overflow-x-auto pb-2" role="group">
     {#each groups as g (g[0].id)}
       <button
-        class="chip flex-none {g === group ? 'preset-filled-primary-500' : 'preset-tonal-surface'}"
+        class="btn btn-sm flex-none {g === group
+          ? 'preset-filled-primary-500'
+          : 'preset-tonal-surface'}"
+        aria-pressed={g === group}
         onclick={() => (selectedId = g[0].id)}
       >
         {g[0].grade} · {g.map((c) => c.member?.firstname).join(', ')}
@@ -333,40 +352,48 @@
 {/if}
 
 <!-- Candidates with their running totals, kept in view while scrolling -->
-<div class="sticky top-0 z-10 bg-surface-50-950 py-2 -mx-1 px-1 border-b border-surface-200-800">
-  <div class="grid gap-2 {group.length > 1 ? 'grid-cols-2' : 'grid-cols-1'}">
+<div class="sticky top-0 z-10 bg-surface-50-950 pt-1 pb-3">
+  <div class="grid gap-2 {pair ? 'grid-cols-2' : 'grid-cols-1'}">
     {#each sheets as { c, evaluation } (c.id)}
       {@const def = gradeDef(c.grade)}
       {@const state = candidateState(c)}
-      <div class="card border border-surface-200-800 p-2 min-w-0">
-        <div class="font-semibold truncate">{c.member?.firstname} {c.member?.lastname}</div>
-        <div class="flex items-center gap-1 text-xs text-surface-600-400">
+      <div class="card border border-surface-200-800 p-3 min-w-0">
+        <div class="flex items-center justify-between gap-2">
+          <span class="font-semibold truncate">{c.member?.firstname} {c.member?.lastname}</span>
+          {#if c.result || state === 'withdrawn'}<ExamStateChip {state} />{/if}
+        </div>
+        <p class="flex items-center gap-1.5 text-xs text-surface-600-400 min-w-0">
           {#if def}<BeltStrip color={def.beltColor} color2={def.beltColor2} size="sm" />{/if}
           <span class="truncate">{[c.grade, programTitle(c)].filter(Boolean).join(' · ')}</span>
-        </div>
-        <div class="flex items-baseline gap-1 mt-1">
-          {#if evaluation}
+        </p>
+        <p class="meta-item text-xs text-surface-600-400 min-w-0">
+          <Fa icon={faUserCheck} size="xs" class="flex-none" />
+          <span class="truncate">
+            {c.examiners?.length
+              ? c.examiners.map((e) => e.name).join(', ')
+              : $_('page.exams.sheet.noExaminer')}
+          </span>
+        </p>
+        {#if evaluation}
+          <p class="flex items-baseline gap-1 mt-1 whitespace-nowrap tabular-nums">
             <span
-              class="text-xl font-bold tabular-nums {evaluation.passed
+              class="text-xl font-bold leading-tight {evaluation.passed
                 ? 'text-success-600-400'
                 : ''}"
             >
               {evaluation.points}
             </span>
-            <span class="text-xs text-surface-600-400 tabular-nums">
+            <span class="text-xs text-surface-600-400">
               / {evaluation.max} · {$_('page.exams.sheet.min', {
                 values: { points: evaluation.minPoints }
               })}
             </span>
-          {/if}
-          <span class="chip text-[10px] ml-auto self-center flex-none {stateClass(state)}">
-            {$_('page.exams.state.' + state)}
-          </span>
-        </div>
-        {#if evaluation}
-          <div class="h-1 rounded bg-surface-200-800 overflow-hidden mt-1">
+          </p>
+          <div class="h-1.5 rounded-full bg-surface-200-800 overflow-hidden mt-1">
             <div
-              class="h-full {evaluation.complete ? 'bg-success-500' : 'bg-surface-500'}"
+              class="h-full rounded-full transition-all duration-500 {evaluation.complete
+                ? 'bg-success-500'
+                : 'bg-primary-500'}"
               style:width="{evaluation.sides ? (evaluation.scored / evaluation.sides) * 100 : 0}%"
             ></div>
           </div>
@@ -376,28 +403,19 @@
   </div>
 </div>
 
-<!-- Examiners -->
-<div class="flex flex-wrap items-center gap-2 text-sm my-2">
-  {#each sheets as { c } (c.id)}
-    {#if group.length > 1}<span class="font-medium">{c.member?.firstname}:</span>{/if}
-    <span class="text-surface-600-400">
-      {c.examiners?.length
-        ? c.examiners.map((e) => e.name).join(', ')
-        : $_('page.exams.sheet.noExaminer')}
-    </span>
-    {#if !readonly(c) && !c.examiners?.some((e) => e.user_id === me)}
-      <button class="btn btn-sm preset-tonal-primary" onclick={() => joinAsExaminer(c)}>
-        <Fa icon={faUserPlus} />
-        <span>{$_('page.exams.sheet.join')}</span>
-      </button>
-    {/if}
-  {/each}
-</div>
+{#if joinable.length > 0}
+  <!-- Optional: the first score signs the sheet anyway -->
+  <div class="flex justify-end mb-2">
+    <button class="btn btn-sm preset-tonal-primary" onclick={() => joinAsExaminer(joinable)}>
+      <Fa icon={faUserPlus} />
+      <span>{$_('page.exams.sheet.join')}</span>
+    </button>
+  </div>
+{/if}
 
-<p class="text-xs text-surface-600-400 mb-3">
-  {$_('page.exams.legend.title')}: 0 = {$_('page.exams.legend.0')} · 1 = {$_('page.exams.legend.1')} ·
-  2 = {$_('page.exams.legend.2')}
-</p>
+{#if layout && !anyScored}
+  <ScoreLegend class="mb-3" />
+{/if}
 
 {#if !layout}
   <div class="card border border-surface-200-800 p-4 mb-4">
@@ -407,32 +425,26 @@
   <div class="space-y-3">
     {#each layout.parts as part (part.key)}
       {@const open = !collapsed[part.key]}
-      <section class="card border border-surface-200-800">
+      <section class="card border border-surface-200-800 overflow-hidden">
         <button
           type="button"
-          class="w-full flex items-start gap-2 p-3 text-left"
+          class="w-full flex items-start gap-3 p-3 text-left hover:bg-surface-100-900 transition-colors"
           aria-expanded={open}
           onclick={() => (collapsed[part.key] = open)}
         >
-          <Fa icon={open ? faChevronDown : faChevronRight} class="mt-1 text-surface-500" />
-          <div class="flex-1 min-w-0">
-            <div class="font-bold">
-              {part.title}
-              {#if part.subtitle}<span class="font-normal text-surface-600-400">
-                  · {part.subtitle}</span
-                >{/if}
-            </div>
-            <div class="flex flex-wrap gap-x-3 text-xs text-surface-600-400">
+          <span class="block flex-1 min-w-0">
+            <ExamPartHeader title={part.title} subtitle={part.subtitle} heading={false} />
+            <span class="flex flex-wrap gap-x-3 text-xs text-surface-600-400 tabular-nums">
               {#each sheets as { c, evaluation } (c.id)}
                 {@const pe = evaluation?.parts.find((p) => p.key === part.key)}
                 {#if pe}
                   <span
                     class={pe.minPoints !== null && pe.scored === pe.sides && !pe.met
-                      ? 'text-error-600-400 font-semibold'
+                      ? 'text-primary-600-400 font-semibold'
                       : ''}
                   >
                     {[
-                      group.length > 1 ? c.member?.firstname : '',
+                      pair ? c.member?.firstname : '',
                       `${pe.points}/${pe.max}`,
                       pe.minPoints !== null
                         ? `(${$_('page.exams.sheet.min', { values: { points: pe.minPoints } })})`
@@ -443,8 +455,15 @@
                   </span>
                 {/if}
               {/each}
-            </div>
-          </div>
+            </span>
+          </span>
+          <Fa
+            icon={faChevronDown}
+            size="xs"
+            class="mt-1.5 text-surface-500 flex-shrink-0 transition-transform {open
+              ? 'rotate-180'
+              : ''}"
+          />
         </button>
 
         {#if open}
@@ -453,9 +472,10 @@
               {@const key = `${group[0]?.id}:${item.key}`}
               {@const hasNote = sheets.some(({ c }) => !!scoresOf(c).get(item.key)?.note)}
               {@const writable = sheets.some(({ c }) => !readonly(c))}
-              <li class="px-3 py-2">
+              <li class="px-2 sm:px-3 py-2">
                 <div class="flex items-start gap-2">
-                  <span class="text-xs text-surface-500 tabular-nums w-4 flex-none pt-1"
+                  <span
+                    class="w-4 flex-none pt-0.5 text-xs text-surface-500 tabular-nums text-right"
                     >{i + 1}</span
                   >
                   <div class="flex-1 min-w-0">
@@ -465,25 +485,36 @@
                     {/if}
                   </div>
                   {#if writable || hasNote}
+                    <!-- Compact, so the title row stays one line high -->
                     <button
                       type="button"
-                      class="btn-icon size-8 flex-none {hasNote
-                        ? 'preset-tonal-warning'
-                        : 'preset-tonal-surface'}"
+                      class="btn-icon relative size-9 min-h-9! min-w-9! p-0 -my-1.5 flex-none rounded-md hover:bg-surface-100-900 {openNotes[
+                        key
+                      ]
+                        ? 'bg-surface-100-900'
+                        : ''} {hasNote ? 'text-warning-800-200' : 'text-surface-400-600'}"
                       title={$_('page.exams.sheet.note')}
                       aria-label={$_('page.exams.sheet.note')}
                       aria-expanded={!!openNotes[key]}
                       onclick={() => (openNotes[key] = !openNotes[key])}
                     >
-                      <Fa icon={faNoteSticky} size="sm" />
+                      <Fa icon={faNoteSticky} />
+                      {#if hasNote}
+                        <span
+                          class="absolute top-1 right-1 size-2 rounded-full bg-warning-500 ring-2 ring-surface-50-950"
+                          aria-hidden="true"
+                        ></span>
+                      {/if}
                     </button>
                   {/if}
                 </div>
                 {#each sheets as { c } (c.id)}
                   {@const score = scoresOf(c).get(item.key)}
-                  <div class="flex flex-wrap items-center gap-x-2 gap-y-1 mt-1">
-                    {#if group.length > 1}
-                      <span class="w-12 truncate text-sm font-medium">{c.member?.firstname}</span>
+                  <div class="flex flex-nowrap items-center gap-x-1.5 mt-1.5">
+                    {#if pair}
+                      <span class="w-12 flex-none truncate text-sm font-medium">
+                        {c.member?.firstname}
+                      </span>
                     {/if}
                     {#each itemSides(item) as side (side)}
                       <ScoreButtons
@@ -495,11 +526,11 @@
                     {/each}
                   </div>
                   {#if openNotes[key]}
-                    <div class="mt-1">
+                    <div class="mt-1.5">
                       {#if readonly(c)}
                         {#if score?.note}
                           <p class="text-sm italic whitespace-pre-wrap">
-                            {#if group.length > 1}{c.member?.firstname}:{/if}
+                            {#if pair}{c.member?.firstname}:{/if}
                             {score.note}
                           </p>
                         {/if}
@@ -508,7 +539,7 @@
                           class="textarea text-sm"
                           rows="2"
                           aria-label="{$_('page.exams.sheet.note')} {c.member?.firstname ?? ''}"
-                          placeholder={group.length > 1
+                          placeholder={pair
                             ? `${c.member?.firstname}: ${$_('page.exams.sheet.notePlaceholder')}`
                             : $_('page.exams.sheet.notePlaceholder')}
                           value={score?.note ?? ''}
@@ -518,8 +549,8 @@
                       {/if}
                     </div>
                   {:else if score?.note}
-                    <p class="text-xs italic text-surface-600-400 truncate">
-                      {#if group.length > 1}{c.member?.firstname}:{/if}
+                    <p class="text-xs italic text-surface-600-400 truncate mt-0.5">
+                      {#if pair}{c.member?.firstname}:{/if}
                       {score.note}
                     </p>
                   {/if}
@@ -534,48 +565,52 @@
 {/if}
 
 <!-- Result per candidate -->
-<h2 class="mt-6 mb-2 text-lg font-bold">{$_('page.exams.sheet.result')}</h2>
-<div class="grid gap-3 {group.length > 1 ? 'md:grid-cols-2' : ''} pb-8">
+<h3 class="mt-6">{$_('page.exams.sheet.result')}</h3>
+<div class="grid gap-4 {pair ? 'md:grid-cols-2' : ''} pb-8">
   {#each sheets as { c, evaluation } (c.id)}
-    <section class="card border border-surface-200-800 p-3 space-y-2">
+    <section class="card border border-surface-200-800 p-4 space-y-3">
       <div class="flex items-center justify-between gap-2">
-        <span class="font-semibold">{c.member?.firstname} {c.member?.lastname}</span>
-        {#if c.result}
-          <span class="chip text-xs {stateClass(c.result)}">
-            {$_('page.exams.state.' + c.result)}
-          </span>
-        {/if}
+        <span class="font-semibold truncate">{c.member?.firstname} {c.member?.lastname}</span>
+        {#if c.result}<ExamStateChip state={c.result} />{/if}
       </div>
 
       {#if evaluation}
-        <p class="tabular-nums">
-          <span class="text-2xl font-bold">{evaluation.points}</span>
-          <span class="text-surface-600-400">
+        <p class="flex items-baseline gap-1 tabular-nums">
+          <span class="text-2xl font-bold leading-tight">{evaluation.points}</span>
+          <span class="text-sm text-surface-600-400">
             / {evaluation.max} · {$_('page.exams.sheet.min', {
               values: { points: evaluation.minPoints }
             })}
           </span>
         </p>
-        <ul class="text-sm space-y-0.5">
+        <ul class="text-sm divide-y divide-surface-200-800">
           {#each evaluation.parts as pe (pe.key)}
             {@const part = sheetFor(c)?.parts.find((p) => p.key === pe.key)}
-            <li class="flex justify-between gap-2" class:text-error-600-400={!pe.met}>
-              <span class="truncate">{part?.title}</span>
-              <span class="tabular-nums flex-none">
+            <li
+              class="flex items-center gap-2 py-1 tabular-nums"
+              class:text-primary-600-400={!pe.met}
+            >
+              <span class="flex-1 min-w-0 truncate">{part?.title}</span>
+              {#if pe.minPoints !== null}
+                <span class="flex-none inline-flex items-center gap-1 text-xs text-surface-600-400">
+                  {$_('page.exams.sheet.min', { values: { points: pe.minPoints } })}
+                  <Fa
+                    icon={pe.met ? faCheck : faXmark}
+                    size="xs"
+                    class={pe.met ? 'text-success-600-400' : 'text-primary-600-400'}
+                  />
+                </span>
+              {/if}
+              <span class="flex-none min-w-12 text-right" class:font-semibold={!pe.met}>
                 {pe.points}/{pe.max}
-                {#if pe.minPoints !== null}
-                  <span class="text-surface-600-400">
-                    ({$_('page.exams.sheet.min', { values: { points: pe.minPoints } })})
-                  </span>
-                  {pe.met ? '✓' : '✗'}
-                {/if}
               </span>
             </li>
           {/each}
         </ul>
         {#if !c.result}
           {#if !evaluation.complete}
-            <p class="text-sm text-warning-700-300">
+            <p class="flex items-center gap-2 text-sm text-surface-700-300">
+              <Fa icon={faTriangleExclamation} class="text-warning-800-200 flex-none" />
               {$_('page.exams.sheet.unscored', {
                 values: { count: evaluation.sides - evaluation.scored }
               })}
@@ -612,19 +647,22 @@
       {/if}
 
       {#if data.canWrite && c.status !== 'withdrawn'}
-        <div class="flex flex-wrap gap-2 pt-1">
-          {#if c.result}
+        {#if c.result}
+          <button
+            class="btn preset-tonal-surface"
+            onclick={() => askResult(c, null)}
+            disabled={busy}
+          >
+            <Fa icon={faRotateLeft} />
+            <span>{$_('page.exams.sheet.reopen')}</span>
+          </button>
+        {:else}
+          <!-- Two equal decisions; the one the points suggest is filled -->
+          <div class="grid grid-cols-2 gap-2">
             <button
-              class="btn preset-tonal-surface"
-              onclick={() => askResult(c, null)}
-              disabled={busy}
-            >
-              <Fa icon={faRotateLeft} />
-              <span>{$_('page.exams.sheet.reopen')}</span>
-            </button>
-          {:else}
-            <button
-              class="btn preset-filled-success-500"
+              class="btn {evaluation?.passed
+                ? 'preset-filled-success-500'
+                : 'preset-tonal-success'}"
               onclick={() => askResult(c, 'passed')}
               disabled={busy}
             >
@@ -632,15 +670,17 @@
               <span>{$_('page.exams.sheet.pass')}</span>
             </button>
             <button
-              class="btn preset-tonal-error"
+              class="btn {evaluation && !evaluation.passed
+                ? 'preset-filled-error-500'
+                : 'preset-tonal-error'}"
               onclick={() => askResult(c, 'failed')}
               disabled={busy}
             >
               <Fa icon={faCircleXmark} />
               <span>{$_('page.exams.sheet.fail')}</span>
             </button>
-          {/if}
-        </div>
+          </div>
+        {/if}
       {/if}
     </section>
   {/each}
@@ -679,7 +719,8 @@
           })}
         </p>
         {#if result === 'passed' && !evaluation.passed}
-          <p class="text-sm text-warning-700-300 mb-2">
+          <p class="flex items-start gap-2 text-sm mb-2">
+            <Fa icon={faTriangleExclamation} class="text-warning-800-200 flex-none mt-1" />
             {$_('page.exams.sheet.againstSuggestion')}
           </p>
         {/if}

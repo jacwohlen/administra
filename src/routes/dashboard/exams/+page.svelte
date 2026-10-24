@@ -4,6 +4,7 @@
     faAward,
     faBookOpen,
     faCalendarDays,
+    faChevronRight,
     faGripLines,
     faPlus,
     faUsers
@@ -32,23 +33,31 @@
   }
 </script>
 
-<div class="page-header">
-  <h1>{$_('page.exams.title')}</h1>
-  <div class="flex gap-2">
-    <a href="/dashboard/exams/programs" class="btn preset-tonal-surface">
-      <Fa icon={faBookOpen} />
-      <span class="hidden sm:inline">{$_('page.exams.programs.title')}</span>
+<div class="page-header gap-2">
+  <h1 class="whitespace-nowrap">{$_('page.exams.title')}</h1>
+  {#if data.canWrite}
+    <a href="/dashboard/exams/new" class="btn preset-filled-primary-500 flex-shrink-0">
+      <Fa icon={faPlus} />
+      <span>{$_('page.exams.create')}</span>
     </a>
-    {#if data.canWrite}
-      <a href="/dashboard/exams/new" class="btn preset-filled-primary-500">
-        <Fa icon={faPlus} />
-        <span>{$_('page.exams.create')}</span>
-      </a>
-    {/if}
-  </div>
+  {/if}
 </div>
 
 <p class="text-sm text-surface-600-400 mb-4">{$_('page.exams.intro')}</p>
+
+<a
+  href="/dashboard/exams/programs"
+  class="card border border-surface-200-800 flex items-center gap-3 px-3 py-2.5 mb-6 hover:bg-surface-100-900 transition-colors"
+>
+  <div class="entity-badge text-primary-600-400">
+    <Fa icon={faBookOpen} size="lg" />
+  </div>
+  <div class="flex-1 min-w-0">
+    <p class="font-semibold truncate">{$_('page.exams.programs.title')}</p>
+    <p class="text-sm text-surface-600-400 truncate">{$_('page.exams.programs.short')}</p>
+  </div>
+  <Fa icon={faChevronRight} class="text-surface-400-600 flex-none" />
+</a>
 
 {#snippet examList(exams: ExamListEntry[])}
   <ul class="flex flex-col gap-2">

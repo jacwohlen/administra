@@ -44,10 +44,15 @@
 </script>
 
 <div class="page-header-back">
-  <a href="/dashboard/exams" class="btn preset-tonal-surface">
+  <a
+    href="/dashboard/exams"
+    class="btn preset-tonal-surface flex-shrink-0"
+    title={$_('page.exams.backToList')}
+    aria-label={$_('page.exams.backToList')}
+  >
     <Fa icon={faArrowLeft} />
   </a>
-  <h1>{$_('page.exams.programs.title')}</h1>
+  <h1 class="flex-1 min-w-0 truncate">{$_('page.exams.programs.title')}</h1>
 </div>
 
 <p class="text-sm text-surface-600-400 mb-4">{$_('page.exams.programs.intro')}</p>
@@ -56,25 +61,27 @@
   {#each ladders as ladder (ladder.section)}
     <section>
       <h3>{ladder.section}</h3>
-      <ul class="card border border-surface-200-800 divide-y divide-surface-200-800">
+      <ul
+        class="card border border-surface-200-800 divide-y divide-surface-200-800 overflow-hidden"
+      >
         {#each ladder.grades as g (g.grade)}
           {@const program = programOf(g)}
           <li>
             {#if program}
               <a
                 href="/dashboard/exams/programs/{program.id}"
-                class="flex items-center gap-3 px-3 py-2.5 hover:bg-surface-100-900"
+                class="flex items-center gap-3 px-3 py-2.5 hover:bg-surface-100-900 transition-colors"
               >
                 <BeltStrip color={g.beltColor} color2={g.beltColor2} size="md" />
                 <div class="flex-1 min-w-0">
-                  <div class="font-semibold">{g.grade} · {program.title}</div>
+                  <div class="font-semibold truncate">{g.grade} · {program.title}</div>
                   <div class="text-xs text-surface-600-400">
                     {$_('page.exams.programs.summary', {
                       values: { max: programMaxPoints(program.parts), min: program.min_points }
                     })}
                   </div>
                 </div>
-                <Fa icon={faChevronRight} class="text-surface-400-600" />
+                <Fa icon={faChevronRight} class="text-surface-400-600 flex-none" />
               </a>
             {:else}
               <div class="flex items-center gap-3 px-3 py-2.5">
@@ -85,7 +92,7 @@
                 </div>
                 {#if data.canWrite}
                   <button
-                    class="btn btn-sm preset-tonal-primary"
+                    class="btn btn-sm preset-tonal-primary flex-none"
                     onclick={() => create(g)}
                     disabled={creating}
                   >

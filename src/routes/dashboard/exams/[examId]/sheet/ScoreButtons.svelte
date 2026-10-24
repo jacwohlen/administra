@@ -1,6 +1,7 @@
 <script lang="ts">
   import { _ } from 'svelte-i18n';
   import { SCORE_VALUES } from '$lib/examUtils';
+  import { SCORE_TONES } from '$lib/components/exams/examStyles';
 
   let {
     value,
@@ -16,31 +17,27 @@
     /** Tapping the chosen value again clears it */
     onchange: (value: number | null) => void;
   } = $props();
-
-  const tones = [
-    'preset-filled-error-500',
-    'preset-filled-warning-500',
-    'preset-filled-success-500'
-  ];
 </script>
 
-<div class="inline-flex items-center gap-1">
+<!-- Three keys like the app's other choice groups; the chosen one takes its
+     score colour (see ScoreLegend), and stays full strength on a closed sheet. -->
+<div class="inline-flex flex-none items-center gap-0.5">
   {#if label}
     <span class="w-3 text-xs font-bold text-surface-600-400 text-center" aria-hidden="true">
       {label}
     </span>
   {/if}
   <div
-    class="inline-flex rounded-lg overflow-hidden border border-surface-300-700"
+    class="inline-flex rounded-lg overflow-hidden border border-surface-300-700 divide-x divide-surface-300-700"
     role="group"
     aria-label={label ? $_('page.exams.sheet.side', { values: { side: label } }) : undefined}
   >
     {#each SCORE_VALUES as v (v)}
       <button
         type="button"
-        class="w-9 h-10 text-base font-semibold tabular-nums transition-colors {value === v
-          ? tones[v]
-          : 'preset-tonal-surface'}"
+        class="w-9 h-11 text-base font-semibold tabular-nums transition-colors {value === v
+          ? `${SCORE_TONES[v]} disabled:opacity-100`
+          : 'bg-surface-100-900 text-surface-900-50 enabled:hover:bg-surface-200-800 disabled:opacity-40'}"
         aria-pressed={value === v}
         title={$_('page.exams.legend.' + v)}
         {disabled}

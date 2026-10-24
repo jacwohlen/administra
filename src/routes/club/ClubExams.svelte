@@ -3,17 +3,20 @@
   import { _ } from 'svelte-i18n';
   import Fa from 'svelte-fa';
   import {
-    faAward,
     faBookOpen,
     faCalendarDays,
     faChevronRight,
-    faSpinner
+    faEdit,
+    faLocationDot,
+    faSpinner,
+    faUserPlus
   } from '@fortawesome/free-solid-svg-icons';
   import dayjs from 'dayjs';
   import { supabaseClient } from '$lib/supabase';
   import { toaster } from '$lib/toast';
   import BeltStrip from '$lib/components/BeltStrip.svelte';
-  import { registrableGrades, suggestedGrade } from '$lib/examUtils';
+  import ExamStateChip from '$lib/components/exams/ExamStateChip.svelte';
+  import { candidateState, registrableGrades, suggestedGrade } from '$lib/examUtils';
   import { gradesBySection } from '$lib/gradeUtils';
   import type { DirectoryMember, Exam, GradeDefinition, MemberCurrentGrade } from '$lib/models';
   import type { MemberExams, MemberRegistration } from './memberExams';
@@ -143,153 +146,159 @@
 </script>
 
 {#if exams.upcoming.length > 0 || results.length > 0 || nextProgram}
-  <section class="card border border-surface-200-800 p-4 space-y-3">
-    <h3 class="flex items-center gap-2 mb-0!">
-      <Fa icon={faAward} class="text-primary-500" />
-      {$_('page.club.exams.title')}
-    </h3>
+  <section class="card border border-surface-200-800 p-4">
+    <h3>{$_('page.club.exams.title')}</h3>
 
-    {#each exams.upcoming as exam (exam.id)}
-      {@const reg = registrationFor(exam)}
-      {@const open = isOpen(exam)}
-      <div class="rounded-lg border border-surface-200-800 p-3 space-y-2">
-        <div class="flex flex-wrap items-baseline justify-between gap-x-3">
-          <span class="font-semibold">{exam.title}</span>
-          <span class="meta-item text-sm text-surface-600-400">
-            <Fa icon={faCalendarDays} size="sm" />
-            {dayjs(exam.date).format('DD.MM.YYYY')}
-          </span>
-        </div>
-        <p class="text-sm text-surface-600-400">
-          {#if exam.location}{exam.location} ·{/if}
-          {open
-            ? $_('page.club.exams.deadline', {
-                values: {
-                  date: dayjs(exam.registration_deadline ?? exam.date).format('DD.MM.YYYY')
-                }
-              })
-            : $_('page.club.exams.closed')}
-        </p>
-        {#if exam.notes}
-          <p class="text-sm whitespace-pre-wrap">{exam.notes}</p>
-        {/if}
+    <div class="divide-y divide-surface-300-700">
+      {#each exams.upcoming as exam (exam.id)}
+        {@const reg = registrationFor(exam)}
+        {@const open = isOpen(exam)}
+        <div class="py-3 first:pt-0 space-y-2">
+          <div>
+            <p class="font-semibold">{exam.title}</p>
+            <p class="flex flex-wrap items-center gap-x-3 text-sm text-surface-600-400">
+              <span class="meta-item">
+                <Fa icon={faCalendarDays} size="sm" />
+                {dayjs(exam.date).format('DD.MM.YYYY')}
+              </span>
+              {#if exam.location}
+                <span class="meta-item"><Fa icon={faLocationDot} size="sm" />{exam.location}</span>
+              {/if}
+            </p>
+            <p class="text-xs text-surface-600-400 mt-0.5">
+              {open
+                ? $_('page.club.exams.deadline', {
+                    values: {
+                      date: dayjs(exam.registration_deadline ?? exam.date).format('DD.MM.YYYY')
+                    }
+                  })
+                : $_('page.club.exams.closed')}
+            </p>
+          </div>
+          {#if exam.notes}
+            <p class="text-sm text-surface-700-300 whitespace-pre-wrap">{exam.notes}</p>
+          {/if}
 
-        {#if reg && formFor !== exam.id}
-          {@const def = gradeDef(reg.section, reg.grade)}
-          {@const program = programFor(reg.section, reg.grade)}
-          <div class="flex items-center gap-2">
-            {#if def}<BeltStrip color={def.beltColor} color2={def.beltColor2} />{/if}
-            <span class="font-medium">{reg.grade}</span>
-            <span
-              class="chip text-xs {reg.status === 'withdrawn'
-                ? 'preset-tonal-surface'
-                : 'preset-tonal-success'}"
-            >
-              {$_('page.exams.state.' + (reg.started_at ? 'grading' : reg.status))}
-            </span>
-          </div>
-          <p class="text-sm">
-            {#if reg.status === 'withdrawn'}
-              {$_('page.club.exams.askTrainer')}
-            {:else if reg.status === 'invited' && (reg.group_name || reg.call_time)}
-              {$_('page.club.exams.callUp', {
-                values: {
-                  group: reg.group_name ?? '–',
-                  time: reg.call_time ?? '–'
-                }
-              })}
-            {:else}
-              {$_('page.club.exams.waitForCallUp')}
-            {/if}
-          </p>
-          <div class="flex flex-wrap gap-2">
-            {#if program}
-              <a href="/club/programs/{program.id}" class="btn btn-sm preset-tonal-primary">
-                <Fa icon={faBookOpen} />
-                <span>{$_('page.club.exams.program')}</span>
-              </a>
-            {/if}
-            {#if open && reg.status === 'registered' && !reg.started_at}
-              <button class="btn btn-sm preset-tonal-surface" onclick={() => openForm(exam, reg)}>
-                {$_('button.edit')}
-              </button>
-            {/if}
-            {#if reg.status !== 'withdrawn' && !reg.started_at && !reg.result}
-              <button
-                class="btn btn-sm preset-tonal-error"
-                onclick={() => (confirmWithdraw = reg)}
-                disabled={busy}
-              >
-                {$_('page.club.exams.withdraw')}
-              </button>
-            {/if}
-          </div>
-        {:else if formFor === exam.id}
-          <form
-            class="space-y-2"
-            onsubmit={(e) => {
-              e.preventDefault();
-              register(exam);
-            }}
-          >
-            <label class="label">
-              <span class="text-sm">{$_('page.club.exams.grade')}</span>
-              <select class="select" bind:value={form.grade} required>
-                {#each options(exam) as g (g.grade)}
-                  <option value={g.grade}>{g.grade}</option>
-                {/each}
-              </select>
-            </label>
-            <label class="label">
-              <span class="text-sm">{$_('page.club.exams.beltLength')}</span>
-              <input
-                class="input"
-                type="number"
-                min="100"
-                max="400"
-                step="10"
-                bind:value={form.belt}
-              />
-              <span class="text-xs text-surface-600-400"
-                >{$_('page.club.exams.beltLengthHint')}</span
-              >
-            </label>
-            <label class="label">
-              <span class="text-sm">{$_('page.club.exams.note')}</span>
-              <input class="input" type="text" maxlength="500" bind:value={form.note} />
-            </label>
-            <div class="flex justify-end gap-2">
-              <button
-                type="button"
-                class="btn preset-tonal-surface"
-                onclick={() => (formFor = null)}
-              >
-                {$_('button.cancel')}
-              </button>
-              <button
-                type="submit"
-                class="btn preset-filled-primary-500"
-                disabled={busy || !form.grade}
-              >
-                {#if busy}<Fa icon={faSpinner} spin />{/if}
-                <span>{$_('page.club.exams.register')}</span>
-              </button>
+          {#if reg && formFor !== exam.id}
+            {@const def = gradeDef(reg.section, reg.grade)}
+            {@const program = programFor(reg.section, reg.grade)}
+            <div class="rounded-container bg-surface-100-900 p-3 space-y-2">
+              <div class="flex items-center gap-2">
+                {#if def}<BeltStrip color={def.beltColor} color2={def.beltColor2} />{/if}
+                <span class="font-semibold">{reg.grade}</span>
+                <span class="ml-auto"><ExamStateChip state={candidateState(reg)} /></span>
+              </div>
+              <p class="text-sm">
+                {#if reg.status === 'withdrawn'}
+                  {$_('page.club.exams.askTrainer')}
+                {:else if reg.status === 'invited' && (reg.group_name || reg.call_time)}
+                  {$_('page.club.exams.callUp', {
+                    values: {
+                      group: reg.group_name ?? '–',
+                      time: reg.call_time ?? '–'
+                    }
+                  })}
+                {:else}
+                  {$_('page.club.exams.waitForCallUp')}
+                {/if}
+              </p>
             </div>
-          </form>
-        {:else if open && options(exam).length > 0}
-          <button class="btn preset-filled-primary-500" onclick={() => openForm(exam)}>
-            {$_('page.club.exams.registerFor', { values: { name: member.firstname } })}
-          </button>
-        {:else if !open}
-          <p class="text-sm text-surface-600-400">{$_('page.club.exams.askTrainer')}</p>
-        {/if}
-      </div>
-    {:else}
-      <p class="text-sm text-surface-600-400">{$_('page.club.exams.noneAnnounced')}</p>
-    {/each}
+            <div class="flex flex-wrap gap-2">
+              {#if program}
+                <a href="/club/programs/{program.id}" class="btn preset-tonal-primary text-sm">
+                  <Fa icon={faBookOpen} />
+                  <span>{$_('page.club.exams.program')}</span>
+                </a>
+              {/if}
+              {#if open && reg.status === 'registered' && !reg.started_at}
+                <button
+                  class="btn preset-tonal-surface text-sm"
+                  onclick={() => openForm(exam, reg)}
+                >
+                  <Fa icon={faEdit} />
+                  <span>{$_('button.edit')}</span>
+                </button>
+              {/if}
+              {#if reg.status !== 'withdrawn' && !reg.started_at && !reg.result}
+                <button
+                  class="btn preset-tonal-error text-sm"
+                  onclick={() => (confirmWithdraw = reg)}
+                  disabled={busy}
+                >
+                  {$_('page.club.exams.withdraw')}
+                </button>
+              {/if}
+            </div>
+          {:else if formFor === exam.id}
+            <form
+              class="space-y-3"
+              onsubmit={(e) => {
+                e.preventDefault();
+                register(exam);
+              }}
+            >
+              <label class="label">
+                <span>{$_('page.club.exams.grade')}</span>
+                <select class="select" bind:value={form.grade} required>
+                  {#each options(exam) as g (g.grade)}
+                    <option value={g.grade}>{g.grade}</option>
+                  {/each}
+                </select>
+              </label>
+              <label class="label">
+                <span>{$_('page.club.exams.beltLength')}</span>
+                <input
+                  class="input"
+                  type="number"
+                  min="100"
+                  max="400"
+                  step="10"
+                  bind:value={form.belt}
+                />
+                <span class="text-xs text-surface-600-400">
+                  {$_('page.club.exams.beltLengthHint')}
+                </span>
+              </label>
+              <label class="label">
+                <span>{$_('page.club.exams.note')}</span>
+                <input class="input" type="text" maxlength="500" bind:value={form.note} />
+              </label>
+              <footer class="flex justify-end gap-2">
+                <button
+                  type="button"
+                  class="btn preset-tonal-surface"
+                  onclick={() => (formFor = null)}
+                >
+                  {$_('button.cancel')}
+                </button>
+                <button
+                  type="submit"
+                  class="btn preset-filled-primary-500"
+                  disabled={busy || !form.grade}
+                >
+                  <Fa icon={busy ? faSpinner : faUserPlus} spin={busy} />
+                  <span>{$_('page.club.exams.register')}</span>
+                </button>
+              </footer>
+            </form>
+          {:else if open && options(exam).length > 0}
+            <button class="btn preset-filled-primary-500" onclick={() => openForm(exam)}>
+              <Fa icon={faUserPlus} />
+              <span
+                >{$_('page.club.exams.registerFor', { values: { name: member.firstname } })}</span
+              >
+            </button>
+          {:else if !open}
+            <p class="text-sm text-surface-600-400">{$_('page.club.exams.askTrainer')}</p>
+          {/if}
+        </div>
+      {:else}
+        <p class="text-surface-600-400 pb-3">{$_('page.club.exams.noneAnnounced')}</p>
+      {/each}
+    </div>
 
     {#if nextProgram && exams.upcoming.length === 0}
-      <a href="/club/programs/{nextProgram.id}" class="btn preset-tonal-primary">
+      <a href="/club/programs/{nextProgram.id}" class="btn preset-tonal-primary text-sm">
         <Fa icon={faBookOpen} />
         <span>
           {$_('page.club.exams.nextProgram', {
@@ -300,37 +309,35 @@
     {/if}
 
     {#if results.length > 0}
-      <div>
-        <p class="text-sm font-medium text-surface-600-400 mb-1">{$_('page.club.exams.results')}</p>
-        <ul class="divide-y divide-surface-200-800">
-          {#each results as r (r.id)}
-            {@const def = gradeDef(r.section, r.grade)}
-            <li>
-              <a
-                href="/club/exams/{r.id}"
-                class="flex items-center gap-2 py-2 hover:bg-surface-100-900 rounded"
-              >
-                {#if def}<BeltStrip color={def.beltColor} color2={def.beltColor2} size="sm" />{/if}
-                <span class="font-medium">{r.grade}</span>
-                <span class="text-sm text-surface-600-400">
-                  {r.exam ? dayjs(r.exam.date).format('DD.MM.YYYY') : ''}
-                </span>
-                <span
-                  class="chip text-xs ml-auto {r.result === 'passed'
-                    ? 'preset-filled-success-500'
-                    : 'preset-tonal-surface'}"
-                >
-                  {$_('page.exams.state.' + r.result)}
-                </span>
+      <p class="text-sm font-medium text-surface-600-400 mt-4 mb-1.5">
+        {$_('page.club.exams.results')}
+      </p>
+      <ul class="divide-y divide-surface-300-700">
+        {#each results as r (r.id)}
+          {@const def = gradeDef(r.section, r.grade)}
+          <li>
+            <a
+              href="/club/exams/{r.id}"
+              class="flex items-center gap-2 py-2 px-2 -mx-2 rounded text-sm hover:bg-surface-100-900 transition-colors"
+            >
+              {#if def}<BeltStrip color={def.beltColor} color2={def.beltColor2} size="sm" />{/if}
+              <span class="font-semibold">{r.grade}</span>
+              <span class="text-surface-600-400 truncate">
+                {r.exam ? dayjs(r.exam.date).format('DD.MM.YYYY') : ''}
+              </span>
+              <span class="ml-auto inline-flex items-center gap-1.5 flex-none">
                 {#if r.total_points !== null}
-                  <span class="text-xs tabular-nums">{r.total_points}/{r.max_points}</span>
+                  <span class="text-xs tabular-nums text-surface-600-400">
+                    {r.total_points}/{r.max_points}
+                  </span>
                 {/if}
-                <Fa icon={faChevronRight} class="text-surface-400-600" />
-              </a>
-            </li>
-          {/each}
-        </ul>
-      </div>
+                <ExamStateChip state={candidateState(r)} />
+              </span>
+              <Fa icon={faChevronRight} class="text-surface-400-600 flex-none" />
+            </a>
+          </li>
+        {/each}
+      </ul>
     {/if}
   </section>
 {/if}
