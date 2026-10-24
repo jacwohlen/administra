@@ -866,7 +866,9 @@
         "changedMeanwhile": "Das Blatt wurde inzwischen geändert – bitte prüfen und nochmals versuchen.",
         "leave": "Nicht mehr prüfen",
         "leaveError": "Fehler beim Abgeben der Kandidaten",
-        "candidatesLabel": "Kandidaten auf diesem Blatt"
+        "candidatesLabel": "Kandidaten auf diesem Blatt",
+        "notLive": "Keine Live-Verbindung: Änderungen anderer Prüfender erscheinen erst nach «Aktualisieren».",
+        "noteChanged": "Inzwischen von jemand anderem geändert: «{text}». Beim Speichern gilt dein Text."
       },
       "print": {
         "title": "Anmeldeliste",

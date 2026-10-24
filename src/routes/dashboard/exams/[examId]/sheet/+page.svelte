@@ -8,6 +8,7 @@
     faArrowLeft,
     faArrowsRotate,
     faCheck,
+    faCircleExclamation,
     faChevronDown,
     faCircleCheck,
     faCircleXmark,
@@ -38,16 +39,117 @@
     sidePoints,
     type ScoreSide
   } from '$lib/examUtils';
-  import type { ExamCandidate, ExamItem, ExamPart, ExamResult, ExamScore } from '$lib/models';
+  import {
+    applyCandidateChange,
+    applyExaminerChange,
+    applyScoreChange,
+    type RowChange
+  } from '$lib/examLive';
+  import type {
+    ExamCandidate,
+    ExamExaminer,
+    ExamItem,
+    ExamPart,
+    ExamResult,
+    ExamScore
+  } from '$lib/models';
   import { assignExaminer } from '../../queries';
   import ScoreButtons from './ScoreButtons.svelte';
   import type { PageData } from './$types';
 
   let { data }: { data: PageData } = $props();
 
-  // Local copies, updated optimistically and replaced on every reload
+  // Local copies, updated optimistically and live, and replaced on every reload
   let candidates = $derived(data.candidates);
   let scores = $derived(data.scores);
+
+  // Live: two examiners grading the same pair share the sheet. Their scores,
+  // notes, sign-ons and results arrive through Supabase Realtime (the echo of
+  // one's own writes too) in commit order, so both phones show what the
+  // database holds.
+  let connection = $state<'connecting' | 'live' | 'lost'>('connecting');
+  // Notes someone else changed while this examiner was typing in the same field
+  let noteConflicts = $state<Record<string, string>>({});
+  let candidateIds = $derived(data.candidates.map((c) => c.id).join(','));
+
+  function noteKey(candidateId: number | undefined, itemKey: string | undefined): string {
+    return `${candidateId}:${itemKey}`;
+  }
+
+  function onScoreChange(change: RowChange<ExamScore>) {
+    const row = change.eventType === 'DELETE' ? change.old : change.new;
+    const key = noteKey(row.candidate_id, row.item_key);
+    const current =
+      scores.find((s) => s.candidate_id === row.candidate_id && s.item_key === row.item_key)
+        ?.note ?? null;
+    // What is being typed in that field stays; the field says the note changed
+    const field = document.activeElement;
+    const typing =
+      change.eventType !== 'DELETE' &&
+      field instanceof HTMLTextAreaElement &&
+      field.dataset.note === key &&
+      field.value !== (current ?? '') &&
+      (change.new.note ?? null) !== current;
+    if (typing) {
+      noteConflicts[key] = change.new.note ?? '';
+      change = { ...change, new: { ...change.new, note: current } };
+    }
+    scores = applyScoreChange(scores, change);
+  }
+
+  $effect(() => {
+    const ids = candidateIds;
+    if (!ids) return;
+    let joined = false;
+    const reload = () => invalidate('app:exam-sheet');
+    const channel = supabaseClient
+      // Own name per subscription: the previous one may still be leaving
+      .channel(`exam-sheet:${data.exam.id}:${crypto.randomUUID()}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'exam_scores', filter: `candidate_id=in.(${ids})` },
+        (p) => onScoreChange(p as unknown as RowChange<ExamScore>)
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'exam_candidates', filter: `id=in.(${ids})` },
+        (p) => {
+          const change = p as unknown as RowChange<ExamCandidate>;
+          if (change.eventType === 'UPDATE') candidates = applyCandidateChange(candidates, change);
+          else reload();
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'exam_examiners',
+          filter: `candidate_id=in.(${ids})`
+        },
+        (p) =>
+          (candidates = applyExaminerChange(candidates, p as unknown as RowChange<ExamExaminer>))
+      )
+      .subscribe((status) => {
+        if (status === 'SUBSCRIBED') {
+          // Back after a break: fetch what changed meanwhile
+          if (joined) reload();
+          joined = true;
+          connection = 'live';
+        } else {
+          connection = 'lost';
+        }
+      });
+    // A phone back from standby catches up, whatever the connection missed
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') reload();
+    };
+    document.addEventListener('visibilitychange', onVisible);
+    return () => {
+      document.removeEventListener('visibilitychange', onVisible);
+      supabaseClient.removeChannel(channel);
+    };
+  });
 
   let me = $derived(data.session.user.id);
   let myName = $derived(examinerName(data.userProfile));
@@ -378,6 +480,7 @@
       return;
     }
     scores = applyScore(scores, c.id, key, 'note', note);
+    delete noteConflicts[noteKey(c.id, key)];
     const { error } = await supabaseClient
       .from('exam_scores')
       .upsert({ candidate_id: c.id, item_key: key, note }, { onConflict: 'candidate_id,item_key' });
@@ -462,6 +565,21 @@
     <Fa icon={faArrowsRotate} />
   </button>
 </div>
+
+{#if connection === 'lost'}
+  <p class="flex items-start gap-2 text-sm text-surface-700-300 mb-3" role="status">
+    <Fa icon={faCircleExclamation} class="text-warning-800-200 flex-none mt-1" />
+    {$_('page.exams.sheet.notLive')}
+  </p>
+{/if}
+
+{#snippet conflict(key: string)}
+  {#if noteConflicts[key] !== undefined}
+    <p class="text-xs text-warning-800-200 mt-1" role="status">
+      {$_('page.exams.sheet.noteChanged', { values: { text: noteConflicts[key] || '–' } })}
+    </p>
+  {/if}
+{/snippet}
 
 {#if groups.length > 1}
   <div bind:this={chipRow} class="flex gap-2 overflow-x-auto pb-2" role="group">
@@ -742,8 +860,10 @@
                             : $_('page.exams.sheet.notePlaceholder')}
                           value={score?.note ?? ''}
                           maxlength="2000"
+                          data-note={noteKey(c.id, item.key)}
                           onchange={(e) => setNote(c, item.key, e.currentTarget)}
                         ></textarea>
+                        {@render conflict(noteKey(c.id, item.key))}
                       {/if}
                     </div>
                   {:else if score?.note}
@@ -843,8 +963,10 @@
             placeholder={$_('page.exams.sheet.feedbackPlaceholder')}
             value={feedbackOf(c) ?? ''}
             maxlength="2000"
+            data-note={noteKey(c.id, FEEDBACK_KEY)}
             onchange={(e) => setNote(c, FEEDBACK_KEY, e.currentTarget)}
           ></textarea>
+          {@render conflict(noteKey(c.id, FEEDBACK_KEY))}
           <span class="block text-xs text-surface-600-400">
             {$_('page.exams.sheet.feedbackHint')}
           </span>

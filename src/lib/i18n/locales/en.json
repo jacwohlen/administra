@@ -866,7 +866,9 @@
         "changedMeanwhile": "The sheet was changed meanwhile – please check and try again.",
         "leave": "Stop examining",
         "leaveError": "Error handing the candidates back",
-        "candidatesLabel": "Candidates on this sheet"
+        "candidatesLabel": "Candidates on this sheet",
+        "notLive": "No live connection: other examiners’ changes show after Refresh.",
+        "noteChanged": "Changed meanwhile by someone else: “{text}”. Saving keeps your text."
       },
       "print": {
         "title": "Registration list",

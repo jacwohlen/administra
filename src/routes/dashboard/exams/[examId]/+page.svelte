@@ -80,6 +80,45 @@
     await invalidate('app:exam-candidates');
   }
 
+  // Live: registrations, call-ups, sheets started or finished and examiners
+  // signing on elsewhere show up here (one reload for a burst of changes)
+  let candidateIds = $derived(data.candidates.map((c) => c.id).join(','));
+  $effect(() => {
+    const examId = data.exam.id;
+    const ids = candidateIds;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const reload = () => {
+      clearTimeout(timer);
+      timer = setTimeout(refresh, 400);
+    };
+    let channel = supabaseClient
+      // Own name per subscription: the previous one may still be leaving
+      .channel(`exam-day:${examId}:${crypto.randomUUID()}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'exam_candidates', filter: `exam_id=eq.${examId}` },
+        reload
+      );
+    // Realtime filters take up to 100 values
+    if (ids && ids.split(',').length <= 100) {
+      channel = channel.on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'exam_examiners',
+          filter: `candidate_id=in.(${ids})`
+        },
+        reload
+      );
+    }
+    channel.subscribe();
+    return () => {
+      clearTimeout(timer);
+      supabaseClient.removeChannel(channel);
+    };
+  });
+
   /** Take the selected open sheets on as examiner and open the sheet. */
   async function grade() {
     const picked = data.candidates.filter((c) => selected.includes(c.id));

@@ -21,7 +21,10 @@ The grading process from registration to the new belt, without paper:
    by side: every item has 0 / 1 / 2 buttons per side (L / R) or one row for
    single-scored items, and a note for the feedback round. Totals, part
    minimums and a pass/fail suggestion update with every tap. _Meine_ lists
-   the candidates the signed-in examiner has taken over.
+   the candidates the signed-in examiner has taken over. Several sheets
+   (different grades) are switched by swiping the candidate cards; each keeps
+   its scroll position. Two examiners on the same pair share the sheet live
+   (see _Live sheets_).
 5. **Result** – after the feedback, _Bestanden_ / _Nicht bestanden_ closes
    the sheet. Passing records the grade in `member_grades` with the exam
    date, so the new belt shows on the profile, in the member directory and
@@ -75,13 +78,33 @@ result and feedback.
 The half belts (5.5 Kyu Halbgelb, 4.5 Kyu Halborange, 3.5 Kyu Halbgrün) are
 rungs of the Judo grade ladder with two colours (`grade_definitions."beltColor2"`).
 
+## Live sheets
+
+The sheet and the exam day subscribe to their rows of `exam_candidates`,
+`exam_scores` and `exam_examiners` through Supabase Realtime
+(`postgres_changes`; the tables are in the `supabase_realtime`
+publication). A score, a note, a sign-on or a result by one examiner shows
+on the other phones within a second; changes arrive in commit order, so all
+phones end up with what the database holds (`src/lib/examLive.ts`). A tap on
+the same side of the same item by two examiners: the later one counts, on
+every phone.
+
+- A note someone else changed while one is typing in the same field is not
+  overwritten; the field says so, and saving keeps one's own text.
+- Without a connection the sheet says so and still works; changes by others
+  then show after _Aktualisieren_. After a reconnect, and when a phone comes
+  back from standby, the sheet reloads once to catch up.
+- Realtime applies row level security per subscriber, so members receive
+  nothing. Deletes, which Postgres cannot check, carry only the primary key.
+
 ## Data and access
 
 `supabase/migrations/20261021120000_q_exams.sql`,
 `20261023090000_q_exams_review_fixes.sql`,
 `20261023150000_q_exams_score_lock.sql`, `20261024120000_exam_roles.sql`,
 `20261024170000_exam_roles_review_fixes.sql` and
-`20261024190000_exam_sheet_states.sql`:
+`20261024190000_exam_sheet_states.sql` and
+`20261024210000_exam_sheet_realtime.sql`:
 
 | Table             | Content                                                  | Members        | Staff (read all)                        |
 | ----------------- | -------------------------------------------------------- | -------------- | --------------------------------------- |
