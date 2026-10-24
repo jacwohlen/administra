@@ -9,6 +9,7 @@
     faPen,
     faPrint,
     faRotate,
+    faDoorClosed,
     faUmbrellaBeach,
     faUser,
     faUserSlash
@@ -52,7 +53,7 @@
       .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name))
   );
   let openCount = $derived(
-    rows.filter((r) => r.date >= today && !r.cancelled && r.session?.trainer_id == null).length
+    rows.filter((r) => r.date >= today && !r.cancelled && r.trainerId == null).length
   );
 
   const key = (r: PlanRow) => `${r.training.id}|${r.date}`;
@@ -70,7 +71,7 @@
       (r) =>
         r.date >= start &&
         !hidden.includes(r.training.id) &&
-        (!onlyOpen || (!r.cancelled && r.session?.trainer_id == null))
+        (!onlyOpen || (!r.cancelled && r.trainerId == null))
     );
     const trainingDays = new Set(rows.map((r) => r.date));
     const items: Item[] = shown.map((row) => ({ kind: 'row', date: row.date, row }));
@@ -275,11 +276,19 @@
           {#each group.items as item (item.kind + item.date + (item.kind === 'row' ? key(item.row) : item.kind === 'event' ? item.event.id : item.brk.id))}
             {#if item.kind === 'break'}
               <li
-                class="flex items-center gap-2 px-3 py-1.5 rounded-lg preset-tonal-warning text-sm"
+                class="flex flex-wrap items-center gap-x-2 px-3 py-1.5 rounded-lg text-sm {item.brk
+                  .cancels_training
+                  ? 'preset-tonal-warning'
+                  : 'preset-tonal-surface'}"
               >
-                <Fa icon={faUmbrellaBeach} />
+                <Fa icon={item.brk.cancels_training ? faDoorClosed : faUmbrellaBeach} />
                 <span class="font-semibold">{item.brk.title}</span>
                 <span>{range(item.brk)}</span>
+                <span class="text-xs opacity-80">
+                  {item.brk.cancels_training
+                    ? $_('page.trainingPlan.breakClosed')
+                    : $_('page.trainingPlan.breakOpen')}
+                </span>
               </li>
             {:else if item.kind === 'event'}
               <li
@@ -293,7 +302,7 @@
               </li>
             {:else}
               {@const r = item.row}
-              {@const trainer = r.session?.trainer_id}
+              {@const trainer = r.trainerId}
               <li
                 class="list-item py-2 {r.cancelled ? 'opacity-60' : ''} {r.date === today
                   ? 'ring-2 ring-primary-500'
@@ -341,6 +350,11 @@
                         {trainer != null
                           ? (memberName.get(trainer) ?? '?')
                           : $_('page.trainingPlan.trainerOpen')}
+                        {#if r.defaultTrainer}
+                          <span class="text-xs text-surface-600-400"
+                            >({$_('page.trainingPlan.mainTrainer')})</span
+                          >
+                        {/if}
                       </span>
                       {#if r.session?.topic}
                         <span class="meta-item">
@@ -397,6 +411,7 @@
     trainings={data.trainings}
     {rows}
     members={data.members}
+    {topics}
     from={data.from}
     to={data.to}
     onclose={() => (rotationOpen = false)}

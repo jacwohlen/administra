@@ -1,6 +1,6 @@
 <script lang="ts">
   import { _ } from 'svelte-i18n';
-  import type { PlanMember } from './+page';
+  import type { PlanMember } from './members';
 
   let {
     members,

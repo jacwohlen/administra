@@ -3,18 +3,8 @@ import { error as err } from '@sveltejs/kit';
 import dayjs from 'dayjs';
 import type { TrainingPlanBreak, TrainingPlanSession } from '$lib/models';
 import type { PlanEvent, PlanTraining } from '$lib/trainingPlanUtils';
+import { loadPlanMembers } from './members';
 import type { PageLoad } from './$types';
-
-export interface PlanMember {
-  id: number;
-  firstname: string;
-  lastname: string;
-  /**
-   * Adult trainer in Webling, led one of the planned trainings in the last
-   * year, or is planned to: offered first
-   */
-  trainer: boolean;
-}
 
 // The plan covers one calendar year (?year=2027), the current one by default
 export const load: PageLoad = async ({ url, depends }) => {
@@ -24,7 +14,7 @@ export const load: PageLoad = async ({ url, depends }) => {
   const from = `${year}-01-01`;
   const to = `${year}-12-31`;
 
-  const [plan, sessions, breaks, events, members] = await Promise.all([
+  const [plan, sessions, breaks, events] = await Promise.all([
     supabaseClient
       .from('training_plan_trainings')
       .select('training:trainings (id, title, weekday, dateFrom, section, mainTrainerId)')
@@ -37,7 +27,7 @@ export const load: PageLoad = async ({ url, depends }) => {
       .returns<TrainingPlanSession[]>(),
     supabaseClient
       .from('training_plan_breaks')
-      .select('id, title, date_from, date_to')
+      .select('id, title, date_from, date_to, cancels_training')
       .lte('date_from', to)
       .gte('date_to', from)
       .order('date_from')
@@ -48,56 +38,22 @@ export const load: PageLoad = async ({ url, depends }) => {
       .gte('date', from)
       .lte('date', to)
       .order('date')
-      .returns<PlanEvent[]>(),
-    supabaseClient
-      .from('members')
-      .select('id, firstname, lastname, labels')
-      .is('archivedAt', null)
-      .order('lastname')
-      .order('firstname')
-      .returns<{ id: number; firstname: string; lastname: string; labels: string[] | null }[]>()
+      .returns<PlanEvent[]>()
   ]);
-  for (const r of [plan, sessions, breaks, events, members]) {
+  for (const r of [plan, sessions, breaks, events]) {
     if (r.error) throw err(500, r.error.message);
   }
 
   const trainings = (plan.data ?? []).map((p) => p.training).filter(Boolean);
-
-  // Trainers of the planned trainings: main trainers in the last year, the
-  // trainings' main trainers and whoever is already planned
-  const trainerIds = new Set<number>();
-  for (const t of trainings) if (t.mainTrainerId) trainerIds.add(t.mainTrainerId);
-  for (const s of sessions.data ?? []) if (s.trainer_id) trainerIds.add(s.trainer_id);
-  if (trainings.length > 0) {
-    const { data: logs, error } = await supabaseClient
-      .from('logs')
-      .select('memberId')
-      .in(
-        'trainingId',
-        trainings.map((t) => t.id)
-      )
-      .eq('trainerRole', 'main_trainer')
-      .gte('date', dayjs().subtract(1, 'year').format('YYYY-MM-DD'))
-      .returns<{ memberId: number | null }[]>();
-    if (error) throw err(500, error.message);
-    for (const l of logs ?? []) if (l.memberId) trainerIds.add(l.memberId);
+  let members;
+  try {
+    members = await loadPlanMembers(
+      trainings,
+      (sessions.data ?? []).flatMap((s) => (s.trainer_id ? [s.trainer_id] : []))
+    );
+  } catch (e) {
+    throw err(500, (e as Error).message);
   }
-
-  // Webling labels the trainers too ("Erwachsenentrainer", "Kindertrainer")
-  for (const m of members.data ?? []) {
-    if ((m.labels ?? []).some((l) => l.toLowerCase().includes('erwachsenentrainer'))) {
-      trainerIds.add(m.id);
-    }
-  }
-
-  const people: PlanMember[] = (members.data ?? [])
-    .filter((m) => trainerIds.has(m.id) || !(m.labels ?? []).includes('probetraining'))
-    .map((m) => ({
-      id: m.id,
-      firstname: m.firstname,
-      lastname: m.lastname,
-      trainer: trainerIds.has(m.id)
-    }));
 
   return {
     year,
@@ -107,6 +63,6 @@ export const load: PageLoad = async ({ url, depends }) => {
     sessions: sessions.data ?? [],
     breaks: breaks.data ?? [],
     events: events.data ?? [],
-    members: people
+    members
   };
 };

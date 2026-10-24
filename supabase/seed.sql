@@ -14430,11 +14430,13 @@ WHERE user_id = 'c3d4e5f6-a7b8-9012-cdef-123456789012';
 --
 INSERT INTO public.training_plan_trainings (training_id) VALUES (27), (23), (26);
 
-INSERT INTO public.training_plan_breaks (title, date_from, date_to) VALUES
-  ('Weihnachtsferien', '2026-12-19', '2027-01-03'),
-  ('Sportferien', '2027-01-30', '2027-02-14'),
-  ('Frühlingsferien', '2027-04-10', '2027-04-25'),
-  ('Auffahrt', '2027-05-06', '2027-05-06');
+-- School holidays: the adults train on; Christmas and public holidays: dojo closed
+INSERT INTO public.training_plan_breaks (title, date_from, date_to, cancels_training) VALUES
+  ('Weihnachten', '2026-12-19', '2027-01-03', true),
+  ('Sportferien', '2027-01-23', '2027-02-07', false),
+  ('Frühlingsferien', '2027-04-03', '2027-04-18', false),
+  ('Auffahrt', '2027-05-06', '2027-05-06', true),
+  ('Brückentag nach Auffahrt', '2027-05-07', '2027-05-07', true);
 
 -- The next eight Mondays and Fridays from today
 INSERT INTO public.training_plan_sessions (training_id, date, trainer_id, topic, cancelled)

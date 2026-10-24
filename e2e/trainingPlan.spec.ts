@@ -15,6 +15,6 @@ test.describe('Training plan', () => {
 
   test('shows the holidays in the settings', async ({ page }) => {
     await page.goto('/dashboard/training-plan/settings');
-    await expect(page.getByText('Weihnachtsferien')).toBeVisible({ timeout: 10000 });
+    await expect(page.getByText('Weihnachten').first()).toBeVisible({ timeout: 10000 });
   });
 });

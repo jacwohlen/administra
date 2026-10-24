@@ -26,10 +26,14 @@ export interface PlanRow {
   date: string;
   training: PlanTraining;
   session: TrainingPlanSession | null;
-  /** The break the date falls into, if any */
+  /** The break the date falls into, if any (one closing the dojo first) */
   break: TrainingPlanBreak | null;
   /** Whether the training is dropped: the session decides, else the break */
   cancelled: boolean;
+  /** Who leads: the planned trainer, else the training's main trainer */
+  trainerId: number | null;
+  /** trainerId is the training's main trainer, not planned for the date */
+  defaultTrainer: boolean;
   /** Events on the same date */
   events: PlanEvent[];
 }
@@ -49,16 +53,21 @@ export function trainingDates(weekday: string, from: string, to: string): string
   return dates;
 }
 
+/**
+ * The break a date falls into; one closing the dojo wins over holidays the
+ * adults train through (Karfreitag within the Frühlingsferien)
+ */
 export function breakOn(date: string, breaks: TrainingPlanBreak[]): TrainingPlanBreak | null {
-  return breaks.find((b) => b.date_from <= date && date <= b.date_to) ?? null;
+  const on = breaks.filter((b) => b.date_from <= date && date <= b.date_to);
+  return on.find((b) => b.cancels_training) ?? on[0] ?? null;
 }
 
 /** null follows the break, true / false is the TK's explicit choice */
 export function isCancelled(
   session: Pick<TrainingPlanSession, 'cancelled'> | null,
-  brk: TrainingPlanBreak | null
+  brk: Pick<TrainingPlanBreak, 'cancels_training'> | null
 ): boolean {
-  return session?.cancelled ?? brk != null;
+  return session?.cancelled ?? brk?.cancels_training ?? false;
 }
 
 /** "18.00" and "18:00" both occur in trainings."dateFrom" */
@@ -88,12 +97,15 @@ export function buildPlan(
     for (const date of trainingDates(training.weekday, from, to)) {
       const session = sessionMap.get(`${training.id}|${date}`) ?? null;
       const brk = breakOn(date, breaks);
+      const planned = session?.trainer_id ?? null;
       rows.push({
         date,
         training,
         session,
         break: brk,
         cancelled: isCancelled(session, brk),
+        trainerId: planned ?? training.mainTrainerId ?? null,
+        defaultTrainer: planned == null && training.mainTrainerId != null,
         events: eventMap.get(date) ?? []
       });
     }
@@ -125,27 +137,37 @@ export interface RotationOptions {
 }
 
 /**
- * Which slot each date of one training gets. Dropped dates get none and stay
- * as they are. The first date of the list starts with the first slot.
+ * Which slot each date of one training gets: trainers, or topics. Dropped
+ * dates get none and stay as they are. The first date of the list starts with
+ * the first slot; part counts the dates within a slot (Teil 1, Teil 2).
  */
-export function rotate(
+export function rotate<T>(
   rows: { date: string; cancelled: boolean }[],
-  slots: RotationSlot[],
+  slots: T[],
   { perSlot, skipCancelled }: RotationOptions
-): { date: string; slot: RotationSlot }[] {
+): { date: string; slot: T; part: number }[] {
   if (slots.length === 0 || rows.length === 0) return [];
   const per = Math.max(1, Math.floor(perSlot));
   const sorted = [...rows].sort((a, b) => a.date.localeCompare(b.date));
   const first = dayjs(sorted[0].date);
-  const result: { date: string; slot: RotationSlot }[] = [];
+  const result: { date: string; slot: T; part: number }[] = [];
   let held = 0;
   for (const row of sorted) {
     if (row.cancelled) continue;
     const step = skipCancelled ? held : Math.round(dayjs(row.date).diff(first, 'day') / 7);
     held++;
-    result.push({ date: row.date, slot: slots[Math.floor(step / per) % slots.length] });
+    result.push({
+      date: row.date,
+      slot: slots[Math.floor(step / per) % slots.length],
+      part: (step % per) + 1
+    });
   }
   return result;
+}
+
+/** A topic of a topic rotation, numbered when it runs over several dates */
+export function topicLabel(topic: string, part: number, perSlot: number, numbered: boolean) {
+  return numbered && perSlot > 1 ? `${topic}, Teil ${part}` : topic;
 }
 
 /** The session columns a rotation slot sets */
@@ -176,7 +198,7 @@ export function planTopics(sessions: Pick<TrainingPlanSession, 'topic'>[]): stri
 export function trainerCounts(rows: PlanRow[]): Map<number, number> {
   const counts = new Map<number, number>();
   for (const r of rows) {
-    const id = r.session?.trainer_id;
+    const id = r.trainerId;
     if (r.cancelled || id == null) continue;
     counts.set(id, (counts.get(id) ?? 0) + 1);
   }

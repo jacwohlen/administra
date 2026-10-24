@@ -8,6 +8,7 @@ import {
   planTopics,
   rotate,
   slotPatch,
+  topicLabel,
   trainerCounts,
   trainingDates,
   type PlanTraining
@@ -27,11 +28,28 @@ const friday: PlanTraining = {
   dateFrom: '20:00',
   section: 'Judo'
 };
+// Dojo closed (e.g. Christmas); the dates are only for the tests
 const autumn: TrainingPlanBreak = {
   id: 1,
   title: 'Herbstferien',
   date_from: '2026-10-03',
-  date_to: '2026-10-18'
+  date_to: '2026-10-18',
+  cancels_training: true
+};
+// School holidays: the adults train on
+const spring: TrainingPlanBreak = {
+  id: 2,
+  title: 'Frühlingsferien',
+  date_from: '2026-04-03',
+  date_to: '2026-04-19',
+  cancels_training: false
+};
+const goodFriday: TrainingPlanBreak = {
+  id: 3,
+  title: 'Karfreitag',
+  date_from: '2026-04-03',
+  date_to: '2026-04-03',
+  cancels_training: true
 };
 
 function session(p: Partial<TrainingPlanSession>): TrainingPlanSession {
@@ -78,6 +96,15 @@ describe('breaks and cancellation', () => {
     expect(breakOn('2026-10-19', [autumn])).toBeNull();
   });
 
+  it('prefers the break that closes the dojo', () => {
+    expect(breakOn('2026-04-03', [spring, goodFriday])).toBe(goodFriday);
+    expect(breakOn('2026-04-10', [spring, goodFriday])).toBe(spring);
+  });
+
+  it('keeps trainings in holidays that do not close the dojo', () => {
+    expect(isCancelled(null, spring)).toBe(false);
+  });
+
   it('follows the break unless the session decides', () => {
     expect(isCancelled(null, autumn)).toBe(true);
     expect(isCancelled(null, null)).toBe(false);
@@ -107,6 +134,22 @@ describe('buildPlan', () => {
     expect(rows[3].events.map((e) => e.title)).toEqual(['Vereinsmeisterschaft']);
   });
 
+  it('falls back to the main trainer of the training', () => {
+    const fixed = { ...monday, mainTrainerId: 5 };
+    const rows = buildPlan(
+      [fixed],
+      [session({ date: '2026-11-09', trainer_id: 7 })],
+      [],
+      [],
+      '2026-11-02',
+      '2026-11-09'
+    );
+    expect(rows.map((r) => [r.trainerId, r.defaultTrainer])).toEqual([
+      [5, true],
+      [7, false]
+    ]);
+  });
+
   it('orders trainings of the same day by start time, whatever the separator', () => {
     const early = { ...monday, id: 28, title: 'Judo Kinder', dateFrom: '18.30' };
     const rows = buildPlan([monday, early], [], [], [], '2026-11-02', '2026-11-02');
@@ -119,6 +162,19 @@ describe('rotate', () => {
   const held = dates.map((date) => ({ date, cancelled: false }));
   const a = { kind: 'trainer', memberId: 1 } as const;
   const b = { kind: 'trainer', memberId: 2 } as const;
+
+  it('numbers the dates within a slot', () => {
+    const r = rotate(held, ['Seoi-nage', 'Uchi-mata'], { perSlot: 2, skipCancelled: true });
+    expect(r.map((x) => topicLabel(x.slot, x.part, 2, true))).toEqual([
+      'Seoi-nage, Teil 1',
+      'Seoi-nage, Teil 2',
+      'Uchi-mata, Teil 1',
+      'Uchi-mata, Teil 2',
+      'Seoi-nage, Teil 1'
+    ]);
+    expect(topicLabel('Randori', 1, 1, true)).toBe('Randori');
+    expect(topicLabel('Kombinationen', 2, 4, false)).toBe('Kombinationen');
+  });
 
   it('alternates the slots date by date', () => {
     const r = rotate(held, [a, b], { perSlot: 1, skipCancelled: true });
@@ -134,10 +190,10 @@ describe('rotate', () => {
     const rows = held.map((r, i) => ({ ...r, cancelled: i === 1 }));
     const r = rotate(rows, [a, b], { perSlot: 1, skipCancelled: true });
     expect(r).toEqual([
-      { date: '2026-11-02', slot: a },
-      { date: '2026-11-16', slot: b },
-      { date: '2026-11-23', slot: a },
-      { date: '2026-11-30', slot: b }
+      { date: '2026-11-02', slot: a, part: 1 },
+      { date: '2026-11-16', slot: b, part: 1 },
+      { date: '2026-11-23', slot: a, part: 1 },
+      { date: '2026-11-30', slot: b, part: 1 }
     ]);
   });
 

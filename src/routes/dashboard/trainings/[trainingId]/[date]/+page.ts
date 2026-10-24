@@ -10,6 +10,7 @@ import type {
 import { supabaseClient } from '$lib/supabase';
 import { error as err } from '@sveltejs/kit';
 import { buildMembersWithStreaks } from '$lib/trainingUtils';
+import { breakOn } from '$lib/trainingPlanUtils';
 import { displayConfig, loadAppSettings } from '$lib/appSettings';
 
 export const load = (async ({ params }) => {
@@ -59,7 +60,7 @@ export const load = (async ({ params }) => {
       >(),
     supabaseClient
       .from('training_plan_breaks')
-      .select('id, title, date_from, date_to')
+      .select('id, title, date_from, date_to, cancels_training')
       .lte('date_from', params.date)
       .gte('date_to', params.date)
       .returns<TrainingPlanBreak[]>()
@@ -112,7 +113,7 @@ export const load = (async ({ params }) => {
     medalMap,
     trialCountMap,
     plan: planned
-      ? { session: planSession ?? null, break: (planBreaks ?? [])[0] ?? null }
+      ? { session: planSession ?? null, break: breakOn(params.date, planBreaks ?? []) }
       : planSession
         ? { session: planSession, break: null }
         : null

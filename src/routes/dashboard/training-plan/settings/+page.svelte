@@ -1,18 +1,25 @@
 <script lang="ts">
   import Fa from 'svelte-fa';
-  import { faArrowLeft, faPlus, faTrash, faUmbrellaBeach } from '@fortawesome/free-solid-svg-icons';
+  import {
+    faArrowLeft,
+    faDoorClosed,
+    faPlus,
+    faTrash,
+    faUmbrellaBeach
+  } from '@fortawesome/free-solid-svg-icons';
   import { _ } from 'svelte-i18n';
   import dayjs from 'dayjs';
   import { invalidate } from '$app/navigation';
   import { supabaseClient } from '$lib/supabase';
   import { toaster } from '$lib/toast';
   import type { TrainingPlanBreak } from '$lib/models';
+  import ImportSheet from './ImportSheet.svelte';
   import type { PageData } from './$types';
 
   let { data }: { data: PageData } = $props();
 
   let busy = $state(false);
-  let form = $state({ title: '', date_from: '', date_to: '' });
+  let form = $state({ title: '', date_from: '', date_to: '', cancels_training: false });
 
   async function refresh() {
     await invalidate('training-plan:settings');
@@ -39,16 +46,33 @@
       return;
     }
     busy = true;
-    const { error } = await supabaseClient
-      .from('training_plan_breaks')
-      .insert({ title, date_from: form.date_from, date_to });
+    const { error } = await supabaseClient.from('training_plan_breaks').insert({
+      title,
+      date_from: form.date_from,
+      date_to,
+      cancels_training: form.cancels_training
+    });
     busy = false;
     if (error) {
       console.error('Error adding break:', error);
       toaster.error({ title: $_('page.trainingPlan.saveError') });
       return;
     }
-    form = { title: '', date_from: '', date_to: '' };
+    form = { title: '', date_from: '', date_to: '', cancels_training: false };
+    await refresh();
+  }
+
+  async function setClosed(b: TrainingPlanBreak, cancels_training: boolean) {
+    busy = true;
+    const { error } = await supabaseClient
+      .from('training_plan_breaks')
+      .update({ cancels_training })
+      .eq('id', b.id);
+    busy = false;
+    if (error) {
+      console.error('Error changing break:', error);
+      toaster.error({ title: $_('page.trainingPlan.saveError') });
+    }
     await refresh();
   }
 
@@ -110,7 +134,7 @@
   <p class="text-sm text-surface-600-400 mb-2">{$_('page.trainingPlan.settings.breaksHint')}</p>
 
   <form
-    class="card border border-surface-200-800 p-3 mb-3 grid grid-cols-2 sm:grid-cols-[1fr_auto_auto_auto] gap-2 items-end"
+    class="card border border-surface-200-800 p-3 mb-3 grid grid-cols-2 sm:grid-cols-[1fr_auto_auto] gap-2 items-end"
     onsubmit={(e) => {
       e.preventDefault();
       addBreak();
@@ -134,9 +158,13 @@
       <span>{$_('page.trainingPlan.to')}</span>
       <input class="input" type="date" bind:value={form.date_to} min={form.date_from} />
     </label>
+    <label class="flex items-center gap-2 col-span-2 sm:col-span-3">
+      <input class="checkbox" type="checkbox" bind:checked={form.cancels_training} />
+      <span>{$_('page.trainingPlan.settings.closed')}</span>
+    </label>
     <button
       type="submit"
-      class="btn preset-filled-primary-500 col-span-2 sm:col-span-1"
+      class="btn preset-filled-primary-500 col-span-2 sm:col-span-3"
       disabled={busy}
     >
       <Fa icon={faPlus} />
@@ -150,13 +178,23 @@
     <ul class="flex flex-col gap-2">
       {#each data.breaks as b (b.id)}
         <li class="list-item">
-          <div class="entity-badge text-warning-600-400">
-            <Fa icon={faUmbrellaBeach} />
+          <div class="entity-badge {b.cancels_training ? 'text-warning-600-400' : ''}">
+            <Fa icon={b.cancels_training ? faDoorClosed : faUmbrellaBeach} />
           </div>
           <div class="list-item-content">
             <div class="font-semibold truncate">{b.title}</div>
             <div class="text-sm text-surface-600-400">{range(b)}</div>
           </div>
+          <label class="flex items-center gap-1 text-sm flex-none">
+            <input
+              class="checkbox"
+              type="checkbox"
+              checked={b.cancels_training}
+              disabled={busy}
+              onchange={(e) => setClosed(b, (e.target as HTMLInputElement).checked)}
+            />
+            <span>{$_('page.trainingPlan.settings.closedShort')}</span>
+          </label>
           <button
             class="btn-icon preset-tonal-error flex-none"
             onclick={() => removeBreak(b)}
@@ -169,4 +207,14 @@
       {/each}
     </ul>
   {/if}
+</section>
+
+<section class="mt-8">
+  <h3>{$_('page.trainingPlan.import.title')}</h3>
+  <ImportSheet
+    trainings={data.plannedTrainings}
+    members={data.members}
+    breaks={data.breaks}
+    onimported={refresh}
+  />
 </section>

@@ -5,7 +5,7 @@
   import dayjs from 'dayjs';
   import type { PlanRow } from '$lib/trainingPlanUtils';
   import TrainerSelect from './TrainerSelect.svelte';
-  import type { PlanMember } from './+page';
+  import type { PlanMember } from './members';
 
   let {
     rows,
@@ -167,7 +167,7 @@
             <option value="keep">{$_('page.trainingPlan.keep')}</option>
           {/if}
           <option value="auto">
-            {single?.break
+            {single?.break?.cancels_training
               ? $_('page.trainingPlan.status.autoBreak', { values: { title: single.break.title } })
               : $_('page.trainingPlan.status.auto')}
           </option>

@@ -9,17 +9,19 @@
     hasAssignment,
     rotate,
     slotPatch,
+    topicLabel,
     type PlanRow,
     type PlanTraining,
     type RotationSlot
   } from '$lib/trainingPlanUtils';
   import TrainerSelect from './TrainerSelect.svelte';
-  import type { PlanMember } from './+page';
+  import type { PlanMember } from './members';
 
   let {
     trainings,
     rows,
     members,
+    topics,
     from,
     to,
     onclose,
@@ -29,14 +31,19 @@
     /** All rows of the shown year */
     rows: PlanRow[];
     members: PlanMember[];
+    /** Topics used so far, offered as suggestions */
+    topics: string[];
     from: string;
     to: string;
     onclose: () => void;
     onsaved: () => void;
   } = $props();
 
-  /** Member id, null for "trainer open", 'none' for no training */
-  type SlotForm = { value: number | null | 'keep' | 'none' };
+  /**
+   * Trainers: member id, null for "trainer open", 'none' for no training.
+   * Topics: the topic, empty for none.
+   */
+  type SlotForm = { value: number | null | 'keep' | 'none'; topic: string };
 
   const today = dayjs().format('YYYY-MM-DD');
   // svelte-ignore state_referenced_locally
@@ -46,9 +53,15 @@
     to,
     perSlot: 1,
     skipCancelled: true,
-    overwrite: false
+    overwrite: false,
+    // Topics: "Seoi-nage, Teil 1", "Seoi-nage, Teil 2" when a topic covers several dates
+    numbered: true
   });
-  let slots = $state<SlotForm[]>([{ value: null }, { value: null }]);
+  let mode = $state<'trainers' | 'topics'>('trainers');
+  let slots = $state<SlotForm[]>([
+    { value: null, topic: '' },
+    { value: null, topic: '' }
+  ]);
   let saving = $state(false);
 
   let memberName = $derived(
@@ -71,24 +84,37 @@
     )
   );
 
-  // Overwriting starts again from the breaks: a date the last rotation
-  // dropped ("no training") counts as held again; held-within-a-break stays
+  // Overwriting trainers starts again from the breaks: a date the last
+  // rotation dropped ("no training") counts as held again; held-when-closed
+  // stays. Topics leave the cancellations alone.
   let assignments = $derived.by(() => {
     const input = trainingRows.map((r) => ({
       date: r.date,
-      cancelled: form.overwrite
-        ? r.session?.cancelled === false
-          ? false
-          : r.break != null
-        : r.cancelled
+      cancelled:
+        form.overwrite && mode === 'trainers'
+          ? r.session?.cancelled === false
+            ? false
+            : (r.break?.cancels_training ?? false)
+          : r.cancelled
     }));
     const byDate = new Map(trainingRows.map((r) => [r.date, r]));
-    return rotate(input, rotationSlots, {
-      perSlot: form.perSlot,
-      skipCancelled: form.skipCancelled
-    }).map((a) => {
+    return rotate(
+      input,
+      slots.map((_, i) => i),
+      { perSlot: form.perSlot, skipCancelled: form.skipCancelled }
+    ).map((a) => {
       const row = byDate.get(a.date)!;
-      return { ...a, row, kept: !form.overwrite && hasAssignment(row.session) };
+      const kept =
+        !form.overwrite &&
+        (mode === 'trainers' ? hasAssignment(row.session) : !!row.session?.topic);
+      const topic = slots[a.slot].topic.trim();
+      return {
+        ...a,
+        row,
+        kept,
+        trainer: rotationSlots[a.slot],
+        topic: topic ? topicLabel(topic, a.part, form.perSlot, form.numbered) : null
+      };
     });
   });
   let changes = $derived(assignments.filter((a) => !a.kept));
@@ -108,12 +134,17 @@
   async function apply() {
     if (changes.length === 0) return;
     saving = true;
-    const upserts = changes.map(({ row, slot }) => ({
+    const upserts = changes.map(({ row, trainer, topic }) => ({
       training_id: row.training.id,
       date: row.date,
-      topic: row.session?.topic ?? null,
       notes: row.session?.notes ?? null,
-      ...slotPatch(slot)
+      ...(mode === 'trainers'
+        ? { topic: row.session?.topic ?? null, ...slotPatch(trainer) }
+        : {
+            topic,
+            trainer_id: row.session?.trainer_id ?? null,
+            cancelled: row.session?.cancelled ?? null
+          })
     }));
     const { error } = await supabaseClient
       .from('training_plan_sessions')
@@ -145,7 +176,24 @@
     onclick={(e) => e.stopPropagation()}
   >
     <h3>{$_('page.trainingPlan.rotation.title')}</h3>
-    <p class="text-sm text-surface-600-400 mb-3">{$_('page.trainingPlan.rotation.intro')}</p>
+    <div class="flex rounded-lg overflow-hidden border border-surface-300-700 my-3">
+      {#each ['trainers', 'topics'] as const as m (m)}
+        <button
+          type="button"
+          class="btn btn-sm flex-1 rounded-none {mode === m
+            ? 'preset-filled-primary-500'
+            : 'preset-tonal-surface'}"
+          onclick={() => (mode = m)}
+        >
+          {$_('page.trainingPlan.rotation.mode.' + m)}
+        </button>
+      {/each}
+    </div>
+    <p class="text-sm text-surface-600-400 mb-3">
+      {mode === 'trainers'
+        ? $_('page.trainingPlan.rotation.intro')
+        : $_('page.trainingPlan.rotation.introTopics')}
+    </p>
 
     <form
       class="space-y-3"
@@ -183,7 +231,17 @@
           <div class="flex items-center gap-2">
             <span class="w-6 text-right text-sm text-surface-600-400">{i + 1}.</span>
             <div class="flex-1 min-w-0">
-              <TrainerSelect {members} bind:value={slot.value} allowNone />
+              {#if mode === 'trainers'}
+                <TrainerSelect {members} bind:value={slot.value} allowNone />
+              {:else}
+                <input
+                  class="input"
+                  type="text"
+                  list="rotation-topics"
+                  placeholder={$_('page.trainingPlan.topicPlaceholder')}
+                  bind:value={slot.topic}
+                />
+              {/if}
             </div>
             <button
               type="button"
@@ -217,17 +275,29 @@
         <button
           type="button"
           class="btn btn-sm preset-tonal-primary"
-          onclick={() => slots.push({ value: null })}
+          onclick={() => slots.push({ value: null, topic: '' })}
         >
           <Fa icon={faPlus} />
           <span>{$_('page.trainingPlan.rotation.addSlot')}</span>
         </button>
+        <datalist id="rotation-topics">
+          {#each topics as t (t)}
+            <option value={t}></option>
+          {/each}
+        </datalist>
       </div>
 
       <label class="label">
         <span>{$_('page.trainingPlan.rotation.perSlot')}</span>
         <input class="input w-24" type="number" min="1" max="12" bind:value={form.perSlot} />
       </label>
+
+      {#if mode === 'topics' && form.perSlot > 1}
+        <label class="flex items-start gap-2">
+          <input class="checkbox mt-1" type="checkbox" bind:checked={form.numbered} />
+          <span>{$_('page.trainingPlan.rotation.numbered')}</span>
+        </label>
+      {/if}
 
       <label class="flex items-start gap-2">
         <input class="checkbox mt-1" type="checkbox" bind:checked={form.skipCancelled} />
@@ -243,7 +313,9 @@
         <span>
           {$_('page.trainingPlan.rotation.overwrite')}
           <span class="block text-xs text-surface-600-400">
-            {$_('page.trainingPlan.rotation.overwriteHint')}
+            {mode === 'trainers'
+              ? $_('page.trainingPlan.rotation.overwriteHint')
+              : $_('page.trainingPlan.rotation.overwriteHintTopics')}
           </span>
         </span>
       </label>
@@ -262,8 +334,10 @@
                 <span class="truncate">
                   {#if a.kept}
                     {$_('page.trainingPlan.rotation.kept')}
+                  {:else if mode === 'trainers'}
+                    {slotLabel(a.trainer)}
                   {:else}
-                    {slotLabel(a.slot)}
+                    {a.topic ?? '–'}
                   {/if}
                 </span>
               </li>
