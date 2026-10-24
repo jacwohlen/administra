@@ -8,15 +8,13 @@
 --   training_plan_trainings  the trainings the TK plans (usually the adult ones)
 --   training_plan_sessions   one row per training and date that has a plan:
 --                            trainer, topic, notes, and whether it takes place
---   training_plan_breaks     holidays and closing days. School holidays only
---                            drop the kids' trainings, the adults train on
---                            (cancels_training false: shown for orientation);
---                            when the dojo is closed (Christmas, public
---                            holidays) every planned training in the period is
---                            dropped unless its session says otherwise
+--   training_plan_breaks     periods without training (holidays, public
+--                            holidays, the day of a big event); every planned
+--                            training in the period is dropped unless its
+--                            session says otherwise
 --
 -- A session's "cancelled" is three-valued: null follows the breaks, true
--- drops the training, false holds it even when the dojo is closed.
+-- drops the training, false holds it even within a break.
 --
 -- The TK is the exam role 'manager' (is_exam_manager(), admins included): it
 -- edits the plan. All staff read it, so trainers see when they lead and what.
@@ -47,7 +45,6 @@ CREATE TABLE public.training_plan_breaks (
   title text NOT NULL CHECK (btrim(title) <> ''),
   date_from text NOT NULL CHECK (date_from ~ '^\d{4}-\d{2}-\d{2}$'),
   date_to text NOT NULL CHECK (date_to ~ '^\d{4}-\d{2}-\d{2}$'),
-  cancels_training boolean NOT NULL DEFAULT true,
   created_at timestamptz NOT NULL DEFAULT now(),
   CHECK (date_to >= date_from)
 );
