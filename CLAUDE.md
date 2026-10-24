@@ -16,6 +16,7 @@ Attendance tracking app for martial arts clubs. SvelteKit frontend + Supabase (P
 - **Frontend:** SvelteKit 2 + Svelte 4, Tailwind CSS + Skeleton UI, svelte-i18n (de/en)
 - **Backend:** Supabase (PostgreSQL with RLS), Google OAuth. Members can also sign in with a one-time email code. New accounts land in `user_profiles` with status `pending`; accounts whose confirmed email matches a member record are approved automatically with role `member` (own profile + member directory in `/club`, see `docs/MEMBER_SIGN_IN.md`), all others must be approved by an admin. Staff roles are `viewer` (read), `trainer` (write) and `admin` (write + user management). RLS policies use `is_approved_user()` (any approved account), `is_staff()` (viewer and up), `is_writer()` and `is_admin()`; members reach their own rows through `my_member_ids()`.
 - **Q-Prüfungen (kyu gradings):** exam days, member self-registration, a phone sheet on which examiners score a pair side by side, and the result written to `member_grades`; programs per grade live in `exam_programs`. On top of a staff role, `user_profiles.exam_role` makes an account an `examiner` (scores the sheet, `is_examiner()`) or the TK `manager` (also exam days and programs, `is_exam_manager()`); admins have both. Members see only exam days, their registrations and the resulting grade, never sheets, points or programs (see `docs/Q_EXAMS.md`, scoring in `src/lib/examUtils.ts`)
+- **Trainingsplanung (training plan):** the TK (`exam_role` `manager`, admins included) plans trainer, topic and cancellations per training and date for the trainings in `training_plan_trainings` (`training_plan_sessions`), with holidays as `training_plan_breaks`; all staff read it, the check-in page shows the plan for its date. Rotation and plan logic in `src/lib/trainingPlanUtils.ts`, see `docs/TRAINING_PLAN.md`
 - **Trial e-mails:** thank-you, waiting-list and training mails to trial candidates go through the club's SMTP server (`PRIVATE_SMTP_*`, `src/lib/server/mailer.ts`), logged in `trial_emails`; see `docs/TRIAL_EMAILS.md`
 - **Error monitoring:** Sentry (`@sentry/sveltekit`, EU region) in `hooks.server.ts` / `hooks.client.ts`; reports are scrubbed by `src/lib/sentryScrub.ts` (no e-mails, OAuth codes, IPs). Off without `PUBLIC_SENTRY_DSN`; see `docs/ERROR_MONITORING.md`. Uptime: an external monitor calls `/api/health`; the Webling sync reports each run to healthchecks.io (`docs/UPTIME_MONITORING.md`)
 - **Deployment:** Netlify via `@sveltejs/adapter-netlify`
@@ -23,7 +24,7 @@ Attendance tracking app for martial arts clubs. SvelteKit frontend + Supabase (P
 
 ## Project Structure
 
-- `src/routes/` - SvelteKit file-based routing (dashboard, members, trainings, events, exams, stats; `club/` is the member self-service area)
+- `src/routes/` - SvelteKit file-based routing (dashboard, members, trainings, training-plan, events, exams, stats; `club/` is the member self-service area)
 - `src/lib/models.ts` - TypeScript interfaces for all data types
 - `src/lib/utils.ts` - Shared utility functions
 - `src/lib/supabase.ts` - Supabase client setup
@@ -40,7 +41,7 @@ Attendance tracking app for martial arts clubs. SvelteKit frontend + Supabase (P
 - Routes: kebab-case directories
 - Environment variables: `PUBLIC_*` for client-accessible, `PRIVATE_*` for server-only
 - Formatting: Prettier (spaces, single quotes, no trailing commas, 100 char width)
-- Dashboard pages show add/edit/delete controls only when `data.canWrite` (trainer/admin, from `src/routes/dashboard/+layout.ts`); create/edit routes redirect viewers in their `+page.ts`. Q-Prüfungen use `data.canManageExams` (exam days, programs), `data.canGrade` (sheets) and `canWrite || canManageExams` (candidates) instead. RLS stays the real guard.
+- Dashboard pages show add/edit/delete controls only when `data.canWrite` (trainer/admin, from `src/routes/dashboard/+layout.ts`); create/edit routes redirect viewers in their `+page.ts`. Q-Prüfungen use `data.canManageExams` (exam days, programs), `data.canGrade` (sheets) and `canWrite || canManageExams` (candidates) instead; the training plan uses `data.canPlanTrainings`. RLS stays the real guard.
 
 ## Database Migrations
 

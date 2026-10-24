@@ -1,0 +1,405 @@
+<script lang="ts">
+  import Fa from 'svelte-fa';
+  import {
+    faArrowLeft,
+    faArrowRight,
+    faBookOpen,
+    faCalendarDays,
+    faGear,
+    faPen,
+    faPrint,
+    faRotate,
+    faUmbrellaBeach,
+    faUser,
+    faUserSlash
+  } from '@fortawesome/free-solid-svg-icons';
+  import { _, locale } from 'svelte-i18n';
+  import dayjs from 'dayjs';
+  import { goto, invalidate } from '$app/navigation';
+  import {
+    buildPlan,
+    planTopics,
+    trainerCounts,
+    type PlanEvent,
+    type PlanRow
+  } from '$lib/trainingPlanUtils';
+  import type { TrainingPlanBreak } from '$lib/models';
+  import SessionDialog from './SessionDialog.svelte';
+  import RotationDialog from './RotationDialog.svelte';
+  import type { PageData } from './$types';
+
+  let { data }: { data: PageData } = $props();
+
+  const today = dayjs().format('YYYY-MM-DD');
+
+  let hidden = $state<number[]>([]);
+  let onlyOpen = $state(false);
+  let showPast = $state(false);
+  let selected = $state<string[]>([]);
+  let dialogRows = $state<PlanRow[] | null>(null);
+  let rotationOpen = $state(false);
+
+  let rows = $derived(
+    buildPlan(data.trainings, data.sessions, data.breaks, data.events, data.from, data.to)
+  );
+  let memberName = $derived(
+    new Map(data.members.map((m) => [m.id, `${m.firstname} ${m.lastname}`] as const))
+  );
+  let topics = $derived(planTopics(data.sessions));
+  let counts = $derived(
+    [...trainerCounts(rows)]
+      .map(([id, count]) => ({ id, count, name: memberName.get(id) ?? '?' }))
+      .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name))
+  );
+  let openCount = $derived(
+    rows.filter((r) => r.date >= today && !r.cancelled && r.session?.trainer_id == null).length
+  );
+
+  const key = (r: PlanRow) => `${r.training.id}|${r.date}`;
+
+  type Item =
+    | { kind: 'row'; date: string; row: PlanRow }
+    | { kind: 'event'; date: string; event: PlanEvent }
+    | { kind: 'break'; date: string; brk: TrainingPlanBreak };
+
+  // Rows, events without a training that day and the start of each break,
+  // grouped by month
+  let months = $derived.by(() => {
+    const start = showPast || data.year !== dayjs().year() ? data.from : today;
+    const shown = rows.filter(
+      (r) =>
+        r.date >= start &&
+        !hidden.includes(r.training.id) &&
+        (!onlyOpen || (!r.cancelled && r.session?.trainer_id == null))
+    );
+    const trainingDays = new Set(rows.map((r) => r.date));
+    const items: Item[] = shown.map((row) => ({ kind: 'row', date: row.date, row }));
+    if (!onlyOpen) {
+      for (const event of data.events) {
+        if (event.date >= start && !trainingDays.has(event.date)) {
+          items.push({ kind: 'event', date: event.date, event });
+        }
+      }
+      for (const brk of data.breaks) {
+        if (brk.date_to >= start) {
+          items.push({
+            kind: 'break',
+            date: brk.date_from < start ? start : brk.date_from,
+            brk
+          });
+        }
+      }
+    }
+    const order = { break: 0, event: 1, row: 2 };
+    items.sort((a, b) => a.date.localeCompare(b.date) || order[a.kind] - order[b.kind]);
+
+    const groups: { month: string; items: Item[] }[] = [];
+    for (const item of items) {
+      const month = item.date.slice(0, 7);
+      if (groups.at(-1)?.month !== month) groups.push({ month, items: [] });
+      groups.at(-1)!.items.push(item);
+    }
+    return groups;
+  });
+
+  let selectedRows = $derived(rows.filter((r) => selected.includes(key(r))));
+
+  function toggleTraining(id: number) {
+    hidden = hidden.includes(id) ? hidden.filter((h) => h !== id) : [...hidden, id];
+  }
+
+  function toggleSelected(r: PlanRow) {
+    const k = key(r);
+    selected = selected.includes(k) ? selected.filter((s) => s !== k) : [...selected, k];
+  }
+
+  function changeYear(by: number) {
+    selected = [];
+    goto(`/dashboard/training-plan?year=${data.year + by}`, { noScroll: true });
+  }
+
+  async function saved() {
+    dialogRows = null;
+    rotationOpen = false;
+    selected = [];
+    await invalidate('training-plan:year');
+  }
+
+  function monthLabel(month: string) {
+    const [y, m] = month.split('-').map(Number);
+    return new Date(y, m - 1, 1).toLocaleDateString($locale ?? 'de', {
+      month: 'long',
+      year: 'numeric'
+    });
+  }
+
+  function range(brk: TrainingPlanBreak) {
+    const a = dayjs(brk.date_from).format('DD.MM.');
+    const b = dayjs(brk.date_to).format('DD.MM.YYYY');
+    return brk.date_from === brk.date_to ? b : `${a} – ${b}`;
+  }
+</script>
+
+<div class="page-header gap-2">
+  <h1 class="whitespace-nowrap">{$_('page.trainingPlan.title')}</h1>
+  <div class="flex items-center gap-1 print:hidden">
+    <button
+      class="btn-icon preset-tonal-surface"
+      onclick={() => changeYear(-1)}
+      aria-label={$_('page.trainingPlan.previousYear')}
+    >
+      <Fa icon={faArrowLeft} />
+    </button>
+    <span class="font-semibold px-1">{data.year}</span>
+    <button
+      class="btn-icon preset-tonal-surface"
+      onclick={() => changeYear(1)}
+      aria-label={$_('page.trainingPlan.nextYear')}
+    >
+      <Fa icon={faArrowRight} />
+    </button>
+  </div>
+</div>
+
+<p class="text-sm text-surface-600-400 mb-4 print:hidden">{$_('page.trainingPlan.intro')}</p>
+
+<div class="flex flex-wrap gap-2 mb-4 print:hidden">
+  {#if data.canPlanTrainings}
+    <button
+      class="btn preset-filled-primary-500"
+      onclick={() => (rotationOpen = true)}
+      disabled={data.trainings.length === 0}
+    >
+      <Fa icon={faRotate} />
+      <span>{$_('page.trainingPlan.rotation.button')}</span>
+    </button>
+    <a href="/dashboard/training-plan/settings" class="btn preset-tonal-surface">
+      <Fa icon={faGear} />
+      <span>{$_('page.trainingPlan.settings.button')}</span>
+    </a>
+  {/if}
+  <button class="btn preset-tonal-surface" onclick={() => window.print()}>
+    <Fa icon={faPrint} />
+    <span class="hidden sm:inline">{$_('page.trainingPlan.print')}</span>
+  </button>
+</div>
+
+{#if data.trainings.length === 0}
+  <div class="empty-state">
+    <p>{$_('page.trainingPlan.empty')}</p>
+    {#if data.canPlanTrainings}
+      <a href="/dashboard/training-plan/settings" class="btn preset-tonal-primary mt-2">
+        {$_('page.trainingPlan.settings.button')}
+      </a>
+    {/if}
+  </div>
+{:else}
+  <!-- Filters -->
+  <div class="flex flex-wrap gap-2 mb-3 print:hidden">
+    {#each data.trainings as t (t.id)}
+      <button
+        class="chip {hidden.includes(t.id)
+          ? 'preset-tonal-surface opacity-60'
+          : 'preset-filled-secondary-500'}"
+        onclick={() => toggleTraining(t.id)}
+        aria-pressed={!hidden.includes(t.id)}
+      >
+        {$_('weekdayShort.' + t.weekday)} · {t.title}
+      </button>
+    {/each}
+    <button
+      class="chip {onlyOpen ? 'preset-filled-warning-500' : 'preset-tonal-surface'}"
+      onclick={() => (onlyOpen = !onlyOpen)}
+      aria-pressed={onlyOpen}
+    >
+      <Fa icon={faUserSlash} size="sm" />
+      {$_('page.trainingPlan.onlyOpen', { values: { count: openCount } })}
+    </button>
+    {#if data.year === dayjs().year()}
+      <button
+        class="chip {showPast ? 'preset-filled-surface-500' : 'preset-tonal-surface'}"
+        onclick={() => (showPast = !showPast)}
+        aria-pressed={showPast}
+      >
+        {$_('page.trainingPlan.showPast')}
+      </button>
+    {/if}
+  </div>
+
+  {#if counts.length > 0}
+    <details class="card border border-surface-200-800 px-3 py-2 mb-4 print:hidden">
+      <summary class="cursor-pointer text-sm font-semibold">
+        {$_('page.trainingPlan.trainerCounts')}
+      </summary>
+      <div class="flex flex-wrap gap-2 mt-2">
+        {#each counts as c (c.id)}
+          <span class="chip bg-surface-100-900 text-surface-900-50">
+            {c.name} <span class="font-bold">{c.count}</span>
+          </span>
+        {/each}
+      </div>
+    </details>
+  {/if}
+
+  {#if data.canPlanTrainings && selected.length > 0}
+    <div
+      class="sticky top-0 z-30 flex items-center justify-between gap-2 p-2 mb-3 rounded-lg preset-filled-primary-500 print:hidden"
+    >
+      <span class="text-sm font-semibold">
+        {$_('page.trainingPlan.selectedCount', { values: { count: selected.length } })}
+      </span>
+      <div class="flex gap-2">
+        <button class="btn btn-sm preset-tonal-surface" onclick={() => (selected = [])}>
+          {$_('button.cancel')}
+        </button>
+        <button
+          class="btn btn-sm preset-filled-surface-50-950"
+          onclick={() => (dialogRows = selectedRows)}
+        >
+          <Fa icon={faPen} />
+          <span>{$_('button.edit')}</span>
+        </button>
+      </div>
+    </div>
+  {/if}
+
+  {#if months.length === 0}
+    <div class="empty-state"><p>{$_('page.trainingPlan.nothingShown')}</p></div>
+  {/if}
+
+  <div class="space-y-6">
+    {#each months as group (group.month)}
+      <section class="break-inside-avoid-page">
+        <h3>{monthLabel(group.month)}</h3>
+        <ul class="flex flex-col gap-1.5">
+          {#each group.items as item (item.kind + item.date + (item.kind === 'row' ? key(item.row) : item.kind === 'event' ? item.event.id : item.brk.id))}
+            {#if item.kind === 'break'}
+              <li
+                class="flex items-center gap-2 px-3 py-1.5 rounded-lg preset-tonal-warning text-sm"
+              >
+                <Fa icon={faUmbrellaBeach} />
+                <span class="font-semibold">{item.brk.title}</span>
+                <span>{range(item.brk)}</span>
+              </li>
+            {:else if item.kind === 'event'}
+              <li
+                class="flex items-center gap-2 px-3 py-1.5 rounded-lg preset-tonal-secondary text-sm"
+              >
+                <Fa icon={faCalendarDays} />
+                <span class="w-16 flex-none">{dayjs(item.date).format('DD.MM.')}</span>
+                <a href="/dashboard/events/{item.event.id}" class="truncate hover:underline">
+                  {item.event.title}
+                </a>
+              </li>
+            {:else}
+              {@const r = item.row}
+              {@const trainer = r.session?.trainer_id}
+              <li
+                class="list-item py-2 {r.cancelled ? 'opacity-60' : ''} {r.date === today
+                  ? 'ring-2 ring-primary-500'
+                  : ''}"
+              >
+                {#if data.canPlanTrainings}
+                  <input
+                    type="checkbox"
+                    class="checkbox print:hidden"
+                    checked={selected.includes(key(r))}
+                    onchange={() => toggleSelected(r)}
+                    aria-label={$_('page.trainingPlan.select')}
+                  />
+                {/if}
+                <div class="w-14 flex-none text-center leading-tight">
+                  <div class="text-xs text-surface-600-400">
+                    {$_('weekdayShort.' + r.training.weekday)}
+                  </div>
+                  <div class="font-bold">{dayjs(r.date).format('DD.MM.')}</div>
+                </div>
+                <a href="/dashboard/trainings/{r.training.id}/{r.date}" class="list-item-content">
+                  <div class="font-semibold truncate {r.cancelled ? 'line-through' : ''}">
+                    {r.training.title}
+                    <span class="font-normal text-sm text-surface-600-400"
+                      >{r.training.dateFrom}</span
+                    >
+                  </div>
+                  {#if r.cancelled}
+                    <div class="text-sm">
+                      {r.session?.cancelled
+                        ? $_('page.trainingPlan.cancelled')
+                        : $_('page.trainingPlan.cancelledBreak', {
+                            values: { title: r.break?.title ?? '' }
+                          })}
+                      {#if r.session?.notes}· {r.session.notes}{/if}
+                    </div>
+                  {:else}
+                    <div class="flex flex-wrap items-center gap-x-3 text-sm">
+                      <span
+                        class="meta-item {trainer == null
+                          ? 'text-warning-700-300 font-semibold'
+                          : ''}"
+                      >
+                        <Fa icon={faUser} size="sm" />
+                        {trainer != null
+                          ? (memberName.get(trainer) ?? '?')
+                          : $_('page.trainingPlan.trainerOpen')}
+                      </span>
+                      {#if r.session?.topic}
+                        <span class="meta-item">
+                          <Fa icon={faBookOpen} size="sm" />
+                          {r.session.topic}
+                        </span>
+                      {/if}
+                    </div>
+                    {#if r.session?.notes}
+                      <div class="text-xs text-surface-600-400 truncate">{r.session.notes}</div>
+                    {/if}
+                  {/if}
+                  {#if r.events.length > 0}
+                    <div class="flex flex-wrap gap-1 mt-1">
+                      {#each r.events as e (e.id)}
+                        <span class="badge preset-tonal-secondary text-xs">
+                          <Fa icon={faCalendarDays} size="xs" />
+                          {e.title}
+                        </span>
+                      {/each}
+                    </div>
+                  {/if}
+                </a>
+                {#if data.canPlanTrainings}
+                  <button
+                    class="btn-icon btn-icon-sm preset-tonal-primary flex-none print:hidden"
+                    onclick={() => (dialogRows = [r])}
+                    aria-label="{$_('button.edit')}: {r.training.title} {r.date}"
+                  >
+                    <Fa icon={faPen} />
+                  </button>
+                {/if}
+              </li>
+            {/if}
+          {/each}
+        </ul>
+      </section>
+    {/each}
+  </div>
+{/if}
+
+{#if dialogRows}
+  <SessionDialog
+    rows={dialogRows}
+    members={data.members}
+    {topics}
+    onclose={() => (dialogRows = null)}
+    onsaved={saved}
+  />
+{/if}
+
+{#if rotationOpen}
+  <RotationDialog
+    trainings={data.trainings}
+    {rows}
+    members={data.members}
+    from={data.from}
+    to={data.to}
+    onclose={() => (rotationOpen = false)}
+    onsaved={saved}
+  />
+{/if}

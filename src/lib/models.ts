@@ -468,3 +468,25 @@ export interface TrainerTrackingRecord {
   trainerRole: TrainerRole;
   attendeeCount: number;
 }
+
+/** Row of training_plan_sessions: the TK's plan for one training on one date */
+export interface TrainingPlanSession {
+  id: number;
+  training_id: number;
+  date: string;
+  /** Member who leads the training; null while open */
+  trainer_id: number | null;
+  topic: string | null;
+  notes: string | null;
+  /** null follows the breaks, true drops the training, false holds it within a break */
+  cancelled: boolean | null;
+  updated_at: string;
+}
+
+/** Row of training_plan_breaks: a period without training (holidays) */
+export interface TrainingPlanBreak {
+  id: number;
+  title: string;
+  date_from: string;
+  date_to: string;
+}

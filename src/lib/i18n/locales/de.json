@@ -59,7 +59,7 @@
       "examRole": {
         "none": "Keine Prüfungsrolle",
         "examiner": "Prüfende (bewerten)",
-        "manager": "TK (Prüfungen leiten)"
+        "manager": "TK (Prüfungen, Trainingsplanung)"
       },
       "action": {
         "approve": "Freigeben",
@@ -929,6 +929,84 @@
         "deleteError": "Fehler beim Löschen des Programms",
         "deleted": "Programm gelöscht",
         "deleteHint": "Laufende und abgeschlossene Blätter behalten ihre Kopie des Programms. Wer für diese Stufe angemeldet und noch nicht geprüft ist, wird ohne Programm bewertet, bis wieder eines erfasst ist."
+      }
+    },
+    "trainingPlan": {
+      "title": "Trainingsplanung",
+      "short": "Trainer und Themen der Erwachsenentrainings übers Jahr",
+      "intro": "Der Jahresplan der TK: wer welches Training leitet, welches Thema drankommt und wann das Training wegen Ferien oder Anlässen ausfällt.",
+      "previousYear": "Vorheriges Jahr",
+      "nextYear": "Nächstes Jahr",
+      "print": "Drucken",
+      "empty": "Noch keine Trainings in der Planung. Die TK wählt unter «Trainings & Ferien» aus, welche Trainings geplant werden.",
+      "nothingShown": "Keine Termine für diese Auswahl",
+      "onlyOpen": "Trainer offen ({count})",
+      "showPast": "Vergangene anzeigen",
+      "trainerCounts": "Einsätze pro Trainer",
+      "selectedCount": "{count, plural, one {# Termin} other {# Termine}} ausgewählt",
+      "select": "Termin auswählen",
+      "training": "Training",
+      "trainer": "Trainer",
+      "trainers": "Trainer",
+      "otherMembers": "Weitere Mitglieder",
+      "trainerOpen": "Trainer offen",
+      "topic": "Thema",
+      "topicPlaceholder": "z. B. Uchi-mata, Ne-waza, Kata",
+      "notes": "Bemerkung",
+      "from": "Von",
+      "to": "Bis",
+      "keep": "– unverändert –",
+      "cancelled": "Fällt aus",
+      "cancelledBreak": "Fällt aus: {title}",
+      "eventsThatDay": "Anlässe an diesem Tag",
+      "editSelected": "{count} Termine bearbeiten",
+      "editSelectedHint": "Nur die gewählten Felder werden geändert, der Rest bleibt pro Termin bestehen.",
+      "saved": "Trainingsplan gespeichert",
+      "saveError": "Fehler beim Speichern des Trainingsplans",
+      "status": {
+        "label": "Durchführung",
+        "auto": "Findet statt",
+        "autoBreak": "Automatisch: fällt aus ({title})",
+        "held": "Findet statt (auch in den Ferien)",
+        "cancelled": "Fällt aus",
+        "hint": "Ferien und Ausfallzeiten unter «Trainings & Ferien» lassen Trainings automatisch ausfallen."
+      },
+      "rotation": {
+        "button": "Rotation",
+        "title": "Trainer-Rotation",
+        "intro": "Verteilt Trainer im Wechsel auf ein Training, z. B. Montag A / B oder Freitag nur jede zweite Woche (A / kein Training).",
+        "slots": "Reihenfolge",
+        "addSlot": "Position hinzufügen",
+        "none": "Kein Training",
+        "up": "Nach oben",
+        "down": "Nach unten",
+        "perSlot": "Termine pro Position",
+        "skipCancelled": "Ausfälle überspringen",
+        "skipCancelledHint": "Nach den Ferien geht es mit der nächsten Person weiter. Ohne Häkchen folgt die Rotation den Kalenderwochen.",
+        "overwrite": "Bestehende Einteilung überschreiben",
+        "overwriteHint": "Sonst bleiben Termine, die schon einen Trainer haben oder ausfallen, wie sie sind.",
+        "preview": "Vorschau",
+        "kept": "bleibt",
+        "noDates": "Keine Termine im gewählten Zeitraum",
+        "apply": "{count, plural, one {# Termin} other {# Termine}} einteilen",
+        "applied": "{count, plural, one {# Termin} other {# Termine}} eingeteilt"
+      },
+      "settings": {
+        "button": "Trainings & Ferien",
+        "title": "Trainings & Ferien",
+        "trainings": "Geplante Trainings",
+        "trainingsHint": "Diese Trainings erscheinen in der Trainingsplanung, meist die Erwachsenentrainings.",
+        "breaks": "Ferien und Ausfallzeiten",
+        "breaksHint": "In diesen Zeiträumen fallen alle geplanten Trainings aus, ausser ein Termin ist ausdrücklich auf «Findet statt» gesetzt. Einzelne Tage (z. B. Feiertage, grosse Anlässe) mit gleichem Von und Bis.",
+        "breakTitle": "Bezeichnung",
+        "breakTitlePlaceholder": "z. B. Herbstferien",
+        "breakInvalid": "Bitte Bezeichnung und gültigen Zeitraum angeben",
+        "breakDeleteConfirm": "«{title}» löschen? Die Trainings in diesem Zeitraum finden dann wieder statt.",
+        "noBreaks": "Noch keine Ferien erfasst"
+      },
+      "checkin": {
+        "cancelled": "Laut Trainingsplan fällt dieses Training aus",
+        "cancelledBreak": "Laut Trainingsplan fällt dieses Training aus: {title}"
       }
     }
   },

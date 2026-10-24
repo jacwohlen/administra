@@ -14425,6 +14425,42 @@ SET status = 'approved', role = 'viewer', exam_role = 'examiner', approved_at = 
 WHERE user_id = 'c3d4e5f6-a7b8-9012-cdef-123456789012';
 
 --
+-- Trainingsplanung (see docs/TRAINING_PLAN.md): the adult Judo trainings,
+-- Monday rotating between two trainers, Friday only every other week
+--
+INSERT INTO public.training_plan_trainings (training_id) VALUES (27), (23), (26);
+
+INSERT INTO public.training_plan_breaks (title, date_from, date_to) VALUES
+  ('Weihnachtsferien', '2026-12-19', '2027-01-03'),
+  ('Sportferien', '2027-01-30', '2027-02-14'),
+  ('Frühlingsferien', '2027-04-10', '2027-04-25'),
+  ('Auffahrt', '2027-05-06', '2027-05-06');
+
+-- The next eight Mondays and Fridays from today
+INSERT INTO public.training_plan_sessions (training_id, date, trainer_id, topic, cancelled)
+SELECT 27, to_char(d, 'YYYY-MM-DD'),
+       CASE WHEN n % 2 = 0 THEN 3384 ELSE 3452 END,
+       (ARRAY['Uchi-mata', 'Uchi-mata', 'Ne-waza: Befreiungen', 'Ne-waza: Befreiungen',
+              'Randori', 'Kombinationen', 'Kombinationen', 'Wettkampfvorbereitung'])[n + 1],
+       NULL
+FROM (
+  SELECT d, (row_number() OVER (ORDER BY d) - 1)::int AS n
+  FROM generate_series(current_date, current_date + 55, interval '1 day') AS d
+  WHERE extract(isodow FROM d) = 1
+) mondays;
+
+INSERT INTO public.training_plan_sessions (training_id, date, trainer_id, topic, cancelled)
+SELECT 23, to_char(d, 'YYYY-MM-DD'),
+       CASE WHEN n % 2 = 0 THEN 3435 END,
+       CASE WHEN n % 2 = 0 THEN 'Technik: Ashi-waza' END,
+       CASE WHEN n % 2 = 1 THEN true END
+FROM (
+  SELECT d, (row_number() OVER (ORDER BY d) - 1)::int AS n
+  FROM generate_series(current_date, current_date + 55, interval '1 day') AS d
+  WHERE extract(isodow FROM d) = 5
+) fridays;
+
+--
 -- Compute badges for all seeded members
 --
 RESET app.skip_badge_refresh;

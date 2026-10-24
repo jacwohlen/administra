@@ -14,7 +14,8 @@
     faClipboardList,
     faUsers,
     faUserCheck,
-    faChalkboardTeacher
+    faChalkboardTeacher,
+    faCalendarWeek
   } from '@fortawesome/free-solid-svg-icons';
   import dayjs from 'dayjs';
   import { goto, preloadData } from '$app/navigation';
@@ -25,6 +26,7 @@
   import { flip } from 'svelte/animate';
   import { quintInOut } from 'svelte/easing';
   import LessonPlan from './LessonPlan.svelte';
+  import { isCancelled } from '$lib/trainingPlanUtils';
 
   let { data }: { data: PageData } = $props();
   let searchterm = $state('');
@@ -197,6 +199,9 @@
     }
   };
 
+  let planCancelled = $derived(data.plan ? isCancelled(data.plan.session, data.plan.break) : false);
+  let planTrainer = $derived(data.plan?.session?.trainer);
+
   let formattedDate = $derived(dayjs(data.date, 'YYYY-MM-DD').format('DD. MMMM YYYY'));
 </script>
 
@@ -239,6 +244,45 @@
     <Fa icon={faArrowRight} />
   </button>
 </div>
+
+<!-- Trainingsplanung: the TK's plan for this date -->
+{#if data.plan && (planCancelled || data.plan.session?.topic || data.plan.session?.trainer_id != null || data.plan.session?.notes)}
+  <a
+    href="/dashboard/training-plan?year={data.date.slice(0, 4)}"
+    class="flex items-start gap-3 p-3 rounded-lg mb-3 {planCancelled
+      ? 'preset-tonal-warning'
+      : 'preset-tonal-primary'}"
+  >
+    <Fa icon={faCalendarWeek} class="mt-1" />
+    <div class="flex-1 min-w-0 text-sm">
+      {#if planCancelled}
+        <p class="font-semibold">
+          {data.plan.session?.cancelled
+            ? $_('page.trainingPlan.checkin.cancelled')
+            : $_('page.trainingPlan.checkin.cancelledBreak', {
+                values: { title: data.plan.break?.title ?? '' }
+              })}
+        </p>
+      {:else}
+        {#if data.plan.session?.topic}
+          <p>
+            <span class="font-semibold">{$_('page.trainingPlan.topic')}:</span>
+            {data.plan.session.topic}
+          </p>
+        {/if}
+        <p>
+          <span class="font-semibold">{$_('page.trainingPlan.trainer')}:</span>
+          {planTrainer
+            ? `${planTrainer.firstname} ${planTrainer.lastname}`
+            : $_('page.trainingPlan.trainerOpen')}
+        </p>
+      {/if}
+      {#if data.plan.session?.notes}
+        <p class="text-surface-700-300">{data.plan.session.notes}</p>
+      {/if}
+    </div>
+  </a>
+{/if}
 
 <!-- View toggle tabs -->
 <div class="flex rounded-lg overflow-hidden border border-surface-300-700 mb-4">
