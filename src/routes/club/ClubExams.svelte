@@ -182,7 +182,8 @@
           {#if reg && formFor !== exam.id}
             {@const def = gradeDef(reg.section, reg.grade)}
             {@const program = programFor(reg.section, reg.grade)}
-            <div class="rounded-container bg-surface-100-900 p-3 space-y-2">
+            <!-- Outlined, not filled, so the neutral "registered" chip stays visible -->
+            <div class="rounded-md border border-surface-200-800 bg-surface-50-950 p-3 space-y-2">
               <div class="flex items-center gap-2">
                 {#if def}<BeltStrip color={def.beltColor} color2={def.beltColor2} />{/if}
                 <span class="font-semibold">{reg.grade}</span>

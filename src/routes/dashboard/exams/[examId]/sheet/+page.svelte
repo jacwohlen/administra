@@ -404,9 +404,12 @@
 </div>
 
 {#if joinable.length > 0}
-  <!-- Optional: the first score signs the sheet anyway -->
-  <div class="flex justify-end mb-2">
-    <button class="btn btn-sm preset-tonal-primary" onclick={() => joinAsExaminer(joinable)}>
+  <!-- Optional (the first score signs the sheet anyway), hence tonal -->
+  <div class="mb-3">
+    <button
+      class="btn preset-tonal-primary w-full sm:w-auto"
+      onclick={() => joinAsExaminer(joinable)}
+    >
       <Fa icon={faUserPlus} />
       <span>{$_('page.exams.sheet.join')}</span>
     </button>
@@ -473,9 +476,8 @@
               {@const hasNote = sheets.some(({ c }) => !!scoresOf(c).get(item.key)?.note)}
               {@const writable = sheets.some(({ c }) => !readonly(c))}
               <li class="px-2 sm:px-3 py-2">
-                <div class="flex items-start gap-2">
-                  <span
-                    class="w-4 flex-none pt-0.5 text-xs text-surface-500 tabular-nums text-right"
+                <div class="flex items-baseline gap-2">
+                  <span class="w-4 flex-none text-xs text-surface-500 tabular-nums text-right"
                     >{i + 1}</span
                   >
                   <div class="flex-1 min-w-0">
@@ -485,26 +487,33 @@
                     {/if}
                   </div>
                   {#if writable || hasNote}
-                    <!-- Compact, so the title row stays one line high -->
+                    <!-- A full 44 px target whose negative margins keep the title row
+                         one line high; only the inner square shows hover / open -->
                     <button
                       type="button"
-                      class="btn-icon relative size-9 min-h-9! min-w-9! p-0 -my-1.5 flex-none rounded-md hover:bg-surface-100-900 {openNotes[
-                        key
-                      ]
-                        ? 'bg-surface-100-900'
-                        : ''} {hasNote ? 'text-warning-800-200' : 'text-surface-400-600'}"
+                      class="group btn-icon size-11 p-0 -my-2.5 -mr-1 flex-none self-start {hasNote
+                        ? 'text-warning-800-200'
+                        : 'text-surface-400-600'}"
                       title={$_('page.exams.sheet.note')}
                       aria-label={$_('page.exams.sheet.note')}
                       aria-expanded={!!openNotes[key]}
                       onclick={() => (openNotes[key] = !openNotes[key])}
                     >
-                      <Fa icon={faNoteSticky} />
-                      {#if hasNote}
-                        <span
-                          class="absolute top-1 right-1 size-2 rounded-full bg-warning-500 ring-2 ring-surface-50-950"
-                          aria-hidden="true"
-                        ></span>
-                      {/if}
+                      <span
+                        class="relative size-9 flex items-center justify-center rounded-md transition-colors group-hover:bg-surface-100-900 {openNotes[
+                          key
+                        ]
+                          ? 'bg-surface-100-900'
+                          : ''}"
+                      >
+                        <Fa icon={faNoteSticky} />
+                        {#if hasNote}
+                          <span
+                            class="absolute top-1 right-1 size-2 rounded-full bg-warning-500 ring-2 ring-surface-50-950"
+                            aria-hidden="true"
+                          ></span>
+                        {/if}
+                      </span>
                     </button>
                   {/if}
                 </div>

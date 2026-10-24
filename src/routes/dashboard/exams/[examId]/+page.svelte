@@ -266,15 +266,19 @@
             {@const prog = programFor(c.grade)}
             <li class="flex items-center gap-3 px-3 py-2.5">
               {#if data.canWrite}
-                <input
-                  type="checkbox"
-                  class="checkbox size-5 flex-none"
-                  checked={selected.includes(c.id)}
-                  onchange={() => toggle(c.id)}
-                  aria-label={$_('page.exams.select', {
-                    values: { name: `${c.member?.firstname} ${c.member?.lastname}` }
-                  })}
-                />
+                <!-- 44 px tap area around the box, so a near miss selects instead of
+                     opening the dialog; the negative margin keeps the row as it was -->
+                <label class="flex flex-none -m-3 p-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    class="checkbox size-5"
+                    checked={selected.includes(c.id)}
+                    onchange={() => toggle(c.id)}
+                    aria-label={$_('page.exams.select', {
+                      values: { name: `${c.member?.firstname} ${c.member?.lastname}` }
+                    })}
+                  />
+                </label>
               {/if}
               <button
                 type="button"

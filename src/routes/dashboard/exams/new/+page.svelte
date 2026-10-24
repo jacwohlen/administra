@@ -10,10 +10,15 @@
 </script>
 
 <div class="page-header-back">
-  <a href="/dashboard/exams" class="btn preset-tonal-surface">
+  <a
+    href="/dashboard/exams"
+    class="btn preset-tonal-surface flex-shrink-0"
+    title={$_('page.exams.backToList')}
+    aria-label={$_('page.exams.backToList')}
+  >
     <Fa icon={faArrowLeft} />
   </a>
-  <h1>{$_('page.exams.create')}</h1>
+  <h1 class="flex-1 min-w-0 truncate">{$_('page.exams.create')}</h1>
 </div>
 
 <ExamForm

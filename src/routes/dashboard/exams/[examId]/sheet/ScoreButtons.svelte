@@ -22,11 +22,10 @@
 <!-- Three keys like the app's other choice groups; the chosen one takes its
      score colour (see ScoreLegend), and stays full strength on a closed sheet. -->
 <div class="inline-flex flex-none items-center gap-0.5">
-  {#if label}
-    <span class="w-3 text-xs font-bold text-surface-600-400 text-center" aria-hidden="true">
-      {label}
-    </span>
-  {/if}
+  <!-- Always there (empty for single-scored items), so every key group starts at the same x -->
+  <span class="w-3 text-xs font-bold text-surface-600-400 text-center" aria-hidden="true">
+    {label}
+  </span>
   <div
     class="inline-flex rounded-lg overflow-hidden border border-surface-300-700 divide-x divide-surface-300-700"
     role="group"

@@ -84,7 +84,12 @@
             {/if}
           </div>
         </a>
-        <a class="btn preset-tonal-primary flex-none" href="/dashboard/exams/{exam.id}">
+        <a
+          class="btn preset-tonal-primary flex-none"
+          href="/dashboard/exams/{exam.id}"
+          title={$_('button.view')}
+          aria-label="{$_('button.view')}: {exam.title}"
+        >
           <Fa icon={faGripLines} />
           <span class="hidden sm:inline">{$_('button.view')}</span>
         </a>

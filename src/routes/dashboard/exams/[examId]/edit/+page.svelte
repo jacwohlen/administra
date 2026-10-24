@@ -29,11 +29,22 @@
 </script>
 
 <div class="page-header-back">
-  <a href="/dashboard/exams/{data.exam.id}" class="btn preset-tonal-surface flex-shrink-0">
+  <a
+    href="/dashboard/exams/{data.exam.id}"
+    class="btn preset-tonal-surface flex-shrink-0"
+    title={$_('page.exams.backToDay')}
+    aria-label={$_('page.exams.backToDay')}
+  >
     <Fa icon={faArrowLeft} />
   </a>
   <h1 class="flex-1 min-w-0 truncate">{$_('page.exams.edit')}</h1>
-  <button class="btn preset-tonal-error" onclick={() => (confirmDelete = true)} disabled={deleting}>
+  <button
+    class="btn preset-tonal-error flex-shrink-0"
+    title={$_('button.delete')}
+    aria-label={$_('button.delete')}
+    onclick={() => (confirmDelete = true)}
+    disabled={deleting}
+  >
     <Fa icon={faTrash} />
   </button>
 </div>
