@@ -14314,6 +14314,116 @@ SELECT 198, 'assigned', 'jonas.frei@example.com', 'Dein Probetraining beim JAC W
        'sent', now() - interval '18 days', now() - interval '18 days', NULL;
 
 --
+-- Q-Prüfungen (see docs/Q_EXAMS.md): a past exam day with a finished sheet
+-- that the E2E member account can read (Brandon's yellow belt), and an
+-- upcoming one with registrations, open for the member account to register.
+--
+INSERT INTO public.exams (section, title, date, location, registration_deadline, notes) VALUES
+  ('Judo', 'Q-Prüfung Herbst 2025', '2025-12-06', 'Turnhalle Jac Wohlen', '2025-11-14', NULL),
+  ('Judo', 'Q-Prüfung Frühling', to_char(current_date + 30, 'YYYY-MM-DD'), 'Turnhalle Jac Wohlen',
+   to_char(current_date + 16, 'YYYY-MM-DD'), 'Kosten CHF 10.– bitte am Prüfungstag mitbringen.');
+
+INSERT INTO public.exam_candidates (
+  exam_id, member_id, section, grade, belt_length_cm, status, group_name, call_time,
+  program, min_points, started_at, result, completed_at, member_grade_id
+)
+SELECT e.id, 107, 'Judo', '5. Kyu', 240, 'invited', 'Kinder Gelb, Orange, Halbgrün', '10:15',
+       p.parts, p.min_points, '2025-12-06 10:30+01', 'passed', '2025-12-06 11:30+01',
+       (SELECT id FROM public.member_grades WHERE "memberId" = 107 AND grade = '5. Kyu')
+FROM public.exams e
+JOIN public.exam_programs p ON p.section = 'Judo' AND p.grade = '5. Kyu'
+WHERE e.title = 'Q-Prüfung Herbst 2025';
+
+-- Every item scored, most with full points
+INSERT INTO public.exam_scores (candidate_id, item_key, left_points, right_points, points, note)
+SELECT c.id, i.item->>'key',
+       CASE WHEN (i.item->>'sides') = '2' THEN 2 END,
+       CASE WHEN (i.item->>'sides') = '2' THEN CASE WHEN i.n % 3 = 0 THEN 1 ELSE 2 END END,
+       CASE WHEN (i.item->>'sides') = '1' THEN CASE WHEN i.n % 4 = 0 THEN 1 ELSE 2 END END,
+       CASE WHEN i.item->>'key' = 'nage-4' THEN 'Gleichgewicht brechen noch üben' END
+FROM public.exam_candidates c
+CROSS JOIN LATERAL (
+  SELECT item, row_number() OVER () AS n
+  FROM jsonb_array_elements(c.program) part, jsonb_array_elements(part->'items') item
+) i
+WHERE c.member_id = 107 AND c.result = 'passed';
+
+-- The feedback round, stored as the sheet's '_feedback' row
+INSERT INTO public.exam_scores (candidate_id, item_key, note)
+SELECT id, '_feedback', 'Sehr saubere Fallschule! Bei O-uchi-gari noch mehr Kuzushi – weiter so.'
+FROM public.exam_candidates WHERE member_id = 107 AND result = 'passed';
+
+UPDATE public.exam_candidates c
+SET total_points = (
+      SELECT sum(coalesce(left_points, 0) + coalesce(right_points, 0) + coalesce(points, 0))
+      FROM public.exam_scores s WHERE s.candidate_id = c.id AND s.item_key <> '_feedback'
+    ),
+    max_points = 66
+WHERE c.member_id = 107 AND c.result = 'passed';
+
+INSERT INTO public.exam_examiners (candidate_id, user_id, name)
+SELECT id, 'a1b2c3d4-e5f6-7890-abcd-ef1234567890', 'Test User'
+FROM public.exam_candidates WHERE member_id = 107 AND result = 'passed';
+
+INSERT INTO public.exam_candidates (
+  exam_id, member_id, section, grade, belt_length_cm, trainer, status, group_name, call_time, note
+)
+SELECT e.id, v.member_id, 'Judo', v.grade, v.belt, v.trainer, v.status, v.group_name, v.call_time, v.note
+FROM public.exams e
+CROSS JOIN (VALUES
+  (3311, '5.5 Kyu', 220, 'Monika Osterwalder', 'invited', 'Kinder Halbgelb', '08:30', NULL),
+  (14367, '5.5 Kyu', 220, 'Monika Osterwalder', 'invited', 'Kinder Halbgelb', '08:30', NULL),
+  (26612, '5. Kyu', 240, 'Lukas Aggeler', 'registered', NULL, NULL, 'Freut sich schon!'),
+  (6849, '4. Kyu', 260, 'Lukas Aggeler', 'registered', NULL, NULL, NULL),
+  (3337, '1. Kyu', 280, NULL, 'invited', 'Erwachsene', '14:45', NULL)
+) AS v(member_id, grade, belt, trainer, status, group_name, call_time, note)
+WHERE e.title = 'Q-Prüfung Frühling';
+
+--
+-- Examiner (Q-Prüfungen): a read-only viewer who grades on the sheet
+-- (user_profiles.exam_role, see docs/Q_EXAMS.md)
+--
+INSERT INTO auth.users (
+  instance_id, id, aud, role, email, encrypted_password,
+  email_confirmed_at, created_at, updated_at,
+  confirmation_token, recovery_token,
+  email_change, email_change_token_new, email_change_token_current,
+  phone, phone_change, phone_change_token,
+  reauthentication_token,
+  raw_app_meta_data, raw_user_meta_data,
+  is_sso_user, is_anonymous
+) VALUES (
+  '00000000-0000-0000-0000-000000000000',
+  'c3d4e5f6-a7b8-9012-cdef-123456789012',
+  'authenticated', 'authenticated',
+  'examiner@example.com',
+  crypt('testpass', gen_salt('bf')),
+  now(), now(), now(),
+  '', '',
+  '', '', '',
+  NULL, '', '',
+  '',
+  '{"provider":"email","providers":["email"]}',
+  '{"full_name":"Erika Prüfer"}',
+  false, false
+);
+
+INSERT INTO auth.identities (
+  id, user_id, provider_id, identity_data, provider, last_sign_in_at, created_at, updated_at
+) VALUES (
+  'c3d4e5f6-a7b8-9012-cdef-123456789012',
+  'c3d4e5f6-a7b8-9012-cdef-123456789012',
+  'examiner@example.com',
+  jsonb_build_object('sub', 'c3d4e5f6-a7b8-9012-cdef-123456789012', 'email', 'examiner@example.com'),
+  'email',
+  now(), now(), now()
+);
+
+UPDATE public.user_profiles
+SET status = 'approved', role = 'viewer', exam_role = 'examiner', approved_at = now()
+WHERE user_id = 'c3d4e5f6-a7b8-9012-cdef-123456789012';
+
+--
 -- Compute badges for all seeded members
 --
 RESET app.skip_badge_refresh;
