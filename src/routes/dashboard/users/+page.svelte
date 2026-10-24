@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { PageData } from './$types';
-  import type { UserProfile, UserRole, UserStatus } from '$lib/models';
+  import type { ExamRole, UserProfile, UserRole, UserStatus } from '$lib/models';
   import Fa from 'svelte-fa';
   import { faCheck, faBan, faRotateLeft } from '@fortawesome/free-solid-svg-icons';
   import { _ } from 'svelte-i18n';
@@ -88,6 +88,11 @@
     return patch(userId, { role }, 'page.users.toast.roleChanged');
   }
 
+  function changeExamRole(userId: string, value: string) {
+    const exam_role = value === '' ? null : (value as ExamRole);
+    return patch(userId, { exam_role }, 'page.users.toast.examRoleChanged');
+  }
+
   function changeMember(userId: string, value: string) {
     const member_id = value === '' ? null : Number(value);
     return patch(userId, { member_id }, 'page.users.toast.memberLinked');
@@ -153,6 +158,20 @@
               <option value="trainer">{$_('page.users.role.trainer')}</option>
               <option value="admin">{$_('page.users.role.admin')}</option>
             </select>
+            <!-- Q-Prüfungen: on top of a staff role; admins have both anyway -->
+            {#if p.role === 'viewer' || p.role === 'trainer'}
+              <select
+                class="select w-auto text-sm py-1"
+                value={p.exam_role ?? ''}
+                disabled={busyId === p.user_id}
+                title={$_('page.users.examRoleLabel')}
+                onchange={(e) => changeExamRole(p.user_id, (e.target as HTMLSelectElement).value)}
+              >
+                <option value="">{$_('page.users.examRole.none')}</option>
+                <option value="examiner">{$_('page.users.examRole.examiner')}</option>
+                <option value="manager">{$_('page.users.examRole.manager')}</option>
+              </select>
+            {/if}
             <select
               class="select w-auto max-w-48 text-sm py-1"
               value={p.member_id ?? ''}

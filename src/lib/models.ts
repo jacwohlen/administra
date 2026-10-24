@@ -4,6 +4,8 @@ export type TrainerRole = 'attendee' | 'main_trainer' | 'assistant';
 
 export type UserStatus = 'pending' | 'approved' | 'disabled';
 export type UserRole = 'member' | 'viewer' | 'trainer' | 'admin';
+/** Q-Prüfungen on top of a staff role: examiners grade, the TK (manager) also runs exam days and programs */
+export type ExamRole = 'examiner' | 'manager';
 
 export interface UserProfile {
   user_id: string;
@@ -12,6 +14,7 @@ export interface UserProfile {
   avatar_url?: string;
   status: UserStatus;
   role: UserRole;
+  exam_role?: ExamRole | null;
   member_id?: number;
   approved_at?: string;
   approved_by?: string;

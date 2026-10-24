@@ -1,7 +1,7 @@
 export const ssr = false;
 import { redirect } from '@sveltejs/kit';
 import { supabaseClient } from '$lib/supabase';
-import { homePath, isStaff, isWriter } from '$lib/roles';
+import { canGrade, canManageExams, homePath, isStaff, isWriter } from '$lib/roles';
 import type { LayoutLoad } from './$types';
 
 export const load: LayoutLoad = async ({ parent, depends }) => {
@@ -28,6 +28,9 @@ export const load: LayoutLoad = async ({ parent, depends }) => {
     userProfile,
     pendingUsers,
     // Viewers browse read-only; pages hide their add/edit/delete controls
-    canWrite: isWriter(userProfile)
+    canWrite: isWriter(userProfile),
+    // Q-Prüfungen: the TK runs exam days and programs, examiners score
+    canManageExams: canManageExams(userProfile),
+    canGrade: canGrade(userProfile)
   };
 };

@@ -37,6 +37,7 @@
       "unlinked": "No member linked",
       "roleLabel": "Role",
       "memberLabel": "Linked member",
+      "examRoleLabel": "Exam role (gradings)",
       "you": "You",
       "selfLocked": "You cannot change your own role or status",
       "pendingCount": "{count} users waiting for approval",
@@ -55,6 +56,11 @@
         "trainer": "Trainer",
         "admin": "Administrator"
       },
+      "examRole": {
+        "none": "No exam role",
+        "examiner": "Examiner",
+        "manager": "Technical committee (runs gradings)"
+      },
       "action": {
         "approve": "Approve",
         "disable": "Disable",
@@ -64,7 +70,8 @@
         "approved": "User approved",
         "disabled": "User disabled",
         "roleChanged": "Role updated",
-        "memberLinked": "Member link updated"
+        "memberLinked": "Member link updated",
+        "examRoleChanged": "Exam role updated"
       }
     },
     "settings": {

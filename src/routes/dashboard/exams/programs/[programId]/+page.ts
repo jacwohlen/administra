@@ -6,7 +6,7 @@ import type { PageLoad } from './$types';
 
 export const load: PageLoad = async ({ params, url, parent, depends }) => {
   depends('app:exam-program');
-  const { canWrite } = await parent();
+  const { canManageExams } = await parent();
   const [programResult, gradeDefinitions] = await Promise.all([
     supabaseClient
       .from('exam_programs')
@@ -23,6 +23,6 @@ export const load: PageLoad = async ({ params, url, parent, depends }) => {
     program,
     grade: gradeDefinitions.find((g) => g.section === program.section && g.grade === program.grade),
     // A freshly created program opens straight in the editor
-    startEditing: canWrite && url.searchParams.has('edit')
+    startEditing: canManageExams && url.searchParams.has('edit')
   };
 };

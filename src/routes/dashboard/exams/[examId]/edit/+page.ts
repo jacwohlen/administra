@@ -3,10 +3,10 @@ import { supabaseClient } from '$lib/supabase';
 import { loadEventOptions } from '../../events';
 import type { PageLoad } from './$types';
 
-// Viewers may browse exam days but not change them
+// Exam days are set by the TK; everybody else browses them
 export const load: PageLoad = async ({ parent, params }) => {
-  const { canWrite, exam } = await parent();
-  if (!canWrite) {
+  const { canManageExams, exam } = await parent();
+  if (!canManageExams) {
     redirect(303, `/dashboard/exams/${params.examId}`);
   }
   const [events, { count }] = await Promise.all([

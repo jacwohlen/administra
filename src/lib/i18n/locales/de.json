@@ -37,6 +37,7 @@
       "unlinked": "Kein Mitglied verknüpft",
       "roleLabel": "Rolle",
       "memberLabel": "Verknüpftes Mitglied",
+      "examRoleLabel": "Prüfungsrolle (Q-Prüfungen)",
       "you": "Du",
       "selfLocked": "Eigene Rolle und Status können nicht geändert werden",
       "pendingCount": "{count} Benutzer warten auf Freigabe",
@@ -55,6 +56,11 @@
         "trainer": "Trainer",
         "admin": "Administrator"
       },
+      "examRole": {
+        "none": "Keine Prüfungsrolle",
+        "examiner": "Prüfer:in",
+        "manager": "TK (Prüfungen leiten)"
+      },
       "action": {
         "approve": "Freigeben",
         "disable": "Deaktivieren",
@@ -64,7 +70,8 @@
         "approved": "Benutzer freigegeben",
         "disabled": "Benutzer deaktiviert",
         "roleChanged": "Rolle aktualisiert",
-        "memberLinked": "Mitgliedsverknüpfung aktualisiert"
+        "memberLinked": "Mitgliedsverknüpfung aktualisiert",
+        "examRoleChanged": "Prüfungsrolle aktualisiert"
       }
     },
     "settings": {
