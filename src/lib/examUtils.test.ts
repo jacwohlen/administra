@@ -226,16 +226,20 @@ describe('groupCandidates', () => {
 });
 
 describe('sheetGroups', () => {
-  it('puts candidates of the same grade on one sheet', () => {
+  it('pairs candidates of the same grade in the order they were picked', () => {
     const groups = sheetGroups([
       candidate(1, 'A'),
       candidate(2, 'B', { grade: '4. Kyu' }),
-      candidate(3, 'C')
+      candidate(3, 'C'),
+      candidate(4, 'D'),
+      candidate(5, 'E'),
+      candidate(6, 'F')
     ]);
-    expect(groups.map((g) => g.map((c) => c.id))).toEqual([[1, 3], [2]]);
+    // Two pairs and a single of one grade, the other grade on its own sheet
+    expect(groups.map((g) => g.map((c) => c.id))).toEqual([[1, 3], [2], [4, 5], [6]]);
   });
 
-  it('keeps started sheets with different program snapshots apart', () => {
+  it('never puts different program snapshots on one sheet', () => {
     const before = [parts[0]];
     const after = parts;
     const groups = sheetGroups([
@@ -244,8 +248,17 @@ describe('sheetGroups', () => {
       candidate(3, 'C'),
       candidate(4, 'D', { program: before, started_at: 't' })
     ]);
-    // C, not started yet, joins the first started sheet and will get its snapshot
-    expect(groups.map((g) => g.map((c) => c.id))).toEqual([[1, 3, 4], [2]]);
+    // C, not started yet, joins B's sheet and will get its snapshot
+    expect(groups.map((g) => g.map((c) => c.id))).toEqual([[1], [2, 3], [4]]);
+  });
+
+  it('keeps a started pair together after a reload', () => {
+    const groups = sheetGroups([
+      candidate(1, 'A', { program: parts, started_at: 't' }),
+      candidate(2, 'B', { program: parts, started_at: 't' }),
+      candidate(3, 'C', { program: parts, started_at: 't' })
+    ]);
+    expect(groups.map((g) => g.map((c) => c.id))).toEqual([[1, 2], [3]]);
   });
 });
 

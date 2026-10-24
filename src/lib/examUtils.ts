@@ -221,36 +221,37 @@ export function groupCandidates(candidates: ExamCandidate[]): CandidateGroup[] {
     });
 }
 
+/** Candidates on one sheet at most: a pair (Tori and Uke) side by side. */
+export const SHEET_SIZE = 2;
+
 /**
- * Candidates graded side by side on one sheet must be scored on the same items:
- * those sharing a grade go together, and among started sheets only those with the
- * same program snapshot. Candidates not started yet join the first sheet of their
- * grade and get its snapshot when they are first scored.
+ * The sheets for the candidates an examiner picked, in the order picked: two of
+ * the same grade form a pair on one sheet (further pairs get sheets of their
+ * own, switched by swiping). Candidates side by side must be scored on the same
+ * items, so two started sheets with different program snapshots never share a
+ * sheet; a candidate not started yet takes the snapshot of the sheet it is on
+ * when first scored.
  */
 export function sheetGroups(candidates: ExamCandidate[]): ExamCandidate[][] {
-  const groups = new Map<string, ExamCandidate[]>();
-  const firstOfGrade = new Map<string, string>();
-  const waiting: [string, ExamCandidate][] = [];
+  const snapshot = (c: ExamCandidate) => (c.started_at ? JSON.stringify(c.program ?? null) : null);
+  const fits = (sheet: ExamCandidate[], c: ExamCandidate) =>
+    sheet.length < SHEET_SIZE &&
+    sheet.every((x) => snapshot(x) === null || snapshot(c) === null || snapshot(x) === snapshot(c));
+  const sheets: ExamCandidate[][] = [];
+  // Per grade the sheet still filling up
+  const open = new Map<string, ExamCandidate[]>();
   for (const c of candidates) {
     const grade = `${c.section}\u0000${c.grade}`;
-    if (!c.program) {
-      waiting.push([grade, c]);
-      continue;
+    const sheet = open.get(grade);
+    if (sheet && fits(sheet, c)) {
+      sheet.push(c);
+    } else {
+      const fresh = [c];
+      sheets.push(fresh);
+      open.set(grade, fresh);
     }
-    const key = `${grade}\u0000${JSON.stringify(c.program)}`;
-    if (!firstOfGrade.has(grade)) firstOfGrade.set(grade, key);
-    groups.set(key, [...(groups.get(key) ?? []), c]);
   }
-  for (const [grade, c] of waiting) {
-    const key = firstOfGrade.get(grade) ?? grade;
-    if (!firstOfGrade.has(grade)) firstOfGrade.set(grade, key);
-    groups.set(key, [...(groups.get(key) ?? []), c]);
-  }
-  // In the order the candidates were picked
-  const order = (c: ExamCandidate) => candidates.indexOf(c);
-  return [...groups.values()]
-    .map((g) => g.sort((a, b) => order(a) - order(b)))
-    .sort((a, b) => order(a[0]) - order(b[0]));
+  return sheets;
 }
 
 /**

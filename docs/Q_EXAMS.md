@@ -15,16 +15,18 @@ The grading process from registration to the new belt, without paper:
 3. **Call-up** – trainers or the TK select candidates and tap _Einteilen_ (the group icon on a
    phone) to give them a group (e.g. "Kinder Halbgelb") and a time, and mark
    them as called up. Members see group and time on their profile.
-4. **Exam day** – each examiner (see _Roles_) opens the exam day on the phone, ticks the
-   pair (or two pairs) they take over and taps _Bewerten_. That puts them on
-   the candidates as examiner and opens one sheet with the candidates side
-   by side: every item has 0 / 1 / 2 buttons per side (L / R) or one row for
-   single-scored items, and a note for the feedback round. Totals, part
-   minimums and a pass/fail suggestion update with every tap. _Meine_ lists
-   the candidates the signed-in examiner has taken over. Several sheets
-   (different grades) are switched by swiping the candidate cards; each keeps
-   its scroll position. Two examiners on the same pair share the sheet live
-   (see _Live sheets_).
+4. **Exam day** – each examiner (see _Roles_) opens the exam day on the
+   phone, ticks the pair (or two pairs) they take over, Tori and Uke one
+   after the other, and taps _Bewerten_. That puts them on the candidates as
+   examiner and opens a sheet per pair with the two side by side (two of the
+   same grade form a pair in the order ticked; another grade or a third
+   candidate gets a sheet of its own): every item has 0 / 1 / 2 buttons per
+   side (L / R) or one row for single-scored items, and a note for the
+   feedback round. Totals, part minimums and a pass/fail suggestion update
+   with every tap. Several sheets are switched by swiping the candidate
+   cards; each keeps its scroll position. _Meine_ lists the candidates the
+   signed-in examiner has taken over. Two examiners on the same pair share
+   the sheet live (see _Live sheets_).
 5. **Result** – after the feedback, _Bestanden_ / _Nicht bestanden_ closes
    the sheet. Passing records the grade in `member_grades` with the exam
    date, so the new belt shows on the profile, in the member directory and
