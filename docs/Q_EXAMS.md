@@ -68,8 +68,9 @@ was started with (snapshot in `exam_candidates.program`), so editing never
 changes running or finished exams. Candidates scored side by side share one
 snapshot; a candidate not started yet takes the snapshot of the sheet they
 are scored on. New items get random keys, so a deleted item's key is never
-handed to another technique. Grades without a program (e.g. Aikido)
-can still be graded: the sheet then only records the result and feedback.
+handed to another technique. Grades without a program (e.g. Aikido), or
+with an empty one, can still be graded: the sheet then only records the
+result and feedback.
 
 The half belts (5.5 Kyu Halbgelb, 4.5 Kyu Halborange, 3.5 Kyu Halbgrün) are
 rungs of the Judo grade ladder with two colours (`grade_definitions."beltColor2"`).
@@ -78,8 +79,9 @@ rungs of the Judo grade ladder with two colours (`grade_definitions."beltColor2"
 
 `supabase/migrations/20261021120000_q_exams.sql`,
 `20261023090000_q_exams_review_fixes.sql`,
-`20261023150000_q_exams_score_lock.sql`, `20261024120000_exam_roles.sql` and
-`20261024170000_exam_roles_review_fixes.sql`:
+`20261023150000_q_exams_score_lock.sql`, `20261024120000_exam_roles.sql`,
+`20261024170000_exam_roles_review_fixes.sql` and
+`20261024190000_exam_sheet_states.sql`:
 
 | Table             | Content                                                  | Members        | Staff (read all)                        |
 | ----------------- | -------------------------------------------------------- | -------------- | --------------------------------------- |
@@ -104,14 +106,18 @@ completion and recorded grade only through the result trigger.
   _Q-Prüfung_, no points). `note` is the member's remark and visible to
   them; `staff_note` is the internal note of trainers and the TK.
 - An examined candidate (sheet started or result in) stays as examined:
-  member, exam day, section, grade, program snapshot and start are fixed,
-  and the status changes only after reopening the sheet. Trainers remove
-  only candidates whose sheet has not started; the TK can remove any.
+  member, exam day, section, grade, program snapshot and start are fixed.
+  A result changes only by reopening the sheet, and a candidate with a
+  result is not withdrawn without reopening; a withdrawn candidate gets no
+  start, scores or result. Trainers remove only candidates whose sheet has
+  not started; the TK can remove any (the recorded grade stays).
   Staff-side candidates are checked against the exam day's section and
   kyu grades, since the result trigger records the grade with its own
-  rights.
+  rights; unlike members, staff may pick any kyu (e.g. for corrections).
 - Examiners sign on to and off open sheets only; the name on the sheet is
-  taken from their profile. The TK can take anyone off a sheet.
+  taken from their profile. In the app each examiner hands back their own
+  candidates (_Nicht mehr prüfen_); the database also lets the TK take
+  others off.
 - An exam role is cleared when the account becomes a member or an admin
   (`clear_exam_role`), so it never comes back unnoticed.
 
@@ -123,7 +129,7 @@ completion and recorded grade only through the result trigger.
   registration) go through the trainers. Withdrawing is possible until
   grading starts.
 - Scores, notes and the feedback can only change while the sheet is open
-  (`result` is null).
+  (`result` is null) and the candidate is not withdrawn.
   Each score write locks the open candidate row (`lock_open_exam_sheet`),
   so closing a sheet waits for a score saved in the same moment and counts
   it, and nothing is written into a closed sheet.
@@ -133,8 +139,9 @@ completion and recorded grade only through the result trigger.
   `remove_exam_candidate_grade` removes that grade when the sheet is
   reopened. An already recorded grade is left alone (and not removed on
   reopening).
-- A sheet is started (program frozen, grade fixed) with its first score or
-  note, and only for the grade the examiner sees; a candidate whose grade has
-  no program is never started, so the grade can still be corrected. An exam
-  day's section is fixed once candidates are registered.
+- A sheet is started (program frozen, grade fixed) with its first score,
+  note or result, and only for the grade the examiner sees; for a grade
+  without a program only the start is recorded, so the candidate is fixed
+  from then on as well. An exam day's section is fixed once candidates are
+  registered.
 - Deleting an exam day deletes registrations and sheets, not the grades.

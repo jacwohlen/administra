@@ -1,11 +1,12 @@
 <script lang="ts">
-  import { invalidate } from '$app/navigation';
+  import { goto, invalidate } from '$app/navigation';
   import { _ } from 'svelte-i18n';
   import Fa from 'svelte-fa';
   import { faArrowLeft, faEdit } from '@fortawesome/free-solid-svg-icons';
   import dayjs from 'dayjs';
   import BeltStrip from '$lib/components/BeltStrip.svelte';
   import ExamProgramView from '$lib/components/exams/ExamProgramView.svelte';
+  import { supabaseClient } from '$lib/supabase';
   import ProgramEditor from './ProgramEditor.svelte';
   import type { PageData } from './$types';
 
@@ -13,6 +14,16 @@
 
   // svelte-ignore state_referenced_locally
   let editing = $state(data.startEditing);
+
+  /** "Erfassen" creates the program right away; cancelling it untouched takes it back. */
+  async function cancel() {
+    if (data.startEditing && data.program.parts.length === 0) {
+      await supabaseClient.from('exam_programs').delete().eq('id', data.program.id);
+      await goto('/dashboard/exams/programs');
+      return;
+    }
+    editing = false;
+  }
 </script>
 
 <div class="page-header-back">
@@ -52,7 +63,7 @@
   {#key data.program.updated_at}
     <ProgramEditor
       program={data.program}
-      oncancel={() => (editing = false)}
+      oncancel={cancel}
       onsaved={async () => {
         await invalidate('app:exam-program');
         editing = false;

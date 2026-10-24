@@ -58,7 +58,7 @@
       },
       "examRole": {
         "none": "Keine Prüfungsrolle",
-        "examiner": "Prüfende",
+        "examiner": "Prüfende (bewerten)",
         "manager": "TK (Prüfungen leiten)"
       },
       "action": {
@@ -773,7 +773,7 @@
       "grade": "Bewerten",
       "assignGroup": "Einteilen",
       "markInvited": "Als aufgeboten markieren",
-      "assignError": "Fehler beim Zuteilen als Prüfende",
+      "assignError": "Fehler beim Eintragen auf dem Blatt",
       "examiners": "Prüfende",
       "openSheet": "Blatt",
       "withdrawn": "{count, plural, one {# Abmeldung} other {# Abmeldungen}}",
@@ -817,7 +817,7 @@
         "searchPlaceholder": "Mitglied suchen…",
         "otherMember": "Anderes Mitglied",
         "grade": "Prüfung für",
-        "gradeLocked": "Die Bewertung läuft bereits mit dem Programm dieses Grads.",
+        "gradeLocked": "Die Bewertung hat begonnen; die Stufe bleibt.",
         "group": "Gruppe",
         "groupPlaceholder": "z.B. Kinder Halbgelb",
         "callTime": "Aufgebot um",
@@ -830,8 +830,10 @@
         "removeError": "Fehler beim Entfernen der Anmeldung",
         "noteHint": "Die Bemerkung bei der Anmeldung; das Mitglied sieht sie.",
         "staffNote": "Interne Notiz",
-        "staffNoteHint": "Nur für Trainer, TK und Prüfende.",
-        "statusLocked": "Das Resultat ist erfasst. Für Änderungen zuerst das Blatt wieder öffnen."
+        "staffNoteHint": "Intern für das Team im Dashboard; Mitglieder sehen sie nie.",
+        "statusLocked": "Das Resultat ist erfasst. Ändern lässt es sich erst, wenn Prüfende oder die TK das Blatt wieder öffnen.",
+        "removeLocked": "Die Bewertung hat inzwischen begonnen; entfernen kann den Kandidaten nur noch die TK.",
+        "removeExaminedHint": "Blatt und Bewertung werden gelöscht. Ein bereits erfasster Gurt bleibt im Profil."
       },
       "sheet": {
         "title": "Prüfungsblatt",
@@ -850,7 +852,7 @@
         "suggestFailed": "Vorschlag: nicht bestanden",
         "feedback": "Rückmeldung",
         "feedbackPlaceholder": "Was gut war, woran weiterarbeiten…",
-        "feedbackHint": "Intern, für Trainer und Prüfende: Grundlage für das Feedback an das Mitglied. Das Mitglied sieht nur den neuen Kyu.",
+        "feedbackHint": "Intern für das Team im Dashboard: Grundlage für das Feedback an das Mitglied. Das Mitglied sieht nur den neuen Kyu.",
         "pass": "Bestanden",
         "fail": "Nicht bestanden",
         "reopen": "Wieder öffnen",
@@ -922,7 +924,8 @@
         "delete": "Programm löschen",
         "deleteConfirm": "Wirklich löschen?",
         "deleteError": "Fehler beim Löschen des Programms",
-        "deleted": "Programm gelöscht"
+        "deleted": "Programm gelöscht",
+        "deleteHint": "Laufende und abgeschlossene Blätter behalten ihre Kopie des Programms. Wer für diese Stufe angemeldet und noch nicht geprüft ist, wird ohne Programm bewertet, bis wieder eines erfasst ist."
       }
     }
   },

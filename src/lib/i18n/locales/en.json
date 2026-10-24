@@ -773,7 +773,7 @@
       "grade": "Score",
       "assignGroup": "Assign",
       "markInvited": "Mark as called up",
-      "assignError": "Error assigning you as examiner",
+      "assignError": "Error adding you to the sheet",
       "examiners": "Examiners",
       "openSheet": "Sheet",
       "withdrawn": "{count, plural, one {# withdrawal} other {# withdrawals}}",
@@ -817,7 +817,7 @@
         "searchPlaceholder": "Search member…",
         "otherMember": "Other member",
         "grade": "Grading for",
-        "gradeLocked": "Scoring has started with the program of this grade.",
+        "gradeLocked": "Grading has started; the grade stays.",
         "group": "Group",
         "groupPlaceholder": "e.g. Kids half yellow",
         "callTime": "Called up at",
@@ -830,8 +830,10 @@
         "removeError": "Error removing the registration",
         "noteHint": "The remark from the registration; the member sees it.",
         "staffNote": "Internal note",
-        "staffNoteHint": "Only for trainers, the technical committee and examiners.",
-        "statusLocked": "The result is recorded. Reopen the sheet first to change it."
+        "staffNoteHint": "Internal for the team in the dashboard; members never see it.",
+        "statusLocked": "The result is recorded. It can only change once an examiner or the technical committee reopens the sheet.",
+        "removeLocked": "Grading has started meanwhile; only the technical committee can remove the candidate now.",
+        "removeExaminedHint": "The sheet and its scores are deleted. A belt already recorded stays on the profile."
       },
       "sheet": {
         "title": "Grading sheet",
@@ -850,7 +852,7 @@
         "suggestFailed": "Suggestion: not passed",
         "feedback": "Feedback",
         "feedbackPlaceholder": "What went well, what to work on…",
-        "feedbackHint": "Internal, for trainers and examiners: notes for the feedback to the member. The member only sees the new kyu.",
+        "feedbackHint": "Internal for the team in the dashboard: notes for the feedback to the member. The member only sees the new kyu.",
         "pass": "Passed",
         "fail": "Not passed",
         "reopen": "Reopen",
@@ -922,7 +924,8 @@
         "delete": "Delete program",
         "deleteConfirm": "Really delete?",
         "deleteError": "Error deleting the program",
-        "deleted": "Program deleted"
+        "deleted": "Program deleted",
+        "deleteHint": "Running and finished sheets keep their copy of the program. Candidates registered for this grade and not graded yet are graded without a program until one is entered again."
       }
     }
   },

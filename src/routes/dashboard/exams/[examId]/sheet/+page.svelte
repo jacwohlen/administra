@@ -72,10 +72,16 @@
     minPoints: number;
   }
 
-  /** The candidate's sheet: their snapshot once started, else the current program. */
+  /**
+   * The candidate's sheet: their snapshot once started, else the current program
+   * (one with items). Started without a program stays without one.
+   */
   function sheetOf(c: ExamCandidate): Sheet | null {
     if (c.program) return { parts: c.program, minPoints: c.min_points ?? 0 };
-    const program = data.programs.find((p) => p.section === c.section && p.grade === c.grade);
+    if (c.started_at) return null;
+    const program = data.programs.find(
+      (p) => p.section === c.section && p.grade === c.grade && p.parts.length > 0
+    );
     return program ? { parts: program.parts, minPoints: program.min_points } : null;
   }
 
@@ -140,12 +146,16 @@
     await invalidate('app:exam-sheet');
   }
 
-  /** Freeze the rows on screen for a candidate, for the grade on screen. */
-  async function startSheet(c: ExamCandidate, sheet: Sheet): Promise<boolean> {
+  /**
+   * Freeze the rows on screen for a candidate, for the grade on screen. Without a
+   * program only the start is recorded, which fixes grade and registration too.
+   */
+  async function startSheet(c: ExamCandidate, sheet: Sheet | null): Promise<boolean> {
     const startedAt = new Date().toISOString();
+    const frozen = sheet ? { program: sheet.parts, min_points: sheet.minPoints } : {};
     const { data: rows, error } = await supabaseClient
       .from('exam_candidates')
-      .update({ program: sheet.parts, min_points: sheet.minPoints, started_at: startedAt })
+      .update({ ...frozen, started_at: startedAt })
       .eq('id', c.id)
       .eq('section', c.section)
       .eq('grade', c.grade)
@@ -161,11 +171,7 @@
       await changedMeanwhile();
       return false;
     }
-    patchCandidate(c.id, {
-      started_at: startedAt,
-      program: sheet.parts,
-      min_points: sheet.minPoints
-    });
+    patchCandidate(c.id, { ...frozen, started_at: startedAt });
     return true;
   }
 
@@ -173,14 +179,14 @@
   const pendingStarts = new Map<number, Promise<boolean>>();
 
   /**
-   * Before the first score or note: freeze the program for the candidate and
-   * sign as examiner. Without a program there is nothing to freeze, and
-   * starting would only lock the grade.
+   * Before the first score, note or result: start the sheet (freezing the
+   * program, if the grade has one) and sign as examiner. From then on the
+   * candidate stays as examined.
    */
   async function ensureStarted(c: ExamCandidate): Promise<boolean> {
     const now = live(c);
     const sheet = sheetFor(now);
-    if (!now.started_at && sheet) {
+    if (!now.started_at) {
       let start = pendingStarts.get(c.id);
       if (!start) {
         start = startSheet(now, sheet).finally(() => pendingStarts.delete(c.id));
@@ -222,24 +228,28 @@
   );
 
   async function leave(list: ExamCandidate[]) {
-    const { error } = await supabaseClient
+    const { data: rows, error } = await supabaseClient
       .from('exam_examiners')
       .delete()
       .eq('user_id', me)
       .in(
         'candidate_id',
         list.map((c) => c.id)
-      );
+      )
+      .select('candidate_id');
     if (error) {
       console.error('Error handing candidates back:', error);
       toaster.error({ title: $_('page.exams.sheet.leaveError') });
       return;
     }
-    for (const c of list) {
+    const left = new Set((rows ?? []).map((r) => r.candidate_id));
+    for (const c of list.filter((x) => left.has(x.id))) {
       patchCandidate(c.id, {
         examiners: (live(c).examiners ?? []).filter((e) => e.user_id !== me)
       });
     }
+    // A sheet closed meanwhile keeps its examiners
+    if (left.size < list.length) await changedMeanwhile();
   }
 
   async function setScore(c: ExamCandidate, item: ExamItem, side: ScoreSide, value: number | null) {
@@ -293,7 +303,7 @@
     await invalidate('app:exam-sheet');
     busy = false;
     const fresh = candidates.find((x) => x.id === candidate.id);
-    if (!fresh || !!fresh.result === (result !== null)) {
+    if (!fresh || !!fresh.result === (result !== null) || fresh.status === 'withdrawn') {
       toaster.error({ title: $_('page.exams.sheet.changedMeanwhile') });
       return;
     }
@@ -436,20 +446,21 @@
   </div>
 </div>
 
-{#if joinable.length > 0}
+{#if joinable.length > 0 || leavable.length > 0}
   <!-- Optional (the first score signs the sheet anyway), hence tonal -->
-  <div class="mb-3">
-    <button class="btn preset-tonal-primary" onclick={() => joinAsExaminer(joinable)}>
-      <Fa icon={faUserPlus} />
-      <span>{$_('page.exams.sheet.join')}</span>
-    </button>
-  </div>
-{:else if leavable.length > 0}
-  <div class="mb-3">
-    <button class="btn preset-tonal-surface" onclick={() => leave(leavable)}>
-      <Fa icon={faUserMinus} />
-      <span>{$_('page.exams.sheet.leave')}</span>
-    </button>
+  <div class="flex flex-wrap gap-2 mb-3">
+    {#if joinable.length > 0}
+      <button class="btn preset-tonal-primary" onclick={() => joinAsExaminer(joinable)}>
+        <Fa icon={faUserPlus} />
+        <span>{$_('page.exams.sheet.join')}</span>
+      </button>
+    {/if}
+    {#if leavable.length > 0}
+      <button class="btn preset-tonal-surface" onclick={() => leave(leavable)}>
+        <Fa icon={faUserMinus} />
+        <span>{$_('page.exams.sheet.leave')}</span>
+      </button>
+    {/if}
   </div>
 {/if}
 
@@ -633,22 +644,26 @@
         <ul class="text-sm divide-y divide-surface-200-800">
           {#each evaluation.parts as pe (pe.key)}
             {@const part = sheetFor(c)?.parts.find((p) => p.key === pe.key)}
+            <!-- A missed minimum only shows on a sheet in grading, not on one not started -->
+            {@const missed = !pe.met && (!readonly(c) || !!c.started_at)}
             <li
               class="flex items-center gap-2 py-1 tabular-nums"
-              class:text-primary-600-400={!pe.met}
+              class:text-primary-600-400={missed}
             >
               <span class="flex-1 min-w-0 truncate">{part?.title}</span>
               {#if pe.minPoints !== null}
                 <span class="flex-none inline-flex items-center gap-1 text-xs text-surface-600-400">
                   {$_('page.exams.sheet.min', { values: { points: pe.minPoints } })}
-                  <Fa
-                    icon={pe.met ? faCheck : faXmark}
-                    size="xs"
-                    class={pe.met ? 'text-success-600-400' : 'text-primary-600-400'}
-                  />
+                  {#if pe.met || missed}
+                    <Fa
+                      icon={pe.met ? faCheck : faXmark}
+                      size="xs"
+                      class={pe.met ? 'text-success-600-400' : 'text-primary-600-400'}
+                    />
+                  {/if}
                 </span>
               {/if}
-              <span class="flex-none min-w-12 text-right" class:font-semibold={!pe.met}>
+              <span class="flex-none min-w-12 text-right" class:font-semibold={missed}>
                 {pe.points}/{pe.max}
               </span>
             </li>

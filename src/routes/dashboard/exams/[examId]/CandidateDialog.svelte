@@ -191,13 +191,19 @@
   async function remove() {
     if (!candidate) return;
     saving = true;
-    const { error } = await supabaseClient.from('exam_candidates').delete().eq('id', candidate.id);
+    const { data: rows, error } = await supabaseClient
+      .from('exam_candidates')
+      .delete()
+      .eq('id', candidate.id)
+      .select('id');
     saving = false;
     if (error) {
       console.error('Error removing candidate:', error);
       toaster.error({ title: $_('page.exams.candidate.removeError') });
       return;
     }
+    // Nothing removed: grading started meanwhile (only the TK removes then)
+    if (!rows?.length) toaster.error({ title: $_('page.exams.candidate.removeLocked') });
     onsaved();
   }
 </script>
@@ -283,7 +289,7 @@
             {/each}
           </select>
         </div>
-        {#if gradeLocked}
+        {#if gradeLocked && !statusLocked}
           <span class="block text-xs text-surface-600-400"
             >{$_('page.exams.candidate.gradeLocked')}</span
           >
@@ -358,6 +364,9 @@
         </span>
       </label>
 
+      {#if confirmRemove && examined}
+        <p class="text-sm text-surface-700-300">{$_('page.exams.candidate.removeExaminedHint')}</p>
+      {/if}
       <footer class="flex flex-wrap justify-between gap-2 pt-2">
         <div>
           {#if candidate && (!examined || canManageExams)}

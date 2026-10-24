@@ -285,7 +285,10 @@
     </ul>
   {/if}
 
-  <div class="flex justify-end gap-2 sticky bottom-0 bg-surface-50-950 py-2">
+  <div class="flex flex-wrap justify-end gap-2 sticky bottom-0 bg-surface-50-950 py-2">
+    {#if confirmRemove}
+      <p class="w-full text-sm text-surface-700-300">{$_('page.exams.programs.deleteHint')}</p>
+    {/if}
     <div class="mr-auto">
       {#if confirmRemove}
         <button

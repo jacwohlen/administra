@@ -90,8 +90,10 @@
     const { error } = await assignExaminer(open, me, examinerName(data.userProfile));
     busy = false;
     if (error) {
+      // Mostly a sheet closed meanwhile: show the current state, a retry then works
       console.error('Error assigning examiner:', error);
       toaster.error({ title: $_('page.exams.assignError') });
+      await refresh();
       return;
     }
     await goto(`/dashboard/exams/${data.exam.id}/sheet?c=${selected.join(',')}`);
