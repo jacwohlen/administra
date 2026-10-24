@@ -30,6 +30,7 @@ Attendance tracking app for martial arts clubs. SvelteKit frontend + Supabase (P
 - `src/lib/i18n/` - Internationalization with locale JSON files
 - `supabase/migrations/` - Versioned SQL migrations
 - `supabase/seed.sql` - Database seed data
+- `static/brand/` - Brand guide extracted from the app (logo, `tokens.css`/`tokens.json`, style sheet at `/brand/`); not imported by the app, update it when the theme or `src/app.css` changes
 
 ## Conventions
 
