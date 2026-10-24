@@ -191,8 +191,18 @@
   const cols = 'sm:grid-cols-[4.5rem_13rem_minmax(0,1fr)_minmax(0,1fr)_4.5rem_1rem]';
 </script>
 
+{#snippet saveState(date: string)}
+  {#if status[date] === 'saving'}
+    <Fa icon={faSpinner} spin size="xs" class="text-surface-500" />
+  {:else if status[date] === 'saved'}
+    <Fa icon={faCheck} size="xs" class="text-success-600-400" />
+  {:else if status[date] === 'error'}
+    <Fa icon={faCircleExclamation} size="xs" class="text-error-600-400" />
+  {/if}
+{/snippet}
+
 {#if canEdit}
-  <p class="text-xs text-surface-600-400 mb-2 print:hidden">{$_('page.trainingPlan.grid.hint')}</p>
+  <p class="text-xs text-surface-600-400 mb-3 print:hidden">{$_('page.trainingPlan.grid.hint')}</p>
 {/if}
 
 <datalist id="grid-topics">
@@ -230,9 +240,11 @@
           <div class="text-xs text-surface-600-400">
             {$_('weekdayShort.' + training.weekday)}
           </div>
-          <div class="font-bold {off ? 'line-through opacity-60' : ''}">
+          <div class="font-bold tabular-nums {off ? 'line-through opacity-60' : ''}">
             {dayjs(row.date).format('DD.MM.')}
           </div>
+          <!-- On phones the save state sits under the date -->
+          <div class="sm:hidden h-4 mt-0.5">{@render saveState(row.date)}</div>
         </div>
 
         <div class="grid grid-cols-[minmax(0,1fr)_auto] gap-1 sm:contents">
@@ -240,14 +252,16 @@
             {members}
             bind:value={drafts[row.date].trainer}
             {openLabel}
-            class="select py-1 text-sm {off ? 'opacity-50' : ''}"
+            class="select h-10 sm:h-9 py-0 text-sm {off ? 'opacity-50' : ''}"
             data-row={i}
             data-col="trainer"
             disabled={!canEdit}
             onchange={() => schedule(row)}
             onkeydown={(e: KeyboardEvent) => onKey(e, i, 'trainer')}
           />
-          <label class="flex items-center justify-center gap-1 sm:hidden text-xs">
+          <label
+            class="flex items-center justify-center gap-1.5 min-h-10 px-1 sm:hidden text-xs cursor-pointer"
+          >
             <input
               type="checkbox"
               class="checkbox"
@@ -258,7 +272,9 @@
             <span>{$_('page.trainingPlan.cancelled')}</span>
           </label>
           <input
-            class="input py-1 text-sm col-span-2 sm:col-span-1 {off ? 'opacity-50' : ''}"
+            class="input h-10 sm:h-9 py-0 text-sm col-span-2 sm:col-span-1 {off
+              ? 'opacity-50'
+              : ''}"
             type="text"
             list="grid-topics"
             placeholder={$_('page.trainingPlan.topic')}
@@ -272,7 +288,7 @@
             onpaste={(e) => onPaste(e, i, 'topic')}
           />
           <input
-            class="input py-1 text-sm col-span-2 sm:col-span-1"
+            class="input h-10 sm:h-9 py-0 text-sm col-span-2 sm:col-span-1"
             type="text"
             placeholder={$_('page.trainingPlan.notes')}
             bind:value={drafts[row.date].notes}
@@ -284,7 +300,7 @@
             onkeydown={(e) => onKey(e, i, 'notes')}
             onpaste={(e) => onPaste(e, i, 'notes')}
           />
-          <label class="hidden sm:flex justify-center">
+          <label class="hidden sm:flex justify-center items-center h-9 cursor-pointer">
             <input
               type="checkbox"
               class="checkbox"
@@ -300,13 +316,7 @@
         </div>
 
         <span class="hidden sm:inline-flex justify-center" aria-live="polite">
-          {#if status[row.date] === 'saving'}
-            <Fa icon={faSpinner} spin size="xs" class="text-surface-500" />
-          {:else if status[row.date] === 'saved'}
-            <Fa icon={faCheck} size="xs" class="text-success-600-400" />
-          {:else if status[row.date] === 'error'}
-            <Fa icon={faCircleExclamation} size="xs" class="text-error-600-400" />
-          {/if}
+          {@render saveState(row.date)}
         </span>
 
         {#if row.break || row.events.length > 0}

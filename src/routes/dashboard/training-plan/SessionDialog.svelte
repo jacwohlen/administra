@@ -2,6 +2,8 @@
   import { supabaseClient } from '$lib/supabase';
   import { toaster } from '$lib/toast';
   import { _ } from 'svelte-i18n';
+  import Fa from 'svelte-fa';
+  import { faCalendarDays, faSpinner } from '@fortawesome/free-solid-svg-icons';
   import dayjs from 'dayjs';
   import type { PlanRow } from '$lib/trainingPlanUtils';
   import TrainerSelect from './TrainerSelect.svelte';
@@ -180,20 +182,24 @@
       </label>
 
       {#if single && single.events.length > 0}
-        <div class="text-sm p-2 rounded preset-tonal-secondary">
-          <span class="font-semibold">{$_('page.trainingPlan.eventsThatDay')}:</span>
-          {single.events.map((e) => e.title).join(', ')}
+        <div class="flex items-start gap-2 p-3 rounded-lg preset-tonal-secondary text-sm">
+          <Fa icon={faCalendarDays} class="mt-0.5 flex-none" />
+          <span>
+            <span class="font-semibold">{$_('page.trainingPlan.eventsThatDay')}:</span>
+            {single.events.map((e) => e.title).join(', ')}
+          </span>
         </div>
       {/if}
 
-      <div class="flex justify-end gap-2 pt-2">
+      <footer class="flex justify-end gap-2 pt-2">
         <button type="button" class="btn preset-tonal-surface" onclick={onclose}>
           {$_('button.cancel')}
         </button>
         <button type="submit" class="btn preset-filled-primary-500" disabled={saving}>
-          {saving ? $_('button.saving') : $_('button.save')}
+          {#if saving}<Fa icon={faSpinner} spin />{/if}
+          <span>{$_('button.save')}</span>
         </button>
-      </div>
+      </footer>
     </form>
   </div>
 </div>

@@ -129,9 +129,15 @@
     bind:value={text}
     oninput={() => read(text)}
   ></textarea>
-  <label class="flex items-center gap-2 text-sm mt-2">
-    <span>{$_('page.trainingPlan.import.file')}</span>
-    <input type="file" accept=".csv,.tsv,.txt,text/csv" class="text-sm" onchange={readFile} />
+  <label class="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm mt-2">
+    <span class="text-surface-600-400 whitespace-nowrap">{$_('page.trainingPlan.import.file')}</span
+    >
+    <input
+      type="file"
+      accept=".csv,.tsv,.txt,text/csv"
+      class="min-w-0 max-w-full text-sm file:btn file:preset-tonal-primary file:mr-3 file:cursor-pointer"
+      onchange={readFile}
+    />
   </label>
 
   {#if text.trim() && rows === null}
@@ -208,8 +214,8 @@
       {/if}
 
       {#if result.sessions.length > 0}
-        <div class="flex items-start gap-2 p-2 rounded preset-tonal-warning text-sm">
-          <Fa icon={faTriangleExclamation} class="mt-0.5" />
+        <div class="flex items-start gap-2 p-3 rounded-lg preset-tonal-warning text-sm">
+          <Fa icon={faTriangleExclamation} class="mt-0.5 flex-none" />
           <span>{$_('page.trainingPlan.import.overwrite')}</span>
         </div>
         <button class="btn preset-filled-primary-500" onclick={runImport} disabled={busy}>

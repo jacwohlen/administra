@@ -15,7 +15,8 @@
     faUsers,
     faUserCheck,
     faChalkboardTeacher,
-    faCalendarWeek
+    faCalendarWeek,
+    faChevronRight
   } from '@fortawesome/free-solid-svg-icons';
   import dayjs from 'dayjs';
   import { goto, preloadData } from '$app/navigation';
@@ -249,11 +250,17 @@
 {#if data.plan && (planCancelled || data.plan.session?.topic || data.plan.session?.trainer_id != null || data.plan.session?.notes)}
   <a
     href="/dashboard/training-plan?year={data.date.slice(0, 4)}"
-    class="flex items-start gap-3 p-3 rounded-lg mb-3 {planCancelled
-      ? 'preset-tonal-warning'
-      : 'preset-tonal-primary'}"
+    class="card border flex items-center gap-3 px-3 py-2.5 mb-4 transition-colors {planCancelled
+      ? 'preset-tonal-warning border-warning-500/30'
+      : 'border-surface-200-800 hover:bg-surface-100-900'}"
   >
-    <Fa icon={faCalendarWeek} class="mt-1" />
+    <div
+      class="entity-badge {planCancelled
+        ? 'bg-warning-500/20! text-warning-800-200'
+        : 'text-primary-600-400'}"
+    >
+      <Fa icon={faCalendarWeek} size="lg" />
+    </div>
     <div class="flex-1 min-w-0 text-sm">
       {#if planCancelled}
         <p class="font-semibold">
@@ -278,9 +285,13 @@
         </p>
       {/if}
       {#if data.plan.session?.notes}
-        <p class="text-surface-700-300">{data.plan.session.notes}</p>
+        <p class="text-surface-600-400">{data.plan.session.notes}</p>
       {/if}
     </div>
+    <Fa
+      icon={faChevronRight}
+      class="flex-none {planCancelled ? 'opacity-60' : 'text-surface-400-600'}"
+    />
   </a>
 {/if}
 

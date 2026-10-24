@@ -97,12 +97,16 @@
   }
 </script>
 
-<div class="page-header gap-2">
-  <a href="/dashboard/training-plan" class="btn preset-tonal-surface">
+<div class="page-header-back">
+  <a
+    href="/dashboard/training-plan"
+    class="btn preset-tonal-surface flex-shrink-0"
+    title={$_('page.trainingPlan.title')}
+    aria-label={$_('page.trainingPlan.title')}
+  >
     <Fa icon={faArrowLeft} />
-    <span class="hidden sm:inline">{$_('page.trainingPlan.title')}</span>
   </a>
-  <h1 class="truncate">{$_('page.trainingPlan.settings.title')}</h1>
+  <h1 class="flex-1 min-w-0 truncate">{$_('page.trainingPlan.settings.title')}</h1>
 </div>
 
 <section class="mb-8">
@@ -111,7 +115,7 @@
   <ul class="card border border-surface-200-800 divide-y divide-surface-200-800">
     {#each data.trainings as t (t.id)}
       <li>
-        <label class="flex items-center gap-3 px-3 py-2 cursor-pointer">
+        <label class="flex items-center gap-3 px-3 py-2.5 cursor-pointer">
           <input
             class="checkbox"
             type="checkbox"
@@ -120,9 +124,9 @@
             onchange={(e) => toggleTraining(Number(t.id), (e.target as HTMLInputElement).checked)}
           />
           <span class="w-8 text-sm text-surface-600-400">{$_('weekdayShort.' + t.weekday)}</span>
-          <span class="w-12 text-sm">{t.dateFrom}</span>
+          <span class="w-12 text-sm tabular-nums">{t.dateFrom}</span>
           <span class="flex-1 truncate font-semibold">{t.title}</span>
-          <span class="text-sm text-surface-600-400">{t.section}</span>
+          <span class="text-sm text-surface-600-400 flex-none">{t.section}</span>
         </label>
       </li>
     {/each}
@@ -164,7 +168,7 @@
     </label>
     <button
       type="submit"
-      class="btn preset-filled-primary-500 col-span-2 sm:col-span-3"
+      class="btn preset-filled-primary-500 col-span-2 sm:col-span-3 sm:justify-self-end"
       disabled={busy}
     >
       <Fa icon={faPlus} />
@@ -175,17 +179,21 @@
   {#if data.breaks.length === 0}
     <div class="empty-state"><p>{$_('page.trainingPlan.settings.noBreaks')}</p></div>
   {:else}
-    <ul class="flex flex-col gap-2">
+    <ul class="card border border-surface-200-800 divide-y divide-surface-200-800">
       {#each data.breaks as b (b.id)}
-        <li class="list-item">
-          <div class="entity-badge {b.cancels_training ? 'text-warning-600-400' : ''}">
-            <Fa icon={b.cancels_training ? faDoorClosed : faUmbrellaBeach} />
+        <li class="flex items-center gap-3 px-3 py-2">
+          <div
+            class="entity-badge {b.cancels_training
+              ? 'bg-warning-500/20! text-warning-800-200'
+              : 'text-surface-600-400'}"
+          >
+            <Fa icon={b.cancels_training ? faDoorClosed : faUmbrellaBeach} size="lg" />
           </div>
           <div class="list-item-content">
             <div class="font-semibold truncate">{b.title}</div>
-            <div class="text-sm text-surface-600-400">{range(b)}</div>
+            <div class="text-sm text-surface-600-400 tabular-nums">{range(b)}</div>
           </div>
-          <label class="flex items-center gap-1 text-sm flex-none">
+          <label class="flex items-center gap-1.5 min-h-11 text-sm flex-none cursor-pointer">
             <input
               class="checkbox"
               type="checkbox"
@@ -196,9 +204,10 @@
             <span>{$_('page.trainingPlan.settings.closedShort')}</span>
           </label>
           <button
-            class="btn-icon preset-tonal-error flex-none"
+            class="btn-icon size-11 p-0 flex-none text-error-600-400 hover:preset-tonal-error"
             onclick={() => removeBreak(b)}
             disabled={busy}
+            title={$_('button.delete')}
             aria-label="{$_('button.delete')}: {b.title}"
           >
             <Fa icon={faTrash} />

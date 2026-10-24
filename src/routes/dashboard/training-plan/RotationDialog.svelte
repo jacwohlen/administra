@@ -3,7 +3,13 @@
   import { toaster } from '$lib/toast';
   import { _ } from 'svelte-i18n';
   import Fa from 'svelte-fa';
-  import { faArrowDown, faArrowUp, faPlus, faTrash } from '@fortawesome/free-solid-svg-icons';
+  import {
+    faArrowDown,
+    faArrowUp,
+    faPlus,
+    faSpinner,
+    faTrash
+  } from '@fortawesome/free-solid-svg-icons';
   import dayjs from 'dayjs';
   import {
     hasAssignment,
@@ -176,13 +182,14 @@
     onclick={(e) => e.stopPropagation()}
   >
     <h3>{$_('page.trainingPlan.rotation.title')}</h3>
-    <div class="flex rounded-lg overflow-hidden border border-surface-300-700 my-3">
+    <div class="flex rounded-lg overflow-hidden border border-surface-300-700 mb-3" role="group">
       {#each ['trainers', 'topics'] as const as m (m)}
         <button
           type="button"
-          class="btn btn-sm flex-1 rounded-none {mode === m
+          class="btn flex-1 rounded-none {mode === m
             ? 'preset-filled-primary-500'
             : 'preset-tonal-surface'}"
+          aria-pressed={mode === m}
           onclick={() => (mode = m)}
         >
           {$_('page.trainingPlan.rotation.mode.' + m)}
@@ -225,61 +232,65 @@
         </label>
       </div>
 
-      <div class="space-y-2">
-        <span class="label-text">{$_('page.trainingPlan.rotation.slots')}</span>
-        {#each slots as slot, i (i)}
-          <div class="flex items-center gap-2">
-            <span class="w-6 text-right text-sm text-surface-600-400">{i + 1}.</span>
-            <div class="flex-1 min-w-0">
-              {#if mode === 'trainers'}
-                <TrainerSelect {members} bind:value={slot.value} allowNone />
-              {:else}
-                <input
-                  class="input"
-                  type="text"
-                  list="rotation-topics"
-                  placeholder={$_('page.trainingPlan.topicPlaceholder')}
-                  bind:value={slot.topic}
-                />
-              {/if}
+      <div class="label">
+        <span>{$_('page.trainingPlan.rotation.slots')}</span>
+        <div class="space-y-2">
+          {#each slots as slot, i (i)}
+            <div class="flex items-center gap-1">
+              <span class="w-6 flex-none text-right text-sm tabular-nums text-surface-600-400 pr-1"
+                >{i + 1}.</span
+              >
+              <div class="flex-1 min-w-0">
+                {#if mode === 'trainers'}
+                  <TrainerSelect {members} bind:value={slot.value} allowNone />
+                {:else}
+                  <input
+                    class="input"
+                    type="text"
+                    list="rotation-topics"
+                    placeholder={$_('page.trainingPlan.topicPlaceholder')}
+                    bind:value={slot.topic}
+                  />
+                {/if}
+              </div>
+              <button
+                type="button"
+                class="btn-icon size-11 p-0 flex-none hover:bg-surface-200-800"
+                onclick={() => move(i, -1)}
+                disabled={i === 0}
+                aria-label={$_('page.trainingPlan.rotation.up')}
+              >
+                <Fa icon={faArrowUp} />
+              </button>
+              <button
+                type="button"
+                class="btn-icon size-11 p-0 flex-none hover:bg-surface-200-800"
+                onclick={() => move(i, 1)}
+                disabled={i === slots.length - 1}
+                aria-label={$_('page.trainingPlan.rotation.down')}
+              >
+                <Fa icon={faArrowDown} />
+              </button>
+              <button
+                type="button"
+                class="btn-icon size-11 p-0 flex-none text-error-600-400 hover:preset-tonal-error"
+                onclick={() => slots.splice(i, 1)}
+                disabled={slots.length === 1}
+                aria-label={$_('button.remove')}
+              >
+                <Fa icon={faTrash} />
+              </button>
             </div>
-            <button
-              type="button"
-              class="btn-icon btn-icon-sm preset-tonal-surface flex-none"
-              onclick={() => move(i, -1)}
-              disabled={i === 0}
-              aria-label={$_('page.trainingPlan.rotation.up')}
-            >
-              <Fa icon={faArrowUp} />
-            </button>
-            <button
-              type="button"
-              class="btn-icon btn-icon-sm preset-tonal-surface flex-none"
-              onclick={() => move(i, 1)}
-              disabled={i === slots.length - 1}
-              aria-label={$_('page.trainingPlan.rotation.down')}
-            >
-              <Fa icon={faArrowDown} />
-            </button>
-            <button
-              type="button"
-              class="btn-icon btn-icon-sm preset-tonal-error flex-none"
-              onclick={() => slots.splice(i, 1)}
-              disabled={slots.length === 1}
-              aria-label={$_('button.remove')}
-            >
-              <Fa icon={faTrash} />
-            </button>
-          </div>
-        {/each}
-        <button
-          type="button"
-          class="btn btn-sm preset-tonal-primary"
-          onclick={() => slots.push({ value: null, topic: '' })}
-        >
-          <Fa icon={faPlus} />
-          <span>{$_('page.trainingPlan.rotation.addSlot')}</span>
-        </button>
+          {/each}
+          <button
+            type="button"
+            class="btn preset-tonal-primary"
+            onclick={() => slots.push({ value: null, topic: '' })}
+          >
+            <Fa icon={faPlus} />
+            <span>{$_('page.trainingPlan.rotation.addSlot')}</span>
+          </button>
+        </div>
         <datalist id="rotation-topics">
           {#each topics as t (t)}
             <option value={t}></option>
@@ -320,17 +331,17 @@
         </span>
       </label>
 
-      <div>
-        <span class="label-text">{$_('page.trainingPlan.rotation.preview')}</span>
+      <div class="label">
+        <span>{$_('page.trainingPlan.rotation.preview')}</span>
         {#if assignments.length === 0}
           <p class="text-sm text-surface-600-400">{$_('page.trainingPlan.rotation.noDates')}</p>
         {:else}
           <ul
-            class="text-sm max-h-48 overflow-y-auto rounded border border-surface-200-800 divide-y divide-surface-200-800"
+            class="text-sm max-h-48 overflow-y-auto rounded-lg border border-surface-200-800 divide-y divide-surface-200-800"
           >
             {#each assignments as a (a.date)}
-              <li class="flex justify-between gap-2 px-2 py-1 {a.kept ? 'opacity-50' : ''}">
-                <span>{dayjs(a.date).format('DD.MM.YYYY')}</span>
+              <li class="flex justify-between gap-2 px-3 py-1.5 {a.kept ? 'opacity-50' : ''}">
+                <span class="tabular-nums flex-none">{dayjs(a.date).format('DD.MM.YYYY')}</span>
                 <span class="truncate">
                   {#if a.kept}
                     {$_('page.trainingPlan.rotation.kept')}
@@ -346,7 +357,7 @@
         {/if}
       </div>
 
-      <div class="flex justify-end gap-2 pt-2">
+      <footer class="flex justify-end gap-2 pt-2">
         <button type="button" class="btn preset-tonal-surface" onclick={onclose}>
           {$_('button.cancel')}
         </button>
@@ -355,11 +366,12 @@
           class="btn preset-filled-primary-500"
           disabled={saving || changes.length === 0}
         >
-          {saving
-            ? $_('button.saving')
-            : $_('page.trainingPlan.rotation.apply', { values: { count: changes.length } })}
+          {#if saving}<Fa icon={faSpinner} spin />{/if}
+          <span>
+            {$_('page.trainingPlan.rotation.apply', { values: { count: changes.length } })}
+          </span>
         </button>
-      </div>
+      </footer>
     </form>
   </div>
 </div>
