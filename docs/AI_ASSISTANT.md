@@ -9,7 +9,7 @@ completes and corrects it, and only then is it saved.
 | Kind                       | Where                                   | Saved to                                         | Who                            |
 | -------------------------- | --------------------------------------- | ------------------------------------------------ | ------------------------------ |
 | **Judo-Pass einlesen**     | member page → _Graduierungen_           | `member_grades`                                  | trainers, admins (`is_writer`) |
-| **Teilnehmerliste**        | check-in page of a training and date    | `logs` (`set_attendance`), `participants`        | trainers, admins               |
+| **Präsenzliste einlesen**  | check-in page of a training and date    | `logs` (`set_attendance`), `participants`        | trainers, admins               |
 | **Trainingsplan einlesen** | _Trainingsplanung → Trainings & Ferien_ | `training_plan_sessions`, `training_plan_breaks` | the TK (`is_exam_manager`)     |
 | **Lektionsplan einlesen**  | check-in page → _Lektionsplan_          | `lesson_plans`                                   | trainers, admins               |
 | **Termine einlesen**       | _Anlässe_                               | `events`                                         | trainers, admins               |
@@ -30,13 +30,27 @@ and date there, and the target page opens the assistant right away
 3. **Review**: every row with its status (_Neu_, _Schon erfasst_,
    _Abweichend_, _Unvollständig_, _Doppelt_). Values the model was unsure
    about are marked with its remark; names are matched to members in the
-   browser, unclear matches are left for the user to pick. Missing values
+   browser (see _Name matching_), unclear matches are left for the user to
+   confirm or pick. Missing values
    can be filled in and wrong ones corrected right there; contradictions
    with what Administra already has (another date for a grading, a
    different trainer on a planned date, an event that already exists) are
    shown side by side and never overwritten without an explicit tick.
 4. **Übernehmen**: only now is anything written, by the browser, through
-   the same tables and with the same permissions as the manual forms.
+   the same tables and with the same permissions as the manual forms. If
+   some rows fail, the review stays open with them marked, so they can be
+   retried without a new reading.
+
+### Name matching
+
+A member is taken without asking only when the name on the document is
+exactly theirs: last name and first name as recorded (ignoring case,
+accents and ü/ue), or, for someone on the training's roster or a plan
+trainer, the exact last name with an initial or short form ("L. Müller",
+"Beni Keller"). Everything else is a suggestion the user confirms: a
+similar last name ("Meier" for Meierhans or Maier), a short first name
+("Jan" for Janine), a first name alone. Two members with the same name
+are never chosen automatically; the one on the roster is suggested first.
 
 ## Per kind
 
@@ -54,9 +68,10 @@ in the pass does not fit the member, saving needs an explicit "yes, this is
 X's pass". The member record itself is never changed: names and birthdays
 come from Webling. Note: _Judo-Pass_ plus the examiner.
 
-**Teilnehmerliste** (check-in page). A list of one session goes to the
-page's date; a grid with several dates gets one column per date, each
-checked: impossible and future dates are left out, a date on another
+**Präsenzliste** (check-in page). A list of one session goes to the date
+written on it when that is a valid date of the training, otherwise to the
+page's date (the review says so when it differs from the page); a grid
+with several dates gets one column per date, each checked: impossible and future dates are left out, a date on another
 weekday than the training only when ticked, a cancelled date is flagged.
 Names are matched against the club's members, the training's roster first;
 a clear match is preselected, a probable one must be confirmed, the rest is
@@ -77,8 +92,9 @@ zu_; ones already recorded are marked.
 
 **Lektionsplan** (check-in page, _Lektionsplan_). The plan is turned into
 the editor's format (`## Aufwärmen`, `- Übung`) and can be edited before
-saving. An existing text plan is replaced (default) or extended; an
-attached file is only replaced after an explicit tick, and deleted from
+saving. An existing text plan is extended by default and replaced only
+when the user picks _ersetzen_; an attached file is only replaced after an
+explicit tick, and deleted from
 storage only once the text is saved. A document with another date than the
 page needs a tick too.
 
@@ -104,7 +120,8 @@ values:
 - **Every answer is checked again** on the server
   (`src/lib/assistant/proposals.ts`): unknown fields are dropped, strings
   are cleaned and capped, invisible and bidi control characters and
-  spreadsheet formula prefixes removed, dates and times must be real, list
+  spreadsheet formula prefixes (= + - @) removed — the CSV downloads of
+  the statistics defuse them too (`src/lib/csv.ts`) — dates and times must be real, list
   lengths are capped, and training keys are only accepted from the list the
   server gave the model. The review checks once more against the data the
   user can see. Model text is only ever shown as text, never as HTML or a
@@ -125,7 +142,9 @@ values:
   logged in `ai_imports` (who, kind, outcome, tokens — no content).
 - **Uploads are checked** on the server: at most 4 files of 3.5 MB
   together, only JPEG, PNG, WebP, GIF and PDF, recognised by their bytes,
-  not their name.
+  not their name, and at most 30,000 characters of text. A request with a
+  PDF is counted first (free) and refused above 100,000 input tokens,
+  about 30 to 60 pages, so a long rulebook cannot run up the bill.
 - **No content in logs or Sentry.** The endpoint logs error codes only;
   Sentry is told not to collect request bodies, AI prompts and answers or
   local variables (`dataCollection` in `src/lib/sentry.ts`, see
@@ -167,7 +186,8 @@ month.
 
 **Cost.** Claude Opus 5.5 costs $4 per million input and $20 per million
 output tokens; a photo is about 2,000–5,000 input tokens, an answer a few
-thousand output tokens, so a reading costs a few cents. Usage per account:
+thousand output tokens, so a reading costs a few cents, a PDF of 30 pages
+up to about 40 cents (the token limit above). Usage per account:
 
 ```sql
 select user_id, kind, status, count(*), sum(input_tokens), sum(output_tokens)
