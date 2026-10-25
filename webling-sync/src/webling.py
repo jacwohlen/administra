@@ -8,7 +8,7 @@ import re
 # Webling
 import requests
 from safe_log import WeblingError, postgrest_error, webling_check, webling_get
-from sync_rules import member_row, missing_table
+from sync_rules import member_row, missing_table, plan_unlinks
 WEBLING_API_KEY=os.environ.get('WEBLING_API_KEY')
 WEBLING_DOMAIN=os.environ.get('WEBLING_DOMAIN')
 
@@ -141,6 +141,9 @@ def sync_members():
   print(f"Synced {len(members) - failed} of {len(members)} members")
   if not write_links(synced_ids):
     failed += 1
+  # Every id Webling returned counts as still there, also members that failed above
+  elif not prune_links({e['id'] for e in members}):
+    failed += 1
   return failed
 
 def write_links(member_ids):
@@ -171,6 +174,37 @@ def write_links(member_ids):
     print("Warning: member_links does not exist here yet, links skipped")
     return True
   print(f"Error: member links: {postgrest_error(response)}")
+  return False
+
+def prune_links(webling_ids):
+  """Unlink members Webling no longer has, so staff can edit or delete them again."""
+  response = requests.get(f"{SUPABASE_URL}/rest/v1/member_links?connection=eq.webling&select=external_id", headers=HEADERS)
+  if response.status_code != 200:
+    try:
+      body = response.json()
+    except ValueError:
+      body = None
+    if missing_table(response.status_code, body):
+      return True
+    print(f"Error: reading member links: {postgrest_error(response)}")
+    return False
+  linked = [row['external_id'] for row in response.json()]
+  stale, too_many = plan_unlinks(linked, webling_ids)
+  if not stale:
+    return True
+  if too_many:
+    # Counts only: ids of people who left are not for the public log
+    print(f"Error: {len(stale)} of {len(linked)} linked members are no longer in Webling; "
+          "too many to unlink unattended, check Webling and unlink by hand")
+    return False
+  ids = ','.join(stale)
+  response = requests.delete(
+      f"{SUPABASE_URL}/rest/v1/member_links?connection=eq.webling&external_id=in.({ids})",
+      headers=HEADERS)
+  if response.status_code in [200, 204]:
+    print(f"Unlinked {len(stale)} members no longer in Webling")
+    return True
+  print(f"Error: unlinking members: {postgrest_error(response)}")
   return False
 
 def upsert(table_name, data):

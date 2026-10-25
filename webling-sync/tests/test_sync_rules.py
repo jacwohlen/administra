@@ -9,6 +9,7 @@ from sync_rules import (
     member_row,
     missing_table,
     plan_participants,
+    plan_unlinks,
     registrations_open,
 )
 
@@ -137,3 +138,21 @@ def test_missing_table():
     assert not missing_table(404, {'code': 'PGRST116'})
     assert not missing_table(400, {'code': 'PGRST205'})
     assert not missing_table(404, None)
+
+
+def test_plan_unlinks():
+    linked = [str(i) for i in range(1, 101)]
+    stale, too_many = plan_unlinks(linked, range(3, 101))
+    assert stale == ['1', '2']
+    assert not too_many
+
+
+def test_plan_unlinks_refuses_mass_unlink():
+    linked = [str(i) for i in range(1, 101)]
+    assert plan_unlinks(linked, range(1, 50))[1]  # 51 of 100 gone
+    assert plan_unlinks(linked, [])[1]  # Webling returned nobody
+    assert not plan_unlinks(['1', '2', '3'], [])[1]  # small clubs: up to 5 at once
+
+
+def test_plan_unlinks_nothing_to_do():
+    assert plan_unlinks(['1', '2'], [1, 2, 3]) == ([], False)

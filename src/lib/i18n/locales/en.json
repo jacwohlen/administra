@@ -27,7 +27,7 @@
       "disabledTitle": "Account disabled",
       "disabledMessage": "Your account has been disabled. Please contact an administrator.",
       "signedInAs": "Signed in as",
-      "noMemberMatch": "This email address isn't on file for any member. Sign in with the email the club has for you – or ask your trainer to add it. You'll get in automatically afterwards.",
+      "noMemberMatch": "This email address isn't on file for any member. Sign in with the email the club has for you – or ask the club to add it to your membership record. You'll get in automatically afterwards.",
       "otherEmail": "Use a different email"
     },
     "users": {
@@ -80,7 +80,6 @@
       "accessReport": {
         "title": "Lose access once membership counts",
         "description": "These member accounts are approved, but none of their member records is active or passive (e.g. non-members or people who left). Nothing has changed yet: only once sign-in requires an active or passive membership do these accounts go back to \"Pending\".",
-        "approvedByAdmin": "approved by an admin",
         "noMember": "no member record"
       }
     },
@@ -340,8 +339,9 @@
         "left": "Left"
       },
       "showAll": "Also show non-members and people who left",
-      "managedBy": "Name, birthday, phone, e-mail and groups come from {provider} and are changed there.",
-      "managedError": "These details come from {provider} and can only be changed there."
+      "managedBy": "Name, birthday, phone, e-mail and groups come from {provider} and are changed there, leaving the club too.",
+      "managedError": "These details come from {provider} and can only be changed there.",
+      "hiddenMatches": "{count, plural, one {# match} other {# matches}} among non-members and people who left."
     },
     "stats": {
       "all": "All",

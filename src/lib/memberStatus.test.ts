@@ -58,6 +58,15 @@ describe('visibleLabels', () => {
     ).toEqual([]);
   });
 
+  it('keeps labels staff typed, which are lowercase', () => {
+    expect(visibleLabels(['passiv', 'nicht-mitglieder', '03_austritt', 'test'])).toEqual([
+      'passiv',
+      'nicht-mitglieder',
+      '03_austritt',
+      'test'
+    ]);
+  });
+
   it('copes with missing labels', () => {
     expect(visibleLabels(null)).toEqual([]);
     expect(visibleLabels(undefined)).toEqual([]);

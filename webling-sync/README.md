@@ -25,8 +25,9 @@ Every synced member is linked to Webling in `member_links` (one request per
 run). Administra then shows its name, birthday, contact and groups as
 maintained in Webling and does not let staff change them. On a database
 without that table yet (migration not promoted) the links are skipped with
-a warning. The membership status follows the groups, see
-`docs/INTEGRATIONS.md`.
+a warning. Members Webling no longer returns are unlinked (more than a
+tenth of the links at once is refused and fails the run). The membership
+status follows the groups, see `docs/INTEGRATIONS.md`.
 
 ### 2. Events Sync (`src/events.py`)
 

@@ -61,7 +61,6 @@ export interface MemberAccessReportRow {
   user_id: string;
   email: string;
   full_name: string | null;
-  approved_by_admin: boolean;
   member_ids: number[];
   statuses: MembershipStatus[];
 }

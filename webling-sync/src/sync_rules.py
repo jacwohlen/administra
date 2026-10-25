@@ -118,3 +118,17 @@ def missing_table(status_code, body):
     """
     code = body.get('code') if isinstance(body, dict) else None
     return status_code == 404 and code in ('PGRST205', '42P01')
+
+
+def plan_unlinks(linked_external_ids, webling_ids):
+    """Webling links whose member Webling no longer returns (deleted or merged there).
+
+    Returns (external ids to unlink, whether that is too many to do
+    unattended). Unlinking makes the member editable and deletable in
+    Administra again; a mass unlink, e.g. after a bad Webling answer, is
+    refused instead.
+    """
+    current = {str(i) for i in webling_ids}
+    stale = sorted(set(linked_external_ids) - current)
+    limit = max(5, len(linked_external_ids) // 10)
+    return stale, len(stale) > limit

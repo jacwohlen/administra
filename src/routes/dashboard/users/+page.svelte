@@ -247,11 +247,6 @@
               >{$_('page.users.accessReport.noMember')}</span
             >
           {/each}
-          {#if r.approved_by_admin}
-            <span class="chip preset-tonal-warning text-xs"
-              >{$_('page.users.accessReport.approvedByAdmin')}</span
-            >
-          {/if}
         </li>
       {/each}
     </ul>

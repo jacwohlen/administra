@@ -50,7 +50,8 @@ FROM public.members
 WHERE id >= 1000 AND id < 10000000
 ON CONFLICT DO NOTHING;
 
--- SECURITY DEFINER so the checks below see links regardless of the caller's RLS
+-- For SECURITY DEFINER functions and triggers only (not callable through the
+-- API: member_links is staff-only)
 CREATE OR REPLACE FUNCTION public.is_provider_linked(p_member_id integer)
 RETURNS boolean
 LANGUAGE sql
@@ -101,9 +102,12 @@ ALTER TABLE public.members
 COMMENT ON COLUMN public.members.membership_status IS
   'trial | active | passive | non_member | left; derived from labels (member_status_from_labels), do not set directly';
 
+-- SECURITY DEFINER: it only computes the status from NEW, and the callers
+-- (staff, the sync, register_trial) need not be able to read member_links
 CREATE OR REPLACE FUNCTION public.trigger_set_membership_status()
 RETURNS trigger
 LANGUAGE plpgsql
+SECURITY DEFINER
 SET search_path = public
 AS $$
 BEGIN
@@ -114,8 +118,10 @@ BEGIN
 END;
 $$;
 
+-- Also on a direct write of membership_status, which is overridden: the
+-- status always follows the labels
 CREATE TRIGGER members_set_membership_status
-  BEFORE INSERT OR UPDATE OF labels ON public.members
+  BEFORE INSERT OR UPDATE OF labels, membership_status ON public.members
   FOR EACH ROW EXECUTE FUNCTION public.trigger_set_membership_status();
 
 -- A link changes whether a member without a status group counts as a member
@@ -152,7 +158,8 @@ CREATE INDEX idx_members_membership_status ON public.members (membership_status)
 
 -- Staff edit through the API as 'authenticated'. The sync (service_role),
 -- migrations and SECURITY DEFINER functions are not restricted. Not SECURITY
--- DEFINER itself: it needs the caller's role.
+-- DEFINER itself: it needs the caller's role. Only writers (staff) can update
+-- members, and staff may read member_links.
 CREATE OR REPLACE FUNCTION public.trigger_guard_provider_fields()
 RETURNS trigger
 LANGUAGE plpgsql
@@ -162,7 +169,7 @@ BEGIN
   IF current_user <> 'authenticated' THEN
     RETURN NEW;
   END IF;
-  IF NOT public.is_provider_linked(OLD.id) THEN
+  IF NOT EXISTS (SELECT 1 FROM public.member_links WHERE member_id = OLD.id) THEN
     RETURN NEW;
   END IF;
   IF NEW.id IS DISTINCT FROM OLD.id
@@ -190,14 +197,14 @@ CREATE TRIGGER members_guard_provider_fields
 
 -- Approved 'member' accounts none of whose member records (explicitly linked
 -- or matched by e-mail) is an active or passive, non-archived member. Once
--- sign-in requires that, these accounts lose access. Staff accounts are not
--- listed: their access comes from their role.
+-- sign-in requires that, these accounts lose access, also ones an admin
+-- approved by hand. Staff accounts are not listed: their access comes from
+-- their role.
 CREATE OR REPLACE FUNCTION public.member_access_report()
 RETURNS TABLE (
   user_id uuid,
   email text,
   full_name text,
-  approved_by_admin boolean,
   member_ids integer[],
   statuses text[]
 )
@@ -210,7 +217,6 @@ AS $$
     p.user_id,
     p.email,
     p.full_name,
-    p.approved_by IS NOT NULL,
     coalesce(array_agg(DISTINCT m.id) FILTER (WHERE m.id IS NOT NULL), '{}'),
     coalesce(array_agg(DISTINCT m.membership_status) FILTER (WHERE m.id IS NOT NULL), '{}')
   FROM public.user_profiles p
@@ -223,7 +229,7 @@ AS $$
   WHERE public.is_admin()
     AND p.status = 'approved'
     AND p.role = 'member'
-  GROUP BY p.user_id, p.email, p.full_name, p.approved_by
+  GROUP BY p.user_id, p.email, p.full_name
   HAVING NOT coalesce(
     bool_or(m.membership_status IN ('active', 'passive') AND m."archivedAt" IS NULL),
     false
@@ -232,10 +238,55 @@ AS $$
 $$;
 
 -----------------
+-- Check-in list: the membership status, shown as a chip on each card (the
+-- status labels themselves are no longer shown). Same as
+-- 20260104120000_add_trainer_roles.sql plus membership_status.
+-----------------
+DROP FUNCTION IF EXISTS public.get_checklist_members(text, integer);
+
+CREATE FUNCTION public.get_checklist_members(d text, tid integer)
+RETURNS TABLE (
+  "trainingId"    smallint,
+  "memberId"      integer,
+  lastname        text,
+  firstname       text,
+  labels          jsonb,
+  img             text,
+  date            text,
+  "trainerRole"   trainer_role,
+  membership_status text
+)
+LANGUAGE plpgsql
+SET search_path = public
+AS $$
+BEGIN
+  RETURN QUERY
+  SELECT
+    p."trainingId",
+    p."memberId",
+    m.lastname,
+    m.firstname,
+    m.labels,
+    m.img,
+    l.date,
+    COALESCE(l."trainerRole", 'attendee'::trainer_role) as "trainerRole",
+    m.membership_status
+  FROM public.participants AS p
+  FULL OUTER JOIN public.logs AS l
+    ON p."memberId" = l."memberId"
+   AND l.date = d
+   AND l."trainingId" = tid
+  INNER JOIN public.members AS m
+    ON m.id = p."memberId"
+  WHERE p."trainingId" = tid;
+END;
+$$;
+
+-----------------
 -- Function privileges (Supabase grants EXECUTE to anon/authenticated on new
 -- functions, see 20260913140000_relock_security_definer_functions.sql)
 -----------------
-REVOKE EXECUTE ON FUNCTION public.is_provider_linked(integer)             FROM PUBLIC, anon;
+REVOKE EXECUTE ON FUNCTION public.is_provider_linked(integer)             FROM PUBLIC, anon, authenticated;
 REVOKE EXECUTE ON FUNCTION public.member_status_from_labels(jsonb, boolean) FROM PUBLIC, anon;
 REVOKE EXECUTE ON FUNCTION public.trigger_set_membership_status()         FROM PUBLIC, anon, authenticated;
 REVOKE EXECUTE ON FUNCTION public.trigger_link_changed_status()           FROM PUBLIC, anon, authenticated;

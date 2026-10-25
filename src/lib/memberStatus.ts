@@ -15,26 +15,28 @@ export function canBeTrainer(status: MembershipStatus | null | undefined): boole
 }
 
 /**
- * Labels that only repeat the membership status (shown as its own chip) or
- * are Webling bookkeeping ("01_Anmeldung", "02_Rechnung verschickt", "Test"):
- * hidden in chips. The status mapping itself lives in SQL,
- * member_status_from_labels() in 20261025230000_membership_status_and_member_links.sql.
+ * Labels that only repeat the membership status (shown as its own chip), the
+ * app's 'new' and Webling bookkeeping ("01_Anmeldung", "03_Austritt", "Test"):
+ * hidden in chips. Exact spelling, like the status mapping in SQL,
+ * member_status_from_labels() in 20261025230000_membership_status_and_member_links.sql,
+ * so a label staff typed (always lowercase) stays visible.
  */
 const STATUS_LABELS = new Set([
-  'aktiv',
-  'passiv',
-  'ehrenmitglieder',
-  'nicht-mitglieder',
+  'Aktiv',
+  'Passiv',
+  'Ehrenmitglieder',
+  'Nicht-Mitglieder',
+  'Probetraining',
   'probetraining',
   'new',
-  'test'
+  'Test'
 ]);
-const BOOKKEEPING_LABEL = /^\d\d_/;
+const BOOKKEEPING_LABEL = /^\d\d_[A-Z]/;
 
 /** The labels worth showing as chips: roles and groups like 'Erwachsenentrainer' or 'J&S' */
 export function visibleLabels(labels: string[] | null | undefined): string[] {
   return (labels ?? []).filter(
-    (label) => !STATUS_LABELS.has(label.toLowerCase()) && !BOOKKEEPING_LABEL.test(label)
+    (label) => !STATUS_LABELS.has(label) && !BOOKKEEPING_LABEL.test(label)
   );
 }
 

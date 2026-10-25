@@ -40,23 +40,29 @@ The work runs in phases; each one ships on its own.
 `member_status_from_labels()` whenever they change, and whenever a provider
 link is added or removed. Never set it directly.
 
-| Labels (Webling group titles are exact)     | Status       | Sign-in (from phase 1b) |
+| Labels (exact spelling)                     | Status       | Sign-in (from phase 1b) |
 | ------------------------------------------- | ------------ | ----------------------- |
 | `03_Austritt`                               | `left`       | no                      |
 | `Aktiv`                                     | `active`     | yes                     |
 | `Passiv`, `Ehrenmitglieder`                 | `passive`    | yes                     |
 | `Nicht-Mitglieder`                          | `non_member` | no                      |
 | `probetraining` (app trial candidate)       | `trial`      | no                      |
-| `Probetraining` (Webling legacy)            | `non_member` | no                      |
+| `Probetraining` (Webling legacy, see below) | `non_member` | no                      |
 | none of these, member comes from Webling    | `non_member` | no                      |
 | none of these, member created in Administra | `active`     | yes                     |
 
-Checked in this order, so `03_Austritt` wins over `Aktiv`. Groups that only
-describe roles (Erwachsenentrainer, Kindertrainer, Hilfstrainer, Vorstand,
-J&S) do not change the status. Status groups and Webling bookkeeping groups
+Checked in this order, so `03_Austritt` wins over `Aktiv`. The labels are
+Webling group titles, except that the sync renames Webling's legacy trial
+group `04_Probetraining` to `Probetraining` (`transform_label()` in
+`webling-sync/src/webling.py`). Groups that only describe roles
+(Erwachsenentrainer, Kindertrainer, Hilfstrainer, Vorstand, J&S) do not
+change the status.
+
+Status groups, the app's label `new` and Webling bookkeeping groups
 (`01_Anmeldung` … `04_Pass bestellt`, `Test`) are not shown as chips
-(`visibleLabels()` in `src/lib/memberStatus.ts`); the status is its own chip,
-except `active`.
+(`visibleLabels()` in `src/lib/memberStatus.ts`, exact spelling like the
+SQL); the status is its own chip, except `active`, on the member list, the
+member page and the check-in cards.
 
 ## Provider links
 
@@ -73,6 +79,16 @@ mobile, e-mail, labels and status made through the API by signed-in staff
 blocks deleting the member. The sync (service role), migrations and
 SECURITY DEFINER functions are not restricted. The member page shows
 "kommen aus Webling" and only offers the notes for editing.
+
+A member that Webling no longer returns (deleted or merged there) loses its
+link at the next sync and becomes editable and deletable again. If more than
+a tenth of the links (at least 5) would go at once, the sync refuses and the
+run turns red: check Webling first.
+
+E-mail: the sync sends a member's address only when Webling has one, so an
+address entered in Administra before the fields became read-only stays, and
+cannot be removed there either. Once those addresses are in Webling (see
+below), the sync can own the field completely.
 
 ## Enforcing sign-in by status (phase 1b)
 

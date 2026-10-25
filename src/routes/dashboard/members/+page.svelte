@@ -29,6 +29,14 @@
       (m) => (showAll || isCurrentMember(m.membership_status)) && search(m.firstname, m.lastname)
     )
   );
+  // Matches among the hidden non-members, so nobody creates a duplicate by mistake
+  let hiddenMatches = $derived(
+    showAll
+      ? 0
+      : data.members.filter(
+          (m) => !isCurrentMember(m.membership_status) && search(m.firstname, m.lastname)
+        ).length
+  );
 
   function showMemberForm() {
     showMemberFormDialog = true;
@@ -169,5 +177,11 @@
 {#if shown.length === 0}
   <p class="empty-state">
     {searchTerm.trim() ? $_('page.members.noResults') : $_('page.members.empty')}
+  </p>
+{/if}
+{#if searchTerm.trim() && hiddenMatches > 0}
+  <p class="text-sm text-surface-600-400 mt-3">
+    {$_('page.members.hiddenMatches', { values: { count: hiddenMatches } })}
+    <button class="anchor" onclick={() => (showAll = true)}>{$_('page.members.showAll')}</button>
   </p>
 {/if}

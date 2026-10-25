@@ -189,7 +189,7 @@
   <button class="btn preset-tonal-surface" onclick={cancel}>{$_('button.cancel')}</button>
   <button
     class="btn preset-filled-primary-500"
-    disabled={!formData.firstname || !formData.lastname || isSubmitting}
+    disabled={(!managedBy && (!formData.firstname || !formData.lastname)) || isSubmitting}
     onclick={onFormSubmit}
   >
     {#if isSubmitting}

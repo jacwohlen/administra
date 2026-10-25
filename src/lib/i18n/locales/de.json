@@ -27,7 +27,7 @@
       "disabledTitle": "Konto deaktiviert",
       "disabledMessage": "Dein Konto wurde deaktiviert. Bitte wende dich an einen Administrator.",
       "signedInAs": "Angemeldet als",
-      "noMemberMatch": "Diese E-Mail-Adresse ist bei keinem Mitglied hinterlegt. Melde dich mit der E-Mail an, die der Verein von dir hat – oder bitte deine Trainerin oder deinen Trainer, sie zu hinterlegen. Danach bist du automatisch drin.",
+      "noMemberMatch": "Diese E-Mail-Adresse ist bei keinem Mitglied hinterlegt. Melde dich mit der E-Mail an, die der Verein von dir hat – oder bitte den Verein, sie bei deinem Mitgliedereintrag zu hinterlegen. Danach bist du automatisch drin.",
       "otherEmail": "Mit anderer E-Mail anmelden"
     },
     "users": {
@@ -80,7 +80,6 @@
       "accessReport": {
         "title": "Verlieren den Zugang, sobald die Mitgliedschaft zählt",
         "description": "Diese Mitglieder-Konten sind freigegeben, aber keiner ihrer Mitglieder-Einträge ist aktiv oder passiv (z. B. Nicht-Mitglieder oder Ausgetretene). Noch hat sich nichts geändert: Erst wenn die Anmeldung eine aktive oder passive Mitgliedschaft voraussetzt, gehen diese Konten zurück auf «Ausstehend».",
-        "approvedByAdmin": "von Admin freigegeben",
         "noMember": "kein Mitglied-Eintrag"
       }
     },
@@ -340,8 +339,9 @@
         "left": "Ausgetreten"
       },
       "showAll": "Auch Nicht-Mitglieder und Ausgetretene anzeigen",
-      "managedBy": "Name, Geburtstag, Telefon, E-Mail und Gruppen kommen aus {provider} und werden dort geändert.",
-      "managedError": "Diese Angaben kommen aus {provider} und können nur dort geändert werden."
+      "managedBy": "Name, Geburtstag, Telefon, E-Mail und Gruppen kommen aus {provider} und werden dort geändert, auch ein Austritt.",
+      "managedError": "Diese Angaben kommen aus {provider} und können nur dort geändert werden.",
+      "hiddenMatches": "{count, plural, one {# Treffer} other {# Treffer}} unter Nicht-Mitgliedern und Ausgetretenen."
     },
     "stats": {
       "all": "Alle",

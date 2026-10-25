@@ -96,7 +96,6 @@ describe('users admin load', () => {
         user_id: 'u9',
         email: 'nm@example.com',
         full_name: null,
-        approved_by_admin: false,
         member_ids: [3295],
         statuses: ['non_member']
       }

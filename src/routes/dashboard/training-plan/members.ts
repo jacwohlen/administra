@@ -65,8 +65,13 @@ export async function loadPlanMembers(
     }
   }
 
+  // Who is already planned or the default trainer stays selectable; everybody
+  // else only while an active or passive member
+  const keep = new Set<number>(plannedIds);
+  for (const t of trainings) if (t.mainTrainerId) keep.add(t.mainTrainerId);
+
   return (members.data ?? [])
-    .filter((m) => trainerIds.has(m.id) || canBeTrainer(m.membership_status))
+    .filter((m) => keep.has(m.id) || canBeTrainer(m.membership_status))
     .map((m) => ({
       id: m.id,
       firstname: m.firstname,

@@ -181,6 +181,7 @@ def test_one_broken_member_does_not_stop_the_others(monkeypatch, capsys):
     upserted = []
     monkeypatch.setattr(webling, 'upsert', lambda table, data: upserted.append(data['id']) or True)
     monkeypatch.setattr(webling.requests, 'post', lambda url, headers=None, data=None: Response(201))
+    monkeypatch.setattr(webling.requests, 'get', lambda url, headers=None: Response(200, []))
 
     assert webling.sync_members() == 1
     assert upserted == [1, 3]
@@ -191,7 +192,7 @@ def test_one_broken_member_does_not_stop_the_others(monkeypatch, capsys):
     assert '03_Austritt' not in out
 
 
-def sync_members_with(monkeypatch, link_response):
+def sync_members_with(monkeypatch, link_response, linked=(), deleted=None):
     webling = load('webling', monkeypatch)
     members = [
         {'id': 1, 'parents': [10], 'properties': {
@@ -210,6 +211,10 @@ def sync_members_with(monkeypatch, link_response):
         return link_response
 
     monkeypatch.setattr(webling.requests, 'post', post)
+    monkeypatch.setattr(webling.requests, 'get', lambda url, headers=None: Response(
+        200, [{'external_id': str(i)} for i in linked]))
+    monkeypatch.setattr(webling.requests, 'delete', lambda url, headers=None: (
+        deleted.append(url) if deleted is not None else None) or Response(204))
     return webling.sync_members(), posted
 
 
@@ -238,3 +243,23 @@ def test_missing_link_table_is_not_an_error(monkeypatch, capsys):
 def test_failed_link_write_fails_the_run(monkeypatch):
     failed, _ = sync_members_with(monkeypatch, Response(500, {'code': 'XX000', 'message': 'boom'}))
     assert failed == 2
+
+
+def test_members_gone_from_webling_are_unlinked(monkeypatch, capsys):
+    deleted = []
+    # 1 and 3 synced, 2 failed but is still in Webling; 4 is gone
+    failed, _ = sync_members_with(monkeypatch, Response(201), linked=range(1, 5), deleted=deleted)
+
+    assert failed == 1
+    assert deleted == [
+        'https://db.example/rest/v1/member_links?connection=eq.webling&external_id=in.(4)'
+    ]
+    assert 'Unlinked 1 members' in capsys.readouterr().out
+
+
+def test_mass_unlink_is_refused(monkeypatch):
+    deleted = []
+    failed, _ = sync_members_with(monkeypatch, Response(201), linked=range(1, 40), deleted=deleted)
+
+    assert deleted == []
+    assert failed == 2  # member 2, and the refused unlink
