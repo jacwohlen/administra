@@ -16,8 +16,10 @@ Fetches all members from Webling and syncs them to Administra.
 - Birthday
 - Groups (as labels)
 - Cell Phone
+- E-Mail (only when Webling has one, so an address entered in the app is kept)
 
-**Runtime:** Fast (~1-2 seconds)
+A member that cannot be read (e.g. a Webling field was renamed) fails on its
+own: the other members are still synced, and the run ends red.
 
 ### 2. Events Sync (`src/events.py`)
 
@@ -36,6 +38,15 @@ Fetches calendar events from Webling calendars and syncs them to Administra. Onl
 - Max Participants
 - Participant registrations (member ID, status, notes)
 
+**Registrations:** for events from today on (Europe/Zurich), members confirmed
+in Webling get a registration, and registrations the sync added earlier are
+removed once Webling no longer lists them. Everything entered in Administra is
+kept: registrations and walk-ins added in the app, attendance and its status,
+and the registration date of existing rows. The sync's own rows are the ones
+whose notes start with `Imported from Webling`. If Webling's participant list
+cannot be read, the event's registrations stay as they are. Registrations of
+past events are never touched.
+
 **Calendar Filtering:**
 
 - Sync all calendars (default)
@@ -52,13 +63,27 @@ Fetches calendar events from Webling calendars and syncs them to Administra. Onl
 
 ### 3. Duplicate Management (`src/duplicates.py`)
 
-Tools to search for and merge duplicate members.
-
-**Usage:**
+Searches for duplicate members.
 
 ```bash
 python src/duplicates.py search <lastname>  # Search for members by lastname
-python src/duplicates.py merge              # Merge duplicate members interactively
+```
+
+`merge` is disabled. It moved only training attendance and participations to
+the kept member and then deleted the other one, which also deleted that
+member's event registrations and attendance, grades, medals, badges, exam
+candidates and trial e-mails, and unlinked their sign-in account. A merge that
+moves every reference in one transaction will replace it.
+
+### Tests
+
+`src/sync_rules.py` holds the rules that need no network (member mapping,
+which registrations to add or remove). CI runs `ruff check` and `pytest` on
+every pull request (job `sync-scripts`):
+
+```bash
+pip install -r requirements-dev.txt
+ruff check . && pytest
 ```
 
 ## Scheduled Sync (GitHub Actions)
@@ -76,7 +101,7 @@ so it no longer depends on a personal machine being switched on.
   Webling/Supabase HTTP error, failed upsert), so the run turns red and GitHub
   emails whoever last changed the workflow's cron schedule (a manual run
   notifies whoever started it). Logs are in the run's step output and list
-  members by id only, without names or contact data.
+  members by id only, without names, contact data or groups.
 - **Logs are public** (the repository is public). The scripts never log a
   response body or a Webling URL (the API key is a query parameter): errors
   show the HTTP status, ids and, for Supabase, the PostgREST error code and
@@ -294,9 +319,6 @@ python src/events.py --calendar judo aikido club
 
 # Search for duplicate members
 python src/duplicates.py search Smith
-
-# Merge duplicate members
-python src/duplicates.py merge
 ```
 
 ## Systemd Service Management
@@ -360,6 +382,8 @@ systemctl --user restart webling-sync-members.timer
 webling-sync/
 ├── README.md                 # This file
 ├── requirements.txt          # Python dependencies (also used by GitHub Actions)
+├── requirements-dev.txt      # + pytest and ruff for the CI job
+├── pyproject.toml            # ruff and pytest settings
 ├── .env.prod                # Production environment variables (not in git)
 ├── .env.staging             # Staging environment variables (not in git)
 ├── install-systemd.sh       # Install script for systemd services
@@ -368,8 +392,10 @@ webling-sync/
 ├── src/                     # Python source files
 │   ├── webling.py           # Member sync script
 │   ├── events.py            # Events & participants sync script
+│   ├── sync_rules.py        # Rules without network access (member mapping, registrations), unit-tested
 │   ├── safe_log.py          # Webling requests and error messages without personal data or keys
-│   └── duplicates.py        # Duplicate management tool
+│   └── duplicates.py        # Duplicate search
+├── tests/                   # pytest (no network, no credentials)
 ├── .env/                    # Python virtual environment
 ├── logs/                    # Log files
 │   ├── events.log

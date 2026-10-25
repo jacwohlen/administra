@@ -7,7 +7,8 @@ import re
 
 # Webling
 import requests
-from safe_log import postgrest_error, webling_check, webling_get
+from safe_log import WeblingError, postgrest_error, webling_check, webling_get
+from sync_rules import member_row
 WEBLING_API_KEY=os.environ.get('WEBLING_API_KEY')
 WEBLING_DOMAIN=os.environ.get('WEBLING_DOMAIN')
 
@@ -108,30 +109,33 @@ def sync_members():
   response = webling_get(WEBLING_DOMAIN, WEBLING_API_KEY, "member", format='full')
   webling_check(response, "member")
 
+  members = response.json()
   failed = 0
-  for e in response.json():
-    prop = e["properties"]
-    labels = get_label(e["parents"]) # membergroups -> titles
-    # Only the id: logs end up in GitHub Actions, which must not hold personal data
-    print(f"ID: {e['id']}, Labels: {labels}")
-    data = {
-        u"id": e['id'],
-        u"firstname": prop["Vorname"].strip(),
-        u"lastname": prop["Name"].strip(),
-        u"birthday": prop["Geburtstag"],
-        u"mobile": prop["Mobile"],
-        u"labels": labels
-    }
-    # Members sign in to Administra with this address (see
-    # docs/MEMBER_SIGN_IN.md). Only send it when Webling has one, so an
-    # address entered in the app is not wiped by an empty Webling field.
-    email = (prop.get("E-Mail") or "").strip()
-    if email:
-      data[u"email"] = email
+  for e in members:
+    # One broken member must not stop the others, so each one fails on its own.
+    # Logs only show ids and counts: they end up in GitHub Actions, which must
+    # not hold personal data (group titles include leaving and billing states)
+    try:
+      labels = get_label(e["parents"]) # membergroups -> titles
+      data = member_row(e['id'], e["properties"], labels)
+    except KeyError as err:
+      print(f"Error: member {e.get('id')}: missing property {err}")
+      failed += 1
+      continue
+    except WeblingError as err:
+      # Method, path and status only, see safe_log.py
+      print(f"Error: member {e.get('id')}: {err}")
+      failed += 1
+      continue
+    except Exception as err:
+      print(f"Error: member {e.get('id')}: {type(err).__name__}")
+      failed += 1
+      continue
     if ANONYMIZE:
       data = anonymize(e['id'], data)
     if not upsert('members', data):
       failed += 1
+  print(f"Synced {len(members) - failed} of {len(members)} members")
   return failed
 
 def upsert(table_name, data):
@@ -148,11 +152,11 @@ def upsert(table_name, data):
         print(f"Error: member {data.get('id')}: {postgrest_error(response)}")
         return None
 
-#print(get_data("members?select=id,firstname,lastname,labels,birthday,mobile"))
-failed = sync_members()
-if failed:
-  # Non-zero exit so the scheduler (GitHub Actions / systemd) reports the run as failed
-  sys.exit(f"{failed} member(s) failed to sync")
+if __name__ == "__main__":
+  failed = sync_members()
+  if failed:
+    # Non-zero exit so the scheduler (GitHub Actions / systemd) reports the run as failed
+    sys.exit(f"{failed} member(s) failed to sync")
 
 # print("Now in Firebase: ")
 # members = db.collection(u'members').stream()

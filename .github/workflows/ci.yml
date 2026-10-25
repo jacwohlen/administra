@@ -117,6 +117,32 @@ jobs:
           path: playwright-report/
           retention-days: 30
 
+  # The Webling sync (webling-sync/) writes to prod every night from main
+  sync-scripts:
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: webling-sync
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: webling-sync/requirements*.txt
+
+      - name: Install dependencies
+        run: pip install -r requirements-dev.txt
+
+      - name: Lint
+        run: ruff check .
+
+      - name: Unit tests
+        run: pytest
+
   db-validate:
     runs-on: ubuntu-latest
 

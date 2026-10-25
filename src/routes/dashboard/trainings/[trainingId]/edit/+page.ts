@@ -1,6 +1,7 @@
 import { redirect, error as err } from '@sveltejs/kit';
 import type { PageLoad } from './$types';
 import { supabaseClient } from '$lib/supabase';
+import { hasTrialLabel } from '$lib/trialUtils';
 
 export interface TrainerOption {
   id: number;
@@ -35,7 +36,7 @@ export const load: PageLoad = async ({ parent, params }) => {
 
   const onList = new Set((participants ?? []).map((p) => p.memberId));
   const trainerOptions: TrainerOption[] = (members ?? [])
-    .filter((m) => !(m.labels ?? []).includes('probetraining'))
+    .filter((m) => !hasTrialLabel(m.labels))
     .map((m) => ({
       id: m.id,
       firstname: m.firstname,
