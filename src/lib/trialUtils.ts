@@ -3,6 +3,15 @@ import type { Training, TrialMember, TrialStatus } from './models';
 export type TrialProgress = 'none' | 'active' | 'convert';
 
 /**
+ * Trial candidates carry the 'probetraining' label; the members of Webling's
+ * old trial group arrive as 'Probetraining'. Case-insensitive like
+ * has_trial_label() in SQL, so neither is offered as a trainer.
+ */
+export function hasTrialLabel(labels: string[] | null | undefined): boolean {
+  return (labels ?? []).some((label) => label.toLowerCase() === 'probetraining');
+}
+
+/**
  * Where a candidate stands in their trial. `threshold` is the number of
  * sessions after which they are expected to sign up as a member — the
  * configured value is `clubConfig.trialSessionThreshold`. It is passed in

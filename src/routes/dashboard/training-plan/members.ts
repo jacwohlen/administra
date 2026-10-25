@@ -1,6 +1,7 @@
 import { supabaseClient } from '$lib/supabase';
 import dayjs from 'dayjs';
 import type { PlanTraining } from '$lib/trainingPlanUtils';
+import { hasTrialLabel } from '$lib/trialUtils';
 
 export interface PlanMember {
   id: number;
@@ -56,7 +57,7 @@ export async function loadPlanMembers(
   }
 
   return (members.data ?? [])
-    .filter((m) => trainerIds.has(m.id) || !(m.labels ?? []).includes('probetraining'))
+    .filter((m) => trainerIds.has(m.id) || !hasTrialLabel(m.labels))
     .map((m) => ({
       id: m.id,
       firstname: m.firstname,
