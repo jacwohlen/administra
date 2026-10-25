@@ -46,10 +46,12 @@ and date there, and the target page opens the assistant right away
 A member is taken without asking only when the name on the document is
 exactly theirs: last name and first name as recorded (ignoring case,
 accents and ü/ue), or, for someone on the training's roster or a plan
-trainer, the exact last name with an initial or short form ("L. Müller",
-"Beni Keller"). Everything else is a suggestion the user confirms: a
-similar last name ("Meier" for Meierhans or Maier), a short first name
-("Jan" for Janine), a first name alone. Two members with the same name
+trainer, the exact last name with the first name's initial ("L. Müller").
+Everything else is a suggestion the user confirms (one click, or all
+roster suggestions at once): a similar last name ("Meier" for Meierhans or
+Maier), a short or similar first name ("Beni" for Benjamin, "Jan" for
+Janine, "Martin" for Marcel — it may be a guest sibling), a last-name
+initial ("Lena M."), a first name alone. Two members with the same name
 are never chosen automatically; the one on the roster is suggested first.
 
 ## Per kind

@@ -33,7 +33,8 @@ export function modelSettings(): ModelSettings {
   };
 }
 
-function timeoutMs(): number {
+/** The time one extraction may take in total, counting included (PRIVATE_ASSISTANT_TIMEOUT_MS) */
+export function timeoutMs(): number {
   const value = Number(env.PRIVATE_ASSISTANT_TIMEOUT_MS);
   return Number.isInteger(value) && value >= 5_000 && value <= 300_000 ? value : DEFAULT_TIMEOUT_MS;
 }
@@ -79,12 +80,18 @@ export function apiError(err: unknown): AssistantError {
   return new AssistantError('failed', 500);
 }
 
+/** Time left of the request's budget, at least 5 s */
+export function timeLeft(startedAt: number, now = Date.now()): number {
+  return Math.max(5_000, timeoutMs() - (now - startedAt));
+}
+
 export async function createMessage(
   params: MessageCreateParamsNonStreaming,
-  signal?: AbortSignal
+  signal?: AbortSignal,
+  timeout?: number
 ): Promise<BetaMessage> {
   try {
-    return await getClient().beta.messages.create(params, { signal });
+    return await getClient().beta.messages.create(params, { signal, timeout });
   } catch (err) {
     throw apiError(err);
   }
@@ -92,7 +99,8 @@ export async function createMessage(
 
 /**
  * Input tokens of a request, counted by the API before anything is billed.
- * Used for PDFs, whose page count the server cannot see.
+ * Used for PDFs, whose page count the server cannot see. Given at most
+ * 10 s, which counts against the extraction's own time budget.
  */
 export async function countInputTokens(
   params: MessageCreateParamsNonStreaming,
@@ -106,7 +114,7 @@ export async function countInputTokens(
         messages: params.messages,
         output_config: params.output_config
       },
-      { signal }
+      { signal, timeout: Math.min(10_000, timeoutMs()) }
     );
     return input_tokens;
   } catch (err) {

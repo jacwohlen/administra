@@ -293,17 +293,25 @@
     if (days) await loadKnown(days);
     else recheck = null;
     progress = null;
-    // Named: the ones that are still missing after the reload
-    const missing = outcome.failed.filter((w) => !recorded.includes(w.row));
-    const description =
-      missing.length > 0
-        ? $_('assistant.events.failedTitles', {
-            values: { titles: missing.map((w) => `«${w.values.title}»`).join(', ') }
-          })
-        : undefined;
-    if (saved > 0) {
+    // Named: the ones that are still missing after the reload. Rows the
+    // reload found recorded went through after all and are counted so.
+    const missing = loadFailed
+      ? outcome.failed
+      : outcome.failed.filter((w) => !recorded.includes(w.row));
+    const savedNow = saved + failed - missing.length;
+    if (missing.length === 0) {
+      toaster.success({ title: $_('assistant.review.done', { values: { count: savedNow } }) });
+      onapplied();
+      return;
+    }
+    const description = $_('assistant.events.failedTitles', {
+      values: { titles: missing.map((w) => `«${w.values.title}»`).join(', ') }
+    });
+    if (savedNow > 0) {
       toaster.warning({
-        title: $_('assistant.review.partial', { values: { saved, failed } }),
+        title: $_('assistant.review.partial', {
+          values: { saved: savedNow, failed: missing.length }
+        }),
         description
       });
     } else {

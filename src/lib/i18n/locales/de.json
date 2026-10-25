@@ -1473,7 +1473,7 @@
     "attendance": {
       "loading": "Mitglieder und bisherige Anwesenheiten werden geladen …",
       "loadingExisting": "Bisherige Anwesenheiten werden geladen …",
-      "loadError": "Mitglieder oder bisherige Anwesenheiten konnten nicht geladen werden. Bitte schliessen und nochmals versuchen.",
+      "loadError": "Mitglieder oder bisherige Anwesenheiten konnten nicht geladen werden. Bitte nochmals laden.",
       "noEntries": "Auf der Liste wurden keine Namen erkannt.",
       "training": "Training: {training}",
       "listTraining": "Auf der Liste: «{text}»",
@@ -1558,7 +1558,8 @@
         "roster": "Konnte nicht auf die Teilnehmerliste gesetzt werden, die Anwesenheit ist nicht gespeichert. Versuche es nochmals.",
         "checkIn": "Anwesenheit nicht gespeichert: {dates}. Versuche es nochmals."
       },
-      "partialHint": "Bei {count} Namen hat das Speichern nicht geklappt (rot markiert). Gespeichertes ist als «Schon erfasst» markiert und wird nicht nochmals gespeichert. Übernimm den Rest nochmals oder schliesse den Dialog."
+      "partialHint": "Bei {count} Namen hat das Speichern nicht geklappt (rot markiert). Gespeichertes ist als «Schon erfasst» markiert und wird nicht nochmals gespeichert. Übernimm den Rest nochmals oder schliesse den Dialog.",
+      "reload": "Neu laden"
     },
     "trainingPlan": {
       "summary": "{count, plural, one {# Termin} other {# Termine}} vom {from} bis {to}",

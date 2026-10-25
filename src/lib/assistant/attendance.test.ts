@@ -121,7 +121,13 @@ describe('createDraft', () => {
       unconfirmed: false,
       marks: [true]
     });
-    expect(beni).toMatchObject({ action: 'member', memberId: 3, role: 'main_trainer' });
+    // A short form is only suggested, also on the roster: it could be someone else
+    expect(beni).toMatchObject({
+      action: 'member',
+      memberId: 3,
+      role: 'main_trainer',
+      unconfirmed: true
+    });
     // Lena or Lukas: the likelier one preselected, to be confirmed
     expect(initial).toMatchObject({
       action: 'member',
@@ -416,7 +422,7 @@ describe('reviewDraft', () => {
   it('merges the same person listed twice, with the higher role', () => {
     const draft = draftOf(
       proposal([
-        entry('Keller Beni', { dates: ['2026-10-12'] }),
+        entry('Keller Benjamin', { dates: ['2026-10-12'] }),
         entry('Benjamin Keller', { role: 'main_trainer', dates: ['2026-10-12', '2026-10-19'] })
       ])
     );
@@ -441,7 +447,7 @@ describe('reviewDraft', () => {
     const draft = draftOf(
       proposal([
         entry('Keller Benjamin', { dates: ['2026-10-05', '2026-10-12'] }),
-        entry('Beni Keller', { role: 'main_trainer', dates: ['2026-10-12'] })
+        entry('Benjamin Keller', { role: 'main_trainer', dates: ['2026-10-12'] })
       ])
     );
     const review = reviewDraft(draft, context([['2026-10-12', 3, 'main_trainer']]));

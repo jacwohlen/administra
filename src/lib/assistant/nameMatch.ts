@@ -71,8 +71,8 @@ function wordScore(written: string, name: string, firstName: boolean): number {
   const w = written.replace(/\.$/, '');
   if (!w) return 0;
   if (w === name) return 1;
-  // An initial: "L." or "L"
-  if (w.length === 1) return firstName && name.startsWith(w) ? 0.85 : 0;
+  // An initial: "L." or "L"; of a last name ("Lena M.") it suggests, never decides
+  if (w.length === 1) return name.startsWith(w) ? (firstName ? 0.85 : 0.6) : 0;
   const cap = firstName ? 1 : LAST_NAME_SIMILAR;
   if (w.length >= 3 && name.startsWith(w)) return Math.min(0.88, cap);
   if (firstName && w.length >= 3 && name.startsWith(w.slice(0, 3))) return 0.8;
@@ -131,11 +131,20 @@ export function sameName(written: string, member: MatchableMember): boolean {
   return query.some((l, i) => last.has(l) && query.some((f, j) => j !== i && first.has(f)));
 }
 
-/** The last name written exactly, next to another word; the score decides whether that fits the first name */
-function sameLastName(written: string, member: MatchableMember): boolean {
+/**
+ * The exact last name with the first name as an initial ("L. Müller").
+ * A short or similar first name ("Jan" for Janine, "Martin" for Marcel)
+ * may be another person, e.g. a sibling, and is never enough.
+ */
+function lastNameWithInitial(written: string, member: MatchableMember): boolean {
   const query = words(written);
   const last = new Set(words(member.lastname));
-  return query.length >= 2 && query.some((w) => last.has(w));
+  const initials = new Set(words(member.firstname).map((w) => w[0]));
+  return query.some(
+    (l, i) =>
+      last.has(l) &&
+      query.some((f, j) => j !== i && f.replace(/\.$/, '').length === 1 && initials.has(f[0]))
+  );
 }
 
 export interface RankOptions {
@@ -187,9 +196,10 @@ export interface BestMatch<M extends MatchableMember> {
  * The member a name clearly stands for, plus the candidates to choose from.
  * Taken without asking only when the score leads clearly and the name is
  * the member's own: last and first name exactly as recorded, or — for a
- * preferred member such as one on the roster — the exact last name with an
- * initial or short form of the first name ("L. Müller", "Beni Keller").
- * A guest "Jan Müller" is never booked on Janine Müller unasked.
+ * preferred member such as one on the roster — the exact last name with
+ * the first name's initial ("L. Müller"). A short or similar first name
+ * ("Beni", "Jan" for Janine, "Martin" for Marcel) is only suggested, also
+ * on the roster: a guest sibling is never booked on a member unasked.
  */
 export function bestMatch<M extends MatchableMember>(
   written: string,
@@ -203,6 +213,6 @@ export function bestMatch<M extends MatchableMember>(
     top.score >= AUTO_MATCH_SCORE &&
     (!second || top.score - second.score >= AUTO_MATCH_MARGIN) &&
     (sameName(written, top.member) ||
-      (options.preferred?.has(top.member.id) === true && sameLastName(written, top.member)));
+      (options.preferred?.has(top.member.id) === true && lastNameWithInitial(written, top.member)));
   return { member: clear ? top.member : null, candidates };
 }

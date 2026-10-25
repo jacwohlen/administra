@@ -582,6 +582,19 @@ describe('after a partial save', () => {
     expect(untickRecorded(twice, [1], loadedFor(known), [...known, created]).recorded).toEqual([1]);
   });
 
+  it('lets one new event account for one failed row only', () => {
+    // Both inserts reported an error; only the Saturday one went through
+    const rows = inputs([
+      { title: 'Kids Cup', date: '2027-03-13', include: true },
+      { title: 'Kids Cup Finale', date: '2027-03-14', include: true }
+    ]).slice(0, 2);
+    const committed: KnownEvent = { id: 500, title: 'Kids Cup', date: '2027-03-13' };
+    const span = { span: { from: '2027-03-12', to: '2027-03-15' }, events: [] };
+    const result = untickRecorded(rows, [0, 1], span, [committed]);
+    expect(result.recorded).toEqual([0]);
+    expect(result.inputs[1].include).toBe(true);
+  });
+
   it('only counts events on the days compared before', () => {
     // The reload after the apply failed, then the Chlausabend was moved a year on: the old
     // Chlausabend there was not new, only not loaded before

@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { bestMatch, normalizeName, rankMembers, sameName, scoreName } from './nameMatch';
+import {
+  bestMatch,
+  normalizeName,
+  rankMembers,
+  sameName,
+  scoreName,
+  SUGGEST_SCORE
+} from './nameMatch';
 
 const members = [
   { id: 1, firstname: 'Lena', lastname: 'Müller' },
@@ -59,11 +66,35 @@ describe('bestMatch', () => {
     expect(bestMatch('Jose Garcia', members).member?.id).toBe(5);
   });
 
-  it('takes a short form of the first name only for preferred members', () => {
-    const open = bestMatch('Beni Keller', members);
-    expect(open.member).toBeNull();
-    expect(open.candidates[0].member.id).toBe(3);
-    expect(bestMatch('Beni Keller', members, { preferred: new Set([3]) }).member?.id).toBe(3);
+  it('takes an initial only for preferred members, a short form never', () => {
+    expect(bestMatch('B. Keller', members).member).toBeNull();
+    expect(bestMatch('B. Keller', members, { preferred: new Set([3]) }).member?.id).toBe(3);
+    const short = bestMatch('Beni Keller', members, { preferred: new Set([3]) });
+    expect(short.member).toBeNull();
+    expect(short.candidates[0].member.id).toBe(3);
+  });
+
+  it('never takes a sibling on the roster for a guest', () => {
+    const roster = [
+      { id: 1, firstname: 'Marcel', lastname: 'Huber' },
+      { id: 2, firstname: 'Janine', lastname: 'Müller' }
+    ];
+    const preferred = new Set([1, 2]);
+    expect(bestMatch('Martin Huber', roster, { preferred }).member).toBeNull();
+    expect(bestMatch('Jan Müller', roster, { preferred }).member).toBeNull();
+    expect(bestMatch('Jan Müller', roster, { preferred }).candidates[0].member.id).toBe(2);
+  });
+
+  it('suggests a member for a last-name initial', () => {
+    const club = [
+      { id: 1, firstname: 'Lena', lastname: 'Meier' },
+      { id: 2, firstname: 'Tim', lastname: 'Schmid' }
+    ];
+    const result = bestMatch('Lena M.', club);
+    expect(result.member).toBeNull();
+    expect(result.candidates[0].member.id).toBe(1);
+    expect(result.candidates[0].score).toBeGreaterThanOrEqual(SUGGEST_SCORE);
+    expect(scoreName('Lena M.', club[0])).toBeGreaterThan(scoreName('Lena', club[0]));
   });
 
   it('suggests, but never takes, a last name with a typo', () => {

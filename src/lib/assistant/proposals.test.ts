@@ -153,7 +153,8 @@ describe('sanitizeTrainingPlan', () => {
         ],
         holidays: [
           { title: 'Sportferien', dateFrom: '2026-02-20', dateTo: '2026-02-07', closed: true },
-          { title: '', dateFrom: '2026-03-01' }
+          { title: '', dateFrom: '2026-03-01' },
+          { title: 'Herbstferien', dateFrom: 'unleserlich', dateTo: '', closed: true }
         ]
       },
       keys
@@ -165,7 +166,8 @@ describe('sanitizeTrainingPlan', () => {
       ['', 12, false]
     ]);
     expect(result.holidays).toEqual([
-      { title: 'Sportferien', dateFrom: '2026-02-07', dateTo: '2026-02-20', closed: true }
+      { title: 'Sportferien', dateFrom: '2026-02-07', dateTo: '2026-02-20', closed: true },
+      { title: 'Herbstferien', dateFrom: '', dateTo: '', closed: true }
     ]);
   });
 });

@@ -646,16 +646,38 @@ export function untickRecorded(
   const old = new Set([...before.events.map((e) => String(e.id)), ...created.map(String)]);
   const { from, to } = before.span;
   const fresh = after.filter((e) => !old.has(String(e.id)) && from <= e.date && e.date <= to);
-  const recorded = failed.filter((i) => {
+  // Each new event accounts for one failed row at most: an insert writes
+  // exactly one event, so it cannot explain two rows ("Kids Cup" and
+  // "Kids Cup Finale" a day apart). Exact title and date first, then the
+  // closest match.
+  const candidates = failed.flatMap((i) => {
     const input = inputs[i];
-    if (!input || input.saved) return false;
+    if (!input || input.saved || !isIsoDate(input.date)) return [];
     const title = cleanText(input.title, MAX_LENGTH.title);
-    return (
-      !!title &&
-      isIsoDate(input.date) &&
-      fresh.some((e) => isSameEvent(title, input.date, e.title, e.date))
-    );
+    return title ? [{ i, title, date: input.date }] : [];
   });
+  const pairs = fresh.flatMap((e, k) =>
+    candidates
+      .filter((c) => isSameEvent(c.title, c.date, e.title, e.date))
+      .map((c) => ({
+        row: c.i,
+        event: k,
+        exact: c.title === e.title && c.date === e.date ? 1 : 0,
+        similarity: titleSimilarity(c.title, e.title),
+        days: Math.abs(daysBetween(c.date, e.date))
+      }))
+  );
+  pairs.sort(
+    (a, b) => b.exact - a.exact || b.similarity - a.similarity || a.days - b.days || a.row - b.row
+  );
+  const usedEvents = new Set<number>();
+  const recorded: number[] = [];
+  for (const pair of pairs) {
+    if (usedEvents.has(pair.event) || recorded.includes(pair.row)) continue;
+    usedEvents.add(pair.event);
+    recorded.push(pair.row);
+  }
+  recorded.sort((a, b) => a - b);
   return {
     inputs: inputs.map((input, i) => (recorded.includes(i) ? { ...input, include: false } : input)),
     recorded

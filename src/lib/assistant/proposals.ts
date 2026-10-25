@@ -297,7 +297,8 @@ export function sanitizeTrainingPlan(
         closed: h.closed === true
       };
     })
-    .filter((h) => h.title && h.dateFrom);
+    // Kept without readable dates too: the review asks for them
+    .filter((h) => h.title);
   return { sessions, holidays, warnings: cleanWarnings(r.warnings) };
 }
 

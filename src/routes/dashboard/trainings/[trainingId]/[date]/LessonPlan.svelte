@@ -7,7 +7,6 @@
   import AssistantButton from '$lib/components/assistant/AssistantButton.svelte';
   import AssistantDialog from '$lib/components/assistant/AssistantDialog.svelte';
   import LessonPlanReview from '$lib/components/assistant/LessonPlanReview.svelte';
-  import { takeAssistantRequest } from '$lib/assistant/autoOpen';
   import { loadAssistantStatus } from '$lib/assistant/client';
   import {
     lessonPlanLines,
@@ -32,12 +31,18 @@
   let {
     trainingId,
     date,
-    readonly = false
+    readonly = false,
+    autoOpen = false,
+    onautoopened
   }: {
     trainingId: string;
     date: string;
     /** Viewers can read and download the plan but not change it */
     readonly?: boolean;
+    /** Open the Daten-Assistent on mount (the page took ?assistant=lesson_plan) */
+    autoOpen?: boolean;
+    /** Called when autoOpen was used, so a later mount (tab switch) does not open it again */
+    onautoopened?: () => void;
   } = $props();
 
   let lessonPlan: LessonPlan | null = $state(null);
@@ -431,7 +436,8 @@
 
   // Opened from the Daten-Assistent overview with ?assistant=lesson_plan
   onMount(() => {
-    if (readonly || !assistantTarget || !takeAssistantRequest('lesson_plan')) return;
+    if (readonly || !assistantTarget || !autoOpen) return;
+    onautoopened?.();
     loadAssistantStatus().then((s) => {
       if (s.configured) openAssistant();
     });

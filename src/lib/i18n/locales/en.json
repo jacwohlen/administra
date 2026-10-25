@@ -1473,7 +1473,7 @@
     "attendance": {
       "loading": "Loading members and recorded attendance …",
       "loadingExisting": "Loading recorded attendance …",
-      "loadError": "Members or recorded attendance could not be loaded. Please close and try again.",
+      "loadError": "Members or recorded attendance could not be loaded. Please try again.",
       "noEntries": "No names were found on the list.",
       "training": "Training: {training}",
       "listTraining": "On the list: “{text}”",
@@ -1558,7 +1558,8 @@
         "roster": "Could not be added to the participant list, so their attendance is not saved. Try again.",
         "checkIn": "Attendance not saved: {dates}. Try again."
       },
-      "partialHint": "{count, plural, one {Saving failed for # name} other {Saving failed for # names}} (marked in red). What was saved shows as “Already recorded” and is not saved again. Apply the rest again or close the dialog."
+      "partialHint": "{count, plural, one {Saving failed for # name} other {Saving failed for # names}} (marked in red). What was saved shows as “Already recorded” and is not saved again. Apply the rest again or close the dialog.",
+      "reload": "Reload"
     },
     "trainingPlan": {
       "summary": "{count, plural, one {# session} other {# sessions}} from {from} to {to}",

@@ -255,7 +255,7 @@
   }
   init();
 
-  // Dates asked for once; a failed load blocks saving instead of retrying
+  // Dates asked for once; a failed load blocks saving until «Neu laden»
   const requested = new Set<string>();
 
   async function loadDates(dates: string[]) {
@@ -290,8 +290,27 @@
       loaded = new Set([...loaded, ...dates]);
     } catch (err) {
       console.error('Error loading recorded attendance:', err);
+      for (const d of dates) requested.delete(d);
       loadFailed = true;
     }
+  }
+
+  /** «Neu laden» after a failed load: the members, or the dates still missing */
+  async function retryLoad() {
+    loadFailed = false;
+    if (!draft) {
+      await init();
+      return;
+    }
+    const missing = [...new Set(draft.dates.map((d) => d.date))].filter(
+      (d) => isIsoDate(d) && !loaded.has(d)
+    );
+    if (missing.length > 0) await loadDates(missing);
+  }
+
+  /** An overwrite tick is consent for the check-ins shown when it was given, not for others */
+  function resetOverwrites() {
+    for (const entry of draft?.entries ?? []) entry.overwrite = false;
   }
 
   // Recorded check-ins of every date on the draft, also of dates the user corrects
@@ -304,7 +323,9 @@
   });
 
   function setDate(index: number, value: string) {
-    if (draft) draft.dates[index] = withDate(value, today, training.weekday);
+    if (!draft) return;
+    draft.dates[index] = withDate(value, today, training.weekday);
+    resetOverwrites();
   }
 
   function choiceValue(entry: EntryDraft): string {
@@ -631,9 +652,15 @@
 
 <!-- Saving stays blocked after a failed load; the review is kept visible -->
 {#if loadFailed}
-  <div class="flex items-start gap-2 p-3 rounded-lg preset-tonal-error text-sm" role="alert">
+  <div
+    class="flex flex-wrap items-start gap-2 p-3 rounded-lg preset-tonal-error text-sm"
+    role="alert"
+  >
     <Fa icon={faTriangleExclamation} class="mt-0.5 flex-none" />
-    <span>{$_('assistant.attendance.loadError')}</span>
+    <span class="flex-1">{$_('assistant.attendance.loadError')}</span>
+    <button type="button" class="btn btn-sm preset-tonal-surface" onclick={retryLoad}>
+      {$_('assistant.attendance.reload')}
+    </button>
   </div>
 {/if}
 {#if !draft || !review}
@@ -696,6 +723,7 @@
               class="checkbox"
               type="checkbox"
               bind:checked={d.include}
+              onchange={resetOverwrites}
               disabled={applying}
               aria-label={$_('assistant.attendance.dates.include', {
                 values: { date: long(d.date) }
@@ -955,6 +983,7 @@
                     })}
                     aria-describedby="{uid}-name-{i}"
                     bind:checked={entry.marks[j]}
+                    onchange={() => (entry.overwrite = false)}
                   />
                   <span>{short(d.date)}</span>
                 </label>

@@ -9,6 +9,7 @@ import {
   isAssistantConfigured,
   modelSettings,
   readAnswer,
+  timeLeft,
   usageOf
 } from '$lib/server/assistant/claude';
 import { loadPromptContext } from '$lib/server/assistant/context';
@@ -76,6 +77,9 @@ async function finish(
 }
 
 export const POST: RequestHandler = async ({ request, locals }) => {
+  // One time budget for the whole request (PRIVATE_ASSISTANT_TIMEOUT_MS), so
+  // it ends with a clean error before Netlify stops the function
+  const startedAt = Date.now();
   const { session } = await locals.safeGetSession();
   if (!session) return failure('unauthorized', 401);
   if (!isAssistantConfigured()) return failure('not_configured', 503);
@@ -106,7 +110,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
         throw new AssistantError('too_many_pages', 413);
       }
     }
-    const message = await createMessage(params, request.signal);
+    const message = await createMessage(params, request.signal, timeLeft(startedAt));
 
     let answer;
     try {

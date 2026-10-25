@@ -73,7 +73,7 @@ const SESSIONS: PlanSessionEntry[] = [
     date: '2026-01-05',
     trainingId: 27,
     trainingAsWritten: 'Kampftraining',
-    trainer: 'Beni Muster',
+    trainer: 'Benjamin Muster',
     topic: 'Topwurf'
   }),
   session({
@@ -201,18 +201,17 @@ describe('the leaders', () => {
     expect(leaderKey('N.N.')).toBe('');
     expect(leaderKey(' Lara  Beispiel ')).toBe(leaderKey('lara beispiel'));
     expect([...leaders.keys()]).toEqual([
-      'beni muster',
+      'benjamin muster',
       'lara beispiel',
       'gast trainerin',
       'roli keller',
-      'hans meier',
-      'benjamin muster'
+      'hans meier'
     ]);
     expect(leaders.get('lara beispiel')?.count).toBe(3);
   });
 
   it('takes clear names, suggests close ones and keeps the rest without a member', () => {
-    expect(leaders.get('beni muster')).toMatchObject({ memberId: 1, kind: 'auto' });
+    expect(leaders.get('benjamin muster')).toMatchObject({ memberId: 1, kind: 'auto' });
     expect(leaders.get('hans meier')).toMatchObject({ memberId: 6, kind: 'auto' });
     // Roland and Rolf Keller both fit; the trainer is suggested, not taken
     expect(leaders.get('roli keller')).toMatchObject({ memberId: 4, kind: 'suggested' });
@@ -1072,9 +1071,8 @@ describe('the leaders, matched strictly', () => {
     return [m?.memberId, m?.kind];
   };
 
-  it('takes a plan trainer by the exact last name with a short form', () => {
+  it('takes a plan trainer by the exact name or the exact last name with an initial', () => {
     expect(kind('L. Meier')).toEqual([12, 'auto']);
-    expect(kind('Beni Keller')).toEqual([14, 'auto']);
     expect(kind('Christian Weber')).toEqual([13, 'auto']);
   });
 
@@ -1082,6 +1080,7 @@ describe('the leaders, matched strictly', () => {
     expect(kind('Peter Meier')).toEqual([11, 'suggested']);
     expect(kind('Lena Maier')).toEqual([12, 'suggested']);
     expect(kind('Chris Weber')).toEqual([13, 'suggested']);
+    expect(kind('Beni Keller')).toEqual([14, 'suggested']);
     expect(kind('Jan Mueller')).toEqual([15, 'suggested']);
   });
 });

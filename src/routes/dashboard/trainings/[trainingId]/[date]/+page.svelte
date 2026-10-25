@@ -37,8 +37,11 @@
   let { data }: { data: PageData } = $props();
   let searchterm = $state('');
   let animateList = $state(true);
-  // Daten-Assistent: a lesson plan to read opens on its tab (LessonPlan takes the request)
-  let showLessonPlan = $state(isAssistantRequested('lesson_plan'));
+  // Daten-Assistent: a lesson plan to read opens on its tab, once. The page
+  // answers the request (LessonPlan mounts again on every tab switch).
+  const lessonPlanRequested = isAssistantRequested('lesson_plan');
+  let showLessonPlan = $state(lessonPlanRequested);
+  let lessonPlanAutoOpen = $state(lessonPlanRequested);
   let showAssistant = $state(false);
   let celebrationBadges: Badge[] = $state([]);
   let celebrationMemberName = $state('');
@@ -225,6 +228,7 @@
   );
 
   onMount(() => {
+    if (lessonPlanRequested) takeAssistantRequest('lesson_plan');
     if (data.canWrite && takeAssistantRequest('attendance')) showAssistant = true;
   });
 
@@ -458,7 +462,13 @@
     {/if}
   </ul>
 {:else}
-  <LessonPlan trainingId={data.trainingId} date={data.date} readonly={!data.canWrite} />
+  <LessonPlan
+    trainingId={data.trainingId}
+    date={data.date}
+    readonly={!data.canWrite}
+    autoOpen={lessonPlanAutoOpen}
+    onautoopened={() => (lessonPlanAutoOpen = false)}
+  />
 {/if}
 
 <BadgeCelebration badges={celebrationBadges} memberName={celebrationMemberName} />

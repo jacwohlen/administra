@@ -5,7 +5,7 @@ vi.mock('$env/dynamic/private', () => ({ env: {} }));
 vi.mock('$lib/server/trialMailContext', () => ({ loadMailSettings: vi.fn() }));
 
 const Anthropic = (await import('@anthropic-ai/sdk')).default;
-const { apiError, readAnswer, usageOf } = await import('./claude');
+const { apiError, readAnswer, timeLeft, usageOf } = await import('./claude');
 const { buildParams, systemPrompt, userContent } = await import('./prompts');
 const { ASSISTANT_SCHEMAS } = await import('./schemas');
 
@@ -42,6 +42,13 @@ describe('readAnswer', () => {
       inputTokens: 0,
       outputTokens: 0
     });
+  });
+});
+
+describe('timeLeft', () => {
+  it('shares one budget between counting and extracting', () => {
+    expect(timeLeft(0, 10_000)).toBe(40_000);
+    expect(timeLeft(0, 49_000)).toBe(5_000);
   });
 });
 
