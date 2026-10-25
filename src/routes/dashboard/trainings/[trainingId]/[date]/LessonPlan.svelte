@@ -14,7 +14,7 @@
     faFileAlt,
     faFileSignature
   } from '@fortawesome/free-solid-svg-icons';
-  import { _ } from 'svelte-i18n';
+  import { _, locale } from 'svelte-i18n';
 
   let {
     trainingId,
@@ -498,7 +498,12 @@
                       <p class="text-sm opacity-60">{formatFileSize(selectedFile.size)}</p>
                     </div>
                   </div>
-                  <button class="btn preset-tonal-error" onclick={removeSelectedFile}>
+                  <button
+                    class="btn preset-tonal-error"
+                    onclick={removeSelectedFile}
+                    title={$_('button.remove')}
+                    aria-label={$_('button.remove')}
+                  >
                     <Fa icon={faTrash} />
                   </button>
                 </div>
@@ -514,7 +519,9 @@
                   <span>{$_('page.trainings.selectFile')}</span>
                 </button>
                 <p class="text-sm opacity-60 mt-2">
-                  {$_('page.trainings.supportedFormats')}: PDF, Images, Word docs, Text files
+                  {$_('page.trainings.supportedFormats')}: {$_(
+                    'page.trainings.supportedFormatsList'
+                  )}
                 </p>
               </div>
             {/if}
@@ -543,7 +550,7 @@
               <div class="flex items-center gap-3 min-w-0 flex-1">
                 <Fa icon={faFile} size="lg" class="flex-shrink-0" />
                 <div class="min-w-0 flex-1">
-                  <p class="truncate">{lessonPlan.fileName || 'Attachment'}</p>
+                  <p class="truncate">{lessonPlan.fileName || $_('page.trainings.attachment')}</p>
                   {#if lessonPlan.fileSize}
                     <p class="text-sm opacity-60">{formatFileSize(lessonPlan.fileSize)}</p>
                   {/if}
@@ -564,7 +571,7 @@
                 {#if lessonPlan.fileType?.startsWith('image/')}
                   <img
                     src={previewUrl}
-                    alt={lessonPlan.fileName || 'Lesson plan attachment'}
+                    alt={lessonPlan.fileName || $_('page.trainings.attachment')}
                     class="max-w-full h-auto rounded-lg shadow-sm"
                     style="max-height: 400px;"
                   />
@@ -572,7 +579,7 @@
                   <div class="text-center p-4 bg-surface-100-900 rounded-lg">
                     <iframe
                       src="{previewUrl}#toolbar=0&navpanes=0&scrollbar=0"
-                      title="PDF Preview"
+                      title={$_('page.trainings.pdfPreview')}
                       class="w-full rounded border border-surface-300-700"
                       style="height: 600px;"
                     ></iframe>
@@ -601,13 +608,13 @@
         {/if}
 
         <footer class="text-sm opacity-60">
-          {$_('page.trainings.lastEdited')}: {new Date(lessonPlan.updatedAt).toLocaleString()}
+          {$_('page.trainings.lastEdited')}: {new Date(lessonPlan.updatedAt).toLocaleString(
+            $locale ?? undefined
+          )}
         </footer>
       </div>
     {:else}
-      <div class="empty-state">
-        <p class="opacity-60">{$_('page.trainings.noLessonPlanMessage')}</p>
-      </div>
+      <p class="empty-state">{$_('page.trainings.noLessonPlanMessage')}</p>
     {/if}
   </section>
 </div>

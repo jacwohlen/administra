@@ -29,7 +29,7 @@
   let { data, error = null }: { data: PageData; error: string | null } = $props();
   let signInError = page.url.searchParams.get('error');
   if (signInError) {
-    error = 'Error: Could not log in: ' + page.url.searchParams.get('error_description');
+    error = page.url.searchParams.get('error_description') ?? signInError;
     supabaseClient.auth.signOut({ scope: 'local' });
   }
 
@@ -156,9 +156,9 @@
     >
   {:else}
     {#if error}
-      <span>
-        {error}
-      </span>
+      <p class="text-sm text-error-600-400 max-w-sm text-center" role="alert">
+        {$_('page.login.errorOAuth', { values: { reason: error } })}
+      </p>
     {/if}
 
     <div class="card w-full max-w-sm p-5 space-y-4 bg-surface-50-950 border border-surface-200-800">
@@ -308,7 +308,7 @@
         {#if devLoginError}
           <p class="text-sm text-error-500">{devLoginError}</p>
         {/if}
-        <button class="btn preset-tonal w-full" type="submit">
+        <button class="btn preset-tonal-surface w-full" type="submit">
           {$_('page.routes.devLoginButton')}
         </button>
       </form>

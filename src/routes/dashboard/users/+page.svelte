@@ -1,16 +1,18 @@
 <script lang="ts">
   import type { PageData } from './$types';
-  import type { UserProfile, UserRole, UserStatus } from '$lib/models';
+  import type { ExamRole, UserProfile, UserRole, UserStatus } from '$lib/models';
   import Fa from 'svelte-fa';
   import { faCheck, faBan, faRotateLeft } from '@fortawesome/free-solid-svg-icons';
   import { _ } from 'svelte-i18n';
   import { supabaseClient } from '$lib/supabase';
   import { toaster } from '$lib/toast';
   import { invalidateAll } from '$app/navigation';
+  import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 
   let { data }: { data: PageData } = $props();
   let busyId = $state<string | null>(null);
   let searchTerm = $state('');
+  let confirmDisable = $state<UserProfile | null>(null);
 
   const STATUS_ORDER: UserStatus[] = ['pending', 'approved', 'disabled'];
 
@@ -88,6 +90,11 @@
     return patch(userId, { role }, 'page.users.toast.roleChanged');
   }
 
+  function changeExamRole(userId: string, value: string) {
+    const exam_role = value === '' ? null : (value as ExamRole);
+    return patch(userId, { exam_role }, 'page.users.toast.examRoleChanged');
+  }
+
   function changeMember(userId: string, value: string) {
     const member_id = value === '' ? null : Number(value);
     return patch(userId, { member_id }, 'page.users.toast.memberLinked');
@@ -108,7 +115,7 @@
 </div>
 
 {#if grouped.length === 0}
-  <p class="text-center text-surface-600-400 py-8">{$_('page.users.empty')}</p>
+  <p class="empty-state">{$_('page.users.empty')}</p>
 {/if}
 
 <ul class="flex flex-col gap-2">
@@ -153,6 +160,20 @@
               <option value="trainer">{$_('page.users.role.trainer')}</option>
               <option value="admin">{$_('page.users.role.admin')}</option>
             </select>
+            <!-- Q-Prüfungen: on top of a staff role; admins have both anyway -->
+            {#if p.role === 'viewer' || p.role === 'trainer'}
+              <select
+                class="select w-auto text-sm py-1"
+                value={p.exam_role ?? ''}
+                disabled={busyId === p.user_id}
+                title={$_('page.users.examRoleLabel')}
+                onchange={(e) => changeExamRole(p.user_id, (e.target as HTMLSelectElement).value)}
+              >
+                <option value="">{$_('page.users.examRole.none')}</option>
+                <option value="examiner">{$_('page.users.examRole.examiner')}</option>
+                <option value="manager">{$_('page.users.examRole.manager')}</option>
+              </select>
+            {/if}
             <select
               class="select w-auto max-w-48 text-sm py-1"
               value={p.member_id ?? ''}
@@ -179,9 +200,9 @@
           </button>
         {:else if p.status === 'approved'}
           <button
-            class="btn preset-tonal-primary flex-shrink-0"
+            class="btn preset-tonal-error flex-shrink-0"
             disabled={busyId === p.user_id || isSelf(p.user_id)}
-            onclick={() => disable(p.user_id)}
+            onclick={() => (confirmDisable = p)}
             title={isSelf(p.user_id)
               ? $_('page.users.selfLocked')
               : $_('page.users.action.disable')}
@@ -204,3 +225,19 @@
     {/each}
   {/each}
 </ul>
+
+{#if confirmDisable}
+  <ConfirmDialog
+    title={$_('page.users.disableConfirm.title')}
+    message={$_('page.users.disableConfirm.message', {
+      values: { name: confirmDisable.full_name || confirmDisable.email }
+    })}
+    confirmLabel={$_('page.users.action.disable')}
+    oncancel={() => (confirmDisable = null)}
+    onconfirm={() => {
+      const userId = confirmDisable!.user_id;
+      confirmDisable = null;
+      disable(userId);
+    }}
+  />
+{/if}

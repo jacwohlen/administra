@@ -26,23 +26,39 @@ export function medalTally(medals: Pick<MemberMedal, 'medal'>[]): MedalTally {
   return tally;
 }
 
-/** The grade with the highest rank, used for the ring around an avatar. */
-export function highestGrade<T extends { gradeRank: number }>(grades: T[]): T | undefined {
-  return grades.reduce<T | undefined>(
-    (best, g) => (best === undefined || g.gradeRank > best.gradeRank ? g : best),
-    undefined
-  );
+/**
+ * How high a grade is, comparable across sections whose ladders have different
+ * lengths (Judo has half belts, Aikido does not): any dan above any kyu, a higher
+ * dan above a lower one, a lower kyu number above a higher one ("5.5 Kyu" reads
+ * as 5.5). Grades without a number fall back to their rank.
+ */
+function crossSectionLevel(g: { gradeRank: number; grade?: string; isDan?: boolean }): number {
+  const n = parseFloat(g.grade ?? '');
+  if (Number.isNaN(n)) return g.gradeRank;
+  return g.isDan ? 100 + n : 10 - n;
+}
+
+/** The highest of a member's grades (one per section), used for the ring around an avatar. */
+export function highestGrade<T extends { gradeRank: number; grade?: string; isDan?: boolean }>(
+  grades: T[]
+): T | undefined {
+  return grades.reduce<T | undefined>((best, g) => {
+    if (best === undefined) return g;
+    const d = crossSectionLevel(g) - crossSectionLevel(best);
+    return d > 0 || (d === 0 && g.gradeRank > best.gradeRank) ? g : best;
+  }, undefined);
 }
 
 /**
  * A white belt is invisible as a ring on a light page and a black belt vanishes on a
- * dark one, so both get a neutral that reads on either ground.
+ * dark one, so both get a neutral that reads on either ground. A half belt shows the
+ * colour it leads to.
  */
-export function beltRingColor(beltColor: string): string {
-  const c = beltColor.trim().toLowerCase();
+export function beltRingColor(beltColor: string, beltColor2?: string | null): string {
+  const c = (beltColor2 || beltColor).trim().toLowerCase();
   if (c === '#f5f5f5' || c === '#fff' || c === '#ffffff' || c === 'white') return '#c8c8c8';
   if (c === '#111111' || c === '#000' || c === '#000000' || c === 'black') return '#5a5a5a';
-  return beltColor;
+  return beltColor2 || beltColor;
 }
 
 /**

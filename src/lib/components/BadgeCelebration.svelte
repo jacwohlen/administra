@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { modalDialog } from '$lib/modalDialog';
   import type { Badge } from '$lib/models';
   import { badgeKey, badgeSuffix } from '$lib/badgeUtils';
   import { displayConfig } from '$lib/appSettings';
@@ -35,6 +36,7 @@
   >
     <!-- svelte-ignore a11y_no_static_element_interactions -->
     <div
+      use:modalDialog
       class="card modal-dialog text-center celebration-dialog"
       onclick={(e) => e.stopPropagation()}
     >

@@ -40,10 +40,10 @@
     <p>{$_('page.pending.disabledMessage')}</p>
   {/if}
   <div class="flex gap-2">
-    <button type="button" class="btn preset-tonal" onclick={refresh}>
+    <button type="button" class="btn preset-filled-primary-500" onclick={refresh}>
       {$_('button.refresh')}
     </button>
-    <button type="button" class="btn preset-filled" onclick={logout}>
+    <button type="button" class="btn preset-tonal-surface" onclick={logout}>
       {$_('page.pending.otherEmail')}
     </button>
   </div>

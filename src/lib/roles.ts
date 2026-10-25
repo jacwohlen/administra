@@ -20,6 +20,21 @@ export function isWriter(profile: ProfileAccess): boolean {
   return isApproved(profile) && WRITER_ROLES.includes(profile!.role);
 }
 
+type ExamAccess = Pick<UserProfile, 'status' | 'role' | 'exam_role'> | null | undefined;
+
+/** The TK: exam days and programs; mirrors is_exam_manager() in the database. */
+export function canManageExams(profile: ExamAccess): boolean {
+  return isStaff(profile) && (profile!.role === 'admin' || profile!.exam_role === 'manager');
+}
+
+/** The TK also keeps the training plan (training_plan_* policies use is_exam_manager()). */
+export const canPlanTrainings = canManageExams;
+
+/** Examiners score on the sheet; mirrors is_examiner() in the database. */
+export function canGrade(profile: ExamAccess): boolean {
+  return isStaff(profile) && (profile!.role === 'admin' || profile!.exam_role != null);
+}
+
 /** Where a signed-in account belongs: dashboard for staff, club area for members. */
 export function homePath(profile: ProfileAccess): '/dashboard' | '/club' | '/pending' {
   if (isStaff(profile)) return '/dashboard';

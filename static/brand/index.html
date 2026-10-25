@@ -1,0 +1,448 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Administra Brand</title>
+    <link rel="icon" href="logo/administra-logo.svg" />
+    <link rel="stylesheet" href="tokens.css" />
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        font-family: var(--font-family);
+        font-size: var(--font-size-base);
+        line-height: var(--line-height-base);
+        background: var(--bg);
+        color: var(--fg);
+      }
+      main {
+        max-width: 64rem;
+        margin: 0 auto;
+        padding: 2rem 1rem 4rem;
+      }
+      header {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 2rem;
+      }
+      header img {
+        width: 3.5rem;
+      }
+      header h1 {
+        margin: 0;
+        font-size: 2rem;
+        line-height: 1.2;
+      }
+      header button {
+        margin-left: auto;
+        white-space: nowrap;
+      }
+      h2 {
+        font-size: 1.25rem;
+        margin: 3rem 0 1rem;
+        padding-bottom: 0.5rem;
+        border-bottom: var(--border-width) solid var(--border);
+      }
+      p,
+      .muted {
+        color: var(--fg-muted);
+      }
+      code {
+        font-size: 0.85em;
+      }
+      a {
+        color: var(--link);
+        text-decoration: none;
+      }
+      a:hover {
+        text-decoration: underline;
+      }
+
+      .logos {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+        gap: 1rem;
+      }
+      .tile {
+        border: var(--border-width) solid var(--border);
+        border-radius: var(--radius-container);
+        padding: 1.5rem;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.75rem;
+        font-size: 0.8rem;
+      }
+      .tile img {
+        width: 7rem;
+        height: 7rem;
+      }
+      .tile.on-dark {
+        background: var(--color-surface-950);
+        color: var(--color-surface-300);
+      }
+
+      .scale {
+        margin-bottom: 1.25rem;
+      }
+      .scale-name {
+        font-weight: 600;
+        font-size: 0.9rem;
+        margin-bottom: 0.25rem;
+      }
+      .swatches {
+        display: grid;
+        grid-template-columns: repeat(11, 1fr);
+        border-radius: var(--radius-base);
+        overflow: hidden;
+      }
+      .sw {
+        height: 3.25rem;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-end;
+        padding: 0.2rem;
+        font-size: 0.6rem;
+        line-height: 1.2;
+      }
+      .sw small {
+        display: block;
+      }
+      @media (max-width: 640px) {
+        .sw small {
+          display: none;
+        }
+      }
+      .sw.key {
+        outline: 3px solid var(--fg);
+        outline-offset: -3px;
+      }
+
+      .row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+        align-items: center;
+      }
+      .chip-sw {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.25rem;
+        font-size: 0.7rem;
+      }
+      .chip-sw span:first-child {
+        width: 3rem;
+        height: 3rem;
+        border-radius: var(--radius-base);
+      }
+      .belt {
+        display: inline-block;
+        width: 4rem;
+        height: 1rem;
+        border-radius: 2px;
+        border: 1px solid rgb(0 0 0 / 0.18);
+        position: relative;
+      }
+      .belt.dan::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        right: 12%;
+        width: 2px;
+        background: rgb(255 255 255 / 0.8);
+      }
+
+      .type-sample > div {
+        margin-bottom: 0.75rem;
+      }
+
+      .btn {
+        font: inherit;
+        font-size: 0.95rem;
+        min-height: var(--touch-target);
+        padding: 0 1.25rem;
+        border: 0;
+        border-radius: var(--radius-base);
+        cursor: pointer;
+        transition: filter var(--duration-fast);
+      }
+      .btn:hover {
+        filter: brightness(1.08);
+      }
+      .btn-primary {
+        background: var(--color-primary-500);
+        color: var(--color-primary-50);
+      }
+      .btn-tonal {
+        background: color-mix(in oklab, var(--color-surface-500) 20%, transparent);
+        color: var(--fg);
+      }
+      .btn-tonal-primary {
+        background: color-mix(in oklab, var(--color-primary-500) 20%, transparent);
+        color: var(--fg);
+      }
+      .btn-error {
+        background: var(--color-error-500);
+        color: var(--color-error-950);
+      }
+      .chip {
+        font-size: 0.75rem;
+        padding: 0.15rem 0.6rem;
+        border-radius: var(--radius-pill);
+        background: color-mix(in oklab, var(--color-secondary-500) 40%, transparent);
+      }
+
+      .tabs {
+        display: flex;
+        border-bottom: var(--border-width) solid var(--border);
+      }
+      .tab {
+        padding: 0.5rem 0.75rem;
+        font-size: 0.8rem;
+        font-weight: 500;
+        color: var(--fg-muted);
+        border-bottom: 2px solid transparent;
+      }
+      .tab.active {
+        color: var(--color-primary-500);
+        border-bottom-color: var(--color-primary-500);
+      }
+      .seg {
+        display: inline-flex;
+        background: var(--color-surface-200);
+        border-radius: var(--radius-pill);
+        padding: 0.15rem;
+      }
+      .dark .seg {
+        background: var(--color-surface-800);
+      }
+      .seg span {
+        padding: 0.2rem 0.75rem;
+        border-radius: var(--radius-pill);
+        font-size: 0.8rem;
+        font-weight: 500;
+        color: var(--fg-muted);
+      }
+      .seg span.on {
+        background: var(--bg);
+        color: var(--fg);
+        box-shadow: 0 1px 3px rgb(0 0 0 / 0.1);
+      }
+      .avatar {
+        width: 2.5rem;
+        height: 2.5rem;
+        border-radius: var(--radius-pill);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.75rem;
+        font-weight: 600;
+        background: var(--bg-raised);
+        color: var(--fg);
+      }
+      .entity {
+        width: 2.5rem;
+        height: 2.5rem;
+        border-radius: var(--radius-base);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.8rem;
+        font-weight: 700;
+        background: var(--bg-raised);
+      }
+      .card {
+        border: var(--border-width) solid var(--border);
+        border-radius: var(--radius-container);
+        padding: 1rem;
+        max-width: 24rem;
+      }
+      .list-item {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding-block: 0.5rem;
+      }
+      .list-item + .list-item {
+        border-top: var(--border-width) solid var(--border);
+      }
+      .list-item img {
+        width: 1rem;
+      }
+      .grow {
+        flex: 1;
+        min-width: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <header>
+        <img src="logo/administra-logo.svg" alt="" />
+        <h1>Administra</h1>
+        <button class="btn btn-tonal" id="theme" type="button">Dark mode</button>
+      </header>
+      <p>
+        Brand and UI style of Administra, the attendance app for martial arts clubs. Built on
+        Skeleton's <em>nosh</em> theme: one strong red on neutral grey. Details in
+        <a href="README.md">README.md</a>, values in <a href="tokens.css">tokens.css</a>.
+      </p>
+
+      <h2>Logo</h2>
+      <div class="logos">
+        <div class="tile">
+          <img src="logo/administra-logo.svg" alt="Administra logo" />
+          <code>administra-logo.svg</code>
+        </div>
+        <div class="tile on-dark">
+          <img src="logo/administra-logo.svg" alt="Administra logo on dark" />
+          <code>on surface-950</code>
+        </div>
+        <div class="tile">
+          <img src="logo/judo-icon.svg" alt="Judo icon" />
+          <code>judo-icon.svg · trainer marker</code>
+        </div>
+      </div>
+
+      <h2>Colour</h2>
+      <div id="scales"></div>
+
+      <h2>Chart series</h2>
+      <div class="row" id="series"></div>
+
+      <h2>Belts</h2>
+      <div class="row" id="belts"></div>
+
+      <h2>Typography</h2>
+      <div class="type-sample">
+        <div style="font-size: 1.5rem; font-weight: bolder; line-height: 1.3">
+          h1 · Training Montag Erwachsene
+        </div>
+        <div style="font-size: 1.25rem; font-weight: bolder; line-height: 1.4">
+          h2 · Teilnehmende
+        </div>
+        <div>Body 18/28 · Heute findet kein Training statt!</div>
+        <div class="muted" style="font-size: 0.875rem">
+          Muted small · Avenir, Montserrat, Corbel, URW Gothic, sans-serif
+        </div>
+      </div>
+
+      <h2>Components</h2>
+      <div class="row" style="margin-bottom: 1.25rem">
+        <button class="btn btn-primary" type="button">Speichern</button>
+        <button class="btn btn-tonal-primary" type="button">Hinzufügen</button>
+        <button class="btn btn-tonal" type="button">Abbrechen</button>
+        <button class="btn btn-error" type="button">Löschen</button>
+        <span class="chip">Judo</span>
+      </div>
+      <div class="tabs" style="margin-bottom: 1.25rem">
+        <span class="tab active">Aktuell</span>
+        <span class="tab">Trainings</span>
+        <span class="tab">Events</span>
+        <span class="tab">Mitglieder</span>
+        <span class="tab">Statistik</span>
+      </div>
+      <div class="row" style="margin-bottom: 1.25rem">
+        <span class="seg"><span class="on">Jahr</span><span>Monat</span><span>Alle</span></span>
+        <span class="avatar">JW</span>
+        <span class="entity">JE</span>
+      </div>
+      <div class="card">
+        <div class="list-item">
+          <span class="avatar">AB</span>
+          <div class="grow">
+            Anna Beispiel
+            <div class="muted" style="font-size: 0.8rem">2. Kyu</div>
+          </div>
+          <span class="belt" style="background: #2e86de"></span>
+        </div>
+        <div class="list-item">
+          <span class="avatar">MT</span>
+          <div class="grow">
+            Max Trainer <img src="logo/judo-icon.svg" alt="trainer" />
+            <div class="muted" style="font-size: 0.8rem">1. Dan</div>
+          </div>
+          <span class="belt dan" style="background: #111111"></span>
+        </div>
+      </div>
+    </main>
+
+    <script>
+      const scales = [
+        ['primary', 500, 'Brand red · logo #dc0024'],
+        ['secondary', 500, 'Blush'],
+        ['tertiary', 500, 'Moss'],
+        ['success', 500, 'Teal'],
+        ['warning', 500, 'Lemon'],
+        ['error', 500, 'Coral'],
+        ['surface', null, 'Neutral grey']
+      ];
+      const steps = [50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 950];
+      const css = getComputedStyle(document.documentElement);
+      const val = (n) => css.getPropertyValue(n).trim();
+      const lum = (hex) => {
+        const n = parseInt(hex.slice(1), 16);
+        return (0.299 * (n >> 16) + 0.587 * ((n >> 8) & 255) + 0.114 * (n & 255)) / 255;
+      };
+
+      document.getElementById('scales').innerHTML = scales
+        .map(
+          ([name, key, label]) => `
+        <div class="scale">
+          <div class="scale-name">${name} <span class="muted">· ${label}</span></div>
+          <div class="swatches">${steps
+            .map((s) => {
+              const hex = val(`--color-${name}-${s}`);
+              const fg = lum(hex) > 0.55 ? '#030303' : '#f7f7f7';
+              return `<div class="sw${s === key ? ' key' : ''}" style="background:${hex};color:${fg}">${s}<small>${hex}</small></div>`;
+            })
+            .join('')}</div>
+        </div>`
+        )
+        .join('');
+
+      const renderSeries = () => {
+        const c = getComputedStyle(document.documentElement);
+        document.getElementById('series').innerHTML = [1, 2, 3, 4, 5, 6, 7, 8]
+          .map((i) => {
+            const hex = c.getPropertyValue(`--chart-${i}`).trim();
+            return `<div class="chip-sw"><span style="background:${hex}"></span><code>${hex}</code></div>`;
+          })
+          .join('');
+      };
+      renderSeries();
+
+      document.getElementById('belts').innerHTML = [
+        ['6. Kyu', '--belt-6-kyu'],
+        ['5. Kyu', '--belt-5-kyu'],
+        ['4. Kyu', '--belt-4-kyu'],
+        ['3. Kyu', '--belt-3-kyu'],
+        ['2. Kyu', '--belt-2-kyu'],
+        ['1. Kyu', '--belt-1-kyu'],
+        ['Dan', '--belt-dan']
+      ]
+        .map(
+          ([label, v]) =>
+            `<div class="chip-sw"><span class="belt${label === 'Dan' ? ' dan' : ''}" style="background:var(${v});width:4rem;height:1rem"></span>${label}<code>${val(v)}</code></div>`
+        )
+        .join('');
+
+      const btn = document.getElementById('theme');
+      const apply = (dark) => {
+        document.documentElement.classList.toggle('dark', dark);
+        btn.textContent = dark ? 'Light mode' : 'Dark mode';
+        renderSeries();
+      };
+      apply(window.matchMedia('(prefers-color-scheme: dark)').matches);
+      btn.addEventListener('click', () =>
+        apply(!document.documentElement.classList.contains('dark'))
+      );
+    </script>
+  </body>
+</html>

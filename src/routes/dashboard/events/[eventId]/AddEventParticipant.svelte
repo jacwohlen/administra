@@ -4,6 +4,7 @@
   import { faUserPlus } from '@fortawesome/free-solid-svg-icons';
   import { supabaseClient } from '$lib/supabase';
   import { _ } from 'svelte-i18n';
+  import { toaster } from '$lib/toast';
 
   let {
     eventId,
@@ -94,6 +95,7 @@
 
       if (error) {
         console.error('Error adding participant:', error);
+        toaster.error({ title: $_('page.events.addParticipantError') });
         return;
       }
 
@@ -106,6 +108,7 @@
 
         if (logError) {
           console.error('Error marking attendance:', logError);
+          toaster.error({ title: $_('page.events.attendanceError') });
           await supabaseClient
             .from('event_participants')
             .update({ attendanceStatus: 'registered' })
@@ -159,7 +162,7 @@
                 role="button"
                 tabindex="0"
               >
-                <span>{member.lastname}, {member.firstname}</span>
+                <span>{member.lastname} {member.firstname}</span>
                 <button
                   class="btn preset-tonal-primary"
                   onclick={(e: MouseEvent) => {

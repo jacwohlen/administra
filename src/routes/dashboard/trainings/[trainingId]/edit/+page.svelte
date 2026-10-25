@@ -56,14 +56,16 @@
         .eq('id', data.id);
 
       if (updateError) {
-        error = updateError.message;
+        console.error('Error updating training:', updateError);
+        error = $_('page.trainings.updateError');
         return;
       }
 
       await invalidateAll();
       await goto(`/dashboard/trainings/${data.id}`);
     } catch (e) {
-      error = e instanceof Error ? e.message : 'Unknown error occurred';
+      console.error('Error updating training:', e);
+      error = $_('page.trainings.updateError');
     } finally {
       loading = false;
     }
@@ -71,7 +73,12 @@
 </script>
 
 <div class="page-header-back">
-  <a href="/dashboard/trainings/{data.id}" class="btn preset-tonal-surface">
+  <a
+    href="/dashboard/trainings/{data.id}"
+    class="btn preset-tonal-surface"
+    title={$_('page.trainings.backToTraining')}
+    aria-label={$_('page.trainings.backToTraining')}
+  >
     <Fa icon={faArrowLeft} />
   </a>
   <h1>{$_('page.trainings.edit_training')}</h1>

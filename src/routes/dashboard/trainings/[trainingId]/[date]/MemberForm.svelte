@@ -50,5 +50,5 @@
 </form>
 <footer class="flex justify-end gap-2 mt-4">
   <button class="btn preset-tonal-surface" onclick={cancel}>{$_('button.cancel')}</button>
-  <button class="btn preset-filled" onclick={onFormSubmit}>{$_('button.add')}</button>
+  <button class="btn preset-filled-primary-500" onclick={onFormSubmit}>{$_('button.add')}</button>
 </footer>

@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { homePath, isApproved, isStaff, isWriter } from './roles';
+import {
+  canGrade,
+  canManageExams,
+  canPlanTrainings,
+  homePath,
+  isApproved,
+  isStaff,
+  isWriter
+} from './roles';
 
 describe('roles', () => {
   it('sends staff to the dashboard', () => {
@@ -30,5 +38,43 @@ describe('roles', () => {
     expect(isWriter({ status: 'approved', role: 'member' })).toBe(false);
     expect(isWriter({ status: 'pending', role: 'admin' })).toBe(false);
     expect(isWriter(null)).toBe(false);
+  });
+
+  it('gives exam roles to staff only, and everything to admins', () => {
+    const admin = { status: 'approved', role: 'admin', exam_role: null } as const;
+    expect(canManageExams(admin)).toBe(true);
+    expect(canGrade(admin)).toBe(true);
+
+    const trainer = { status: 'approved', role: 'trainer' } as const;
+    expect(canManageExams(trainer)).toBe(false);
+    expect(canGrade(trainer)).toBe(false);
+
+    const examiner = { status: 'approved', role: 'viewer', exam_role: 'examiner' } as const;
+    expect(canManageExams(examiner)).toBe(false);
+    expect(canGrade(examiner)).toBe(true);
+
+    const tk = { status: 'approved', role: 'trainer', exam_role: 'manager' } as const;
+    expect(canManageExams(tk)).toBe(true);
+    expect(canGrade(tk)).toBe(true);
+
+    const member = { status: 'approved', role: 'member', exam_role: 'manager' } as const;
+    expect(canManageExams(member)).toBe(false);
+    expect(canGrade(member)).toBe(false);
+
+    const pending = { status: 'pending', role: 'trainer', exam_role: 'manager' } as const;
+    expect(canManageExams(pending)).toBe(false);
+    expect(canGrade(pending)).toBe(false);
+    expect(canGrade(null)).toBe(false);
+  });
+
+  it('lets the TK and admins plan trainings, but not plain trainers', () => {
+    expect(canPlanTrainings({ status: 'approved', role: 'admin', exam_role: null })).toBe(true);
+    expect(canPlanTrainings({ status: 'approved', role: 'viewer', exam_role: 'manager' })).toBe(
+      true
+    );
+    expect(canPlanTrainings({ status: 'approved', role: 'trainer', exam_role: null })).toBe(false);
+    expect(canPlanTrainings({ status: 'approved', role: 'viewer', exam_role: 'examiner' })).toBe(
+      false
+    );
   });
 });

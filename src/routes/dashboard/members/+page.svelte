@@ -1,7 +1,8 @@
 <script lang="ts">
+  import { modalDialog } from '$lib/modalDialog';
   import type { PageData } from './$types';
   import Fa from 'svelte-fa';
-  import { faGripLines, faPlus } from '@fortawesome/free-solid-svg-icons';
+  import { faChevronRight, faPlus } from '@fortawesome/free-solid-svg-icons';
   import { _ } from 'svelte-i18n';
   import { supabaseClient } from '$lib/supabase';
   import { toaster } from '$lib/toast';
@@ -94,7 +95,11 @@
     }}
   >
     <!-- svelte-ignore a11y_no_static_element_interactions -->
-    <div class="card modal-dialog modal-dialog-lg" onclick={(e) => e.stopPropagation()}>
+    <div
+      use:modalDialog
+      class="card modal-dialog modal-dialog-lg"
+      onclick={(e) => e.stopPropagation()}
+    >
       <h3>{$_('page.members.addMember')}</h3>
       <MemberForm
         {isSubmitting}
@@ -117,33 +122,37 @@
 <ul class="flex flex-col gap-2">
   {#each data.members as m (m.id)}
     {#if search(m.firstname, m.lastname)}
-      <li class="list-item">
-        <div class="relative inline-block flex-shrink-0">
-          <div class="avatar-initials">
-            {m.lastname.charAt(0)}{m.firstname.charAt(0)}
+      <li>
+        <a href={'/dashboard/members/' + m.id} class="list-item list-item-link">
+          <div class="relative inline-block flex-shrink-0">
+            <div class="avatar-initials">
+              {m.lastname.charAt(0)}{m.firstname.charAt(0)}
+            </div>
           </div>
-        </div>
-        <span class="list-item-content">
-          <dt class="font-bold truncate">
-            {m.lastname}
-            {m.firstname}{#if data.badgeMap[m.id]}<span
-                class="ml-1 inline-block text-base leading-none align-middle"
-                >{data.badgeMap[m.id]}</span
-              >{/if}
-          </dt>
-          <dd class="flex flex-wrap gap-1">
-            {#if m.labels}
-              {#each m.labels as l (l)}
-                <span class="chip preset-tonal-secondary text-xs">{l}</span>
-              {/each}
-            {/if}
-          </dd>
-        </span>
-        <a class="btn preset-tonal-primary flex-shrink-0" href={'/dashboard/members/' + m.id}>
-          <Fa icon={faGripLines} />
-          <span class="hidden sm:inline">{$_('button.view')}</span>
+          <span class="list-item-content">
+            <dt class="font-bold truncate">
+              {m.lastname}
+              {m.firstname}{#if data.badgeMap[m.id]}<span
+                  class="ml-1 inline-block text-base leading-none align-middle"
+                  >{data.badgeMap[m.id]}</span
+                >{/if}
+            </dt>
+            <dd class="flex flex-wrap gap-1">
+              {#if m.labels}
+                {#each m.labels as l (l)}
+                  <span class="chip preset-tonal-secondary text-xs">{l}</span>
+                {/each}
+              {/if}
+            </dd>
+          </span>
+          <Fa icon={faChevronRight} class="text-surface-400-600 flex-none" />
         </a>
       </li>
     {/if}
   {/each}
 </ul>
+{#if !data.members.some((m) => search(m.firstname, m.lastname))}
+  <p class="empty-state">
+    {searchTerm.trim() ? $_('page.members.noResults') : $_('page.members.empty')}
+  </p>
+{/if}

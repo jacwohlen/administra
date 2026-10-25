@@ -18,23 +18,41 @@ import { load as newTraining } from './trainings/new/+page';
 import { load as editTraining } from './trainings/[trainingId]/edit/+page';
 import { load as newEvent } from './events/new/+page';
 import { load as editEvent } from './events/[eventId]/edit/+page';
+import { load as newExam } from './exams/new/+page';
+import { load as editExam } from './exams/[examId]/edit/+page';
+import { load as trainingPlanSettings } from './training-plan/settings/+page';
 
-// Create/edit pages send viewers back to the read-only page they came from.
+// Create/edit pages send viewers back to the read-only page they came from;
+// exam days and the training plan settings need the TK (canManageExams /
+// canPlanTrainings, the same role), not just a trainer.
 type Load = (event: never) => unknown;
+type Flags = { canWrite: boolean; canManageExams: boolean };
 
-function event(canWrite: boolean, params: Record<string, string> = {}) {
-  return { parent: async () => ({ canWrite }), params } as never;
+function event(flags: Flags, params: Record<string, string> = {}) {
+  return {
+    parent: async () => ({
+      ...flags,
+      canPlanTrainings: flags.canManageExams,
+      exam: { id: 7, event_id: null }
+    }),
+    params,
+    depends: () => {}
+  } as never;
 }
 
-async function redirectTarget(load: Load, canWrite: boolean, params?: Record<string, string>) {
+async function redirectTarget(load: Load, flags: Flags, params?: Record<string, string>) {
   try {
-    await load(event(canWrite, params));
+    await load(event(flags, params));
     return null;
   } catch (e) {
     if (isRedirect(e)) return e.location;
     throw e;
   }
 }
+
+const viewer = { canWrite: false, canManageExams: false };
+const trainer = { canWrite: true, canManageExams: false };
+const tk = { canWrite: false, canManageExams: true };
 
 describe('writer-only dashboard pages', () => {
   const cases: [string, Load, Record<string, string>, string][] = [
@@ -46,11 +64,30 @@ describe('writer-only dashboard pages', () => {
 
   for (const [name, load, params, target] of cases) {
     it(`${name}: redirects viewers to ${target}`, async () => {
-      expect(await redirectTarget(load, false, params)).toBe(target);
+      expect(await redirectTarget(load, viewer, params)).toBe(target);
     });
 
     it(`${name}: lets trainers and admins in`, async () => {
-      expect(await redirectTarget(load, true, params)).toBeNull();
+      expect(await redirectTarget(load, trainer, params)).toBeNull();
+    });
+  }
+});
+
+describe('TK-only exam pages', () => {
+  const cases: [string, Load, Record<string, string>, string][] = [
+    ['new exam day', newExam as Load, {}, '/dashboard/exams'],
+    ['edit exam day', editExam as Load, { examId: '7' }, '/dashboard/exams/7'],
+    ['training plan settings', trainingPlanSettings as Load, {}, '/dashboard/training-plan']
+  ];
+
+  for (const [name, load, params, target] of cases) {
+    it(`${name}: redirects viewers and trainers to ${target}`, async () => {
+      expect(await redirectTarget(load, viewer, params)).toBe(target);
+      expect(await redirectTarget(load, trainer, params)).toBe(target);
+    });
+
+    it(`${name}: lets the TK and admins in`, async () => {
+      expect(await redirectTarget(load, tk, params)).toBeNull();
     });
   }
 });

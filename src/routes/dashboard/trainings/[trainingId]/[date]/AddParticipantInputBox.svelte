@@ -1,9 +1,11 @@
 <script lang="ts">
+  import { modalDialog } from '$lib/modalDialog';
   import type { Member } from '$lib/models';
   import Fa from 'svelte-fa';
   import { faUserPlus } from '@fortawesome/free-solid-svg-icons';
   import { supabaseClient } from '$lib/supabase';
   import { _ } from 'svelte-i18n';
+  import { toaster } from '$lib/toast';
   import MemberForm from './MemberForm.svelte';
 
   let { onadd }: { onadd?: (data: { member: Member }) => void } = $props();
@@ -94,7 +96,11 @@
         .insert({ ...r, labels: ['new'] })
         .select()
         .single();
-      if (error) console.error(error);
+      if (error) {
+        console.error(error);
+        toaster.error({ title: $_('page.members.createError') });
+        return;
+      }
       onadd?.({ member: data });
       clearSearch();
       showNewMemberForm = false;
@@ -188,7 +194,11 @@
     }}
   >
     <!-- svelte-ignore a11y_no_static_element_interactions -->
-    <div class="card modal-dialog modal-dialog-lg" onclick={(e) => e.stopPropagation()}>
+    <div
+      use:modalDialog
+      class="card modal-dialog modal-dialog-lg"
+      onclick={(e) => e.stopPropagation()}
+    >
       <h3>{$_('button.createNew')}</h3>
       <MemberForm
         lastname={newMemberLastname}
