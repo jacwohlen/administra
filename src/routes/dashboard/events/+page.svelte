@@ -6,7 +6,7 @@
     faLocationDot,
     faUsers,
     faPlus,
-    faGripLines
+    faChevronRight
   } from '@fortawesome/free-solid-svg-icons';
   import { _ } from 'svelte-i18n';
   import dayjs from 'dayjs';
@@ -84,44 +84,41 @@
         <h3>{$_('page.events.today')}</h3>
         <ul class="flex flex-col gap-2">
           {#each filteredEvents.filter((e) => isToday(e.date)) as event (event.id)}
-            <li class="list-item">
-              <div class="relative inline-block flex-none">
-                <div class="entity-badge">
-                  <Fa icon={faCalendarDays} size="lg" />
+            <li>
+              <a href="/dashboard/events/{event.id}" class="list-item list-item-link">
+                <div class="relative inline-block flex-none">
+                  <div class="entity-badge">
+                    <Fa icon={faCalendarDays} size="lg" />
+                  </div>
                 </div>
-              </div>
-              <span class="list-item-content">
-                <dt class="font-bold truncate">
-                  {event.title}
-                </dt>
-                {#if event.description}
-                  <dd class="text-surface-600-400 text-sm truncate">
-                    {event.description}
-                  </dd>
-                {/if}
-                <dd class="flex items-center gap-2 text-sm text-surface-600-400">
-                  <span class="meta-item">
-                    <Fa icon={faCalendarDays} size="sm" />
-                    {formatEventDate(event.date)}
-                  </span>
-                  {#if event.location}
-                    <span class="meta-item truncate">
-                      <Fa icon={faLocationDot} size="sm" />
-                      {event.location}
-                    </span>
+                <span class="list-item-content">
+                  <dt class="font-bold truncate">
+                    {event.title}
+                  </dt>
+                  {#if event.description}
+                    <dd class="text-surface-600-400 text-sm truncate">
+                      {event.description}
+                    </dd>
                   {/if}
-                  <span class="meta-item">
-                    <Fa icon={faUsers} size="sm" />
-                    {event.section}
-                  </span>
-                </dd>
-              </span>
-              <span class="flex-none">
-                <a class="btn preset-tonal-primary" href="/dashboard/events/{event.id}">
-                  <Fa icon={faGripLines} />
-                  <span class="hidden sm:inline">{$_('button.view')}</span>
-                </a>
-              </span>
+                  <dd class="flex items-center gap-2 text-sm text-surface-600-400">
+                    <span class="meta-item">
+                      <Fa icon={faCalendarDays} size="sm" />
+                      {formatEventDate(event.date)}
+                    </span>
+                    {#if event.location}
+                      <span class="meta-item truncate">
+                        <Fa icon={faLocationDot} size="sm" />
+                        {event.location}
+                      </span>
+                    {/if}
+                    <span class="meta-item">
+                      <Fa icon={faUsers} size="sm" />
+                      {event.section}
+                    </span>
+                  </dd>
+                </span>
+                <Fa icon={faChevronRight} class="text-surface-400-600 flex-none" />
+              </a>
             </li>
           {/each}
         </ul>
@@ -136,44 +133,41 @@
         </h3>
         <ul class="flex flex-col gap-2">
           {#each filteredEvents.filter((e) => isUpcoming(e.date)) as event (event.id)}
-            <li class="list-item">
-              <div class="relative inline-block flex-none">
-                <div class="entity-badge">
-                  <Fa icon={faCalendarDays} size="lg" />
+            <li>
+              <a href="/dashboard/events/{event.id}" class="list-item list-item-link">
+                <div class="relative inline-block flex-none">
+                  <div class="entity-badge">
+                    <Fa icon={faCalendarDays} size="lg" />
+                  </div>
                 </div>
-              </div>
-              <span class="list-item-content">
-                <dt class="font-bold truncate">
-                  {event.title}
-                </dt>
-                {#if event.description}
-                  <dd class="text-surface-600-400 text-sm truncate">
-                    {event.description}
-                  </dd>
-                {/if}
-                <dd class="flex items-center gap-2 text-sm text-surface-600-400">
-                  <span class="meta-item">
-                    <Fa icon={faCalendarDays} size="sm" />
-                    {formatEventDate(event.date)}
-                  </span>
-                  {#if event.location}
-                    <span class="meta-item truncate">
-                      <Fa icon={faLocationDot} size="sm" />
-                      {event.location}
-                    </span>
+                <span class="list-item-content">
+                  <dt class="font-bold truncate">
+                    {event.title}
+                  </dt>
+                  {#if event.description}
+                    <dd class="text-surface-600-400 text-sm truncate">
+                      {event.description}
+                    </dd>
                   {/if}
-                  <span class="meta-item">
-                    <Fa icon={faUsers} size="sm" />
-                    {event.section}
-                  </span>
-                </dd>
-              </span>
-              <span class="flex-none">
-                <a class="btn preset-tonal-primary" href="/dashboard/events/{event.id}">
-                  <Fa icon={faGripLines} />
-                  <span class="hidden sm:inline">{$_('button.view')}</span>
-                </a>
-              </span>
+                  <dd class="flex items-center gap-2 text-sm text-surface-600-400">
+                    <span class="meta-item">
+                      <Fa icon={faCalendarDays} size="sm" />
+                      {formatEventDate(event.date)}
+                    </span>
+                    {#if event.location}
+                      <span class="meta-item truncate">
+                        <Fa icon={faLocationDot} size="sm" />
+                        {event.location}
+                      </span>
+                    {/if}
+                    <span class="meta-item">
+                      <Fa icon={faUsers} size="sm" />
+                      {event.section}
+                    </span>
+                  </dd>
+                </span>
+                <Fa icon={faChevronRight} class="text-surface-400-600 flex-none" />
+              </a>
             </li>
           {/each}
         </ul>
@@ -186,44 +180,41 @@
         <h3>{$_('page.events.past')}</h3>
         <ul class="flex flex-col gap-2">
           {#each filteredEvents.filter((e) => isPast(e.date)) as event (event.id)}
-            <li class="list-item">
-              <div class="relative inline-block flex-none">
-                <div class="entity-badge">
-                  <Fa icon={faCalendarDays} size="lg" />
+            <li>
+              <a href="/dashboard/events/{event.id}" class="list-item list-item-link">
+                <div class="relative inline-block flex-none">
+                  <div class="entity-badge">
+                    <Fa icon={faCalendarDays} size="lg" />
+                  </div>
                 </div>
-              </div>
-              <span class="list-item-content">
-                <dt class="font-bold truncate">
-                  {event.title}
-                </dt>
-                {#if event.description}
-                  <dd class="text-surface-600-400 text-sm truncate">
-                    {event.description}
-                  </dd>
-                {/if}
-                <dd class="flex items-center gap-2 text-sm text-surface-600-400">
-                  <span class="meta-item">
-                    <Fa icon={faCalendarDays} size="sm" />
-                    {formatEventDate(event.date)}
-                  </span>
-                  {#if event.location}
-                    <span class="meta-item truncate">
-                      <Fa icon={faLocationDot} size="sm" />
-                      {event.location}
-                    </span>
+                <span class="list-item-content">
+                  <dt class="font-bold truncate">
+                    {event.title}
+                  </dt>
+                  {#if event.description}
+                    <dd class="text-surface-600-400 text-sm truncate">
+                      {event.description}
+                    </dd>
                   {/if}
-                  <span class="meta-item">
-                    <Fa icon={faUsers} size="sm" />
-                    {event.section}
-                  </span>
-                </dd>
-              </span>
-              <span class="flex-none">
-                <a class="btn preset-tonal-primary" href="/dashboard/events/{event.id}">
-                  <Fa icon={faGripLines} />
-                  <span class="hidden sm:inline">{$_('button.view')}</span>
-                </a>
-              </span>
+                  <dd class="flex items-center gap-2 text-sm text-surface-600-400">
+                    <span class="meta-item">
+                      <Fa icon={faCalendarDays} size="sm" />
+                      {formatEventDate(event.date)}
+                    </span>
+                    {#if event.location}
+                      <span class="meta-item truncate">
+                        <Fa icon={faLocationDot} size="sm" />
+                        {event.location}
+                      </span>
+                    {/if}
+                    <span class="meta-item">
+                      <Fa icon={faUsers} size="sm" />
+                      {event.section}
+                    </span>
+                  </dd>
+                </span>
+                <Fa icon={faChevronRight} class="text-surface-400-600 flex-none" />
+              </a>
             </li>
           {/each}
         </ul>

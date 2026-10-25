@@ -141,7 +141,16 @@ Skeleton v4 is headless, so `src/app.css` styles these directly:
 - **Forms:** label above the field, `*` after the label of required fields,
   Cancel (tonal) then Save (primary) at the bottom right.
 - **Detail pages:** `.page-header-back` with an icon-only back button, the
-  entity name as `h1`, actions on the right.
+  entity name as `h1`, Edit and the ⋮ `MoreMenu` on the right. Delete and
+  other rare actions live in the ⋮ menu, never as a visible button. Adding
+  and editing a member opens a dialog; trainings, events and exam days use
+  their own `/new` and `/edit` pages because their forms are long.
+- **List rows:** the whole row is the link (`.list-item.list-item-link`), with
+  a grey chevron (›) on the right; no separate "Anzeigen" button.
+- **Filters:** `PillToggle` (`src/lib/components/PillToggle.svelte`) for 2–4
+  fixed views of a list; chips (`chip preset-filled-primary-500` when on,
+  `preset-tonal-surface` when off) when there are more or the options come
+  from the data.
 - **Empty states:** `p.empty-state`: centred, muted (`surface-600-400`), 2rem
   vertical padding. Lists show one when empty and when a search finds nothing.
 - **Errors:** a toast with a translated message; never raw database text,

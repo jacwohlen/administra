@@ -1,4 +1,5 @@
 <script lang="ts">
+  import MoreMenu from '$lib/components/MoreMenu.svelte';
   import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
   import type { PageData } from './$types';
   let { data }: { data: PageData } = $props();
@@ -13,7 +14,6 @@
     faArrowLeft,
     faEdit,
     faTrash,
-    faEllipsisVertical,
     faUserTie
   } from '@fortawesome/free-solid-svg-icons';
   import { supabaseClient } from '$lib/supabase';
@@ -22,28 +22,6 @@
 
   let isDeleting = $state(false);
   let showDeleteConfirm = $state(false);
-  let menuOpen = $state(false);
-  let menuStyle = $state('');
-  let menuBtnEl = $state<HTMLButtonElement>();
-
-  function toggleMenu() {
-    if (menuOpen) {
-      menuOpen = false;
-      return;
-    }
-    if (!menuBtnEl) return;
-    const rect = menuBtnEl.getBoundingClientRect();
-    const top = rect.bottom + 4;
-    const left = rect.right - 192;
-    menuStyle = `position:fixed;top:${top}px;left:${left}px;z-index:9999;`;
-    menuOpen = true;
-  }
-
-  function handleWindowClick(e: MouseEvent) {
-    if (menuOpen && menuBtnEl && !menuBtnEl.contains(e.target as Node)) {
-      menuOpen = false;
-    }
-  }
 
   function getDateString() {
     const weekday = utils.weekdayToNumber(data.weekday);
@@ -83,8 +61,6 @@
   }
 </script>
 
-<svelte:window onclick={handleWindowClick} />
-
 <!-- Header -->
 <div class="page-header-back">
   <a
@@ -106,35 +82,21 @@
       >
         <Fa icon={faEdit} />
       </a>
-      <div class="relative">
-        <button
-          class="btn preset-tonal-surface"
-          bind:this={menuBtnEl}
-          onclick={toggleMenu}
-          title={$_('page.members.moreActions')}
-          aria-label={$_('page.members.moreActions')}
-        >
-          <Fa icon={faEllipsisVertical} />
-        </button>
-        {#if menuOpen}
-          <nav
-            class="card min-w-48 p-1 shadow-xl bg-surface-50-950 border border-surface-300-700"
-            style={menuStyle}
+      <MoreMenu>
+        {#snippet items(close)}
+          <button
+            class="btn w-full justify-start text-error-600-400"
+            onclick={() => {
+              close();
+              confirmDelete();
+            }}
+            disabled={isDeleting}
           >
-            <button
-              class="btn w-full justify-start text-error-600-400"
-              onclick={() => {
-                menuOpen = false;
-                confirmDelete();
-              }}
-              disabled={isDeleting}
-            >
-              <Fa icon={faTrash} />
-              <span>{$_('button.delete')}</span>
-            </button>
-          </nav>
-        {/if}
-      </div>
+            <Fa icon={faTrash} />
+            <span>{$_('button.delete')}</span>
+          </button>
+        {/snippet}
+      </MoreMenu>
     </div>
   {/if}
 </div>

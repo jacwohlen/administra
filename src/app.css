@@ -91,6 +91,19 @@ h4,
   min-width: 0;
 }
 
+/* A list row that opens its detail page: the whole row is the link, with a
+   chevron on the right */
+.list-item-link {
+  padding-inline: 0.5rem;
+  margin-inline: -0.5rem;
+  border-radius: var(--radius-base);
+  transition: background-color 0.15s;
+}
+
+.list-item-link:hover {
+  background-color: var(--color-surface-100-900);
+}
+
 .meta-item {
   display: flex;
   align-items: center;

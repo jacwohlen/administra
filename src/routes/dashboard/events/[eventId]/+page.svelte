@@ -1,4 +1,5 @@
 <script lang="ts">
+  import MoreMenu from '$lib/components/MoreMenu.svelte';
   import type { PageData } from './$types';
   import { supabaseClient } from '$lib/supabase';
   import { _ } from 'svelte-i18n';
@@ -274,15 +275,21 @@
         >
           <Fa icon={faEdit} />
         </a>
-        <button
-          class="btn preset-tonal-error"
-          onclick={confirmDelete}
-          disabled={isDeleting}
-          title={$_('button.delete')}
-          aria-label={$_('button.delete')}
-        >
-          <Fa icon={faTrash} />
-        </button>
+        <MoreMenu>
+          {#snippet items(close)}
+            <button
+              class="btn w-full justify-start text-error-600-400"
+              onclick={() => {
+                close();
+                confirmDelete();
+              }}
+              disabled={isDeleting}
+            >
+              <Fa icon={faTrash} />
+              <span>{$_('button.delete')}</span>
+            </button>
+          {/snippet}
+        </MoreMenu>
       </div>
     {/if}
   </div>

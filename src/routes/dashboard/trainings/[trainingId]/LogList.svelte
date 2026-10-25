@@ -4,7 +4,7 @@
   import {
     faExclamationTriangle,
     faCheckCircle,
-    faGripLines
+    faChevronRight
   } from '@fortawesome/free-solid-svg-icons';
   import { supabaseClient } from '$lib/supabase';
   import { _ } from 'svelte-i18n';
@@ -92,10 +92,7 @@
             {/if}
           </div>
 
-          <span class="btn preset-tonal-primary flex-shrink-0">
-            <Fa icon={faGripLines} />
-            <span>{$_('button.view')}</span>
-          </span>
+          <Fa icon={faChevronRight} class="text-surface-400-600 flex-none" />
         </a>
       {/each}
     </div>

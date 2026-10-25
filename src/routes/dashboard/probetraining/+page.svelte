@@ -1,4 +1,5 @@
 <script lang="ts">
+  import PillToggle from '$lib/components/PillToggle.svelte';
   import { modalDialog } from '$lib/modalDialog';
   import type { PageData } from './$types';
   import { untrack } from 'svelte';
@@ -428,19 +429,17 @@
         placeholder={$_('page.probetraining.searchPlaceholder')}
       />
     </label>
-    <div class="flex flex-wrap gap-1" role="tablist">
-      {#each FILTER_TABS as t (t)}
-        <button
-          role="tab"
-          aria-selected={tab === t}
-          class="btn btn-sm {tab === t ? 'preset-filled-primary-500' : 'preset-tonal-surface'}"
-          onclick={() => selectTab(t)}
-        >
-          {$_('page.probetraining.tab.' + t)}
-          <span class="tabular-nums opacity-70">{tabCounts[t]}</span>
-        </button>
-      {/each}
-    </div>
+    <PillToggle
+      name="trial-filter"
+      label={$_('page.probetraining.title')}
+      value={tab}
+      options={FILTER_TABS.map((t) => ({
+        value: t,
+        label: $_('page.probetraining.tab.' + t),
+        count: tabCounts[t]
+      }))}
+      onchange={(v) => selectTab(v as TrialTab)}
+    />
   </div>
 
   {#if tab === 'inactive' || tab === 'archived'}
