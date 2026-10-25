@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { modalDialog } from '$lib/modalDialog';
   import { supabaseClient } from '$lib/supabase';
   import { toaster } from '$lib/toast';
   import { _ } from 'svelte-i18n';
@@ -218,6 +219,7 @@
 >
   <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
   <div
+    use:modalDialog
     class="card modal-dialog modal-dialog-lg max-h-[90vh] overflow-y-auto"
     onclick={(e) => e.stopPropagation()}
   >
@@ -278,7 +280,7 @@
       {/if}
 
       <label class="label">
-        <span>{$_('page.exams.candidate.grade')}</span>
+        <span>{$_('page.exams.candidate.grade')} *</span>
         <div class="flex items-center gap-2">
           {#if selectedGrade}
             <BeltStrip color={selectedGrade.beltColor} color2={selectedGrade.beltColor2} />
@@ -385,6 +387,7 @@
                 class="btn preset-tonal-error"
                 title={$_('button.remove')}
                 onclick={() => (confirmRemove = true)}
+                aria-label={$_('button.remove')}
               >
                 <Fa icon={faTrash} />
               </button>

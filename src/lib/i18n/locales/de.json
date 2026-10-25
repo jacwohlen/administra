@@ -32,7 +32,7 @@
     },
     "users": {
       "title": "Benutzer",
-      "searchPlaceholder": "Benutzer suchen...",
+      "searchPlaceholder": "Benutzer suchen…",
       "empty": "Keine Benutzer gefunden",
       "unlinked": "Kein Mitglied verknüpft",
       "roleLabel": "Rolle",
@@ -72,6 +72,10 @@
         "roleChanged": "Rolle aktualisiert",
         "memberLinked": "Mitgliedsverknüpfung aktualisiert",
         "examRoleChanged": "Prüfungsrolle aktualisiert"
+      },
+      "disableConfirm": {
+        "title": "Benutzer deaktivieren?",
+        "message": "{name} kann sich danach nicht mehr anmelden, bis du das Konto wieder aktivierst."
       }
     },
     "settings": {
@@ -177,13 +181,13 @@
       "dateTo": "Bis",
       "section": "Sektion",
       "logs": "Protokolle",
-      "searchMembersPlaceholder": "Mitglied Suchen...",
+      "searchMembersPlaceholder": "Mitglied suchen…",
       "memberNotFound": "Mitglied nicht gefunden",
-      "addMemberPlaceholder": "Mitglied Hinzufügen...",
+      "addMemberPlaceholder": "Mitglied hinzufügen…",
       "attendanceSaveError": "Die Anwesenheit von {name} konnte nicht gespeichert werden. Bitte nochmals versuchen.",
       "noMainTrainerWarning": {
         "title": "Haupttrainer fehlt:",
-        "message": "Bitte markieren Sie mindestens einen Haupttrainer für diese Session."
+        "message": "Bitte markiere mindestens einen Haupttrainer für dieses Training."
       },
       "noTrainer": "Kein Trainer",
       "lessonPlan": "Trainingsplan",
@@ -193,8 +197,8 @@
       "lessonPlanTitle": "Trainingsplan",
       "createLessonPlan": "Plan erstellen",
       "titleTraining": "Titel",
-      "titlePlaceholder": "z.B. Grundtechniken, Sparring-Training...",
-      "contentPlaceholder": "Trainingsplan hier eingeben...",
+      "titlePlaceholder": "z.B. Grundtechniken, Sparring-Training…",
+      "contentPlaceholder": "Trainingsplan hier eingeben…",
       "lastEdited": "Zuletzt bearbeitet",
       "noLessonPlanMessage": "Noch kein Trainingsplan für dieses Datum erstellt.",
       "defaultTemplate": [
@@ -217,26 +221,26 @@
         "- ",
         ""
       ],
-      "uploadFile": "Datei Hochladen",
-      "selectFile": "Datei Auswählen",
+      "uploadFile": "Datei hochladen",
+      "selectFile": "Datei auswählen",
       "supportedFormats": "Unterstützte Formate",
       "or": "oder",
-      "writeContent": "Inhalt Schreiben",
+      "writeContent": "Inhalt schreiben",
       "textDisabledWhenFileSelected": "Textinhalt ist deaktiviert wenn eine Datei ausgewählt ist",
-      "uploading": "Hochladen...",
+      "uploading": "Hochladen…",
       "uploadError": "Fehler beim Hochladen der Datei",
       "saveError": "Fehler beim Speichern des Lektionsplans",
-      "create_training": "Training Erstellen",
-      "edit_training": "Training Bearbeiten",
+      "create_training": "Training erstellen",
+      "edit_training": "Training bearbeiten",
       "form": {
         "title": "Trainingstitel",
-        "title_placeholder": "z.B. Kinder Judo, Fortgeschrittenes Aikido...",
+        "title_placeholder": "z.B. Kinder Judo, Fortgeschrittenes Aikido…",
         "weekday": "Wochentag",
-        "select_weekday": "Wochentag auswählen...",
+        "select_weekday": "Wochentag auswählen…",
         "time_from": "Startzeit",
         "time_to": "Endzeit",
         "section": "Sektion",
-        "select_section": "Sektion auswählen...",
+        "select_section": "Sektion auswählen…",
         "age_from": "Alter von",
         "age_to": "Alter bis",
         "age_placeholder": "z.B. 5",
@@ -254,10 +258,18 @@
       "createError": "Fehler beim Erstellen des Trainings",
       "updateSuccess": "Training erfolgreich aktualisiert",
       "updateError": "Fehler beim Aktualisieren des Trainings",
-      "deleteConfirmTitle": "Training Löschen",
-      "deleteConfirmMessage": "Sind Sie sicher, dass Sie das Training löschen möchten",
+      "deleteConfirmTitle": "Training löschen",
+      "deleteConfirmMessage": "Bist du sicher, dass du das Training löschen möchtest",
       "deleteSuccess": "Training erfolgreich gelöscht",
-      "deleteError": "Fehler beim Löschen des Trainings"
+      "deleteError": "Fehler beim Löschen des Trainings",
+      "noLogsMessage": "Für dieses Training wurde noch keine Anwesenheit erfasst.",
+      "supportedFormatsList": "PDF, Bilder, Word-Dokumente, Textdateien",
+      "attachment": "Anhang",
+      "pdfPreview": "PDF-Vorschau",
+      "backToList": "Zurück zu den Trainings",
+      "backToTraining": "Zurück zum Training",
+      "empty": "Noch keine Trainings erfasst.",
+      "removeParticipantConfirm": "{name} aus diesem Training entfernen?"
     },
     "members": {
       "title": "Mitglieder",
@@ -268,7 +280,7 @@
       "mobile": "Mobiltelefon",
       "email": "E-Mail",
       "notes": "Notizen",
-      "notesPlaceholder": "Freie Notizen zum Mitglied...",
+      "notesPlaceholder": "Freie Notizen zum Mitglied…",
       "labels": "Labels",
       "backToList": "Zurück zur Mitgliederliste",
       "age": "{age} Jahre",
@@ -295,7 +307,7 @@
       "deleteSuccess": "Mitglied erfolgreich gelöscht",
       "deleteError": "Fehler beim Löschen des Mitglieds",
       "trainingsSummary": {
-        "title": "Trainings Übersicht",
+        "title": "Trainingsübersicht",
         "noItems": "Keine Trainings registriert",
         "table": {
           "title": "Training",
@@ -306,12 +318,14 @@
         }
       },
       "trainingsHistory": {
-        "title": "Trainings Historie",
+        "title": "Trainingsverlauf",
         "noItems": "Keine Trainings registriert"
       },
       "moreActions": "Weitere Aktionen",
       "archived": "Archiviert am {date} – erscheint nicht in der Mitgliederliste und der Suche.",
-      "archivedLink": "Im Probetraining-Archiv wiederherstellen"
+      "archivedLink": "Im Probetraining-Archiv wiederherstellen",
+      "empty": "Noch keine Mitglieder erfasst.",
+      "noResults": "Keine Mitglieder entsprechen deiner Suche"
     },
     "stats": {
       "all": "Alle",
@@ -319,7 +333,7 @@
       "topTrainers": "Top Trainer",
       "topEventParticipants": "Top Event-Teilnehmer",
       "topEventCoaches": "Top Event-Coaches",
-      "loading": "Lädt...",
+      "loading": "Lädt…",
       "no_event_data": "Keine Event-Daten verfügbar",
       "downloadTrainerTracking": "Trainerübersicht herunterladen",
       "noTrainerData": "Keine Trainerdaten für diesen Zeitraum verfügbar",
@@ -372,7 +386,8 @@
         "members": "Neu dabei ({count})",
         "since": "seit {date}",
         "none": "Keine neuen Mitglieder"
-      }
+      },
+      "loadError": "Die Daten konnten nicht geladen werden. Bitte lade die Seite neu."
     },
     "events": {
       "title": "Events",
@@ -380,24 +395,24 @@
       "upcoming": "Kommende Events",
       "past": "Vergangene Events",
       "no_events": "Keine Events gefunden",
-      "no_events_found": "Keine Events entsprechen Ihrer Suche",
-      "search_placeholder": "Events suchen...",
-      "create_event": "Event Erstellen",
-      "create_first_event": "Erstes Event Erstellen",
-      "edit_event": "Event Bearbeiten",
-      "add_participant": "Teilnehmer Hinzufügen",
+      "no_events_found": "Keine Events entsprechen deiner Suche",
+      "search_placeholder": "Events suchen…",
+      "create_event": "Event erstellen",
+      "create_first_event": "Erstes Event erstellen",
+      "edit_event": "Event bearbeiten",
+      "add_participant": "Teilnehmer hinzufügen",
       "add_as_attended_hint": "Hinzugefügte Teilnehmer werden direkt als anwesend erfasst.",
-      "select_member": "Mitglied Auswählen",
-      "choose_member": "Mitglied wählen...",
-      "search_members_placeholder": "Mitglieder suchen...",
+      "select_member": "Mitglied auswählen",
+      "choose_member": "Mitglied wählen…",
+      "search_members_placeholder": "Mitglieder suchen…",
       "participants": "Teilnehmer",
       "no_participants": "Noch keine Teilnehmer registriert",
       "description": "Beschreibung",
       "registration_info": "Anmelde-Informationen",
       "registration_deadline": "Anmeldeschluss",
-      "registration_closed": "Anmeldung Geschlossen",
+      "registration_closed": "Anmeldung geschlossen",
       "max_participants": "Max. Teilnehmer",
-      "event_full": "Event Ausgebucht",
+      "event_full": "Event ausgebucht",
       "attended_at": "Teilgenommen um",
       "stats": {
         "registered": "Angemeldet",
@@ -412,16 +427,16 @@
       },
       "form": {
         "title": "Event-Titel",
-        "title_placeholder": "z.B. Turnier, Seminar, Prüfung...",
+        "title_placeholder": "z.B. Turnier, Seminar, Prüfung…",
         "description": "Beschreibung",
-        "description_placeholder": "Beschreibe worum es bei diesem Event geht...",
+        "description_placeholder": "Beschreibe worum es bei diesem Event geht…",
         "date": "Datum",
         "time_from": "Startzeit",
         "time_to": "Endzeit",
         "location": "Ort",
-        "location_placeholder": "z.B. Haupthalle, Externe Location...",
+        "location_placeholder": "z.B. Haupthalle, Externe Location…",
         "section": "Sektion",
-        "select_section": "Sektion auswählen...",
+        "select_section": "Sektion auswählen…",
         "max_participants": "Max. Teilnehmer",
         "max_participants_placeholder": "Leer lassen für unbegrenzt",
         "registration_deadline": "Anmeldeschluss"
@@ -429,13 +444,24 @@
       "validation": {
         "required_fields": "Bitte alle Pflichtfelder ausfüllen"
       },
-      "deleteConfirmTitle": "Event Löschen",
-      "deleteConfirmMessage": "Sind Sie sicher, dass Sie das Event löschen möchten",
+      "deleteConfirmTitle": "Event löschen",
+      "deleteConfirmMessage": "Bist du sicher, dass du das Event löschen möchtest",
       "deleteSuccess": "Event erfolgreich gelöscht",
       "deleteError": "Fehler beim Löschen des Events",
       "coach": "Coach",
       "make_coach": "Als Coach markieren",
-      "remove_coach": "Coach entfernen"
+      "remove_coach": "Coach entfernen",
+      "mark_attended": "Anwesenheit eintragen",
+      "removeParticipant": "Teilnehmer entfernen",
+      "removeParticipantConfirm": "{name} von diesem Event abmelden?",
+      "removeParticipantError": "Teilnehmer konnte nicht entfernt werden",
+      "attendanceError": "Anwesenheit konnte nicht gespeichert werden",
+      "coachError": "Coach-Status konnte nicht gespeichert werden",
+      "addParticipantError": "Teilnehmer konnte nicht hinzugefügt werden",
+      "createError": "Fehler beim Erstellen des Events",
+      "updateError": "Fehler beim Aktualisieren des Events",
+      "backToList": "Zurück zu den Events",
+      "backToEvent": "Zurück zum Event"
     },
     "trialRegistration": {
       "title": "Anmeldung Probetraining",
@@ -447,11 +473,11 @@
       "emailHint": "Bei Kindern bitte die E-Mail eines Elternteils angeben.",
       "mobile": "Mobilnummer",
       "section": "Sektion / Interesse",
-      "sectionPlaceholder": "Bitte wählen...",
+      "sectionPlaceholder": "Bitte wählen…",
       "notes": "Anmerkung",
-      "notesPlaceholder": "Z.B. Vorerfahrung, gewünschter Zeitpunkt, Fragen...",
+      "notesPlaceholder": "Z.B. Vorerfahrung, gewünschter Zeitpunkt, Fragen…",
       "submit": "Anmeldung absenden",
-      "submitting": "Sende...",
+      "submitting": "Sende…",
       "successTitle": "Vielen Dank!",
       "successMessage": "Deine Anmeldung ist bei uns eingegangen – du erhältst gleich eine Bestätigung per E-Mail. Wir melden uns in Kürze mit einem Termin für dein Probetraining.",
       "validation": {
@@ -473,7 +499,7 @@
       "registeredOn": "angemeldet am",
       "attended": "Bereits besuchte Probetrainings",
       "convertHint": "Hat die vereinbarte Anzahl erreicht – Mitgliedschaft klären.",
-      "searchPlaceholder": "Name suchen...",
+      "searchPlaceholder": "Name suchen…",
       "noResults": "Keine Kandidaten entsprechen dieser Auswahl.",
       "assignTraining": "Training zuweisen",
       "manageTrainings": "Trainings verwalten",
@@ -630,7 +656,8 @@
       "resendIn": "Erneut senden in {seconds} s",
       "errorSend": "Der Code konnte nicht gesendet werden. Bitte prüfe die E-Mail-Adresse.",
       "errorCode": "Der Code ist falsch oder abgelaufen. Versuch es nochmals.",
-      "errorRateLimit": "Zu viele Versuche. Bitte warte einen Moment und versuch es dann nochmals."
+      "errorRateLimit": "Zu viele Versuche. Bitte warte einen Moment und versuch es dann nochmals.",
+      "errorOAuth": "Die Anmeldung hat nicht geklappt: {reason}"
     },
     "club": {
       "myProfile": "Mein Profil",
@@ -1065,27 +1092,27 @@
   },
   "button": {
     "view": "Anzeigen",
-    "openDashboard": "Dashboard Öffnen",
+    "openDashboard": "Dashboard öffnen",
     "login": "Anmelden",
     "logout": "Abmelden",
     "day": "Tag",
     "week": "Woche",
     "year": "Jahr",
     "trackAttendance": "Anwesenheit bearbeiten",
-    "loadMore": "Mehr Laden",
+    "loadMore": "Mehr laden",
     "remove": "Entfernen",
     "add": "Hinzufügen",
     "save": "Speichern",
-    "saving": "Speichere...",
+    "saving": "Speichere…",
     "edit": "Bearbeiten",
-    "createNew": "Neu Erstellen",
+    "createNew": "Neu erstellen",
     "cancel": "Abbrechen",
     "close": "Schliessen",
     "confirm": "Bestätigen",
     "delete": "Löschen",
-    "deleting": "Lösche...",
+    "deleting": "Lösche…",
     "create": "Erstellen",
-    "creating": "Erstelle...",
+    "creating": "Erstelle…",
     "download": "Herunterladen",
     "lightMode": "Heller Modus",
     "darkMode": "Dunkler Modus",
@@ -1096,10 +1123,10 @@
     "newMember": {
       "title": "Neues Mitglied",
       "lastName": "Nachname",
-      "lastNamePlaceholder": "Nachname eingeben...",
+      "lastNamePlaceholder": "Nachname eingeben…",
       "firstName": "Vorname",
-      "firstNamePlaceholder": "Vorname eingeben...",
-      "labelPlaceholder": "Label hinzufügen..."
+      "firstNamePlaceholder": "Vorname eingeben…",
+      "labelPlaceholder": "Label hinzufügen…"
     },
     "editMember": {
       "title": "Mitglied bearbeiten",
@@ -1107,7 +1134,7 @@
       "updateError": "Fehler beim Aktualisieren des Mitglieds"
     },
     "confirm": {
-      "title": "Bitte Bestätigen",
+      "title": "Bitte bestätigen",
       "body": "Bist du sicher, dass du fortfahren möchtest?"
     }
   },
@@ -1115,7 +1142,7 @@
     "title": "Abzeichen",
     "noBadges": "Noch keine Abzeichen verdient",
     "refreshAll": "Abzeichen aktualisieren",
-    "refreshing": "Aktualisiere...",
+    "refreshing": "Aktualisiere…",
     "refreshSuccess": "Abzeichen erfolgreich aktualisiert",
     "refreshError": "Fehler beim Aktualisieren der Abzeichen",
     "leaderboard": "Abzeichen-Rangliste",

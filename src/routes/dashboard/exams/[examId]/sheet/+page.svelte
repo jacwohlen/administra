@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { modalDialog } from '$lib/modalDialog';
   import { tick } from 'svelte';
   import { fly } from 'svelte/transition';
   import { beforeNavigate, invalidate } from '$app/navigation';
@@ -587,9 +588,8 @@
   <div bind:this={chipRow} class="flex gap-2 overflow-x-auto pb-2" role="group">
     {#each groups as g (g[0].id)}
       <button
-        class="btn btn-sm flex-none {g === group
-          ? 'preset-filled-primary-500'
-          : 'preset-tonal-surface'}"
+        type="button"
+        class="chip flex-none {g === group ? 'preset-filled-primary-500' : 'preset-tonal-surface'}"
         aria-pressed={g === group}
         onclick={() => showGroup(groups.indexOf(g))}
       >
@@ -1028,7 +1028,7 @@
     }}
   >
     <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
-    <div class="card modal-dialog" onclick={(e) => e.stopPropagation()}>
+    <div use:modalDialog class="card modal-dialog" onclick={(e) => e.stopPropagation()}>
       <h3>{$_('dialog.confirm.title')}</h3>
       <p class="mb-2">
         {#if result === 'passed'}

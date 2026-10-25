@@ -44,7 +44,7 @@
     {:else}
       <p class="empty-state">{emptyText ?? $_('page.stats.no_data')}</p>
     {/if}
-  {:catch error}
-    <p class="text-sm text-error-600-400">{error.message}</p>
+  {:catch}
+    <p class="text-sm text-error-600-400">{$_('page.stats.loadError')}</p>
   {/await}
 </StatsSection>

@@ -85,7 +85,7 @@
 
 <form class="space-y-4">
   <label class="label">
-    <span>{$_('dialog.newMember.lastName')}</span>
+    <span>{$_('dialog.newMember.lastName')} *</span>
     <input
       class="input"
       bind:value={formData.lastname}
@@ -95,7 +95,7 @@
     />
   </label>
   <label class="label">
-    <span>{$_('dialog.newMember.firstName')}</span>
+    <span>{$_('dialog.newMember.firstName')} *</span>
     <input
       class="input"
       bind:value={formData.firstname}

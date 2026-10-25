@@ -5,7 +5,6 @@
     faBookOpen,
     faCalendarDays,
     faChevronRight,
-    faGripLines,
     faPlus,
     faUsers
   } from '@fortawesome/free-solid-svg-icons';
@@ -63,35 +62,29 @@
   <ul class="flex flex-col gap-2">
     {#each exams as exam (exam.id)}
       {@const c = counts(exam)}
-      <li class="list-item">
-        <div class="entity-badge text-primary-600-400">
-          <Fa icon={faAward} size="lg" />
-        </div>
-        <a href="/dashboard/exams/{exam.id}" class="list-item-content">
-          <div class="font-bold truncate">{exam.title}</div>
-          <div class="flex flex-wrap items-center gap-x-3 text-sm text-surface-600-400">
-            <span class="meta-item">
-              <Fa icon={faCalendarDays} size="sm" />
-              {dayjs(exam.date).format('DD.MM.YYYY')}
-            </span>
-            <span>{exam.section}</span>
-            <span class="meta-item">
-              <Fa icon={faUsers} size="sm" />
-              {$_('page.exams.candidateCount', { values: { count: c.registered } })}
-            </span>
-            {#if c.passed > 0}
-              <span>{$_('page.exams.passedCount', { values: { count: c.passed } })}</span>
-            {/if}
+      <li>
+        <a href="/dashboard/exams/{exam.id}" class="list-item list-item-link">
+          <div class="entity-badge text-primary-600-400">
+            <Fa icon={faAward} size="lg" />
           </div>
-        </a>
-        <a
-          class="btn preset-tonal-primary flex-none"
-          href="/dashboard/exams/{exam.id}"
-          title={$_('button.view')}
-          aria-label="{$_('button.view')}: {exam.title}"
-        >
-          <Fa icon={faGripLines} />
-          <span class="hidden sm:inline">{$_('button.view')}</span>
+          <span class="list-item-content">
+            <div class="font-bold truncate">{exam.title}</div>
+            <div class="flex flex-wrap items-center gap-x-3 text-sm text-surface-600-400">
+              <span class="meta-item">
+                <Fa icon={faCalendarDays} size="sm" />
+                {dayjs(exam.date).format('DD.MM.YYYY')}
+              </span>
+              <span>{exam.section}</span>
+              <span class="meta-item">
+                <Fa icon={faUsers} size="sm" />
+                {$_('page.exams.candidateCount', { values: { count: c.registered } })}
+              </span>
+              {#if c.passed > 0}
+                <span>{$_('page.exams.passedCount', { values: { count: c.passed } })}</span>
+              {/if}
+            </div>
+          </span>
+          <Fa icon={faChevronRight} class="text-surface-400-600 flex-none" />
         </a>
       </li>
     {/each}
@@ -99,9 +92,7 @@
 {/snippet}
 
 {#if data.exams.length === 0}
-  <div class="empty-state">
-    <p>{$_('page.exams.empty')}</p>
-  </div>
+  <p class="empty-state">{$_('page.exams.empty')}</p>
 {:else}
   <div class="space-y-6">
     {#if upcoming.length > 0}

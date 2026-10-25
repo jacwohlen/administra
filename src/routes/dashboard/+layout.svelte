@@ -194,7 +194,7 @@
         {#if data.session.user.user_metadata.avatar_url && !avatarError}
           <img
             src={data.session.user.user_metadata.avatar_url}
-            alt="Profile"
+            alt={$_('page.dashboard.myProfile')}
             class="size-8 rounded-full object-cover hover:ring-2 ring-primary-600-400"
             onerror={() => (avatarError = true)}
           />
@@ -270,7 +270,7 @@
             <LanguageSwitcher onselect={() => (popoverOpen = false)} />
           </div>
           <form action="/logout" method="POST" use:enhance={submitLogout}>
-            <button type="submit" class="btn preset-filled w-full">
+            <button type="submit" class="btn preset-tonal-surface w-full">
               {$_('button.logout')}
             </button>
           </form>

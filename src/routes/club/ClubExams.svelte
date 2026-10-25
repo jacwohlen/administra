@@ -1,4 +1,5 @@
 <script lang="ts">
+  import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
   import { invalidate } from '$app/navigation';
   import { _ } from 'svelte-i18n';
   import Fa from 'svelte-fa';
@@ -131,7 +132,7 @@
   <section class="card border border-surface-200-800 p-4">
     <h3>{$_('page.club.exams.title')}</h3>
 
-    <div class="divide-y divide-surface-300-700">
+    <div class="divide-y divide-surface-200-800">
       {#each exams.upcoming as exam (exam.id)}
         {@const reg = registrationFor(exam)}
         {@const open = isOpen(exam)}
@@ -216,7 +217,7 @@
               }}
             >
               <label class="label">
-                <span>{$_('page.club.exams.grade')}</span>
+                <span>{$_('page.club.exams.grade')} *</span>
                 <select class="select" bind:value={form.grade} required>
                   {#each options(exam) as g (g.grade)}
                     <option value={g.grade}>{g.grade}</option>
@@ -277,30 +278,14 @@
 
 {#if confirmWithdraw}
   {@const { reg, exam } = confirmWithdraw}
-  <!-- svelte-ignore a11y_no_static_element_interactions -->
-  <div
-    class="modal-overlay"
-    onclick={() => (confirmWithdraw = null)}
-    onkeydown={(e) => {
-      if (e.key === 'Escape') confirmWithdraw = null;
-    }}
-  >
-    <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
-    <div class="card modal-dialog" onclick={(e) => e.stopPropagation()}>
-      <h3>{$_('dialog.confirm.title')}</h3>
-      <p class="mb-4">
-        {$_('page.club.exams.withdrawConfirm', {
-          values: { name: member.firstname, title: exam.title }
-        })}
-      </p>
-      <div class="flex justify-end gap-2">
-        <button class="btn preset-tonal-surface" onclick={() => (confirmWithdraw = null)}>
-          {$_('button.cancel')}
-        </button>
-        <button class="btn preset-filled-error-500" onclick={() => withdraw(reg)} disabled={busy}>
-          {$_('page.club.exams.withdraw')}
-        </button>
-      </div>
-    </div>
-  </div>
+  <ConfirmDialog
+    title={$_('dialog.confirm.title')}
+    message={$_('page.club.exams.withdrawConfirm', {
+      values: { name: member.firstname, title: exam.title }
+    })}
+    confirmLabel={$_('page.club.exams.withdraw')}
+    {busy}
+    oncancel={() => (confirmWithdraw = null)}
+    onconfirm={() => withdraw(reg)}
+  />
 {/if}

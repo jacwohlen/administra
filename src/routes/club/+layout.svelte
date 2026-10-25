@@ -112,7 +112,7 @@
           />
         {:else}
           <span
-            class="size-8 rounded-full bg-surface-200-800 flex items-center justify-center text-xs font-bold hover:ring-2 ring-primary-600-400"
+            class="size-8 rounded-full bg-surface-100-900 flex items-center justify-center text-xs font-bold hover:ring-2 ring-primary-600-400"
           >
             {initials}
           </span>
@@ -151,7 +151,7 @@
             <span>{isDark ? $_('button.lightMode') : $_('button.darkMode')}</span>
           </button>
           <LanguageSwitcher onselect={() => (menuOpen = false)} />
-          <button type="button" class="btn preset-filled w-full" onclick={logout}>
+          <button type="button" class="btn preset-tonal-surface w-full" onclick={logout}>
             <Fa icon={faArrowRightFromBracket} />
             <span>{$_('button.logout')}</span>
           </button>

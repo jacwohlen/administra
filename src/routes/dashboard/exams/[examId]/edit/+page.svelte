@@ -1,4 +1,5 @@
 <script lang="ts">
+  import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
   import { goto, invalidate } from '$app/navigation';
   import { _ } from 'svelte-i18n';
   import Fa from 'svelte-fa';
@@ -61,26 +62,12 @@
 />
 
 {#if confirmDelete}
-  <!-- svelte-ignore a11y_no_static_element_interactions -->
-  <div
-    class="modal-overlay"
-    onclick={() => (confirmDelete = false)}
-    onkeydown={(e) => {
-      if (e.key === 'Escape') confirmDelete = false;
-    }}
-  >
-    <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
-    <div class="card modal-dialog" onclick={(e) => e.stopPropagation()}>
-      <h3>{$_('dialog.confirm.title')}</h3>
-      <p class="mb-4">{$_('page.exams.deleteConfirm', { values: { title: data.exam.title } })}</p>
-      <div class="flex justify-end gap-2">
-        <button class="btn preset-tonal-surface" onclick={() => (confirmDelete = false)}>
-          {$_('button.cancel')}
-        </button>
-        <button class="btn preset-filled-error-500" onclick={remove} disabled={deleting}>
-          {$_('button.delete')}
-        </button>
-      </div>
-    </div>
-  </div>
+  <ConfirmDialog
+    title={$_('dialog.confirm.title')}
+    message={$_('page.exams.deleteConfirm', { values: { title: data.exam.title } })}
+    confirmLabel={$_('button.delete')}
+    busy={deleting}
+    oncancel={() => (confirmDelete = false)}
+    onconfirm={remove}
+  />
 {/if}
