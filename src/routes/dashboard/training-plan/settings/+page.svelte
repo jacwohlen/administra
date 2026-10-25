@@ -1,4 +1,5 @@
 <script lang="ts">
+  import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
   import Fa from 'svelte-fa';
   import {
     faArrowLeft,
@@ -19,6 +20,7 @@
   let { data }: { data: PageData } = $props();
 
   let busy = $state(false);
+  let confirmRemove = $state<TrainingPlanBreak | null>(null);
   let form = $state({ title: '', date_from: '', date_to: '', cancels_training: false });
 
   async function refresh() {
@@ -77,10 +79,7 @@
   }
 
   async function removeBreak(b: TrainingPlanBreak) {
-    if (
-      !confirm($_('page.trainingPlan.settings.breakDeleteConfirm', { values: { title: b.title } }))
-    )
-      return;
+    confirmRemove = null;
     busy = true;
     const { error } = await supabaseClient.from('training_plan_breaks').delete().eq('id', b.id);
     busy = false;
@@ -205,7 +204,7 @@
           </label>
           <button
             class="btn-icon size-11 p-0 flex-none text-error-600-400 hover:preset-tonal-error"
-            onclick={() => removeBreak(b)}
+            onclick={() => (confirmRemove = b)}
             disabled={busy}
             title={$_('button.delete')}
             aria-label="{$_('button.delete')}: {b.title}"
@@ -227,3 +226,14 @@
     onimported={refresh}
   />
 </section>
+
+{#if confirmRemove}
+  {@const b = confirmRemove}
+  <ConfirmDialog
+    title={$_('dialog.confirm.title')}
+    message={$_('page.trainingPlan.settings.breakDeleteConfirm', { values: { title: b.title } })}
+    confirmLabel={$_('button.delete')}
+    oncancel={() => (confirmRemove = null)}
+    onconfirm={() => removeBreak(b)}
+  />
+{/if}

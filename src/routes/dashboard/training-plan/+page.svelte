@@ -1,4 +1,5 @@
 <script lang="ts">
+  import PillToggle from '$lib/components/PillToggle.svelte';
   import Fa from 'svelte-fa';
   import {
     faArrowLeft,
@@ -8,8 +9,6 @@
     faCalendarDays,
     faCheck,
     faGear,
-    faList,
-    faTableCells,
     faPen,
     faPlus,
     faPrint,
@@ -267,22 +266,17 @@
   </div>
 {:else}
   <!-- View: overview of all trainings, or one training as a table to fill in quickly -->
-  <div
-    class="flex rounded-lg overflow-hidden border border-surface-300-700 mb-3 print:hidden"
-    role="group"
-  >
-    {#each ['list', 'table'] as const as v (v)}
-      <button
-        class="btn flex-1 rounded-none {view === v
-          ? 'preset-filled-primary-500'
-          : 'preset-tonal-surface'}"
-        aria-pressed={view === v}
-        onclick={() => setView(v)}
-      >
-        <Fa icon={v === 'list' ? faList : faTableCells} />
-        <span>{$_('page.trainingPlan.view.' + v)}</span>
-      </button>
-    {/each}
+  <div class="mb-3 print:hidden">
+    <PillToggle
+      name="plan-view"
+      label={$_('page.trainingPlan.title')}
+      value={view}
+      options={(['list', 'table'] as const).map((v) => ({
+        value: v,
+        label: $_('page.trainingPlan.view.' + v)
+      }))}
+      onchange={(v) => setView(v as typeof view)}
+    />
   </div>
 
   {#if view === 'table'}
@@ -291,7 +285,7 @@
         <button
           class="chip min-h-9 {gridTraining?.id === t.id
             ? 'preset-filled-primary-500'
-            : 'bg-surface-100-900 text-surface-700-300'}"
+            : 'preset-tonal-surface'}"
           onclick={() => setGridTraining(t.id)}
           aria-pressed={gridTraining?.id === t.id}
         >
