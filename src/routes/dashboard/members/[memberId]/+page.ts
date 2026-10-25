@@ -56,7 +56,8 @@ export const load = (async ({ params, depends }) => {
     gradeHistoryResult,
     medalResult,
     gradeDefinitions,
-    eventResult
+    eventResult,
+    linkResult
   ] = await Promise.all([
     supabaseClient.rpc('get_member_badges', { p_member_id: memberId }),
     supabaseClient.rpc('get_member_badge_progress', { p_member_id: memberId }),
@@ -79,6 +80,13 @@ export const load = (async ({ params, depends }) => {
       .lte('date', today)
       .order('date', { ascending: false })
       .limit(100),
+    // The provider a member comes from owns name, birthday, contact and groups
+    supabaseClient
+      .from('member_links')
+      .select('connection')
+      .eq('member_id', memberId)
+      .limit(1)
+      .returns<{ connection: string }[]>(),
     resolveAvatar()
   ]);
 
@@ -94,6 +102,7 @@ export const load = (async ({ params, depends }) => {
     gradeHistory: list<MemberGrade>(gradeHistoryResult),
     medals: list<MemberMedal>(medalResult),
     gradeDefinitions,
-    pastEvents: list<PastEvent>(eventResult)
+    pastEvents: list<PastEvent>(eventResult),
+    managedBy: list<{ connection: string }>(linkResult)[0]?.connection ?? null
   };
 }) satisfies PageLoad;

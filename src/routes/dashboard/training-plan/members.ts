@@ -1,7 +1,8 @@
 import { supabaseClient } from '$lib/supabase';
 import dayjs from 'dayjs';
 import type { PlanTraining } from '$lib/trainingPlanUtils';
-import { hasTrialLabel } from '$lib/trialUtils';
+import { canBeTrainer } from '$lib/memberStatus';
+import type { MembershipStatus } from '$lib/models';
 
 export interface PlanMember {
   id: number;
@@ -15,8 +16,8 @@ export interface PlanMember {
 }
 
 /**
- * The members a training can be planned for (no trial candidates, nobody
- * archived), trainers of the planned trainings first
+ * The members a training can be planned for (active and passive members,
+ * nobody archived), trainers of the planned trainings first
  */
 export async function loadPlanMembers(
   trainings: PlanTraining[],
@@ -25,11 +26,19 @@ export async function loadPlanMembers(
   const [members, logs] = await Promise.all([
     supabaseClient
       .from('members')
-      .select('id, firstname, lastname, labels')
+      .select('id, firstname, lastname, labels, membership_status')
       .is('archivedAt', null)
       .order('lastname')
       .order('firstname')
-      .returns<{ id: number; firstname: string; lastname: string; labels: string[] | null }[]>(),
+      .returns<
+        {
+          id: number;
+          firstname: string;
+          lastname: string;
+          labels: string[] | null;
+          membership_status: MembershipStatus | null;
+        }[]
+      >(),
     trainings.length > 0
       ? supabaseClient
           .from('logs')
@@ -57,7 +66,7 @@ export async function loadPlanMembers(
   }
 
   return (members.data ?? [])
-    .filter((m) => trainerIds.has(m.id) || !hasTrialLabel(m.labels))
+    .filter((m) => trainerIds.has(m.id) || canBeTrainer(m.membership_status))
     .map((m) => ({
       id: m.id,
       firstname: m.firstname,

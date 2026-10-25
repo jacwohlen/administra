@@ -76,6 +76,12 @@
       "disableConfirm": {
         "title": "Benutzer deaktivieren?",
         "message": "{name} kann sich danach nicht mehr anmelden, bis du das Konto wieder aktivierst."
+      },
+      "accessReport": {
+        "title": "Verlieren den Zugang, sobald die Mitgliedschaft zählt",
+        "description": "Diese Mitglieder-Konten sind freigegeben, aber keiner ihrer Mitglieder-Einträge ist aktiv oder passiv (z. B. Nicht-Mitglieder oder Ausgetretene). Noch hat sich nichts geändert: Erst wenn die Anmeldung eine aktive oder passive Mitgliedschaft voraussetzt, gehen diese Konten zurück auf «Ausstehend».",
+        "approvedByAdmin": "von Admin freigegeben",
+        "noMember": "kein Mitglied-Eintrag"
       }
     },
     "settings": {
@@ -325,7 +331,17 @@
       "archived": "Archiviert am {date} – erscheint nicht in der Mitgliederliste und der Suche.",
       "archivedLink": "Im Probetraining-Archiv wiederherstellen",
       "empty": "Noch keine Mitglieder erfasst.",
-      "noResults": "Keine Mitglieder entsprechen deiner Suche"
+      "noResults": "Keine Mitglieder entsprechen deiner Suche",
+      "status": {
+        "trial": "Probetraining",
+        "active": "Aktiv",
+        "passive": "Passiv",
+        "non_member": "Nicht-Mitglied",
+        "left": "Ausgetreten"
+      },
+      "showAll": "Auch Nicht-Mitglieder und Ausgetretene anzeigen",
+      "managedBy": "Name, Geburtstag, Telefon, E-Mail und Gruppen kommen aus {provider} und werden dort geändert.",
+      "managedError": "Diese Angaben kommen aus {provider} und können nur dort geändert werden."
     },
     "stats": {
       "all": "Alle",
@@ -1131,7 +1147,8 @@
     "editMember": {
       "title": "Mitglied bearbeiten",
       "updateSuccess": "Mitglied erfolgreich aktualisiert",
-      "updateError": "Fehler beim Aktualisieren des Mitglieds"
+      "updateError": "Fehler beim Aktualisieren des Mitglieds",
+      "managedHint": "Name, Geburtstag, Telefon, E-Mail und Gruppen kommen aus {provider} und werden dort geändert. Hier kannst du die Notizen bearbeiten."
     },
     "confirm": {
       "title": "Bitte bestätigen",

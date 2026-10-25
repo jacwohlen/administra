@@ -21,6 +21,13 @@ Fetches all members from Webling and syncs them to Administra.
 A member that cannot be read (e.g. a Webling field was renamed) fails on its
 own: the other members are still synced, and the run ends red.
 
+Every synced member is linked to Webling in `member_links` (one request per
+run). Administra then shows its name, birthday, contact and groups as
+maintained in Webling and does not let staff change them. On a database
+without that table yet (migration not promoted) the links are skipped with
+a warning. The membership status follows the groups, see
+`docs/INTEGRATIONS.md`.
+
 ### 2. Events Sync (`src/events.py`)
 
 Fetches calendar events from Webling calendars and syncs them to Administra. Only syncs events from the current year onwards (skips past events). Supports syncing all calendars or filtering by specific calendar IDs or names.

@@ -7,6 +7,7 @@
   import MemberProfile from '$lib/components/memberProfile/MemberProfile.svelte';
   import {
     faArrowLeft,
+    faArrowsRotate,
     faBoxArchive,
     faCamera,
     faEdit,
@@ -22,6 +23,12 @@
   import { goto, invalidate } from '$app/navigation';
   import MemberForm from '../MemberForm.svelte';
   import { toaster } from '$lib/toast';
+  import {
+    isManagedByProviderError,
+    providerName,
+    statusChip,
+    visibleLabels
+  } from '$lib/memberStatus';
 
   let { data }: { data: PageData } = $props();
   let loadingImage = $state(false);
@@ -34,6 +41,13 @@
   // Viewers get the profile read-only; the database enforces the same
   let canWrite = $derived(data.canWrite);
   let showPhotoMenu = $state(false);
+  // Members from a provider (Webling) are edited there; only notes and photo here
+  let provider = $derived(data.managedBy ? providerName(data.managedBy) : null);
+  let status = $derived(statusChip(data.membership_status));
+  let tags = $derived([
+    ...(status ? [$_(`page.members.status.${status}`)] : []),
+    ...visibleLabels(data.labels)
+  ]);
 
   function refresh() {
     invalidate('app:member:' + data.id);
@@ -152,19 +166,20 @@
     isEditing = true;
 
     try {
-      // Update the member in the database
-      const { error } = await supabaseClient
-        .from('members')
-        .update({
-          firstname: result.firstname,
-          lastname: result.lastname,
-          birthday: result.birthday,
-          mobile: result.mobile,
-          email: result.email || null,
-          notes: result.notes || null,
-          labels: result.labels
-        })
-        .eq('id', data.id);
+      // Update the member in the database; the database refuses changes to
+      // the fields a provider owns (trigger_guard_provider_fields)
+      const changes = provider
+        ? { notes: result.notes || null }
+        : {
+            firstname: result.firstname,
+            lastname: result.lastname,
+            birthday: result.birthday,
+            mobile: result.mobile,
+            email: result.email || null,
+            notes: result.notes || null,
+            labels: result.labels
+          };
+      const { error } = await supabaseClient.from('members').update(changes).eq('id', data.id);
 
       if (error) {
         throw error;
@@ -177,7 +192,11 @@
       invalidate('app:member:' + data.id);
     } catch (error) {
       console.error('Error updating member:', error);
-      toaster.error({ title: $_('dialog.editMember.updateError') });
+      toaster.error({
+        title: isManagedByProviderError(error)
+          ? $_('page.members.managedError', { values: { provider: provider ?? 'Webling' } })
+          : $_('dialog.editMember.updateError')
+      });
     } finally {
       isEditing = false;
     }
@@ -240,24 +259,36 @@
         >
           <Fa icon={faEdit} />
         </button>
-        <MoreMenu>
-          {#snippet items(close)}
-            <button
-              class="btn w-full justify-start text-error-600-400"
-              onclick={() => {
-                close();
-                confirmDelete();
-              }}
-              disabled={isDeleting}
-            >
-              <Fa icon={faTrash} />
-              <span>{$_('button.delete')}</span>
-            </button>
-          {/snippet}
-        </MoreMenu>
+        <!-- A provider's members are not deleted here: they keep their history and leave in the provider -->
+        {#if !provider}
+          <MoreMenu>
+            {#snippet items(close)}
+              <button
+                class="btn w-full justify-start text-error-600-400"
+                onclick={() => {
+                  close();
+                  confirmDelete();
+                }}
+                disabled={isDeleting}
+              >
+                <Fa icon={faTrash} />
+                <span>{$_('button.delete')}</span>
+              </button>
+            {/snippet}
+          </MoreMenu>
+        {/if}
       </div>
     {/if}
   </div>
+
+  {#if provider}
+    <p
+      class="flex items-center gap-2 rounded-md border border-surface-300-700 bg-surface-100-900 px-3 py-2 text-sm"
+    >
+      <Fa icon={faArrowsRotate} class="text-surface-500" />
+      <span>{$_('page.members.managedBy', { values: { provider } })}</span>
+    </p>
+  {/if}
 
   {#if data.archivedAt}
     <p
@@ -300,6 +331,7 @@
           email={data.email}
           notes={data.notes}
           labels={data.labels}
+          managedBy={provider}
           onclose={() => (showEditFormDialog = false)}
           onsubmit={handleEditResponse}
         />
@@ -322,7 +354,7 @@
     firstname={data.firstname}
     lastname={data.lastname}
     photo={data.img ?? null}
-    tags={data.labels ?? []}
+    {tags}
     showId
     details={{ birthday: data.birthday, mobile: data.mobile, email: data.email }}
     notes={data.notes}

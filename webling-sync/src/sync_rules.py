@@ -108,3 +108,13 @@ def registrations_open(event_date, today):
         return date.fromisoformat(event_date) >= today
     except (TypeError, ValueError):
         return False
+
+
+def missing_table(status_code, body):
+    """PostgREST's answer for a table that does not exist (yet).
+
+    The sync runs from main against prod before a migration is promoted to
+    prod, so a new table can be missing there for a while.
+    """
+    code = body.get('code') if isinstance(body, dict) else None
+    return status_code == 404 and code in ('PGRST205', '42P01')

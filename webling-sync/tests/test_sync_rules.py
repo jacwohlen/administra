@@ -7,6 +7,7 @@ from sync_rules import (
     club_today,
     confirmed_member_ids,
     member_row,
+    missing_table,
     plan_participants,
     registrations_open,
 )
@@ -128,3 +129,11 @@ def test_registrations_open(event_date, expected):
 
 def test_club_today_is_a_date():
     assert isinstance(club_today(), date)
+
+
+def test_missing_table():
+    assert missing_table(404, {'code': 'PGRST205', 'message': 'Could not find the table'})
+    assert missing_table(404, {'code': '42P01'})
+    assert not missing_table(404, {'code': 'PGRST116'})
+    assert not missing_table(400, {'code': 'PGRST205'})
+    assert not missing_table(404, None)

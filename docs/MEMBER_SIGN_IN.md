@@ -33,6 +33,12 @@ Trial candidates (label `probetraining` / `Probetraining`) never grant
 access: the public trial form lets anyone create such a record with any
 email. Once a trainer takes them on (removes the label), access follows.
 
+Every member record also has a `membership_status` (trial, active, passive,
+non-member, left; see `docs/INTEGRATIONS.md`). It does not affect sign-in
+yet. Once it does, only active and passive members grant access; admins can
+see beforehand which accounts that affects under _Benutzer_. For members
+from Webling the email can only be changed in Webling.
+
 Admins can still approve anybody manually and change a member's role in
 _Benutzer_; disabled accounts are never re-enabled automatically.
 

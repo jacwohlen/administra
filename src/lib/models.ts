@@ -53,8 +53,22 @@ export interface MemberAchievements {
   gradeDefinitions: GradeDefinition[];
 }
 
+/** members.membership_status, derived from the labels in the database */
+export type MembershipStatus = 'trial' | 'active' | 'passive' | 'non_member' | 'left';
+
+/** member_access_report(): an approved member account without an active or passive membership */
+export interface MemberAccessReportRow {
+  user_id: string;
+  email: string;
+  full_name: string | null;
+  approved_by_admin: boolean;
+  member_ids: number[];
+  statuses: MembershipStatus[];
+}
+
 export interface Member {
   id: string;
+  membership_status?: MembershipStatus;
   firstname: string;
   lastname: string;
   birthday?: string;

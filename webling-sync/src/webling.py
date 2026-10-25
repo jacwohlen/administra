@@ -8,7 +8,7 @@ import re
 # Webling
 import requests
 from safe_log import WeblingError, postgrest_error, webling_check, webling_get
-from sync_rules import member_row
+from sync_rules import member_row, missing_table
 WEBLING_API_KEY=os.environ.get('WEBLING_API_KEY')
 WEBLING_DOMAIN=os.environ.get('WEBLING_DOMAIN')
 
@@ -111,6 +111,7 @@ def sync_members():
 
   members = response.json()
   failed = 0
+  synced_ids = []
   for e in members:
     # One broken member must not stop the others, so each one fails on its own.
     # Logs only show ids and counts: they end up in GitHub Actions, which must
@@ -133,10 +134,44 @@ def sync_members():
       continue
     if ANONYMIZE:
       data = anonymize(e['id'], data)
-    if not upsert('members', data):
+    if upsert('members', data):
+      synced_ids.append(e['id'])
+    else:
       failed += 1
   print(f"Synced {len(members) - failed} of {len(members)} members")
+  if not write_links(synced_ids):
+    failed += 1
   return failed
+
+def write_links(member_ids):
+  """Record that these members come from Webling (member_links).
+
+  Administra shows their name, birthday, contact and groups as maintained in
+  Webling and keeps them read-only. One request for all members; existing
+  links stay as they are.
+  """
+  if not member_ids:
+    return True
+  rows = [{'connection': 'webling', 'external_id': str(i), 'member_id': i} for i in member_ids]
+  headers = {
+      **AUTH_HEADERS,
+      'Content-Type': 'application/json',
+      'Prefer': 'resolution=ignore-duplicates,return=minimal'
+  }
+  response = requests.post(f"{SUPABASE_URL}/rest/v1/member_links", headers=headers, data=json.dumps(rows))
+  if response.status_code in [200, 201, 204]:
+    print(f"Linked {len(rows)} members to Webling")
+    return True
+  try:
+    body = response.json()
+  except ValueError:
+    body = None
+  if missing_table(response.status_code, body):
+    # Not an error: the migration with member_links has not reached this database yet
+    print("Warning: member_links does not exist here yet, links skipped")
+    return True
+  print(f"Error: member links: {postgrest_error(response)}")
+  return False
 
 def upsert(table_name, data):
     headers = {

@@ -1,5 +1,6 @@
 """The sync scripts against a fake Supabase / Webling (no network)."""
 import importlib
+import json
 import sys
 
 import pytest
@@ -179,6 +180,7 @@ def test_one_broken_member_does_not_stop_the_others(monkeypatch, capsys):
     monkeypatch.setattr(webling, 'get_label', lambda parents: ['03_Austritt'])
     upserted = []
     monkeypatch.setattr(webling, 'upsert', lambda table, data: upserted.append(data['id']) or True)
+    monkeypatch.setattr(webling.requests, 'post', lambda url, headers=None, data=None: Response(201))
 
     assert webling.sync_members() == 1
     assert upserted == [1, 3]
@@ -187,3 +189,52 @@ def test_one_broken_member_does_not_stop_the_others(monkeypatch, capsys):
     assert 'member 2' in out
     # Group titles (leaving and billing states) never reach the public log
     assert '03_Austritt' not in out
+
+
+def sync_members_with(monkeypatch, link_response):
+    webling = load('webling', monkeypatch)
+    members = [
+        {'id': 1, 'parents': [10], 'properties': {
+            'Vorname': 'Anna', 'Name': 'Muster', 'Geburtstag': None, 'Mobile': None}},
+        {'id': 2, 'parents': [10], 'properties': {'Vorname': 'Ben'}},
+        {'id': 3, 'parents': [10], 'properties': {
+            'Vorname': 'Cleo', 'Name': 'Beispiel', 'Geburtstag': None, 'Mobile': None}},
+    ]
+    monkeypatch.setattr(webling, 'webling_get', lambda *args, **kwargs: Response(200, members))
+    monkeypatch.setattr(webling, 'get_label', lambda parents: ['Aktiv'])
+    monkeypatch.setattr(webling, 'upsert', lambda table, data: True)
+    posted = []
+
+    def post(url, headers=None, data=None):
+        posted.append((url, headers, data))
+        return link_response
+
+    monkeypatch.setattr(webling.requests, 'post', post)
+    return webling.sync_members(), posted
+
+
+def test_synced_members_are_linked_to_webling(monkeypatch):
+    failed, posted = sync_members_with(monkeypatch, Response(201))
+
+    assert failed == 1  # member 2 has no last name property
+    assert len(posted) == 1
+    url, headers, data = posted[0]
+    assert url == 'https://db.example/rest/v1/member_links'
+    assert 'resolution=ignore-duplicates' in headers['Prefer']
+    assert json.loads(data) == [
+        {'connection': 'webling', 'external_id': '1', 'member_id': 1},
+        {'connection': 'webling', 'external_id': '3', 'member_id': 3},
+    ]
+
+
+def test_missing_link_table_is_not_an_error(monkeypatch, capsys):
+    response = Response(404, {'code': 'PGRST205', 'message': "Could not find the table 'public.member_links'"})
+    failed, _ = sync_members_with(monkeypatch, response)
+
+    assert failed == 1  # only member 2
+    assert 'links skipped' in capsys.readouterr().out
+
+
+def test_failed_link_write_fails_the_run(monkeypatch):
+    failed, _ = sync_members_with(monkeypatch, Response(500, {'code': 'XX000', 'message': 'boom'}))
+    assert failed == 2

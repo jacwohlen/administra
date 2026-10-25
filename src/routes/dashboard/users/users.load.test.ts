@@ -18,7 +18,8 @@ function createChainFromResult(result: { data: unknown; error: unknown }) {
 
 const { mockSupabase } = vi.hoisted(() => ({
   mockSupabase: {
-    from: vi.fn()
+    from: vi.fn(),
+    rpc: vi.fn()
   }
 }));
 
@@ -52,6 +53,7 @@ function parentWith(profile: Partial<UserProfile> | null) {
 describe('users admin load', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockSupabase.rpc.mockReturnValue(createChainFromResult({ data: [], error: null }));
   });
 
   it('redirects non-admins to the dashboard', async () => {
@@ -82,9 +84,43 @@ describe('users admin load', () => {
 
     const result = await load({ parent: parentWith(adminProfile) } as never);
 
-    expect(result).toEqual({ profiles, members });
+    expect(result).toEqual({ profiles, members, accessReport: [] });
     expect(mockSupabase.from).toHaveBeenCalledWith('user_profiles');
     expect(mockSupabase.from).toHaveBeenCalledWith('members');
+    expect(mockSupabase.rpc).toHaveBeenCalledWith('member_access_report');
+  });
+
+  it('returns the accounts that would lose access', async () => {
+    const report = [
+      {
+        user_id: 'u9',
+        email: 'nm@example.com',
+        full_name: null,
+        approved_by_admin: false,
+        member_ids: [3295],
+        statuses: ['non_member']
+      }
+    ];
+    mockSupabase.from
+      .mockReturnValueOnce(createChainFromResult({ data: [], error: null }))
+      .mockReturnValueOnce(createChainFromResult({ data: [], error: null }));
+    mockSupabase.rpc.mockReturnValueOnce(createChainFromResult({ data: report, error: null }));
+
+    const result = await load({ parent: parentWith(adminProfile) } as never);
+    expect(result).toMatchObject({ accessReport: report });
+  });
+
+  it('throws when the access report fails', async () => {
+    mockSupabase.from
+      .mockReturnValueOnce(createChainFromResult({ data: [], error: null }))
+      .mockReturnValueOnce(createChainFromResult({ data: [], error: null }));
+    mockSupabase.rpc.mockReturnValueOnce(
+      createChainFromResult({ data: null, error: { message: 'report failed' } })
+    );
+
+    await expect(load({ parent: parentWith(adminProfile) } as never)).rejects.toThrow(
+      'report failed'
+    );
   });
 
   it('throws when loading profiles fails', async () => {
@@ -101,6 +137,6 @@ describe('users admin load', () => {
       .mockReturnValueOnce(createChainFromResult({ data: [], error: null }));
 
     const result = await load({ parent: parentWith(adminProfile) } as never);
-    expect(result).toEqual({ profiles: [], members: [] });
+    expect(result).toEqual({ profiles: [], members: [], accessReport: [] });
   });
 });

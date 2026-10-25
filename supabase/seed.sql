@@ -14463,3 +14463,13 @@ FROM (
 --
 RESET app.skip_badge_refresh;
 SELECT public.refresh_all_member_badges();
+
+--
+-- Provider links: seeded members with Webling-range ids come from Webling
+-- (see 20261025230000_membership_status_and_member_links.sql, which runs
+-- before this seed and so finds no members to link)
+--
+INSERT INTO public.member_links (connection, external_id, member_id)
+SELECT 'webling', id::text, id
+FROM public.members
+WHERE id >= 1000 AND id < 10000000;
