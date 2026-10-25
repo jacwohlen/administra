@@ -155,8 +155,3 @@ export async function loadPromptContext(
     }
   }
 }
-
-/** Today in the club's time zone, YYYY-MM-DD. */
-export function clubToday(now = new Date()): string {
-  return new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Zurich' }).format(now);
-}

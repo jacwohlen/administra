@@ -19,7 +19,9 @@
     faCalendarWeek
   } from '@fortawesome/free-solid-svg-icons';
   import dayjs from 'dayjs';
-  import { goto, preloadData } from '$app/navigation';
+  import { onMount } from 'svelte';
+  import { goto, invalidateAll, preloadData } from '$app/navigation';
+  import { page } from '$app/state';
   import AddParticipantInputBox from './AddParticipantInputBox.svelte';
   import { supabaseClient } from '$lib/supabase';
   import { toaster } from '$lib/toast';
@@ -28,11 +30,17 @@
   import { quintInOut } from 'svelte/easing';
   import LessonPlan from './LessonPlan.svelte';
   import { isCancelled } from '$lib/trainingPlanUtils';
+  import AssistantButton from '$lib/components/assistant/AssistantButton.svelte';
+  import AssistantDialog from '$lib/components/assistant/AssistantDialog.svelte';
+  import AttendanceReview from '$lib/components/assistant/AttendanceReview.svelte';
+  import { takeAssistantRequest } from '$lib/assistant/autoOpen';
 
   let { data }: { data: PageData } = $props();
   let searchterm = $state('');
   let animateList = $state(true);
-  let showLessonPlan = $state(false);
+  // Daten-Assistent: a lesson plan to read opens on its tab (LessonPlan takes the request)
+  let showLessonPlan = $state(page.url.searchParams.get('assistant') === 'lesson_plan');
+  let showAssistant = $state(false);
   let celebrationBadges: Badge[] = $state([]);
   let celebrationMemberName = $state('');
 
@@ -204,6 +212,32 @@
   let planTrainer = $derived(data.plan?.session?.trainer);
 
   let formattedDate = $derived(dayjs(data.date, 'YYYY-MM-DD').format('DD. MMMM YYYY'));
+
+  // Daten-Assistent: the training of this page, only when its id is the page's own
+  let assistantTraining = $derived(
+    Number.isInteger(Number(data.id)) && Number(data.id) === Number(data.trainingId)
+      ? {
+          id: Number(data.id),
+          title: data.title,
+          weekday: data.weekday ?? null,
+          dateFrom: data.dateFrom ?? null
+        }
+      : null
+  );
+
+  onMount(() => {
+    if (data.canWrite && takeAssistantRequest('attendance')) showAssistant = true;
+  });
+
+  // After a bulk import: reload the list, and close the review even if that fails
+  async function assistantApplied() {
+    try {
+      await invalidateAll();
+    } finally {
+      filterData();
+      showAssistant = false;
+    }
+  }
 </script>
 
 <!-- Header: back to the training + title -->
@@ -221,6 +255,13 @@
 <div class="flex flex-wrap items-center gap-2 mb-4 text-sm">
   <span class="chip preset-tonal-secondary">{data.section}</span>
   <span class="text-surface-600-400">{$_('weekday.' + data.weekday)} | {data.dateFrom}</span>
+  {#if data.canWrite && assistantTraining}
+    <AssistantButton
+      class="btn btn-sm preset-tonal-primary ml-auto"
+      label={$_('assistant.kinds.attendance.title')}
+      onclick={() => (showAssistant = true)}
+    />
+  {/if}
 </div>
 
 <!-- Date navigation -->
@@ -401,3 +442,24 @@
 {/if}
 
 <BadgeCelebration badges={celebrationBadges} memberName={celebrationMemberName} />
+
+{#if showAssistant && data.canWrite && assistantTraining}
+  {@const training = assistantTraining}
+  <AssistantDialog
+    kind="attendance"
+    context={{ trainingId: training.id, date: data.date }}
+    onclose={() => (showAssistant = false)}
+  >
+    {#snippet review(proposal, back)}
+      <AttendanceReview
+        {proposal}
+        {training}
+        date={data.date}
+        roster={data.participants.map((p) => Number(p.id))}
+        onback={back}
+        onclose={() => (showAssistant = false)}
+        onapplied={assistantApplied}
+      />
+    {/snippet}
+  </AssistantDialog>
+{/if}

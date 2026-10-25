@@ -13,7 +13,19 @@ export function takeAssistantRequest(kind: AssistantKind): boolean {
   if (page.url.searchParams.get('assistant') !== kind) return false;
   const url = new URL(page.url);
   url.searchParams.delete('assistant');
-  replaceState(url, page.state);
+  try {
+    replaceState(url, page.state);
+  } catch {
+    // On a full page load onMount can run before the router has started;
+    // remove the parameter once it has, or leave it if that fails too.
+    setTimeout(() => {
+      try {
+        replaceState(url, page.state);
+      } catch {
+        // Only cosmetic: a reload would open the dialog again
+      }
+    });
+  }
   return true;
 }
 

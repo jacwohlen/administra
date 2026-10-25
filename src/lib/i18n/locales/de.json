@@ -1430,6 +1430,227 @@
       "trainingPlaceholder": "Training wählen …",
       "date": "Datum",
       "start": "Starten"
+    },
+    "grades": {
+      "inPass": "Im Pass",
+      "inProfile": "Im Profil",
+      "holder": {
+        "doubt": "Name oder Geburtsdatum im Pass passen nicht zu {name}. Ist das der richtige Pass?",
+        "confirm": "Ja, das ist der Pass von {name}",
+        "profileUnchanged": "Name und Geburtsdatum im Profil werden nicht geändert. Falls sie falsch sind, korrigiere sie in Webling.",
+        "unknown": "Im Pass wurde kein Name erkannt. Prüfe, ob es der Pass von {name} ist."
+      },
+      "empty": "Im Pass wurden keine Prüfungen erkannt.",
+      "pickGrade": "Grad wählen …",
+      "recordedOn": "Schon erfasst am {date}, es wird nichts geändert.",
+      "correct": "Erfasst am {recorded} – Datum auf {date} korrigieren",
+      "duplicateOf": "Gleicher Grad wie Zeile {row}, wird nur einmal gespeichert.",
+      "plan": "Zu speichern: {inserts, plural, =0 {keine neue Prüfung} one {# neue Prüfung} other {# neue Prüfungen}} und {updates, plural, =0 {keine Datumskorrektur} one {# Datumskorrektur} other {# Datumskorrekturen}}.",
+      "progress": "Wird gespeichert … {done} von {total}",
+      "confirmFirst": "Bestätige zuerst oben, dass es der richtige Pass ist.",
+      "blocked": "{count, plural, one {Eine Zeile braucht} other {# Zeilen brauchen}} noch eine Angabe: ergänze sie oder wähle «Nicht übernehmen».",
+      "issues": {
+        "noGrade": "Grad nicht erkannt – bitte wählen.",
+        "noDate": "Datum fehlt – bitte eintragen.",
+        "partialDate": "Im Pass ist nur «{written}» lesbar – bitte das ganze Datum eintragen.",
+        "badDate": "Kein gültiges Datum.",
+        "futureDate": "Das Datum liegt in der Zukunft.",
+        "beforeBirthday": "Liegt vor dem Geburtsdatum im Profil ({birthday}).",
+        "beforeLower": "Früher datiert als der tiefere {grade} ({date}) – Reihenfolge prüfen.",
+        "afterHigher": "Später datiert als der höhere {grade} ({date}) – Reihenfolge prüfen.",
+        "mismatch": "Im Pass steht «{written}», das passt nicht zum gewählten Grad.",
+        "dan": "Dan-Grad: wird zum aktuellen Gurt{badge, select, true { und vergibt das Abzeichen «{badgeName}»} other {}}."
+      }
+    },
+    "attendance": {
+      "loading": "Mitglieder und bisherige Anwesenheiten werden geladen …",
+      "loadingExisting": "Bisherige Anwesenheiten werden geladen …",
+      "loadError": "Mitglieder oder bisherige Anwesenheiten konnten nicht geladen werden. Bitte schliessen und nochmals versuchen.",
+      "noEntries": "Auf der Liste wurden keine Namen erkannt.",
+      "training": "Training: {training}",
+      "listTraining": "Auf der Liste: «{text}»",
+      "otherWeekday": "Die Liste nennt {written}, dieses Training ist am {weekday}. Prüfe, ob es wirklich die Liste dieses Trainings ist.",
+      "dates": {
+        "titleSingle": "Datum",
+        "titleGrid": "Daten auf der Liste",
+        "date": "Datum",
+        "include": "Datum {date} übernehmen",
+        "marked": "{count, plural, one {# Person} other {# Personen}}",
+        "listDate": "Auf der Liste steht {dates}. Übernommen wird das Datum oben.",
+        "notPageDate": "Nicht das Datum dieser Seite ({date}).",
+        "cancelled": "Laut Trainingsplan fällt das Training an diesem Tag aus.",
+        "excluded": "Datum wird nicht übernommen",
+        "issues": {
+          "invalid": "Kein gültiges Datum",
+          "future": "Liegt in der Zukunft – wird nicht übernommen",
+          "weekday": "Ein {weekday}, das Training ist am {training}. Nur mit Häkchen übernehmen.",
+          "duplicate": "Datum kommt doppelt vor – wird nicht übernommen"
+        }
+      },
+      "people": {
+        "title": "{count, plural, one {# Name auf der Liste} other {# Namen auf der Liste}}",
+        "member": "Mitglied",
+        "role": "Rolle",
+        "filter": "Mitglied suchen …",
+        "search": "Anderes Mitglied suchen",
+        "suggestions": "Vorschläge",
+        "allMembers": "Alle Mitglieder",
+        "createNew": "Neues Mitglied erfassen",
+        "confirm": "Bestätigen",
+        "swapNames": "Vor- und Nachname tauschen",
+        "createWarning": "Erfasse nur Personen, die es noch nicht gibt – auch nicht in Webling. Sonst entsteht ein Duplikat, das später von Hand zusammengeführt werden muss.",
+        "similar": "Ähnliche Mitglieder: {names}",
+        "notOnRoster": "Kommt neu auf die Teilnehmerliste dieses Trainings.",
+        "duplicateOf": "Steht schon weiter oben («{name}») und wird damit zusammengeführt. Hat die Person an einem Datum zwei Rollen, gilt die höhere.",
+        "overwrite": "Schon erfasst als {roles} – mit der Rolle von der Liste überschreiben",
+        "skipOpen": "Offene nicht übernehmen",
+        "present": "Am {date} anwesend"
+      },
+      "problems": {
+        "pick": "Wähle ein Mitglied, erfasse die Person neu oder übernimm sie nicht.",
+        "confirm": "Ist das die richtige Person? Bestätige die Zuordnung oder wähle ein anderes Mitglied.",
+        "name": "Für ein neues Mitglied braucht es Vor- und Nachname."
+      },
+      "status": {
+        "confirm": "Bitte bestätigen",
+        "empty": "Kein Datum"
+      },
+      "hints": {
+        "former": "Laut Webling ausgetreten.",
+        "passive": "Passivmitglied.",
+        "trial": "Probetraining-Kandidat/in. Kommt sie oder er auf die Teilnehmerliste, gilt das Probetraining als zugeteilt."
+      },
+      "roles": {
+        "attendee": "Teilnehmer/in",
+        "mainTrainer": "Haupttrainer/in",
+        "assistant": "Hilfstrainer/in"
+      },
+      "summary": "{checkIns, plural, one {# Anwesenheit} other {# Anwesenheiten}} an {dates, plural, one {# Datum} other {# Daten}}",
+      "summaryCreates": "{count, plural, one {# neues Mitglied} other {# neue Mitglieder}}",
+      "summaryRoster": "{count, plural, one {# Person kommt} other {# Personen kommen}} neu auf die Teilnehmerliste",
+      "open": "{count, plural, one {# Name braucht} other {# Namen brauchen}} noch eine Entscheidung.",
+      "onlyPresent": "Es werden nur Anwesenheiten eingetragen, nie welche entfernt. Bei älteren Daten dauert das Speichern etwas länger, weil die Abzeichen neu berechnet werden.",
+      "progress": "Wird gespeichert … {done} von {total}"
+    },
+    "trainingPlan": {
+      "summary": "{count, plural, one {# Termin} other {# Termine}} vom {from} bis {to}",
+      "keepHint": "Leere Felder im Dokument lassen die bestehende Planung unverändert, leere Felder der bestehenden Planung werden ergänzt. Ein anderer Leiter, ein anderes Thema oder ein Ausfall ersetzt die bestehende Planung nur, wenn du es beim Termin ankreuzt.",
+      "empty": "Im Dokument wurden keine Termine und keine Ferien erkannt.",
+      "loading": "Bestehende Planung wird geladen …",
+      "loadError": "Die bestehende Planung konnte nicht geladen werden. Ohne Vergleich wird nichts gespeichert.",
+      "retry": "Nochmals laden",
+      "leaders": "Leiter",
+      "leadersHint": "Zuordnung der Namen zu Mitgliedern, gilt für alle Termine mit diesem Namen. Ohne Zuordnung (z. B. Gasttrainer) bleibt der Name in der Bemerkung.",
+      "leaderCount": "{count, plural, one {# Termin} other {# Termine}}",
+      "leaderSuggested": "Bitte prüfen",
+      "confirmLeader": "Stimmt",
+      "inDocument": "Im Dokument",
+      "noTraining": "Kein Training gewählt",
+      "pickTraining": "Training wählen …",
+      "editDone": "Fertig",
+      "otherMember": "anderes Mitglied",
+      "status": {
+        "fill": "Ergänzung"
+      },
+      "fillHint": "Ergänzt die bestehende Planung:",
+      "changedHint": "Weicht von der bestehenden Planung ab:",
+      "exists": "Schon so geplant, es wird nichts geändert.",
+      "overwrite": "Bestehende Planung ersetzen",
+      "duplicateOf": "Gleicher Termin wie Zeile {row}, wird nur einmal gespeichert.",
+      "issues": {
+        "badDate": "Datum fehlt oder ist ungültig.",
+        "noTraining": "Kein geplantes Training erkannt – bitte wählen.",
+        "weekday": "Das Training ist am {training}, das Datum ist ein {date}. Bitte Datum oder Training korrigieren.",
+        "empty": "Nichts eingetragen – wird nicht übernommen.",
+        "trainerUnconfirmed": "«{name}» ist vermutlich {member} – bitte bestätigen oder anders zuordnen.",
+        "trainingGuessed": "Training nach dem Wochentag zugeordnet – bitte prüfen.",
+        "trainerUnmatched": "Kein Mitglied für «{name}», der Name steht in der Bemerkung.",
+        "closedBreak": "Dojo geschlossen ({title}): Das Training fällt trotzdem aus.",
+        "unusualYear": "Ungewöhnliches Jahr – stimmt das Datum?"
+      },
+      "holidays": "Ferien",
+      "holidaysHint": "Werden zu den Ferien und Ausfallzeiten hinzugefügt. «Dojo zu» lässt alle geplanten Trainings in dieser Zeit ausfallen.",
+      "addHoliday": "Übernehmen",
+      "holidayExists": "Schon erfasst, wird nicht nochmals hinzugefügt.",
+      "holidayDuplicate": "Gleiche Ferien wie Zeile {row}, werden nur einmal hinzugefügt.",
+      "holidayOverlaps": "Überschneidet sich mit «{title}» ({range}).",
+      "holidayIssues": {
+        "noTitle": "Bezeichnung fehlt.",
+        "badDates": "Zeitraum fehlt oder ist ungültig."
+      },
+      "plan": "Zu speichern: {sessions, plural, =0 {kein Termin} one {# Termin} other {# Termine}} und {breaks, plural, =0 {keine Ferien} one {# Ferieneintrag} other {# Ferieneinträge}}.",
+      "progress": "Wird gespeichert … {done} von {total}",
+      "blocked": "{count, plural, one {Eine Zeile braucht} other {# Zeilen brauchen}} noch eine Angabe: ergänze sie oder wähle «Nicht übernehmen».",
+      "skipIncomplete": "Unvollständige nicht übernehmen"
+    },
+    "lessonPlan": {
+      "forDate": "Lektionsplan für den {date}",
+      "same": "Genau dieser Plan ist schon gespeichert.",
+      "contained": "Dieser Text steht schon im bisherigen Plan.",
+      "date": {
+        "differs": "Auf dem Plan steht der {written}, gespeichert wird er aber für den {date} – das Datum dieser Seite.",
+        "otherPage": "Gehört er zu einem anderen Tag, brich ab und lies ihn auf der Seite des Trainings an jenem Datum ein.",
+        "confirm": "Trotzdem für den {date} speichern"
+      },
+      "existing": {
+        "text": "Für diesen Tag gibt es schon einen Lektionsplan.",
+        "mode": "Was soll mit dem bisherigen Plan passieren?",
+        "replace": "Bisherigen Plan ersetzen",
+        "append": "Bisherigen Text behalten und den eingelesenen unten anhängen",
+        "show": "Bisherigen Inhalt anzeigen"
+      },
+      "file": {
+        "exists": "Für diesen Tag ist eine Datei als Lektionsplan hinterlegt: «{name}».",
+        "replaced": "Ein Lektionsplan ist entweder Text oder eine Datei. Speicherst du den eingelesenen Text, wird die Datei gelöscht – wie wenn du im Editor zu «Inhalt schreiben» wechselst und speicherst. Lade sie vorher herunter, wenn du sie behalten willst.",
+        "confirm": "Datei «{name}» löschen und durch den Text ersetzen",
+        "notRemoved": "Lektionsplan gespeichert, die alte Datei konnte aber nicht gelöscht werden."
+      },
+      "previousTitle": "Bisher: «{title}»",
+      "content": "Inhalt",
+      "contentAppend": "Inhalt, der unten angehängt wird",
+      "contentHelp": "Eine Zeile pro Eintrag: «## » beginnt einen Abschnitt, «- » einen Punkt.",
+      "preview": "Vorschau",
+      "previewEmpty": "Noch kein Inhalt.",
+      "errors": {
+        "target": "Training oder Datum dieser Seite sind ungültig, hier kann kein Lektionsplan gespeichert werden.",
+        "empty": "Der Inhalt ist leer. Ergänze ihn oder geh zurück zum Upload.",
+        "tooLong": "Der eingelesene Inhalt ist zu lang (höchstens {max} Zeichen).",
+        "fileNotConfirmed": "Bestätige zuerst, dass die Datei ersetzt werden darf.",
+        "dateNotConfirmed": "Bestätige zuerst das Datum."
+      },
+      "changedMeanwhile": "Der Lektionsplan wurde inzwischen geändert oder konnte nicht gespeichert werden. Der aktuelle Stand ist neu geladen – prüfe ihn und übernimm nochmals."
+    },
+    "events": {
+      "intro": "{count, plural, one {# Termin gelesen} other {# Termine gelesen}}. Angehakte Termine werden als neue Events erstellt, bestehende Events bleiben unverändert.",
+      "defaultSection": "Sektion für Termine ohne Sektion",
+      "defaultSectionNone": "Keine – pro Termin wählen",
+      "useDefault": "Standard: {section}",
+      "multiDay": "Mehrtägig",
+      "multiDayInfo": "Events haben kein Enddatum: Ein mehrtägiger Termin wird am ersten Tag erstellt, und «bis …» steht in der ersten Zeile der Beschreibung.",
+      "dateTo": "Bis (mehrtägig)",
+      "untilLine": "bis {date}",
+      "descriptionStarts": "Die Beschreibung beginnt mit «{line}».",
+      "include": "Als Event erstellen",
+      "includeAnyway": "Trotzdem als neues Event erstellen",
+      "duplicateOf": "Ähnliches Event schon erfasst: «{title}» am {date}",
+      "duplicateOfRow": "Gleicher Termin wie Nr. {row}",
+      "fromWebling": "Kommt aus Webling und wird automatisch synchronisiert. Nur erstellen, wenn es ein anderer Termin ist.",
+      "empty": "Im Dokument wurden keine Termine gefunden.",
+      "progress": "{done} von {total} gespeichert …",
+      "blocked": "{count, plural, one {# Termin ist unvollständig: korrigieren oder abwählen.} other {# Termine sind unvollständig: korrigieren oder abwählen.}}",
+      "issues": {
+        "noTitle": "Titel fehlt.",
+        "noDate": "Datum fehlt.",
+        "badDate": "Kein gültiges Datum.",
+        "noSection": "Sektion wählen.",
+        "unknownSection": "Die Sektion «{written}» gibt es hier nicht: bitte eine wählen.",
+        "badTimeFrom": "Startzeit als HH:MM angeben.",
+        "badTimeTo": "Endzeit als HH:MM angeben.",
+        "timeOrder": "Die Endzeit muss nach der Startzeit liegen.",
+        "badDateTo": "Das Enddatum muss nach dem Datum liegen.",
+        "past": "Liegt in der Vergangenheit.",
+        "farFuture": "Liegt mehr als zwei Jahre in der Zukunft: Jahr prüfen."
+      }
     }
   }
 }

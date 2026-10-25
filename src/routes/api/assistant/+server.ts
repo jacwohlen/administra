@@ -1,6 +1,6 @@
 import { json, type RequestHandler } from '@sveltejs/kit';
 import type { SupabaseClient } from '@supabase/supabase-js';
-import { sanitizeProposal } from '$lib/assistant/proposals';
+import { clubToday, sanitizeProposal } from '$lib/assistant/proposals';
 import { ASSISTANT_LIMITS, type AssistantErrorCode } from '$lib/assistant/types';
 import {
   apiError,
@@ -10,7 +10,7 @@ import {
   readAnswer,
   usageOf
 } from '$lib/server/assistant/claude';
-import { clubToday, loadPromptContext } from '$lib/server/assistant/context';
+import { loadPromptContext } from '$lib/server/assistant/context';
 import { buildParams } from '$lib/server/assistant/prompts';
 import { AssistantError, parseAssistantRequest } from '$lib/server/assistant/request';
 

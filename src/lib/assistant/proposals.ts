@@ -115,6 +115,11 @@ export function cleanName(value: unknown): string {
     .trim();
 }
 
+/** Today in the club's time zone (Europe/Zurich), YYYY-MM-DD. */
+export function clubToday(now = new Date()): string {
+  return new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Zurich' }).format(now);
+}
+
 const ISO_DATE = /^(\d{4})-(\d{2})-(\d{2})$/;
 
 /** Whether `value` is a real calendar day as YYYY-MM-DD (1900–2100). */

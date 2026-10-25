@@ -1,8 +1,21 @@
 <script lang="ts">
+  import { onMount } from 'svelte';
   import { supabaseClient } from '$lib/supabase';
   import type { LessonPlan } from '$lib/models';
   import Fa from 'svelte-fa';
   import { toaster } from '$lib/toast';
+  import AssistantButton from '$lib/components/assistant/AssistantButton.svelte';
+  import AssistantDialog from '$lib/components/assistant/AssistantDialog.svelte';
+  import LessonPlanReview from '$lib/components/assistant/LessonPlanReview.svelte';
+  import { takeAssistantRequest } from '$lib/assistant/autoOpen';
+  import { loadAssistantStatus } from '$lib/assistant/client';
+  import {
+    lessonPlanLines,
+    lessonPlanTarget,
+    sameTarget,
+    toExistingPlan,
+    type LessonPlanTarget
+  } from '$lib/assistant/lessonPlan';
   import {
     faEdit,
     faSave,
@@ -37,6 +50,18 @@
   let fileInput: HTMLInputElement;
   let tabSet = $state(0); // 0 for text, 1 for file
   let previewUrl: string | null = $state(null);
+
+  // Daten-Assistent: the dialog stays tied to the training and date it was opened for
+  let assistantTarget = $derived(lessonPlanTarget(trainingId, date));
+  let assistantFor = $state<LessonPlanTarget | null>(null);
+  let showAssistant = $derived(!readonly && sameTarget(assistantFor, assistantTarget));
+  // A plan still loaded for another date is never taken for this date's plan
+  let assistantStale = $derived(lessonPlan !== null && !sameTarget(lessonPlan, assistantFor));
+
+  // Leaving for another date (back button) closes the dialog instead of hiding it
+  $effect(() => {
+    if (assistantFor && !showAssistant) assistantFor = null;
+  });
 
   async function loadLessonPlan() {
     isLoading = true;
@@ -392,13 +417,38 @@
       loadLessonPlan();
     }
   });
+
+  function openAssistant() {
+    if (!readonly && !isEditing) assistantFor = assistantTarget;
+  }
+
+  async function assistantApplied() {
+    assistantFor = null;
+    selectedFile = null;
+    isEditing = false;
+    await loadLessonPlan();
+  }
+
+  // Opened from the Daten-Assistent overview with ?assistant=lesson_plan
+  onMount(() => {
+    if (readonly || !assistantTarget || !takeAssistantRequest('lesson_plan')) return;
+    loadAssistantStatus().then((s) => {
+      if (s.configured) openAssistant();
+    });
+  });
 </script>
 
 <div class="card">
-  <header class="card-header flex justify-between items-center mb-4">
+  <header class="card-header flex flex-wrap justify-between items-center gap-2 mb-4">
     <h3>{$_('page.trainings.lessonPlanTitle')}</h3>
     {#if !readonly}
-      <div class="flex gap-2">
+      <div class="flex flex-wrap justify-end gap-2">
+        {#if !isEditing && assistantTarget}
+          <AssistantButton
+            label={$_('assistant.kinds.lesson_plan.title')}
+            onclick={openAssistant}
+          />
+        {/if}
         {#if isEditing}
           <button
             class="btn preset-filled-primary-500"
@@ -591,17 +641,17 @@
         {:else if lessonPlan.content}
           <!-- Text content display -->
           <div class="prose max-w-none">
-            {#each lessonPlan.content.split('\n') as line}
-              {#if line.startsWith('# ')}
-                <h1 class="mt-2">{line.slice(2)}</h1>
-              {:else if line.startsWith('## ')}
-                <h2 class="mt-2">{line.slice(3)}</h2>
-              {:else if line.startsWith('### ')}
-                <h3 class="mt-2">{line.slice(4)}</h3>
-              {:else if line.startsWith('- ')}
-                <ul style="list-style: square;" class="px-8"><li>{line.slice(2)}</li></ul>
+            {#each lessonPlanLines(lessonPlan.content) as line}
+              {#if line.kind === 'h1'}
+                <h1 class="mt-2">{line.text}</h1>
+              {:else if line.kind === 'h2'}
+                <h2 class="mt-2">{line.text}</h2>
+              {:else if line.kind === 'h3'}
+                <h3 class="mt-2">{line.text}</h3>
+              {:else if line.kind === 'item'}
+                <ul style="list-style: square;" class="px-8"><li>{line.text}</li></ul>
               {:else}
-                <p>{line}</p>
+                <p>{line.text}</p>
               {/if}
             {/each}
           </div>
@@ -618,3 +668,27 @@
     {/if}
   </section>
 </div>
+
+{#if showAssistant && assistantFor}
+  {@const target = assistantFor}
+  <AssistantDialog
+    kind="lesson_plan"
+    context={{ trainingId: target.trainingId, date: target.date }}
+    onclose={() => (assistantFor = null)}
+  >
+    {#snippet review(proposal, back)}
+      <LessonPlanReview
+        {proposal}
+        trainingId={target.trainingId}
+        date={target.date}
+        existing={assistantStale ? null : toExistingPlan(lessonPlan)}
+        loading={isLoading || assistantStale}
+        onback={back}
+        oncancel={() => (assistantFor = null)}
+        onreload={loadLessonPlan}
+        onapplied={assistantApplied}
+        ondownload={downloadFile}
+      />
+    {/snippet}
+  </AssistantDialog>
+{/if}

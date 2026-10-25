@@ -137,7 +137,9 @@ group by 1, 2, 3;
   per kind (`grades.ts`, `attendance.ts`, `trainingPlan.ts`,
   `lessonPlan.ts`, `events.ts`)
 - `src/lib/components/assistant/`: the dialog, the button and the review
-  per kind
+  per kind (the training plan's next to its page,
+  `src/routes/dashboard/training-plan/settings/TrainingPlanReview.svelte`,
+  as it uses the plan's trainer picker)
 - `src/routes/dashboard/assistant/`: the overview
 - `supabase/migrations/20261026090000_ai_assistant.sql`: `ai_imports`,
   `ai_import_begin()`, `ai_import_finish()`, `ai_import_remaining()`

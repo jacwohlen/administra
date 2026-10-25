@@ -1,5 +1,11 @@
 <script lang="ts">
+  import { onMount } from 'svelte';
   import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
+  import AssistantButton from '$lib/components/assistant/AssistantButton.svelte';
+  import AssistantDialog from '$lib/components/assistant/AssistantDialog.svelte';
+  import GradesReview from '$lib/components/assistant/GradesReview.svelte';
+  import { takeAssistantRequest } from '$lib/assistant/autoOpen';
+  import { loadAssistantStatus } from '$lib/assistant/client';
   import { modalDialog } from '$lib/modalDialog';
   import type { GradeDefinition, MemberCurrentGrade, MemberGrade } from '$lib/models';
   import { gradesBySection } from '$lib/gradeUtils';
@@ -17,7 +23,8 @@
     history,
     definitions,
     onchanged,
-    readonly = false
+    readonly = false,
+    member
   }: {
     memberId: number;
     current: MemberCurrentGrade[];
@@ -26,6 +33,8 @@
     onchanged?: () => void;
     /** Hide the add/remove controls (club area) */
     readonly?: boolean;
+    /** Name and birthday, to check a Judo pass read by the assistant is this member's */
+    member?: { firstname: string; lastname: string; birthday?: string | null };
   } = $props();
 
   let ladders = $derived(gradesBySection(definitions));
@@ -33,6 +42,7 @@
   let historySorted = $derived([...history].sort((a, b) => b.examDate.localeCompare(a.examDate)));
 
   let showAdd = $state(false);
+  let showAssistant = $state(false);
   let saving = $state(false);
   let confirmDeleteId: number | null = $state(null);
   let form = $state({ section: '', grade: '', examDate: '', note: '' });
@@ -97,19 +107,36 @@
     toaster.success({ title: $_('grades.deleteSuccess') });
     onchanged?.();
   }
+
+  // Opened from the Daten-Assistent overview with ?assistant=grades
+  // (the parameter is always removed, also when this viewer may not use it)
+  onMount(() => {
+    const requested = takeAssistantRequest('grades');
+    if (!requested || readonly || !member || sections.length === 0) return;
+    loadAssistantStatus().then((s) => (showAssistant = s.configured));
+  });
 </script>
 
 <div class="flex justify-between items-center mb-3">
   <h3>{$_('grades.title')}</h3>
   {#if !readonly}
-    <button
-      class="btn preset-tonal-primary text-sm"
-      onclick={openAdd}
-      disabled={sections.length === 0}
-    >
-      <Fa icon={faPlus} />
-      <span>{$_('grades.addGrading')}</span>
-    </button>
+    <div class="flex flex-wrap justify-end gap-2">
+      {#if member && sections.length > 0}
+        <AssistantButton
+          class="btn preset-tonal-primary text-sm"
+          label={$_('assistant.kinds.grades.title')}
+          onclick={() => (showAssistant = true)}
+        />
+      {/if}
+      <button
+        class="btn preset-tonal-primary text-sm"
+        onclick={openAdd}
+        disabled={sections.length === 0}
+      >
+        <Fa icon={faPlus} />
+        <span>{$_('grades.addGrading')}</span>
+      </button>
+    </div>
   {/if}
 </div>
 
@@ -187,7 +214,7 @@
       if (e.key === 'Escape') showAdd = false;
     }}
   >
-    <!-- svelte-ignore a11y_no_static_element_interactions -->
+    <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
     <div use:modalDialog class="card modal-dialog" onclick={(e) => e.stopPropagation()}>
       <h3>{$_('grades.addGrading')}</h3>
       <form class="space-y-4" onsubmit={(e) => e.preventDefault()}>
@@ -234,6 +261,28 @@
       </footer>
     </div>
   </div>
+{/if}
+
+{#if showAssistant && member && !readonly}
+  {@const person = member}
+  <AssistantDialog kind="grades" context={{ memberId }} onclose={() => (showAssistant = false)}>
+    {#snippet review(proposal, back)}
+      <GradesReview
+        {proposal}
+        {memberId}
+        member={person}
+        {definitions}
+        {current}
+        {history}
+        onback={back}
+        oncancel={() => (showAssistant = false)}
+        onapplied={() => {
+          showAssistant = false;
+          onchanged?.();
+        }}
+      />
+    {/snippet}
+  </AssistantDialog>
 {/if}
 
 {#if confirmDeleteId !== null}
