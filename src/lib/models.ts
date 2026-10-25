@@ -468,3 +468,27 @@ export interface TrainerTrackingRecord {
   trainerRole: TrainerRole;
   attendeeCount: number;
 }
+
+/** Row of training_plan_sessions: the TK's plan for one training on one date */
+export interface TrainingPlanSession {
+  id: number;
+  training_id: number;
+  date: string;
+  /** Member who leads the training; null while open */
+  trainer_id: number | null;
+  topic: string | null;
+  notes: string | null;
+  /** null follows the breaks, true drops the training, false holds it when the dojo is closed */
+  cancelled: boolean | null;
+  updated_at: string;
+}
+
+/** Row of training_plan_breaks: holidays, or days the dojo is closed */
+export interface TrainingPlanBreak {
+  id: number;
+  title: string;
+  date_from: string;
+  date_to: string;
+  /** Dojo closed: planned trainings are dropped. False: holidays, the adults train on */
+  cancels_training: boolean;
+}

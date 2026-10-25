@@ -20,16 +20,23 @@ import { load as newEvent } from './events/new/+page';
 import { load as editEvent } from './events/[eventId]/edit/+page';
 import { load as newExam } from './exams/new/+page';
 import { load as editExam } from './exams/[examId]/edit/+page';
+import { load as trainingPlanSettings } from './training-plan/settings/+page';
 
 // Create/edit pages send viewers back to the read-only page they came from;
-// exam days need the TK (canManageExams), not just a trainer.
+// exam days and the training plan settings need the TK (canManageExams /
+// canPlanTrainings, the same role), not just a trainer.
 type Load = (event: never) => unknown;
 type Flags = { canWrite: boolean; canManageExams: boolean };
 
 function event(flags: Flags, params: Record<string, string> = {}) {
   return {
-    parent: async () => ({ ...flags, exam: { id: 7, event_id: null } }),
-    params
+    parent: async () => ({
+      ...flags,
+      canPlanTrainings: flags.canManageExams,
+      exam: { id: 7, event_id: null }
+    }),
+    params,
+    depends: () => {}
   } as never;
 }
 
@@ -69,7 +76,8 @@ describe('writer-only dashboard pages', () => {
 describe('TK-only exam pages', () => {
   const cases: [string, Load, Record<string, string>, string][] = [
     ['new exam day', newExam as Load, {}, '/dashboard/exams'],
-    ['edit exam day', editExam as Load, { examId: '7' }, '/dashboard/exams/7']
+    ['edit exam day', editExam as Load, { examId: '7' }, '/dashboard/exams/7'],
+    ['training plan settings', trainingPlanSettings as Load, {}, '/dashboard/training-plan']
   ];
 
   for (const [name, load, params, target] of cases) {

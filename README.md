@@ -11,6 +11,7 @@ A modern attendance tracking system designed specifically for martial arts clubs
 - **Secure Authentication** - Google OAuth or passwordless email code, admin approval and role-based access (member / viewer / trainer / admin)
 - **Member Self-Service** - Members sign in with the email the club has on file and see their own profile and the member directory
 - **Q-Prüfungen (Kyu Gradings)** - Members register for exam days, examiners score candidates on their phone, passing records the new belt; the TK and examiners are exam roles set in the user management (see `docs/Q_EXAMS.md`)
+- **Trainingsplanung (Training Plan)** - The TK plans trainers, topics, rotations and holidays of the adult trainings for the year, replacing the shared document (see `docs/TRAINING_PLAN.md`)
 - **Multi-language Support** - Built-in internationalization (German/English)
 - **Responsive Design** - Works seamlessly across desktop and mobile devices
 
@@ -161,6 +162,7 @@ src/
 │   ├── dashboard/         # Main application routes
 │   │   ├── members/       # Member management
 │   │   ├── trainings/     # Training session management
+│   │   ├── training-plan/ # Trainingsplanung: trainers, topics, holidays
 │   │   ├── events/        # Event management
 │   │   ├── exams/         # Q-Prüfungen: exam days, scoring sheets, programs
 │   │   └── stats/         # Statistics and reports
@@ -234,6 +236,7 @@ supabase db push
 - `logs` - Attendance records with date and trainer status
 - `events` - General events and activities
 - `exams`, `exam_candidates`, `exam_scores`, `exam_programs` - Kyu gradings (`docs/Q_EXAMS.md`)
+- `training_plan_trainings`, `training_plan_sessions`, `training_plan_breaks` - The TK's training plan (`docs/TRAINING_PLAN.md`)
 
 **Views and Functions:**
 

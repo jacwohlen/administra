@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { canGrade, canManageExams, homePath, isApproved, isStaff, isWriter } from './roles';
+import {
+  canGrade,
+  canManageExams,
+  canPlanTrainings,
+  homePath,
+  isApproved,
+  isStaff,
+  isWriter
+} from './roles';
 
 describe('roles', () => {
   it('sends staff to the dashboard', () => {
@@ -57,5 +65,16 @@ describe('roles', () => {
     expect(canManageExams(pending)).toBe(false);
     expect(canGrade(pending)).toBe(false);
     expect(canGrade(null)).toBe(false);
+  });
+
+  it('lets the TK and admins plan trainings, but not plain trainers', () => {
+    expect(canPlanTrainings({ status: 'approved', role: 'admin', exam_role: null })).toBe(true);
+    expect(canPlanTrainings({ status: 'approved', role: 'viewer', exam_role: 'manager' })).toBe(
+      true
+    );
+    expect(canPlanTrainings({ status: 'approved', role: 'trainer', exam_role: null })).toBe(false);
+    expect(canPlanTrainings({ status: 'approved', role: 'viewer', exam_role: 'examiner' })).toBe(
+      false
+    );
   });
 });
