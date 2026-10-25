@@ -19,7 +19,8 @@
       "noTrainingsToday": "There are no trainings happening today!",
       "settings": "Settings",
       "myProfile": "My profile",
-      "exams": "Gradings"
+      "exams": "Gradings",
+      "assistant": "Data assistant"
     },
     "pending": {
       "title": "Access pending",
@@ -1414,6 +1415,21 @@
       "pickMember": "Choose member …",
       "noMatch": "No matching member found",
       "skip": "Don't apply"
+    },
+    "page": {
+      "intro": "The assistant helps you get started: existing records on paper, as PDF or in Excel are read in instead of typing everything by hand.",
+      "step1": "Upload a photo, PDF or text, e.g. a judo pass, an attendance list or a training plan.",
+      "step2": "Claude reads the material and makes a proposal.",
+      "step3": "You check the proposal, fill in what is missing and correct differences; uncertain values are marked.",
+      "step4": "Only when you press “Apply” is anything saved, with your normal permissions.",
+      "safety": "The AI cannot change anything itself: it only returns a proposal in a fixed format, sees no member data from Administra and never picks members. Names are matched here in the browser.",
+      "notConfigured": "The assistant is not set up on this installation yet. An admin has to add an Anthropic API key (see docs/AI_ASSISTANT.md).",
+      "member": "Member",
+      "memberPlaceholder": "Search name …",
+      "training": "Training",
+      "trainingPlaceholder": "Choose training …",
+      "date": "Date",
+      "start": "Start"
     }
   }
 }

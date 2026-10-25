@@ -19,7 +19,8 @@
       "noTrainingsToday": "Heute findet kein Training statt!",
       "settings": "Einstellungen",
       "myProfile": "Mein Profil",
-      "exams": "Q-Prüfungen"
+      "exams": "Q-Prüfungen",
+      "assistant": "Daten-Assistent"
     },
     "pending": {
       "title": "Zugriff ausstehend",
@@ -1414,6 +1415,21 @@
       "pickMember": "Mitglied wählen …",
       "noMatch": "Kein passendes Mitglied gefunden",
       "skip": "Nicht übernehmen"
+    },
+    "page": {
+      "intro": "Der Assistent hilft beim Einstieg: Bestehende Unterlagen auf Papier, als PDF oder in Excel werden eingelesen, statt alles von Hand abzutippen.",
+      "step1": "Foto, PDF oder Text hochladen, z. B. einen Judo-Pass, eine Präsenzliste oder einen Trainingsplan.",
+      "step2": "Claude liest die Unterlagen und macht einen Vorschlag.",
+      "step3": "Du prüfst den Vorschlag, ergänzt Fehlendes und korrigierst Abweichungen; Unsicheres ist markiert.",
+      "step4": "Erst wenn du «Übernehmen» drückst, wird gespeichert, mit deinen normalen Berechtigungen.",
+      "safety": "Die KI kann nichts selbst ändern: Sie liefert nur einen Vorschlag in einem festen Format, sieht keine Mitgliederdaten aus Administra und wählt keine Mitglieder aus. Namen werden hier im Browser zugeordnet.",
+      "notConfigured": "Der Assistent ist auf dieser Installation noch nicht eingerichtet. Ein Admin muss dafür einen API-Schlüssel von Anthropic hinterlegen (siehe docs/AI_ASSISTANT.md).",
+      "member": "Mitglied",
+      "memberPlaceholder": "Name suchen …",
+      "training": "Training",
+      "trainingPlaceholder": "Training wählen …",
+      "date": "Datum",
+      "start": "Starten"
     }
   }
 }
