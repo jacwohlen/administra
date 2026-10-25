@@ -1462,7 +1462,13 @@
         "afterHigher": "Später datiert als der höhere {grade} ({date}) – Reihenfolge prüfen.",
         "mismatch": "Im Pass steht «{written}», das passt nicht zum gewählten Grad.",
         "dan": "Dan-Grad: wird zum aktuellen Gurt{badge, select, true { und vergibt das Abzeichen «{badgeName}»} other {}}."
-      }
+      },
+      "saved": "Gespeichert",
+      "saveFailed": {
+        "failed": "Nicht gespeichert – versuche es nochmals oder lass die Zeile weg.",
+        "notUpdated": "Nicht gespeichert: Die Prüfung wurde inzwischen gelöscht, oder du darfst sie nicht ändern."
+      },
+      "retry": "{count, plural, one {Eine Prüfung wurde} other {# Prüfungen wurden}} nicht gespeichert. Versuche es nochmals oder schliesse den Assistenten – was gespeichert ist, bleibt gespeichert."
     },
     "attendance": {
       "loading": "Mitglieder und bisherige Anwesenheiten werden geladen …",
@@ -1479,7 +1485,7 @@
         "include": "Datum {date} übernehmen",
         "marked": "{count, plural, one {# Person} other {# Personen}}",
         "listDate": "Auf der Liste steht {dates}. Übernommen wird das Datum oben.",
-        "notPageDate": "Nicht das Datum dieser Seite ({date}).",
+        "notPageDate": "Nicht das Datum dieser Seite ({date}) – eingetragen wird das Datum hier.",
         "cancelled": "Laut Trainingsplan fällt das Training an diesem Tag aus.",
         "excluded": "Datum wird nicht übernommen",
         "issues": {
@@ -1506,7 +1512,20 @@
         "duplicateOf": "Steht schon weiter oben («{name}») und wird damit zusammengeführt. Hat die Person an einem Datum zwei Rollen, gilt die höhere.",
         "overwrite": "Schon erfasst als {roles} – mit der Rolle von der Liste überschreiben",
         "skipOpen": "Offene nicht übernehmen",
-        "present": "Am {date} anwesend"
+        "present": "Am {date} anwesend",
+        "confirmRoster": "{count, plural, one {# Vorschlag von der Teilnehmerliste bestätigen} other {# Vorschläge von der Teilnehmerliste bestätigen}}",
+        "notOnRosterConfirm": "Steht nicht auf der Teilnehmerliste dieses Trainings und kommt mit der Bestätigung neu darauf.",
+        "saved": "Gespeichert.",
+        "option": "{name} ({details})",
+        "details": {
+          "roster": "auf der Teilnehmerliste",
+          "notRoster": "nicht auf der Teilnehmerliste",
+          "former": "ausgetreten",
+          "passive": "passiv",
+          "trial": "Probetraining",
+          "new": "neu erfasst",
+          "id": "Nr. {id}"
+        }
       },
       "problems": {
         "pick": "Wähle ein Mitglied, erfasse die Person neu oder übernimm sie nicht.",
@@ -1532,7 +1551,14 @@
       "summaryRoster": "{count, plural, one {# Person kommt} other {# Personen kommen}} neu auf die Teilnehmerliste",
       "open": "{count, plural, one {# Name braucht} other {# Namen brauchen}} noch eine Entscheidung.",
       "onlyPresent": "Es werden nur Anwesenheiten eingetragen, nie welche entfernt. Bei älteren Daten dauert das Speichern etwas länger, weil die Abzeichen neu berechnet werden.",
-      "progress": "Wird gespeichert … {done} von {total}"
+      "progress": "Wird gespeichert … {done} von {total}",
+      "failed": {
+        "create": "Das neue Mitglied konnte nicht erfasst werden, die Anwesenheit ist nicht gespeichert. Versuche es nochmals oder übernimm die Person nicht.",
+        "createdAnyway": "Das neue Mitglied wurde trotz Fehlermeldung erfasst und ist oben gewählt. Bestätige es, dann wird die Anwesenheit nochmals gespeichert.",
+        "roster": "Konnte nicht auf die Teilnehmerliste gesetzt werden, die Anwesenheit ist nicht gespeichert. Versuche es nochmals.",
+        "checkIn": "Anwesenheit nicht gespeichert: {dates}. Versuche es nochmals."
+      },
+      "partialHint": "Bei {count} Namen hat das Speichern nicht geklappt (rot markiert). Gespeichertes ist als «Schon erfasst» markiert und wird nicht nochmals gespeichert. Übernimm den Rest nochmals oder schliesse den Dialog."
     },
     "trainingPlan": {
       "summary": "{count, plural, one {# Termin} other {# Termine}} vom {from} bis {to}",
@@ -1565,10 +1591,10 @@
         "weekday": "Das Training ist am {training}, das Datum ist ein {date}. Bitte Datum oder Training korrigieren.",
         "empty": "Nichts eingetragen – wird nicht übernommen.",
         "trainerUnconfirmed": "«{name}» ist vermutlich {member} – bitte bestätigen oder anders zuordnen.",
-        "trainingGuessed": "Training nach dem Wochentag zugeordnet – bitte prüfen.",
         "trainerUnmatched": "Kein Mitglied für «{name}», der Name steht in der Bemerkung.",
         "closedBreak": "Dojo geschlossen ({title}): Das Training fällt trotzdem aus.",
-        "unusualYear": "Ungewöhnliches Jahr – stimmt das Datum?"
+        "unusualYear": "Ungewöhnliches Jahr – stimmt das Datum?",
+        "trainingUnconfirmed": "Im Dokument steht kein geplantes Training, nach dem Wochentag wäre es dieses. Bitte bestätigen oder ein anderes wählen."
       },
       "holidays": "Ferien",
       "holidaysHint": "Werden zu den Ferien und Ausfallzeiten hinzugefügt. «Dojo zu» lässt alle geplanten Trainings in dieser Zeit ausfallen.",
@@ -1583,7 +1609,17 @@
       "plan": "Zu speichern: {sessions, plural, =0 {kein Termin} one {# Termin} other {# Termine}} und {breaks, plural, =0 {keine Ferien} one {# Ferieneintrag} other {# Ferieneinträge}}.",
       "progress": "Wird gespeichert … {done} von {total}",
       "blocked": "{count, plural, one {Eine Zeile braucht} other {# Zeilen brauchen}} noch eine Angabe: ergänze sie oder wähle «Nicht übernehmen».",
-      "skipIncomplete": "Unvollständige nicht übernehmen"
+      "skipIncomplete": "Unvollständige nicht übernehmen",
+      "confirmTraining": "Training stimmt",
+      "confirmTrainingGroup": "Stimmt für alle {count} Termine «{name}»",
+      "guessDuplicateOf": "Im Dokument steht kein geplantes Training; nach dem Wochentag wäre es der gleiche Termin wie Zeile {row}. Wird nicht übernommen – wähle ein Training, wenn der Termin doch dazugehört.",
+      "saved": "Gespeichert",
+      "saveFailed": "Nicht gespeichert – versuche es nochmals oder lass den Termin weg.",
+      "holidaySaveFailed": "Nicht gespeichert – versuche es nochmals oder entferne das Häkchen bei «Übernehmen».",
+      "saveRetry": "{count, plural, one {Ein Eintrag wurde} other {# Einträge wurden}} nicht gespeichert. Versuche es nochmals oder schliesse den Assistenten – was gespeichert ist, bleibt gespeichert.",
+      "holidayNotPreselected": "Nicht vorgewählt, weil sich der Zeitraum mit erfassten Ferien überschneidet. Kreuze «Übernehmen» nur an, wenn es zusätzliche Ferien sind.",
+      "holidayOverlapsRow": "Überschneidet sich mit Zeile {row}, «{title}» ({range}).",
+      "holidayClosesOpen": "Überschneidet sich mit «{title}» ({range}), erfasst ohne «Dojo zu»: Dort findet das Training statt. Mit «Dojo zu» fallen in der Überschneidung alle geplanten Trainings aus."
     },
     "lessonPlan": {
       "forDate": "Lektionsplan für den {date}",
@@ -1620,7 +1656,8 @@
         "fileNotConfirmed": "Bestätige zuerst, dass die Datei ersetzt werden darf.",
         "dateNotConfirmed": "Bestätige zuerst das Datum."
       },
-      "changedMeanwhile": "Der Lektionsplan wurde inzwischen geändert oder konnte nicht gespeichert werden. Der aktuelle Stand ist neu geladen – prüfe ihn und übernimm nochmals."
+      "changedMeanwhile": "Der Lektionsplan wurde inzwischen geändert oder konnte nicht gespeichert werden. Der aktuelle Stand ist neu geladen – prüfe ihn und übernimm nochmals.",
+      "saveFailed": "Nicht gespeichert. Der Lektionsplan ist neu geladen – prüfe ihn und versuche es nochmals."
     },
     "events": {
       "intro": "{count, plural, one {# Termin gelesen} other {# Termine gelesen}}. Angehakte Termine werden als neue Events erstellt, bestehende Events bleiben unverändert.",
@@ -1648,11 +1685,19 @@
         "unknownSection": "Die Sektion «{written}» gibt es hier nicht: bitte eine wählen.",
         "badTimeFrom": "Startzeit als HH:MM angeben.",
         "badTimeTo": "Endzeit als HH:MM angeben.",
-        "timeOrder": "Die Endzeit muss nach der Startzeit liegen.",
+        "timeOrder": "Die Endzeit liegt nicht nach der Startzeit – endet der Anlass nach Mitternacht?",
         "badDateTo": "Das Enddatum muss nach dem Datum liegen.",
         "past": "Liegt in der Vergangenheit.",
         "farFuture": "Liegt mehr als zwei Jahre in der Zukunft: Jahr prüfen."
-      }
+      },
+      "comparing": "Die bestehenden Events werden zum Vergleich geladen …",
+      "compareFailed": "Die bestehenden Events konnten nicht geladen werden. Ohne diesen Vergleich wird nichts gespeichert, damit kein Termin doppelt entsteht.",
+      "compareRetry": "Nochmals laden",
+      "saved": "Gespeichert",
+      "saveFailed": "Nicht gespeichert – versuche es nochmals oder wähle den Termin ab.",
+      "recordedAnyway": "Ein passendes Event ist jetzt erfasst, wohl trotz der Fehlermeldung. Der Termin bleibt abgewählt, damit er nicht doppelt entsteht.",
+      "failedTitles": "Nicht gespeichert: {titles}",
+      "retry": "{count, plural, one {# Termin wurde nicht gespeichert (rot markiert).} other {# Termine wurden nicht gespeichert (rot markiert).}} Gespeicherte sind markiert und werden nicht nochmals erstellt. Übernimm den Rest nochmals oder schliesse den Dialog."
     },
     "textLength": "{count} von {max} Zeichen"
   }

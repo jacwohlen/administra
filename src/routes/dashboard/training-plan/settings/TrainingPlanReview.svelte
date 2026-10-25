@@ -16,24 +16,31 @@
   import { supabaseClient } from '$lib/supabase';
   import { toaster } from '$lib/toast';
   import type { PlanTraining } from '$lib/trainingPlanUtils';
-  import { MAX_LENGTH, isIsoDate } from '$lib/assistant/proposals';
+  import { MAX_LENGTH, clubToday, isIsoDate } from '$lib/assistant/proposals';
   import {
     PORTION,
     applyLeaderChoice,
     buildBreakWrites,
     buildPlanWrites,
+    confirmTraining,
     dateSpan,
+    holidayRowsOf,
     initialHolidayInputs,
     initialPlanInputs,
+    insertBreaks,
     leaderKey,
+    markSaved,
     matchLeaders,
     reviewHolidays,
     reviewPlan,
     rowValues,
+    sessionRowsOf,
     setRowTrainer,
+    setRowTraining,
     skipIncomplete,
     skipIncompleteHolidays,
     summarizePlan,
+    trainingGuessGroup,
     weekdayOf,
     writeInPortions,
     type HolidayInput,
@@ -58,6 +65,11 @@
    * with what the TK planned already, plus the holidays. New sessions and
    * ones that only fill empty fields are saved like the sheet import;
    * sessions that contradict the plan only when the user ticks it.
+   *
+   * When some writes fail, the review stays open: saved rows are marked and
+   * left out, failed ones say so, and the plan and the holidays are read
+   * again so that a write that went through despite an error shows as
+   * recorded and is not written twice.
    */
   let {
     proposal,
@@ -66,7 +78,8 @@
     breaks,
     onback,
     oncancel,
-    onapplied
+    onapplied,
+    onpartial
   }: {
     proposal: TrainingPlanProposal;
     /** The planned trainings */
@@ -76,14 +89,19 @@
     breaks: TrainingPlanBreak[];
     onback: () => void;
     oncancel: () => void;
-    /** Something was saved: close the dialog and reload the page */
+    /** Everything was saved: close the dialog and reload the page */
     onapplied: () => void;
+    /**
+     * Not everything was saved, the review stays open. `breaks` are the
+     * holidays recorded now; the page has to reload when the dialog closes.
+     */
+    onpartial: (breaks: TrainingPlanBreak[]) => void;
   } = $props();
 
   /** PostgREST returns at most 1000 rows per request */
   const PAGE = 1000;
   const uid = $props.id();
-  const today = dayjs().format('YYYY-MM-DD');
+  const today = clubToday();
 
   const leaders = untrack(() => matchLeaders(proposal.sessions, members));
   const leaderList = [...leaders.values()].sort((a, b) => a.name.localeCompare(b.name));
@@ -104,11 +122,33 @@
   let progress = $state<{ done: number; total: number } | null>(null);
   let busy = $derived(progress !== null);
 
-  let holidayRows = $derived(reviewHolidays(proposal.holidays, holidayInputs, breaks));
-  /** Recorded holidays plus the ones about to be added, for the "dojo closed" check */
+  /** The holidays as read again after a partial save */
+  let reloadedBreaks = $state.raw<TrainingPlanBreak[] | null>(null);
+  let recorded = $derived(reloadedBreaks ?? breaks);
+  /** Rows whose write failed in the last apply */
+  let failedSessions = $state<Record<number, boolean>>({});
+  let failedHolidays = $state<Record<number, boolean>>({});
+  /** An apply did not save everything (a failed write may have gone through): leaving closes */
+  let attempted = $state(false);
+
+  let holidayRows = $derived(reviewHolidays(proposal.holidays, holidayInputs, recorded));
+  /** Recorded holidays plus the ones about to be added (or just added), for the "dojo closed" check */
   let planBreaks = $derived<PlannedBreak[]>([
-    ...breaks,
-    ...holidayRows.flatMap((h) => (h.write ? [h.write] : []))
+    ...recorded,
+    ...holidayRows.flatMap((h): PlannedBreak[] =>
+      h.write
+        ? [h.write]
+        : h.input.saved && h.status === 'new'
+          ? [
+              {
+                title: h.input.title,
+                date_from: h.input.dateFrom,
+                date_to: h.input.dateTo || h.input.dateFrom,
+                cancels_training: h.input.closed
+              }
+            ]
+          : []
+    )
   ]);
   let rows = $derived(
     reviewPlan(proposal.sessions, inputs, {
@@ -126,6 +166,19 @@
   let span = $derived(dateSpan(inputs.map((i) => i.date)));
   let canApply = $derived(
     !busy && !loadFailed && count > 0 && summary.blocking === 0 && summary.waiting === 0
+  );
+  /** A failed write the reload shows as recorded did go through after all */
+  let sessionFailed = $derived(
+    rows.map((r, i) => !!failedSessions[i] && !r.input.saved && r.status !== 'exists')
+  );
+  let holidayFailed = $derived(
+    holidayRows.map((h, i) => !!failedHolidays[i] && !h.input.saved && h.status !== 'exists')
+  );
+  let failedCount = $derived(
+    sessionFailed.filter(Boolean).length + holidayFailed.filter(Boolean).length
+  );
+  let anySaved = $derived(
+    inputs.some((input) => input.saved) || holidayInputs.some((input) => input.saved)
   );
 
   // Rows that need a fix start open
@@ -188,6 +241,16 @@
   });
 
   type TrainerValue = number | null | 'keep' | 'none';
+
+  /** The user picked a training: their choice, no guess to confirm */
+  function setTraining(i: number, trainingId: number | null) {
+    inputs[i] = setRowTraining(inputs[i], trainingId);
+  }
+
+  /** The weekday's training is right (for all rows of the same written training) */
+  function confirmGuess(i: number) {
+    inputs = confirmTraining(rows, inputs, i);
+  }
 
   function setTrainer(i: number, value: TrainerValue) {
     const next = typeof value === 'number' ? value : null;
@@ -292,16 +355,53 @@
     holidayInputs = skipIncompleteHolidays(holidayRows, holidayInputs);
   }
 
+  /** All recorded holidays, as the page lists them */
+  async function reloadBreaks() {
+    try {
+      const { data, error } = await supabaseClient
+        .from('training_plan_breaks')
+        .select('id, title, date_from, date_to, cancels_training')
+        .order('date_from', { ascending: false })
+        .returns<TrainingPlanBreak[]>();
+      if (error) throw error;
+      reloadedBreaks = data ?? [];
+    } catch (err) {
+      console.error('Error reloading holidays after saving from the assistant:', err);
+    }
+  }
+
+  /** The holidays recorded in a period, null when they cannot be read */
+  async function breaksBetween(span: { from: string; to: string }) {
+    try {
+      const { data, error } = await supabaseClient
+        .from('training_plan_breaks')
+        .select('title, date_from, date_to, cancels_training')
+        .lte('date_from', span.to)
+        .gte('date_to', span.from)
+        .returns<PlannedBreak[]>();
+      if (error) throw error;
+      return data ?? [];
+    } catch (err) {
+      console.error('Error checking holidays from the assistant:', err);
+      return null;
+    }
+  }
+
   async function apply() {
     if (!canApply) return;
-    const sessions = buildPlanWrites(rows, { trainings, members });
-    const holidays = buildBreakWrites(holidayRows);
+    const sessionRows = rows;
+    const breakRows = holidayRows;
+    const sessions = buildPlanWrites(sessionRows, { trainings, members });
+    const holidays = buildBreakWrites(breakRows);
     const total = sessions.length + holidays.length;
     if (total === 0) return;
     progress = { done: 0, total };
+    failedSessions = {};
+    failedHolidays = {};
 
     // Sessions in portions like the sheet import; a failed portion is
-    // retried row by row so the failures are known per session
+    // retried row by row so the failures are known per session (an upsert
+    // on training and date: writing one twice changes nothing)
     const savedSessions = await writeInPortions(
       sessions,
       PORTION,
@@ -321,9 +421,12 @@
         if (progress) progress.done = done;
       }
     );
-    const savedBreaks = await writeInPortions(
+    // Holidays have no unique key: never inserted twice, see insertBreaks.
+    // The recorded ones are always read first: the list the review compares
+    // with may be older than the table (a reading after a partial save
+    // whose reload failed, another tab)
+    const savedBreaks = await insertBreaks(
       holidays,
-      PORTION,
       async (portion) => {
         try {
           const { error } = await supabaseClient.from('training_plan_breaks').insert(portion);
@@ -334,8 +437,12 @@
           return false;
         }
       },
-      (done) => {
-        if (progress) progress.done = sessions.length + done;
+      breaksBetween,
+      {
+        checkFirst: true,
+        onProgress: (done) => {
+          if (progress) progress.done = sessions.length + done;
+        }
       }
     );
 
@@ -343,15 +450,31 @@
     const failed = savedSessions.failed.length + savedBreaks.failed.length;
     if (failed === 0) {
       toaster.success({ title: $_('assistant.review.done', { values: { count: saved } }) });
-    } else if (saved > 0) {
-      toaster.warning({ title: $_('assistant.review.partial', { values: { saved, failed } }) });
-    } else {
-      // Nothing saved: keep the review open to try again
-      toaster.error({ title: $_('assistant.review.error') });
-      progress = null;
+      onapplied();
       return;
     }
-    onapplied();
+    // Not everything went through: the review stays open to retry or close.
+    // Saved rows are never written again, failed ones say so, and the plan
+    // and the holidays are read again (a write can commit and still fail).
+    inputs = markSaved(inputs, sessionRowsOf(sessionRows, savedSessions.saved));
+    holidayInputs = markSaved(holidayInputs, holidayRowsOf(breakRows, savedBreaks.saved));
+    failedSessions = Object.fromEntries(
+      sessionRowsOf(sessionRows, savedSessions.failed).map((i) => [i, true])
+    );
+    failedHolidays = Object.fromEntries(
+      holidayRowsOf(breakRows, savedBreaks.failed).map((i) => [i, true])
+    );
+    attempted = true;
+    // Loaded again by the effect; apply waits for it
+    planned = null;
+    await reloadBreaks();
+    progress = null;
+    onpartial(recorded);
+    if (saved > 0) {
+      toaster.warning({ title: $_('assistant.review.partial', { values: { saved, failed } }) });
+    } else {
+      toaster.error({ title: $_('assistant.review.error') });
+    }
   }
 </script>
 
@@ -463,6 +586,7 @@
       {#each rows as row, i (i)}
         {@const idle =
           row.input.skip ||
+          row.input.saved ||
           row.status === 'exists' ||
           row.status === 'duplicate' ||
           (row.status === 'changed' && !row.input.overwrite)}
@@ -474,7 +598,12 @@
         >
           <div class="flex flex-wrap items-center gap-2 text-sm">
             <span class="text-xs text-surface-600-400 tabular-nums">{i + 1}.</span>
-            {#if !row.checked && !row.input.skip && row.errors.length === 0}
+            {#if row.input.saved}
+              <span class="badge text-xs preset-tonal-success">
+                <Fa icon={faCheck} />
+                <span>{$_('assistant.trainingPlan.saved')}</span>
+              </span>
+            {:else if !row.checked && !row.input.skip && row.errors.length === 0}
               <Fa icon={faSpinner} spin class="text-surface-600-400" />
             {:else}
               <span class="badge text-xs {STATUS_CLASS[row.status]}">{statusText(row.status)}</span>
@@ -490,17 +619,20 @@
             <span id="{uid}-training-{i}" class="min-w-0 truncate">
               {row.training ? trainingLabel(row.training) : $_('assistant.trainingPlan.noTraining')}
             </span>
-            <button
-              type="button"
-              class="btn btn-sm preset-tonal-surface ml-auto"
-              aria-expanded={!!editing[i]}
-              aria-describedby="{uid}-date-{i} {uid}-training-{i}"
-              disabled={busy}
-              onclick={() => (editing[i] = !editing[i])}
-            >
-              <Fa icon={editing[i] ? faChevronUp : faPen} />
-              <span>{editing[i] ? $_('assistant.trainingPlan.editDone') : $_('button.edit')}</span>
-            </button>
+            {#if !row.input.saved}
+              <button
+                type="button"
+                class="btn btn-sm preset-tonal-surface ml-auto"
+                aria-expanded={!!editing[i]}
+                aria-describedby="{uid}-date-{i} {uid}-training-{i}"
+                disabled={busy}
+                onclick={() => (editing[i] = !editing[i])}
+              >
+                <Fa icon={editing[i] ? faChevronUp : faPen} />
+                <span>{editing[i] ? $_('assistant.trainingPlan.editDone') : $_('button.edit')}</span
+                >
+              </button>
+            {/if}
           </div>
           <p class="text-xs text-surface-600-400 break-words">
             {$_('assistant.trainingPlan.inDocument')}: {written(row.entry)}
@@ -509,7 +641,7 @@
             <p class="text-xs italic text-surface-600-400 break-words">{row.entry.remark}</p>
           {/if}
 
-          {#if editing[i]}
+          {#if editing[i] && !row.input.saved}
             <div class="grid gap-2 sm:grid-cols-2 items-end">
               <label class="label">
                 <span class="text-xs">{$_('page.trainingPlan.grid.date')}</span>
@@ -522,7 +654,11 @@
               </label>
               <label class="label">
                 <span class="text-xs">{$_('page.trainingPlan.training')}</span>
-                <select class="select text-sm" bind:value={inputs[i].trainingId} disabled={busy}>
+                <select
+                  class="select text-sm"
+                  bind:value={() => inputs[i].trainingId, (v) => setTraining(i, v)}
+                  disabled={busy}
+                >
                   <option value={null}>{$_('assistant.trainingPlan.pickTraining')}</option>
                   {#each trainings as t (t.id)}
                     <option value={t.id}>{trainingLabel(t)}</option>
@@ -610,7 +746,9 @@
             </div>
           {/if}
 
-          {#if row.status === 'exists'}
+          {#if row.input.saved}
+            <!-- Saved: nothing to choose any more -->
+          {:else if row.status === 'exists'}
             <p class="text-xs text-surface-600-400">{$_('assistant.trainingPlan.exists')}</p>
           {:else if row.status === 'changed'}
             <label class="flex items-center gap-2 text-sm">
@@ -625,10 +763,15 @@
             </label>
           {:else if row.status === 'duplicate' && row.duplicateOf !== null}
             <p class="text-xs text-surface-600-400">
-              {$_('assistant.trainingPlan.duplicateOf', { values: { row: row.duplicateOf + 1 } })}
+              {$_(
+                row.input.trainingGuess === null
+                  ? 'assistant.trainingPlan.duplicateOf'
+                  : 'assistant.trainingPlan.guessDuplicateOf',
+                { values: { row: row.duplicateOf + 1 } }
+              )}
             </p>
           {/if}
-          {#if row.input.skip || row.status === 'new' || row.status === 'fill' || row.status === 'invalid'}
+          {#if !row.input.saved && (row.input.skip || row.status === 'new' || row.status === 'fill' || row.status === 'invalid')}
             <label class="flex items-center gap-2 text-sm">
               <input
                 class="checkbox"
@@ -661,6 +804,24 @@
                       <Fa icon={faCheck} />
                       <span>{$_('assistant.trainingPlan.confirmLeader')}</span>
                     </button>
+                  {:else if issue.code === 'trainingUnconfirmed' && !row.input.skip && row.training}
+                    {@const group = trainingGuessGroup(rows, i).length}
+                    <button
+                      type="button"
+                      class="btn btn-sm preset-tonal-primary"
+                      aria-describedby="{uid}-date-{i} {uid}-training-{i}"
+                      disabled={busy}
+                      onclick={() => confirmGuess(i)}
+                    >
+                      <Fa icon={faCheck} />
+                      <span>
+                        {group > 1
+                          ? $_('assistant.trainingPlan.confirmTrainingGroup', {
+                              values: { count: group, name: row.entry.trainingAsWritten }
+                            })
+                          : $_('assistant.trainingPlan.confirmTraining')}
+                      </span>
+                    </button>
                   {/if}
                 </li>
               {/each}
@@ -671,6 +832,16 @@
                 </li>
               {/each}
             </ul>
+          {/if}
+          {#if sessionFailed[i]}
+            <p
+              class="flex items-start gap-1.5 text-xs {row.input.skip
+                ? 'text-surface-600-400'
+                : 'text-error-600-400'}"
+            >
+              <Fa icon={faCircleExclamation} class="mt-0.5 flex-none" />
+              <span>{$_('assistant.trainingPlan.saveFailed')}</span>
+            </p>
           {/if}
         </li>
       {/each}
@@ -683,6 +854,7 @@
       <p class="text-xs text-surface-600-400 mb-2">{$_('assistant.trainingPlan.holidaysHint')}</p>
       <ul class="space-y-2">
         {#each holidayRows as h, i (i)}
+          {@const locked = busy || h.input.saved}
           <li
             class="card border p-3 space-y-2 {h.blocking
               ? 'border-error-500'
@@ -690,24 +862,31 @@
             class:opacity-70={!h.write}
           >
             <div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
-              <label class="flex items-center gap-2">
-                <input
-                  class="checkbox"
-                  type="checkbox"
-                  bind:checked={holidayInputs[i].use}
-                  aria-describedby="{uid}-holiday-{i}"
-                  disabled={busy || h.status === 'exists'}
-                />
-                <span>{$_('assistant.trainingPlan.addHoliday')}</span>
-              </label>
-              <span class="badge text-xs {STATUS_CLASS[h.status]}">{statusText(h.status)}</span>
+              {#if h.input.saved}
+                <span class="badge text-xs preset-tonal-success">
+                  <Fa icon={faCheck} />
+                  <span>{$_('assistant.trainingPlan.saved')}</span>
+                </span>
+              {:else}
+                <label class="flex items-center gap-2">
+                  <input
+                    class="checkbox"
+                    type="checkbox"
+                    bind:checked={holidayInputs[i].use}
+                    aria-describedby="{uid}-holiday-{i}"
+                    disabled={busy || h.status === 'exists'}
+                  />
+                  <span>{$_('assistant.trainingPlan.addHoliday')}</span>
+                </label>
+                <span class="badge text-xs {STATUS_CLASS[h.status]}">{statusText(h.status)}</span>
+              {/if}
               <label class="flex items-center gap-1.5 ml-auto">
                 <input
                   class="checkbox"
                   type="checkbox"
                   bind:checked={holidayInputs[i].closed}
                   aria-describedby="{uid}-holiday-{i}"
-                  disabled={busy || !holidayInputs[i].use || h.status === 'exists'}
+                  disabled={locked || !holidayInputs[i].use || h.status === 'exists'}
                 />
                 <span>{$_('page.trainingPlan.settings.closedShort')}</span>
               </label>
@@ -721,7 +900,7 @@
                   type="text"
                   maxlength={MAX_LENGTH.heading}
                   bind:value={holidayInputs[i].title}
-                  disabled={busy}
+                  disabled={locked}
                 />
               </label>
               <label class="label">
@@ -730,7 +909,7 @@
                   class="input text-sm"
                   type="date"
                   bind:value={holidayInputs[i].dateFrom}
-                  disabled={busy}
+                  disabled={locked}
                 />
               </label>
               <label class="label">
@@ -740,11 +919,13 @@
                   type="date"
                   min={holidayInputs[i].dateFrom}
                   bind:value={holidayInputs[i].dateTo}
-                  disabled={busy}
+                  disabled={locked}
                 />
               </label>
             </div>
-            {#if h.status === 'exists'}
+            {#if h.input.saved}
+              <!-- Added: nothing to choose any more -->
+            {:else if h.status === 'exists'}
               <p class="text-xs text-surface-600-400">
                 {$_('assistant.trainingPlan.holidayExists')}
               </p>
@@ -754,8 +935,12 @@
                   values: { row: h.duplicateOf + 1 }
                 })}
               </p>
+            {:else if h.status === 'new' && !h.input.use && h.overlaps.length > 0}
+              <p class="text-xs text-surface-600-400">
+                {$_('assistant.trainingPlan.holidayNotPreselected')}
+              </p>
             {/if}
-            {#if h.errors.length > 0 || h.overlaps.length > 0}
+            {#if h.errors.length > 0 || h.overlaps.length > 0 || h.overlapsRows.length > 0}
               <ul class="space-y-0.5 text-xs">
                 {#each h.errors as issue (issue.code)}
                   <li
@@ -768,19 +953,53 @@
                   </li>
                 {/each}
                 {#each h.overlaps as other, j (j)}
+                  {@const closesOpen = h.closesOpen.includes(other)}
+                  <li
+                    class="flex items-start gap-1.5 text-warning-800-200"
+                    class:font-semibold={closesOpen && h.input.use && !h.input.saved}
+                  >
+                    <Fa icon={faTriangleExclamation} class="mt-0.5 flex-none" />
+                    <span>
+                      {$_(
+                        closesOpen
+                          ? 'assistant.trainingPlan.holidayClosesOpen'
+                          : 'assistant.trainingPlan.holidayOverlaps',
+                        {
+                          values: {
+                            title: other.title,
+                            range: period(other.date_from, other.date_to)
+                          }
+                        }
+                      )}
+                    </span>
+                  </li>
+                {/each}
+                {#each h.overlapsRows as j (j)}
+                  {@const other = holidayInputs[j]}
                   <li class="flex items-start gap-1.5 text-warning-800-200">
                     <Fa icon={faTriangleExclamation} class="mt-0.5 flex-none" />
                     <span>
-                      {$_('assistant.trainingPlan.holidayOverlaps', {
+                      {$_('assistant.trainingPlan.holidayOverlapsRow', {
                         values: {
+                          row: j + 1,
                           title: other.title,
-                          range: period(other.date_from, other.date_to)
+                          range: period(other.dateFrom, other.dateTo || other.dateFrom)
                         }
                       })}
                     </span>
                   </li>
                 {/each}
               </ul>
+            {/if}
+            {#if holidayFailed[i]}
+              <p
+                class="flex items-start gap-1.5 text-xs {h.input.use
+                  ? 'text-error-600-400'
+                  : 'text-surface-600-400'}"
+              >
+                <Fa icon={faCircleExclamation} class="mt-0.5 flex-none" />
+                <span>{$_('assistant.trainingPlan.holidaySaveFailed')}</span>
+              </p>
             {/if}
           </li>
         {/each}
@@ -802,6 +1021,8 @@
         {$_('assistant.trainingPlan.progress', { values: progress })}
       {:else if loadFailed}
         {$_('assistant.trainingPlan.loadError')}
+      {:else if failedCount > 0}
+        {$_('assistant.trainingPlan.saveRetry', { values: { count: failedCount } })}
       {:else if summary.waiting > 0}
         {$_('assistant.trainingPlan.loading')}
       {:else if summary.blocking > 0}
@@ -819,7 +1040,8 @@
       {$_('assistant.review.back')}
     </button>
     <button type="button" class="btn preset-tonal-surface" onclick={oncancel} disabled={busy}>
-      {$_('button.cancel')}
+      <!-- After a partial save, leaving cancels nothing: what is saved stays -->
+      {anySaved || attempted ? $_('button.close') : $_('button.cancel')}
     </button>
     <button
       type="button"

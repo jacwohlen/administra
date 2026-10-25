@@ -43,6 +43,10 @@
 
   let showAdd = $state(false);
   let showAssistant = $state(false);
+  /** The gradings as the assistant reloaded them after a partial save, while it is open */
+  let assistantHistory = $state<MemberGrade[] | null>(null);
+  /** The assistant wrote (or tried to: a failed write may still commit): reload the member on close */
+  let assistantSaved = false;
   let saving = $state(false);
   let confirmDeleteId: number | null = $state(null);
   let form = $state({ section: '', grade: '', examDate: '', note: '' });
@@ -106,6 +110,15 @@
     }
     toaster.success({ title: $_('grades.deleteSuccess') });
     onchanged?.();
+  }
+
+  function closeAssistant() {
+    showAssistant = false;
+    assistantHistory = null;
+    if (assistantSaved) {
+      assistantSaved = false;
+      onchanged?.();
+    }
   }
 
   // Opened from the Daten-Assistent overview with ?assistant=grades
@@ -265,7 +278,7 @@
 
 {#if showAssistant && member && !readonly}
   {@const person = member}
-  <AssistantDialog kind="grades" context={{ memberId }} onclose={() => (showAssistant = false)}>
+  <AssistantDialog kind="grades" context={{ memberId }} onclose={closeAssistant}>
     {#snippet review(proposal, back)}
       <GradesReview
         {proposal}
@@ -273,12 +286,17 @@
         member={person}
         {definitions}
         {current}
-        {history}
+        history={assistantHistory ?? history}
         onback={back}
-        oncancel={() => (showAssistant = false)}
+        oncancel={closeAssistant}
         onapplied={() => {
-          showAssistant = false;
-          onchanged?.();
+          assistantSaved = true;
+          closeAssistant();
+        }}
+        onpartial={(reloaded) => {
+          // The review stays open; a new reading compares against these
+          assistantHistory = reloaded;
+          assistantSaved = true;
         }}
       />
     {/snippet}

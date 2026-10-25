@@ -29,9 +29,22 @@
   let confirmRemove = $state<TrainingPlanBreak | null>(null);
   let form = $state({ title: '', date_from: '', date_to: '', cancels_training: false });
   let showAssistant = $state(false);
+  /** The holidays as the assistant read them again after a partial save, while it is open */
+  let assistantBreaks = $state.raw<TrainingPlanBreak[] | null>(null);
+  /** The assistant saved something (or tried: a failed write may still commit): reload on close */
+  let assistantSaved = false;
 
   async function refresh() {
     await invalidate('training-plan:settings');
+  }
+
+  function closeAssistant() {
+    showAssistant = false;
+    assistantBreaks = null;
+    if (assistantSaved) {
+      assistantSaved = false;
+      refresh();
+    }
   }
 
   // Opened from the Daten-Assistent overview with ?assistant=training_plan
@@ -254,18 +267,23 @@
 </section>
 
 {#if showAssistant && data.canPlanTrainings}
-  <AssistantDialog kind="training_plan" onclose={() => (showAssistant = false)}>
+  <AssistantDialog kind="training_plan" onclose={closeAssistant}>
     {#snippet review(proposal, back)}
       <TrainingPlanReview
         {proposal}
         trainings={data.plannedTrainings}
         members={data.members}
-        breaks={data.breaks}
+        breaks={assistantBreaks ?? data.breaks}
         onback={back}
-        oncancel={() => (showAssistant = false)}
+        oncancel={closeAssistant}
         onapplied={() => {
-          showAssistant = false;
-          refresh();
+          assistantSaved = true;
+          closeAssistant();
+        }}
+        onpartial={(breaks) => {
+          // The review stays open; a new reading compares against these
+          assistantBreaks = breaks;
+          assistantSaved = true;
         }}
       />
     {/snippet}

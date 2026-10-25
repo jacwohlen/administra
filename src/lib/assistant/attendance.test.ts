@@ -1,17 +1,25 @@
 import { describe, expect, it } from 'vitest';
 import type { TrainerRole } from '$lib/models';
 import {
+  adoptMember,
   cancelledDates,
   checkInKey,
+  chooseEntry,
+  confirmRosterSuggestions,
   createDraft,
+  createdAnyway,
   dateIssue,
   dateIssues,
   fetchAllRows,
   filterMembers,
+  isRosterSuggestionOpen,
   labelList,
   memberHint,
+  nameTwins,
   needsConfirmation,
   newMemberNames,
+  openFailures,
+  personRows,
   reviewDraft,
   skipOpen,
   sortMembers,
@@ -21,7 +29,8 @@ import {
   writtenWeekdays,
   type AttendanceDraft,
   type AttendanceMember,
-  type ReviewContext
+  type ReviewContext,
+  type SaveFailure
 } from './attendance';
 import { clubToday } from './proposals';
 import type { AttendanceEntry, AttendanceProposal } from './types';
@@ -180,6 +189,74 @@ describe('createDraft', () => {
     ]);
   });
 
+  it('preselects the roster member of two with the same name, to be confirmed', () => {
+    // A check-in-created 'new' record and the later Webling record of one kid
+    const hans = [
+      { id: 50, firstname: 'Hans', lastname: 'Muster', labels: ['Aktiv'] },
+      { id: 90, firstname: 'Hans', lastname: 'Muster', labels: ['new'] }
+    ];
+    for (const order of [hans, [...hans].reverse()]) {
+      const draft = createDraft(proposal([entry('Muster Hans')]), {
+        members: [...members, ...order],
+        roster: new Set([...roster, 90]),
+        pageDate: '2026-10-19',
+        today: TODAY,
+        weekday: WEEKDAY
+      });
+      expect(draft.entries[0]).toMatchObject({ action: 'member', memberId: 90, unconfirmed: true });
+      expect(draft.entries[0].candidates.slice(0, 2)).toEqual([90, 50]);
+    }
+  });
+
+  it('only suggests a look-alike last name, and never as a roster suggestion', () => {
+    const club = [...members, { id: 8, firstname: 'Lena', lastname: 'Hugentobler', labels: [] }];
+    const draft = createDraft(proposal([entry('Lena Hug'), entry('Lena')]), {
+      members: club,
+      roster: new Set([8]),
+      pageDate: '2026-10-19',
+      today: TODAY,
+      weekday: WEEKDAY
+    });
+    // Hug is not Hugentobler: to be confirmed one by one
+    expect(draft.entries[0]).toMatchObject({
+      memberId: 8,
+      unconfirmed: true,
+      rosterSuggestion: false
+    });
+    // Only a first name on a kids' list, one Lena on the roster
+    expect(draft.entries[1]).toMatchObject({
+      memberId: 8,
+      unconfirmed: true,
+      rosterSuggestion: true
+    });
+  });
+
+  it('confirms the roster suggestions at once, but not unsure or ambiguous ones', () => {
+    const draft = draftOf(
+      proposal([
+        entry('Mia'),
+        entry('Elias'),
+        entry('L. Müller'),
+        entry('Benjamin', { confidence: 'low' }),
+        entry('Lena Müller')
+      ])
+    );
+    expect(draft.entries.map((e) => [e.memberId, e.unconfirmed, e.rosterSuggestion])).toEqual([
+      // Mia Meier is on the roster
+      [6, true, true],
+      // Elias Brunner is not
+      [7, true, false],
+      // Lena or Lukas, both on the roster
+      [1, true, false],
+      [3, true, false],
+      [1, false, false]
+    ]);
+    expect(draft.entries.map(isRosterSuggestionOpen)).toEqual([true, false, false, false, false]);
+    expect(confirmRosterSuggestions(draft.entries)).toEqual([0]);
+    expect(draft.entries.map((e) => e.unconfirmed)).toEqual([false, true, true, true, false]);
+    expect(confirmRosterSuggestions(draft.entries)).toEqual([]);
+  });
+
   it('splits names like the check-in page', () => {
     expect(splitName('Muster Anna-Lena')).toEqual(['Muster', 'Anna-Lena']);
     expect(splitName('Muster, Anna Lena')).toEqual(['Muster', 'Anna Lena']);
@@ -254,6 +331,42 @@ describe('reviewDraft', () => {
     expect(reviewDraft(draft, ctx).plan[0].checkIns).toEqual([
       { date: '2026-10-19', role: 'main_trainer' }
     ]);
+  });
+
+  it('says before the confirmation that a suggestion off the roster is added to it', () => {
+    const draft = draftOf(proposal([entry('Elias'), entry('Mia')]));
+    const review = reviewDraft(draft, context());
+    expect(review.entries.map((e) => [e.problem, e.addsToRoster])).toEqual([
+      ['confirm', true],
+      ['confirm', false]
+    ]);
+    // Nothing is written or counted until it is confirmed
+    expect(review.rosterAdds).toBe(0);
+    // Recorded already: confirming would not touch the roster
+    const recorded = reviewDraft(draft, context([['2026-10-19', 7, 'attendee']]));
+    expect(recorded.entries[0].addsToRoster).toBe(false);
+  });
+
+  it('withdraws the overwrite tick and the confirmation when another member is chosen', () => {
+    const draft = draftOf(proposal([entry('Benjamin Keller', { role: 'main_trainer' })]));
+    const ctx = context([
+      ['2026-10-19', 3, 'attendee'],
+      ['2026-10-19', 7, 'assistant']
+    ]);
+    const [row] = draft.entries;
+    row.overwrite = true;
+    expect(reviewDraft(draft, ctx).plan[0].checkIns).toHaveLength(1);
+
+    chooseEntry(row, 'm:7', (id) => memberMap.has(id));
+    expect(row).toMatchObject({ action: 'member', memberId: 7, overwrite: false });
+    const review = reviewDraft(draft, ctx);
+    expect(review.entries[0]).toMatchObject({ status: 'changed', existingRoles: ['assistant'] });
+    expect(review.plan).toEqual([]);
+
+    chooseEntry(row, 'skip', (id) => memberMap.has(id));
+    expect(row).toMatchObject({ action: 'skip', memberId: null });
+    chooseEntry(row, 'm:99', (id) => memberMap.has(id));
+    expect(row.action).toBe('open');
   });
 
   it('holds everything back while a row needs a decision', () => {
@@ -398,6 +511,101 @@ describe('reviewDraft', () => {
   });
 });
 
+describe('after a partly failed save', () => {
+  it('retries a created member through its id, roster first, without creating it again', () => {
+    const draft = draftOf(
+      proposal([
+        entry('Graf Zoe', { dates: ['2026-10-12', '2026-10-19'] }),
+        entry('Zoe Graf', { dates: ['2026-10-19'] })
+      ])
+    );
+    for (const e of draft.entries) {
+      chooseEntry(e, 'create', () => false);
+      e.lastname = 'Graf';
+      e.firstname = 'Zoe';
+    }
+    const before = reviewDraft(draft, context());
+    expect(before.plan).toHaveLength(1);
+    expect(personRows(before, before.plan[0].entry)).toEqual([0, 1]);
+
+    // Created as member 20, but the roster upsert failed
+    const zoe = { id: 20, firstname: 'Zoe', lastname: 'Graf', labels: ['new'] };
+    adoptMember(draft.entries, personRows(before, 0), zoe.id, true);
+    const ctx = { ...context(), members: new Map([...memberMap, [zoe.id, zoe]]) };
+    const retry = reviewDraft(draft, ctx);
+    expect(retry.creates).toBe(0);
+    expect(retry.plan).toEqual([
+      {
+        entry: 0,
+        memberId: 20,
+        create: null,
+        addToRoster: true,
+        checkIns: [
+          { date: '2026-10-12', role: 'attendee' },
+          { date: '2026-10-19', role: 'attendee' }
+        ]
+      }
+    ]);
+
+    // On the roster now, the 12th saved: only the 19th is left
+    const saved = reviewDraft(draft, {
+      ...ctx,
+      roster: new Set([...roster, 20]),
+      existing: new Map([[checkInKey('2026-10-12', 20), 'attendee']])
+    });
+    expect(saved.plan[0]).toMatchObject({
+      addToRoster: false,
+      checkIns: [{ date: '2026-10-19', role: 'attendee' }]
+    });
+    expect(saved.entries[0].cells).toEqual(['exists', 'new']);
+  });
+
+  it('drops the check-ins that committed despite the error', () => {
+    const failures = new Map<number, SaveFailure>([
+      [
+        0,
+        {
+          step: 'checkIn',
+          memberId: 1,
+          checkIns: [
+            { date: '2026-10-12', role: 'attendee' },
+            { date: '2026-10-19', role: 'main_trainer' }
+          ]
+        }
+      ],
+      [2, { step: 'checkIn', memberId: 2, checkIns: [{ date: '2026-10-12', role: 'attendee' }] }],
+      [
+        3,
+        {
+          step: 'create',
+          memberId: null,
+          checkIns: [{ date: '2026-10-12', role: 'attendee' }]
+        }
+      ]
+    ]);
+    const existing = new Map<string, TrainerRole>([
+      [checkInKey('2026-10-12', 1), 'attendee'],
+      // Still the old role: the overwrite did not go through
+      [checkInKey('2026-10-19', 1), 'attendee'],
+      [checkInKey('2026-10-12', 2), 'attendee']
+    ]);
+    const open = openFailures(failures, existing);
+    expect([...open.keys()]).toEqual([0, 3]);
+    expect(open.get(0)?.checkIns).toEqual([{ date: '2026-10-19', role: 'main_trainer' }]);
+    expect(open.get(3)?.checkIns).toHaveLength(1);
+  });
+
+  it('finds a member an insert created although it reported an error', () => {
+    const found = [
+      { id: 3, firstname: 'Zoe', lastname: 'Graf', labels: [] },
+      { id: 21, firstname: 'Zoé', lastname: 'Graf', labels: ['new'] }
+    ];
+    const known = new Set([3]);
+    expect(createdAnyway({ lastname: 'Graf', firstname: 'Zoe' }, found, known)?.id).toBe(21);
+    expect(createdAnyway({ lastname: 'Graf', firstname: 'Lea' }, found, known)).toBeNull();
+  });
+});
+
 describe('training plan', () => {
   const breaks = [
     {
@@ -440,6 +648,25 @@ describe('helpers', () => {
     expect(memberHint(members[0])).toBeNull();
     expect(labelList(['Aktiv', 3, null])).toEqual(['Aktiv']);
     expect(labelList(null)).toEqual([]);
+  });
+
+  it('tells members with the same name apart', () => {
+    const club: AttendanceMember[] = [
+      ...members,
+      { id: 50, firstname: 'Hans', lastname: 'Muster', labels: ['Aktiv'] },
+      { id: 90, firstname: 'Hans', lastname: 'Muster', labels: ['new'] },
+      { id: 91, firstname: 'Lena', lastname: 'Mueller', labels: ['Passiv'] },
+      { id: 92, firstname: 'Elias', lastname: 'Brunner', labels: [] }
+    ];
+    const twins = nameTwins(club, new Set([...roster, 90]));
+    expect([...twins.keys()].sort((a, b) => a - b)).toEqual([1, 7, 50, 90, 91, 92]);
+    expect(twins.get(50)).toEqual({ details: ['notRoster'], showId: false });
+    expect(twins.get(90)).toEqual({ details: ['roster', 'new'], showId: false });
+    expect(twins.get(1)).toEqual({ details: ['roster'], showId: false });
+    expect(twins.get(91)).toEqual({ details: ['notRoster', 'passive'], showId: false });
+    // Nothing else to tell them apart by
+    expect(twins.get(7)).toEqual({ details: ['notRoster'], showId: true });
+    expect(twins.get(92)).toEqual({ details: ['notRoster'], showId: true });
   });
 
   it('sorts members by name and filters them by word starts', () => {

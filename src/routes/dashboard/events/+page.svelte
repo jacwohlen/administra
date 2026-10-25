@@ -29,10 +29,23 @@
     loadAssistantStatus().then((s) => (showAssistant = s.configured));
   });
 
+  /** The review saved part of the events and stays open: reload the list once it closes */
+  let assistantSavedSome = false;
+
   async function assistantApplied() {
+    assistantSavedSome = false;
     // Closed first, so the review does not show the new events as duplicates of themselves
     showAssistant = false;
     await invalidateAll();
+  }
+
+  function closeAssistant() {
+    showAssistant = false;
+    if (!assistantSavedSome) return;
+    assistantSavedSome = false;
+    invalidateAll().catch((err) =>
+      console.error('Error reloading the events after the assistant:', err)
+    );
   }
 
   function formatEventDate(date: string) {
@@ -89,14 +102,15 @@
 </div>
 
 {#if showAssistant && data.canWrite}
-  <AssistantDialog kind="events" onclose={() => (showAssistant = false)}>
+  <AssistantDialog kind="events" onclose={closeAssistant}>
     {#snippet review(proposal, back)}
       <EventsReview
         {proposal}
         known={data.events}
         onback={back}
-        oncancel={() => (showAssistant = false)}
+        oncancel={closeAssistant}
         onapplied={assistantApplied}
+        onpartial={() => (assistantSavedSome = true)}
       />
     {/snippet}
   </AssistantDialog>

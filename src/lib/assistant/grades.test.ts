@@ -7,9 +7,11 @@ import {
   formatPassDate,
   gradesByColour,
   gradesByNumber,
+  hasDanGrade,
   initialInputs,
   initialSection,
   mapGrade,
+  openSaveFailures,
   passNote,
   remapInputs,
   reviewGrades,
@@ -95,6 +97,7 @@ const ctx: GradeReviewContext = {
   section: 'Judo',
   ladder: judo,
   history,
+  hasDan: false,
   birthday: '2012-03-14',
   today: '2026-10-25'
 };
@@ -105,7 +108,8 @@ function inputs(...rows: Partial<GradeRowInput>[]): GradeRowInput[] {
     examDate: '',
     note: 'Judo-Pass',
     skip: false,
-    correct: false,
+    correctId: null,
+    saved: false,
     ...r
   }));
 }
@@ -189,11 +193,17 @@ describe('starting the review', () => {
     warnings: []
   };
 
-  it('picks the section of the pass, else the member current one, else the first', () => {
-    expect(initialSection({ ...proposal, section: 'Judo' }, ladders, [])).toBe('Judo');
+  it('picks the section of the pass, else Judo, else the member current one, else the first', () => {
     const current = [{ section: 'Aikido' } as never];
-    expect(initialSection(proposal, ladders, current)).toBe('Aikido');
-    expect(initialSection(proposal, ladders, [])).toBe([...ladders.keys()][0]);
+    expect(initialSection({ ...proposal, section: 'Judo' }, ladders, current)).toBe('Judo');
+    expect(initialSection({ ...proposal, section: 'Aikido' }, ladders, [])).toBe('Aikido');
+    // No section read (or "Judo-Pass", "SJV"): the Judo pass, not the member's first section
+    expect(initialSection(proposal, ladders, current)).toBe('Judo');
+    expect(initialSection({ ...proposal, section: 'Karate' }, ladders, current)).toBe('Judo');
+    // A club without a Judo ladder
+    const noJudo = gradesBySection([...aikido, { ...aikido[0], section: 'Kendo' }]);
+    expect(initialSection(proposal, noJudo, [{ section: 'Kendo' } as never])).toBe('Kendo');
+    expect(initialSection(proposal, noJudo, [])).toBe([...noJudo.keys()][0]);
   });
 
   it('prefills grade, full dates and a short note', () => {
@@ -203,9 +213,17 @@ describe('starting the review', () => {
         examDate: '2021-05-08',
         note: 'Judo-Pass · H. Keller',
         skip: false,
-        correct: false
+        correctId: null,
+        saved: false
       },
-      { grade: '4.5 Kyu', examDate: '', note: 'Judo-Pass', skip: false, correct: false }
+      {
+        grade: '4.5 Kyu',
+        examDate: '',
+        note: 'Judo-Pass',
+        skip: false,
+        correctId: null,
+        saved: false
+      }
     ]);
     expect(passNote('', '')).toBe('Pass');
     expect(passNote('Judo', 'x'.repeat(200))).toHaveLength(100);
@@ -220,10 +238,10 @@ describe('starting the review', () => {
     expect(writtenConflict(proposal.entries[0], aikido, '5. Kyu')).toBe('Gelbgurt');
     const kept = remapInputs(
       [entry({ gradeAsWritten: '3. Kyu' })],
-      inputs({ grade: '3. Kyu', correct: true }),
+      inputs({ grade: '3. Kyu', correctId: 101 }),
       toAikido
     );
-    expect(kept[0]).toMatchObject({ grade: '3. Kyu', correct: false });
+    expect(kept[0]).toMatchObject({ grade: '3. Kyu', correctId: null });
   });
 
   it('moves an untouched note to the new section, keeps one the user wrote', () => {
@@ -272,16 +290,36 @@ describe('reviewing the rows', () => {
     const entries = [entry({ gradeAsWritten: 'Halbgelb', date: '2020-01-25' })];
     const rows = reviewGrades(
       entries,
-      inputs({ grade: '5.5 Kyu', examDate: '2020-01-25', correct: true }),
+      inputs({ grade: '5.5 Kyu', examDate: '2020-01-25', correctId: 102 }),
       ctx
     );
     expect(rows[0]).toMatchObject({ status: 'changed', action: 'update', blocking: false });
   });
 
+  it('keeps a date correction to the grading it was ticked for', () => {
+    // Ticked for the recorded 6. Kyu (101), then the row is switched to 5.5 Kyu (102)
+    const entries = [entry({ gradeAsWritten: '6. Kyu', date: '2019-07-01' })];
+    const ticked = inputs({ grade: '6. Kyu', examDate: '2019-07-01', correctId: 101 });
+    const before = reviewGrades(entries, ticked, ctx);
+    expect(before[0]).toMatchObject({ status: 'changed', action: 'update' });
+    expect(buildGradeWrites(4711, before, ctx).corrections).toEqual([
+      { row: 0, values: { id: 101, examDate: '2019-07-01' } }
+    ]);
+
+    const switched = reviewGrades(entries, [{ ...ticked[0], grade: '5.5 Kyu' }], ctx);
+    expect(switched[0]).toMatchObject({ status: 'changed', action: null, blocking: false });
+    expect(switched[0].existing?.id).toBe(102);
+    expect(buildGradeWrites(4711, switched, ctx)).toEqual({ inserts: [], corrections: [] });
+    // … and a row claiming the update anyway is not written either
+    expect(buildGradeWrites(4711, [{ ...switched[0], action: 'update' }], ctx).corrections).toEqual(
+      []
+    );
+  });
+
   it('needs a full date to correct one', () => {
     const rows = reviewGrades(
       [entry({ gradeAsWritten: 'Halbgelb', date: '2021' })],
-      inputs({ grade: '5.5 Kyu', correct: true }),
+      inputs({ grade: '5.5 Kyu', correctId: 102 }),
       ctx
     );
     expect(rows[0]).toMatchObject({ status: 'changed', action: null, blocking: true });
@@ -463,6 +501,127 @@ describe('reviewing the rows', () => {
     );
     expect(both.map((r) => r.warnings)).toEqual([[], [{ code: 'dan', badge: true }]]);
   });
+
+  it('knows the black belt badge from a dan of another section', () => {
+    const aikidoShodan: MemberGrade = {
+      id: 301,
+      memberId: 4711,
+      section: 'Aikido',
+      grade: '1. Dan',
+      examDate: '2017-05-20',
+      note: null
+    };
+    const aikidoKyu: MemberGrade = { ...aikidoShodan, id: 302, grade: '1. Kyu' };
+    expect(hasDanGrade([aikidoShodan], definitions)).toBe(true);
+    expect(hasDanGrade([aikidoKyu, ...history], definitions)).toBe(false);
+    // A grade without a definition is no dan
+    expect(hasDanGrade([{ ...aikidoShodan, section: 'Karate' }], definitions)).toBe(false);
+
+    const judoShodan = [entry({ grade: '1. Dan', gradeAsWritten: 'Shodan', date: '2025-11-29' })];
+    const row = inputs({ grade: '1. Dan', examDate: '2025-11-29' });
+    const withAikidoDan = [aikidoShodan, ...history];
+    expect(
+      reviewGrades(judoShodan, row, {
+        ...ctx,
+        history: withAikidoDan,
+        hasDan: hasDanGrade(withAikidoDan, definitions)
+      })[0].warnings
+    ).toEqual([{ code: 'dan', badge: false }]);
+    expect(
+      reviewGrades(judoShodan, row, {
+        ...ctx,
+        history: [aikidoKyu, ...history],
+        hasDan: hasDanGrade([aikidoKyu, ...history], definitions)
+      })[0].warnings
+    ).toEqual([{ code: 'dan', badge: true }]);
+  });
+
+  it('never writes a row again that an earlier apply saved', () => {
+    const entries = [
+      entry({ gradeAsWritten: 'Gelbgurt', date: '2021-05-08' }),
+      entry({ gradeAsWritten: '4. Kyu', date: '2022-11-19' })
+    ];
+    // Row 0 was saved, the history not reloaded (yet): still 'new', but left out
+    const rows = reviewGrades(
+      entries,
+      inputs(
+        { grade: '5. Kyu', examDate: '2021-05-08', saved: true },
+        { grade: '4. Kyu', examDate: '2022-11-19' }
+      ),
+      ctx
+    );
+    expect(rows.map((r) => [r.status, r.action, r.blocking])).toEqual([
+      ['new', null, false],
+      ['new', 'insert', false]
+    ]);
+    expect(summarizeGrades(rows)).toMatchObject({ inserts: 1, blocking: 0 });
+    expect(buildGradeWrites(4711, rows, ctx).inserts.map((w) => w.row)).toEqual([1]);
+    // A tampered saved row is still not written
+    const tampered = [{ ...rows[0], action: 'insert' as const }];
+    expect(buildGradeWrites(4711, tampered, ctx).inserts).toEqual([]);
+    // Once reloaded, the saved row is simply on record
+    const reloaded: MemberGrade[] = [
+      ...history,
+      { id: 103, memberId: 4711, section: 'Judo', grade: '5. Kyu', examDate: '2021-05-08' }
+    ];
+    const after = reviewGrades(
+      entries,
+      inputs(
+        { grade: '5. Kyu', examDate: '2021-05-08', saved: true },
+        { grade: '4. Kyu', examDate: '2022-11-19' }
+      ),
+      { ...ctx, history: reloaded }
+    );
+    expect(after.map((r) => r.status)).toEqual(['exists', 'new']);
+  });
+
+  it('checks the order against a row saved before the history is reloaded', () => {
+    const rows = reviewGrades(
+      [entry({ gradeAsWritten: '3. Kyu' }), entry({ gradeAsWritten: '4. Kyu' })],
+      inputs(
+        { grade: '3. Kyu', examDate: '2022-06-11', saved: true },
+        { grade: '4. Kyu', examDate: '2023-03-04' }
+      ),
+      ctx
+    );
+    expect(rows[1].warnings).toEqual([
+      { code: 'afterHigher', grade: '3. Kyu', date: '11.06.2022' }
+    ]);
+  });
+
+  it('shows a failed write only while the row is still to be saved', () => {
+    const entries = [
+      entry({ gradeAsWritten: 'Gelbgurt', date: '2021-05-08' }),
+      entry({ gradeAsWritten: '4. Kyu', date: '2022-11-19' }),
+      entry({ gradeAsWritten: 'Halbgelb', date: '2020-01-25' })
+    ];
+    const failures = { 0: 'failed', 1: 'failed', 2: 'notUpdated' } as const;
+    const tried = inputs(
+      { grade: '5. Kyu', examDate: '2021-05-08' },
+      { grade: '4. Kyu', examDate: '2022-11-19' },
+      { grade: '5.5 Kyu', examDate: '2020-01-25', correctId: 102 }
+    );
+    expect(openSaveFailures(reviewGrades(entries, tried, ctx), failures)).toEqual([
+      'failed',
+      'failed',
+      'notUpdated'
+    ]);
+    // Row 0 committed after all (the reload shows it), row 1 is left out,
+    // the correction of row 2 is unticked
+    const reloaded: MemberGrade[] = [
+      ...history,
+      { id: 103, memberId: 4711, section: 'Judo', grade: '5. Kyu', examDate: '2021-05-08' }
+    ];
+    const later = reviewGrades(
+      entries,
+      [tried[0], { ...tried[1], skip: true }, { ...tried[2], correctId: null }],
+      { ...ctx, history: reloaded }
+    );
+    expect(openSaveFailures(later, failures)).toEqual([undefined, undefined, undefined]);
+    // A row the user broke while fixing it keeps its message
+    const broken = reviewGrades(entries, [tried[0], { ...tried[1], examDate: '' }, tried[2]], ctx);
+    expect(openSaveFailures(broken, { 1: 'failed' })).toEqual([undefined, 'failed', undefined]);
+  });
 });
 
 describe('the pass holder', () => {
@@ -480,6 +639,33 @@ describe('the pass holder', () => {
       nameFits: false,
       birthdayFits: false
     });
+  });
+
+  it('takes only the exact first and last name for the holder', () => {
+    const fits = (name: string, firstname: string, lastname: string) =>
+      checkHolder({ name, birthday: '' }, { firstname, lastname, birthday: null }).nameFits;
+    // Siblings and look-alike first names: a short form is not the same person
+    expect(fits('Jan Muster', 'Jana', 'Muster')).toBe(false);
+    expect(fits('Jana Muster', 'Jan', 'Muster')).toBe(false);
+    expect(fits('Marco Huber', 'Marcel', 'Huber')).toBe(false);
+    expect(fits('Daniel Keller', 'Daniela', 'Keller')).toBe(false);
+    // A family name one letter off or longer
+    expect(fits('Lena Maier', 'Lena', 'Meier')).toBe(false);
+    expect(fits('Lena Meierhans', 'Lena', 'Meier')).toBe(false);
+    // The same name, as passes print it
+    expect(fits('Muster, Jana', 'Jana', 'Muster')).toBe(true);
+    expect(fits('Lena Sophie Meier', 'Lena', 'Meier')).toBe(true);
+    expect(fits('Lena Meier-Huber', 'Lena', 'Meier')).toBe(true);
+    expect(fits('Anna Bär', 'Anna-Lena', 'Baer')).toBe(true);
+  });
+
+  it('still compares the birthday when the name does not fit', () => {
+    expect(
+      checkHolder({ name: 'Jan Müller', birthday: '2012-03-14' }, { ...lena, firstname: 'Jana' })
+    ).toMatchObject({ nameFits: false, birthdayFits: true });
+    expect(
+      checkHolder({ name: 'Jan Müller', birthday: '2010-01-02' }, { ...lena, firstname: 'Jana' })
+    ).toMatchObject({ nameFits: false, birthdayFits: false });
   });
 
   it('has nothing to compare when the pass or the record lacks a value', () => {
@@ -501,7 +687,7 @@ describe('what is written', () => {
     entry({ gradeAsWritten: '4.5 Kyu' })
   ];
   const rowInputs = inputs(
-    { grade: '5.5 Kyu', examDate: '2020-01-25', correct: true },
+    { grade: '5.5 Kyu', examDate: '2020-01-25', correctId: 102 },
     { grade: '5. Kyu', examDate: '2021-05-08', note: '  Judo-Pass · H. Keller ' },
     { grade: '5. Kyu', examDate: '2021-05-08' },
     { grade: '4.5 Kyu', examDate: '', skip: true }
@@ -512,15 +698,18 @@ describe('what is written', () => {
     const writes = buildGradeWrites(4711, rows, ctx);
     expect(writes.inserts).toEqual([
       {
-        memberId: 4711,
-        section: 'Judo',
-        grade: '5. Kyu',
-        examDate: '2021-05-08',
-        note: 'Judo-Pass · H. Keller'
+        row: 1,
+        values: {
+          memberId: 4711,
+          section: 'Judo',
+          grade: '5. Kyu',
+          examDate: '2021-05-08',
+          note: 'Judo-Pass · H. Keller'
+        }
       }
     ]);
-    expect(writes.corrections).toEqual([{ id: 102, examDate: '2020-01-25' }]);
-    expect(Object.keys(writes.inserts[0]).sort()).toEqual(
+    expect(writes.corrections).toEqual([{ row: 0, values: { id: 102, examDate: '2020-01-25' } }]);
+    expect(Object.keys(writes.inserts[0].values).sort()).toEqual(
       ['examDate', 'grade', 'memberId', 'note', 'section'].sort()
     );
   });
@@ -531,7 +720,7 @@ describe('what is written', () => {
       inputs({ grade: '5. Kyu', examDate: '2021-05-08', note: ' ' }),
       ctx
     );
-    expect(buildGradeWrites(4711, rows, ctx).inserts[0].note).toBeNull();
+    expect(buildGradeWrites(4711, rows, ctx).inserts[0].values.note).toBeNull();
   });
 
   it('checks every row again before writing', () => {

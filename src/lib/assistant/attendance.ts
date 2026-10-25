@@ -1,6 +1,12 @@
 import type { TrainerRole, TrainingPlanBreak, TrainingPlanSession } from '$lib/models';
 import { breakOn, isCancelled } from '$lib/trainingPlanUtils';
-import { bestMatch, normalizeName, SUGGEST_SCORE, type MatchableMember } from './nameMatch';
+import {
+  bestMatch,
+  normalizeName,
+  SUGGEST_SCORE,
+  type MatchableMember,
+  type MemberMatch
+} from './nameMatch';
 import { cleanText, isIsoDate, MAX_LENGTH } from './proposals';
 import type { AttendanceProposal, Confidence } from './types';
 
@@ -95,6 +101,13 @@ export interface EntryDraft {
   memberId: number | null;
   /** Preselected as the likely member, but not certain: the user confirms it */
   unconfirmed: boolean;
+  /**
+   * The unconfirmed suggestion is on the roster, read with confidence and
+   * written with the member's own last name (or as just their first name),
+   * and no other roster member comes close: it may be confirmed together
+   * with the others (`confirmRosterSuggestions`)
+   */
+  rosterSuggestion: boolean;
   /** Members the name could stand for, best first */
   candidates: number[];
   /** Names of a member to create, prefilled from the list */
@@ -200,6 +213,9 @@ export function createDraft(proposal: AttendanceProposal, options: DraftOptions)
     const top = match.candidates[0];
     const member = match.member ?? (top && top.score >= SUGGEST_SCORE ? top.member : null);
     const [lastname, firstname] = splitName(e.name, lastNameFirst);
+    const unconfirmed =
+      member !== null &&
+      (match.member === null || e.confidence === 'low' || needsConfirmation(member, roster));
     return {
       name: e.name,
       remark: e.remark,
@@ -207,9 +223,9 @@ export function createDraft(proposal: AttendanceProposal, options: DraftOptions)
       role: e.role,
       action: member ? 'member' : 'open',
       memberId: member?.id ?? null,
-      unconfirmed:
-        member !== null &&
-        (match.member === null || e.confidence === 'low' || needsConfirmation(member, roster)),
+      unconfirmed,
+      rosterSuggestion:
+        unconfirmed && member !== null && isRosterSuggestion(e, member, match.candidates, roster),
       candidates: match.candidates.map((c) => c.member.id),
       lastname,
       firstname,
@@ -224,6 +240,106 @@ export function createDraft(proposal: AttendanceProposal, options: DraftOptions)
     listDates: [...proposal.dates],
     entries
   };
+}
+
+/** Lead a roster suggestion needs over every other roster member to be confirmed with the others */
+const ROSTER_MARGIN = 0.1;
+
+/** Words of a name, double names also by their parts, without initials' dots */
+function nameParts(value: string): string[] {
+  const out: string[] = [];
+  for (const word of normalizeName(value).split(/[\s,]+/)) {
+    const w = word.replace(/^[.-]+|[.-]+$/g, '');
+    if (!w) continue;
+    out.push(w);
+    if (w.includes('-')) out.push(...w.split('-').filter(Boolean));
+  }
+  return out;
+}
+
+/**
+ * The written name has the member's own last name, or is just their first
+ * name (kids' lists); a look-alike last name ("Hug" for Hugentobler) is not
+ */
+function namesMember(written: string, member: MatchableMember): boolean {
+  const last = new Set(nameParts(member.lastname));
+  if (nameParts(written).some((w) => last.has(w))) return true;
+  const first = normalizeName(written).replace(/\./g, '').trim();
+  return first !== '' && first === normalizeName(member.firstname);
+}
+
+function isRosterSuggestion(
+  entry: { name: string; confidence: Confidence },
+  member: AttendanceMember,
+  candidates: readonly MemberMatch<AttendanceMember>[],
+  roster: ReadonlySet<number>
+): boolean {
+  if (!roster.has(member.id) || entry.confidence === 'low' || !namesMember(entry.name, member)) {
+    return false;
+  }
+  const own = candidates.find((c) => c.member.id === member.id)?.score ?? 0;
+  const rival = candidates.find((c) => c.member.id !== member.id && roster.has(c.member.id));
+  return !rival || own - rival.score >= ROSTER_MARGIN;
+}
+
+/** A suggestion `confirmRosterSuggestions` confirms */
+export function isRosterSuggestionOpen(entry: EntryDraft): boolean {
+  return entry.action === 'member' && entry.unconfirmed && entry.rosterSuggestion;
+}
+
+/** Confirms every open roster suggestion (`EntryDraft.rosterSuggestion`); returns their rows */
+export function confirmRosterSuggestions(entries: EntryDraft[]): number[] {
+  const rows: number[] = [];
+  entries.forEach((e, i) => {
+    if (!isRosterSuggestionOpen(e)) return;
+    e.unconfirmed = false;
+    rows.push(i);
+  });
+  return rows;
+}
+
+/**
+ * The user's choice in a row's select: `m:<id>` for a member, `create`,
+ * `skip`, or '' for none. A choice of the user's own counts as confirmed.
+ * A ticked "overwrite" was consent for the person chosen before, so it is
+ * withdrawn.
+ */
+export function chooseEntry(
+  entry: EntryDraft,
+  value: string,
+  isMember: (id: number) => boolean
+): void {
+  entry.unconfirmed = false;
+  entry.rosterSuggestion = false;
+  entry.overwrite = false;
+  const id = value.startsWith('m:') ? Number(value.slice(2)) : NaN;
+  if (Number.isInteger(id) && isMember(id)) {
+    entry.action = 'member';
+    entry.memberId = id;
+  } else {
+    entry.action = value === 'create' || value === 'skip' ? value : 'open';
+    entry.memberId = null;
+  }
+}
+
+/**
+ * Points rows at a member that exists now: one the save created (confirmed)
+ * or one an insert created despite reporting an error (to be confirmed).
+ */
+export function adoptMember(
+  entries: EntryDraft[],
+  rows: readonly number[],
+  memberId: number,
+  confirmed: boolean
+): void {
+  for (const i of rows) {
+    const e = entries[i];
+    e.action = 'member';
+    e.memberId = memberId;
+    e.unconfirmed = !confirmed;
+    e.rosterSuggestion = false;
+    e.overwrite = false;
+  }
 }
 
 /** Key of a recorded check-in in `ReviewContext.existing` */
@@ -286,7 +402,11 @@ export interface EntryReview {
   /** Index of the row this one is merged into (same person twice) */
   duplicateOf: number | null;
   member: AttendanceMember | null;
-  /** Not on the training's roster yet and checked in: added to it before the check-ins */
+  /**
+   * Not on the training's roster yet and checked in: added to it before the
+   * check-ins. For a suggestion still to confirm: confirming it would add
+   * them, so an off-roster pick is noticed before the click.
+   */
   addsToRoster: boolean;
   cells: CellState[];
   /** Roles the differing check-ins were recorded with */
@@ -415,6 +535,9 @@ export function reviewDraft(draft: AttendanceDraft, ctx: ReviewContext): Attenda
 
   const recorded = (memberId: number | null, date: string) =>
     memberId === null ? undefined : ctx.existing.get(checkInKey(date, memberId));
+  // A check-in is written when none is recorded, or one with another role the user overwrites
+  const writes = (before: TrainerRole | undefined, role: TrainerRole, overwrite: boolean) =>
+    before === undefined || (before !== role && overwrite);
 
   // What is written per person: check-ins not recorded yet, and the ones
   // recorded with another role only when the user asked to overwrite them
@@ -424,8 +547,7 @@ export function reviewDraft(draft: AttendanceDraft, ctx: ReviewContext): Attenda
     const checkIns = draft.dates.flatMap((d, j) => {
       const role = group.roles[j];
       if (!usable[j] || role === null) return [];
-      const before = recorded(memberId, d.date);
-      return before === undefined || (before !== role && group.overwrite)
+      return writes(recorded(memberId, d.date), role, group.overwrite)
         ? [{ date: d.date, role }]
         : [];
     });
@@ -462,12 +584,23 @@ export function reviewDraft(draft: AttendanceDraft, ctx: ReviewContext): Attenda
     else if (cells.includes('new')) status = 'new';
     else if (cells.includes('exists')) status = 'exists';
     else status = 'empty';
+    const addsToRoster = group
+      ? key !== null && planned.get(key)?.addToRoster === true
+      : problem === 'confirm' &&
+        member !== null &&
+        !ctx.roster.has(member.id) &&
+        draft.dates.some(
+          (d, j) =>
+            entry.marks[j] === true &&
+            usable[j] &&
+            writes(recorded(member.id, d.date), entry.role, entry.overwrite)
+        );
     return {
       status,
       problem,
       duplicateOf: duplicateOf[i],
       member,
-      addsToRoster: !!group && key !== null && planned.get(key)?.addToRoster === true,
+      addsToRoster,
       cells,
       existingRoles: [...existingRoles]
     };
@@ -492,6 +625,64 @@ export function reviewDraft(draft: AttendanceDraft, ctx: ReviewContext): Attenda
     creates: plan.filter((p) => p.create).length,
     rosterAdds: plan.filter((p) => p.addToRoster).length
   };
+}
+
+/** The rows merged into the person planned from row `primary` (`PlannedMember.entry`) */
+export function personRows(review: Pick<AttendanceReview, 'entries'>, primary: number): number[] {
+  return review.entries.flatMap((e, i) => (i === primary || e.duplicateOf === primary ? [i] : []));
+}
+
+/**
+ * What a save could not write for one person: creating them, putting them
+ * on the roster (either way none of their check-ins is saved), or some of
+ * their check-ins. `createdAnyway`: the insert reported an error, but the
+ * member exists; the rows now suggest them, to be confirmed.
+ */
+export type SaveStep = 'create' | 'createdAnyway' | 'roster' | 'checkIn';
+
+export interface SaveFailure {
+  step: SaveStep;
+  /** null while the person to create does not exist */
+  memberId: number | null;
+  /** Check-ins not saved */
+  checkIns: { date: string; role: TrainerRole }[];
+}
+
+/**
+ * The failures still open with the recorded check-ins reloaded: a check-in
+ * that committed despite the error is saved after all, and a person whose
+ * check-ins all did is no failure any more.
+ */
+export function openFailures(
+  failures: ReadonlyMap<number, SaveFailure>,
+  existing: ReadonlyMap<string, TrainerRole>
+): Map<number, SaveFailure> {
+  const out = new Map<number, SaveFailure>();
+  for (const [row, failure] of failures) {
+    const { memberId } = failure;
+    const checkIns = failure.checkIns.filter(
+      (c) => memberId === null || existing.get(checkInKey(c.date, memberId)) !== c.role
+    );
+    if (failure.step === 'checkIn' && checkIns.length === 0) continue;
+    out.set(row, { ...failure, checkIns });
+  }
+  return out;
+}
+
+/**
+ * A member with exactly the names of `create` that was not known before: the
+ * one an insert created although it reported an error (a timeout)
+ */
+export function createdAnyway<M extends MatchableMember>(
+  create: NewMember,
+  found: readonly M[],
+  known: { has(id: number): boolean }
+): M | null {
+  const name = normalizeName(`${create.lastname} ${create.firstname}`);
+  return (
+    found.find((m) => !known.has(m.id) && normalizeName(`${m.lastname} ${m.firstname}`) === name) ??
+    null
+  );
 }
 
 /** Rows without a member yet, set to "not taken over" */
@@ -556,6 +747,53 @@ export function memberHint(member: Pick<AttendanceMember, 'labels'>): MemberHint
   if (labels.includes('passiv')) return 'passive';
   if (labels.includes('probetraining')) return 'trial';
   return null;
+}
+
+/** What tells members with the same name apart in a select */
+export type MemberDetail = 'roster' | 'notRoster' | MemberHint | 'new';
+
+export interface TwinDetails {
+  details: MemberDetail[];
+  /** The details are the same for two of them: the id is shown as well */
+  showId: boolean;
+}
+
+/**
+ * Members whose name another member shares, by id ("Muster Hans" twice:
+ * often a member created on the check-in page and the later Webling
+ * record), with what tells them apart: the roster, the labels, else the id.
+ */
+export function nameTwins(
+  members: readonly AttendanceMember[],
+  roster: ReadonlySet<number>
+): Map<number, TwinDetails> {
+  const byName = new Map<string, AttendanceMember[]>();
+  for (const m of members) {
+    const name = normalizeName(`${m.lastname} ${m.firstname}`);
+    const same = byName.get(name);
+    if (same) same.push(m);
+    else byName.set(name, [m]);
+  }
+  const out = new Map<number, TwinDetails>();
+  for (const same of byName.values()) {
+    if (same.length < 2) continue;
+    const details = same.map((m): MemberDetail[] => {
+      const hint = memberHint(m);
+      return [
+        roster.has(m.id) ? 'roster' : 'notRoster',
+        ...(hint ? [hint] : []),
+        ...(m.labels.some((l) => l.toLowerCase() === 'new') ? (['new'] as const) : [])
+      ];
+    });
+    const keys = details.map((d) => d.join());
+    same.forEach((m, i) =>
+      out.set(m.id, {
+        details: details[i],
+        showId: keys.filter((k) => k === keys[i]).length > 1
+      })
+    );
+  }
+  return out;
 }
 
 /** Members by last and first name */

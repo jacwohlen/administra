@@ -1,7 +1,9 @@
 import { describe, expect, it, vi } from 'vitest';
 import {
   ID_RETRIES,
+  addDays,
   buildEventInserts,
+  comparisonSpan,
   daysBetween,
   eventDescription,
   formatDay,
@@ -10,15 +12,19 @@ import {
   insertEvents,
   isTime,
   isWeblingEvent,
+  markSaved,
   matchSection,
   preselect,
   reviewEvents,
+  spanCovers,
   summarizeEvents,
   titleSimilarity,
   titleWords,
-  type EventInsert,
+  untickRecorded,
+  type ComparisonSet,
   type EventReviewContext,
   type EventRowInput,
+  type EventWrite,
   type KnownEvent
 } from './events';
 import type { EventEntry, EventsProposal } from './types';
@@ -140,6 +146,8 @@ describe('helpers', () => {
     expect(daysBetween('2026-11-14', '2026-11-16')).toBe(2);
     expect(daysBetween('2026-12-31', '2027-01-01')).toBe(1);
     expect(daysBetween('2026-03-01', '2026-02-28')).toBe(-1);
+    expect(addDays('2026-12-31', 1)).toBe('2027-01-01');
+    expect(addDays('2028-03-01', -1)).toBe('2028-02-29');
   });
 
   it('accepts times only as HH:MM', () => {
@@ -182,7 +190,8 @@ describe('initial inputs', () => {
       location: 'Sporthalle Junkholz, Wohlen',
       section: 'Judo',
       description: 'Anmeldung bis 31.10. beim Trainer',
-      include: null
+      include: null,
+      saved: false
     });
     expect(camp.dateTo).toBe('2026-11-16');
     expect(chlaus.section).toBe('');
@@ -312,13 +321,45 @@ describe('review', () => {
     const wrong = inputs([
       {},
       { dateTo: '2026-11-14' },
-      { timeFrom: '12:30', timeTo: '10:00' },
+      {},
       { section: 'Judo', timeFrom: '18', timeTo: '7:5' }
     ]);
     const rows = reviewEvents(proposal.events, wrong, ctx());
     expect(rows[1].errors).toEqual([{ code: 'badDateTo' }]);
-    expect(rows[2].errors).toEqual([{ code: 'timeOrder' }]);
     expect(rows[3].errors.map((e) => e.code)).toEqual(['badTimeFrom', 'badTimeTo']);
+  });
+
+  it('only asks whether a one-day event ends after midnight', () => {
+    const night = inputs([
+      {},
+      // Sommerlager: Friday 18:00 to Sunday 14:00
+      { timeFrom: '18:00', timeTo: '14:00' },
+      // Silvester 20:00–01:00
+      { title: 'Silvesterparty', date: '2026-12-31', timeFrom: '20:00', timeTo: '01:00' },
+      { section: 'Judo', timeFrom: '18:00', timeTo: '18:00' }
+    ]);
+    const rows = reviewEvents(proposal.events, night, ctx());
+    expect(rows[1]).toMatchObject({ status: 'new', errors: [], warnings: [], blocking: false });
+    expect(rows[2]).toMatchObject({
+      status: 'new',
+      errors: [],
+      warnings: [{ code: 'timeOrder' }],
+      blocking: false
+    });
+    expect(rows[3].warnings).toEqual([{ code: 'timeOrder' }]);
+    // Saved with both times as read
+    const writes = buildEventInserts(rows, SECTIONS, until);
+    expect(writes.find((w) => w.row === 2)?.values).toMatchObject({
+      title: 'Silvesterparty',
+      date: '2026-12-31',
+      timeFrom: '20:00',
+      timeTo: '01:00'
+    });
+    expect(writes.find((w) => w.row === 1)?.values).toMatchObject({
+      timeFrom: '18:00',
+      timeTo: '14:00',
+      description: 'bis 16.11.2026'
+    });
   });
 
   it('warns about past dates and far-off years without blocking', () => {
@@ -337,7 +378,7 @@ describe('review', () => {
     expect(summarizeEvents(rows)).toEqual({
       inserts: 2,
       blocking: 0,
-      byStatus: { new: 2, duplicate: 1, invalid: 2 }
+      byStatus: { new: 2, duplicate: 1, invalid: 2, saved: 0 }
     });
   });
 
@@ -346,7 +387,7 @@ describe('review', () => {
     expect(summary).toEqual({
       inserts: 2,
       blocking: 2,
-      byStatus: { new: 2, duplicate: 1, invalid: 2 }
+      byStatus: { new: 2, duplicate: 1, invalid: 2, saved: 0 }
     });
   });
 });
@@ -383,7 +424,9 @@ describe('writes', () => {
       { include: false }
     ]);
     const rows = reviewEvents(proposal.events, edited, ctx());
-    expect(buildEventInserts(rows, SECTIONS, until)).toEqual([
+    const writes = buildEventInserts(rows, SECTIONS, until);
+    expect(writes.map((w) => w.row)).toEqual([1, 2]);
+    expect(writes.map((w) => w.values)).toEqual([
       {
         title: 'Herbstlager',
         description: 'bis 16.11.2026\nMit Übernachtung',
@@ -415,7 +458,7 @@ describe('writes', () => {
       inputs([{ include: true }, { include: false }, { include: false }, {}, { include: false }]),
       ctx({ defaultSection: 'Judo' })
     );
-    const inserts = buildEventInserts(rows, SECTIONS, until);
+    const inserts = buildEventInserts(rows, SECTIONS, until).map((w) => w.values);
     expect(inserts.map((r) => [r.title, r.section])).toEqual([
       ['Kids Cup', 'Judo'],
       ['Chlausabend', 'Judo']
@@ -426,45 +469,169 @@ describe('writes', () => {
   it('never writes a row with errors, even when its flags say otherwise', () => {
     const rows = reviewEvents(proposal.events, inputs(), ctx());
     const forged = rows.map((row) => ({ ...row, selected: true, errors: [] }));
-    const titles = buildEventInserts(forged, SECTIONS, until).map((r) => r.title);
+    const titles = buildEventInserts(forged, SECTIONS, until).map((w) => w.values.title);
     // Chlausabend has no club section, the Generalversammlung no date
     expect(titles).toEqual(['Kids Cup', 'Herbstlager', 'Aikido Lehrgang mit Sensei Tanaka']);
     // A section that is no longer the club's
     const aikido = rows.map((row) => ({ ...row, selected: true }));
-    expect(buildEventInserts(aikido, ['Judo'], until).map((r) => r.title)).not.toContain(
+    expect(buildEventInserts(aikido, ['Judo'], until).map((w) => w.values.title)).not.toContain(
       'Aikido Lehrgang mit Sensei Tanaka'
     );
+    // A row saved before, whatever its flags say
+    const saved = reviewEvents(proposal.events, markSaved(inputs(), [1]), ctx());
+    const again = saved.map((row) => ({ ...row, selected: true }));
+    expect(buildEventInserts(again, SECTIONS, until).map((w) => w.row)).not.toContain(1);
+  });
+});
+
+describe('events to compare with', () => {
+  it('spans every date read, a day wider on both ends', () => {
+    expect(comparisonSpan(inputs())).toEqual({ from: '2026-11-13', to: '2026-12-07' });
+    expect(comparisonSpan([{ date: '2027-01-01' }, { date: '' }, { date: '2026-12-31' }])).toEqual({
+      from: '2026-12-30',
+      to: '2027-01-02'
+    });
+    // An edited date widens it
+    expect(comparisonSpan(inputs([{}, {}, {}, {}, { date: '2027-03-14' }]))?.to).toBe('2027-03-15');
+    expect(comparisonSpan([{ date: '' }, { date: '2026-02-30' }])).toBeNull();
+  });
+
+  it('tells whether the loaded events cover what the review needs', () => {
+    const loaded = { from: '2026-11-13', to: '2026-12-07' };
+    expect(spanCovers(loaded, { from: '2026-11-13', to: '2026-12-07' })).toBe(true);
+    expect(spanCovers(loaded, { from: '2026-11-20', to: '2026-11-22' })).toBe(true);
+    expect(spanCovers(loaded, { from: '2026-11-13', to: '2026-12-08' })).toBe(false);
+    expect(spanCovers(loaded, { from: '2026-11-12', to: '2026-12-07' })).toBe(false);
+    expect(spanCovers(null, { from: '2026-11-13', to: '2026-12-07' })).toBe(false);
+    // Nothing to compare: nothing to load
+    expect(spanCovers(null, null)).toBe(true);
+  });
+});
+
+describe('after a partial save', () => {
+  // The events compared with before the apply, for the days of the rows read
+  const loadedFor = (events: KnownEvent[]): ComparisonSet => ({
+    span: { from: '2026-11-13', to: '2026-12-07' },
+    events
+  });
+
+  it('shows saved rows as saved and never writes them again', () => {
+    const start = preselect(inputs(), reviewEvents(proposal.events, inputs(), ctx()));
+    const after = markSaved(start, [1, 2]);
+    expect(after.map((input) => input.saved)).toEqual([false, true, true, false, false]);
+    // The reloaded events now hold the Herbstlager: it is not its own duplicate
+    const reloaded: KnownEvent[] = [
+      ...known,
+      { id: 9001, title: 'Herbstlager', date: '2026-11-14', description: 'bis 16.11.2026' }
+    ];
+    const rows = reviewEvents(proposal.events, after, ctx({ known: reloaded }));
+    expect(rows[1]).toMatchObject({
+      status: 'saved',
+      selected: false,
+      duplicate: null,
+      errors: [],
+      blocking: false
+    });
+    expect(summarizeEvents(rows)).toMatchObject({
+      inserts: 0,
+      byStatus: { new: 0, duplicate: 1, invalid: 2, saved: 2 }
+    });
+    expect(buildEventInserts(rows, SECTIONS, until)).toEqual([]);
+  });
+
+  it('unticks a failed row that was recorded after all', () => {
+    const start = preselect(inputs(), reviewEvents(proposal.events, inputs(), ctx()));
+    // Herbstlager saved (id 9001), the Aikido Lehrgang reported an error but went through
+    // (id 9002), the Chlausabend failed
+    const saved = markSaved(start, [1]);
+    const reloaded: KnownEvent[] = [
+      ...known,
+      { id: 9001, title: 'Herbstlager', date: '2026-11-14' },
+      { id: 9002, title: 'Aikido Lehrgang mit Sensei Tanaka', date: '2026-12-05' }
+    ];
+    const { inputs: next, recorded } = untickRecorded(
+      saved,
+      [2, 3],
+      loadedFor(known),
+      reloaded,
+      [9001]
+    );
+    expect(recorded).toEqual([2]);
+    expect(next[2].include).toBe(false);
+    expect(next[3].include).toBe(true);
+    const rows = reviewEvents(proposal.events, next, ctx({ known: reloaded }));
+    expect(rows[2]).toMatchObject({ status: 'duplicate', selected: false });
+    expect(rows[2].duplicate).toMatchObject({ kind: 'existing', event: { id: 9002 } });
+  });
+
+  it('keeps the choice of a failed row whose only match was there before', () => {
+    // The Kids Cup was ticked although Webling has it; its insert failed
+    const start = inputs([{ include: true }]);
+    const { inputs: next, recorded } = untickRecorded(start, [0], loadedFor(known), known);
+    expect(recorded).toEqual([]);
+    expect(next[0].include).toBe(true);
+    // Created for another row of this apply: not a sign that this one went through
+    const twice = [
+      { ...start[1], include: true, saved: true },
+      { ...start[1], title: 'Herbstlager Tenero', include: true }
+    ];
+    const created: KnownEvent = { id: 9001, title: 'Herbstlager', date: '2026-11-14' };
+    expect(
+      untickRecorded(twice, [1], loadedFor(known), [...known, created], [9001]).recorded
+    ).toEqual([]);
+    expect(untickRecorded(twice, [1], loadedFor(known), [...known, created]).recorded).toEqual([1]);
+  });
+
+  it('only counts events on the days compared before', () => {
+    // The reload after the apply failed, then the Chlausabend was moved a year on: the old
+    // Chlausabend there was not new, only not loaded before
+    const start = preselect(inputs(), reviewEvents(proposal.events, inputs(), ctx()));
+    const moved = start.map((input, i) => (i === 3 ? { ...input, date: '2027-12-06' } : input));
+    const old: KnownEvent = { id: 77, title: 'Chlausabend', date: '2027-12-06' };
+    const result = untickRecorded(moved, [3], loadedFor(known), [...known, old]);
+    expect(result.recorded).toEqual([]);
+    expect(result.inputs[3].include).toBe(moved[3].include);
+    // On the days compared before, the same event is new: the insert went through after all
+    const fresh = { ...old, date: '2026-12-06' };
+    expect(untickRecorded(start, [3], loadedFor(known), [...known, fresh]).recorded).toEqual([3]);
   });
 });
 
 describe('saving', () => {
-  const row = (title: string): EventInsert => ({
-    title,
-    description: null,
-    date: '2026-11-14',
-    timeFrom: null,
-    timeTo: null,
-    location: null,
-    section: 'Judo',
-    maxParticipants: null,
-    registrationDeadline: null
+  let rowIndex = 0;
+  const row = (title: string): EventWrite => ({
+    row: rowIndex++,
+    values: {
+      title,
+      description: null,
+      date: '2026-11-14',
+      timeFrom: null,
+      timeTo: null,
+      location: null,
+      section: 'Judo',
+      maxParticipants: null,
+      registrationDeadline: null
+    }
   });
 
   it('creates the events one by one and reports failures per row', async () => {
     vi.spyOn(console, 'error').mockImplementation(() => {});
-    const insert = vi.fn(async (r: EventInsert) => ({
-      error: r.title === 'Lager' ? { code: '42501', message: 'row-level security' } : null
-    }));
-    const progress: number[] = [];
-    const outcome = await insertEvents(
-      [row('Kids Cup'), row('Lager'), row('Chlausabend')],
-      insert,
-      (done) => progress.push(done)
+    let id = 9000;
+    const insert = vi.fn(async (values: EventWrite['values']) =>
+      values.title === 'Lager'
+        ? { data: null, error: { code: '42501', message: 'row-level security' } }
+        : { data: { id: ++id }, error: null }
     );
-    expect(outcome.saved.map((r) => r.title)).toEqual(['Kids Cup', 'Chlausabend']);
-    expect(outcome.failed.map((r) => r.title)).toEqual(['Lager']);
+    const progress: number[] = [];
+    const writes = [row('Kids Cup'), row('Lager'), row('Chlausabend')];
+    const outcome = await insertEvents(writes, insert, (done) => progress.push(done));
+    expect(outcome.saved.map((w) => w.values.title)).toEqual(['Kids Cup', 'Chlausabend']);
+    expect(outcome.failed).toEqual([writes[1]]);
+    expect(outcome.created).toEqual([9001, 9002]);
     expect(progress).toEqual([1, 2, 3]);
     expect(insert).toHaveBeenCalledTimes(3);
+    // Only the columns go to the database, not the row index
+    expect(insert.mock.calls[0][0]).toBe(writes[0].values);
   });
 
   it('tries again when the next id is taken', async () => {

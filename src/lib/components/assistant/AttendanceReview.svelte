@@ -14,14 +14,22 @@
   import { formatTime } from '$lib/trainingUtils';
   import type { TrainerRole, TrainingPlanBreak, TrainingPlanSession } from '$lib/models';
   import {
+    adoptMember,
     cancelledDates,
     checkInKey,
+    chooseEntry,
+    confirmRosterSuggestions,
     createDraft,
+    createdAnyway,
     fetchAllRows,
     filterMembers,
     isHardIssue,
+    isRosterSuggestionOpen,
     labelList,
     memberHint,
+    nameTwins,
+    openFailures,
+    personRows,
     reviewDraft,
     skipOpen,
     sortMembers,
@@ -32,7 +40,9 @@
     type AttendanceMember,
     type CellState,
     type EntryDraft,
-    type EntryReview
+    type EntryReview,
+    type NewMember,
+    type SaveFailure
   } from '$lib/assistant/attendance';
   import { isIsoDate, MAX_LENGTH, clubToday } from '$lib/assistant/proposals';
   import type { AttendanceProposal } from '$lib/assistant/types';
@@ -50,7 +60,8 @@
     roster,
     onback,
     onclose,
-    onapplied
+    onapplied,
+    onpartial
   }: {
     proposal: AttendanceProposal;
     /** The check-in page's training, from its own data */
@@ -61,8 +72,10 @@
     roster: number[];
     onback: () => void;
     onclose: () => void;
-    /** Refreshes the page and closes the dialog */
+    /** Everything saved: refreshes the page and closes the dialog */
     onapplied: () => Promise<void> | void;
+    /** Some of it saved, the review stays open for the rest: the page refreshes when it closes */
+    onpartial: () => void;
   } = $props();
 
   type MemberRow = { id: number; firstname: string; lastname: string; labels: unknown };
@@ -97,7 +110,9 @@
   };
 
   const today = clubToday();
-  const rosterIds = $derived(new Set(roster));
+  /** Put on the roster by a save that failed in part (the page's roster is reloaded on close) */
+  let addedToRoster = $state.raw(new Set<number>());
+  const rosterIds = $derived(new Set([...roster, ...addedToRoster]));
 
   let members = $state.raw<AttendanceMember[]>([]);
   let draft = $state<AttendanceDraft | null>(null);
@@ -111,14 +126,22 @@
   let filters = $state<Record<number, string>>({});
   let searching = $state<Record<number, boolean>>({});
   let applying = $state(false);
-  /** Set once an apply ran: the review is stale then and never saves twice */
+  /** Set once everything is saved: the dialog closes then, and never saves twice */
   let applied = $state(false);
+  /** A save wrote something: closing is no longer cancelling */
+  let savedSome = $state(false);
+  /** By the first row of a person: what the last save could not write */
+  let failures = $state.raw(new Map<number, SaveFailure>());
+  /** First rows of the people the last save wrote completely */
+  let savedRows = $state.raw(new Set<number>());
   let progress = $state({ done: 0, total: 0 });
   /** Prefix for the ids that tie a row's controls to the name as written */
   const uid = $props.id();
 
   const memberMap = $derived(new Map(members.map((m) => [m.id, m])));
   const sortedMembers = $derived(sortMembers(members));
+  /** Members sharing their name with another: told apart in the selects */
+  const twins = $derived(nameTwins(members, rosterIds));
 
   const review = $derived(
     draft
@@ -141,6 +164,10 @@
   /** Recorded check-ins of a date on the draft are still being loaded */
   const loadingExisting = $derived(
     !!draft && !loadFailed && draft.dates.some((d) => isIsoDate(d.date) && !loaded.has(d.date))
+  );
+  /** Suggestions on the roster that may be confirmed at once */
+  const rosterSuggestions = $derived(
+    draft ? draft.entries.filter(isRosterSuggestionOpen).length : 0
   );
   const canApply = $derived(
     !!review &&
@@ -170,6 +197,15 @@
       : null;
   });
 
+  function toMember(m: MemberRow): AttendanceMember {
+    return {
+      id: m.id,
+      firstname: m.firstname ?? '',
+      lastname: m.lastname ?? '',
+      labels: labelList(m.labels)
+    };
+  }
+
   async function init() {
     try {
       const [memberRows, plannedRow] = await Promise.all([
@@ -188,12 +224,7 @@
           .eq('training_id', training.id)
           .maybeSingle()
       ]);
-      members = memberRows.map((m) => ({
-        id: m.id,
-        firstname: m.firstname ?? '',
-        lastname: m.lastname ?? '',
-        labels: labelList(m.labels)
-      }));
+      members = memberRows.map(toMember);
       // The plan only adds a warning; without it the review still works
       if (plannedRow.error) console.error('Error loading the training plan:', plannedRow.error);
       planned = plannedRow.data != null;
@@ -255,7 +286,7 @@
       }
       existing = next;
       if (plan.error) console.error('Error loading the training plan:', plan.error);
-      else sessions = [...sessions, ...(plan.data ?? [])];
+      else sessions = [...sessions.filter((s) => !dates.includes(s.date)), ...(plan.data ?? [])];
       loaded = new Set([...loaded, ...dates]);
     } catch (err) {
       console.error('Error loading recorded attendance:', err);
@@ -281,25 +312,40 @@
     return entry.action === 'open' ? '' : entry.action;
   }
 
-  function choose(entry: EntryDraft, value: string) {
-    // Any choice of the user's own counts as confirmed
+  /** A row's search is done once a member is chosen or confirmed: its filter must not linger */
+  function endSearch(index: number) {
+    filters[index] = '';
+    searching[index] = false;
+  }
+
+  /** A row set to another person: what the last save said about it no longer applies */
+  function forgetSave(index: number) {
+    if (failures.has(index)) failures = new Map([...failures].filter(([row]) => row !== index));
+    if (savedRows.has(index)) savedRows = new Set([...savedRows].filter((row) => row !== index));
+  }
+
+  function choose(index: number, entry: EntryDraft, value: string) {
+    chooseEntry(entry, value, (id) => memberMap.has(id));
+    endSearch(index);
+    forgetSave(index);
+  }
+
+  function confirm(index: number, entry: EntryDraft) {
     entry.unconfirmed = false;
-    const id = value.startsWith('m:') ? Number(value.slice(2)) : NaN;
-    if (memberMap.has(id)) {
-      entry.action = 'member';
-      entry.memberId = id;
-    } else {
-      entry.action = value === 'create' || value === 'skip' ? value : 'open';
-    }
+    endSearch(index);
+  }
+
+  function confirmSuggestions() {
+    if (draft) for (const i of confirmRosterSuggestions(draft.entries)) endSearch(i);
   }
 
   function swapNames(entry: EntryDraft) {
     [entry.lastname, entry.firstname] = [entry.firstname, entry.lastname];
   }
 
-  /** Members offered in a row's select: filtered, but always with the chosen one */
+  /** Members offered in a row's select: filtered while the search shows, always with the chosen one */
   function options(index: number, entry: EntryDraft): AttendanceMember[] {
-    const query = filters[index] ?? '';
+    const query = showSearch(index, entry) ? (filters[index] ?? '') : '';
     if (!query.trim()) return sortedMembers;
     const hits = filterMembers(sortedMembers, query);
     const chosen = entry.memberId === null ? undefined : memberMap.get(entry.memberId);
@@ -315,6 +361,26 @@
 
   function memberName(m: AttendanceMember): string {
     return `${m.lastname} ${m.firstname}`.trim();
+  }
+
+  /** A member in a select; with the roster, labels or id when another member has the same name */
+  function optionLabel(m: AttendanceMember): string {
+    const twin = twins.get(m.id);
+    if (!twin) return memberName(m);
+    const details = twin.details.map((d) => $_(`assistant.attendance.people.details.${d}`));
+    if (twin.showId) {
+      details.push($_('assistant.attendance.people.details.id', { values: { id: m.id } }));
+    }
+    return $_('assistant.attendance.people.option', {
+      values: { name: memberName(m), details: details.join(', ') }
+    });
+  }
+
+  function failureText(failure: SaveFailure): string {
+    if (failure.step !== 'checkIn') return $_(`assistant.attendance.failed.${failure.step}`);
+    return $_('assistant.attendance.failed.checkIn', {
+      values: { dates: failure.checkIns.map((c) => long(c.date)).join(', ') }
+    });
   }
 
   function short(value: string): string {
@@ -353,91 +419,213 @@
       .join(', ');
   }
 
-  async function apply() {
-    if (!review || !canApply) return;
-    const { plan, checkIns } = review;
-    applying = true;
-    applied = true;
-    progress = { done: 0, total: review.creates + review.rosterAdds + checkIns };
-    const step = () => (progress.done += 1);
-    let saved = 0;
-    // Member id per planned person; missing when creating or rostering them failed
-    const ids = new Map<number, number>();
-
+  /** One write; an error or an exception counts as failed */
+  async function attempt(
+    what: string,
+    write: () => PromiseLike<{ error: unknown }>
+  ): Promise<boolean> {
     try {
-      // New members first, exactly as the check-in page creates them
-      for (const [i, p] of plan.entries()) {
-        if (p.memberId !== null) {
-          ids.set(i, p.memberId);
-          continue;
-        }
-        if (!p.create) continue;
+      const { error } = await write();
+      if (!error) return true;
+      console.error(`Error ${what} from the attendance list:`, error);
+    } catch (err) {
+      console.error(`Error ${what} from the attendance list:`, err);
+    }
+    return false;
+  }
+
+  /** A new member exactly as the check-in page creates them; null when that failed */
+  async function createMember(create: NewMember): Promise<number | null> {
+    try {
+      const { data, error } = await supabaseClient
+        .from('members')
+        .insert({ lastname: create.lastname, firstname: create.firstname, labels: ['new'] })
+        .select('id')
+        .single<{ id: number }>();
+      if (!error && typeof data?.id === 'number') return data.id;
+      console.error('Error creating a member from the attendance list:', error);
+    } catch (err) {
+      console.error('Error creating a member from the attendance list:', err);
+    }
+    return null;
+  }
+
+  /**
+   * After a save that failed in part: reloads the recorded check-ins of the
+   * failed dates, so what committed despite an error shows as recorded, and
+   * looks for members an insert created although it reported an error; their
+   * rows then suggest that member instead of creating another one.
+   */
+  async function recheck(
+    failed: Map<number, SaveFailure>,
+    creates: { row: number; rows: number[]; create: NewMember }[]
+  ) {
+    const dates = [...new Set([...failed.values()].flatMap((f) => f.checkIns.map((c) => c.date)))];
+    if (dates.length > 0) {
+      // Saving waits for them again
+      loaded = new Set([...loaded].filter((d) => !dates.includes(d)));
+      await loadDates(dates);
+    }
+    for (const { row, rows, create } of creates) {
+      try {
         const { data, error } = await supabaseClient
           .from('members')
-          .insert({ lastname: p.create.lastname, firstname: p.create.firstname, labels: ['new'] })
-          .select('id')
-          .single<{ id: number }>();
-        step();
-        if (error || typeof data?.id !== 'number') {
-          console.error('Error creating a member from the attendance list:', error);
+          .select('id, firstname, lastname, labels')
+          .eq('lastname', create.lastname)
+          .eq('firstname', create.firstname)
+          .is('archivedAt', null)
+          .returns<MemberRow[]>();
+        if (error) throw error;
+        const found = createdAnyway(create, (data ?? []).map(toMember), memberMap);
+        const failure = failed.get(row);
+        if (!found || !draft || !failure) continue;
+        members = [...members, found];
+        adoptMember(draft.entries, rows, found.id, false);
+        failed.set(row, { ...failure, step: 'createdAnyway', memberId: found.id });
+      } catch (err) {
+        console.error('Error checking a member created from the attendance list:', err);
+      }
+    }
+    failures = openFailures(failed, existing);
+  }
+
+  async function apply() {
+    if (!review || !draft || !canApply) return;
+    const snapshot = review;
+    const { plan, checkIns } = snapshot;
+    applying = true;
+    failures = new Map();
+    savedRows = new Set();
+    progress = { done: 0, total: snapshot.creates + snapshot.rosterAdds + checkIns };
+    const failed = new Map<number, SaveFailure>();
+    const done = new Set<number>();
+    const created: { rows: number[]; member: AttendanceMember }[] = [];
+    const failedCreates: { row: number; rows: number[]; create: NewMember }[] = [];
+    const rostered: number[] = [];
+    const written: [string, TrainerRole][] = [];
+
+    // One person after the other: create them, put them on the roster, then
+    // each check-in (each recalculates badges). A failed step skips the rest
+    // of that person, so nobody is checked in off the roster.
+    for (const p of plan) {
+      const end = progress.done + (p.memberId === null ? 1 : 0) + (p.addToRoster ? 1 : 0);
+      const fail = (step: SaveFailure['step'], memberId: number | null) => {
+        failed.set(p.entry, { step, memberId, checkIns: p.checkIns });
+        progress.done = end + p.checkIns.length;
+      };
+      let memberId = p.memberId;
+      if (memberId === null) {
+        memberId = p.create ? await createMember(p.create) : null;
+        progress.done += 1;
+        if (memberId === null) {
+          if (p.create) {
+            failedCreates.push({
+              row: p.entry,
+              rows: personRows(snapshot, p.entry),
+              create: p.create
+            });
+          }
+          fail('create', null);
           continue;
         }
-        ids.set(i, data.id);
-      }
-
-      // On the roster, so the check-ins show on the check-in page
-      for (const [i, p] of plan.entries()) {
-        if (!p.addToRoster) continue;
-        const memberId = ids.get(i);
-        if (memberId !== undefined) {
-          const { error } = await supabaseClient
-            .from('participants')
-            .upsert({ trainingId: training.id, memberId });
-          if (error) {
-            console.error('Error adding a participant from the attendance list:', error);
-            ids.delete(i);
-          }
-        }
-        step();
-      }
-
-      // One after the other: each check-in recalculates badges
-      for (const [i, p] of plan.entries()) {
-        const memberId = ids.get(i);
-        for (const c of p.checkIns) {
-          if (memberId !== undefined) {
-            const { error } = await supabaseClient.rpc('set_attendance', {
-              p_date: c.date,
-              p_training_id: training.id,
-              p_member_id: memberId,
-              p_present: true,
-              p_trainer_role: c.role
-            });
-            if (error) console.error('Error saving attendance from the attendance list:', error);
-            else saved++;
-          }
-          step();
+        if (p.create) {
+          created.push({
+            rows: personRows(snapshot, p.entry),
+            member: { id: memberId, ...p.create, labels: ['new'] }
+          });
         }
       }
-    } catch (err) {
-      console.error('Error applying the attendance list:', err);
+      const id = memberId;
+      if (p.addToRoster) {
+        const ok = await attempt('adding a participant', () =>
+          supabaseClient.from('participants').upsert({ trainingId: training.id, memberId: id })
+        );
+        progress.done += 1;
+        if (!ok) {
+          fail('roster', id);
+          continue;
+        }
+        rostered.push(id);
+      }
+      const missed: SaveFailure['checkIns'] = [];
+      for (const c of p.checkIns) {
+        const ok = await attempt('saving attendance', () =>
+          supabaseClient.rpc('set_attendance', {
+            p_date: c.date,
+            p_training_id: training.id,
+            p_member_id: id,
+            p_present: true,
+            p_trainer_role: c.role
+          })
+        );
+        progress.done += 1;
+        if (ok) {
+          written.push([checkInKey(c.date, id), c.role]);
+        } else {
+          missed.push(c);
+        }
+      }
+      if (missed.length > 0) {
+        failed.set(p.entry, { step: 'checkIn', memberId: id, checkIns: missed });
+      } else {
+        done.add(p.entry);
+      }
     }
 
-    const failed = checkIns - saved;
-    if (failed === 0) {
+    // What was written is part of the review now: the rows of a new member
+    // point at them (a retry does not create them twice), saved check-ins
+    // show as recorded and drop out of the next save
+    if (created.length > 0) {
+      members = [...members, ...created.map((c) => c.member)];
+      for (const c of created) adoptMember(draft.entries, c.rows, c.member.id, true);
+    }
+    if (rostered.length > 0) addedToRoster = new Set([...addedToRoster, ...rostered]);
+    if (written.length > 0) existing = new Map([...existing, ...written]);
+
+    if (failed.size > 0) {
+      // A write that reported an error may have gone through all the same:
+      // the page refreshes when the dialog closes, and what the reload shows
+      // as committed counts as saved
+      onpartial();
+      failures = failed;
+      try {
+        await recheck(failed, failedCreates);
+      } catch (err) {
+        console.error('Error reloading after the attendance list:', err);
+      }
+      for (const row of failed.keys()) if (!failures.has(row)) done.add(row);
+    }
+    const missed = [...failures.values()].reduce((sum, f) => sum + f.checkIns.length, 0);
+    const saved = checkIns - missed;
+
+    if (failures.size === 0) {
+      applied = true;
       toaster.success({ title: $_('assistant.review.done', { values: { count: saved } }) });
-    } else if (saved > 0) {
-      toaster.warning({ title: $_('assistant.review.partial', { values: { saved, failed } }) });
+      try {
+        await onapplied();
+      } catch (err) {
+        console.error('Error refreshing after the attendance list:', err);
+      } finally {
+        applying = false;
+      }
+      return;
+    }
+
+    // Not everything: the review stays open with the failed rows to retry
+    if (saved > 0) {
+      toaster.warning({
+        title: $_('assistant.review.partial', { values: { saved, failed: missed } })
+      });
     } else {
       toaster.error({ title: $_('assistant.review.error') });
     }
-    try {
-      await onapplied();
-    } catch (err) {
-      console.error('Error refreshing after the attendance list:', err);
-    } finally {
-      applying = false;
-    }
+    savedSome ||=
+      saved > 0 ||
+      created.length > 0 ||
+      rostered.length > 0 ||
+      [...failures.values()].some((f) => f.step === 'createdAnyway');
+    savedRows = done;
+    applying = false;
   }
 </script>
 
@@ -545,8 +733,11 @@
             <span class="text-warning-700-300">{$_('assistant.attendance.dates.cancelled')}</span>
           {/if}
           {#if !draft.grid && d.date !== date && isIsoDate(date)}
-            <span class="text-surface-600-400">
-              {$_('assistant.attendance.dates.notPageDate', { values: { date: long(date) } })}
+            <span class="flex items-center gap-1 text-warning-700-300">
+              <Fa icon={faTriangleExclamation} class="flex-none" />
+              <span>
+                {$_('assistant.attendance.dates.notPageDate', { values: { date: long(date) } })}
+              </span>
             </span>
           {/if}
         </li>
@@ -567,26 +758,46 @@
       <h4 class="font-semibold">
         {$_('assistant.attendance.people.title', { values: { count: draft.entries.length } })}
       </h4>
-      {#if draft.entries.some((e) => e.action === 'open')}
-        <button
-          type="button"
-          class="btn btn-sm preset-tonal-surface"
-          disabled={applying}
-          onclick={() => draft && skipOpen(draft.entries)}
-        >
-          {$_('assistant.attendance.people.skipOpen')}
-        </button>
-      {/if}
+      <div class="flex flex-wrap gap-2">
+        {#if rosterSuggestions > 0}
+          <button
+            type="button"
+            class="btn btn-sm preset-tonal-warning"
+            disabled={applying}
+            onclick={confirmSuggestions}
+          >
+            <Fa icon={faCheck} />
+            <span>
+              {$_('assistant.attendance.people.confirmRoster', {
+                values: { count: rosterSuggestions }
+              })}
+            </span>
+          </button>
+        {/if}
+        {#if draft.entries.some((e) => e.action === 'open')}
+          <button
+            type="button"
+            class="btn btn-sm preset-tonal-surface"
+            disabled={applying}
+            onclick={() => draft && skipOpen(draft.entries)}
+          >
+            {$_('assistant.attendance.people.skipOpen')}
+          </button>
+        {/if}
+      </div>
     </div>
 
     <ul class="space-y-2">
       {#each draft.entries as entry, i (i)}
         {@const info = review.entries[i]}
         {@const hint = info.member ? memberHint(info.member) : null}
+        {@const failure = failures.get(i)}
         <li
-          class="card border p-3 space-y-2 {info.problem
-            ? 'border-warning-500'
-            : 'border-surface-200-800'}"
+          class="card border p-3 space-y-2 {failure
+            ? 'border-error-500'
+            : info.problem
+              ? 'border-warning-500'
+              : 'border-surface-200-800'}"
         >
           <div class="flex flex-wrap items-start gap-2">
             <div class="min-w-0 flex-1 {entry.action === 'skip' ? 'opacity-60' : ''}">
@@ -622,7 +833,7 @@
                 disabled={applying}
                 aria-label={$_('assistant.attendance.people.member')}
                 aria-describedby="{uid}-name-{i}"
-                onchange={(e) => choose(entry, e.currentTarget.value)}
+                onchange={(e) => choose(i, entry, e.currentTarget.value)}
               >
                 <option value="">{$_('assistant.review.pickMember')}</option>
                 {#if entry.candidates.length > 0}
@@ -630,14 +841,14 @@
                     {#each entry.candidates as id (id)}
                       {@const m = memberMap.get(id)}
                       {#if m}
-                        <option value="m:{m.id}">{memberName(m)}</option>
+                        <option value="m:{m.id}">{optionLabel(m)}</option>
                       {/if}
                     {/each}
                   </optgroup>
                 {/if}
                 <optgroup label={$_('assistant.attendance.people.allMembers')}>
                   {#each options(i, entry) as m (m.id)}
-                    <option value="m:{m.id}">{memberName(m)}</option>
+                    <option value="m:{m.id}">{optionLabel(m)}</option>
                   {/each}
                 </optgroup>
                 <option value="create">{$_('assistant.attendance.people.createNew')}</option>
@@ -649,7 +860,7 @@
                   class="btn btn-sm preset-filled-warning-500"
                   disabled={applying}
                   aria-describedby="{uid}-name-{i}"
-                  onclick={() => (entry.unconfirmed = false)}
+                  onclick={() => confirm(i, entry)}
                 >
                   <Fa icon={faCheck} />
                   <span>{$_('assistant.attendance.people.confirm')}</span>
@@ -764,9 +975,15 @@
             </p>
           {/if}
           {#if info.addsToRoster && info.duplicateOf === null}
-            <p class="text-xs text-surface-600-400">
-              {$_('assistant.attendance.people.notOnRoster')}
-            </p>
+            {#if info.problem === 'confirm'}
+              <p class="text-xs text-warning-700-300">
+                {$_('assistant.attendance.people.notOnRosterConfirm')}
+              </p>
+            {:else}
+              <p class="text-xs text-surface-600-400">
+                {$_('assistant.attendance.people.notOnRoster')}
+              </p>
+            {/if}
           {/if}
           {#if hint && entry.action === 'member'}
             <p class="text-xs text-warning-700-300">{$_(`assistant.attendance.hints.${hint}`)}</p>
@@ -785,6 +1002,17 @@
                 })}
               </span>
             </label>
+          {/if}
+          {#if failure}
+            <p class="flex items-start gap-2 text-xs text-error-600-400">
+              <Fa icon={faTriangleExclamation} class="mt-0.5 flex-none" />
+              <span>{failureText(failure)}</span>
+            </p>
+          {:else if savedRows.has(i) && info.status === 'exists'}
+            <p class="flex items-center gap-2 text-xs text-success-700-300">
+              <Fa icon={faCheck} class="flex-none" />
+              <span>{$_('assistant.attendance.people.saved')}</span>
+            </p>
           {/if}
         </li>
       {/each}
@@ -820,6 +1048,14 @@
     {#if review.open > 0}
       <p class="text-warning-700-300">
         {$_('assistant.attendance.open', { values: { count: review.open } })}
+      </p>
+    {/if}
+    {#if failures.size > 0 && !applying}
+      <p class="flex items-start gap-2 text-error-600-400" role="alert">
+        <Fa icon={faTriangleExclamation} class="mt-0.5 flex-none" />
+        <span>
+          {$_('assistant.attendance.partialHint', { values: { count: failures.size } })}
+        </span>
       </p>
     {/if}
     <p class="text-xs text-surface-600-400">{$_('assistant.attendance.onlyPresent')}</p>
@@ -858,7 +1094,7 @@
     {$_('assistant.review.back')}
   </button>
   <button type="button" class="btn preset-tonal-surface" disabled={applying} onclick={onclose}>
-    {$_('button.cancel')}
+    {savedSome ? $_('button.close') : $_('button.cancel')}
   </button>
   <button type="button" class="btn preset-filled-primary-500" disabled={!canApply} onclick={apply}>
     {#if applying}

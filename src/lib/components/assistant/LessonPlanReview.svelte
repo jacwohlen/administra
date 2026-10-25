@@ -19,7 +19,9 @@
     defaultTitle,
     initialInput,
     lessonPlanLines,
+    rebaseInput,
     reviewLessonPlan,
+    samePlan,
     type ExistingLessonPlan,
     type LessonPlanInput,
     type LessonPlanMode,
@@ -31,10 +33,12 @@
   /**
    * Review step of the Daten-Assistent for a lesson plan: the plan read
    * from the document in the editor's text format, editable, next to how
-   * the card will show it. An existing text plan is replaced or kept with
-   * the import added below it; an existing file is only replaced after an
-   * explicit tick. Saved with the editor's columns, one row per training
-   * and date.
+   * the card will show it. An existing text plan is kept with the import
+   * added below it, and only replaced when the user picks that; an
+   * existing file is only replaced after an explicit tick. Saved with the
+   * editor's columns, one row per training and date. A failed save keeps
+   * the review open and loads the plan again, so a save that went through
+   * despite the error shows as already there.
    */
   let {
     proposal,
@@ -71,9 +75,27 @@
   let lines = $derived(review.content ? lessonPlanLines(review.content) : []);
   let count = $derived(review.status === 'new' || review.status === 'changed' ? 1 : 0);
   let saving = $state(false);
+  /** The last save failed; cleared by the next one */
+  let saveFailed = $state(false);
   let canApply = $derived(review.ready && !saving && !loading);
 
-  const MODES: LessonPlanMode[] = ['replace', 'append'];
+  // Extending comes first: it is the default and loses nothing
+  const MODES: LessonPlanMode[] = ['append', 'replace'];
+
+  /** The saved plan the user's choices were made for */
+  let basis = untrack(() => existing);
+
+  // The plan was loaded again and is another one now (saved meanwhile, or
+  // by a save that reported an error): a replace picked for the old one
+  // does not carry over
+  $effect(() => {
+    const next = existing;
+    untrack(() => {
+      if (samePlan(basis, next)) return;
+      input = rebaseInput(input, proposal, basis, next);
+      basis = next;
+    });
+  });
 
   const STATUS_CLASS: Record<LessonPlanStatus, string> = {
     new: 'preset-tonal-success',
@@ -108,6 +130,7 @@
   async function apply() {
     if (!canApply) return;
     saving = true;
+    saveFailed = false;
     try {
       const {
         data: { user }
@@ -163,7 +186,14 @@
       onapplied();
     } catch (err) {
       console.error('Error saving the lesson plan from the assistant:', err);
+      saveFailed = true;
       toaster.error({ title: $_('assistant.review.error') });
+      // The write may have gone through all the same: show what is saved now
+      try {
+        await onreload();
+      } catch (reloadError) {
+        console.error('Error reloading the lesson plan after a failed save:', reloadError);
+      }
     } finally {
       saving = false;
     }
@@ -240,7 +270,7 @@
       </label>
     </div>
   {:else if existing}
-    <!-- Replacing is the default here, so it stands out like the file warning -->
+    <!-- Extending is the default; replacing, once picked, stands out like the file warning -->
     <div
       class="p-3 rounded-lg text-sm space-y-2 {review.mode === 'replace'
         ? 'preset-tonal-warning'
@@ -349,6 +379,13 @@
   {#if review.status === 'exists' || review.status === 'duplicate'}
     <p class="text-sm text-surface-600-400">
       {$_(`assistant.lessonPlan.${review.status === 'exists' ? 'same' : 'contained'}`)}
+    </p>
+  {/if}
+
+  {#if saveFailed && review.ready}
+    <p class="flex items-start gap-1.5 text-xs text-error-600-400" role="alert">
+      <Fa icon={faCircleExclamation} class="mt-0.5 flex-none" />
+      <span>{$_('assistant.lessonPlan.saveFailed')}</span>
     </p>
   {/if}
 

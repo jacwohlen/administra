@@ -63,9 +63,11 @@ saved by default, _Schon erfasst_ is skipped, _Abweichend_ (recorded with
 another date) is only corrected when ticked. A date the pass only shows in
 part (2015) has to be completed. Warnings for a date before the birthday,
 an unusual order of the grades, and a Dan grade (it becomes the current
-belt and awards the _Schwarzgurt_ badge). When the name or birthday printed
-in the pass does not fit the member, saving needs an explicit "yes, this is
-X's pass". The member record itself is never changed: names and birthdays
+belt and awards the _Schwarzgurt_ badge, unless the member already holds
+it). When the name printed in the pass is not exactly the member's first
+and last name, or the birthday differs, saving needs an explicit "yes, this
+is X's pass". A pass whose section is unclear is reviewed on the Judo
+ladder; the section can be changed at the top. The member record itself is never changed: names and birthdays
 come from Webling. Note: _Judo-Pass_ plus the examiner.
 
 **Präsenzliste** (check-in page). A list of one session goes to the date
@@ -85,10 +87,14 @@ ticked.
 is checked against the planned trainings (right weekday) and compared with
 the plan: _Neu_ and sessions that only fill empty fields are saved,
 _Schon erfasst_ is skipped, sessions that would replace a planned trainer,
-topic, note or cancellation only when ticked. Leaders are matched to
-members like on the sheet import; an unmatched name stays in the note and
+topic, note or cancellation only when ticked. A training the model could
+not name but that is the only one on that weekday has to be confirmed, and
+a row whose training the document names wins its date. Leaders are matched
+to members (see _Name matching_); an unmatched name stays in the note and
 the trainer stays open. Holidays can be taken over with or without _Dojo
-zu_; ones already recorded are marked.
+zu_; ones that overlap recorded holidays are not preselected, and a closed
+period over recorded school holidays is flagged. Recorded holidays are read
+again right before saving, so a retry never adds one twice.
 
 **Lektionsplan** (check-in page, _Lektionsplan_). The plan is turned into
 the editor's format (`## Aufwärmen`, `- Übung`) and can be edited before
@@ -100,9 +106,11 @@ page needs a tick too.
 
 **Termine** (_Anlässe_). One event per date, with section, times and place;
 multi-day events are saved on their first day with "bis …" in the
-description (events have no end date). Dates similar to an existing event
+description (events have no end date); an end time before the start time
+is only a warning (overnight events). Events similar to an existing event
 within a day (also ones synced from Webling) are marked _Doppelt_ and not
-created unless ticked.
+created unless ticked; the review loads the existing events of the period
+itself and saves only once they are loaded.
 
 ## Safety
 

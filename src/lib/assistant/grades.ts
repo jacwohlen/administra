@@ -1,5 +1,5 @@
 import type { GradeDefinition, MemberCurrentGrade, MemberGrade } from '$lib/models';
-import { AUTO_MATCH_SCORE, scoreName } from './nameMatch';
+import { sameName } from './nameMatch';
 import { cleanText, isIsoDate } from './proposals';
 import type { GradeEntry, GradesProposal } from './types';
 
@@ -190,8 +190,14 @@ export interface GradeRowInput {
   note: string;
   /** Leave the row out: nothing is written for it */
   skip: boolean;
-  /** The grade is recorded with another date: replace that date (opt-in) */
-  correct: boolean;
+  /**
+   * Opt-in to replace the date of a recorded grading: the id of the
+   * grading the user ticked it for. Bound to that grading, so it never
+   * carries over when another grade is picked in the row.
+   */
+  correctId: number | null;
+  /** Written by an earlier apply of this review: never written again */
+  saved: boolean;
 }
 
 export type GradeRowStatus = 'new' | 'exists' | 'changed' | 'duplicate' | 'invalid';
@@ -208,7 +214,7 @@ export type GradeIssue =
   /** This grade is dated after a higher one */
   | { code: 'afterHigher'; grade: string; date: string }
   | { code: 'mismatch'; written: string }
-  /** Becomes the current belt; `badge`: the section's first dan, which gives the black belt badge */
+  /** Becomes the current belt; `badge`: the member's first dan, which gives the black belt badge */
   | { code: 'dan'; badge: boolean };
 
 export interface GradeReviewRow {
@@ -236,6 +242,11 @@ export interface GradeReviewContext {
   ladder: GradeDefinition[];
   /** The member's recorded gradings (all sections) */
   history: MemberGrade[];
+  /**
+   * The member has a dan in any section (hasDanGrade): the black belt badge
+   * is awarded for the first dan of all sections, so it is theirs already.
+   */
+  hasDan: boolean;
   /** The member's birthday (YYYY-MM-DD) if known */
   birthday: string | null | undefined;
   /** YYYY-MM-DD, local date */
@@ -270,14 +281,30 @@ function sameAsRecorded(examDate: string, written: string, recorded: string): bo
   return isPartialDate(written) ? recorded.startsWith(written) : true;
 }
 
-/** The section the pass is reviewed in: the model's, else the member's current one, else the first. */
+/** The section of the pass the assistant is offered for ("Judo-Pass einlesen") */
+const PASS_SECTION = 'Judo';
+
+/**
+ * The section the pass is reviewed in: the model's, else Judo (the
+ * assistant reads the Judo pass), else the member's current one, else the
+ * first. Never the member's first section by the alphabet just because the
+ * model left the section open: a Judo pass would map to the Aikido ladder.
+ */
 export function initialSection(
   proposal: GradesProposal,
   ladders: Map<string, GradeDefinition[]>,
   current: MemberCurrentGrade[]
 ): string {
   if (ladders.has(proposal.section)) return proposal.section;
+  if (ladders.has(PASS_SECTION)) return PASS_SECTION;
   return current.find((g) => ladders.has(g.section))?.section ?? [...ladders.keys()][0] ?? '';
+}
+
+/** Whether the member has a dan grade in any section (and with it the black belt badge). */
+export function hasDanGrade(history: MemberGrade[], definitions: GradeDefinition[]): boolean {
+  return history.some((h) =>
+    definitions.some((d) => d.section === h.section && d.grade === h.grade && d.isDan)
+  );
 }
 
 /** "Judo-Pass · H. Muster": where the grading comes from, for the history list. */
@@ -296,7 +323,8 @@ export function initialInputs(
     examDate: isIsoDate(entry.date) ? entry.date : '',
     note: passNote(section, entry.examiner),
     skip: false,
-    correct: false
+    correctId: null,
+    saved: false
   }));
 }
 
@@ -318,7 +346,7 @@ export function remapInputs(
         ? input.grade
         : mapGrade(entries[i], ladder),
       note: input.note === passNote(from, examiner) ? passNote(to, examiner) : input.note,
-      correct: false
+      correctId: null
     };
   });
 }
@@ -328,7 +356,8 @@ export function remapInputs(
  * that date (or the pass gives no other date), 'changed' when it is
  * recorded with another date (written only if the user opts in to correct
  * it), 'duplicate' for a second row with the same grade (the first one
- * counts), 'invalid' while grade or date is missing or wrong.
+ * counts), 'invalid' while grade or date is missing or wrong. A row saved
+ * by an earlier apply keeps its status but is never written again.
  */
 export function reviewGrades(
   entries: GradeEntry[],
@@ -345,6 +374,9 @@ export function reviewGrades(
       ? (recorded.find((h) => h.grade === definition.grade) ?? null)
       : null;
     const dateProblems = dateErrors(input.examDate, entry.date, ctx.today);
+    // Only the grading the opt-in was given for, not one picked afterwards
+    const correct = existing !== null && input.correctId === existing.id;
+    const leftOut = input.skip || input.saved;
     let status: GradeRowStatus;
     let duplicateOf: number | null = null;
     let errors: GradeIssue[] = [];
@@ -361,21 +393,17 @@ export function reviewGrades(
         status = sameAsRecorded(input.examDate, entry.date, existing.examDate)
           ? 'exists'
           : 'changed';
-        if (status === 'changed' && input.correct) errors = dateProblems;
+        if (status === 'changed' && correct) errors = dateProblems;
       } else {
         status = dateProblems.length > 0 ? 'invalid' : 'new';
         errors = dateProblems;
       }
     }
 
-    const correcting = status === 'changed' && input.correct && !input.skip;
+    const correcting = status === 'changed' && correct && !leftOut;
     const action =
-      status === 'new' && !input.skip
-        ? 'insert'
-        : correcting && errors.length === 0
-          ? 'update'
-          : null;
-    const blocking = (status === 'invalid' && !input.skip) || (correcting && errors.length > 0);
+      status === 'new' && !leftOut ? 'insert' : correcting && errors.length === 0 ? 'update' : null;
+    const blocking = (status === 'invalid' && !leftOut) || (correcting && errors.length > 0);
     return {
       entry,
       input,
@@ -393,10 +421,14 @@ export function reviewGrades(
   // The member's gradings as they will be after saving, to check the order
   const timeline = new Map(recorded.map((h) => [h.grade, h.examDate]));
   for (const row of rows) {
-    if (row.action && row.definition) timeline.set(row.definition.grade, row.input.examDate);
+    if ((row.action || row.input.saved) && row.definition) {
+      timeline.set(row.definition.grade, row.input.examDate);
+    }
   }
   const birthday = ctx.birthday && isIsoDate(ctx.birthday) ? ctx.birthday : null;
-  const danRecorded = recorded.some((h) => ctx.ladder.some((o) => o.grade === h.grade && o.isDan));
+  // The badge counts dans of every section; this section's are a fallback
+  const danRecorded =
+    ctx.hasDan || recorded.some((h) => ctx.ladder.some((o) => o.grade === h.grade && o.isDan));
 
   for (const row of rows) {
     const d = row.definition;
@@ -437,6 +469,22 @@ export function reviewGrades(
   return rows;
 }
 
+/** Why a row's write failed: an error, or a correction that changed no row (RLS, removed meanwhile) */
+export type GradeSaveFailure = 'failed' | 'notUpdated';
+
+/**
+ * The failures of the last apply still worth showing, by row: only for rows
+ * still to be saved. A row the reload shows as recorded went through after
+ * all, and one the user left out (skipped, correction unticked) is no
+ * longer asked for.
+ */
+export function openSaveFailures(
+  rows: GradeReviewRow[],
+  failures: Partial<Record<number, GradeSaveFailure>>
+): (GradeSaveFailure | undefined)[] {
+  return rows.map((r, i) => (r.action !== null || r.blocking ? failures[i] : undefined));
+}
+
 export interface GradeReviewSummary {
   inserts: number;
   updates: number;
@@ -473,14 +521,20 @@ export interface HolderCheck {
   birthdayFits: boolean | null;
 }
 
-/** Whether the pass looks like the member's own: name and birthday as printed. */
+/**
+ * Whether the pass looks like the member's own: name and birthday as
+ * printed. The name fits only with the member's exact last and first name
+ * (in any order and spelling of umlauts; a double name by its parts): a
+ * sibling's pass ("Jan" for Jana, "Marco" for Marcel) or a look-alike
+ * family name ("Maier" for Meier) does not, and saving then needs the
+ * user's confirmation.
+ */
 export function checkHolder(
   holder: GradesProposal['holder'],
   member: { firstname: string; lastname: string; birthday?: string | null }
 ): HolderCheck {
   const nameFits = holder.name
-    ? scoreName(holder.name, { id: 0, firstname: member.firstname, lastname: member.lastname }) >=
-      AUTO_MATCH_SCORE
+    ? sameName(holder.name, { id: 0, firstname: member.firstname, lastname: member.lastname })
     : null;
   const birthdayFits =
     holder.birthday && member.birthday && isIsoDate(member.birthday)
@@ -506,15 +560,22 @@ export interface GradeCorrection {
   examDate: string;
 }
 
+/** A write and the review row it comes from, to show per row what failed */
+export interface GradeWrite<T> {
+  row: number;
+  values: T;
+}
+
 export interface GradeWrites {
-  inserts: GradeInsert[];
-  corrections: GradeCorrection[];
+  inserts: GradeWrite<GradeInsert>[];
+  corrections: GradeWrite<GradeCorrection>[];
 }
 
 /**
  * The rows to write, checked once more: only grades of the section's
  * ladder, real dates not in the future, each grade once, new ones only if
- * not recorded yet, corrections only of the member's own recorded gradings.
+ * not recorded yet, corrections only of the member's own recorded gradings,
+ * nothing a previous apply saved already.
  */
 export function buildGradeWrites(
   memberId: number,
@@ -524,10 +585,12 @@ export function buildGradeWrites(
   const writes: GradeWrites = { inserts: [], corrections: [] };
   if (!Number.isInteger(memberId) || memberId <= 0) return writes;
   const seen = new Set<string>();
-  for (const row of rows) {
+  for (const [index, row] of rows.entries()) {
     const d = row.definition;
     const examDate = row.input.examDate;
-    if (!row.action || !d || row.errors.length > 0 || seen.has(d.grade)) continue;
+    if (!row.action || row.input.saved || !d || row.errors.length > 0 || seen.has(d.grade)) {
+      continue;
+    }
     const onLadder = ctx.ladder.some((l) => l.section === d.section && l.grade === d.grade);
     if (d.section !== ctx.section || !onLadder) continue;
     if (!isIsoDate(examDate) || examDate > ctx.today) continue;
@@ -535,22 +598,27 @@ export function buildGradeWrites(
     if (row.action === 'insert') {
       if (ctx.history.some((h) => h.section === d.section && h.grade === d.grade)) continue;
       writes.inserts.push({
-        memberId,
-        section: d.section,
-        grade: d.grade,
-        examDate,
-        note: cleanText(row.input.note, NOTE_MAX) || null
+        row: index,
+        values: {
+          memberId,
+          section: d.section,
+          grade: d.grade,
+          examDate,
+          note: cleanText(row.input.note, NOTE_MAX) || null
+        }
       });
     } else {
+      // Only the grading the user ticked the correction for
       const existing = ctx.history.find(
         (h) =>
           h.id === row.existing?.id &&
+          h.id === row.input.correctId &&
           Number(h.memberId) === memberId &&
           h.section === d.section &&
           h.grade === d.grade
       );
       if (existing && existing.examDate !== examDate) {
-        writes.corrections.push({ id: existing.id, examDate });
+        writes.corrections.push({ row: index, values: { id: existing.id, examDate } });
       }
     }
   }

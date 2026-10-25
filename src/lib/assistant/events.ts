@@ -8,7 +8,8 @@ import type { EventEntry, EventsProposal } from './types';
  * (events has no natural key, so similar titles on nearby days count as
  * the same event) and turned into the rows the "Event erstellen" form
  * would insert. Existing events are never changed. Pure, so EventsReview
- * only renders and saves what comes out of here.
+ * only renders and saves what comes out of here (it loads the events to
+ * compare with itself, for the days `comparisonSpan` names).
  */
 
 /** Days apart two dates may be and still be one event (a date misread by one) */
@@ -110,6 +111,11 @@ function dayNumber(date: string): number {
   return Date.UTC(y, m - 1, d) / 86_400_000;
 }
 
+/** The YYYY-MM-DD date `days` after (or before) `date`. */
+export function addDays(date: string, days: number): string {
+  return new Date((dayNumber(date) + days) * 86_400_000).toISOString().slice(0, 10);
+}
+
 /** Days between two YYYY-MM-DD dates, positive when b is later. */
 export function daysBetween(a: string, b: string): number {
   return dayNumber(b) - dayNumber(a);
@@ -170,9 +176,12 @@ export interface EventRowInput {
    * click changes it later.
    */
   include: boolean | null;
+  /** Created by an earlier apply of this review: never written again */
+  saved: boolean;
 }
 
-export type EventRowStatus = 'new' | 'duplicate' | 'invalid';
+/** 'saved': created by an earlier apply of this review (see markSaved) */
+export type EventRowStatus = 'new' | 'duplicate' | 'invalid' | 'saved';
 
 export type EventIssue =
   | { code: 'noTitle' }
@@ -183,7 +192,10 @@ export type EventIssue =
   | { code: 'unknownSection'; written: string }
   | { code: 'badTimeFrom' }
   | { code: 'badTimeTo' }
-  /** The end time is not after the start time */
+  /**
+   * A one-day event ends at or before its start time: often an event
+   * that ends after midnight (Silvester 20:00–01:00), so only a warning
+   */
   | { code: 'timeOrder' }
   /** The last day is not a real date after the first */
   | { code: 'badDateTo' }
@@ -206,7 +218,7 @@ export interface EventReviewRow {
   /** Created on apply */
   selected: boolean;
   duplicate: EventDuplicate | null;
-  /** Missing or wrong values; such a row is never written */
+  /** Missing or wrong values; such a row is never written (none for a saved row) */
   errors: EventIssue[];
   /** Worth a second look, no reason not to save */
   warnings: EventIssue[];
@@ -240,7 +252,8 @@ export function initialInputs(
       location: entry.location,
       section: matchSection(entry.section, sections),
       description: entry.description,
-      include: null
+      include: null,
+      saved: false
     };
   });
 }
@@ -271,9 +284,6 @@ function inputErrors(
   }
   if (input.timeFrom && !isTime(input.timeFrom)) errors.push({ code: 'badTimeFrom' });
   if (input.timeTo && !isTime(input.timeTo)) errors.push({ code: 'badTimeTo' });
-  if (isTime(input.timeFrom) && isTime(input.timeTo) && input.timeTo <= input.timeFrom) {
-    errors.push({ code: 'timeOrder' });
-  }
   if (
     input.dateTo &&
     (!isIsoDate(input.dateTo) || (isIsoDate(input.date) && input.dateTo <= input.date))
@@ -286,6 +296,20 @@ function inputErrors(
 /** Two years after `today`, as YYYY-MM-DD (compared as text only) */
 function twoYearsAfter(today: string): string {
   return `${Number(today.slice(0, 4)) + 2}${today.slice(4)}`;
+}
+
+/**
+ * A one-day event whose end time is not after its start time. Not an
+ * error: it may end after midnight. A multi-day event ends on another day,
+ * so its times are never compared (the Webling sync writes them the same way).
+ */
+function endsBeforeStart(input: EventRowInput): boolean {
+  return (
+    !input.dateTo &&
+    isTime(input.timeFrom) &&
+    isTime(input.timeTo) &&
+    input.timeTo <= input.timeFrom
+  );
 }
 
 /** Whether another date is near enough to the row's and has an alike title. */
@@ -305,7 +329,7 @@ function findKnown(
 ): KnownEvent | null {
   let best: { event: KnownEvent; similarity: number; distance: number } | null = null;
   for (let offset = -DUPLICATE_DAYS; offset <= DUPLICATE_DAYS; offset++) {
-    const day = new Date((dayNumber(date) + offset) * 86_400_000).toISOString().slice(0, 10);
+    const day = addDays(date, offset);
     for (const event of byDate.get(day) ?? []) {
       const similarity = titleSimilarity(title, event.title);
       if (similarity < SIMILAR_TITLE) continue;
@@ -323,10 +347,11 @@ function findKnown(
 }
 
 /**
- * One review row per date read. Status: 'duplicate' when a recorded event
- * or an earlier row has an alike title on the same day or the day next to
- * it (not created unless the user ticks it), 'invalid' while a required
- * value is missing or wrong, else 'new'.
+ * One review row per date read. Status: 'saved' once an earlier apply of
+ * this review created it, 'duplicate' when a recorded event or an earlier
+ * row has an alike title on the same day or the day next to it (not
+ * created unless the user ticks it), 'invalid' while a required value is
+ * missing or wrong, else 'new'.
  */
 export function reviewEvents(
   entries: EventEntry[],
@@ -345,6 +370,20 @@ export function reviewEvents(
   return entries.map((entry, i): EventReviewRow => {
     const input = inputs[i];
     const section = input.section || defaultSection;
+    if (input.saved) {
+      // It is one of the recorded events now: compared with nothing, never written again
+      return {
+        entry,
+        input,
+        section,
+        status: 'saved',
+        selected: false,
+        duplicate: null,
+        errors: [],
+        warnings: [],
+        blocking: false
+      };
+    }
     // Named only when the model's section is not one of the club's
     const written = section || matchSection(entry.section, ctx.sections) ? '' : entry.section;
     const errors = inputErrors(input, section, written, ctx.sections);
@@ -367,6 +406,7 @@ export function reviewEvents(
     const warnings: EventIssue[] = [];
     if (date && date < ctx.today) warnings.push({ code: 'past' });
     if (date && date > later) warnings.push({ code: 'farFuture' });
+    if (endsBeforeStart(input)) warnings.push({ code: 'timeOrder' });
 
     const status: EventRowStatus = duplicate ? 'duplicate' : errors.length > 0 ? 'invalid' : 'new';
     const selected = input.include ?? status !== 'duplicate';
@@ -403,13 +443,44 @@ export interface EventReviewSummary {
 }
 
 export function summarizeEvents(rows: EventReviewRow[]): EventReviewSummary {
-  const byStatus: Record<EventRowStatus, number> = { new: 0, duplicate: 0, invalid: 0 };
+  const byStatus: Record<EventRowStatus, number> = { new: 0, duplicate: 0, invalid: 0, saved: 0 };
   for (const row of rows) byStatus[row.status]++;
   return {
     inserts: rows.filter((r) => r.selected && r.errors.length === 0).length,
     blocking: rows.filter((r) => r.blocking).length,
     byStatus
   };
+}
+
+// ----- The events to compare with -----
+
+/** First and last day (YYYY-MM-DD, inclusive) */
+export interface DateSpan {
+  from: string;
+  to: string;
+}
+
+/**
+ * The days whose recorded events the review needs: from the first row's
+ * date to the last one's, each widened by DUPLICATE_DAYS like findKnown.
+ * Recomputed as dates are edited, null while no row has a valid date.
+ */
+export function comparisonSpan(inputs: readonly Pick<EventRowInput, 'date'>[]): DateSpan | null {
+  const dates = inputs
+    .map((input) => input.date)
+    .filter(isIsoDate)
+    .sort();
+  if (dates.length === 0) return null;
+  return {
+    from: addDays(dates[0], -DUPLICATE_DAYS),
+    to: addDays(dates[dates.length - 1], DUPLICATE_DAYS)
+  };
+}
+
+/** Whether the events loaded for `loaded` are all the review needs for `needed`. */
+export function spanCovers(loaded: DateSpan | null, needed: DateSpan | null): boolean {
+  if (!needed) return true;
+  return loaded !== null && loaded.from <= needed.from && needed.to <= loaded.to;
 }
 
 // ----- What is written -----
@@ -443,44 +514,59 @@ export function eventDescription(
   return text.startsWith(line) ? text : `${line}\n${text}`.trim();
 }
 
+/** One event to create, with the review row it comes from */
+export interface EventWrite {
+  /** Index of the review row */
+  row: number;
+  values: EventInsert;
+}
+
 /**
  * The events to create, checked once more: only ticked rows without
- * errors, real dates, times as HH:MM with the end after the start, and a
+ * errors that were not saved before, real dates, times as HH:MM and a
  * section of the club. Nothing of the proposal is copied unchecked.
  */
 export function buildEventInserts(
   rows: EventReviewRow[],
   sections: readonly string[],
   untilLine: (dateTo: string) => string
-): EventInsert[] {
-  const inserts: EventInsert[] = [];
-  for (const row of rows) {
+): EventWrite[] {
+  const writes: EventWrite[] = [];
+  rows.forEach((row, index) => {
     const { input, section } = row;
-    if (!row.selected || row.errors.length > 0) continue;
-    if (inputErrors(input, section, '', sections).length > 0) continue;
-    inserts.push({
-      title: cleanText(input.title, MAX_LENGTH.title),
-      description: eventDescription(input, untilLine) || null,
-      date: input.date,
-      timeFrom: input.timeFrom || null,
-      timeTo: input.timeTo || null,
-      location: cleanText(input.location, MAX_LENGTH.location) || null,
-      section,
-      maxParticipants: null,
-      registrationDeadline: null
+    if (!row.selected || row.errors.length > 0 || input.saved) return;
+    if (inputErrors(input, section, '', sections).length > 0) return;
+    writes.push({
+      row: index,
+      values: {
+        title: cleanText(input.title, MAX_LENGTH.title),
+        description: eventDescription(input, untilLine) || null,
+        date: input.date,
+        timeFrom: input.timeFrom || null,
+        timeTo: input.timeTo || null,
+        location: cleanText(input.location, MAX_LENGTH.location) || null,
+        section,
+        maxParticipants: null,
+        registrationDeadline: null
+      }
     });
-  }
-  return inserts;
+  });
+  return writes;
 }
 
 // ----- Saving -----
 
 /** What an insert into events answers, as far as insertEvents needs it */
-export type InsertResult = PromiseLike<{ error: { code?: string; message?: string } | null }>;
+export type InsertResult = PromiseLike<{
+  data?: { id: string | number } | null;
+  error: { code?: string; message?: string } | null;
+}>;
 
 export interface InsertOutcome {
-  saved: EventInsert[];
-  failed: EventInsert[];
+  saved: EventWrite[];
+  failed: EventWrite[];
+  /** Ids of the events created, as far as the inserts returned them */
+  created: (string | number)[];
 }
 
 /** The id the identity column handed out is already used (events has no other unique key) */
@@ -497,18 +583,19 @@ function isTakenId(error: { code?: string; message?: string }): boolean {
  * the row.
  */
 export async function insertEvents(
-  rows: EventInsert[],
-  insert: (row: EventInsert) => InsertResult,
+  writes: EventWrite[],
+  insert: (values: EventInsert) => InsertResult,
   onProgress?: (done: number) => void
 ): Promise<InsertOutcome> {
-  const outcome: InsertOutcome = { saved: [], failed: [] };
-  for (const row of rows) {
+  const outcome: InsertOutcome = { saved: [], failed: [], created: [] };
+  for (const write of writes) {
     let ok = false;
     try {
       for (let attempt = 0; attempt <= ID_RETRIES; attempt++) {
-        const { error } = await insert(row);
+        const { data, error } = await insert(write.values);
         if (!error) {
           ok = true;
+          if (data?.id !== undefined && data.id !== null) outcome.created.push(data.id);
           break;
         }
         if (!isTakenId(error)) {
@@ -519,8 +606,58 @@ export async function insertEvents(
     } catch (err) {
       console.error('Error creating an event from the assistant:', err);
     }
-    (ok ? outcome.saved : outcome.failed).push(row);
+    (ok ? outcome.saved : outcome.failed).push(write);
     onProgress?.(outcome.saved.length + outcome.failed.length);
   }
   return outcome;
+}
+
+// ----- After a partial save -----
+
+/** The rows an apply created: shown as saved, never written again. */
+export function markSaved(inputs: EventRowInput[], rows: readonly number[]): EventRowInput[] {
+  return inputs.map((input, i) => (rows.includes(i) ? { ...input, saved: true } : input));
+}
+
+/** Events as loaded to compare with, and the days they were loaded for */
+export interface ComparisonSet {
+  span: DateSpan;
+  events: readonly KnownEvent[];
+}
+
+/**
+ * After an apply that failed in part, with the events loaded again: a
+ * failed row that now matches an event that was not there before (and
+ * that this apply did not create for another row) most likely went
+ * through although its insert reported an error, or someone created it
+ * meanwhile. It is unticked, so trying again does not create it twice;
+ * the review shows it as a duplicate of that event. The other failed rows
+ * keep the user's choice. Only the days of `before` count: an event on
+ * another day (loaded once a date was edited) was not new, only not
+ * loaded then. Returns the rows unticked so.
+ */
+export function untickRecorded(
+  inputs: EventRowInput[],
+  failed: readonly number[],
+  before: ComparisonSet,
+  after: readonly KnownEvent[],
+  created: readonly (string | number)[] = []
+): { inputs: EventRowInput[]; recorded: number[] } {
+  const old = new Set([...before.events.map((e) => String(e.id)), ...created.map(String)]);
+  const { from, to } = before.span;
+  const fresh = after.filter((e) => !old.has(String(e.id)) && from <= e.date && e.date <= to);
+  const recorded = failed.filter((i) => {
+    const input = inputs[i];
+    if (!input || input.saved) return false;
+    const title = cleanText(input.title, MAX_LENGTH.title);
+    return (
+      !!title &&
+      isIsoDate(input.date) &&
+      fresh.some((e) => isSameEvent(title, input.date, e.title, e.date))
+    );
+  });
+  return {
+    inputs: inputs.map((input, i) => (recorded.includes(i) ? { ...input, include: false } : input)),
+    recorded
+  };
 }

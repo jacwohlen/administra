@@ -228,14 +228,35 @@
     if (data.canWrite && takeAssistantRequest('attendance')) showAssistant = true;
   });
 
-  // After a bulk import: reload the list, and close the review even if that fails
-  async function assistantApplied() {
+  // A save that failed in part keeps the review open for the rest; what it
+  // wrote shows once the dialog closes
+  let assistantSavedSome = false;
+
+  async function reloadAfterAssistant() {
     try {
       await invalidateAll();
     } finally {
       filterData();
+    }
+  }
+
+  // After a bulk import: reload the list, and close the review even if that fails
+  async function assistantApplied() {
+    assistantSavedSome = false;
+    try {
+      await reloadAfterAssistant();
+    } finally {
       showAssistant = false;
     }
+  }
+
+  function closeAssistant() {
+    showAssistant = false;
+    if (!assistantSavedSome) return;
+    assistantSavedSome = false;
+    reloadAfterAssistant().catch((err) =>
+      console.error('Error reloading after the attendance list:', err)
+    );
   }
 </script>
 
@@ -447,7 +468,7 @@
   <AssistantDialog
     kind="attendance"
     context={{ trainingId: training.id, date: data.date }}
-    onclose={() => (showAssistant = false)}
+    onclose={closeAssistant}
   >
     {#snippet review(proposal, back)}
       <AttendanceReview
@@ -456,8 +477,9 @@
         date={data.date}
         roster={data.participants.map((p) => Number(p.id))}
         onback={back}
-        onclose={() => (showAssistant = false)}
+        onclose={closeAssistant}
         onapplied={assistantApplied}
+        onpartial={() => (assistantSavedSome = true)}
       />
     {/snippet}
   </AssistantDialog>

@@ -66,7 +66,7 @@ export function dateSpan(dates: string[]): { from: string; to: string } | null {
 /**
  * The planned training a session goes to: the model's, if it is one of the
  * planned trainings, else the only planned training on the date's weekday
- * (guessed, flagged in the review), else none and the user picks.
+ * (guessed: the user has to confirm it), else none and the user picks.
  */
 export function resolveTraining(
   entry: Pick<PlanSessionEntry, 'date' | 'trainingId'>,
@@ -161,6 +161,14 @@ export interface PlanReviewInput {
   date: string;
   /** A planned training, null until picked */
   trainingId: number | null;
+  /**
+   * The document named no planned training and the one of the weekday was
+   * taken: 'open' until the user confirms it ('confirmed'), null when the
+   * document or the user chose the training. The document often leaves the
+   * training out because none of the planned ones fits (a kids' group on
+   * the same evening), so a guess is never saved unasked.
+   */
+  trainingGuess: 'open' | 'confirmed' | null;
   /** Member who leads, null when open */
   trainerId: number | null;
   topic: string;
@@ -170,6 +178,8 @@ export interface PlanReviewInput {
   skip: boolean;
   /** The session contradicts what is planned: replace it (opt-in) */
   overwrite: boolean;
+  /** Saved by an earlier apply of this review: never written again */
+  saved: boolean;
 }
 
 /** The trainer of one row changed: the written name moves into the notes or out of them. */
@@ -187,7 +197,7 @@ export function setRowTrainer(
 /**
  * The member for a written leader name was changed: every row with that
  * name that still had the previous choice follows, rows changed one by one
- * keep theirs.
+ * keep theirs, and so do rows saved already.
  */
 export function applyLeaderChoice(
   entries: PlanSessionEntry[],
@@ -197,10 +207,15 @@ export function applyLeaderChoice(
   next: number | null
 ): PlanReviewInput[] {
   return inputs.map((input, i) =>
-    leaderKey(entries[i].trainer) === key && input.trainerId === previous
+    !input.saved && leaderKey(entries[i].trainer) === key && input.trainerId === previous
       ? setRowTrainer(entries[i], input, next)
       : input
   );
+}
+
+/** The user picked a training for a row: their choice, not a guess any more. */
+export function setRowTraining(input: PlanReviewInput, trainingId: number | null): PlanReviewInput {
+  return { ...input, trainingId, trainingGuess: null };
 }
 
 function hasValues(input: PlanReviewInput): boolean {
@@ -228,15 +243,18 @@ export function initialPlanInputs(
       topic = '';
     }
     if (leader && trainerId === null) notes = withLeaderNote(notes, s.trainer, true);
+    const training = resolveTraining(s, trainings);
     const input: PlanReviewInput = {
       date: s.date,
-      trainingId: resolveTraining(s, trainings).trainingId,
+      trainingId: training.trainingId,
+      trainingGuess: training.guessed ? 'open' : null,
       trainerId,
       topic,
       notes: cleanText(notes, MAX_LENGTH.notes),
       cancelled: s.cancelled,
       skip: false,
-      overwrite: false
+      overwrite: false,
+      saved: false
     };
     // A date with nothing on it: nothing to save
     return { ...input, skip: !hasValues(input) };
@@ -254,8 +272,8 @@ export type PlanIssue =
   | { code: 'empty' }
   /** The written name was matched to a member by a guess */
   | { code: 'trainerUnconfirmed'; name: string; memberId: number }
-  /** The model named no planned training; taken by the weekday */
-  | { code: 'trainingGuessed' }
+  /** The document named no planned training; the weekday's was taken and needs a confirmation */
+  | { code: 'trainingUnconfirmed' }
   /** No member for the written name; it stays in the notes */
   | { code: 'trainerUnmatched'; name: string }
   /** The dojo is closed that day: the training drops anyway */
@@ -408,8 +426,13 @@ export function mergeSession(
  * the training and date, 'exists' when the plan says the same already,
  * 'fill' when the document only adds values to empty fields (written),
  * 'changed' when it contradicts the plan (written only if the user opts
- * in), 'duplicate' for a second row of the same training and date (the
- * first one counts), 'invalid' while a value is missing or wrong.
+ * in), 'duplicate' for another row of a training and date that a row
+ * counts for already, 'invalid' while a value is missing or wrong.
+ *
+ * Which row counts for a training and date: one saved by an earlier apply,
+ * else the first ready row whose training the document or the user named.
+ * A training taken by the weekday only gets a date no such row has, and
+ * only once the user confirms it.
  */
 export function reviewPlan(
   entries: PlanSessionEntry[],
@@ -419,10 +442,10 @@ export function reviewPlan(
   const planned = new Map(
     (ctx.planned?.sessions ?? []).map((s) => [sessionKey(s.training_id, s.date), s])
   );
-  const firstRow = new Map<string, number>();
   const year = +ctx.today.slice(0, 4);
 
-  return entries.map((entry, i): PlanReviewRow => {
+  // What each row says on its own
+  const base = entries.map((entry, i) => {
     const input = inputs[i];
     const training = ctx.trainings.find((t) => t.id === input.trainingId) ?? null;
     const validDate = isIsoDate(input.date);
@@ -463,24 +486,51 @@ export function reviewPlan(
     ) {
       errors.push({ code: 'empty' });
     }
+    return { training, key, checked, existing, proposed, leaderWithoutMember, errors };
+  });
+
+  // The row that counts for each training and date: a saved one, else a
+  // named one, else a confirmed guess, each in the order of the document
+  const firstRow = new Map<string, number>();
+  const claim = (counts: (input: PlanReviewInput, i: number) => boolean) =>
+    base.forEach((b, i) => {
+      if (b.key && !firstRow.has(b.key) && counts(inputs[i], i)) firstRow.set(b.key, i);
+    });
+  const ready = (input: PlanReviewInput, i: number) => !input.skip && base[i].errors.length === 0;
+  claim((input) => input.saved);
+  claim((input, i) => ready(input, i) && input.trainingGuess === null);
+  claim((input, i) => ready(input, i) && input.trainingGuess === 'confirmed');
+
+  return entries.map((entry, i): PlanReviewRow => {
+    const input = inputs[i];
+    const { training, key, checked, existing, proposed, leaderWithoutMember } = base[i];
+    let errors = base[i].errors;
+    const merged = mergeSession(proposed, existing, { leaderWithoutMember });
+    const taken = key ? firstRow.get(key) : undefined;
+    const counted = taken !== undefined && taken !== i && !input.skip && !input.saved;
+
+    if (input.trainingGuess !== null && counted) {
+      // Guessed by the weekday, and another row has the training on that
+      // date: that row counts, this one is left out (nothing to confirm)
+      errors = [];
+    } else if (input.trainingGuess === 'open' && training) {
+      const asPlanned =
+        checked && existing !== null && !isEmptySession(existing) && merged.changes.length === 0;
+      // Nothing would change: no need to confirm
+      if (!asPlanned) errors = [...errors, { code: 'trainingUnconfirmed' }];
+    }
 
     const warnings: PlanIssue[] = [];
-    if (training && entry.trainingId !== training.id) {
-      const guess = resolveTraining(entry, ctx.trainings);
-      if (guess.guessed && guess.trainingId === training.id) {
-        warnings.push({ code: 'trainingGuessed' });
-      }
-    }
     if (leaderWithoutMember) {
       warnings.push({ code: 'trainerUnmatched', name: entry.trainer });
     }
-    if (validDate && !input.cancelled) {
+    if (isIsoDate(input.date) && !input.cancelled) {
       const closed = ctx.breaks.find(
         (b) => b.cancels_training && b.date_from <= input.date && input.date <= b.date_to
       );
       if (closed) warnings.push({ code: 'closedBreak', title: closed.title });
     }
-    if (validDate && Math.abs(+input.date.slice(0, 4) - year) > 1) {
+    if (isIsoDate(input.date) && Math.abs(+input.date.slice(0, 4) - year) > 1) {
       warnings.push({ code: 'unusualYear' });
     }
 
@@ -489,14 +539,12 @@ export function reviewPlan(
     let changes: PlanChange[] = [];
     let write: PlanSessionWrite | null = null;
 
-    if (errors.length > 0 || !key || !training) {
-      status = 'invalid';
-    } else if (!input.skip && firstRow.has(key)) {
+    if (counted && errors.length === 0) {
       status = 'duplicate';
-      duplicateOf = firstRow.get(key)!;
+      duplicateOf = taken;
+    } else if (errors.length > 0 || !key || !training) {
+      status = 'invalid';
     } else {
-      if (!input.skip) firstRow.set(key, i);
-      const merged = mergeSession(proposed, existing, { leaderWithoutMember });
       changes = merged.changes;
       status =
         !existing || isEmptySession(existing)
@@ -508,7 +556,7 @@ export function reviewPlan(
               : 'fill';
       const writes =
         status === 'new' || status === 'fill' || (status === 'changed' && input.overwrite);
-      if (writes && checked && !input.skip) {
+      if (writes && checked && !input.skip && !input.saved) {
         write = {
           training_id: training.id,
           date: input.date,
@@ -532,9 +580,45 @@ export function reviewPlan(
       write,
       errors,
       warnings,
-      blocking: !input.skip && (errors.length > 0 || !checked)
+      blocking: !input.skip && !input.saved && (errors.length > 0 || !checked)
     };
   });
+}
+
+const awaitsTraining = (row: PlanReviewRow) =>
+  !row.input.skip && row.errors.some((e) => e.code === 'trainingUnconfirmed');
+
+/**
+ * The rows a confirmation of row `index`'s weekday guess stands for: the
+ * row itself and the other rows waiting for the same confirmation, with
+ * the same training written the same way in the document ("Judo Kinder"
+ * on every Monday). Rows another row counts for are not among them.
+ */
+export function trainingGuessGroup(rows: PlanReviewRow[], index: number): number[] {
+  const target = rows[index];
+  if (!target || !awaitsTraining(target)) return [];
+  const written = normalizeName(target.entry.trainingAsWritten);
+  return rows.flatMap((row, i) =>
+    i === index ||
+    (written !== '' &&
+      awaitsTraining(row) &&
+      row.input.trainingId === target.input.trainingId &&
+      normalizeName(row.entry.trainingAsWritten) === written)
+      ? [i]
+      : []
+  );
+}
+
+/** The user confirms the weekday guess of row `index` (and of its group). */
+export function confirmTraining(
+  rows: PlanReviewRow[],
+  inputs: PlanReviewInput[],
+  index: number
+): PlanReviewInput[] {
+  const group = new Set(trainingGuessGroup(rows, index));
+  return inputs.map((input, i) =>
+    group.has(i) ? { ...input, trainingGuess: 'confirmed' as const } : input
+  );
 }
 
 /** The values a row stands for, as saved: its write, else what the row says, cleaned */
@@ -576,6 +660,8 @@ export interface HolidayInput {
   dateTo: string;
   /** Dojo closed: planned trainings drop (cancels_training) */
   closed: boolean;
+  /** Added by an earlier apply of this review: never added again */
+  saved: boolean;
 }
 
 export type HolidayStatus = 'new' | 'exists' | 'duplicate' | 'invalid';
@@ -590,6 +676,14 @@ export interface HolidayReviewRow {
   existing: PlannedBreak | null;
   /** Recorded holidays the period overlaps (other title or dates) */
   overlaps: PlannedBreak[];
+  /**
+   * Those of `overlaps` recorded without "dojo closed" (school holidays,
+   * the trainings take place) that this period, closing the dojo, would
+   * override: every planned training in the overlap drops
+   */
+  closesOpen: PlannedBreak[];
+  /** Other periods of the review being added that overlap this one (row indexes) */
+  overlapsRows: number[];
   duplicateOf: number | null;
   errors: HolidayIssue[];
   write: PlanBreakWrite | null;
@@ -597,11 +691,10 @@ export interface HolidayReviewRow {
   blocking: boolean;
 }
 
+type BreakPeriod = Pick<PlannedBreak, 'title' | 'date_from' | 'date_to'>;
+
 /** Same title (case and spaces aside) and dates: recorded already, not added twice */
-function sameBreak(
-  a: Pick<PlannedBreak, 'title' | 'date_from' | 'date_to'>,
-  b: Pick<PlannedBreak, 'title' | 'date_from' | 'date_to'>
-): boolean {
+function sameBreak(a: BreakPeriod, b: BreakPeriod): boolean {
   return (
     normalizeName(a.title) === normalizeName(b.title) &&
     a.date_from === b.date_from &&
@@ -609,7 +702,12 @@ function sameBreak(
   );
 }
 
-function asBreak(input: HolidayInput): Pick<PlannedBreak, 'title' | 'date_from' | 'date_to'> {
+/** At least one day in common */
+function overlap(a: BreakPeriod, b: BreakPeriod): boolean {
+  return a.date_from <= b.date_to && b.date_from <= a.date_to;
+}
+
+function asBreak(input: HolidayInput): BreakPeriod {
   return {
     title: cleanText(input.title, MAX_LENGTH.heading),
     date_from: input.dateFrom,
@@ -617,20 +715,28 @@ function asBreak(input: HolidayInput): Pick<PlannedBreak, 'title' | 'date_from' 
   };
 }
 
+/**
+ * The first choice per holiday period: added unless it touches a holiday
+ * recorded already. One recorded with the same dates is there; one that
+ * overlaps is usually the same holidays under another title or with other
+ * dates (school holidays recorded, "kein Training" on the plan of a
+ * group), and adding it could drop planned trainings, so it needs a tick.
+ */
 export function initialHolidayInputs(
   holidays: HolidayEntry[],
   breaks: PlannedBreak[]
 ): HolidayInput[] {
   return holidays.map((h) => {
-    const input = {
+    const input: HolidayInput = {
       use: true,
       title: h.title,
       dateFrom: h.dateFrom,
       dateTo: h.dateTo || h.dateFrom,
-      closed: h.closed
+      closed: h.closed,
+      saved: false
     };
     const b = asBreak(input);
-    return { ...input, use: !breaks.some((e) => sameBreak(e, b)) };
+    return { ...input, use: !breaks.some((e) => sameBreak(e, b) || overlap(e, b)) };
   });
 }
 
@@ -638,15 +744,16 @@ export function initialHolidayInputs(
  * One row per holiday period. 'exists' when the same title and dates are
  * recorded (never added twice), 'duplicate' for a second row of the same
  * period, 'invalid' while the title or the dates are missing or wrong.
+ * Overlaps with recorded holidays and with the other periods being added
+ * are listed, a closed dojo over recorded school holidays separately.
  */
 export function reviewHolidays(
   entries: HolidayEntry[],
   inputs: HolidayInput[],
   breaks: PlannedBreak[]
 ): HolidayReviewRow[] {
-  const firstRow: { index: number; b: Pick<PlannedBreak, 'title' | 'date_from' | 'date_to'> }[] =
-    [];
-  return entries.map((entry, i): HolidayReviewRow => {
+  const firstRow: { index: number; b: BreakPeriod }[] = [];
+  const rows = entries.map((entry, i): HolidayReviewRow => {
     const input = inputs[i];
     const b = asBreak(input);
     const errors: HolidayIssue[] = [];
@@ -655,12 +762,7 @@ export function reviewHolidays(
       errors.push({ code: 'badDates' });
     }
     const existing = breaks.find((e) => sameBreak(e, b)) ?? null;
-    const overlaps =
-      errors.length > 0
-        ? []
-        : breaks.filter(
-            (e) => e !== existing && e.date_from <= b.date_to && b.date_from <= e.date_to
-          );
+    const overlaps = errors.length > 0 ? [] : breaks.filter((e) => e !== existing && overlap(e, b));
     let status: HolidayStatus;
     let duplicateOf: number | null = null;
     if (errors.length > 0) {
@@ -669,12 +771,12 @@ export function reviewHolidays(
       status = 'exists';
     } else {
       const earlier = firstRow.find((f) => sameBreak(f.b, b));
-      if (input.use && earlier) {
+      if (input.use && !input.saved && earlier) {
         status = 'duplicate';
         duplicateOf = earlier.index;
       } else {
         status = 'new';
-        if (input.use) firstRow.push({ index: i, b });
+        if (input.use || input.saved) firstRow.push({ index: i, b });
       }
     }
     return {
@@ -683,10 +785,12 @@ export function reviewHolidays(
       status,
       existing,
       overlaps,
+      closesOpen: input.closed ? overlaps.filter((e) => !e.cancels_training) : [],
+      overlapsRows: [],
       duplicateOf,
       errors,
       write:
-        status === 'new' && input.use
+        status === 'new' && input.use && !input.saved
           ? {
               title: b.title,
               date_from: b.date_from,
@@ -694,9 +798,18 @@ export function reviewHolidays(
               cancels_training: input.closed === true
             }
           : null,
-      blocking: input.use && errors.length > 0
+      blocking: input.use && !input.saved && errors.length > 0
     };
   });
+  // The periods being added (or added already), each against the others
+  for (const row of rows) {
+    if (row.errors.length > 0) continue;
+    const b = asBreak(row.input);
+    row.overlapsRows = firstRow
+      .filter((f) => rows[f.index] !== row && !sameBreak(f.b, b) && overlap(f.b, b))
+      .map((f) => f.index);
+  }
+  return rows;
 }
 
 /** Leaves out every holiday period that is wanted but incomplete. */
@@ -767,6 +880,33 @@ export function buildPlanWrites(
   return out;
 }
 
+/** The review rows the session writes were built from, in the order of the writes */
+export function sessionRowsOf(rows: PlanReviewRow[], writes: PlanSessionWrite[]): number[] {
+  const byKey = new Map<string, number>();
+  rows.forEach((r, i) => {
+    const key = r.write ? sessionKey(r.write.training_id, r.write.date) : null;
+    if (key && !byKey.has(key)) byKey.set(key, i);
+  });
+  return writes.flatMap((w) => {
+    const i = byKey.get(sessionKey(w.training_id, w.date));
+    return i === undefined ? [] : [i];
+  });
+}
+
+/** The review rows the holiday writes were built from, in the order of the writes */
+export function holidayRowsOf(rows: HolidayReviewRow[], writes: PlanBreakWrite[]): number[] {
+  return writes.flatMap((w) => {
+    const i = rows.findIndex((r) => r.write !== null && sameBreak(r.write, w));
+    return i < 0 ? [] : [i];
+  });
+}
+
+/** Marks rows as saved: they are shown as such and never written again */
+export function markSaved<T extends { saved: boolean }>(inputs: T[], rows: number[]): T[] {
+  const saved = new Set(rows);
+  return inputs.map((input, i) => (saved.has(i) ? { ...input, saved: true } : input));
+}
+
 export interface PlanReviewSummary {
   /** Sessions to write */
   sessions: number;
@@ -799,7 +939,7 @@ export function summarizePlan(
     blocking:
       rows.filter((r) => r.blocking && r.errors.length > 0).length +
       holidays.filter((h) => h.blocking).length,
-    waiting: rows.filter((r) => !r.input.skip && !r.checked).length,
+    waiting: rows.filter((r) => !r.input.skip && !r.input.saved && !r.checked).length,
     byStatus,
     cancelled: rows.filter((r) => r.write?.cancelled).length
   };
@@ -840,6 +980,71 @@ export async function writeInPortions<T>(
       }
     }
     onProgress?.(saved.length + failed.length);
+  }
+  return { saved, failed };
+}
+
+/** First day and last day of the periods, null when there is none */
+function breakSpan(breaks: BreakPeriod[]): { from: string; to: string } | null {
+  if (breaks.length === 0) return null;
+  return {
+    from: breaks.map((b) => b.date_from).sort()[0],
+    to: breaks
+      .map((b) => b.date_to)
+      .sort()
+      .at(-1)!
+  };
+}
+
+/**
+ * Adds holidays without ever adding one twice. training_plan_breaks has no
+ * unique key, and an insert reported as failed may have been saved all the
+ * same (the answer got lost on the way), so it is never repeated blindly:
+ * after a failure the holidays recorded in the period are read again, the
+ * ones found there count as saved, and only the others are tried again,
+ * one by one. When the recorded holidays cannot be read, nothing is tried
+ * again. `checkFirst` reads them before the first insert too, for a new
+ * attempt after an apply with failures. Holidays are few (at most
+ * MAX_ROWS.holidays), so they go in one insert.
+ */
+export async function insertBreaks(
+  items: PlanBreakWrite[],
+  insert: (portion: PlanBreakWrite[]) => Promise<boolean>,
+  recorded: (span: { from: string; to: string }) => Promise<PlannedBreak[] | null>,
+  {
+    checkFirst = false,
+    onProgress
+  }: { checkFirst?: boolean; onProgress?: (done: number) => void } = {}
+): Promise<WriteOutcome<PlanBreakWrite>> {
+  const saved: PlanBreakWrite[] = [];
+  const failed: PlanBreakWrite[] = [];
+  const span = breakSpan(items);
+  if (!span) return { saved, failed };
+  const progress = () => onProgress?.(saved.length + failed.length);
+  const isRecorded = (w: PlanBreakWrite, known: PlannedBreak[]) =>
+    known.some((k) => sameBreak(k, w));
+
+  let todo = items;
+  if (checkFirst) {
+    const known = await recorded(span);
+    if (known === null) return { saved, failed: [...items] };
+    saved.push(...todo.filter((w) => isRecorded(w, known)));
+    todo = todo.filter((w) => !isRecorded(w, known));
+    progress();
+    if (todo.length === 0) return { saved, failed };
+  }
+  if (await insert(todo)) {
+    saved.push(...todo);
+    progress();
+    return { saved, failed };
+  }
+  const known = await recorded(span);
+  for (const w of todo) {
+    if (known !== null && isRecorded(w, known)) saved.push(w);
+    // A single insert has been tried already; without the recorded ones, none is retried
+    else if (known !== null && todo.length > 1 && (await insert([w]))) saved.push(w);
+    else failed.push(w);
+    progress();
   }
   return { saved, failed };
 }

@@ -3,13 +3,16 @@ import type { LessonPlan } from '$lib/models';
 import {
   CONTENT_MAX,
   buildLessonPlanWrite,
+  defaultMode,
   defaultTitle,
   initialInput,
   lessonPlanLines,
   lessonPlanTarget,
   normalizeContent,
   proposalToContent,
+  rebaseInput,
   reviewLessonPlan,
+  samePlan,
   sameTarget,
   toExistingPlan,
   type ExistingLessonPlan,
@@ -186,6 +189,16 @@ describe('target and saved plan', () => {
     expect(toExistingPlan(null)).toBeNull();
   });
 
+  it('tells whether the saved plan is still the one reviewed', () => {
+    expect(samePlan(textPlan, { ...textPlan })).toBe(true);
+    expect(samePlan(null, null)).toBe(true);
+    expect(samePlan(null, textPlan)).toBe(false);
+    expect(samePlan(textPlan, null)).toBe(false);
+    expect(samePlan(textPlan, { ...textPlan, updatedAt: '2026-11-02T18:01:00+00:00' })).toBe(false);
+    expect(samePlan(textPlan, { ...textPlan, filePath: filePlan.filePath })).toBe(false);
+    expect(samePlan(textPlan, filePlan)).toBe(false);
+  });
+
   it('picks the title per mode', () => {
     expect(defaultTitle('replace', proposal, textPlan)).toBe('Fallschule und O-soto-gari');
     expect(defaultTitle('replace', { title: '' }, textPlan)).toBe('Bodenarbeit');
@@ -213,14 +226,49 @@ describe('review', () => {
     });
   });
 
-  it('replaces a saved text plan by default and names the old title', () => {
+  it('extends a saved text plan by default and keeps its title', () => {
+    expect(defaultMode(textPlan)).toBe('append');
     const start = initialInput(proposal, textPlan);
-    expect(start.mode).toBe('replace');
+    expect(start).toMatchObject({ mode: 'append', title: 'Bodenarbeit' });
     const review = reviewLessonPlan(proposal, start, context(textPlan));
+    expect(review.mode).toBe('append');
+    expect(review.status).toBe('changed');
+    expect(review.content).toBe(`${normalizeContent(textPlan.content)}\n\n${CONTENT}`);
+    expect(review.previousTitle).toBeNull();
+    expect(review.ready).toBe(true);
+    // Also a saved plan with a title only: nothing of it is lost
+    expect(initialInput(proposal, { ...textPlan, content: '' }).mode).toBe('append');
+  });
+
+  it('replaces a saved text plan only when the user picks it, and names the old title', () => {
+    const picked = { ...initialInput(proposal, textPlan), mode: 'replace' as const };
+    const review = reviewLessonPlan(proposal, picked, context(textPlan));
+    expect(review.mode).toBe('replace');
     expect(review.status).toBe('changed');
     expect(review.content).toBe(CONTENT);
-    expect(review.previousTitle).toBe('Bodenarbeit');
     expect(review.ready).toBe(true);
+    const retitled = reviewLessonPlan(
+      proposal,
+      { ...picked, title: defaultTitle('replace', proposal, textPlan) },
+      context(textPlan)
+    );
+    expect(retitled.previousTitle).toBe('Bodenarbeit');
+  });
+
+  it('starts a new plan or a file plan in replace mode', () => {
+    expect(defaultMode(null)).toBe('replace');
+    expect(initialInput(proposal, null)).toMatchObject({
+      mode: 'replace',
+      title: 'Fallschule und O-soto-gari',
+      replaceFile: null
+    });
+    // A file cannot be extended; its own tick guards it
+    expect(defaultMode(filePlan)).toBe('replace');
+    const start = initialInput(proposal, filePlan);
+    expect(start.mode).toBe('replace');
+    expect(reviewLessonPlan(proposal, start, context(filePlan)).errors).toEqual([
+      'fileNotConfirmed'
+    ]);
   });
 
   it('appends below the saved text', () => {
@@ -333,6 +381,59 @@ describe('review', () => {
     );
     expect(review.title).toBe('Fallschule und Rollen');
     expect(review.content).toBe('- Rolle vorwärts');
+  });
+});
+
+describe('plan loaded again', () => {
+  it('keeps the input while the saved plan is the same', () => {
+    const picked = { ...initialInput(proposal, textPlan), mode: 'replace' as const };
+    expect(rebaseInput(picked, proposal, textPlan, { ...textPlan })).toBe(picked);
+  });
+
+  it('goes back to extending when another plan turned up', () => {
+    // Saved by someone else while the review was open
+    const start = initialInput(proposal, null);
+    const theirs = { ...textPlan, updatedAt: '2026-11-02T18:01:00+00:00' };
+    const rebased = rebaseInput(start, proposal, null, theirs);
+    expect(rebased).toMatchObject({ mode: 'append', title: 'Bodenarbeit', content: CONTENT });
+    expect(reviewLessonPlan(proposal, rebased, context(theirs)).content).toBe(
+      `${normalizeContent(theirs.content)}\n\n${CONTENT}`
+    );
+    // Replacing was picked for the plan as it was: changed meanwhile, it must be picked again
+    const picked = { ...initialInput(proposal, textPlan), mode: 'replace' as const };
+    expect(rebaseInput(picked, proposal, textPlan, theirs).mode).toBe('append');
+  });
+
+  it('keeps a title the user typed and the ticks', () => {
+    const typed = { ...initialInput(proposal, null), title: 'Fallschule', otherDate: true };
+    const rebased = rebaseInput(typed, proposal, null, textPlan);
+    expect(rebased).toMatchObject({ mode: 'append', title: 'Fallschule', otherDate: true });
+  });
+
+  it('shows a plan saved despite an error as already there', () => {
+    // The insert went through although the answer was lost: loaded again, nothing is left to do
+    const start = initialInput(proposal, null);
+    const mine: ExistingLessonPlan = {
+      ...textPlan,
+      title: 'Fallschule und O-soto-gari',
+      content: CONTENT
+    };
+    const rebased = rebaseInput(start, proposal, null, mine);
+    const review = reviewLessonPlan(proposal, rebased, context(mine));
+    expect(review.status).toBe('duplicate');
+    expect(review.ready).toBe(false);
+    // Replacing the same text again would not change anything either
+    expect(reviewLessonPlan(proposal, start, context(mine)).status).toBe('exists');
+  });
+
+  it('asks for the file tick when a file turned up', () => {
+    const start = initialInput(proposal, textPlan);
+    const rebased = rebaseInput(start, proposal, textPlan, filePlan);
+    expect(rebased.mode).toBe('replace');
+    expect(rebased.title).toBe('Fallschule und O-soto-gari');
+    expect(reviewLessonPlan(proposal, rebased, context(filePlan)).errors).toEqual([
+      'fileNotConfirmed'
+    ]);
   });
 });
 

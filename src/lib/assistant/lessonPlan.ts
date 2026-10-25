@@ -124,7 +124,11 @@ export function toExistingPlan(plan: LessonPlan | null): ExistingLessonPlan | nu
 
 // ----- Review -----
 
-/** Replace the saved plan, or keep its text and add the import below it */
+/**
+ * Replace the saved plan, or keep its text and add the import below it.
+ * A saved text plan is extended by default and only replaced when the user
+ * picks it; a saved file is only replaced after its own tick.
+ */
 export type LessonPlanMode = 'replace' | 'append';
 
 export interface LessonPlanInput {
@@ -149,17 +153,57 @@ export function defaultTitle(
     : proposal.title || existing?.title || '';
 }
 
+/**
+ * The mode the review starts with: a saved text plan is kept and the
+ * import added below it, so nothing written is lost by accident. With no
+ * plan there is nothing to keep; a file cannot be extended (its tick
+ * guards it instead).
+ */
+export function defaultMode(existing: ExistingLessonPlan | null): LessonPlanMode {
+  return existing && !existing.filePath ? 'append' : 'replace';
+}
+
 export function initialInput(
   proposal: LessonPlanProposal,
   existing: ExistingLessonPlan | null
 ): LessonPlanInput {
+  const mode = defaultMode(existing);
   return {
-    title: defaultTitle('replace', proposal, existing),
+    title: defaultTitle(mode, proposal, existing),
     content: proposalToContent(proposal),
-    mode: 'replace',
+    mode,
     replaceFile: null,
     otherDate: false
   };
+}
+
+/** The same saved plan, unchanged since it was loaded (or both none). */
+export function samePlan(a: ExistingLessonPlan | null, b: ExistingLessonPlan | null): boolean {
+  if (a === null || b === null) return a === b;
+  return a.id === b.id && a.updatedAt === b.updatedAt && a.filePath === b.filePath;
+}
+
+/**
+ * The input once the saved plan was loaded again and differs from the one
+ * the user decided on (saved meanwhile by someone else, or by a save that
+ * reported an error): the choice to replace was made for the other plan,
+ * so the mode goes back to the default, and a title the user did not
+ * change follows it. The text read and the ticks stay (the file tick
+ * names its file, so another file needs a new one anyway).
+ */
+export function rebaseInput(
+  input: LessonPlanInput,
+  proposal: Pick<LessonPlanProposal, 'title'>,
+  before: ExistingLessonPlan | null,
+  after: ExistingLessonPlan | null
+): LessonPlanInput {
+  if (samePlan(before, after)) return input;
+  const mode = defaultMode(after);
+  const title =
+    input.title === defaultTitle(input.mode, proposal, before)
+      ? defaultTitle(mode, proposal, after)
+      : input.title;
+  return { ...input, mode, title };
 }
 
 export type LessonPlanStatus = 'new' | 'changed' | 'exists' | 'duplicate' | 'invalid';
