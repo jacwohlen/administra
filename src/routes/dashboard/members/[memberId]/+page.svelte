@@ -56,11 +56,7 @@
   }
 
   async function updateSupabaseMember(file: File, timeStamp: Dayjs) {
-    const quality = 80;
-    const width = 128;
-    const height = 'auto';
-    const format = 'webp';
-    const blob = await fromBlob(file, quality, width, height, format);
+    const blob = await fromBlob(file, { quality: 80, width: 128, format: 'webp' });
     const url = await blobToDataUrl(blob);
 
     const { error } = await supabaseClient
@@ -87,12 +83,8 @@
   }
 
   async function uploadNewProfilePictureToStorage(timestamp: Dayjs, file: File) {
-    const quality = 80;
-    const width = 512;
-    const height = 'auto';
-    const format = 'webp';
     const newFileName = data.id + '_' + timestamp.valueOf() + '.webp';
-    const blob = await fromBlob(file, quality, width, height, format);
+    const blob = await fromBlob(file, { quality: 80, width: 512, format: 'webp' });
     const url = await blobToDataUrl(blob);
 
     const { error: uploadError } = await supabaseClient.storage
