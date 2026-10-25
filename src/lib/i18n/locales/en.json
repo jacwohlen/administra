@@ -1353,7 +1353,7 @@
       "grades": {
         "title": "Read a judo pass",
         "hint": "Take photos of the pages with the gradings (kyu and dan). Grades and dates are recognised; you check them before anything is saved.",
-        "description": "Take over kyu and dan gradings from a member's judo pass."
+        "description": "Import kyu and dan gradings from a member's judo pass."
       },
       "attendance": {
         "title": "Read an attendance list",
@@ -1363,7 +1363,7 @@
       "training_plan": {
         "title": "Read a training plan",
         "hint": "Photo, PDF or table of the plan: date, training, leader, topic, cancellations and holidays. Large plans are best done month by month.",
-        "description": "Take over leaders, topics, cancellations and holidays from an existing plan."
+        "description": "Import leaders, topics, cancellations and holidays from an existing plan."
       },
       "lesson_plan": {
         "title": "Read a lesson plan",
@@ -1371,9 +1371,9 @@
         "description": "Create a lesson plan (warm-up, main part, cool-down) for a training and date."
       },
       "events": {
-        "title": "Read dates",
-        "hint": "Photo, PDF or text with dates: competitions, courses, camps, club events.",
-        "description": "Take over competitions, courses and club events from a list or an invitation."
+        "title": "Read events",
+        "hint": "Photo, PDF or text with club events: competitions, courses, camps, gatherings.",
+        "description": "Import competitions, courses and club events from a list or an invitation."
       }
     },
     "errors": {
@@ -1382,6 +1382,7 @@
       "forbidden": "You are not allowed to do this.",
       "quota": "The daily limit of readings is reached. Try again tomorrow.",
       "too_large": "The files are too large. At most 3.5 MB together.",
+      "too_many_pages": "The PDF is too long. Please upload only the pages needed, about 30 pages or fewer.",
       "too_many_files": "At most 4 photos or PDFs per reading.",
       "invalid_request": "The request was incomplete. Please check the files and try again.",
       "not_found": "The related data was not found, e.g. no training in the plan.",
@@ -1393,8 +1394,9 @@
       "failed": "Reading failed. Please try again.",
       "network": "No connection. Please check your internet connection.",
       "heic": "HEIC photos are not supported. Please save as JPEG or use “Take photo”.",
-      "unsupported_file": "This file type is not supported. Possible are photos (JPEG, PNG, WebP), PDF and text or CSV files.",
-      "unreadable": "The file could not be read."
+      "unsupported_file": "This file type is not supported. Supported are photos (JPEG, PNG, WebP), PDF, and text or CSV files.",
+      "unreadable": "The file could not be read.",
+      "text_too_long": "The text is too long (at most 30,000 characters). Please split it into smaller parts, e.g. one month."
     },
     "review": {
       "apply": "{count, plural, one {Apply # entry} other {Apply # entries}}",
@@ -1621,9 +1623,9 @@
       "changedMeanwhile": "The lesson plan was changed in the meantime or could not be saved. The current version has been reloaded; check it and apply again."
     },
     "events": {
-      "intro": "{count, plural, one {# date read} other {# dates read}}. Ticked dates are created as new events; existing events stay as they are.",
-      "defaultSection": "Section for dates without one",
-      "defaultSectionNone": "None – choose per date",
+      "intro": "{count, plural, one {# event read} other {# events read}}. Ticked events are created as new events; existing events stay as they are.",
+      "defaultSection": "Section for events without one",
+      "defaultSectionNone": "None – choose per event",
       "useDefault": "Default: {section}",
       "multiDay": "Several days",
       "multiDayInfo": "Events have no end date: an event over several days is created on its first day, with \"until …\" on the first line of its description.",
@@ -1635,9 +1637,9 @@
       "duplicateOf": "A similar event is already recorded: \"{title}\" on {date}",
       "duplicateOfRow": "Same date as no. {row}",
       "fromWebling": "Comes from Webling and is synced automatically. Only create it if it is a different event.",
-      "empty": "No dates were found in the document.",
+      "empty": "No events were found in the document.",
       "progress": "{done} of {total} saved …",
-      "blocked": "{count, plural, one {# date is incomplete: fix it or untick it.} other {# dates are incomplete: fix or untick them.}}",
+      "blocked": "{count, plural, one {# event is incomplete: fix it or untick it.} other {# events are incomplete: fix or untick them.}}",
       "issues": {
         "noTitle": "Title missing.",
         "noDate": "Date missing.",
@@ -1651,6 +1653,7 @@
         "past": "This date is in the past.",
         "farFuture": "More than two years ahead: check the year."
       }
-    }
+    },
+    "textLength": "{count} of {max} characters"
   }
 }

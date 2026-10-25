@@ -24,19 +24,32 @@ export class AssistantRequestError extends Error {
 let status: Promise<AssistantStatus> | null = null;
 const OFF: AssistantStatus = { configured: false, remaining: null };
 
+function fetchStatus(fetchFn: typeof fetch): Promise<AssistantStatus> {
+  return fetchFn('/api/assistant', { headers: { accept: 'application/json' } })
+    .then(async (res) => (res.ok ? ((await res.json()) as AssistantStatus) : OFF))
+    .catch(() => OFF);
+}
+
 /**
- * Whether the assistant is set up on this deployment, fetched once per app
- * session; a failed check is not cached.
+ * Whether the assistant is set up on this deployment, for showing its
+ * buttons: fetched once per app session, a failed check is not cached.
+ * Its `remaining` may be stale; the dialog asks refreshAssistantStatus.
  */
 export function loadAssistantStatus(fetchFn: typeof fetch = fetch): Promise<AssistantStatus> {
-  status ??= fetchFn('/api/assistant', { headers: { accept: 'application/json' } })
-    .then(async (res) => (res.ok ? ((await res.json()) as AssistantStatus) : OFF))
-    .catch(() => OFF)
-    .then((result) => {
-      if (!result.configured) status = null;
-      return result;
-    });
+  status ??= fetchStatus(fetchFn).then((result) => {
+    if (!result.configured) status = null;
+    return result;
+  });
   return status;
+}
+
+/** The current status, with the extractions left right now (the limit is a rolling 24 h). */
+export async function refreshAssistantStatus(
+  fetchFn: typeof fetch = fetch
+): Promise<AssistantStatus> {
+  const result = await fetchStatus(fetchFn);
+  status = result.configured ? Promise.resolve(result) : null;
+  return result;
 }
 
 /** Code for a failed response; Netlify answers a killed function with a bare 502/504. */

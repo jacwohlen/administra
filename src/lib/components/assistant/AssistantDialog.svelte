@@ -1,6 +1,6 @@
 <script lang="ts" generics="K extends AssistantKind">
   import type { Snippet } from 'svelte';
-  import { onDestroy } from 'svelte';
+  import { onDestroy, tick } from 'svelte';
   import { _, locale } from 'svelte-i18n';
   import Fa from 'svelte-fa';
   import {
@@ -15,7 +15,7 @@
   import { modalDialog } from '$lib/modalDialog';
   import {
     AssistantRequestError,
-    loadAssistantStatus,
+    refreshAssistantStatus,
     requestProposal,
     type ClientErrorCode
   } from '$lib/assistant/client';
@@ -71,16 +71,35 @@
 
   let fileInput = $state<HTMLInputElement>();
   let cameraInput = $state<HTMLInputElement>();
+  let dialogEl = $state<HTMLElement>();
+  let analyzeButton = $state<HTMLButtonElement>();
+  let cancelButton = $state<HTMLButtonElement>();
+  let errorBox = $state<HTMLElement>();
 
-  loadAssistantStatus().then((s) => (remaining = s.remaining));
+  // Fresh on every opening: the limit is a rolling 24 hours
+  refreshAssistantStatus().then((s) => (remaining = s.remaining));
 
   const pastedText = $derived(
     [text, ...uploads.map((u) => u.text ?? '')].filter((t) => t.trim()).join('\n\n')
   );
+  // Never cut: a partial text would give a partial proposal that looks complete
+  const textTooLong = $derived(pastedText.length > ASSISTANT_LIMITS.maxTextLength);
   const fileCount = $derived(uploads.filter((u) => u.file).length);
   const canAnalyze = $derived(
-    preparing === 0 && (fileCount > 0 || pastedText.trim().length > 0) && remaining !== 0
+    preparing === 0 &&
+      !textTooLong &&
+      (fileCount > 0 || pastedText.trim().length > 0) &&
+      remaining !== 0
   );
+  const shownError = $derived(textTooLong ? 'text_too_long' : error);
+
+  /** Keeps keyboard focus inside the dialog when a step replaces the focused control. */
+  async function focusStep() {
+    await tick();
+    if (step === 'working') cancelButton?.focus();
+    else if (step === 'review') dialogEl?.focus();
+    else (errorBox ?? analyzeButton)?.focus();
+  }
 
   async function addFiles(list: FileList | null) {
     if (!list) return;
@@ -123,6 +142,7 @@
     if (!canAnalyze) return;
     error = null;
     step = 'working';
+    focusStep();
     seconds = 0;
     timer = setInterval(() => seconds++, 1000);
     controller = new AbortController();
@@ -131,7 +151,7 @@
         {
           kind,
           files: uploads.flatMap((u) => (u.file ? [u.file] : [])),
-          text: pastedText.slice(0, ASSISTANT_LIMITS.maxTextLength),
+          text: pastedText,
           hint: hint.trim(),
           locale: $locale?.startsWith('de') ? 'de' : 'en',
           context
@@ -142,15 +162,17 @@
       remaining = response.remaining;
       step = 'review';
     } catch (err) {
-      if (controller?.signal.aborted) {
-        step = 'input';
-      } else {
+      if (!controller?.signal.aborted) {
         error = err instanceof AssistantRequestError ? err.code : 'failed';
-        step = 'input';
       }
+      step = 'input';
+      // A failed extraction still counts against the limit
+      if (error === 'quota') remaining = 0;
+      else refreshAssistantStatus().then((s) => (remaining = s.remaining));
     } finally {
       stopTimer();
       controller = null;
+      focusStep();
     }
   }
 
@@ -161,6 +183,7 @@
   function back() {
     proposal = null;
     step = 'input';
+    focusStep();
   }
 
   function close() {
@@ -187,6 +210,7 @@
 >
   <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
   <div
+    bind:this={dialogEl}
     use:modalDialog
     class="card modal-dialog modal-dialog-xl max-h-[90vh] overflow-y-auto space-y-4"
     onclick={(e) => e.stopPropagation()}
@@ -262,10 +286,17 @@
         <textarea
           class="textarea text-sm"
           rows="4"
-          maxlength={ASSISTANT_LIMITS.maxTextLength}
           placeholder={$_('assistant.pasteTextPlaceholder')}
+          aria-invalid={textTooLong}
           bind:value={text}
         ></textarea>
+        {#if pastedText.length > ASSISTANT_LIMITS.maxTextLength * 0.8}
+          <span class="block text-xs {textTooLong ? 'text-error-600-400' : 'text-surface-600-400'}">
+            {$_('assistant.textLength', {
+              values: { count: pastedText.length, max: ASSISTANT_LIMITS.maxTextLength }
+            })}
+          </span>
+        {/if}
       </label>
 
       <label class="label">
@@ -284,10 +315,15 @@
         <span>{$_('assistant.privacy')}</span>
       </p>
 
-      {#if error}
-        <div class="flex items-start gap-2 p-3 rounded-lg preset-tonal-error text-sm" role="alert">
+      {#if shownError}
+        <div
+          bind:this={errorBox}
+          class="flex items-start gap-2 p-3 rounded-lg preset-tonal-error text-sm"
+          role="alert"
+          tabindex="-1"
+        >
           <Fa icon={faTriangleExclamation} class="mt-0.5 flex-none" />
-          <span>{$_(`assistant.errors.${error}`)}</span>
+          <span>{$_(`assistant.errors.${shownError}`)}</span>
         </div>
       {/if}
 
@@ -301,6 +337,7 @@
           {$_('button.cancel')}
         </button>
         <button
+          bind:this={analyzeButton}
           type="button"
           class="btn preset-filled-primary-500"
           disabled={!canAnalyze}
@@ -311,13 +348,18 @@
         </button>
       </footer>
     {:else if step === 'working'}
-      <div class="flex flex-col items-center gap-3 py-8 text-center" aria-live="polite">
+      <div class="flex flex-col items-center gap-3 py-8 text-center">
         <Fa icon={faSpinner} spin size="2x" class="text-primary-500" />
-        <p>{$_('assistant.working')}</p>
-        <p class="text-sm text-surface-600-400">
+        <p aria-live="polite">{$_('assistant.working')}</p>
+        <p class="text-sm text-surface-600-400" aria-hidden="true">
           {$_('assistant.workingSeconds', { values: { seconds } })}
         </p>
-        <button type="button" class="btn preset-tonal-surface" onclick={cancel}>
+        <button
+          bind:this={cancelButton}
+          type="button"
+          class="btn preset-tonal-surface"
+          onclick={cancel}
+        >
           {$_('button.cancel')}
         </button>
       </div>

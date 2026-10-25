@@ -2,6 +2,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import type { LadderGrade, SanitizeContext } from '$lib/assistant/proposals';
 import type { AssistantRequest } from '$lib/assistant/types';
 import { loadMailSettings } from '$lib/server/trialMailContext';
+import { tagSafe } from './prompts';
 import { AssistantError } from './request';
 
 /**
@@ -51,9 +52,11 @@ interface TrainingRow {
 
 const TRAINING_COLUMNS = 'id, title, weekday, dateFrom, dateTo, section';
 
+/** One line about a training; database values, so escaped for the prompt */
 function describeTraining(t: TrainingRow): string {
   const time = [t.dateFrom, t.dateTo].filter(Boolean).join('–');
-  return [t.weekday, time, t.title, t.section ? `(${t.section})` : ''].filter(Boolean).join(' ');
+  const line = [t.weekday, time, t.title, t.section ? `(${t.section})` : ''].filter(Boolean);
+  return tagSafe(line.join(' '));
 }
 
 async function loadTraining(supabase: SupabaseClient, id: number): Promise<TrainingRow> {
@@ -99,9 +102,9 @@ export async function loadPromptContext(
           .filter((r) => r.section === section)
           .map((r) => {
             const belt = [color(r.beltColor), color(r.beltColor2)].filter(Boolean).join('-');
-            return belt ? `${r.grade} (${belt})` : r.grade;
+            return tagSafe(belt ? `${r.grade} (${belt})` : r.grade);
           });
-        return `${section}: ${grades.join(', ')}`;
+        return `${tagSafe(section)}: ${grades.join(', ')}`;
       });
       const ladder: LadderGrade[] = rows.map((r) => ({ section: r.section, grade: r.grade }));
       return {
@@ -151,7 +154,7 @@ export async function loadPromptContext(
 
     case 'events': {
       const { club } = await loadMailSettings(supabase);
-      return { text: `Club sections: ${club.sections.join(', ')}`, sanitize: {} };
+      return { text: `Club sections: ${tagSafe(club.sections.join(', '))}`, sanitize: {} };
     }
   }
 }

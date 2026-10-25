@@ -21,7 +21,6 @@
   import dayjs from 'dayjs';
   import { onMount } from 'svelte';
   import { goto, invalidateAll, preloadData } from '$app/navigation';
-  import { page } from '$app/state';
   import AddParticipantInputBox from './AddParticipantInputBox.svelte';
   import { supabaseClient } from '$lib/supabase';
   import { toaster } from '$lib/toast';
@@ -33,13 +32,13 @@
   import AssistantButton from '$lib/components/assistant/AssistantButton.svelte';
   import AssistantDialog from '$lib/components/assistant/AssistantDialog.svelte';
   import AttendanceReview from '$lib/components/assistant/AttendanceReview.svelte';
-  import { takeAssistantRequest } from '$lib/assistant/autoOpen';
+  import { isAssistantRequested, takeAssistantRequest } from '$lib/assistant/autoOpen';
 
   let { data }: { data: PageData } = $props();
   let searchterm = $state('');
   let animateList = $state(true);
   // Daten-Assistent: a lesson plan to read opens on its tab (LessonPlan takes the request)
-  let showLessonPlan = $state(page.url.searchParams.get('assistant') === 'lesson_plan');
+  let showLessonPlan = $state(isAssistantRequested('lesson_plan'));
   let showAssistant = $state(false);
   let celebrationBadges: Badge[] = $state([]);
   let celebrationMemberName = $state('');

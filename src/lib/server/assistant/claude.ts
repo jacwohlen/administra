@@ -90,6 +90,30 @@ export async function createMessage(
   }
 }
 
+/**
+ * Input tokens of a request, counted by the API before anything is billed.
+ * Used for PDFs, whose page count the server cannot see.
+ */
+export async function countInputTokens(
+  params: MessageCreateParamsNonStreaming,
+  signal?: AbortSignal
+): Promise<number> {
+  try {
+    const { input_tokens } = await getClient().beta.messages.countTokens(
+      {
+        model: params.model,
+        system: params.system,
+        messages: params.messages,
+        output_config: params.output_config
+      },
+      { signal }
+    );
+    return input_tokens;
+  } catch (err) {
+    throw apiError(err);
+  }
+}
+
 export interface Extraction {
   /** The parsed JSON, still unchecked */
   raw: unknown;

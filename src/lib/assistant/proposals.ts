@@ -88,10 +88,17 @@ function stripInvisible(value: string, keepNewlines: boolean): string {
   return out;
 }
 
+/** Drops leading = + - @ (also repeated, also after spaces): a spreadsheet runs them as a formula. */
+function stripFormula(text: string): string {
+  let out = text;
+  while (/^[=+\-@]/.test(out)) out = out.replace(/^[=+\-@\s]+/, '');
+  return out;
+}
+
 /**
  * A plain string: invisible characters removed, whitespace collapsed,
- * capped at `max`. A leading = + or @ is dropped, since such a value would
- * run as a formula in a spreadsheet export.
+ * capped at `max`. A leading = + - or @ is dropped, since such a value
+ * would run as a formula in a spreadsheet export.
  */
 export function cleanText(value: unknown, max: number, multiline = false): string {
   if (typeof value !== 'string') return '';
@@ -104,8 +111,8 @@ export function cleanText(value: unknown, max: number, multiline = false): strin
         .replace(/\n{3,}/g, '\n\n')
         .trim()
     : text.replace(/\s+/g, ' ').trim();
-  text = text.replace(/^[=+@]+/, '').trim();
-  return text.length > max ? text.slice(0, max).trim() : text;
+  text = stripFormula(text);
+  return stripFormula(text.length > max ? text.slice(0, max).trim() : text);
 }
 
 /** A name: plain text without markup characters. */
@@ -196,8 +203,12 @@ export interface LadderGrade {
 export function sanitizeGrades(raw: unknown, ladder: LadderGrade[]): GradesProposal {
   const r = obj(raw);
   const sections = [...new Set(ladder.map((g) => g.section))];
+  // "Judo" or "Judo (SJV)": a section named as a word, if only one is
   const sectionText = cleanText(r.section, MAX_LENGTH.short).toLowerCase();
-  const section = sections.find((s) => s.toLowerCase() === sectionText) ?? '';
+  const sectionWords = sectionText.split(/[^\p{L}]+/u);
+  const named = sections.filter((s) => sectionWords.includes(s.toLowerCase()));
+  const section =
+    sections.find((s) => s.toLowerCase() === sectionText) ?? (named.length === 1 ? named[0] : '');
   const known = (grade: string) =>
     ladder.some((g) => g.grade === grade && (!section || g.section === section));
   const holder = obj(r.holder);
@@ -272,11 +283,12 @@ export function sanitizeTrainingPlan(
         remark: cleanText(s.remark, MAX_LENGTH.remark)
       };
     })
-    .filter((s) => s.date);
+    // Kept without a date too: the review asks for it instead of losing the row
+    .filter((s) => s.date || s.trainingAsWritten || s.trainer || s.topic || s.notes || s.cancelled);
   const holidays: HolidayEntry[] = list(r.holidays, MAX_ROWS.holidays)
     .map((value) => {
       const h = obj(value);
-      const from = cleanDate(h.dateFrom);
+      const from = cleanDate(h.dateFrom) || cleanDate(h.dateTo);
       const to = cleanDate(h.dateTo) || from;
       return {
         title: cleanText(h.title, MAX_LENGTH.heading),

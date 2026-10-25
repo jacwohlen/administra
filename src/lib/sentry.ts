@@ -20,6 +20,12 @@ export function sentryOptions(dsn: string | undefined, deployContext: string | u
     dataCollection: {
       userInfo: false,
       cookies: false,
+      // Only harmless request headers: Netlify adds the client IP and its
+      // location (x-nf-client-connection-ip, x-nf-geo) under its own names
+      httpHeaders: {
+        request: { allow: ['user-agent', 'accept', 'accept-language', 'content-type', 'referer'] },
+        response: false
+      },
       httpBodies: [],
       genAI: { inputs: false, outputs: false },
       databaseQueryData: false,

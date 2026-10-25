@@ -5,24 +5,34 @@ import type { AssistantKind } from './types';
 /**
  * The Daten-Assistent page (/dashboard/assistant) sends the user to the
  * page where a kind is reviewed and saved, with `?assistant=<kind>`. That
- * page calls this in onMount: true when the dialog should open right away.
- * The parameter is removed again, so a reload or the back button does not
- * reopen it.
+ * page calls takeAssistantRequest in onMount: true when the dialog should
+ * open right away.
+ *
+ * The request is answered once per history entry. The parameter is removed
+ * from the address bar, and the entry is marked as answered in its shallow
+ * state (`page.state.assistantTaken`): SvelteKit keeps the original URL of
+ * an entry and restores it on Back, and `page.url` keeps the parameter
+ * until the next navigation, so the parameter alone would reopen the
+ * dialog on Back or when a component mounts again.
  */
+export function isAssistantRequested(kind: AssistantKind): boolean {
+  return page.url.searchParams.get('assistant') === kind && page.state.assistantTaken !== kind;
+}
+
 export function takeAssistantRequest(kind: AssistantKind): boolean {
-  if (page.url.searchParams.get('assistant') !== kind) return false;
+  if (!isAssistantRequested(kind)) return false;
   const url = new URL(page.url);
   url.searchParams.delete('assistant');
+  const mark = () => replaceState(url, { ...page.state, assistantTaken: kind });
   try {
-    replaceState(url, page.state);
+    mark();
   } catch {
-    // On a full page load onMount can run before the router has started;
-    // remove the parameter once it has, or leave it if that fails too.
+    // On a full page load onMount can run before the router has started
     setTimeout(() => {
       try {
-        replaceState(url, page.state);
+        mark();
       } catch {
-        // Only cosmetic: a reload would open the dialog again
+        // Only cosmetic: the dialog could open once more
       }
     });
   }

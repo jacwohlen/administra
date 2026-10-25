@@ -21,5 +21,8 @@ describe('sentryOptions', () => {
       genAI: { inputs: false, outputs: false },
       stackFrameVariables: false
     });
+    const headers = dataCollection.httpHeaders.request as { allow: string[] };
+    expect(headers.allow).not.toContain('x-nf-client-connection-ip');
+    expect(headers.allow).not.toContain('x-forwarded-for');
   });
 });

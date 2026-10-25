@@ -207,6 +207,7 @@ export const ASSISTANT_ERROR_CODES = [
   'forbidden',
   'quota',
   'too_large',
+  'too_many_pages',
   'invalid_request',
   'not_found',
   'refused',
@@ -231,5 +232,10 @@ export const ASSISTANT_LIMITS = {
   imageMaxEdge: 2000,
   maxRequestBytes: 5_000_000,
   maxTextLength: 30_000,
-  maxHintLength: 500
+  maxHintLength: 500,
+  /**
+   * Input tokens a request with a PDF may have (each page costs text and
+   * image tokens): about 30 to 60 pages, a few cents to 40 cents
+   */
+  maxInputTokens: 100_000
 } as const;

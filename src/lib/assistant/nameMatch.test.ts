@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { bestMatch, normalizeName, rankMembers, scoreName } from './nameMatch';
+import { bestMatch, normalizeName, rankMembers, sameName, scoreName } from './nameMatch';
 
 const members = [
   { id: 1, firstname: 'Lena', lastname: 'Müller' },
@@ -16,6 +16,23 @@ describe('normalizeName', () => {
     expect(normalizeName('Müller')).toBe(normalizeName('MUELLER'));
     expect(normalizeName('José García')).toBe('jose garcia');
     expect(normalizeName('Strasse')).toBe(normalizeName('Straße'));
+  });
+});
+
+describe('sameName', () => {
+  it('needs the exact last and first name', () => {
+    expect(sameName('Muster Jana', { id: 1, firstname: 'Jana', lastname: 'Muster' })).toBe(true);
+    expect(
+      sameName('Mueller Anna-Lena', { id: 1, firstname: 'Anna-Lena', lastname: 'Müller' })
+    ).toBe(true);
+    for (const [written, firstname] of [
+      ['Jan Muster', 'Jana'],
+      ['Marco Muster', 'Marcel'],
+      ['Daniel Muster', 'Daniela'],
+      ['Muster', 'Muster']
+    ]) {
+      expect(sameName(written, { id: 1, firstname, lastname: 'Muster' }), written).toBe(false);
+    }
   });
 });
 
@@ -39,12 +56,49 @@ describe('scoreName', () => {
 describe('bestMatch', () => {
   it('takes a clear match', () => {
     expect(bestMatch('Keller Benjamin', members).member?.id).toBe(3);
-    expect(bestMatch('Beni Keller', members).member?.id).toBe(3);
     expect(bestMatch('Jose Garcia', members).member?.id).toBe(5);
   });
 
-  it('accepts a typo', () => {
-    expect(bestMatch('Kelller Benjamin', members).member?.id).toBe(3);
+  it('takes a short form of the first name only for preferred members', () => {
+    const open = bestMatch('Beni Keller', members);
+    expect(open.member).toBeNull();
+    expect(open.candidates[0].member.id).toBe(3);
+    expect(bestMatch('Beni Keller', members, { preferred: new Set([3]) }).member?.id).toBe(3);
+  });
+
+  it('suggests, but never takes, a last name with a typo', () => {
+    const result = bestMatch('Kelller Benjamin', members);
+    expect(result.member).toBeNull();
+    expect(result.candidates[0].member.id).toBe(3);
+  });
+
+  it('never takes another family name that merely looks alike', () => {
+    const club = [
+      { id: 1, firstname: 'Lena', lastname: 'Hugentobler' },
+      { id: 2, firstname: 'Peter', lastname: 'Meierhans' },
+      { id: 3, firstname: 'Lena', lastname: 'Meier' },
+      { id: 4, firstname: 'Marco', lastname: 'Schmid' },
+      { id: 5, firstname: 'Janine', lastname: 'Müller' }
+    ];
+    for (const written of [
+      'Lena Hug',
+      'Peter Meier',
+      'Lena Maier',
+      'Marco Schmidt',
+      'Jan Müller'
+    ]) {
+      expect(bestMatch(written, club).member, written).toBeNull();
+    }
+  });
+
+  it('prefers the roster between members with the same name', () => {
+    const twins = [
+      { id: 5, firstname: 'Hans', lastname: 'Muster' },
+      { id: 9, firstname: 'Hans', lastname: 'Muster' }
+    ];
+    const result = bestMatch('Muster Hans', twins, { preferred: new Set([9]) });
+    expect(result.member).toBeNull();
+    expect(result.candidates[0].member.id).toBe(9);
   });
 
   it('leaves an initial shared by two members to the user', () => {

@@ -7,6 +7,7 @@ vi.mock('$lib/server/trialMailContext', () => ({
 }));
 
 const create = vi.fn();
+const countTokens = vi.fn();
 vi.mock('@anthropic-ai/sdk', async (original) => {
   const actual = await original<typeof import('@anthropic-ai/sdk')>();
   class FakeAnthropic {
@@ -18,7 +19,7 @@ vi.mock('@anthropic-ai/sdk', async (original) => {
     static PermissionDeniedError = actual.default.PermissionDeniedError;
     static RateLimitError = actual.default.RateLimitError;
     static InternalServerError = actual.default.InternalServerError;
-    beta = { messages: { create } };
+    beta = { messages: { create, countTokens } };
   }
   return { default: FakeAnthropic };
 });
@@ -57,6 +58,7 @@ const okRpc: Rpc = async (fn) =>
 
 beforeEach(() => {
   create.mockReset();
+  countTokens.mockReset();
   env.PRIVATE_ANTHROPIC_API_KEY = 'sk-test';
   vi.spyOn(console, 'error').mockImplementation(() => {});
 });
@@ -130,6 +132,32 @@ describe('POST /api/assistant', () => {
     const params = create.mock.calls[0][0];
     expect(params.tools).toBeUndefined();
     expect(params.model).toBe('claude-opus-5-5');
+  });
+
+  it('refuses a PDF that is too long before the extraction is billed', async () => {
+    countTokens.mockResolvedValue({ input_tokens: 400_000 });
+    const pdf = Buffer.from('%PDF-1.7 a long rulebook').toString('base64');
+    const l = locals(okRpc);
+    const result = await post(
+      { kind: 'events', files: [{ name: 'x.pdf', mediaType: 'application/pdf', data: pdf }] },
+      l
+    );
+    expect(result).toEqual({ status: 413, body: { code: 'too_many_pages' } });
+    expect(create).not.toHaveBeenCalled();
+    expect(l.supabase.rpc).toHaveBeenCalledWith(
+      'ai_import_finish',
+      expect.objectContaining({ p_status: 'failed' })
+    );
+  });
+
+  it('counts tokens only for PDFs', async () => {
+    create.mockResolvedValue({
+      stop_reason: 'end_turn',
+      content: [{ type: 'text', text: '{"events":[],"warnings":[]}' }],
+      usage: { input_tokens: 1, output_tokens: 1 }
+    });
+    await post(body, locals(okRpc));
+    expect(countTokens).not.toHaveBeenCalled();
   });
 
   it('logs a refusal and answers with its code', async () => {

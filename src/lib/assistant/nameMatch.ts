@@ -61,24 +61,30 @@ function levenshtein(a: string, b: string): number {
 
 /**
  * How well one written word fits one name word, 0–1. First names also
- * match by their first three letters, like matchLeader in
- * $lib/trainingPlanImport ("Beni" for Benjamin, "Roli" for Roland).
+ * match by a short form ("Chris" for Christian) and by their first three
+ * letters, like matchLeader in $lib/trainingPlanImport ("Beni" for
+ * Benjamin). A last name that is only similar (a prefix, one letter off)
+ * scores at most LAST_NAME_SIMILAR: Meier is not Meierhans or Maier, and
+ * such a candidate must always be confirmed.
  */
 function wordScore(written: string, name: string, firstName: boolean): number {
   const w = written.replace(/\.$/, '');
   if (!w) return 0;
   if (w === name) return 1;
   // An initial: "L." or "L"
-  if (w.length === 1) return name.startsWith(w) ? 0.85 : 0;
-  // A short form: "Chris" for Christian
-  if (w.length >= 3 && name.startsWith(w)) return 0.88;
+  if (w.length === 1) return firstName && name.startsWith(w) ? 0.85 : 0;
+  const cap = firstName ? 1 : LAST_NAME_SIMILAR;
+  if (w.length >= 3 && name.startsWith(w)) return Math.min(0.88, cap);
   if (firstName && w.length >= 3 && name.startsWith(w.slice(0, 3))) return 0.8;
   if (w.length < 4 || name.length < 4) return 0;
   // Typos and OCR noise: at most one wrong letter per four
   const distance = levenshtein(w, name);
   const similarity = 1 - distance / Math.max(w.length, name.length);
-  return similarity >= 0.75 ? similarity * 0.95 : 0;
+  return similarity >= 0.75 ? Math.min(similarity * 0.95, cap) : 0;
 }
+
+/** Best score of a similar, not identical last name */
+const LAST_NAME_SIMILAR = 0.7;
 
 function best(written: string, names: string[], firstName = false): number {
   return names.reduce((top, name) => Math.max(top, wordScore(written, name, firstName)), 0);
@@ -112,6 +118,26 @@ export function scoreName(written: string, member: MatchableMember): number {
   return Math.round(score * 1000) / 1000;
 }
 
+/**
+ * Whether the written name contains the member's last name and first name
+ * exactly (after folding case, accents and umlauts), as two different
+ * words. A double name counts by its parts too. This is the identity check
+ * of the Judo pass and the condition for taking a member without asking.
+ */
+export function sameName(written: string, member: MatchableMember): boolean {
+  const query = words(written);
+  const last = new Set(words(member.lastname));
+  const first = new Set(words(member.firstname));
+  return query.some((l, i) => last.has(l) && query.some((f, j) => j !== i && first.has(f)));
+}
+
+/** The last name written exactly, next to another word; the score decides whether that fits the first name */
+function sameLastName(written: string, member: MatchableMember): boolean {
+  const query = words(written);
+  const last = new Set(words(member.lastname));
+  return query.length >= 2 && query.some((w) => last.has(w));
+}
+
 export interface RankOptions {
   /** Members expected on the list (e.g. the training's roster), preferred on ties */
   preferred?: ReadonlySet<number>;
@@ -120,29 +146,31 @@ export interface RankOptions {
   minScore?: number;
 }
 
-/** Members that could be meant, best first. */
+/** Members that could be meant, best first; on equal scores the preferred ones. */
 export function rankMembers<M extends MatchableMember>(
   written: string,
   members: readonly M[],
   { preferred, limit = 5, minScore = 0.45 }: RankOptions = {}
 ): MemberMatch<M>[] {
+  const isPreferred = (m: M) => (preferred?.has(m.id) ? 1 : 0);
   return members
     .map((member) => {
       const score = scoreName(written, member);
-      const bonus = score > 0 && preferred?.has(member.id) ? 0.05 : 0;
+      const bonus = score > 0 && isPreferred(member) ? 0.05 : 0;
       return { member, score: Math.min(1, score + bonus) };
     })
     .filter((m) => m.score >= minScore)
     .sort(
       (a, b) =>
         b.score - a.score ||
+        isPreferred(b.member) - isPreferred(a.member) ||
         a.member.lastname.localeCompare(b.member.lastname) ||
         a.member.firstname.localeCompare(b.member.firstname)
     )
     .slice(0, limit);
 }
 
-/** Score from which a member is taken without asking */
+/** Score from which a member can be taken without asking */
 export const AUTO_MATCH_SCORE = 0.85;
 /** Score from which the best candidate is preselected, marked for the user to confirm */
 export const SUGGEST_SCORE = 0.55;
@@ -155,7 +183,14 @@ export interface BestMatch<M extends MatchableMember> {
   candidates: MemberMatch<M>[];
 }
 
-/** The member a name clearly stands for, plus the candidates to choose from. */
+/**
+ * The member a name clearly stands for, plus the candidates to choose from.
+ * Taken without asking only when the score leads clearly and the name is
+ * the member's own: last and first name exactly as recorded, or — for a
+ * preferred member such as one on the roster — the exact last name with an
+ * initial or short form of the first name ("L. Müller", "Beni Keller").
+ * A guest "Jan Müller" is never booked on Janine Müller unasked.
+ */
 export function bestMatch<M extends MatchableMember>(
   written: string,
   members: readonly M[],
@@ -166,6 +201,8 @@ export function bestMatch<M extends MatchableMember>(
   const clear =
     top &&
     top.score >= AUTO_MATCH_SCORE &&
-    (!second || top.score - second.score >= AUTO_MATCH_MARGIN);
+    (!second || top.score - second.score >= AUTO_MATCH_MARGIN) &&
+    (sameName(written, top.member) ||
+      (options.preferred?.has(top.member.id) === true && sameLastName(written, top.member)));
   return { member: clear ? top.member : null, candidates };
 }

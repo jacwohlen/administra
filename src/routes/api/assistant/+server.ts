@@ -4,6 +4,7 @@ import { clubToday, sanitizeProposal } from '$lib/assistant/proposals';
 import { ASSISTANT_LIMITS, type AssistantErrorCode } from '$lib/assistant/types';
 import {
   apiError,
+  countInputTokens,
   createMessage,
   isAssistantConfigured,
   modelSettings,
@@ -97,6 +98,14 @@ export const POST: RequestHandler = async ({ request, locals }) => {
     started = await begin(locals.supabase, input.kind);
     const context = await loadPromptContext(locals.supabase, input);
     const params = buildParams(input, context.text, clubToday(), modelSettings());
+    // A PDF can have hundreds of pages within the byte limit; refuse those
+    // before they cost anything
+    if (input.files.some((f) => f.mediaType === 'application/pdf')) {
+      const tokens = await countInputTokens(params, request.signal);
+      if (tokens > ASSISTANT_LIMITS.maxInputTokens) {
+        throw new AssistantError('too_many_pages', 413);
+      }
+    }
     const message = await createMessage(params, request.signal);
 
     let answer;

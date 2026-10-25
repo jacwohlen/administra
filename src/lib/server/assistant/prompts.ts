@@ -61,14 +61,19 @@ export function systemPrompt(kind: AssistantKind): string {
 
 const LANGUAGES = { de: 'German', en: 'English' } as const;
 
-/** Escapes what could close our tags early. */
-function tagSafe(value: string): string {
+/**
+ * Escapes what could open or close a tag of the prompt: for every value
+ * that comes from the request or the database (hint, training titles,
+ * grade names), never for the prompt's own markup.
+ */
+export function tagSafe(value: string): string {
   return value.replace(/</g, '‹').replace(/>/g, '›');
 }
 
 /**
  * The user turn: uploads first, then the reference data and the hint.
- * `contextText` is the kind-specific reference data (assistant/context.ts).
+ * `contextText` is the kind-specific reference data (assistant/context.ts),
+ * whose values are already escaped with tagSafe.
  */
 export function userContent(
   request: AssistantRequest,
@@ -98,7 +103,7 @@ export function userContent(
     '<context>',
     `Language for remarks and warnings: ${LANGUAGES[request.locale]}`,
     `Today: ${today}`,
-    tagSafe(contextText),
+    contextText,
     '</context>'
   ];
   if (request.hint.trim()) {

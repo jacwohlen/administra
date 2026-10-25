@@ -29,6 +29,10 @@ describe('cleaning values', () => {
 
   it('drops spreadsheet formula prefixes', () => {
     expect(cleanText('=HYPERLINK("x")', 100)).toBe('HYPERLINK("x")');
+    expect(cleanText('= =1+1', 100)).toBe('1+1');
+    expect(cleanText('=\u200b=HYPERLINK(1)', 100)).toBe('HYPERLINK(1)');
+    expect(cleanText('-2+3', 100)).toBe('2+3');
+    expect(cleanText('Muster =1', 100)).toBe('Muster =1');
     expect(cleanName('@Lena <b>Müller</b>')).toBe('Lena bMüller/b');
   });
 
@@ -90,6 +94,11 @@ describe('sanitizeGrades', () => {
     expect(result).not.toHaveProperty('injected');
   });
 
+  it('recognises a section named in a longer text', () => {
+    expect(sanitizeGrades({ section: 'Judo (SJV)' }, ladder).section).toBe('Judo');
+    expect(sanitizeGrades({ section: 'Budo-Pass' }, ladder).section).toBe('');
+  });
+
   it('survives garbage', () => {
     expect(sanitizeGrades('nonsense', ladder)).toEqual({
       section: '',
@@ -138,7 +147,9 @@ describe('sanitizeTrainingPlan', () => {
             cancelled: false
           },
           { date: '2026-01-06', training: 'T99', cancelled: 'yes' },
-          { date: 'Januar', training: 'T12' }
+          { date: 'Januar', training: 'T12' },
+          { date: '', training: 'T12', trainer: 'Lara', remark: 'Datum unleserlich' },
+          { date: '', training: 'T12' }
         ],
         holidays: [
           { title: 'Sportferien', dateFrom: '2026-02-20', dateTo: '2026-02-07', closed: true },
@@ -147,9 +158,11 @@ describe('sanitizeTrainingPlan', () => {
       },
       keys
     );
+    // A session without a readable date stays, for the user to complete
     expect(result.sessions.map((s) => [s.date, s.trainingId, s.cancelled])).toEqual([
       ['2026-01-05', 12, false],
-      ['2026-01-06', null, false]
+      ['2026-01-06', null, false],
+      ['', 12, false]
     ]);
     expect(result.holidays).toEqual([
       { title: 'Sportferien', dateFrom: '2026-02-07', dateTo: '2026-02-20', closed: true }

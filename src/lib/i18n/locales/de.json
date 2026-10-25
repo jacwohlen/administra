@@ -1356,9 +1356,9 @@
         "description": "Kyu- und Dan-Prüfungen aus dem Judo-Pass eines Mitglieds übernehmen."
       },
       "attendance": {
-        "title": "Teilnehmerliste einlesen",
-        "hint": "Foto oder Text der Anwesenheitsliste: für ein einzelnes Training oder eine Tabelle über mehrere Daten.",
-        "description": "Anwesenheiten aus einer Papier- oder Excel-Liste eines Trainings erfassen."
+        "title": "Präsenzliste einlesen",
+        "hint": "Foto oder Text der Präsenzliste: für ein einzelnes Training oder eine Tabelle über mehrere Daten.",
+        "description": "Anwesenheiten aus einer Präsenzliste auf Papier oder in Excel erfassen."
       },
       "training_plan": {
         "title": "Trainingsplan einlesen",
@@ -1382,6 +1382,7 @@
       "forbidden": "Dafür fehlt dir die Berechtigung.",
       "quota": "Das Tageslimit für Auswertungen ist erreicht. Morgen geht es weiter.",
       "too_large": "Die Dateien sind zu gross. Zusammen höchstens 3.5 MB.",
+      "too_many_pages": "Das PDF ist zu umfangreich. Bitte nur die nötigen Seiten hochladen, etwa 30 Seiten oder weniger.",
       "too_many_files": "Höchstens 4 Fotos oder PDFs pro Auswertung.",
       "invalid_request": "Die Anfrage war unvollständig. Bitte die Dateien prüfen und nochmals versuchen.",
       "not_found": "Die zugehörigen Daten wurden nicht gefunden, z. B. kein Training im Plan.",
@@ -1394,7 +1395,8 @@
       "network": "Keine Verbindung. Bitte die Internetverbindung prüfen.",
       "heic": "HEIC-Fotos werden nicht unterstützt. Bitte als JPEG speichern oder direkt mit «Foto aufnehmen» fotografieren.",
       "unsupported_file": "Dieser Dateityp wird nicht unterstützt. Möglich sind Fotos (JPEG, PNG, WebP), PDF und Text- oder CSV-Dateien.",
-      "unreadable": "Die Datei konnte nicht gelesen werden."
+      "unreadable": "Die Datei konnte nicht gelesen werden.",
+      "text_too_long": "Der Text ist zu lang (höchstens 30 000 Zeichen). Bitte in kleinere Teile aufteilen, z. B. einen Monat."
     },
     "review": {
       "apply": "{count, plural, one {# Eintrag übernehmen} other {# Einträge übernehmen}}",
@@ -1651,6 +1653,7 @@
         "past": "Liegt in der Vergangenheit.",
         "farFuture": "Liegt mehr als zwei Jahre in der Zukunft: Jahr prüfen."
       }
-    }
+    },
+    "textLength": "{count} von {max} Zeichen"
   }
 }
