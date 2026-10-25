@@ -1,4 +1,5 @@
 <script lang="ts">
+  import PillToggle from '$lib/components/PillToggle.svelte';
   import { modalDialog } from '$lib/modalDialog';
   import { goto, invalidate } from '$app/navigation';
   import { _ } from 'svelte-i18n';
@@ -265,27 +266,17 @@
 
 <!-- Only examiners have candidates of their own -->
 {#if data.canGrade}
-  <div class="flex rounded-lg overflow-hidden border border-surface-300-700 mb-3" role="group">
-    <button
-      class="btn flex-1 rounded-none {filter === 'all'
-        ? 'preset-filled-primary-500'
-        : 'preset-tonal-surface'}"
-      aria-pressed={filter === 'all'}
-      onclick={() => (filter = 'all')}
-    >
-      <Fa icon={faUsers} />
-      <span>{$_('page.exams.filter.all')} ({active.length})</span>
-    </button>
-    <button
-      class="btn flex-1 rounded-none {filter === 'mine'
-        ? 'preset-filled-primary-500'
-        : 'preset-tonal-surface'}"
-      aria-pressed={filter === 'mine'}
-      onclick={() => (filter = 'mine')}
-    >
-      <Fa icon={faUserCheck} />
-      <span>{$_('page.exams.filter.mine')} ({mine.length})</span>
-    </button>
+  <div class="mb-3">
+    <PillToggle
+      name="candidate-filter"
+      label={$_('page.exams.stats.candidates')}
+      value={filter}
+      options={[
+        { value: 'all', label: $_('page.exams.filter.all'), count: active.length },
+        { value: 'mine', label: $_('page.exams.filter.mine'), count: mine.length }
+      ]}
+      onchange={(v) => (filter = v as typeof filter)}
+    />
   </div>
 {/if}
 

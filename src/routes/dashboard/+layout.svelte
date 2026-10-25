@@ -40,7 +40,7 @@
 
   function getActiveTab(): string {
     if (page.route.id == '/dashboard') return 'today';
-    if (page.route.id?.startsWith('/dashboard/trainings')) return 'trainings';
+    if (page.route.id?.startsWith('/dashboard/training')) return 'trainings';
     if (page.route.id?.startsWith('/dashboard/events')) return 'events';
     if (page.route.id?.startsWith('/dashboard/exams')) return 'exams';
     if (page.route.id?.startsWith('/dashboard/members')) return 'members';
@@ -270,7 +270,7 @@
             <LanguageSwitcher onselect={() => (popoverOpen = false)} />
           </div>
           <form action="/logout" method="POST" use:enhance={submitLogout}>
-            <button type="submit" class="btn preset-filled w-full">
+            <button type="submit" class="btn preset-tonal-surface w-full">
               {$_('button.logout')}
             </button>
           </form>

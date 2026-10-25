@@ -59,7 +59,7 @@
       "examRole": {
         "none": "No exam role",
         "examiner": "Examiner",
-        "manager": "Technical committee (runs gradings)"
+        "manager": "Technical committee (gradings, training plan)"
       },
       "action": {
         "approve": "Approve",
@@ -265,7 +265,11 @@
       "noLogsMessage": "No attendance recorded for this training yet.",
       "supportedFormatsList": "PDF, images, Word documents, text files",
       "attachment": "Attachment",
-      "pdfPreview": "PDF preview"
+      "pdfPreview": "PDF preview",
+      "backToList": "Back to trainings",
+      "backToTraining": "Back to training",
+      "empty": "No trainings yet.",
+      "removeParticipantConfirm": "Remove {name} from this training?"
     },
     "members": {
       "title": "Members",
@@ -319,7 +323,9 @@
       },
       "moreActions": "More actions",
       "archived": "Archived on {date} – not shown in the member list and search.",
-      "archivedLink": "Restore from the trial archive"
+      "archivedLink": "Restore from the trial archive",
+      "empty": "No members yet.",
+      "noResults": "No members match your search"
     },
     "stats": {
       "all": "All",
@@ -453,7 +459,9 @@
       "coachError": "Could not save coach status",
       "addParticipantError": "Could not add participant",
       "createError": "Error creating event",
-      "updateError": "Error updating event"
+      "updateError": "Error updating event",
+      "backToList": "Back to events",
+      "backToEvent": "Back to event"
     },
     "trialRegistration": {
       "title": "Trial Training Registration",
@@ -948,6 +956,125 @@
         "deleteError": "Error deleting the program",
         "deleted": "Program deleted",
         "deleteHint": "Running and finished sheets keep their copy of the program. Candidates registered for this grade and not graded yet are graded without a program until one is entered again."
+      }
+    },
+    "trainingPlan": {
+      "title": "Training plan",
+      "short": "Trainers and topics of the adult trainings through the year",
+      "intro": "The technical committee's year plan: who leads which training, which topic is on, and when a training is dropped for holidays or events.",
+      "previousYear": "Previous year",
+      "nextYear": "Next year",
+      "print": "Print",
+      "empty": "No trainings in the plan yet. The technical committee picks the planned trainings under \"Trainings & holidays\" and can import the existing plan from the Google Sheet there.",
+      "nothingShown": "No dates for this selection",
+      "onlyOpen": "Trainer open ({count})",
+      "showPast": "Show past",
+      "trainerCounts": "Sessions per trainer",
+      "selectedCount": "{count, plural, one {# date} other {# dates}} selected",
+      "select": "Select date",
+      "training": "Training",
+      "trainer": "Trainer",
+      "trainers": "Trainers",
+      "otherMembers": "Other members",
+      "trainerOpen": "Trainer open",
+      "topic": "Topic",
+      "topicPlaceholder": "e.g. Uchi-mata, Ne-waza, Kata",
+      "notes": "Note",
+      "from": "From",
+      "to": "To",
+      "keep": "– unchanged –",
+      "cancelled": "Cancelled",
+      "cancelledBreak": "Cancelled: {title}",
+      "eventsThatDay": "Events that day",
+      "editSelected": "Edit {count} dates",
+      "editSelectedHint": "Only the fields you set are changed; everything else stays as it is per date.",
+      "saved": "Training plan saved",
+      "saveError": "Error saving the training plan",
+      "status": {
+        "label": "Takes place",
+        "auto": "Takes place",
+        "autoBreak": "Automatic: cancelled ({title})",
+        "held": "Takes place (even when the dojo is closed)",
+        "cancelled": "Cancelled",
+        "hint": "When the dojo is closed (under \"Trainings & holidays\"), trainings are cancelled automatically."
+      },
+      "rotation": {
+        "button": "Rotation",
+        "title": "Rotation",
+        "intro": "Assigns trainers to a training in turn, e.g. Monday A / B, or Friday only every other week (A / no training).",
+        "slots": "Order",
+        "addSlot": "Add position",
+        "none": "No training",
+        "up": "Move up",
+        "down": "Move down",
+        "perSlot": "Dates per position",
+        "skipCancelled": "Skip cancelled dates",
+        "skipCancelledHint": "After the holidays the next person continues. Unchecked, the rotation follows the calendar weeks.",
+        "overwrite": "Overwrite existing assignments",
+        "overwriteHint": "Otherwise dates that already have a trainer or are cancelled stay as they are.",
+        "preview": "Preview",
+        "kept": "unchanged",
+        "noDates": "No dates in the chosen period",
+        "apply": "Assign {count, plural, one {# date} other {# dates}}",
+        "applied": "{count, plural, one {# date} other {# dates}} assigned",
+        "mode": {
+          "trainers": "Trainers",
+          "topics": "Topics"
+        },
+        "introTopics": "Assigns topics in turn to a training, e.g. Friday one technique for two dates (part 1 and part 2), or Monday one topic for four weeks.",
+        "numbered": "Number the parts (\"Seoi-Nage, Teil 1\", \"Seoi-Nage, Teil 2\")",
+        "overwriteHintTopics": "Otherwise dates that already have a topic stay as they are."
+      },
+      "settings": {
+        "button": "Trainings & holidays",
+        "title": "Trainings & holidays",
+        "trainings": "Planned trainings",
+        "trainingsHint": "These trainings appear in the training plan, usually the adult trainings.",
+        "breaks": "Holidays and breaks",
+        "breaksHint": "School holidays for orientation (adult training takes place) and days the dojo is closed (Christmas, public holidays, bridge days): then all planned trainings are cancelled, unless a date is explicitly set to \"Takes place\". Single days with the same from and to date.",
+        "breakTitle": "Name",
+        "breakTitlePlaceholder": "e.g. Autumn holidays",
+        "breakInvalid": "Please enter a name and a valid period",
+        "breakDeleteConfirm": "Delete \"{title}\"?",
+        "noBreaks": "No holidays yet",
+        "closed": "Dojo closed: all planned trainings are cancelled",
+        "closedShort": "Dojo closed"
+      },
+      "checkin": {
+        "cancelled": "According to the training plan this training is cancelled",
+        "cancelledBreak": "According to the training plan this training is cancelled: {title}"
+      },
+      "breakClosed": "Dojo closed, no training",
+      "breakOpen": "Adult training takes place",
+      "mainTrainer": "main trainer",
+      "import": {
+        "title": "Import from the Google Sheet",
+        "hint": "In the sheet \"Trainingsplanung\", select the rows including the header (KW, Tag, Datum, Trainingstyp, …, Leiter, Thema, Info / Bemerkung), copy and paste them here, or download the sheet as CSV and pick it. Pick the planned trainings above first: each row goes to the training of its weekday.",
+        "noTrainings": "Pick the planned trainings above first.",
+        "placeholder": "KW\tTag\tDatum\tTrainingstyp\t…",
+        "file": "or CSV file:",
+        "noHeader": "No header row with \"Datum\" found. Please copy the header row too.",
+        "nothing": "No rows for the planned trainings found.",
+        "summary": "{sessions} dates from {from} to {to}, {cancelled} of them without training.",
+        "skipped": "{count, plural, one {# row} other {# rows}} on weekdays without a planned training are skipped.",
+        "leaders": "Leaders",
+        "leadersHint": "Matched to members. Without a match (e.g. a guest trainer) the name stays in the note.",
+        "holidays": "Holidays",
+        "holidaysHint": "From the column \"Info / Bemerkung\". \"Dojo closed\" is suggested when no planned training took place during that time.",
+        "exists": "already entered",
+        "overwrite": "Whatever is already planned on these dates is replaced by the sheet.",
+        "run": "Import {count} dates",
+        "done": "{sessions} dates and {breaks} holidays imported",
+        "error": "Error importing the sheet"
+      },
+      "view": {
+        "list": "Overview",
+        "table": "Per training"
+      },
+      "grid": {
+        "date": "Date",
+        "hint": "Type right in, every cell saves on its own. Enter or the arrow keys move to the next row; a column copied from Excel or Google Sheets fills the rows below when pasted.",
+        "pasted": "{count, plural, one {# row} other {# rows}} pasted"
       }
     }
   },

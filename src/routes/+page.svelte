@@ -308,7 +308,7 @@
         {#if devLoginError}
           <p class="text-sm text-error-500">{devLoginError}</p>
         {/if}
-        <button class="btn preset-tonal w-full" type="submit">
+        <button class="btn preset-tonal-surface w-full" type="submit">
           {$_('page.routes.devLoginButton')}
         </button>
       </form>

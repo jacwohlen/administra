@@ -1,6 +1,6 @@
 <script lang="ts">
   import Fa from 'svelte-fa';
-  import { faGripLines } from '@fortawesome/free-solid-svg-icons';
+  import { faChevronRight } from '@fortawesome/free-solid-svg-icons';
   import { _ } from 'svelte-i18n';
   import type { Log } from '$lib/models';
   import { displayConfig } from '$lib/appSettings';
@@ -34,19 +34,14 @@
 {:then l}
   <ul class="flex flex-col">
     {#each l.slice(0, currentItem) as i}
-      <li class="list-item">
-        <span class="flex-auto truncate">
-          <dt class="font-semibold">{i.date}</dt>
-          <dd class="text-sm text-surface-600-400">{i.trainingId.title}</dd>
-        </span>
-        <span class="chip preset-tonal-secondary text-sm">{i.trainingId.section}</span>
-        <a
-          class="btn preset-tonal-primary flex-shrink-0"
-          href="/dashboard/trainings/{i.trainingId.id}/{i.date}"
-          title={$_('button.view')}
-          aria-label={$_('button.view')}
-        >
-          <Fa icon={faGripLines} />
+      <li>
+        <a href="/dashboard/trainings/{i.trainingId.id}/{i.date}" class="list-item list-item-link">
+          <span class="flex-auto truncate">
+            <dt class="font-semibold">{i.date}</dt>
+            <dd class="text-sm text-surface-600-400">{i.trainingId.title}</dd>
+          </span>
+          <span class="chip preset-tonal-secondary text-sm">{i.trainingId.section}</span>
+          <Fa icon={faChevronRight} class="text-surface-400-600 flex-none" />
         </a>
       </li>
     {:else}

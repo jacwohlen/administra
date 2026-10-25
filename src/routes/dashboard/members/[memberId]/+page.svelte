@@ -1,4 +1,6 @@
 <script lang="ts">
+  import MoreMenu from '$lib/components/MoreMenu.svelte';
+  import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
   import { modalDialog } from '$lib/modalDialog';
   import type { PageData } from './$types';
   import { _ } from 'svelte-i18n';
@@ -8,7 +10,6 @@
     faBoxArchive,
     faCamera,
     faEdit,
-    faEllipsisVertical,
     faTrash,
     faUpload
   } from '@fortawesome/free-solid-svg-icons';
@@ -139,28 +140,6 @@
     resetImage();
   }
 
-  // Delete sits behind the ⋮ menu, as on the training page
-  let menuOpen = $state(false);
-  let menuStyle = $state('');
-  let menuBtnEl = $state<HTMLButtonElement>();
-
-  function toggleMenu() {
-    if (menuOpen) {
-      menuOpen = false;
-      return;
-    }
-    if (!menuBtnEl) return;
-    const rect = menuBtnEl.getBoundingClientRect();
-    menuStyle = `position:fixed;top:${rect.bottom + 4}px;left:${rect.right - 192}px;z-index:9999;`;
-    menuOpen = true;
-  }
-
-  function handleWindowClick(e: MouseEvent) {
-    if (menuOpen && menuBtnEl && !menuBtnEl.contains(e.target as Node)) {
-      menuOpen = false;
-    }
-  }
-
   function showEditForm() {
     showEditFormDialog = true;
   }
@@ -248,8 +227,6 @@
   }
 </script>
 
-<svelte:window onclick={handleWindowClick} />
-
 <div class="space-y-4">
   <div class="page-header-back">
     <a
@@ -271,35 +248,21 @@
         >
           <Fa icon={faEdit} />
         </button>
-        <div class="relative">
-          <button
-            class="btn preset-tonal-surface"
-            bind:this={menuBtnEl}
-            onclick={toggleMenu}
-            aria-label={$_('page.members.moreActions')}
-            aria-expanded={menuOpen}
-          >
-            <Fa icon={faEllipsisVertical} />
-          </button>
-          {#if menuOpen}
-            <nav
-              class="card min-w-48 p-1 shadow-xl bg-surface-50-950 border border-surface-300-700"
-              style={menuStyle}
+        <MoreMenu>
+          {#snippet items(close)}
+            <button
+              class="btn w-full justify-start text-error-600-400"
+              onclick={() => {
+                close();
+                confirmDelete();
+              }}
+              disabled={isDeleting}
             >
-              <button
-                class="btn w-full justify-start text-error-600-400"
-                onclick={() => {
-                  menuOpen = false;
-                  confirmDelete();
-                }}
-                disabled={isDeleting}
-              >
-                <Fa icon={faTrash} />
-                <span>{$_('button.delete')}</span>
-              </button>
-            </nav>
-          {/if}
-        </div>
+              <Fa icon={faTrash} />
+              <span>{$_('button.delete')}</span>
+            </button>
+          {/snippet}
+        </MoreMenu>
       </div>
     {/if}
   </div>
@@ -353,32 +316,13 @@
   {/if}
 
   {#if showDeleteConfirm}
-    <!-- svelte-ignore a11y_no_static_element_interactions -->
-    <div
-      class="modal-overlay"
-      onclick={() => handleDeleteResponse(false)}
-      onkeydown={(e) => {
-        if (e.key === 'Escape') handleDeleteResponse(false);
-      }}
-    >
-      <!-- svelte-ignore a11y_no_static_element_interactions -->
-      <div use:modalDialog class="card modal-dialog" onclick={(e) => e.stopPropagation()}>
-        <h3>{$_('page.members.deleteConfirmTitle')}</h3>
-        <p class="mb-4">
-          {$_('page.members.deleteConfirmMessage')}
-          {data.firstname}
-          {data.lastname}?
-        </p>
-        <div class="flex justify-end gap-2">
-          <button class="btn preset-tonal-surface" onclick={() => handleDeleteResponse(false)}>
-            {$_('button.cancel')}
-          </button>
-          <button class="btn preset-filled-error-500" onclick={() => handleDeleteResponse(true)}>
-            {$_('button.delete')}
-          </button>
-        </div>
-      </div>
-    </div>
+    <ConfirmDialog
+      title={$_('page.members.deleteConfirmTitle')}
+      message={`${$_('page.members.deleteConfirmMessage')} ${data.firstname} ${data.lastname}?`}
+      confirmLabel={$_('button.delete')}
+      oncancel={() => handleDeleteResponse(false)}
+      onconfirm={() => handleDeleteResponse(true)}
+    />
   {/if}
 
   <MemberProfile

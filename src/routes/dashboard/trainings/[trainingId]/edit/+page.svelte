@@ -73,7 +73,12 @@
 </script>
 
 <div class="page-header-back">
-  <a href="/dashboard/trainings/{data.id}" class="btn preset-tonal-surface">
+  <a
+    href="/dashboard/trainings/{data.id}"
+    class="btn preset-tonal-surface"
+    title={$_('page.trainings.backToTraining')}
+    aria-label={$_('page.trainings.backToTraining')}
+  >
     <Fa icon={faArrowLeft} />
   </a>
   <h1>{$_('page.trainings.edit_training')}</h1>

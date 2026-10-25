@@ -1,5 +1,6 @@
 <script lang="ts">
-  import { modalDialog } from '$lib/modalDialog';
+  import MoreMenu from '$lib/components/MoreMenu.svelte';
+  import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
   import type { PageData } from './$types';
   let { data }: { data: PageData } = $props();
   import LogList from './LogList.svelte';
@@ -13,7 +14,6 @@
     faArrowLeft,
     faEdit,
     faTrash,
-    faEllipsisVertical,
     faUserTie
   } from '@fortawesome/free-solid-svg-icons';
   import { supabaseClient } from '$lib/supabase';
@@ -22,28 +22,6 @@
 
   let isDeleting = $state(false);
   let showDeleteConfirm = $state(false);
-  let menuOpen = $state(false);
-  let menuStyle = $state('');
-  let menuBtnEl = $state<HTMLButtonElement>();
-
-  function toggleMenu() {
-    if (menuOpen) {
-      menuOpen = false;
-      return;
-    }
-    if (!menuBtnEl) return;
-    const rect = menuBtnEl.getBoundingClientRect();
-    const top = rect.bottom + 4;
-    const left = rect.right - 192;
-    menuStyle = `position:fixed;top:${top}px;left:${left}px;z-index:9999;`;
-    menuOpen = true;
-  }
-
-  function handleWindowClick(e: MouseEvent) {
-    if (menuOpen && menuBtnEl && !menuBtnEl.contains(e.target as Node)) {
-      menuOpen = false;
-    }
-  }
 
   function getDateString() {
     const weekday = utils.weekdayToNumber(data.weekday);
@@ -83,42 +61,42 @@
   }
 </script>
 
-<svelte:window onclick={handleWindowClick} />
-
 <!-- Header -->
 <div class="page-header-back">
-  <a href="/dashboard/trainings" class="btn preset-tonal-surface flex-shrink-0">
+  <a
+    href="/dashboard/trainings"
+    class="btn preset-tonal-surface flex-shrink-0"
+    title={$_('page.trainings.backToList')}
+    aria-label={$_('page.trainings.backToList')}
+  >
     <Fa icon={faArrowLeft} />
   </a>
   <h1 class="flex-1 min-w-0 truncate">{data.title}</h1>
   {#if data.canWrite}
     <div class="flex gap-2 flex-shrink-0">
-      <a href="/dashboard/trainings/{data.id}/edit" class="btn preset-tonal-surface">
+      <a
+        href="/dashboard/trainings/{data.id}/edit"
+        class="btn preset-tonal-surface"
+        title={$_('button.edit')}
+        aria-label={$_('button.edit')}
+      >
         <Fa icon={faEdit} />
       </a>
-      <div class="relative">
-        <button class="btn preset-tonal-surface" bind:this={menuBtnEl} onclick={toggleMenu}>
-          <Fa icon={faEllipsisVertical} />
-        </button>
-        {#if menuOpen}
-          <nav
-            class="card min-w-48 p-1 shadow-xl bg-surface-50-950 border border-surface-300-700"
-            style={menuStyle}
+      <MoreMenu>
+        {#snippet items(close)}
+          <button
+            class="btn w-full justify-start text-error-600-400"
+            onclick={() => {
+              close();
+              confirmDelete();
+            }}
+            disabled={isDeleting}
           >
-            <button
-              class="btn w-full justify-start text-error-600-400"
-              onclick={() => {
-                menuOpen = false;
-                confirmDelete();
-              }}
-              disabled={isDeleting}
-            >
-              <Fa icon={faTrash} />
-              <span>{$_('button.delete')}</span>
-            </button>
-          </nav>
-        {/if}
-      </div>
+            <Fa icon={faTrash} />
+            <span>{$_('button.delete')}</span>
+          </button>
+        {/snippet}
+      </MoreMenu>
     </div>
   {/if}
 </div>
@@ -152,28 +130,13 @@
 {/if}
 
 {#if showDeleteConfirm}
-  <!-- svelte-ignore a11y_no_static_element_interactions -->
-  <div
-    class="modal-overlay"
-    onclick={() => handleDeleteResponse(false)}
-    onkeydown={(e) => {
-      if (e.key === 'Escape') handleDeleteResponse(false);
-    }}
-  >
-    <!-- svelte-ignore a11y_no_static_element_interactions -->
-    <div use:modalDialog class="card modal-dialog" onclick={(e) => e.stopPropagation()}>
-      <h3>{$_('page.trainings.deleteConfirmTitle')}</h3>
-      <p class="mb-4">{$_('page.trainings.deleteConfirmMessage')} "{data.title}"?</p>
-      <div class="flex justify-end gap-2">
-        <button class="btn preset-tonal-surface" onclick={() => handleDeleteResponse(false)}>
-          {$_('button.cancel')}
-        </button>
-        <button class="btn preset-filled-error-500" onclick={() => handleDeleteResponse(true)}>
-          {$_('button.delete')}
-        </button>
-      </div>
-    </div>
-  </div>
+  <ConfirmDialog
+    title={$_('page.trainings.deleteConfirmTitle')}
+    message={`${$_('page.trainings.deleteConfirmMessage')} "${data.title}"?`}
+    confirmLabel={$_('button.delete')}
+    oncancel={() => handleDeleteResponse(false)}
+    onconfirm={() => handleDeleteResponse(true)}
+  />
 {/if}
 
 <!-- Logs section -->

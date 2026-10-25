@@ -115,7 +115,7 @@
 </div>
 
 {#if grouped.length === 0}
-  <p class="text-center text-surface-600-400 py-8">{$_('page.users.empty')}</p>
+  <p class="empty-state">{$_('page.users.empty')}</p>
 {/if}
 
 <ul class="flex flex-col gap-2">

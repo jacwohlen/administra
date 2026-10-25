@@ -280,7 +280,7 @@
       {/if}
 
       <label class="label">
-        <span>{$_('page.exams.candidate.grade')}</span>
+        <span>{$_('page.exams.candidate.grade')} *</span>
         <div class="flex items-center gap-2">
           {#if selectedGrade}
             <BeltStrip color={selectedGrade.beltColor} color2={selectedGrade.beltColor2} />
@@ -387,6 +387,7 @@
                 class="btn preset-tonal-error"
                 title={$_('button.remove')}
                 onclick={() => (confirmRemove = true)}
+                aria-label={$_('button.remove')}
               >
                 <Fa icon={faTrash} />
               </button>

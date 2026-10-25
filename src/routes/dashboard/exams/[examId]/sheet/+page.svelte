@@ -588,9 +588,8 @@
   <div bind:this={chipRow} class="flex gap-2 overflow-x-auto pb-2" role="group">
     {#each groups as g (g[0].id)}
       <button
-        class="btn btn-sm flex-none {g === group
-          ? 'preset-filled-primary-500'
-          : 'preset-tonal-surface'}"
+        type="button"
+        class="chip flex-none {g === group ? 'preset-filled-primary-500' : 'preset-tonal-surface'}"
         aria-pressed={g === group}
         onclick={() => showGroup(groups.indexOf(g))}
       >

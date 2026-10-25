@@ -98,7 +98,7 @@
               />
             {:else}
               <div
-                class="size-24 sm:size-28 rounded-full bg-surface-200-800 flex items-center justify-center text-3xl font-bold"
+                class="size-24 sm:size-28 rounded-full bg-surface-100-900 flex items-center justify-center text-3xl font-bold"
               >
                 {firstname.charAt(0)}{lastname.charAt(0)}
               </div>

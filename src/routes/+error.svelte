@@ -26,5 +26,5 @@
       </p>
     {/if}
   </div>
-  <a class="btn preset-filled" href="/">{$_('page.error.home')}</a>
+  <a class="btn preset-filled-primary-500" href="/">{$_('page.error.home')}</a>
 </div>

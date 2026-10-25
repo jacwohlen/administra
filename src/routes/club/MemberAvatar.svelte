@@ -37,7 +37,7 @@
     <div
       class="{dims[
         size
-      ]} rounded-full bg-primary-100-900 text-primary-800-200 flex items-center justify-center font-bold"
+      ]} rounded-full bg-surface-100-900 flex items-center justify-center font-bold"
       aria-hidden="true"
     >
       {firstname.charAt(0)}{lastname.charAt(0)}

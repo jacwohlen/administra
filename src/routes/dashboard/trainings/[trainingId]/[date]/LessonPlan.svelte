@@ -498,7 +498,12 @@
                       <p class="text-sm opacity-60">{formatFileSize(selectedFile.size)}</p>
                     </div>
                   </div>
-                  <button class="btn preset-tonal-error" onclick={removeSelectedFile}>
+                  <button
+                    class="btn preset-tonal-error"
+                    onclick={removeSelectedFile}
+                    title={$_('button.remove')}
+                    aria-label={$_('button.remove')}
+                  >
                     <Fa icon={faTrash} />
                   </button>
                 </div>
@@ -609,9 +614,7 @@
         </footer>
       </div>
     {:else}
-      <div class="empty-state">
-        <p class="opacity-60">{$_('page.trainings.noLessonPlanMessage')}</p>
-      </div>
+      <p class="empty-state">{$_('page.trainings.noLessonPlanMessage')}</p>
     {/if}
   </section>
 </div>

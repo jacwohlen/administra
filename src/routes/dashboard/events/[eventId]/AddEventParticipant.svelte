@@ -162,7 +162,7 @@
                 role="button"
                 tabindex="0"
               >
-                <span>{member.lastname}, {member.firstname}</span>
+                <span>{member.lastname} {member.firstname}</span>
                 <button
                   class="btn preset-tonal-primary"
                   onclick={(e: MouseEvent) => {

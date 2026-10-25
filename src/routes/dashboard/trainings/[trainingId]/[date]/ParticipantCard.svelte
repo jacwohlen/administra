@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { modalDialog } from '$lib/modalDialog';
+  import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
   import Fa from 'svelte-fa';
   import { faEllipsisVertical, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
   import Labels from './Labels.svelte';
@@ -194,6 +194,8 @@
           e.stopPropagation();
           toggleMenu();
         }}
+        title={$_('page.members.moreActions')}
+        aria-label={$_('page.members.moreActions')}
       >
         <Fa icon={faEllipsisVertical} />
       </button>
@@ -255,28 +257,15 @@
     </div>
 
     {#if showRemoveConfirm}
-      <!-- svelte-ignore a11y_no_static_element_interactions -->
-      <div
-        class="modal-overlay"
-        onclick={() => handleRemoveResponse(false)}
-        onkeydown={(e) => {
-          if (e.key === 'Escape') handleRemoveResponse(false);
-        }}
-      >
-        <!-- svelte-ignore a11y_no_static_element_interactions -->
-        <div use:modalDialog class="card modal-dialog" onclick={(e) => e.stopPropagation()}>
-          <h4>{$_('dialog.confirm.title')}</h4>
-          <p class="mb-4">{$_('dialog.confirm.body')}</p>
-          <div class="flex justify-end gap-2">
-            <button class="btn preset-tonal-surface" onclick={() => handleRemoveResponse(false)}>
-              {$_('button.cancel')}
-            </button>
-            <button class="btn preset-filled-error-500" onclick={() => handleRemoveResponse(true)}>
-              {$_('button.confirm')}
-            </button>
-          </div>
-        </div>
-      </div>
+      <ConfirmDialog
+        title={$_('button.remove')}
+        message={$_('page.trainings.removeParticipantConfirm', {
+          values: { name: `${member.lastname} ${member.firstname}` }
+        })}
+        confirmLabel={$_('button.remove')}
+        oncancel={() => handleRemoveResponse(false)}
+        onconfirm={() => handleRemoveResponse(true)}
+      />
     {/if}
   {:else}
     {$_('page.trainings.memberNotFound')}

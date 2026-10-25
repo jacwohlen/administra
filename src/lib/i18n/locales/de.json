@@ -59,7 +59,7 @@
       "examRole": {
         "none": "Keine Prüfungsrolle",
         "examiner": "Prüfende (bewerten)",
-        "manager": "TK (Prüfungen leiten)"
+        "manager": "TK (Prüfungen, Trainingsplanung)"
       },
       "action": {
         "approve": "Freigeben",
@@ -265,7 +265,11 @@
       "noLogsMessage": "Für dieses Training wurde noch keine Anwesenheit erfasst.",
       "supportedFormatsList": "PDF, Bilder, Word-Dokumente, Textdateien",
       "attachment": "Anhang",
-      "pdfPreview": "PDF-Vorschau"
+      "pdfPreview": "PDF-Vorschau",
+      "backToList": "Zurück zu den Trainings",
+      "backToTraining": "Zurück zum Training",
+      "empty": "Noch keine Trainings erfasst.",
+      "removeParticipantConfirm": "{name} aus diesem Training entfernen?"
     },
     "members": {
       "title": "Mitglieder",
@@ -319,7 +323,9 @@
       },
       "moreActions": "Weitere Aktionen",
       "archived": "Archiviert am {date} – erscheint nicht in der Mitgliederliste und der Suche.",
-      "archivedLink": "Im Probetraining-Archiv wiederherstellen"
+      "archivedLink": "Im Probetraining-Archiv wiederherstellen",
+      "empty": "Noch keine Mitglieder erfasst.",
+      "noResults": "Keine Mitglieder entsprechen deiner Suche"
     },
     "stats": {
       "all": "Alle",
@@ -453,7 +459,9 @@
       "coachError": "Coach-Status konnte nicht gespeichert werden",
       "addParticipantError": "Teilnehmer konnte nicht hinzugefügt werden",
       "createError": "Fehler beim Erstellen des Events",
-      "updateError": "Fehler beim Aktualisieren des Events"
+      "updateError": "Fehler beim Aktualisieren des Events",
+      "backToList": "Zurück zu den Events",
+      "backToEvent": "Zurück zum Event"
     },
     "trialRegistration": {
       "title": "Anmeldung Probetraining",
@@ -948,6 +956,125 @@
         "deleteError": "Fehler beim Löschen des Programms",
         "deleted": "Programm gelöscht",
         "deleteHint": "Laufende und abgeschlossene Blätter behalten ihre Kopie des Programms. Wer für diese Stufe angemeldet und noch nicht geprüft ist, wird ohne Programm bewertet, bis wieder eines erfasst ist."
+      }
+    },
+    "trainingPlan": {
+      "title": "Trainingsplanung",
+      "short": "Trainer und Themen der Erwachsenentrainings übers Jahr",
+      "intro": "Der Jahresplan der TK: wer welches Training leitet, welches Thema drankommt und wann das Training wegen Ferien oder Anlässen ausfällt.",
+      "previousYear": "Vorheriges Jahr",
+      "nextYear": "Nächstes Jahr",
+      "print": "Drucken",
+      "empty": "Noch keine Trainings in der Planung. Die TK wählt unter «Trainings & Ferien» aus, welche Trainings geplant werden, und kann dort den bisherigen Plan aus dem Google Sheet übernehmen.",
+      "nothingShown": "Keine Termine für diese Auswahl",
+      "onlyOpen": "Trainer offen ({count})",
+      "showPast": "Vergangene anzeigen",
+      "trainerCounts": "Einsätze pro Trainer",
+      "selectedCount": "{count, plural, one {# Termin} other {# Termine}} ausgewählt",
+      "select": "Termin auswählen",
+      "training": "Training",
+      "trainer": "Trainer",
+      "trainers": "Trainer",
+      "otherMembers": "Weitere Mitglieder",
+      "trainerOpen": "Trainer offen",
+      "topic": "Thema",
+      "topicPlaceholder": "z. B. Uchi-mata, Ne-waza, Kata",
+      "notes": "Bemerkung",
+      "from": "Von",
+      "to": "Bis",
+      "keep": "– unverändert –",
+      "cancelled": "Fällt aus",
+      "cancelledBreak": "Fällt aus: {title}",
+      "eventsThatDay": "Anlässe an diesem Tag",
+      "editSelected": "{count} Termine bearbeiten",
+      "editSelectedHint": "Nur die gewählten Felder werden geändert, der Rest bleibt pro Termin bestehen.",
+      "saved": "Trainingsplan gespeichert",
+      "saveError": "Fehler beim Speichern des Trainingsplans",
+      "status": {
+        "label": "Durchführung",
+        "auto": "Findet statt",
+        "autoBreak": "Automatisch: fällt aus ({title})",
+        "held": "Findet statt (auch wenn das Dojo zu ist)",
+        "cancelled": "Fällt aus",
+        "hint": "Ist das Dojo geschlossen (unter «Trainings & Ferien»), fallen Trainings automatisch aus."
+      },
+      "rotation": {
+        "button": "Rotation",
+        "title": "Rotation",
+        "intro": "Verteilt Trainer im Wechsel auf ein Training, z. B. Montag A / B oder Freitag nur jede zweite Woche (A / kein Training).",
+        "slots": "Reihenfolge",
+        "addSlot": "Position hinzufügen",
+        "none": "Kein Training",
+        "up": "Nach oben",
+        "down": "Nach unten",
+        "perSlot": "Termine pro Position",
+        "skipCancelled": "Ausfälle überspringen",
+        "skipCancelledHint": "Nach den Ferien geht es mit der nächsten Person weiter. Ohne Häkchen folgt die Rotation den Kalenderwochen.",
+        "overwrite": "Bestehende Einteilung überschreiben",
+        "overwriteHint": "Sonst bleiben Termine, die schon einen Trainer haben oder ausfallen, wie sie sind.",
+        "preview": "Vorschau",
+        "kept": "bleibt",
+        "noDates": "Keine Termine im gewählten Zeitraum",
+        "apply": "{count, plural, one {# Termin} other {# Termine}} einteilen",
+        "applied": "{count, plural, one {# Termin} other {# Termine}} eingeteilt",
+        "mode": {
+          "trainers": "Trainer",
+          "topics": "Themen"
+        },
+        "introTopics": "Verteilt Themen der Reihe nach auf ein Training, z. B. Freitag je eine Technik für zwei Termine (Teil 1 und Teil 2) oder Montag ein Thema für vier Wochen.",
+        "numbered": "Teile nummerieren («Seoi-Nage, Teil 1», «Seoi-Nage, Teil 2»)",
+        "overwriteHintTopics": "Sonst bleiben Termine, die schon ein Thema haben, wie sie sind."
+      },
+      "settings": {
+        "button": "Trainings & Ferien",
+        "title": "Trainings & Ferien",
+        "trainings": "Geplante Trainings",
+        "trainingsHint": "Diese Trainings erscheinen in der Trainingsplanung, meist die Erwachsenentrainings.",
+        "breaks": "Ferien und Ausfallzeiten",
+        "breaksHint": "Schulferien zur Orientierung (das Erwachsenentraining findet statt) und Tage, an denen das Dojo geschlossen ist (Weihnachten, Feiertage, Brückentage): dann fallen alle geplanten Trainings aus, ausser ein Termin ist ausdrücklich auf «Findet statt» gesetzt. Einzelne Tage mit gleichem Von und Bis.",
+        "breakTitle": "Bezeichnung",
+        "breakTitlePlaceholder": "z. B. Herbstferien",
+        "breakInvalid": "Bitte Bezeichnung und gültigen Zeitraum angeben",
+        "breakDeleteConfirm": "«{title}» löschen?",
+        "noBreaks": "Noch keine Ferien erfasst",
+        "closed": "Dojo geschlossen: alle geplanten Trainings fallen aus",
+        "closedShort": "Dojo zu"
+      },
+      "checkin": {
+        "cancelled": "Laut Trainingsplan fällt dieses Training aus",
+        "cancelledBreak": "Laut Trainingsplan fällt dieses Training aus: {title}"
+      },
+      "breakClosed": "Dojo geschlossen, kein Training",
+      "breakOpen": "Erwachsenentraining findet statt",
+      "mainTrainer": "Haupttrainer",
+      "import": {
+        "title": "Aus dem Google Sheet übernehmen",
+        "hint": "Im Sheet «Trainingsplanung» die Zeilen samt Kopfzeile (KW, Tag, Datum, Trainingstyp, …, Leiter, Thema, Info / Bemerkung) markieren, kopieren und hier einfügen, oder das Blatt als CSV herunterladen und wählen. Zuerst oben die geplanten Trainings wählen: die Zeilen gehen an das Training ihres Wochentags.",
+        "noTrainings": "Zuerst oben die geplanten Trainings wählen.",
+        "placeholder": "KW\tTag\tDatum\tTrainingstyp\t…",
+        "file": "oder CSV-Datei:",
+        "noHeader": "Keine Kopfzeile mit «Datum» gefunden. Bitte die Kopfzeile mitkopieren.",
+        "nothing": "Keine Zeilen für die geplanten Trainings gefunden.",
+        "summary": "{sessions} Termine vom {from} bis {to}, davon {cancelled} ohne Training.",
+        "skipped": "{count, plural, one {# Zeile} other {# Zeilen}} an Wochentagen ohne geplantes Training werden übersprungen.",
+        "leaders": "Leiter",
+        "leadersHint": "Zuordnung zu den Mitgliedern. Ohne Zuordnung (z. B. Gasttrainer) bleibt der Name in der Bemerkung.",
+        "holidays": "Ferien",
+        "holidaysHint": "Aus der Spalte «Info / Bemerkung». «Dojo zu» ist vorgeschlagen, wenn in dieser Zeit kein geplantes Training stattfand.",
+        "exists": "schon erfasst",
+        "overwrite": "Was an diesen Daten schon geplant ist, wird durch das Sheet ersetzt.",
+        "run": "{count} Termine übernehmen",
+        "done": "{sessions} Termine und {breaks} Ferien übernommen",
+        "error": "Fehler beim Übernehmen des Sheets"
+      },
+      "view": {
+        "list": "Übersicht",
+        "table": "Pro Training"
+      },
+      "grid": {
+        "date": "Datum",
+        "hint": "Direkt eintippen, jede Zelle speichert sofort. Enter oder Pfeiltasten springen zur nächsten Zeile; eine aus Excel oder Google Sheets kopierte Spalte füllt beim Einfügen die Zeilen nach unten.",
+        "pasted": "{count, plural, one {# Zeile} other {# Zeilen}} eingefügt"
       }
     }
   },
