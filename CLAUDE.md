@@ -57,6 +57,14 @@ merging to `main` applies new migrations to the Dev project
 to production (admin.jacwohlen.ch). Never edit an already-merged
 migration — add a new one. Manual `supabase db push` is only a fallback.
 
+Other clubs run their own Supabase project + Netlify site from this repo
+(see `docs/CLUB_INSTANCES.md`): `scripts/club-instances/rollout.js` applies
+`prod`'s migrations to every club database, then moves branch `clubs`, which
+the club sites build. So migrations must work while the previous release is
+still deployed, must not depend on `config.toml` or seed data, and must not
+hard-code JAC Wohlen specifics (addresses, sections) — use settings or
+`bootstrap_admins` instead.
+
 ## Production Releases
 
 A prod release is a promotion PR `main` → `prod`, merged with a merge
