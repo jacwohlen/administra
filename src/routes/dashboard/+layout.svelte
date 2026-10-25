@@ -1,9 +1,10 @@
 <script lang="ts">
   import { goto } from '$app/navigation';
-  import { Tabs, Toast } from '@skeletonlabs/skeleton-svelte';
+  import { Tabs } from '@skeletonlabs/skeleton-svelte';
   import { page } from '$app/state';
   import Fa from 'svelte-fa';
   import {
+    faAward,
     faCalendarCheck,
     faChartSimple,
     faList,
@@ -23,7 +24,7 @@
   import type { LayoutData } from './$types';
   import { _ } from 'svelte-i18n';
   import type { Snippet } from 'svelte';
-  import { toaster } from '$lib/toast';
+  import AppToaster from '$lib/components/AppToaster.svelte';
   import LanguageSwitcher from '$lib/components/LanguageSwitcher.svelte';
 
   let { data, children }: { data: LayoutData; children: Snippet } = $props();
@@ -40,8 +41,9 @@
 
   function getActiveTab(): string {
     if (page.route.id == '/dashboard') return 'today';
-    if (page.route.id?.startsWith('/dashboard/trainings')) return 'trainings';
+    if (page.route.id?.startsWith('/dashboard/training')) return 'trainings';
     if (page.route.id?.startsWith('/dashboard/events')) return 'events';
+    if (page.route.id?.startsWith('/dashboard/exams')) return 'exams';
     if (page.route.id?.startsWith('/dashboard/members')) return 'members';
     if (page.route.id?.startsWith('/dashboard/probetraining')) return 'probetraining';
     if (page.route.id?.startsWith('/dashboard/stats')) return 'stats';
@@ -86,9 +88,9 @@
   });
 </script>
 
-<div class="h-full flex flex-col overflow-hidden">
+<div class="h-full flex flex-col overflow-hidden print:h-auto print:overflow-visible">
   <!-- Header -->
-  <header class="bg-surface-100-900 flex items-center px-2">
+  <header class="bg-surface-100-900 flex items-center px-2 print:hidden">
     <div class="flex-1 min-w-0 overflow-hidden">
       <Tabs
         value={getActiveTab()}
@@ -97,6 +99,7 @@
             today: '/dashboard',
             trainings: '/dashboard/trainings',
             events: '/dashboard/events',
+            exams: '/dashboard/exams',
             members: '/dashboard/members',
             probetraining: '/dashboard/probetraining',
             stats: '/dashboard/stats',
@@ -134,6 +137,15 @@
           >
             <Fa icon={faCalendarDays} class="nav-icon" />
             <span class="hidden sm:inline">{$_('page.dashboard.events')}</span>
+          </Tabs.Trigger>
+          <Tabs.Trigger
+            value="exams"
+            onclick={() => {
+              if (getActiveTab() === 'exams') goto('/dashboard/exams', { invalidateAll: true });
+            }}
+          >
+            <Fa icon={faAward} class="nav-icon" />
+            <span class="hidden sm:inline">{$_('page.dashboard.exams')}</span>
           </Tabs.Trigger>
           <Tabs.Trigger
             value="members"
@@ -183,7 +195,7 @@
         {#if data.session.user.user_metadata.avatar_url && !avatarError}
           <img
             src={data.session.user.user_metadata.avatar_url}
-            alt="Profile"
+            alt={$_('page.dashboard.myProfile')}
             class="size-8 rounded-full object-cover hover:ring-2 ring-primary-600-400"
             onerror={() => (avatarError = true)}
           />
@@ -267,7 +279,7 @@
             <LanguageSwitcher onselect={() => (popoverOpen = false)} />
           </div>
           <form action="/logout" method="POST" use:enhance={submitLogout}>
-            <button type="submit" class="btn preset-filled w-full">
+            <button type="submit" class="btn preset-tonal-surface w-full">
               {$_('button.logout')}
             </button>
           </form>
@@ -277,11 +289,11 @@
   </header>
 
   <!-- Main content -->
-  <main class="flex-1 overflow-auto">
+  <main class="flex-1 overflow-auto print:overflow-visible">
     <div class="max-w-4xl px-3 sm:px-4 py-2 mx-auto">
       {@render children()}
     </div>
   </main>
 </div>
 
-<Toast.Group {toaster} />
+<AppToaster />

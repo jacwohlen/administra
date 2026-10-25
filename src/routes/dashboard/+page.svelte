@@ -2,8 +2,8 @@
   import Fa from 'svelte-fa';
   import {
     faClipboardCheck,
-    faArrowRight,
-    faArrowLeft,
+    faChevronRight,
+    faChevronLeft,
     faCalendarDays,
     faLocationDot,
     faUsers
@@ -65,16 +65,16 @@
 
 <div class="page-header">
   <div>
-    <button class="btn" onclick={previousDay}>
-      <Fa icon={faArrowLeft} /><span class="hidden sm:inline">{$_('button.day')}</span>
+    <button class="btn preset-tonal-surface" onclick={previousDay}>
+      <Fa icon={faChevronLeft} /><span class="hidden sm:inline">{$_('button.day')}</span>
     </button>
   </div>
   <div>
     <h1>{date.format('dddd')}</h1>
   </div>
   <div>
-    <button class="btn" onclick={nextDay}>
-      <span class="hidden sm:inline">{$_('button.day')}</span><Fa icon={faArrowRight} />
+    <button class="btn preset-tonal-surface" onclick={nextDay}>
+      <span class="hidden sm:inline">{$_('button.day')}</span><Fa icon={faChevronRight} />
     </button>
   </div>
 </div>

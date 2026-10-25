@@ -32,7 +32,8 @@
     showAttendance = false,
     achievements,
     editing = null,
-    photoAction
+    photoAction,
+    children
   }: {
     id: number;
     firstname: string;
@@ -56,10 +57,14 @@
     editing?: { events: PastEvent[]; onchanged: () => void } | null;
     /** Controls placed on the avatar, e.g. the staff photo menu */
     photoAction?: Snippet;
+    /** Extra sections before the achievements, e.g. the exam registration (club) */
+    children?: Snippet;
   } = $props();
 
   let topGrade = $derived(highestGrade(achievements.currentGrades));
-  let ringColor = $derived(topGrade ? beltRingColor(topGrade.beltColor) : null);
+  let ringColor = $derived(
+    topGrade ? beltRingColor(topGrade.beltColor, topGrade.beltColor2) : null
+  );
   let tally = $derived(medalTally(achievements.medals));
   let gradeSections = $derived([...new Set(achievements.gradeDefinitions.map((d) => d.section))]);
   let age = $derived(calculateAge(details?.birthday ?? undefined));
@@ -93,7 +98,7 @@
               />
             {:else}
               <div
-                class="size-24 sm:size-28 rounded-full bg-surface-200-800 flex items-center justify-center text-3xl font-bold"
+                class="size-24 sm:size-28 rounded-full bg-surface-100-900 flex items-center justify-center text-3xl font-bold"
               >
                 {firstname.charAt(0)}{lastname.charAt(0)}
               </div>
@@ -140,7 +145,12 @@
             <div class="flex flex-wrap justify-center gap-x-4 gap-y-1">
               {#each achievements.currentGrades as g (g.section)}
                 <span class="inline-flex items-center gap-2 text-sm" title={g.grade}>
-                  <BeltStrip color={g.beltColor} isDan={g.isDan} grade={g.grade} />
+                  <BeltStrip
+                    color={g.beltColor}
+                    color2={g.beltColor2}
+                    isDan={g.isDan}
+                    grade={g.grade}
+                  />
                   <span class="font-semibold">{g.grade}</span>
                   <span class="text-surface-600-400">{g.section}</span>
                 </span>
@@ -207,6 +217,8 @@
       <p class="whitespace-pre-wrap">{notes}</p>
     </section>
   {/if}
+
+  {@render children?.()}
 
   <!-- Achievements -->
   <div class="grid grid-cols-1 md:grid-cols-2 gap-4">

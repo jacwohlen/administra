@@ -1,4 +1,5 @@
 <script lang="ts">
+  import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
   import Fa from 'svelte-fa';
   import { faEllipsisVertical, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
   import Labels from './Labels.svelte';
@@ -35,7 +36,7 @@
     readonly?: boolean;
   } = $props();
 
-  let ringColor = $derived(grade ? beltRingColor(grade.beltColor) : null);
+  let ringColor = $derived(grade ? beltRingColor(grade.beltColor, grade.beltColor2) : null);
   let needsMembership = $derived(
     trialAttendedCount !== undefined &&
       trialProgress(trialAttendedCount, clubConfig.trialSessionThreshold) === 'convert'
@@ -128,7 +129,7 @@
         <span
           class="absolute -bottom-0 -right-0 z-10 bg-primary-600-400 rounded-full w-4 h-4 flex items-center justify-center"
         >
-          <img class="w-2.5" src="/judo-icon.svg" alt="main-trainer" />
+          <img class="w-2.5" src="/judo-icon.svg" alt={$_('page.stats.mainTrainer')} />
         </span>
       {:else if member.trainerRole === 'assistant'}
         <span
@@ -160,7 +161,13 @@
         <ParticipantFrequency streak={member.streak} isPresent={member.isPresent} />
         {#if grade}
           <span class="inline-flex items-center gap-1 text-xs text-surface-600-400">
-            <BeltStrip color={grade.beltColor} isDan={grade.isDan} grade={grade.grade} size="sm" />
+            <BeltStrip
+              color={grade.beltColor}
+              color2={grade.beltColor2}
+              isDan={grade.isDan}
+              grade={grade.grade}
+              size="sm"
+            />
             {grade.grade}
           </span>
         {/if}
@@ -187,6 +194,8 @@
           e.stopPropagation();
           toggleMenu();
         }}
+        title={$_('page.members.moreActions')}
+        aria-label={$_('page.members.moreActions')}
       >
         <Fa icon={faEllipsisVertical} />
       </button>
@@ -219,7 +228,7 @@
                   class="btn w-full text-left justify-start gap-2"
                   onclick={() => setTrainerRole('main_trainer')}
                 >
-                  <img class="w-4 flex-shrink-0" src="/judo-icon.svg" alt="judo-icon" />
+                  <img class="w-4 flex-shrink-0" src="/judo-icon.svg" alt="" />
                   {$_('components.ParticipantCard.SetAsMainTrainer')}
                 </button>
               </li>
@@ -248,28 +257,15 @@
     </div>
 
     {#if showRemoveConfirm}
-      <!-- svelte-ignore a11y_no_static_element_interactions -->
-      <div
-        class="modal-overlay"
-        onclick={() => handleRemoveResponse(false)}
-        onkeydown={(e) => {
-          if (e.key === 'Escape') handleRemoveResponse(false);
-        }}
-      >
-        <!-- svelte-ignore a11y_no_static_element_interactions -->
-        <div class="card modal-dialog" onclick={(e) => e.stopPropagation()}>
-          <h4>{$_('dialog.confirm.title')}</h4>
-          <p class="mb-4">{$_('dialog.confirm.body')}</p>
-          <div class="flex justify-end gap-2">
-            <button class="btn preset-tonal-surface" onclick={() => handleRemoveResponse(false)}>
-              {$_('button.cancel')}
-            </button>
-            <button class="btn preset-filled-error-500" onclick={() => handleRemoveResponse(true)}>
-              {$_('button.confirm')}
-            </button>
-          </div>
-        </div>
-      </div>
+      <ConfirmDialog
+        title={$_('button.remove')}
+        message={$_('page.trainings.removeParticipantConfirm', {
+          values: { name: `${member.lastname} ${member.firstname}` }
+        })}
+        confirmLabel={$_('button.remove')}
+        oncancel={() => handleRemoveResponse(false)}
+        onconfirm={() => handleRemoveResponse(true)}
+      />
     {/if}
   {:else}
     {$_('page.trainings.memberNotFound')}

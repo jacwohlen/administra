@@ -1,4 +1,5 @@
 <script lang="ts">
+  import PillToggle from '$lib/components/PillToggle.svelte';
   import { onMount, untrack } from 'svelte';
   import { _ } from 'svelte-i18n';
   import Fa from 'svelte-fa';
@@ -135,19 +136,18 @@
     </p>
   {/if}
 
-  <div class="flex flex-wrap gap-1" role="tablist" aria-label={$_('page.probetraining.mail.kind')}>
-    {#each TRIAL_MAIL_KINDS as k (k)}
-      <button
-        type="button"
-        role="tab"
-        aria-selected={kind === k}
-        class="btn btn-sm {kind === k ? 'preset-filled-primary-500' : 'preset-tonal-surface'}"
-        disabled={sending}
-        onclick={() => (kind = k)}
-      >
-        {$_('page.settings.trialMail.kind.' + k)}
-      </button>
-    {/each}
+  <div>
+    <PillToggle
+      name="mail-kind"
+      label={$_('page.probetraining.mail.kind')}
+      value={kind}
+      disabled={sending}
+      options={TRIAL_MAIL_KINDS.map((k) => ({
+        value: k,
+        label: $_('page.settings.trialMail.kind.' + k)
+      }))}
+      onchange={(v) => (kind = v as typeof kind)}
+    />
   </div>
 
   {#if kind === 'assigned' && trainings.length === 0}

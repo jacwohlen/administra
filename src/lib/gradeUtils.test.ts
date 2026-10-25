@@ -59,6 +59,20 @@ describe('highestGrade', () => {
     expect(best?.section).toBe('Judo');
   });
 
+  it('compares sections by grade, not by their ladder positions', () => {
+    // Judo 2. Kyu sits higher on the longer Judo ladder (half belts) than Aikido 1. Dan
+    const best = highestGrade([
+      { section: 'Judo', grade: '2. Kyu', gradeRank: 8, isDan: false },
+      { section: 'Aikido', grade: '1. Dan', gradeRank: 7, isDan: true }
+    ]);
+    expect(best?.section).toBe('Aikido');
+    const kyu = highestGrade([
+      { section: 'Judo', grade: '4.5 Kyu', gradeRank: 4, isDan: false },
+      { section: 'Aikido', grade: '5. Kyu', gradeRank: 2, isDan: false }
+    ]);
+    expect(kyu?.section).toBe('Judo');
+  });
+
   it('is undefined without grades', () => {
     expect(highestGrade([])).toBeUndefined();
   });
@@ -72,6 +86,11 @@ describe('beltRingColor', () => {
 
   it('keeps coloured belts as they are', () => {
     expect(beltRingColor('#27ae60')).toBe('#27ae60');
+  });
+
+  it('shows the colour a half belt leads to', () => {
+    expect(beltRingColor('#f5f5f5', '#f4d03f')).toBe('#f4d03f');
+    expect(beltRingColor('#f4d03f', null)).toBe('#f4d03f');
   });
 });
 

@@ -32,7 +32,8 @@ export default defineConfig({
           },
           {
             name: 'authenticated',
-            testMatch: /dashboard\.spec|members\.spec|trainings\.spec|stats\.spec/,
+            testMatch:
+              /dashboard\.spec|members\.spec|trainings\.spec|stats\.spec|exams\.spec|trainingPlan\.spec/,
             dependencies: ['auth-setup'],
             use: {
               ...devices['Desktop Chrome'],

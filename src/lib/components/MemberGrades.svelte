@@ -1,4 +1,6 @@
 <script lang="ts">
+  import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
+  import { modalDialog } from '$lib/modalDialog';
   import type { GradeDefinition, MemberCurrentGrade, MemberGrade } from '$lib/models';
   import { gradesBySection } from '$lib/gradeUtils';
   import { supabaseClient } from '$lib/supabase';
@@ -114,10 +116,17 @@
 {#if current.length === 0}
   <p class="text-surface-600-400">{$_('grades.noGrades')}</p>
 {:else}
-  <div class="divide-y divide-surface-300-700">
+  <div class="divide-y divide-surface-200-800">
     {#each current as g (g.section)}
       <div class="flex items-center gap-3 py-2">
-        <BeltStrip color={g.beltColor} isDan={g.isDan} grade={g.grade} size="lg" title={g.grade} />
+        <BeltStrip
+          color={g.beltColor}
+          color2={g.beltColor2}
+          isDan={g.isDan}
+          grade={g.grade}
+          size="lg"
+          title={g.grade}
+        />
         <div class="flex-1 min-w-0">
           <p class="text-sm text-surface-600-400">{g.section}</p>
           <div class="font-semibold leading-tight">{g.grade}</div>
@@ -144,6 +153,7 @@
       <li class="flex items-center gap-2 text-sm">
         <BeltStrip
           color={d?.beltColor ?? '#999'}
+          color2={d?.beltColor2}
           isDan={d?.isDan ?? false}
           grade={h.grade}
           size="sm"
@@ -155,9 +165,10 @@
         {/if}
         {#if !readonly}
           <button
-            class="ml-auto p-1 text-surface-600-400 hover:text-error-600-400"
+            class="btn-icon ml-auto text-surface-600-400 hover:text-error-600-400"
             title={$_('button.remove')}
             onclick={() => (confirmDeleteId = h.id)}
+            aria-label={$_('button.remove')}
           >
             <Fa icon={faTrash} size="xs" />
           </button>
@@ -177,7 +188,7 @@
     }}
   >
     <!-- svelte-ignore a11y_no_static_element_interactions -->
-    <div class="card modal-dialog" onclick={(e) => e.stopPropagation()}>
+    <div use:modalDialog class="card modal-dialog" onclick={(e) => e.stopPropagation()}>
       <h3>{$_('grades.addGrading')}</h3>
       <form class="space-y-4" onsubmit={(e) => e.preventDefault()}>
         <label class="label">
@@ -197,7 +208,7 @@
           </select>
         </label>
         <label class="label">
-          <span>{$_('grades.examDate')}</span>
+          <span>{$_('grades.examDate')} *</span>
           <input class="input" type="date" bind:value={form.examDate} required />
         </label>
         <label class="label">
@@ -227,26 +238,11 @@
 
 {#if confirmDeleteId !== null}
   {@const id = confirmDeleteId}
-  <!-- svelte-ignore a11y_no_static_element_interactions -->
-  <div
-    class="modal-overlay"
-    onclick={() => (confirmDeleteId = null)}
-    onkeydown={(e) => {
-      if (e.key === 'Escape') confirmDeleteId = null;
-    }}
-  >
-    <!-- svelte-ignore a11y_no_static_element_interactions -->
-    <div class="card modal-dialog" onclick={(e) => e.stopPropagation()}>
-      <h3>{$_('dialog.confirm.title')}</h3>
-      <p class="mb-4">{$_('grades.deleteConfirm')}</p>
-      <div class="flex justify-end gap-2">
-        <button class="btn preset-tonal-surface" onclick={() => (confirmDeleteId = null)}>
-          {$_('button.cancel')}
-        </button>
-        <button class="btn preset-filled-error-500" onclick={() => remove(id)}>
-          {$_('button.delete')}
-        </button>
-      </div>
-    </div>
-  </div>
+  <ConfirmDialog
+    title={$_('dialog.confirm.title')}
+    message={$_('grades.deleteConfirm')}
+    confirmLabel={$_('button.delete')}
+    oncancel={() => (confirmDeleteId = null)}
+    onconfirm={() => remove(id)}
+  />
 {/if}

@@ -49,7 +49,8 @@
         .eq('id', data.event.id);
 
       if (updateError) {
-        error = updateError.message;
+        console.error('Error updating event:', updateError);
+        error = $_('page.events.updateError');
         return;
       }
 
@@ -57,7 +58,8 @@
       await invalidateAll();
       await goto(`/dashboard/events/${data.event.id}`);
     } catch (e) {
-      error = e instanceof Error ? e.message : 'Unknown error occurred';
+      console.error('Error updating event:', e);
+      error = $_('page.events.updateError');
     } finally {
       loading = false;
     }
@@ -65,7 +67,12 @@
 </script>
 
 <div class="page-header-back">
-  <a href="/dashboard/events/{data.event.id}" class="btn preset-tonal-surface">
+  <a
+    href="/dashboard/events/{data.event.id}"
+    class="btn preset-tonal-surface"
+    title={$_('page.events.backToEvent')}
+    aria-label={$_('page.events.backToEvent')}
+  >
     <Fa icon={faArrowLeft} />
   </a>
   <h1>{$_('page.events.edit_event')}</h1>

@@ -47,13 +47,15 @@
         .single();
 
       if (insertError) {
-        error = insertError.message;
+        console.error('Error creating event:', insertError);
+        error = $_('page.events.createError');
         return;
       }
 
       await goto(`/dashboard/events/${data.id}`);
     } catch (e) {
-      error = e instanceof Error ? e.message : 'Unknown error occurred';
+      console.error('Error creating event:', e);
+      error = $_('page.events.createError');
     } finally {
       loading = false;
     }
@@ -61,7 +63,12 @@
 </script>
 
 <div class="page-header-back">
-  <a href="/dashboard/events" class="btn preset-tonal-surface">
+  <a
+    href="/dashboard/events"
+    class="btn preset-tonal-surface"
+    title={$_('page.events.backToList')}
+    aria-label={$_('page.events.backToList')}
+  >
     <Fa icon={faArrowLeft} />
   </a>
   <h1>{$_('page.events.create_event')}</h1>
