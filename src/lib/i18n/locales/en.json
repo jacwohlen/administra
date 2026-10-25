@@ -792,7 +792,7 @@
       "delete_success": "J+S course deleted",
       "replace_hint": "Note: the import in the NDS replaces all activities or attendance already recorded for the course, so the files always contain the whole course. Keep the order: persons, activities, attendance.",
       "step_persons": "Persons",
-      "step_persons_hint": "{participants} participants and {leaders} leaders. Only needed for persons not yet in the NDS course. The data (AHV number, address, ...) comes straight from Webling.",
+      "step_persons_hint": "{participants} participants and {leaders} leaders. Only needed for persons not yet in the NDS course. The data (AHV number, address …) comes straight from Webling.",
       "download_participants": "Participants (CSV)",
       "download_leaders": "Leaders (CSV)",
       "persons_admin_only": "Only admins can download the person export (it contains AHV numbers).",
@@ -809,7 +809,11 @@
       "warning_both_roles": "Recorded both as leader and as participant:",
       "warning_without_time": "“{title}” has no valid start or end time and is not exported.",
       "warning_too_short": "“{title}” lasts only {minutes} minutes and is not exported.",
-      "warning_shortened": "“{title}” lasts {minutes} minutes and is exported as {exported} minutes."
+      "warning_shortened": "“{title}” lasts {minutes} minutes and is exported as {exported} minutes.",
+      "saveError": "Error saving the J+S course",
+      "deleteError": "Error deleting the J+S course",
+      "backToList": "Back to J+S courses",
+      "backToCourse": "Back to J+S course"
     },
     "exams": {
       "title": "Gradings",

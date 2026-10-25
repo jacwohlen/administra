@@ -3,9 +3,8 @@
   import { goto, invalidateAll } from '$app/navigation';
   import { _ } from 'svelte-i18n';
   import Fa from 'svelte-fa';
-  import { faSave, faTrash } from '@fortawesome/free-solid-svg-icons';
+  import { faSave } from '@fortawesome/free-solid-svg-icons';
   import { supabaseClient } from '$lib/supabase';
-  import { toaster } from '$lib/toast';
   import type { Training } from '$lib/models';
   import { DEFAULT_DURATIONS, parseDurations, type JsCourse } from '$lib/jsExport';
 
@@ -26,7 +25,6 @@
   let selected = $state<number[]>((initial?.js_course_trainings ?? []).map((t) => t.training_id));
   let loading = $state(false);
   let error = $state('');
-  let showDeleteConfirm = $state(false);
 
   async function save() {
     const allowed = parseDurations(durations);
@@ -85,27 +83,11 @@
       await invalidateAll();
       await goto(`/dashboard/js/${saved.id}`);
     } catch (e) {
-      error = e instanceof Error ? e.message : String((e as { message?: string })?.message ?? e);
+      console.error('Error saving J+S course:', e);
+      error = $_('page.js.saveError');
     } finally {
       loading = false;
     }
-  }
-
-  async function handleDeleteResponse(confirmed: boolean) {
-    showDeleteConfirm = false;
-    if (!confirmed || !initial) return;
-    loading = true;
-    const { error: deleteError } = await supabaseClient
-      .from('js_courses')
-      .delete()
-      .eq('id', initial.id);
-    loading = false;
-    if (deleteError) {
-      toaster.error({ title: deleteError.message });
-      return;
-    }
-    toaster.success({ title: $_('page.js.delete_success') });
-    await goto('/dashboard/js', { invalidateAll: true });
   }
 </script>
 
@@ -207,17 +189,6 @@
   {/if}
 
   <div class="flex justify-end gap-4">
-    {#if initial}
-      <button
-        type="button"
-        class="btn preset-tonal-error mr-auto"
-        onclick={() => (showDeleteConfirm = true)}
-        disabled={loading}
-      >
-        <Fa icon={faTrash} />
-        <span>{$_('button.delete')}</span>
-      </button>
-    {/if}
     <a href={cancelHref} class="btn preset-tonal-surface">{$_('button.cancel')}</a>
     <button type="submit" class="btn preset-filled-primary-500" disabled={loading}>
       <Fa icon={faSave} />
@@ -225,28 +196,3 @@
     </button>
   </div>
 </form>
-
-{#if showDeleteConfirm && initial}
-  <!-- svelte-ignore a11y_no_static_element_interactions -->
-  <div
-    class="modal-overlay"
-    onclick={() => handleDeleteResponse(false)}
-    onkeydown={(e) => {
-      if (e.key === 'Escape') handleDeleteResponse(false);
-    }}
-  >
-    <!-- svelte-ignore a11y_no_static_element_interactions, a11y_click_events_have_key_events -->
-    <div class="card modal-dialog" onclick={(e) => e.stopPropagation()}>
-      <h3>{$_('page.js.delete_title')}</h3>
-      <p class="mb-4">{$_('page.js.delete_message', { values: { title: initial.title } })}</p>
-      <div class="flex justify-end gap-2">
-        <button class="btn preset-tonal-surface" onclick={() => handleDeleteResponse(false)}>
-          {$_('button.cancel')}
-        </button>
-        <button class="btn preset-filled-error-500" onclick={() => handleDeleteResponse(true)}>
-          {$_('button.delete')}
-        </button>
-      </div>
-    </div>
-  </div>
-{/if}

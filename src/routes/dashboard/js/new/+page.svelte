@@ -9,7 +9,12 @@
 </script>
 
 <div class="page-header-back">
-  <a href="/dashboard/js" class="btn preset-tonal-surface">
+  <a
+    href="/dashboard/js"
+    class="btn preset-tonal-surface"
+    title={$_('page.js.backToList')}
+    aria-label={$_('page.js.backToList')}
+  >
     <Fa icon={faArrowLeft} />
   </a>
   <h1>{$_('page.js.create_course')}</h1>

@@ -6,8 +6,13 @@
     faArrowLeft,
     faDownload,
     faPenToSquare,
+    faTrash,
     faTriangleExclamation
   } from '@fortawesome/free-solid-svg-icons';
+  import { goto } from '$app/navigation';
+  import { supabaseClient } from '$lib/supabase';
+  import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
+  import MoreMenu from '$lib/components/MoreMenu.svelte';
   import { toaster } from '$lib/toast';
   import {
     ACTIVITY_HEADER,
@@ -68,22 +73,76 @@
     }
   }
 
+  let showDeleteConfirm = $state(false);
+  let isDeleting = $state(false);
+
+  async function deleteCourse() {
+    showDeleteConfirm = false;
+    isDeleting = true;
+    const { error } = await supabaseClient.from('js_courses').delete().eq('id', course.id);
+    isDeleting = false;
+    if (error) {
+      console.error('Error deleting J+S course:', error);
+      toaster.error({ title: $_('page.js.deleteError') });
+      return;
+    }
+    toaster.success({ title: $_('page.js.delete_success') });
+    await goto('/dashboard/js', { invalidateAll: true });
+  }
+
   const names = (members: CourseMember[]) =>
     members.map((m) => `${m.lastname} ${m.firstname}`).join(', ');
 </script>
 
 <div class="page-header-back">
-  <a href="/dashboard/js" class="btn preset-tonal-surface">
+  <a
+    href="/dashboard/js"
+    class="btn preset-tonal-surface flex-shrink-0"
+    title={$_('page.js.backToList')}
+    aria-label={$_('page.js.backToList')}
+  >
     <Fa icon={faArrowLeft} />
   </a>
-  <h1 class="flex-1">{course.title}</h1>
+  <h1 class="flex-1 min-w-0 truncate">{course.title}</h1>
   {#if data.canWrite}
-    <a href="/dashboard/js/{course.id}/edit" class="btn preset-tonal-surface">
-      <Fa icon={faPenToSquare} />
-      <span class="hidden sm:inline">{$_('button.edit')}</span>
-    </a>
+    <div class="flex gap-2 flex-shrink-0">
+      <a
+        href="/dashboard/js/{course.id}/edit"
+        class="btn preset-tonal-surface"
+        title={$_('button.edit')}
+        aria-label={$_('button.edit')}
+      >
+        <Fa icon={faPenToSquare} />
+      </a>
+      <MoreMenu>
+        {#snippet items(close)}
+          <button
+            class="btn w-full justify-start text-error-600-400"
+            onclick={() => {
+              close();
+              showDeleteConfirm = true;
+            }}
+            disabled={isDeleting}
+          >
+            <Fa icon={faTrash} />
+            <span>{$_('button.delete')}</span>
+          </button>
+        {/snippet}
+      </MoreMenu>
+    </div>
   {/if}
 </div>
+
+{#if showDeleteConfirm}
+  <ConfirmDialog
+    title={$_('page.js.delete_title')}
+    message={$_('page.js.delete_message', { values: { title: course.title } })}
+    confirmLabel={$_('button.delete')}
+    busy={isDeleting}
+    oncancel={() => (showDeleteConfirm = false)}
+    onconfirm={deleteCourse}
+  />
+{/if}
 
 <dl class="card p-4 mb-4 grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-sm">
   <dt class="text-surface-600-400">{$_('page.js.form.course_number')}</dt>

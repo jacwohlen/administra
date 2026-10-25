@@ -792,7 +792,7 @@
       "delete_success": "J+S-Kurs gelöscht",
       "replace_hint": "Achtung: Der Import in der NDS ersetzt alle bereits erfassten Aktivitäten bzw. Anwesenheiten des Kurses. Die Dateien enthalten deshalb immer den ganzen Kurs. Reihenfolge einhalten: Personen, Aktivitäten, Anwesenheiten.",
       "step_persons": "Personen",
-      "step_persons_hint": "{participants} Teilnehmende und {leaders} Leitende. Nur nötig für Personen, die noch nicht im NDS-Kurs sind. Die Daten (AHV-Nr., Adresse, ...) kommen direkt aus Webling.",
+      "step_persons_hint": "{participants} Teilnehmende und {leaders} Leitende. Nur nötig für Personen, die noch nicht im NDS-Kurs sind. Die Daten (AHV-Nr., Adresse …) kommen direkt aus Webling.",
       "download_participants": "Teilnehmende (CSV)",
       "download_leaders": "Leitende (CSV)",
       "persons_admin_only": "Den Personen-Export (mit AHV-Nummern) können nur Admins herunterladen.",
@@ -809,7 +809,11 @@
       "warning_both_roles": "Als Leiter/in und als Teilnehmer/in eingetragen:",
       "warning_without_time": "«{title}» hat keine gültige Start- oder Endzeit und wird nicht exportiert.",
       "warning_too_short": "«{title}» dauert nur {minutes} Minuten und wird nicht exportiert.",
-      "warning_shortened": "«{title}» dauert {minutes} Minuten und wird mit {exported} Minuten exportiert."
+      "warning_shortened": "«{title}» dauert {minutes} Minuten und wird mit {exported} Minuten exportiert.",
+      "saveError": "Fehler beim Speichern des J+S-Kurses",
+      "deleteError": "Fehler beim Löschen des J+S-Kurses",
+      "backToList": "Zurück zu den J+S-Kursen",
+      "backToCourse": "Zurück zum J+S-Kurs"
     },
     "exams": {
       "title": "Q-Prüfungen",

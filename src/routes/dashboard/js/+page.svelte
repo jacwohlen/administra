@@ -3,7 +3,7 @@
   import Fa from 'svelte-fa';
   import {
     faCalendarDays,
-    faGripLines,
+    faChevronRight,
     faList,
     faLocationDot,
     faPlus
@@ -27,43 +27,38 @@
 <p class="text-sm text-surface-600-400 mb-4">{$_('page.js.intro')}</p>
 
 {#if data.courses.length === 0}
-  <div class="empty-state">
-    <p class="text-surface-600-400">{$_('page.js.no_courses')}</p>
-  </div>
+  <p class="empty-state">{$_('page.js.no_courses')}</p>
 {:else}
   <ul class="flex flex-col gap-2">
     {#each data.courses as course (course.id)}
-      <li class="list-item">
-        <span class="list-item-content">
-          <dt class="font-bold truncate">{course.title}</dt>
-          <dd class="flex flex-wrap items-center gap-2 text-sm text-surface-600-400">
-            <span class="meta-item">
-              <Fa icon={faCalendarDays} size="sm" />
-              {formatDate(course.date_from)} – {formatDate(course.date_to)}
-            </span>
-            {#if course.location}
-              <span class="meta-item truncate">
-                <Fa icon={faLocationDot} size="sm" />
-                {course.location}
+      <li>
+        <a href="/dashboard/js/{course.id}" class="list-item list-item-link">
+          <span class="list-item-content">
+            <dt class="font-bold truncate">{course.title}</dt>
+            <dd class="flex flex-wrap items-center gap-2 text-sm text-surface-600-400">
+              <span class="meta-item">
+                <Fa icon={faCalendarDays} size="sm" />
+                {formatDate(course.date_from)} – {formatDate(course.date_to)}
               </span>
-            {/if}
-            <span class="meta-item">
-              <Fa icon={faList} size="sm" />
-              {$_('page.js.training_count', {
-                values: { count: course.js_course_trainings?.length ?? 0 }
-              })}
-            </span>
-            {#if course.course_number}
-              <span class="meta-item">#{course.course_number}</span>
-            {/if}
-          </dd>
-        </span>
-        <span class="flex-none">
-          <a class="btn preset-tonal-primary" href="/dashboard/js/{course.id}">
-            <Fa icon={faGripLines} />
-            <span class="hidden sm:inline">{$_('button.view')}</span>
-          </a>
-        </span>
+              {#if course.location}
+                <span class="meta-item truncate">
+                  <Fa icon={faLocationDot} size="sm" />
+                  {course.location}
+                </span>
+              {/if}
+              <span class="meta-item">
+                <Fa icon={faList} size="sm" />
+                {$_('page.js.training_count', {
+                  values: { count: course.js_course_trainings?.length ?? 0 }
+                })}
+              </span>
+              {#if course.course_number}
+                <span class="meta-item">#{course.course_number}</span>
+              {/if}
+            </dd>
+          </span>
+          <Fa icon={faChevronRight} class="text-surface-400-600 flex-none" />
+        </a>
       </li>
     {/each}
   </ul>

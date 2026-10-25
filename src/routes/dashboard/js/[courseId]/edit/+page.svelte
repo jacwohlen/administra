@@ -9,7 +9,12 @@
 </script>
 
 <div class="page-header-back">
-  <a href="/dashboard/js/{data.course.id}" class="btn preset-tonal-surface">
+  <a
+    href="/dashboard/js/{data.course.id}"
+    class="btn preset-tonal-surface"
+    title={$_('page.js.backToCourse')}
+    aria-label={$_('page.js.backToCourse')}
+  >
     <Fa icon={faArrowLeft} />
   </a>
   <h1>{$_('page.js.edit_course')}</h1>
