@@ -38,6 +38,56 @@ and date there, and the target page opens the assistant right away
 4. **Übernehmen**: only now is anything written, by the browser, through
    the same tables and with the same permissions as the manual forms.
 
+## Per kind
+
+**Judo-Pass** (member page, _Graduierungen_). Each grading of the pass is
+mapped to the section's grade ladder: the model's grade if it is on the
+ladder, else the number or belt colour as written ("5 Kyu", "Gelbgurt",
+"weiss-gelb" is _5.5 Kyu_, "Shodan"); anything unclear is picked by hand.
+Compared with the member's gradings (one per section and grade): _Neu_ is
+saved by default, _Schon erfasst_ is skipped, _Abweichend_ (recorded with
+another date) is only corrected when ticked. A date the pass only shows in
+part (2015) has to be completed. Warnings for a date before the birthday,
+an unusual order of the grades, and a Dan grade (it becomes the current
+belt and awards the _Schwarzgurt_ badge). When the name or birthday printed
+in the pass does not fit the member, saving needs an explicit "yes, this is
+X's pass". The member record itself is never changed: names and birthdays
+come from Webling. Note: _Judo-Pass_ plus the examiner.
+
+**Teilnehmerliste** (check-in page). A list of one session goes to the
+page's date; a grid with several dates gets one column per date, each
+checked: impossible and future dates are left out, a date on another
+weekday than the training only when ticked, a cancelled date is flagged.
+Names are matched against the club's members, the training's roster first;
+a clear match is preselected, a probable one must be confirmed, the rest is
+picked, created as a new member (marked _new_, like on the check-in page)
+or left out. Former members and trial candidates not on the roster always
+need a confirmation. People not on the roster are added to it. Existing
+check-ins are never removed, and a different role is only overwritten when
+ticked.
+
+**Trainingsplan** (_Trainingsplanung → Trainings & Ferien_). Every session
+is checked against the planned trainings (right weekday) and compared with
+the plan: _Neu_ and sessions that only fill empty fields are saved,
+_Schon erfasst_ is skipped, sessions that would replace a planned trainer,
+topic, note or cancellation only when ticked. Leaders are matched to
+members like on the sheet import; an unmatched name stays in the note and
+the trainer stays open. Holidays can be taken over with or without _Dojo
+zu_; ones already recorded are marked.
+
+**Lektionsplan** (check-in page, _Lektionsplan_). The plan is turned into
+the editor's format (`## Aufwärmen`, `- Übung`) and can be edited before
+saving. An existing text plan is replaced (default) or extended; an
+attached file is only replaced after an explicit tick, and deleted from
+storage only once the text is saved. A document with another date than the
+page needs a tick too.
+
+**Termine** (_Anlässe_). One event per date, with section, times and place;
+multi-day events are saved on their first day with "bis …" in the
+description (events have no end date). Dates similar to an existing event
+within a day (also ones synced from Webling) are marked _Doppelt_ and not
+created unless ticked.
+
 ## Safety
 
 The assistant is built so that the model cannot do anything but propose
