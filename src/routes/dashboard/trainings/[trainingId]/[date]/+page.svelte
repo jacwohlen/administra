@@ -15,7 +15,8 @@
     faClipboardList,
     faUsers,
     faUserCheck,
-    faChalkboardTeacher
+    faChalkboardTeacher,
+    faCalendarWeek
   } from '@fortawesome/free-solid-svg-icons';
   import dayjs from 'dayjs';
   import { goto, preloadData } from '$app/navigation';
@@ -26,6 +27,7 @@
   import { flip } from 'svelte/animate';
   import { quintInOut } from 'svelte/easing';
   import LessonPlan from './LessonPlan.svelte';
+  import { isCancelled } from '$lib/trainingPlanUtils';
 
   let { data }: { data: PageData } = $props();
   let searchterm = $state('');
@@ -198,6 +200,9 @@
     }
   };
 
+  let planCancelled = $derived(data.plan ? isCancelled(data.plan.session, data.plan.break) : false);
+  let planTrainer = $derived(data.plan?.session?.trainer);
+
   let formattedDate = $derived(dayjs(data.date, 'YYYY-MM-DD').format('DD. MMMM YYYY'));
 </script>
 
@@ -242,6 +247,55 @@
     <Fa icon={faChevronRight} />
   </button>
 </div>
+
+<!-- Trainingsplanung: the TK's plan for this date -->
+{#if data.plan && (planCancelled || data.plan.session?.topic || data.plan.session?.trainer_id != null || data.plan.session?.notes)}
+  <a
+    href="/dashboard/training-plan?year={data.date.slice(0, 4)}"
+    class="card border flex items-center gap-3 px-3 py-2.5 mb-4 transition-colors {planCancelled
+      ? 'preset-tonal-warning border-warning-500/30'
+      : 'border-surface-200-800 hover:bg-surface-100-900'}"
+  >
+    <div
+      class="entity-badge {planCancelled
+        ? 'bg-warning-500/20! text-warning-800-200'
+        : 'text-primary-600-400'}"
+    >
+      <Fa icon={faCalendarWeek} size="lg" />
+    </div>
+    <div class="flex-1 min-w-0 text-sm">
+      {#if planCancelled}
+        <p class="font-semibold">
+          {data.plan.session?.cancelled
+            ? $_('page.trainingPlan.checkin.cancelled')
+            : $_('page.trainingPlan.checkin.cancelledBreak', {
+                values: { title: data.plan.break?.title ?? '' }
+              })}
+        </p>
+      {:else}
+        {#if data.plan.session?.topic}
+          <p>
+            <span class="font-semibold">{$_('page.trainingPlan.topic')}:</span>
+            {data.plan.session.topic}
+          </p>
+        {/if}
+        <p>
+          <span class="font-semibold">{$_('page.trainingPlan.trainer')}:</span>
+          {planTrainer
+            ? `${planTrainer.firstname} ${planTrainer.lastname}`
+            : $_('page.trainingPlan.trainerOpen')}
+        </p>
+      {/if}
+      {#if data.plan.session?.notes}
+        <p class="text-surface-600-400">{data.plan.session.notes}</p>
+      {/if}
+    </div>
+    <Fa
+      icon={faChevronRight}
+      class="flex-none {planCancelled ? 'opacity-60' : 'text-surface-400-600'}"
+    />
+  </a>
+{/if}
 
 <!-- View toggle tabs -->
 <div class="flex rounded-lg overflow-hidden border border-surface-300-700 mb-4">

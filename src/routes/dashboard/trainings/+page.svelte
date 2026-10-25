@@ -1,7 +1,7 @@
 <script lang="ts">
   import type { PageData } from './$types';
   import Fa from 'svelte-fa';
-  import { faChevronRight, faPlus } from '@fortawesome/free-solid-svg-icons';
+  import { faCalendarWeek, faChevronRight, faPlus } from '@fortawesome/free-solid-svg-icons';
   import { _ } from 'svelte-i18n';
 
   let { data }: { data: PageData } = $props();
@@ -16,6 +16,21 @@
     </a>
   {/if}
 </div>
+
+<a
+  href="/dashboard/training-plan"
+  class="card border border-surface-200-800 flex items-center gap-3 px-3 py-2.5 mb-2 hover:bg-surface-100-900 transition-colors"
+>
+  <div class="entity-badge text-primary-600-400">
+    <Fa icon={faCalendarWeek} size="lg" />
+  </div>
+  <div class="flex-1 min-w-0">
+    <p class="font-semibold truncate">{$_('page.trainingPlan.title')}</p>
+    <p class="text-sm text-surface-600-400 truncate">{$_('page.trainingPlan.short')}</p>
+  </div>
+  <Fa icon={faChevronRight} class="text-surface-400-600 flex-none" />
+</a>
+
 {#if data.trainings.length === 0}
   <p class="empty-state">{$_('page.trainings.empty')}</p>
 {/if}

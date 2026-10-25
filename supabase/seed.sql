@@ -14425,6 +14425,44 @@ SET status = 'approved', role = 'viewer', exam_role = 'examiner', approved_at = 
 WHERE user_id = 'c3d4e5f6-a7b8-9012-cdef-123456789012';
 
 --
+-- Trainingsplanung (see docs/TRAINING_PLAN.md): the adult Judo trainings,
+-- Monday rotating between two trainers, Friday only every other week
+--
+INSERT INTO public.training_plan_trainings (training_id) VALUES (27), (23), (26);
+
+-- School holidays: the adults train on; Christmas and public holidays: dojo closed
+INSERT INTO public.training_plan_breaks (title, date_from, date_to, cancels_training) VALUES
+  ('Weihnachten', '2026-12-19', '2027-01-03', true),
+  ('Sportferien', '2027-01-23', '2027-02-07', false),
+  ('Frühlingsferien', '2027-04-03', '2027-04-18', false),
+  ('Auffahrt', '2027-05-06', '2027-05-06', true),
+  ('Brückentag nach Auffahrt', '2027-05-07', '2027-05-07', true);
+
+-- The next eight Mondays and Fridays from today
+INSERT INTO public.training_plan_sessions (training_id, date, trainer_id, topic, cancelled)
+SELECT 27, to_char(d, 'YYYY-MM-DD'),
+       CASE WHEN n % 2 = 0 THEN 3384 ELSE 3452 END,
+       (ARRAY['Uchi-mata', 'Uchi-mata', 'Ne-waza: Befreiungen', 'Ne-waza: Befreiungen',
+              'Randori', 'Kombinationen', 'Kombinationen', 'Wettkampfvorbereitung'])[n + 1],
+       NULL
+FROM (
+  SELECT d, (row_number() OVER (ORDER BY d) - 1)::int AS n
+  FROM generate_series(current_date, current_date + 55, interval '1 day') AS d
+  WHERE extract(isodow FROM d) = 1
+) mondays;
+
+INSERT INTO public.training_plan_sessions (training_id, date, trainer_id, topic, cancelled)
+SELECT 23, to_char(d, 'YYYY-MM-DD'),
+       CASE WHEN n % 2 = 0 THEN 3435 END,
+       CASE WHEN n % 2 = 0 THEN 'Technik: Ashi-waza' END,
+       CASE WHEN n % 2 = 1 THEN true END
+FROM (
+  SELECT d, (row_number() OVER (ORDER BY d) - 1)::int AS n
+  FROM generate_series(current_date, current_date + 55, interval '1 day') AS d
+  WHERE extract(isodow FROM d) = 5
+) fridays;
+
+--
 -- Compute badges for all seeded members
 --
 RESET app.skip_badge_refresh;

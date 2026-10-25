@@ -27,6 +27,9 @@ export function canManageExams(profile: ExamAccess): boolean {
   return isStaff(profile) && (profile!.role === 'admin' || profile!.exam_role === 'manager');
 }
 
+/** The TK also keeps the training plan (training_plan_* policies use is_exam_manager()). */
+export const canPlanTrainings = canManageExams;
+
 /** Examiners score on the sheet; mirrors is_examiner() in the database. */
 export function canGrade(profile: ExamAccess): boolean {
   return isStaff(profile) && (profile!.role === 'admin' || profile!.exam_role != null);
