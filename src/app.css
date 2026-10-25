@@ -166,6 +166,11 @@ h4,
   max-width: 32rem;
 }
 
+/* Review tables, e.g. the Daten-Assistent */
+.modal-dialog-xl {
+  max-width: 56rem;
+}
+
 @media (min-width: 640px) {
   .modal-dialog {
     padding: 1.5rem;

@@ -1331,5 +1331,89 @@
     "lastDaysAgo": "Zuletzt vor {n} Tagen",
     "last30": "{n, plural, one {# Training} other {# Trainings}} in den letzten 30 Tagen",
     "cell": "{date}: {n, plural, =0 {kein Training} one {# Training} other {# Trainings}}"
+  },
+  "assistant": {
+    "button": "Mit KI erfassen",
+    "title": "Daten-Assistent",
+    "chooseFiles": "Fotos oder PDF wählen",
+    "takePhoto": "Foto aufnehmen",
+    "preparing": "Datei wird vorbereitet …",
+    "pasteText": "Oder Text einfügen",
+    "pasteTextPlaceholder": "Text oder Tabelle hier einfügen, z. B. aus einer E-Mail oder aus Excel",
+    "hint": "Hinweis für die Auswertung (optional)",
+    "hintPlaceholder": "z. B. «Die zweite Spalte ist der Leiter»",
+    "privacy": "Fotos und Text werden zur Auswertung an Claude (Anthropic) gesendet, ohne Mitgliederdaten aus Administra. Gespeichert wird erst, was du im nächsten Schritt prüfst und übernimmst.",
+    "analyze": "Auswerten",
+    "working": "Claude liest die Unterlagen …",
+    "workingSeconds": "{seconds} s – das dauert meist 10 bis 40 Sekunden.",
+    "remaining": "Heute noch {count, plural, one {# Auswertung} other {# Auswertungen}}",
+    "modelWarnings": "Hinweise zur Vorlage",
+    "kinds": {
+      "grades": {
+        "title": "Judo-Pass einlesen",
+        "hint": "Fotografiere die Seiten mit den Prüfungen (Kyu und Dan). Grade und Daten werden erkannt; du prüfst sie, bevor etwas gespeichert wird.",
+        "description": "Kyu- und Dan-Prüfungen aus dem Judo-Pass eines Mitglieds übernehmen."
+      },
+      "attendance": {
+        "title": "Teilnehmerliste einlesen",
+        "hint": "Foto oder Text der Anwesenheitsliste: für ein einzelnes Training oder eine Tabelle über mehrere Daten.",
+        "description": "Anwesenheiten aus einer Papier- oder Excel-Liste eines Trainings erfassen."
+      },
+      "training_plan": {
+        "title": "Trainingsplan einlesen",
+        "hint": "Foto, PDF oder Tabelle des Plans: Datum, Training, Leiter, Thema, Ausfälle und Ferien. Grosse Pläne am besten monatsweise.",
+        "description": "Leiter, Themen, Ausfälle und Ferien aus einem bestehenden Plan übernehmen."
+      },
+      "lesson_plan": {
+        "title": "Lektionsplan einlesen",
+        "hint": "Foto oder Text des Lektionsplans für dieses Training.",
+        "description": "Einen Lektionsplan (Aufwärmen, Hauptteil, Ausklang) für ein Training und Datum erstellen."
+      },
+      "events": {
+        "title": "Termine einlesen",
+        "hint": "Foto, PDF oder Text mit Terminen: Wettkämpfe, Kurse, Lager, Anlässe.",
+        "description": "Wettkämpfe, Kurse und Anlässe aus einer Liste oder Ausschreibung übernehmen."
+      }
+    },
+    "errors": {
+      "not_configured": "Der Assistent ist auf dieser Installation nicht eingerichtet.",
+      "unauthorized": "Bitte melde dich erneut an.",
+      "forbidden": "Dafür fehlt dir die Berechtigung.",
+      "quota": "Das Tageslimit für Auswertungen ist erreicht. Morgen geht es weiter.",
+      "too_large": "Die Dateien sind zu gross. Zusammen höchstens 3.5 MB.",
+      "too_many_files": "Höchstens 4 Fotos oder PDFs pro Auswertung.",
+      "invalid_request": "Die Anfrage war unvollständig. Bitte die Dateien prüfen und nochmals versuchen.",
+      "not_found": "Die zugehörigen Daten wurden nicht gefunden, z. B. kein Training im Plan.",
+      "refused": "Claude hat die Auswertung abgelehnt. Versuche es mit einem anderen Ausschnitt.",
+      "incomplete": "Die Vorlage ist zu umfangreich. Bitte in kleinere Teile aufteilen, z. B. einen Monat.",
+      "invalid_output": "Die Antwort war unbrauchbar. Bitte nochmals versuchen.",
+      "timeout": "Die Auswertung hat zu lange gedauert. Versuche es mit weniger Seiten oder einem kleineren Ausschnitt.",
+      "busy": "Der KI-Dienst ist gerade ausgelastet. Bitte in einer Minute nochmals versuchen.",
+      "failed": "Die Auswertung ist fehlgeschlagen. Bitte nochmals versuchen.",
+      "network": "Keine Verbindung. Bitte die Internetverbindung prüfen.",
+      "heic": "HEIC-Fotos werden nicht unterstützt. Bitte als JPEG speichern oder direkt mit «Foto aufnehmen» fotografieren.",
+      "unsupported_file": "Dieser Dateityp wird nicht unterstützt. Möglich sind Fotos (JPEG, PNG, WebP), PDF und Text- oder CSV-Dateien.",
+      "unreadable": "Die Datei konnte nicht gelesen werden."
+    },
+    "review": {
+      "apply": "{count, plural, one {# Eintrag übernehmen} other {# Einträge übernehmen}}",
+      "applying": "Wird gespeichert …",
+      "nothing": "Nichts zu übernehmen.",
+      "back": "Zurück zum Upload",
+      "uncertain": "Unsicher – bitte prüfen",
+      "status": {
+        "new": "Neu",
+        "exists": "Schon erfasst",
+        "changed": "Abweichend",
+        "invalid": "Unvollständig",
+        "duplicate": "Doppelt"
+      },
+      "done": "{count, plural, one {# Eintrag gespeichert} other {# Einträge gespeichert}}",
+      "partial": "{saved} gespeichert, {failed} fehlgeschlagen",
+      "error": "Speichern fehlgeschlagen",
+      "pickMember": "Mitglied wählen …",
+      "noMatch": "Kein passendes Mitglied gefunden",
+      "skip": "Nicht übernehmen"
+    }
   }
 }

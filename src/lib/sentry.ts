@@ -12,8 +12,20 @@ export function sentryOptions(dsn: string | undefined, deployContext: string | u
   return {
     dsn: dsn || undefined,
     environment: sentryEnvironment(deployContext),
-    // No IP addresses, cookies or request bodies
-    sendDefaultPii: false,
+    // No IP addresses, cookies or request bodies. Sentry 11 dropped
+    // `sendDefaultPii` and collects all of this unless told otherwise; the
+    // Daten-Assistent's uploads and the model's answers (names, birthdays)
+    // must never end up in a report, neither as bodies, AI span data nor
+    // local variables of a stack frame.
+    dataCollection: {
+      userInfo: false,
+      cookies: false,
+      httpBodies: [],
+      genAI: { inputs: false, outputs: false },
+      databaseQueryData: false,
+      queues: false,
+      stackFrameVariables: false
+    },
     beforeSend: scrubEvent,
     // Not sent today (no tracesSampleRate), but scrubbed should tracing be
     // turned on: transaction names and spans contain URLs too.

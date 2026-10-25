@@ -15,7 +15,12 @@ Without `PUBLIC_SENTRY_DSN` nothing is sent (local development, tests, CI).
 
 ## Privacy
 
-- `sendDefaultPii: false`: no IP addresses, cookies or request bodies.
+- `dataCollection` in `src/lib/sentry.ts`: no IP addresses, cookies,
+  request or response bodies, AI prompts and answers, database query data
+  or local variables of stack frames. (Sentry 11 replaced `sendDefaultPii`
+  with this option and collects all of it by default.) This matters for the
+  Daten-Assistent (docs/AI_ASSISTANT.md), whose uploads and answers hold
+  names and birthdays.
 - `src/lib/sentryScrub.ts` removes from every report, before it leaves the
   app: values of sensitive query parameters (`?code=` from the OAuth
   callback, `?email=` on the login page, OAuth and provider tokens), the
