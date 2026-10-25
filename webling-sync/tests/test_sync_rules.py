@@ -37,10 +37,17 @@ def test_member_row_leaves_email_out_when_webling_has_none(email):
     assert 'email' not in member_row(1, {**PROPERTIES, 'E-Mail': email}, [])
 
 
-def test_member_row_empty_names():
-    row = member_row(1, {**PROPERTIES, 'Vorname': None, 'Name': None}, [])
+def test_member_row_empty_first_name():
+    row = member_row(1, {**PROPERTIES, 'Vorname': None, 'Name': 'Muster'}, [])
     assert row['firstname'] == ''
-    assert row['lastname'] == ''
+    assert row['lastname'] == 'Muster'
+
+
+@pytest.mark.parametrize('lastname', [None, '', '   '])
+def test_member_row_empty_last_name_raises(lastname):
+    # Would blank the member's name in Administra
+    with pytest.raises(ValueError):
+        member_row(1, {**PROPERTIES, 'Name': lastname}, [])
 
 
 def test_member_row_missing_property_raises():

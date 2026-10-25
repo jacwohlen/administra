@@ -40,9 +40,13 @@ Fetches calendar events from Webling calendars and syncs them to Administra. Onl
 
 **Registrations:** for events from today on (Europe/Zurich), members confirmed
 in Webling get a registration, and registrations the sync added earlier are
-removed once Webling no longer lists them. Everything entered in Administra is
+removed once the member is no longer confirmed in Webling (not listed, or
+listed with another state such as declined), as long as they are still
+`registered` and have no attendance. Everything entered in Administra is
 kept: registrations and walk-ins added in the app, attendance and its status,
-and the registration date of existing rows. The sync's own rows are the ones
+and the registration date of existing rows. Removing a registration in
+Administra that is still confirmed in Webling does not stick: the next run adds
+it again, so cancel it in Webling. The sync's own rows are the ones
 whose notes start with `Imported from Webling`. If Webling's participant list
 cannot be read, the event's registrations stay as they are. Registrations of
 past events are never touched.

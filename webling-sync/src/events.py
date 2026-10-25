@@ -11,8 +11,9 @@ Features:
 - Fetches participants for each event using the Webling participant query API
 - Only syncs participants with "confirmed" state (property 594 = "confirmed")
 - For events today/future (Europe/Zurich): adds members confirmed in Webling and
-  removes registrations the sync added earlier once Webling no longer lists
-  them; registrations, walk-ins and attendance entered in the app are kept
+  removes registrations the sync added earlier once the member is no longer
+  confirmed in Webling (not listed, or another state); registrations, walk-ins
+  and attendance entered in the app are kept
 - For past events: preserves historical data, skips participant sync
 - Supports filtering by calendar ID or name
 - Skips events from previous years
@@ -190,10 +191,17 @@ def get_event_participants(event_id):
         return None
 
     try:
-        participant_ids = response.json().get('objects', [])
+        body = response.json()
     except Exception as e:
         # Never the raw response: it holds participant data
         record_error(f"      Error parsing participant response for event {event_id}: {type(e).__name__}")
+        return None
+    # Anything but a list of ids is an unreadable answer, not an empty event
+    participant_ids = body.get('objects') if isinstance(body, dict) else None
+    if not isinstance(participant_ids, list):
+        # Keys only: the values may hold personal data
+        keys = sorted(body.keys()) if isinstance(body, dict) else None
+        record_error(f"      Unexpected participant response for event {event_id}: {type(body).__name__} {keys}")
         return None
     print(f"      Found {len(participant_ids)} participant IDs")
 
@@ -540,7 +548,7 @@ def print_usage():
     print("  - Syncs events from Webling calendars to Administra")
     print("  - Fetches participants for each event and syncs their registrations")
     print("  - Only syncs participants with 'confirmed' state")
-    print("  - For events today/future: adds confirmed registrations, removes the ones Webling dropped")
+    print("  - For events today/future: adds confirmed registrations, removes the ones no longer confirmed")
     print("    (registrations and attendance entered in Administra are kept)")
     print("  - For past events: preserves historical data")
     print("  - Skips events from previous years (current year and future only)")

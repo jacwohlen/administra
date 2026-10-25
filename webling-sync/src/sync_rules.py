@@ -25,13 +25,17 @@ def member_row(member_id, properties, labels):
     """The members row for one Webling member.
 
     A missing property raises KeyError: a field renamed in Webling must fail
-    the member, not overwrite every name with an empty value. An empty value
-    becomes '' (names) or None.
+    the member, not overwrite every name with an empty value. An empty last
+    name fails the member too (ValueError); an empty first name becomes ''.
     """
+    firstname = (properties['Vorname'] or '').strip()
+    lastname = (properties['Name'] or '').strip()
+    if not lastname:
+        raise ValueError('member without a last name')
     row = {
         'id': member_id,
-        'firstname': (properties['Vorname'] or '').strip(),
-        'lastname': (properties['Name'] or '').strip(),
+        'firstname': firstname,
+        'lastname': lastname,
         'birthday': properties['Geburtstag'],
         'mobile': properties['Mobile'],
         'labels': labels,

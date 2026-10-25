@@ -85,7 +85,7 @@ def test_participants_are_synced_without_touching_app_rows(events, monkeypatch):
 
     events.sync_event_participants(42, [webling_participant(1), webling_participant(5)])
 
-    # Only member 2: a Webling registration Webling dropped. Member 3 attended,
+    # Only member 2: a Webling registration no longer confirmed. Member 3 attended,
     # member 4 was added in the app.
     assert len(fake.deleted) == 1
     url = fake.deleted[0]
@@ -150,6 +150,14 @@ def test_failed_participant_fetch_is_none_not_empty(events, monkeypatch):
 
     monkeypatch.setattr(events.session, 'post', lambda url, data=None: Response(200, {'objects': []}))
     assert events.get_event_participants(42) == []
+
+
+@pytest.mark.parametrize('body', [{'error': 'x'}, {'objects': None}, ['objects']])
+def test_unexpected_participant_answer_is_none(events, monkeypatch, body):
+    # A 200 without a list of ids must not look like an event without participants
+    monkeypatch.setattr(events.session, 'post', lambda url, data=None: Response(200, body))
+    assert events.get_event_participants(42) is None
+    assert events.errors
 
 
 def test_failed_bulk_fetch_is_none(events, monkeypatch):
