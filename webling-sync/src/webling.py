@@ -8,7 +8,8 @@ import re
 # Webling
 import requests
 from safe_log import WeblingError, postgrest_error, webling_check, webling_get
-from sync_rules import member_row, missing_table, plan_unlinks
+from datetime import datetime, timezone
+from sync_rules import WEBLING_ID_MAX, WEBLING_ID_MIN, member_row, missing_table, plan_gone
 WEBLING_API_KEY=os.environ.get('WEBLING_API_KEY')
 WEBLING_DOMAIN=os.environ.get('WEBLING_DOMAIN')
 
@@ -139,73 +140,111 @@ def sync_members():
     else:
       failed += 1
   print(f"Synced {len(members) - failed} of {len(members)} members")
-  if not write_links(synced_ids):
+  now = datetime.now(timezone.utc).isoformat()
+  if not write_links(synced_ids, now):
     failed += 1
   # Every id Webling returned counts as still there, also members that failed above
-  elif not prune_links({e['id'] for e in members}):
+  elif not mark_gone({e['id'] for e in members}, now):
     failed += 1
   return failed
 
-def write_links(member_ids):
+def write_links(member_ids, now):
   """Record that these members come from Webling (member_links).
 
   Administra shows their name, birthday, contact and groups as maintained in
-  Webling and keeps them read-only. One request for all members; existing
-  links stay as they are.
+  Webling and keeps them read-only. One request for all members; a member
+  that was gone and is back in Webling is revived.
   """
   if not member_ids:
     return True
-  rows = [{'connection': 'webling', 'external_id': str(i), 'member_id': i} for i in member_ids]
+  rows = [
+      {'connection': 'webling', 'external_id': str(i), 'member_id': i,
+       'last_seen_at': now, 'gone_at': None}
+      for i in member_ids
+  ]
   headers = {
       **AUTH_HEADERS,
       'Content-Type': 'application/json',
-      'Prefer': 'resolution=ignore-duplicates,return=minimal'
+      'Prefer': 'resolution=merge-duplicates,return=minimal'
   }
   response = requests.post(f"{SUPABASE_URL}/rest/v1/member_links", headers=headers, data=json.dumps(rows))
   if response.status_code in [200, 201, 204]:
     print(f"Linked {len(rows)} members to Webling")
     return True
-  try:
-    body = response.json()
-  except ValueError:
-    body = None
-  if missing_table(response.status_code, body):
+  if is_missing_table(response):
     # Not an error: the migration with member_links has not reached this database yet
     print("Warning: member_links does not exist here yet, links skipped")
     return True
   print(f"Error: member links: {postgrest_error(response)}")
   return False
 
-def prune_links(webling_ids):
-  """Unlink members Webling no longer has, so staff can edit or delete them again."""
-  response = requests.get(f"{SUPABASE_URL}/rest/v1/member_links?connection=eq.webling&select=external_id", headers=HEADERS)
-  if response.status_code != 200:
-    try:
-      body = response.json()
-    except ValueError:
-      body = None
-    if missing_table(response.status_code, body):
-      return True
-    print(f"Error: reading member links: {postgrest_error(response)}")
+def is_missing_table(response):
+  try:
+    body = response.json()
+  except ValueError:
+    body = None
+  return missing_table(response.status_code, body)
+
+def get_all(path):
+  """Every row of a PostgREST query, page by page.
+
+  Returns (rows, state): state 'ok', 'missing' (table not there yet) or
+  'error' (printed).
+  """
+  rows = []
+  page = 1000
+  while True:
+    response = requests.get(f"{SUPABASE_URL}/rest/v1/{path}&limit={page}&offset={len(rows)}", headers=HEADERS)
+    if response.status_code != 200:
+      if is_missing_table(response):
+        return None, 'missing'
+      print(f"Error: reading {path.split('?')[0]}: {postgrest_error(response)}")
+      return None, 'error'
+    batch = response.json()
+    rows.extend(batch)
+    if len(batch) < page:
+      return rows, 'ok'
+
+def mark_gone(webling_ids, now):
+  """Record which members Webling no longer has: they have left (membership_status
+  'left') and are editable and deletable in Administra again."""
+  links, state = get_all("member_links?connection=eq.webling&select=external_id,gone_at&order=external_id")
+  if state != 'ok':
+    # A missing table (migration not here yet) is not an error
+    return state == 'missing'
+  in_range, state = get_all(f"members?select=id&id=gte.{WEBLING_ID_MIN}&id=lt.{WEBLING_ID_MAX}&order=id")
+  if state != 'ok':
     return False
-  linked = [row['external_id'] for row in response.json()]
-  stale, too_many = plan_unlinks(linked, webling_ids)
-  if not stale:
-    return True
+  to_mark, to_adopt, too_many = plan_gone(links, [m['id'] for m in in_range], webling_ids)
   if too_many:
     # Counts only: ids of people who left are not for the public log
-    print(f"Error: {len(stale)} of {len(linked)} linked members are no longer in Webling; "
-          "too many to unlink unattended, check Webling and unlink by hand")
+    active = sum(1 for link in links if link.get('gone_at') is None)
+    print(f"Error: {len(to_mark)} of {active} members still in Webling would be "
+          "marked as gone; too many at once, check Webling first")
     return False
-  ids = ','.join(stale)
-  response = requests.delete(
-      f"{SUPABASE_URL}/rest/v1/member_links?connection=eq.webling&external_id=in.({ids})",
-      headers=HEADERS)
-  if response.status_code in [200, 204]:
-    print(f"Unlinked {len(stale)} members no longer in Webling")
-    return True
-  print(f"Error: unlinking members: {postgrest_error(response)}")
-  return False
+  ok = True
+  if to_mark:
+    ids = ','.join(to_mark)
+    response = requests.patch(
+        f"{SUPABASE_URL}/rest/v1/member_links?connection=eq.webling&external_id=in.({ids})",
+        headers=HEADERS, data=json.dumps({'gone_at': now}))
+    if response.status_code in [200, 204]:
+      print(f"{len(to_mark)} members are no longer in Webling")
+    else:
+      print(f"Error: marking members as gone: {postgrest_error(response)}")
+      ok = False
+  if to_adopt:
+    rows = [{'connection': 'webling', 'external_id': str(i), 'member_id': i, 'gone_at': now}
+            for i in to_adopt]
+    headers = {**AUTH_HEADERS, 'Content-Type': 'application/json',
+               'Prefer': 'resolution=ignore-duplicates,return=minimal'}
+    response = requests.post(f"{SUPABASE_URL}/rest/v1/member_links", headers=headers, data=json.dumps(rows))
+    if response.status_code in [200, 201, 204]:
+      print(f"{len(to_adopt)} former Webling members recorded as gone")
+    else:
+      print(f"Error: recording former Webling members: {postgrest_error(response)}")
+      ok = False
+  return ok
 
 def upsert(table_name, data):
     headers = {

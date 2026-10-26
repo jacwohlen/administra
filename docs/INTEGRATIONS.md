@@ -29,6 +29,8 @@ The work runs in phases; each one ships on its own.
 - For members that come from Webling, name, birthday, mobile, e-mail and
   groups are **read-only in Administra** and changed in Webling. Notes and
   the photo stay editable.
+- Members that **Webling no longer has** (deleted or merged there) count as
+  having **left**.
 - Defaults until decided otherwise: Ehrenmitglieder count as passive (may
   sign in); non-members and people who left are hidden from the member list
   (unless asked for) and from trainer pickers, but stay in the database with
@@ -36,12 +38,13 @@ The work runs in phases; each one ships on its own.
 
 ## Membership status
 
-`members.membership_status` is derived from the labels by
-`member_status_from_labels()` whenever they change, and whenever a provider
-link is added or removed. Never set it directly.
+`members.membership_status` is derived from the labels and the provider
+link by `member_status_from_labels()` whenever either changes. Never set it
+directly.
 
 | Labels (exact spelling)                     | Status       | Sign-in (from phase 1b) |
 | ------------------------------------------- | ------------ | ----------------------- |
+| any, but Webling no longer has the member   | `left`       | no                      |
 | `03_Austritt`                               | `left`       | no                      |
 | `Aktiv`                                     | `active`     | yes                     |
 | `Passiv`, `Ehrenmitglieder`                 | `passive`    | yes                     |
@@ -66,30 +69,32 @@ member page and the check-in cards.
 
 ## Provider links
 
-`member_links (connection, external_id, member_id)` records where a member
-comes from. The Webling sync writes one row per member it syncs
-(`connection = 'webling'`, `external_id` = Webling member id, which is also
-`members.id` for historical reasons), from its first run after the
-migration on. Webling ids lie between 1'000 and 10'000'000, app ids below
-1'000 or from 10'000'001 on.
+`member_links (connection, external_id, member_id, last_seen_at, gone_at)`
+records where a member comes from. The Webling sync writes one row per
+member Webling returns (`connection = 'webling'`, `external_id` = Webling
+member id, which is also `members.id` for historical reasons), from its
+first run after the migration on. Webling ids lie between 1'000 and
+10'000'000, app ids below 1'000 or from 10'000'001 on.
 
-Not every row in the Webling id range gets a link: in October 2026 prod had
-537 such rows, but Webling returned only 227 members. The others (mostly
-the legacy Probetraining group and old Nicht-Mitglieder) were deleted in
-Webling; they stay unlinked, so staff can still edit or delete them, and
-their status follows their last labels.
+When Webling no longer returns a member (deleted or merged there), the sync
+sets `gone_at` on its link: the member has left. If more than a tenth of
+the members still in Webling (at least 5) would go at once, or Webling
+returns nobody, the sync refuses and the run turns red: check Webling
+first. A member that is back in Webling gets its link revived.
 
-For a linked member the database refuses changes to name, birthday,
-mobile, e-mail, labels and status made through the API by signed-in staff
-(`trigger_guard_provider_fields`, error `MANAGED_BY_PROVIDER`), and the link
-blocks deleting the member. The sync (service role), migrations and
+Rows in the Webling id range that were never linked are recorded as gone on
+the first run: in October 2026 prod had 537 such rows, but Webling returned
+only 227 members; the others (mostly the legacy Probetraining group and old
+Nicht-Mitglieder) were deleted in Webling.
+
+While a member is in Webling, the database refuses changes to name,
+birthday, mobile, e-mail, labels and status made through the API by
+signed-in staff, and deleting the member (`trigger_guard_provider_fields`,
+error `MANAGED_BY_PROVIDER`). The sync (service role), migrations and
 SECURITY DEFINER functions are not restricted. The member page shows
-"kommen aus Webling" and only offers the notes for editing.
-
-A member that Webling no longer returns (deleted or merged there) loses its
-link at the next sync and becomes editable and deletable again. If more than
-a tenth of the links (at least 5) would go at once, the sync refuses and the
-run turns red: check Webling first.
+"kommen aus Webling" and only offers the notes for editing. A member gone
+from Webling is the app's again: editable, and deletable (the link goes
+with it).
 
 E-mail: the sync sends a member's address only when Webling has one, so an
 address entered in Administra before the fields became read-only stays, and

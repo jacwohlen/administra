@@ -80,11 +80,13 @@ export const load = (async ({ params, depends }) => {
       .lte('date', today)
       .order('date', { ascending: false })
       .limit(100),
-    // The provider a member comes from owns name, birthday, contact and groups
+    // The provider a member comes from owns name, birthday, contact and groups,
+    // as long as it still has the member (no gone_at)
     supabaseClient
       .from('member_links')
       .select('connection')
       .eq('member_id', memberId)
+      .is('gone_at', null)
       .limit(1)
       .returns<{ connection: string }[]>(),
     resolveAvatar()

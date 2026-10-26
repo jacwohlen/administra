@@ -9,7 +9,7 @@ from sync_rules import (
     member_row,
     missing_table,
     plan_participants,
-    plan_unlinks,
+    plan_gone,
     registrations_open,
 )
 
@@ -140,19 +140,33 @@ def test_missing_table():
     assert not missing_table(404, None)
 
 
-def test_plan_unlinks():
-    linked = [str(i) for i in range(1, 101)]
-    stale, too_many = plan_unlinks(linked, range(3, 101))
-    assert stale == ['1', '2']
+def links(*ids, gone=()):
+    return [{'external_id': str(i), 'gone_at': '2026-10-01' if i in gone else None} for i in ids]
+
+
+def test_plan_gone_marks_members_webling_dropped():
+    to_mark, to_adopt, too_many = plan_gone(links(*range(1001, 1101)), range(1001, 1101), range(1003, 1101))
+    assert to_mark == ['1001', '1002']
+    assert to_adopt == []
     assert not too_many
 
 
-def test_plan_unlinks_refuses_mass_unlink():
-    linked = [str(i) for i in range(1, 101)]
-    assert plan_unlinks(linked, range(1, 50))[1]  # 51 of 100 gone
-    assert plan_unlinks(linked, [])[1]  # Webling returned nobody
-    assert not plan_unlinks(['1', '2', '3'], [])[1]  # small clubs: up to 5 at once
+def test_plan_gone_records_never_linked_rows():
+    # First run: Webling returned 1001-1003, the database also has 1004-1006
+    to_mark, to_adopt, too_many = plan_gone(links(1001, 1002, 1003), range(1001, 1007), [1001, 1002, 1003])
+    assert to_mark == []
+    assert to_adopt == [1004, 1005, 1006]
+    assert not too_many
 
 
-def test_plan_unlinks_nothing_to_do():
-    assert plan_unlinks(['1', '2'], [1, 2, 3]) == ([], False)
+def test_plan_gone_leaves_gone_links_alone():
+    to_mark, to_adopt, _ = plan_gone(links(1001, 1002, gone=(1002,)), [1001, 1002], [1001])
+    assert to_mark == []
+    assert to_adopt == []
+
+
+def test_plan_gone_refuses_mass_marking():
+    active = links(*range(1001, 1101))
+    assert plan_gone(active, [], range(1001, 1050))[2]  # 51 of 100 gone at once
+    assert plan_gone(active, [], [])[2]  # Webling returned nobody
+    assert not plan_gone(links(1001, 1002, 1003), [], [1001])[2]  # up to 5 at once

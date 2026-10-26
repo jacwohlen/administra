@@ -192,52 +192,62 @@ def test_one_broken_member_does_not_stop_the_others(monkeypatch, capsys):
     assert '03_Austritt' not in out
 
 
-def sync_members_with(monkeypatch, link_response, linked=(), deleted=None):
+def sync_members_with(monkeypatch, link_response, links=(), in_range=(), calls=None):
     webling = load('webling', monkeypatch)
     members = [
-        {'id': 1, 'parents': [10], 'properties': {
+        {'id': 1001, 'parents': [10], 'properties': {
             'Vorname': 'Anna', 'Name': 'Muster', 'Geburtstag': None, 'Mobile': None}},
-        {'id': 2, 'parents': [10], 'properties': {'Vorname': 'Ben'}},
-        {'id': 3, 'parents': [10], 'properties': {
+        {'id': 1002, 'parents': [10], 'properties': {'Vorname': 'Ben'}},
+        {'id': 1003, 'parents': [10], 'properties': {
             'Vorname': 'Cleo', 'Name': 'Beispiel', 'Geburtstag': None, 'Mobile': None}},
     ]
     monkeypatch.setattr(webling, 'webling_get', lambda *args, **kwargs: Response(200, members))
     monkeypatch.setattr(webling, 'get_label', lambda parents: ['Aktiv'])
     monkeypatch.setattr(webling, 'upsert', lambda table, data: True)
-    posted = []
+    calls = calls if calls is not None else []
 
     def post(url, headers=None, data=None):
-        posted.append((url, headers, data))
-        return link_response
+        calls.append(('post', url, headers, data))
+        return link_response if not calls[:-1] else Response(201)
+
+    def get(url, headers=None):
+        if '/member_links?' in url:
+            return Response(200, [{'external_id': str(i), 'gone_at': None} for i in links])
+        return Response(200, [{'id': i} for i in in_range])
+
+    def patch(url, headers=None, data=None):
+        calls.append(('patch', url, headers, data))
+        return Response(204)
 
     monkeypatch.setattr(webling.requests, 'post', post)
-    monkeypatch.setattr(webling.requests, 'get', lambda url, headers=None: Response(
-        200, [{'external_id': str(i)} for i in linked]))
-    monkeypatch.setattr(webling.requests, 'delete', lambda url, headers=None: (
-        deleted.append(url) if deleted is not None else None) or Response(204))
-    return webling.sync_members(), posted
+    monkeypatch.setattr(webling.requests, 'get', get)
+    monkeypatch.setattr(webling.requests, 'patch', patch)
+    return webling.sync_members(), calls
 
 
 def test_synced_members_are_linked_to_webling(monkeypatch):
-    failed, posted = sync_members_with(monkeypatch, Response(201))
+    failed, calls = sync_members_with(monkeypatch, Response(201), links=(1001, 1003), in_range=(1001, 1002, 1003))
 
-    assert failed == 1  # member 2 has no last name property
-    assert len(posted) == 1
-    url, headers, data = posted[0]
+    assert failed == 1  # member 1002 has no last name property
+    assert len(calls) == 1
+    _, url, headers, data = calls[0]
     assert url == 'https://db.example/rest/v1/member_links'
-    assert 'resolution=ignore-duplicates' in headers['Prefer']
-    assert json.loads(data) == [
-        {'connection': 'webling', 'external_id': '1', 'member_id': 1},
-        {'connection': 'webling', 'external_id': '3', 'member_id': 3},
+    assert 'resolution=merge-duplicates' in headers['Prefer']
+    rows = json.loads(data)
+    assert [(r['external_id'], r['member_id'], r['gone_at']) for r in rows] == [
+        ('1001', 1001, None),
+        ('1003', 1003, None),
     ]
+    assert all(r['last_seen_at'] for r in rows)
 
 
 def test_missing_link_table_is_not_an_error(monkeypatch, capsys):
     response = Response(404, {'code': 'PGRST205', 'message': "Could not find the table 'public.member_links'"})
-    failed, _ = sync_members_with(monkeypatch, response)
+    failed, calls = sync_members_with(monkeypatch, response)
 
-    assert failed == 1  # only member 2
+    assert failed == 1  # only member 1002
     assert 'links skipped' in capsys.readouterr().out
+    assert [c[0] for c in calls] == ['post']
 
 
 def test_failed_link_write_fails_the_run(monkeypatch):
@@ -245,21 +255,30 @@ def test_failed_link_write_fails_the_run(monkeypatch):
     assert failed == 2
 
 
-def test_members_gone_from_webling_are_unlinked(monkeypatch, capsys):
-    deleted = []
-    # 1 and 3 synced, 2 failed but is still in Webling; 4 is gone
-    failed, _ = sync_members_with(monkeypatch, Response(201), linked=range(1, 5), deleted=deleted)
+def test_members_gone_from_webling_are_marked(monkeypatch, capsys):
+    # 1001 and 1003 synced, 1002 failed but is still in Webling; 1004 is gone,
+    # 1005 was never linked and is not in Webling
+    failed, calls = sync_members_with(
+        monkeypatch, Response(201), links=(1001, 1002, 1003, 1004), in_range=range(1001, 1006))
 
     assert failed == 1
-    assert deleted == [
-        'https://db.example/rest/v1/member_links?connection=eq.webling&external_id=in.(4)'
+    kinds = [(c[0], c[1]) for c in calls[1:]]
+    assert kinds == [
+        ('patch', 'https://db.example/rest/v1/member_links?connection=eq.webling&external_id=in.(1004)'),
+        ('post', 'https://db.example/rest/v1/member_links'),
     ]
-    assert 'Unlinked 1 members' in capsys.readouterr().out
+    assert json.loads(calls[1][3])['gone_at']
+    adopted = json.loads(calls[2][3])
+    assert [(r['external_id'], r['member_id']) for r in adopted] == [('1005', 1005)]
+    assert adopted[0]['gone_at']
+    out = capsys.readouterr().out
+    assert '1 members are no longer in Webling' in out
+    assert '1 former Webling members recorded as gone' in out
 
 
-def test_mass_unlink_is_refused(monkeypatch):
-    deleted = []
-    failed, _ = sync_members_with(monkeypatch, Response(201), linked=range(1, 40), deleted=deleted)
+def test_mass_gone_is_refused(monkeypatch):
+    failed, calls = sync_members_with(
+        monkeypatch, Response(201), links=range(1001, 1040), in_range=range(1001, 1040))
 
-    assert deleted == []
-    assert failed == 2  # member 2, and the refused unlink
+    assert [c[0] for c in calls] == ['post']  # links written, nothing marked gone
+    assert failed == 2  # member 1002, and the refused marking

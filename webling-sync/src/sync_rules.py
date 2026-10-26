@@ -120,15 +120,30 @@ def missing_table(status_code, body):
     return status_code == 404 and code in ('PGRST205', '42P01')
 
 
-def plan_unlinks(linked_external_ids, webling_ids):
-    """Webling links whose member Webling no longer returns (deleted or merged there).
+# Members.id range of Webling members: app ids are below 1'000 or from
+# 10'000'001 on (supabase/migrations/20261025220000_fence_member_event_ids.sql)
+WEBLING_ID_MIN = 1000
+WEBLING_ID_MAX = 10000000
 
-    Returns (external ids to unlink, whether that is too many to do
-    unattended). Unlinking makes the member editable and deletable in
-    Administra again; a mass unlink, e.g. after a bad Webling answer, is
-    refused instead.
+
+def plan_gone(links, webling_range_ids, webling_ids):
+    """Which members Webling no longer has (deleted or merged there).
+
+    links:             the 'webling' member_links ({external_id, gone_at})
+    webling_range_ids: members.id of every row in the Webling id range
+    webling_ids:       the member ids Webling returned in this run
+
+    Returns (external ids of links to mark gone, member ids to record as gone
+    that were never linked, whether that is too many to do unattended). A gone
+    member counts as having left and is editable and deletable in Administra
+    again. Marking more than a tenth of the members still in Webling (at
+    least 5) at once, e.g. after a bad Webling answer, is refused instead;
+    an empty answer records nothing.
     """
     current = {str(i) for i in webling_ids}
-    stale = sorted(set(linked_external_ids) - current)
-    limit = max(5, len(linked_external_ids) // 10)
-    return stale, len(stale) > limit
+    linked = {link['external_id'] for link in links}
+    active = [link['external_id'] for link in links if link.get('gone_at') is None]
+    to_mark = sorted((e for e in active if e not in current), key=int)
+    to_adopt = sorted(i for i in webling_range_ids if str(i) not in linked and str(i) not in current)
+    too_many = not current or len(to_mark) > max(5, len(active) // 10)
+    return to_mark, to_adopt, too_many
