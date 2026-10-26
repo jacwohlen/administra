@@ -69,9 +69,15 @@ member page and the check-in cards.
 `member_links (connection, external_id, member_id)` records where a member
 comes from. The Webling sync writes one row per member it syncs
 (`connection = 'webling'`, `external_id` = Webling member id, which is also
-`members.id` for historical reasons). Existing Webling members were
-backfilled by the migration: Webling ids lie between 1'000 and 10'000'000,
-app ids below 1'000 or from 10'000'001 on.
+`members.id` for historical reasons), from its first run after the
+migration on. Webling ids lie between 1'000 and 10'000'000, app ids below
+1'000 or from 10'000'001 on.
+
+Not every row in the Webling id range gets a link: in October 2026 prod had
+537 such rows, but Webling returned only 227 members. The others (mostly
+the legacy Probetraining group and old Nicht-Mitglieder) were deleted in
+Webling; they stay unlinked, so staff can still edit or delete them, and
+their status follows their last labels.
 
 For a linked member the database refuses changes to name, birthday,
 mobile, e-mail, labels and status made through the API by signed-in staff

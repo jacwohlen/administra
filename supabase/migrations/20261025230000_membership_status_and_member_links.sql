@@ -5,8 +5,12 @@
 -- app. This adds both, without changing who may sign in yet:
 --
 -- * member_links: which provider record a member comes from. The Webling
---   sync writes one row per member (connection 'webling', external id = the
---   Webling member id); existing Webling members are backfilled here.
+--   sync writes one row per member Webling returns (connection 'webling',
+--   external id = the Webling member id), starting with its first run after
+--   this migration. Nothing is backfilled: of the 537 prod rows in the
+--   Webling id range only 227 are still in Webling (the rest are mostly the
+--   legacy Probetraining group and old Nicht-Mitglieder), and those must stay
+--   editable and deletable.
 -- * members.membership_status: trial | active | passive | non_member | left,
 --   derived from the labels (see member_status_from_labels) whenever they
 --   change, and when a link is added or removed.
@@ -39,16 +43,6 @@ REVOKE ALL ON public.member_links FROM anon;
 REVOKE INSERT, UPDATE, DELETE, TRUNCATE ON public.member_links FROM authenticated;
 CREATE POLICY member_links_read ON public.member_links FOR SELECT TO authenticated
   USING ((SELECT public.is_staff()));
-
--- Webling ids were written into members.id by the sync. App ids are below
--- 1'000 (prod: 1-334) or from 10'000'001 on (20261025220000_fence_member_event_ids.sql),
--- Webling member ids lie in between (prod: 3'240-62'454). Previews and local
--- databases get theirs from seed.sql, which runs after the migrations.
-INSERT INTO public.member_links (connection, external_id, member_id)
-SELECT 'webling', id::text, id
-FROM public.members
-WHERE id >= 1000 AND id < 10000000
-ON CONFLICT DO NOTHING;
 
 -- For SECURITY DEFINER functions and triggers only (not callable through the
 -- API: member_links is staff-only)
