@@ -1336,47 +1336,50 @@
   "assistant": {
     "button": "Capture with AI",
     "title": "Data assistant",
-    "chooseFiles": "Choose photos or PDF",
+    "chooseFiles": "Choose file",
+    "fileTypes": "Photos, PDF, TXT or CSV; at most {max} photos or PDFs",
     "takePhoto": "Take photo",
     "preparing": "Preparing file …",
-    "pasteText": "Or paste or dictate text",
-    "pasteTextPlaceholder": "Paste text or a table, e.g. from Excel, or dictate: {example}",
+    "attachments": "Chosen files",
+    "pasteText": "Paste text",
+    "pasteTextPlaceholder": "Or paste text, also from Excel, e.g. {example}",
     "hint": "Hint for reading it (optional)",
     "hintPlaceholder": "e.g. “The second column is the leader”",
-    "privacy": "Photos and text are sent to Claude (Anthropic) to be read, without any member data from Administra. Nothing is saved until you check and apply it in the next step.",
+    "privacy": "Photos and text go to Claude (Anthropic) without member data. Nothing is saved until you have checked it.",
     "analyze": "Read",
     "working": "Claude is reading the material …",
     "workingSeconds": "{seconds} s – this usually takes 10 to 40 seconds.",
     "remaining": "{count, plural, one {# reading} other {# readings}} left today",
+    "remainingShort": "{count} left today",
     "modelWarnings": "Notes on the material",
     "kinds": {
       "grades": {
         "title": "Read a judo pass",
-        "hint": "Take photos of the pages with the gradings (kyu and dan). Grades and dates are recognised; you check them before anything is saved.",
+        "hint": "Take photos of the pages with the gradings (kyu and dan).",
         "description": "Import kyu and dan gradings from a member's judo pass.",
         "example": "“5th kyu on 12 June 2019, 4th kyu on 3 May 2021”"
       },
       "attendance": {
         "title": "Read an attendance list",
-        "hint": "Photo or text of the attendance list: for one session or a table covering several dates.",
+        "hint": "The list of one session or a table covering several dates.",
         "description": "Record attendance from a paper or Excel list of a training.",
         "example": "“Present: Lena Müller, Tim Weber, Anna Keller; led by Beni Keller”"
       },
       "training_plan": {
         "title": "Read a training plan",
-        "hint": "Photo, PDF or table of the plan: date, training, leader, topic, cancellations and holidays. Large plans are best done month by month.",
+        "hint": "A plan with date, training, leader, topic, cancellations and holidays. Large plans are best done month by month.",
         "description": "Import leaders, topics, cancellations and holidays from an existing plan.",
         "example": "“2 November randori with Sandra, topic ne-waza; 9 November cancelled”"
       },
       "lesson_plan": {
         "title": "Read a lesson plan",
-        "hint": "Photo or text of the lesson plan for this training.",
+        "hint": "The lesson plan for this training, handwritten or printed.",
         "description": "Create a lesson plan (warm-up, main part, cool-down) for a training and date.",
         "example": "“Warm-up: running and breakfalls. Main part: o-goshi in pairs. Cool-down: randori”"
       },
       "events": {
         "title": "Read events",
-        "hint": "Photo, PDF or text with club events: competitions, courses, camps, gatherings.",
+        "hint": "Competitions, courses, camps or club events, e.g. from an invitation.",
         "description": "Import competitions, courses and club events from a list or an invitation.",
         "example": "“Kids Cup on 14 November in Wohlen, 9 am to 4 pm”"
       }
@@ -1398,7 +1401,7 @@
       "busy": "The AI service is busy. Please try again in a minute.",
       "failed": "Reading failed. Please try again.",
       "network": "No connection. Please check your internet connection.",
-      "heic": "HEIC photos are not supported. Please save as JPEG or use “Take photo”.",
+      "heic": "HEIC photos are not supported. Please save as JPEG or, on a phone, use “Take photo”.",
       "unsupported_file": "This file type is not supported. Supported are photos (JPEG, PNG, WebP), PDF, and text or CSV files.",
       "unreadable": "The file could not be read.",
       "text_too_long": "The text is too long (at most 30,000 characters). Please split it into smaller parts, e.g. one month."
@@ -1708,7 +1711,7 @@
     "textLength": "{count} of {max} characters",
     "dictation": {
       "start": "Dictate",
-      "stop": "Stop",
+      "stop": "Stop dictation",
       "listening": "Listening … speak in full sentences and say names clearly.",
       "privacy": "Your browser does the speech recognition: Chrome and Edge through Google or Microsoft, Safari through Apple.",
       "errors": {

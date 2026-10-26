@@ -60,3 +60,18 @@ describe('DictateButton', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent('assistant.dictation.errors.denied');
   });
 });
+
+describe('DictateButton iconOnly', () => {
+  it('names the icon button and shows the status on a row of its own', async () => {
+    (globalThis as { webkitSpeechRecognition?: unknown }).webkitSpeechRecognition = FakeRecognition;
+    render(DictateButton, { ontext: vi.fn(), iconOnly: true });
+    await fireEvent.click(screen.getByRole('button', { name: 'assistant.dictation.start' }));
+    expect(screen.getByRole('button', { name: 'assistant.dictation.stop' })).toHaveAttribute(
+      'aria-pressed',
+      'true'
+    );
+    expect(screen.getByText('assistant.dictation.privacy').parentElement).toHaveClass('basis-full');
+    FakeRecognition.last!.onerror?.({ error: 'not-allowed' });
+    expect(await screen.findByRole('alert')).toHaveTextContent('assistant.dictation.errors.denied');
+  });
+});

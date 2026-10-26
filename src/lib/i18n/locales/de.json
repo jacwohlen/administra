@@ -1336,47 +1336,50 @@
   "assistant": {
     "button": "Mit KI erfassen",
     "title": "Daten-Assistent",
-    "chooseFiles": "Fotos oder PDF wählen",
+    "chooseFiles": "Datei wählen",
+    "fileTypes": "Fotos, PDF, TXT oder CSV; höchstens {max} Fotos oder PDFs",
     "takePhoto": "Foto aufnehmen",
     "preparing": "Datei wird vorbereitet …",
-    "pasteText": "Oder Text einfügen oder diktieren",
-    "pasteTextPlaceholder": "Text oder Tabelle einfügen, z. B. aus Excel, oder diktieren: {example}",
+    "attachments": "Gewählte Dateien",
+    "pasteText": "Text einfügen",
+    "pasteTextPlaceholder": "Oder Text einfügen, auch aus Excel, z. B. {example}",
     "hint": "Hinweis für die Auswertung (optional)",
     "hintPlaceholder": "z. B. «Die zweite Spalte ist der Leiter»",
-    "privacy": "Fotos und Text werden zur Auswertung an Claude (Anthropic) gesendet, ohne Mitgliederdaten aus Administra. Gespeichert wird erst, was du im nächsten Schritt prüfst und übernimmst.",
+    "privacy": "Fotos und Text gehen ohne Mitgliederdaten an Claude (Anthropic). Gespeichert wird erst nach deiner Prüfung.",
     "analyze": "Auswerten",
     "working": "Claude liest die Unterlagen …",
     "workingSeconds": "{seconds} s – das dauert meist 10 bis 40 Sekunden.",
     "remaining": "Heute noch {count, plural, one {# Auswertung} other {# Auswertungen}}",
+    "remainingShort": "Heute noch {count}",
     "modelWarnings": "Hinweise zur Vorlage",
     "kinds": {
       "grades": {
         "title": "Judo-Pass einlesen",
-        "hint": "Fotografiere die Seiten mit den Prüfungen (Kyu und Dan). Grade und Daten werden erkannt; du prüfst sie, bevor etwas gespeichert wird.",
+        "hint": "Fotografiere die Seiten mit den Prüfungen (Kyu und Dan).",
         "description": "Kyu- und Dan-Prüfungen aus dem Judo-Pass eines Mitglieds übernehmen.",
         "example": "«5. Kyu am 12. Juni 2019, 4. Kyu am 3. Mai 2021»"
       },
       "attendance": {
         "title": "Präsenzliste einlesen",
-        "hint": "Foto oder Text der Präsenzliste: für ein einzelnes Training oder eine Tabelle über mehrere Daten.",
+        "hint": "Liste eines Trainings oder Tabelle über mehrere Daten.",
         "description": "Anwesenheiten aus einer Präsenzliste auf Papier oder in Excel erfassen.",
         "example": "«Anwesend: Lena Müller, Tim Weber, Anna Keller; Leitung Beni Keller»"
       },
       "training_plan": {
         "title": "Trainingsplan einlesen",
-        "hint": "Foto, PDF oder Tabelle des Plans: Datum, Training, Leiter, Thema, Ausfälle und Ferien. Grosse Pläne am besten monatsweise.",
+        "hint": "Plan mit Datum, Training, Leiter, Thema, Ausfällen und Ferien. Grosse Pläne am besten monatsweise.",
         "description": "Leiter, Themen, Ausfälle und Ferien aus einem bestehenden Plan übernehmen.",
         "example": "«2. November Kampftraining mit Sandra, Thema Ne-Waza; am 9. November fällt es aus»"
       },
       "lesson_plan": {
         "title": "Lektionsplan einlesen",
-        "hint": "Foto oder Text des Lektionsplans für dieses Training.",
+        "hint": "Der Lektionsplan für dieses Training, von Hand oder gedruckt.",
         "description": "Einen Lektionsplan (Aufwärmen, Hauptteil, Ausklang) für ein Training und Datum erstellen.",
         "example": "«Aufwärmen: Laufen und Fallschule. Hauptteil: O-Goshi in Paaren. Ausklang: Randori»"
       },
       "events": {
         "title": "Termine einlesen",
-        "hint": "Foto, PDF oder Text mit Terminen: Wettkämpfe, Kurse, Lager, Anlässe.",
+        "hint": "Wettkämpfe, Kurse, Lager oder Anlässe, z. B. aus einer Ausschreibung.",
         "description": "Wettkämpfe, Kurse und Anlässe aus einer Liste oder Ausschreibung übernehmen.",
         "example": "«Kids Cup am 14. November in Wohlen, 9 bis 16 Uhr»"
       }
@@ -1398,7 +1401,7 @@
       "busy": "Der KI-Dienst ist gerade ausgelastet. Bitte in einer Minute nochmals versuchen.",
       "failed": "Die Auswertung ist fehlgeschlagen. Bitte nochmals versuchen.",
       "network": "Keine Verbindung. Bitte die Internetverbindung prüfen.",
-      "heic": "HEIC-Fotos werden nicht unterstützt. Bitte als JPEG speichern oder direkt mit «Foto aufnehmen» fotografieren.",
+      "heic": "HEIC-Fotos werden nicht unterstützt. Bitte als JPEG speichern oder auf dem Handy direkt mit «Foto aufnehmen» fotografieren.",
       "unsupported_file": "Dieser Dateityp wird nicht unterstützt. Möglich sind Fotos (JPEG, PNG, WebP), PDF und Text- oder CSV-Dateien.",
       "unreadable": "Die Datei konnte nicht gelesen werden.",
       "text_too_long": "Der Text ist zu lang (höchstens 30 000 Zeichen). Bitte in kleinere Teile aufteilen, z. B. einen Monat."
@@ -1708,7 +1711,7 @@
     "textLength": "{count} von {max} Zeichen",
     "dictation": {
       "start": "Diktieren",
-      "stop": "Stopp",
+      "stop": "Diktieren beenden",
       "listening": "Hört zu … sprich in ganzen Sätzen, Namen deutlich.",
       "privacy": "Die Spracherkennung macht dein Browser: Chrome und Edge über Google bzw. Microsoft, Safari über Apple.",
       "errors": {

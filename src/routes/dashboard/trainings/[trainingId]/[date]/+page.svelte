@@ -279,15 +279,6 @@
 <div class="flex flex-wrap items-center gap-2 mb-4 text-sm">
   <span class="chip preset-tonal-secondary">{data.section}</span>
   <span class="text-surface-600-400">{$_('weekday.' + data.weekday)} | {data.dateFrom}</span>
-  {#if data.canWrite && assistantTraining}
-    <span class="ml-auto">
-      <AssistantButton
-        iconOnly
-        label={$_('assistant.kinds.attendance.title')}
-        onclick={() => (showAssistant = true)}
-      />
-    </span>
-  {/if}
 </div>
 
 <!-- Date navigation -->
@@ -463,6 +454,17 @@
       </li>
     {/if}
   </ul>
+
+  <!-- Daten-Assistent: a paper or Excel list, kept out of the way of the check-in itself -->
+  {#if data.canWrite && assistantTraining}
+    <div class="flex justify-center">
+      <AssistantButton
+        class="btn btn-sm mt-4 text-surface-600-400 hover:bg-surface-200-800"
+        label={$_('assistant.kinds.attendance.title')}
+        onclick={() => (showAssistant = true)}
+      />
+    </div>
+  {/if}
 {:else}
   <LessonPlan
     trainingId={data.trainingId}

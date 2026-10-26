@@ -16,20 +16,24 @@ completes and corrects it, and only then is it saved.
 
 On these pages the assistant is the small wand attached to the page's own
 create button (_Prüfung erfassen_, _Event erstellen_, _Lektionsplan
-erstellen_ or _Bearbeiten_), or a wand icon where there is no create button
-(check-in page, training plan import), so it takes no extra room. Without
-the API key only the create button shows. The overview
+erstellen_ or _Bearbeiten_), so it takes no extra room. Where there is no
+create button it stays out of the way: a quiet _Präsenzliste einlesen_
+button below the participant list on the check-in page, a wand icon on the
+training plan import. Without the API key only the create button shows. The overview
 `/dashboard/assistant` (avatar menu → _Daten-Assistent_) explains the steps
 and leads to these pages: pick a member or a training and date there, and
 the target page opens the assistant right away (`?assistant=<kind>`).
 
 ## How it is used
 
-1. **Upload**: up to 4 photos (or the camera on a phone), a PDF, pasted
-   text or a `.txt`/`.csv` file, plus an optional hint ("the second column
-   is the leader"). Photos are scaled down to 2000 px and re-encoded as
-   JPEG in the browser, which also drops EXIF data such as the location.
-   Text can also be **dictated** (see _Dictation_).
+1. **Upload**: up to 4 photos (on a phone _Foto aufnehmen_ opens the
+   camera; the button only shows on touch screens), a PDF, pasted text or a
+   `.txt`/`.csv` file, plus an optional hint ("the second column is the
+   leader"), folded away behind _Hinweis für die Auswertung_. Photos are
+   scaled down to 2000 px and re-encoded as JPEG in the browser, which also
+   drops EXIF data such as the location. Text can also be **dictated** with
+   the microphone beside the text field (see _Dictation_). The form is
+   narrow; the dialog widens for the review tables.
 2. **Auswerten**: the server sends it to Claude, which answers with a
    proposal in a fixed format. This takes 10 to 40 seconds.
 3. **Review**: every row with its status (_Neu_, _Schon erfasst_,
