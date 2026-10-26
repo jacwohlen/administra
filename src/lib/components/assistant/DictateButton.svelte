@@ -4,6 +4,7 @@
   import Fa from 'svelte-fa';
   import { faMicrophone, faStop } from '@fortawesome/free-solid-svg-icons';
   import {
+    appendDictation,
     dictationError,
     dictationLang,
     dictationSession,
@@ -14,9 +15,12 @@
 
   /**
    * «Diktieren»: speech to text with the browser's own recognition
-   * ($lib/assistant/dictation.ts). The new words of each finished phrase
-   * go to `ontext`; what is still being recognised shows below the button.
-   * Renders nothing where the browser cannot recognise speech.
+   * ($lib/assistant/dictation.ts). While listening, `ontext` gets the
+   * field's text as it was at the start plus everything dictated since, so
+   * a revised guess replaces the old one; the parent should keep the field
+   * read-only meanwhile (`onlistening`). What is still being recognised
+   * shows below the button. Renders nothing where the browser cannot
+   * recognise speech.
    *
    * `iconOnly` shows just the microphone (its label as tooltip and name) and
    * leaves the layout to the parent: button and status lines become items of
@@ -25,10 +29,19 @@
    * what it hears below the field.
    */
   let {
+    text,
     ontext,
+    onlistening,
     disabled = false,
     iconOnly = false
-  }: { ontext: (text: string) => void; disabled?: boolean; iconOnly?: boolean } = $props();
+  }: {
+    /** The field's current text */
+    text: string;
+    ontext: (text: string) => void;
+    onlistening?: (listening: boolean) => void;
+    disabled?: boolean;
+    iconOnly?: boolean;
+  } = $props();
 
   const Recognition = speechRecognition();
   let recognition: SpeechRecognitionLike | null = null;
@@ -48,10 +61,11 @@
     r.lang = dictationLang($locale);
     r.continuous = true;
     r.interimResults = true;
+    const base = text;
     const read = dictationSession();
     r.onresult = (event) => {
       const update = read(event);
-      if (update.text) ontext(update.text);
+      if (update.text) ontext(appendDictation(base, update.text));
       interim = update.interim;
     };
     r.onerror = (event) => {
@@ -61,11 +75,13 @@
       listening = false;
       interim = '';
       recognition = null;
+      onlistening?.(false);
     };
     try {
       r.start();
       recognition = r;
       listening = true;
+      onlistening?.(true);
     } catch {
       error = 'failed';
     }
@@ -75,7 +91,10 @@
     recognition?.stop();
   }
 
-  onDestroy(() => recognition?.abort());
+  onDestroy(() => {
+    recognition?.abort();
+    if (listening) onlistening?.(false);
+  });
 </script>
 
 {#if Recognition}

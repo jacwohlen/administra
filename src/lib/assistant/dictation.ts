@@ -11,6 +11,8 @@
 
 export interface SpeechAlternative {
   transcript: string;
+  /** 0 on Chrome for Android's guesses, see dictationSession() */
+  confidence?: number;
 }
 
 export interface SpeechResult {
@@ -52,32 +54,55 @@ export function dictationLang(locale: string | null | undefined): string {
   return locale?.startsWith('en') ? 'en-GB' : 'de-CH';
 }
 
-/** Whether `longer` begins with the whole words of `shorter`, ignoring case. */
-function extendsPhrase(longer: string, shorter: string): boolean {
-  if (!shorter || !longer.toLowerCase().startsWith(shorter.toLowerCase())) return false;
-  return longer.length === shorter.length || /[\s,.;:!?]/.test(longer[shorter.length]);
+/** Lower-case words without punctuation, for comparing guesses. */
+function words(text: string): string[] {
+  return text
+    .toLowerCase()
+    .split(/[^\p{L}\p{N}]+/u)
+    .filter(Boolean);
+}
+
+/**
+ * Whether `next` is a new guess for the same speech as `previous`: they
+ * share one of their first words, or one first word contains the other
+ * («unter» and «Hunter»). Speech after a new start shares neither.
+ */
+function sameSpeech(previous: string, next: string): boolean {
+  const a = words(previous).slice(0, 3);
+  const b = words(next).slice(0, 3);
+  if (a.some((word) => b.includes(word))) return true;
+  const [x = '', y = ''] = [a[0], b[0]];
+  return x.length >= 3 && y.length >= 3 && (x.includes(y) || y.includes(x));
+}
+
+/** Whether the words of `longer` begin with those of `shorter`. */
+function startsWithWords(longer: string, shorter: string): boolean {
+  const a = words(longer);
+  const b = words(shorter);
+  return b.length > 0 && b.length <= a.length && b.every((word, i) => a[i] === word);
 }
 
 export interface DictationUpdate {
-  /** New text to append to the field, '' if none */
+  /** Everything dictated in this session, for the text field */
   text: string;
   /** What is still being recognised */
   interim: string;
 }
 
 /**
- * Reads the result events of one listening session. Chrome on Android
- * sends a phrase again each time it grows, every time as final («unter»,
- * «unter», «unter alexander», «unter alexander ist»), and some browsers
- * hand earlier results over again. So a final result seen before adds
- * nothing, and one that repeats or extends the previous phrase adds only
- * its new words.
+ * Reads the result events of one listening session into its whole text.
+ * Final results are normally separate phrases and are joined as they come
+ * (desktop Chrome, Edge, Safari). Chrome on Android, up to version 157,
+ * instead sends every guess of the speech so far as a final result without
+ * confidence («unter», «unter», «unter alexander», «Hunter Alexander ist»):
+ * from the first such result on, each guess replaces the previous one, and
+ * only a guess for unrelated speech starts a new phrase.
  */
 export function dictationSession(): (event: SpeechResultEvent) => DictationUpdate {
-  const seen = new Map<number, string>();
-  let previous = '';
+  const phrases: string[] = [];
+  let guess = '';
+  let guessing = false;
   return (event) => {
-    const added: string[] = [];
     const pending: string[] = [];
     for (let i = event.resultIndex; i < event.results.length; i++) {
       const result = event.results[i];
@@ -87,18 +112,24 @@ export function dictationSession(): (event: SpeechResultEvent) => DictationUpdat
         pending.push(transcript);
         continue;
       }
-      if (seen.get(i) === transcript) continue;
-      seen.set(i, transcript);
-      if (extendsPhrase(transcript, previous)) {
-        const rest = transcript.slice(previous.length).trim();
-        if (rest) added.push(rest);
-        previous = transcript;
-      } else if (!extendsPhrase(previous, transcript)) {
-        added.push(transcript);
-        previous = transcript;
+      if (result[0].confidence === 0) guessing = true;
+      if (!guessing) {
+        phrases.push(transcript);
+        continue;
       }
+      // The guesses may go on from a phrase taken before the first of them
+      if (!guess && phrases.length > 0 && sameSpeech(phrases[phrases.length - 1], transcript)) {
+        guess = phrases.pop()!;
+      }
+      if (guess && !sameSpeech(guess, transcript)) phrases.push(guess);
+      guess = transcript;
+      // A guess of the whole session so far also holds the phrases before it
+      const covered = phrases.findIndex((_, k) =>
+        startsWithWords(transcript, phrases.slice(k).join(' '))
+      );
+      if (covered >= 0) phrases.splice(covered);
     }
-    return { text: added.join(' '), interim: pending.join(' ') };
+    return { text: [...phrases, guess].filter(Boolean).join(' '), interim: pending.join(' ') };
   };
 }
 

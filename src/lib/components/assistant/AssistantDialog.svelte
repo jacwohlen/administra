@@ -17,7 +17,6 @@
     faXmark
   } from '@fortawesome/free-solid-svg-icons';
   import { modalDialog } from '$lib/modalDialog';
-  import { appendDictation } from '$lib/assistant/dictation';
   import DictateButton from './DictateButton.svelte';
   import {
     AssistantRequestError,
@@ -85,6 +84,8 @@
   let hintInput = $state<HTMLInputElement>();
   // The hint is rarely needed: folded away, but still open after «Zurück»
   let hintOpen = $state(false);
+  // Dictation rewrites the field while it listens, so typing waits until it stops
+  let dictating = $state(false);
   const uid = $props.id();
 
   // Fresh on every opening: the limit is a rolling 24 hours
@@ -368,9 +369,15 @@
               values: { example: $_(`assistant.kinds.${kind}.example`) }
             })}
             aria-invalid={textTooLong}
+            readonly={dictating}
             bind:value={text}
           ></textarea>
-          <DictateButton iconOnly ontext={(spoken) => (text = appendDictation(text, spoken))} />
+          <DictateButton
+            iconOnly
+            {text}
+            ontext={(dictated) => (text = dictated)}
+            onlistening={(on) => (dictating = on)}
+          />
           {#if showLength}
             <p
               id="{uid}-length"

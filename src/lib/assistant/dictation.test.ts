@@ -9,8 +9,20 @@ import {
   type SpeechResultEvent
 } from './dictation';
 
-function result(transcript: string, isFinal: boolean): SpeechResult {
-  return { isFinal, length: 1, 0: { transcript } };
+function result(transcript: string, isFinal: boolean, confidence?: number): SpeechResult {
+  return { isFinal, length: 1, 0: { transcript, confidence } };
+}
+
+/** One event per final, at growing indexes, as Blink and WebKit send them. */
+function session(...finals: [transcript: string, confidence?: number][]): string[] {
+  const read = dictationSession();
+  return finals.map(([transcript, confidence], i) => {
+    const event: SpeechResultEvent = {
+      resultIndex: i,
+      results: { length: i + 1, [i]: result(transcript, true, confidence) }
+    };
+    return read(event).text;
+  });
 }
 
 describe('dictation', () => {
@@ -35,69 +47,73 @@ describe('dictation', () => {
       results: {
         length: 3,
         0: result('schon verarbeitet', true),
-        1: result('Anwesend Lena Müller ', true),
+        1: result('Anwesend Lena Müller ', true, 0.9),
         2: result('Tim We', false)
       }
     };
     expect(read(event)).toEqual({ text: 'Anwesend Lena Müller', interim: 'Tim We' });
   });
 
-  /** Events with one result each, at growing indexes, as Chrome sends them. */
-  function events(...finals: string[]): SpeechResultEvent[] {
-    return finals.map((transcript, i) => ({
-      resultIndex: i,
-      results: { length: i + 1, [i]: result(transcript, true) } as SpeechResultEvent['results']
-    }));
-  }
-
-  it('adds separate phrases one after the other (desktop Chrome, Safari)', () => {
-    const read = dictationSession();
-    const added = events('Anwesend Lena Müller', ' Tim Weber', ' Leitung Beni Keller').map(
-      (e) => read(e).text
+  it('joins separate phrases as they come, also the same word twice (desktop, Safari)', () => {
+    expect(session(['Anwesend Lena Müller', 0.9], [' Tim Weber', 0.8]).at(-1)).toBe(
+      'Anwesend Lena Müller Tim Weber'
     );
-    expect(added).toEqual(['Anwesend Lena Müller', 'Tim Weber', 'Leitung Beni Keller']);
+    expect(session(['Lena', 0.9], [' Lena', 0.9]).at(-1)).toBe('Lena Lena');
+    expect(session(['Ja.'], [' Ja.']).at(-1)).toBe('Ja. Ja.');
   });
 
-  it('adds only the new words of a phrase that is sent again as it grows (Chrome on Android)', () => {
-    const read = dictationSession();
-    const added = events(
+  it('replaces the guesses Chrome on Android sends as final results', () => {
+    const guesses = [
       'unter',
       'unter',
       'unter alexander',
       'unter alexander',
-      'Unter Alexander ist',
+      'unter alexander ist',
       'unter alexander ist Trainer'
-    ).map((e) => read(e).text);
-    expect(added.filter(Boolean).join(' ')).toBe('unter alexander ist Trainer');
+    ];
+    const texts = session(...guesses.map((t): [string, number] => [t, 0]));
+    expect(texts.at(-1)).toBe('unter alexander ist Trainer');
+    expect(texts[2]).toBe('unter alexander');
   });
 
-  it('also when every event hands over all growing phrases again from the start', () => {
-    const read = dictationSession();
-    const phrases = ['unter', 'unter alexander', 'unter alexander ist Trainer'];
-    const added = phrases.map((_, n) => {
-      const results: Record<number, SpeechResult> = {};
-      phrases.slice(0, n + 1).forEach((t, i) => (results[i] = result(t, true)));
-      return read({ resultIndex: 0, results: { length: n + 1, ...results } }).text;
-    });
-    expect(added).toEqual(['unter', 'alexander', 'ist Trainer']);
+  it('takes a guess that revises earlier words', () => {
+    expect(
+      session(
+        ['unter', 0],
+        ['unter alexander', 0],
+        ['Hunter Alexander ist', 0],
+        ['Hunter Alexander ist Trainer', 0]
+      ).at(-1)
+    ).toBe('Hunter Alexander ist Trainer');
+    expect(session(['Hunter', 0], ['Hunter Alex', 0], ['Hunter Alexander', 0]).at(-1)).toBe(
+      'Hunter Alexander'
+    );
+    expect(session(['lena müller tim weber', 0], ['Lena Müller, Tim Weber.', 0.9]).at(-1)).toBe(
+      'Lena Müller, Tim Weber.'
+    );
   });
 
-  it('ignores a shorter repeat and final results handed over again', () => {
-    const read = dictationSession();
-    expect(read(events('Lena Müller')[0]).text).toBe('Lena Müller');
-    expect(read(events('', 'Lena')[1]).text).toBe('');
-    const again = {
-      resultIndex: 0,
-      results: { length: 2, 0: result('Lena Müller', true), 1: result('Tim Weber', true) }
-    };
-    expect(read(again).text).toBe('Tim Weber');
-    expect(read(again).text).toBe('');
+  it('keeps an earlier guess when unrelated speech starts', () => {
+    expect(
+      session(
+        ['Lena Müller', 0],
+        ['Lena Müller ist da', 0],
+        ['Tim Weber', 0],
+        ['Tim Weber fehlt', 0]
+      ).at(-1)
+    ).toBe('Lena Müller ist da Tim Weber fehlt');
   });
 
-  it('does not take a longer word for a repeat', () => {
-    const read = dictationSession();
-    expect(read(events('Tim')[0]).text).toBe('Tim');
-    expect(read(events('', 'Timo Weber')[1]).text).toBe('Timo Weber');
+  it('does not repeat earlier phrases that a later guess of the whole session holds', () => {
+    expect(
+      session(['Lena Müller', 0], ['Tim', 0], ['Tim Weber', 0], ['Lena Müller Tim Weber', 0]).at(-1)
+    ).toBe('Lena Müller Tim Weber');
+  });
+
+  it('lets the guesses go on from a phrase taken before them', () => {
+    expect(session(['Lena Müller', 0.9], ['Lena Müller ist da', 0]).at(-1)).toBe(
+      'Lena Müller ist da'
+    );
   });
 
   it('appends dictated phrases to the text', () => {

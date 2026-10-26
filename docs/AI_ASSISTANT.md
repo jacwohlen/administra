@@ -62,10 +62,15 @@ The language follows the app's: Swiss Standard German (`de-CH`, no
 dialect) or English, and the dialog names it while listening. Names from
 another language are written by ear («Hunter» can come out as «unter»);
 name matching then preselects the closest member (here Alexander Hunter)
-for the user to confirm. Chrome on
-Android sends each phrase again as it grows («unter», «unter alexander»,
-…), all marked final; `dictationSession()` adds only the new words, so the
-text is not repeated.
+for the user to confirm.
+
+Chrome on Android (up to version 157) sends every guess of the speech so
+far as a final result without confidence («unter», «unter alexander»,
+«Hunter Alexander ist», …), and later guesses revise earlier words. So
+`dictationSession()` keeps a session's whole text: separate phrases (desktop
+Chrome, Edge, Safari) are joined as they come, a guess replaces the
+previous one. The field shows that text live and is read-only while the
+microphone is on, so a replaced guess never overwrites typing.
 
 The Claude API takes no audio, so the speech recognition is the browser's
 own (Web Speech API, `src/lib/assistant/dictation.ts`): no key and no cost,
