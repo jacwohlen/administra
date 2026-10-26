@@ -690,13 +690,9 @@ INSERT INTO public.members (id, labels, birthday, lastname, firstname, mobile, i
 	(193, '["new"]', NULL, 'Figueroa', 'Mackenzie', NULL, NULL, NULL);
 
 
-  -- Set the next generated id to 200+1 (or 1 if table empty)
-DO $$
-DECLARE next_id bigint;
-BEGIN
-  SELECT COALESCE(200, 0) + 1 INTO next_id FROM public.members;
-  EXECUTE format('ALTER TABLE public.members ALTER COLUMN id RESTART WITH %s', next_id);
-END$$;
+-- The members id sequence is left where migration
+-- 20261025220000_fence_member_event_ids.sql put it (10'000'000), so members
+-- created in the app never get a Webling id.
 
 --
 -- Data for Name: trainings; Type: TABLE DATA; Schema: public; Owner: postgres
@@ -14467,3 +14463,12 @@ FROM (
 --
 RESET app.skip_badge_refresh;
 SELECT public.refresh_all_member_badges();
+
+--
+-- Provider links: on Dev and Prod the Webling sync writes them; here the
+-- seeded members with Webling ids (1'000 to 10'000'000) count as synced
+--
+INSERT INTO public.member_links (connection, external_id, member_id)
+SELECT 'webling', id::text, id
+FROM public.members
+WHERE id >= 1000 AND id < 10000000;

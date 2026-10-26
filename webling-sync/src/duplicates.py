@@ -1,7 +1,6 @@
 #!/bin/python
 import os
 import sys
-import json
 
 # Webling
 import requests
@@ -40,25 +39,8 @@ def get(table_name):
         print("Error:", response.text)
         return None
 
-def update(table_name, data):
-    response = requests.patch(f"{SUPABASE_URL}/rest/v1/{table_name}", headers=HEADERS, data=json.dumps(data))
-    if response.status_code == 204:
-        return f"Updated: {data}"
-    else:
-        print(f"Error: [{response.status_code}]", response.text)
-        return None
-
-def delete(table_name):
-    response = requests.delete(f"{SUPABASE_URL}/rest/v1/{table_name}", headers=HEADERS) 
-    if response.status_code == 204:
-        return f"Deleted"
-    else:
-        print("Error:", response.text)
-        return None
-
 def print_usage():
     print("./duplicates.py search Schmid")
-    print("./duplicates.py merge")
 
 def main(cmd):
     if cmd == "search": 
@@ -66,21 +48,14 @@ def main(cmd):
         for m in get(f"members?lastname=ilike.*{arg2}*"): 
             print(m["id"], m["lastname"], m["firstname"], m["birthday"], m["labels"])
     elif cmd == "merge":
-        keep_id = input("ID to keep?: ")
-        to_remove_id = input("ID to remove?: ")
-        ret = input(f"Going to merge {to_remove_id} into {keep_id}, confirm? [N/y]: ")
-        if "y" != ret and "Y" != ret: 
-            print("aborting")
-            sys.exit(0)
-
-        print("Replace ids in logs and participation")
-        update(f"participants?memberId=eq.{to_remove_id}", {"memberId": keep_id})
-        update(f"logs?memberId=eq.{to_remove_id}", {"memberId": keep_id})
-
-        print("Remove member")
-        delete(f"members?id=eq.{to_remove_id}")
+        # Disabled: it only moved logs and participants to the kept member and
+        # then deleted the other one, which also deleted (ON DELETE CASCADE) its
+        # event registrations and attendance, grades, medals, badges, exam
+        # candidates and trial e-mails, and unlinked its sign-in account. A
+        # merge that moves every reference in one transaction will replace it.
+        sys.exit("merge is disabled: it deleted grades, medals, badges and event attendance of the removed member")
     else:
-        print("command {cmd} unknown")
+        print(f"command {cmd} unknown")
         print_usage()
         sys.exit(1)
     sys.exit(0)
