@@ -6,7 +6,7 @@
   import {
     dictationError,
     dictationLang,
-    readResults,
+    dictationSession,
     speechRecognition,
     type DictationError,
     type SpeechRecognitionLike
@@ -14,9 +14,9 @@
 
   /**
    * «Diktieren»: speech to text with the browser's own recognition
-   * ($lib/assistant/dictation.ts). Each finished phrase goes to `ontext`;
-   * what is still being recognised shows below the button. Renders nothing
-   * where the browser cannot recognise speech.
+   * ($lib/assistant/dictation.ts). The new words of each finished phrase
+   * go to `ontext`; what is still being recognised shows below the button.
+   * Renders nothing where the browser cannot recognise speech.
    *
    * `iconOnly` shows just the microphone (its label as tooltip and name) and
    * leaves the layout to the parent: button and status lines become items of
@@ -48,10 +48,11 @@
     r.lang = dictationLang($locale);
     r.continuous = true;
     r.interimResults = true;
+    const read = dictationSession();
     r.onresult = (event) => {
-      const { final, interim: pending } = readResults(event);
-      if (final) ontext(final);
-      interim = pending;
+      const update = read(event);
+      if (update.text) ontext(update.text);
+      interim = update.interim;
     };
     r.onerror = (event) => {
       error = dictationError(event.error);

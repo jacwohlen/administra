@@ -52,17 +52,54 @@ export function dictationLang(locale: string | null | undefined): string {
   return locale?.startsWith('en') ? 'en-GB' : 'de-CH';
 }
 
-/** The final and the interim text of a result event, from `resultIndex` on. */
-export function readResults(event: SpeechResultEvent): { final: string; interim: string } {
-  let final = '';
-  let interim = '';
-  for (let i = event.resultIndex; i < event.results.length; i++) {
-    const result = event.results[i];
-    const transcript = result[0]?.transcript ?? '';
-    if (result.isFinal) final += transcript;
-    else interim += transcript;
-  }
-  return { final: final.trim(), interim: interim.trim() };
+/** Whether `longer` begins with the whole words of `shorter`, ignoring case. */
+function extendsPhrase(longer: string, shorter: string): boolean {
+  if (!shorter || !longer.toLowerCase().startsWith(shorter.toLowerCase())) return false;
+  return longer.length === shorter.length || /[\s,.;:!?]/.test(longer[shorter.length]);
+}
+
+export interface DictationUpdate {
+  /** New text to append to the field, '' if none */
+  text: string;
+  /** What is still being recognised */
+  interim: string;
+}
+
+/**
+ * Reads the result events of one listening session. Chrome on Android
+ * sends a phrase again each time it grows, every time as final («unter»,
+ * «unter», «unter alexander», «unter alexander ist»), and some browsers
+ * hand earlier results over again. So a final result seen before adds
+ * nothing, and one that repeats or extends the previous phrase adds only
+ * its new words.
+ */
+export function dictationSession(): (event: SpeechResultEvent) => DictationUpdate {
+  const seen = new Map<number, string>();
+  let previous = '';
+  return (event) => {
+    const added: string[] = [];
+    const pending: string[] = [];
+    for (let i = event.resultIndex; i < event.results.length; i++) {
+      const result = event.results[i];
+      const transcript = (result[0]?.transcript ?? '').trim();
+      if (!transcript) continue;
+      if (!result.isFinal) {
+        pending.push(transcript);
+        continue;
+      }
+      if (seen.get(i) === transcript) continue;
+      seen.set(i, transcript);
+      if (extendsPhrase(transcript, previous)) {
+        const rest = transcript.slice(previous.length).trim();
+        if (rest) added.push(rest);
+        previous = transcript;
+      } else if (!extendsPhrase(previous, transcript)) {
+        added.push(transcript);
+        previous = transcript;
+      }
+    }
+    return { text: added.join(' '), interim: pending.join(' ') };
+  };
 }
 
 /** Appends dictated text to what is already in the field. */
@@ -70,7 +107,9 @@ export function appendDictation(text: string, addition: string): string {
   const add = addition.trim();
   if (!add) return text;
   if (!text.trim()) return add;
-  return /\n\s*$/.test(text) ? `${text}${add}` : `${text.trimEnd()} ${add}`;
+  if (/\n\s*$/.test(text)) return `${text}${add}`;
+  // «Lena» + «, Tim»: punctuation goes right after the word
+  return /^[,.;:!?]/.test(add) ? `${text.trimEnd()}${add}` : `${text.trimEnd()} ${add}`;
 }
 
 export type DictationError = 'denied' | 'noSpeech' | 'failed';

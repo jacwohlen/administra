@@ -58,6 +58,15 @@ Juni 2019". The text can be read and corrected there and is then read
 like pasted text; the prompt tells the model that dictated text may spell
 out numbers and dates and spell names by ear.
 
+The language follows the app's: Swiss Standard German (`de-CH`, no
+dialect) or English, and the dialog names it while listening. Names from
+another language are written by ear («Hunter» can come out as «unter»);
+name matching then preselects the closest member (here Alexander Hunter)
+for the user to confirm. Chrome on
+Android sends each phrase again as it grows («unter», «unter alexander»,
+…), all marked final; `dictationSession()` adds only the new words, so the
+text is not repeated.
+
 The Claude API takes no audio, so the speech recognition is the browser's
 own (Web Speech API, `src/lib/assistant/dictation.ts`): no key and no cost,
 but Chrome and Edge send the audio to Google or Microsoft, Safari

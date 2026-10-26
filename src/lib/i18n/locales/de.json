@@ -1713,7 +1713,7 @@
     "dictation": {
       "start": "Diktieren",
       "stop": "Diktieren beenden",
-      "listening": "Hört zu … sprich in ganzen Sätzen, Namen deutlich.",
+      "listening": "Hört auf Deutsch zu … sprich in ganzen Sätzen, Namen deutlich.",
       "privacy": "Die Spracherkennung macht dein Browser: Chrome und Edge über Google bzw. Microsoft, Safari über Apple.",
       "errors": {
         "denied": "Kein Zugriff auf das Mikrofon. Erlaube es in den Einstellungen des Browsers.",
