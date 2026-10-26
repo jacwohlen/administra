@@ -1339,8 +1339,8 @@
     "chooseFiles": "Fotos oder PDF wählen",
     "takePhoto": "Foto aufnehmen",
     "preparing": "Datei wird vorbereitet …",
-    "pasteText": "Oder Text einfügen",
-    "pasteTextPlaceholder": "Text oder Tabelle hier einfügen, z. B. aus einer E-Mail oder aus Excel",
+    "pasteText": "Oder Text einfügen oder diktieren",
+    "pasteTextPlaceholder": "Text oder Tabelle einfügen, z. B. aus Excel, oder diktieren: {example}",
     "hint": "Hinweis für die Auswertung (optional)",
     "hintPlaceholder": "z. B. «Die zweite Spalte ist der Leiter»",
     "privacy": "Fotos und Text werden zur Auswertung an Claude (Anthropic) gesendet, ohne Mitgliederdaten aus Administra. Gespeichert wird erst, was du im nächsten Schritt prüfst und übernimmst.",
@@ -1353,27 +1353,32 @@
       "grades": {
         "title": "Judo-Pass einlesen",
         "hint": "Fotografiere die Seiten mit den Prüfungen (Kyu und Dan). Grade und Daten werden erkannt; du prüfst sie, bevor etwas gespeichert wird.",
-        "description": "Kyu- und Dan-Prüfungen aus dem Judo-Pass eines Mitglieds übernehmen."
+        "description": "Kyu- und Dan-Prüfungen aus dem Judo-Pass eines Mitglieds übernehmen.",
+        "example": "«5. Kyu am 12. Juni 2019, 4. Kyu am 3. Mai 2021»"
       },
       "attendance": {
         "title": "Präsenzliste einlesen",
         "hint": "Foto oder Text der Präsenzliste: für ein einzelnes Training oder eine Tabelle über mehrere Daten.",
-        "description": "Anwesenheiten aus einer Präsenzliste auf Papier oder in Excel erfassen."
+        "description": "Anwesenheiten aus einer Präsenzliste auf Papier oder in Excel erfassen.",
+        "example": "«Anwesend: Lena Müller, Tim Weber, Anna Keller; Leitung Beni Keller»"
       },
       "training_plan": {
         "title": "Trainingsplan einlesen",
         "hint": "Foto, PDF oder Tabelle des Plans: Datum, Training, Leiter, Thema, Ausfälle und Ferien. Grosse Pläne am besten monatsweise.",
-        "description": "Leiter, Themen, Ausfälle und Ferien aus einem bestehenden Plan übernehmen."
+        "description": "Leiter, Themen, Ausfälle und Ferien aus einem bestehenden Plan übernehmen.",
+        "example": "«2. November Kampftraining mit Sandra, Thema Ne-Waza; am 9. November fällt es aus»"
       },
       "lesson_plan": {
         "title": "Lektionsplan einlesen",
         "hint": "Foto oder Text des Lektionsplans für dieses Training.",
-        "description": "Einen Lektionsplan (Aufwärmen, Hauptteil, Ausklang) für ein Training und Datum erstellen."
+        "description": "Einen Lektionsplan (Aufwärmen, Hauptteil, Ausklang) für ein Training und Datum erstellen.",
+        "example": "«Aufwärmen: Laufen und Fallschule. Hauptteil: O-Goshi in Paaren. Ausklang: Randori»"
       },
       "events": {
         "title": "Termine einlesen",
         "hint": "Foto, PDF oder Text mit Terminen: Wettkämpfe, Kurse, Lager, Anlässe.",
-        "description": "Wettkämpfe, Kurse und Anlässe aus einer Liste oder Ausschreibung übernehmen."
+        "description": "Wettkämpfe, Kurse und Anlässe aus einer Liste oder Ausschreibung übernehmen.",
+        "example": "«Kids Cup am 14. November in Wohlen, 9 bis 16 Uhr»"
       }
     },
     "errors": {
@@ -1700,6 +1705,17 @@
       "failedTitles": "Nicht gespeichert: {titles}",
       "retry": "{count, plural, one {# Termin wurde nicht gespeichert (rot markiert).} other {# Termine wurden nicht gespeichert (rot markiert).}} Gespeicherte sind markiert und werden nicht nochmals erstellt. Übernimm den Rest nochmals oder schliesse den Dialog."
     },
-    "textLength": "{count} von {max} Zeichen"
+    "textLength": "{count} von {max} Zeichen",
+    "dictation": {
+      "start": "Diktieren",
+      "stop": "Stopp",
+      "listening": "Hört zu … sprich in ganzen Sätzen, Namen deutlich.",
+      "privacy": "Die Spracherkennung macht dein Browser: Chrome und Edge über Google bzw. Microsoft, Safari über Apple.",
+      "errors": {
+        "denied": "Kein Zugriff auf das Mikrofon. Erlaube es in den Einstellungen des Browsers.",
+        "noSpeech": "Nichts gehört. Bitte nochmals versuchen.",
+        "failed": "Die Spracherkennung ist fehlgeschlagen. Tippe den Text oder versuche es nochmals."
+      }
+    }
   }
 }

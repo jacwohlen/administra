@@ -280,11 +280,13 @@
   <span class="chip preset-tonal-secondary">{data.section}</span>
   <span class="text-surface-600-400">{$_('weekday.' + data.weekday)} | {data.dateFrom}</span>
   {#if data.canWrite && assistantTraining}
-    <AssistantButton
-      class="btn btn-sm preset-tonal-primary ml-auto"
-      label={$_('assistant.kinds.attendance.title')}
-      onclick={() => (showAssistant = true)}
-    />
+    <span class="ml-auto">
+      <AssistantButton
+        iconOnly
+        label={$_('assistant.kinds.attendance.title')}
+        onclick={() => (showAssistant = true)}
+      />
+    </span>
   {/if}
 </div>
 

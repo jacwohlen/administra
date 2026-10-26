@@ -10,7 +10,9 @@ const PERMISSIONS_POLICY = [
   // Profile photos use a file input (capture="user"), which needs no
   // camera permission.
   'camera=()',
-  'microphone=()',
+  // Dictation in the Daten-Assistent (speech recognition), on the app's
+  // own pages only, never in a frame of another site
+  'microphone=(self)',
   'geolocation=()',
   'payment=()',
   'usb=()',

@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
-  import AssistantButton from '$lib/components/assistant/AssistantButton.svelte';
+  import CreateButton from '$lib/components/assistant/CreateButton.svelte';
   import AssistantDialog from '$lib/components/assistant/AssistantDialog.svelte';
   import GradesReview from '$lib/components/assistant/GradesReview.svelte';
   import { takeAssistantRequest } from '$lib/assistant/autoOpen';
@@ -13,7 +13,7 @@
   import { toaster } from '$lib/toast';
   import BeltStrip from './BeltStrip.svelte';
   import Fa from 'svelte-fa';
-  import { faPlus, faSpinner, faTrash } from '@fortawesome/free-solid-svg-icons';
+  import { faSpinner, faTrash } from '@fortawesome/free-solid-svg-icons';
   import dayjs from 'dayjs';
   import { _ } from 'svelte-i18n';
 
@@ -133,23 +133,15 @@
 <div class="flex justify-between items-center mb-3">
   <h3>{$_('grades.title')}</h3>
   {#if !readonly}
-    <div class="flex flex-wrap justify-end gap-2">
-      {#if member && sections.length > 0}
-        <AssistantButton
-          class="btn preset-tonal-primary text-sm"
-          label={$_('assistant.kinds.grades.title')}
-          onclick={() => (showAssistant = true)}
-        />
-      {/if}
-      <button
-        class="btn preset-tonal-primary text-sm"
-        onclick={openAdd}
-        disabled={sections.length === 0}
-      >
-        <Fa icon={faPlus} />
-        <span>{$_('grades.addGrading')}</span>
-      </button>
-    </div>
+    <CreateButton
+      class="btn preset-tonal-primary text-sm"
+      label={$_('grades.addGrading')}
+      onclick={openAdd}
+      disabled={sections.length === 0}
+      assistant={!!member && sections.length > 0}
+      assistantLabel={$_('assistant.kinds.grades.title')}
+      onassistant={() => (showAssistant = true)}
+    />
   {/if}
 </div>
 

@@ -252,7 +252,7 @@
     <h3>{$_('page.trainingPlan.import.title')}</h3>
     {#if data.canPlanTrainings && data.plannedTrainings.length > 0}
       <AssistantButton
-        class="btn preset-tonal-primary text-sm"
+        iconOnly
         label={$_('assistant.kinds.training_plan.title')}
         onclick={() => (showAssistant = true)}
       />

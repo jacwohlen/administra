@@ -7,12 +7,11 @@
     faCalendarDays,
     faLocationDot,
     faUsers,
-    faPlus,
     faChevronRight
   } from '@fortawesome/free-solid-svg-icons';
   import { _ } from 'svelte-i18n';
   import dayjs from 'dayjs';
-  import AssistantButton from '$lib/components/assistant/AssistantButton.svelte';
+  import CreateButton from '$lib/components/assistant/CreateButton.svelte';
   import AssistantDialog from '$lib/components/assistant/AssistantDialog.svelte';
   import EventsReview from '$lib/components/assistant/EventsReview.svelte';
   import { takeAssistantRequest } from '$lib/assistant/autoOpen';
@@ -88,16 +87,12 @@
 <div class="page-header">
   <h1>{$_('page.events.title')}</h1>
   {#if data.canWrite}
-    <div class="flex flex-wrap justify-end gap-2">
-      <AssistantButton
-        label={$_('assistant.kinds.events.title')}
-        onclick={() => (showAssistant = true)}
-      />
-      <a href="/dashboard/events/new" class="btn preset-filled-primary-500">
-        <Fa icon={faPlus} />
-        <span>{$_('page.events.create_event')}</span>
-      </a>
-    </div>
+    <CreateButton
+      href="/dashboard/events/new"
+      label={$_('page.events.create_event')}
+      assistantLabel={$_('assistant.kinds.events.title')}
+      onassistant={() => (showAssistant = true)}
+    />
   {/if}
 </div>
 

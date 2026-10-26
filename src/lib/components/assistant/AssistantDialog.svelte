@@ -13,6 +13,8 @@
     faWandMagicSparkles
   } from '@fortawesome/free-solid-svg-icons';
   import { modalDialog } from '$lib/modalDialog';
+  import { appendDictation } from '$lib/assistant/dictation';
+  import DictateButton from './DictateButton.svelte';
   import {
     AssistantRequestError,
     refreshAssistantStatus,
@@ -286,7 +288,9 @@
         <textarea
           class="textarea text-sm"
           rows="4"
-          placeholder={$_('assistant.pasteTextPlaceholder')}
+          placeholder={$_('assistant.pasteTextPlaceholder', {
+            values: { example: $_(`assistant.kinds.${kind}.example`) }
+          })}
           aria-invalid={textTooLong}
           bind:value={text}
         ></textarea>
@@ -298,6 +302,8 @@
           </span>
         {/if}
       </label>
+      <!-- Speech goes into the text field, where it can be read and corrected first -->
+      <DictateButton ontext={(spoken) => (text = appendDictation(text, spoken))} />
 
       <label class="label">
         <span>{$_('assistant.hint')}</span>

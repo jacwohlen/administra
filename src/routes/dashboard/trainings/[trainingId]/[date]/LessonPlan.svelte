@@ -4,7 +4,7 @@
   import type { LessonPlan } from '$lib/models';
   import Fa from 'svelte-fa';
   import { toaster } from '$lib/toast';
-  import AssistantButton from '$lib/components/assistant/AssistantButton.svelte';
+  import CreateButton from '$lib/components/assistant/CreateButton.svelte';
   import AssistantDialog from '$lib/components/assistant/AssistantDialog.svelte';
   import LessonPlanReview from '$lib/components/assistant/LessonPlanReview.svelte';
   import { loadAssistantStatus } from '$lib/assistant/client';
@@ -18,7 +18,6 @@
   import {
     faEdit,
     faSave,
-    faPlus,
     faUpload,
     faFile,
     faDownload,
@@ -449,12 +448,6 @@
     <h3>{$_('page.trainings.lessonPlanTitle')}</h3>
     {#if !readonly}
       <div class="flex flex-wrap justify-end gap-2">
-        {#if !isEditing && assistantTarget}
-          <AssistantButton
-            label={$_('assistant.kinds.lesson_plan.title')}
-            onclick={openAssistant}
-          />
-        {/if}
         {#if isEditing}
           <button
             class="btn preset-filled-primary-500"
@@ -470,15 +463,25 @@
             {$_('button.cancel')}
           </button>
         {:else if lessonPlan}
-          <button class="btn preset-tonal-primary" onclick={startEditing} disabled={isLoading}>
-            <Fa icon={faEdit} />
-            <span>{$_('button.edit')}</span>
-          </button>
+          <CreateButton
+            class="btn preset-tonal-primary"
+            icon={faEdit}
+            label={$_('button.edit')}
+            onclick={startEditing}
+            disabled={isLoading}
+            assistant={!!assistantTarget}
+            assistantLabel={$_('assistant.kinds.lesson_plan.title')}
+            onassistant={openAssistant}
+          />
         {:else}
-          <button class="btn preset-filled-primary-500" onclick={startEditing} disabled={isLoading}>
-            <Fa icon={faPlus} />
-            <span>{$_('page.trainings.createLessonPlan')}</span>
-          </button>
+          <CreateButton
+            label={$_('page.trainings.createLessonPlan')}
+            onclick={startEditing}
+            disabled={isLoading}
+            assistant={!!assistantTarget}
+            assistantLabel={$_('assistant.kinds.lesson_plan.title')}
+            onassistant={openAssistant}
+          />
         {/if}
       </div>
     {/if}

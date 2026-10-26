@@ -14,10 +14,14 @@ completes and corrects it, and only then is it saved.
 | **Lektionsplan einlesen**  | check-in page → _Lektionsplan_          | `lesson_plans`                                   | trainers, admins               |
 | **Termine einlesen**       | _Anlässe_                               | `events`                                         | trainers, admins               |
 
-The overview `/dashboard/assistant` (avatar menu → _Daten-Assistent_)
-explains the steps and leads to these pages: pick a member or a training
-and date there, and the target page opens the assistant right away
-(`?assistant=<kind>`).
+On these pages the assistant is the small wand attached to the page's own
+create button (_Prüfung erfassen_, _Event erstellen_, _Lektionsplan
+erstellen_ or _Bearbeiten_), or a wand icon where there is no create button
+(check-in page, training plan import), so it takes no extra room. Without
+the API key only the create button shows. The overview
+`/dashboard/assistant` (avatar menu → _Daten-Assistent_) explains the steps
+and leads to these pages: pick a member or a training and date there, and
+the target page opens the assistant right away (`?assistant=<kind>`).
 
 ## How it is used
 
@@ -25,6 +29,7 @@ and date there, and the target page opens the assistant right away
    text or a `.txt`/`.csv` file, plus an optional hint ("the second column
    is the leader"). Photos are scaled down to 2000 px and re-encoded as
    JPEG in the browser, which also drops EXIF data such as the location.
+   Text can also be **dictated** (see _Dictation_).
 2. **Auswerten**: the server sends it to Claude, which answers with a
    proposal in a fixed format. This takes 10 to 40 seconds.
 3. **Review**: every row with its status (_Neu_, _Schon erfasst_,
@@ -40,6 +45,24 @@ and date there, and the target page opens the assistant right away
    the same tables and with the same permissions as the manual forms. If
    some rows fail, the review stays open with them marked, so they can be
    retried without a new reading.
+
+### Dictation
+
+_Diktieren_ turns speech into text in the dialog's text field, e.g.
+"Anwesend: Lena Müller, Tim Weber; Leitung Beni Keller" or "5. Kyu am 12.
+Juni 2019". The text can be read and corrected there and is then read
+like pasted text; the prompt tells the model that dictated text may spell
+out numbers and dates and spell names by ear.
+
+The Claude API takes no audio, so the speech recognition is the browser's
+own (Web Speech API, `src/lib/assistant/dictation.ts`): no key and no cost,
+but Chrome and Edge send the audio to Google or Microsoft, Safari
+recognises on the device or with Apple; the dialog says so while
+listening. Firefox has none, the button is hidden there. On phones the
+keyboard's own microphone works in the text field too. The microphone is
+allowed for the app's own pages only (`Permissions-Policy:
+microphone=(self)`, docs/SECURITY_HEADERS.md), and the browser asks before
+the first use.
 
 ### Name matching
 
@@ -167,8 +190,10 @@ are sent to Anthropic's API in the US to be read. Under Anthropic's
 commercial terms, API data is not used to train models and is deleted after
 a limited retention period. Nothing from Administra's database is sent
 except the reference data the model needs: the grade ladder, training
-titles with weekday and time, and the club's sections. Mention the
-assistant in the club's privacy notice before using it with members' data.
+titles with weekday and time, and the club's sections. Dictation is
+recognised by the browser's speech service (Google, Microsoft or Apple, see
+_Dictation_) before the text reaches Anthropic. Mention the assistant in
+the club's privacy notice before using it with members' data.
 
 ## Setup (Netlify)
 
