@@ -1,6 +1,5 @@
 import { describe, it, expect } from 'vitest';
 import {
-  hasTrialLabel,
   trialProgress,
   trainingMatchesAge,
   splitTrainingsByAge,
@@ -23,22 +22,6 @@ function training(partial: Partial<Training> & { id: string }): Training {
     ...partial
   };
 }
-
-describe('hasTrialLabel', () => {
-  it('matches the app label and the old Webling group in any case', () => {
-    expect(hasTrialLabel(['probetraining'])).toBe(true);
-    expect(hasTrialLabel(['Aktiv', 'Probetraining'])).toBe(true);
-    expect(hasTrialLabel(['PROBETRAINING'])).toBe(true);
-  });
-
-  it('ignores other labels and missing ones', () => {
-    expect(hasTrialLabel(['Aktiv', 'Erwachsenentrainer'])).toBe(false);
-    expect(hasTrialLabel(['04_Probetraining'])).toBe(false);
-    expect(hasTrialLabel([])).toBe(false);
-    expect(hasTrialLabel(null)).toBe(false);
-    expect(hasTrialLabel(undefined)).toBe(false);
-  });
-});
 
 describe('trialProgress', () => {
   const threshold = 3;

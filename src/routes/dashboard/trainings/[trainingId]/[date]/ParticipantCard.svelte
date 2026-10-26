@@ -8,6 +8,7 @@
   import MedalTally from '$lib/components/MedalTally.svelte';
   import { beltRingColor } from '$lib/gradeUtils';
   import { trialProgress } from '$lib/trialUtils';
+  import { statusChip } from '$lib/memberStatus';
   import { clubConfig } from '$lib/clubConfig';
   import { _ } from 'svelte-i18n';
 
@@ -37,6 +38,8 @@
   } = $props();
 
   let ringColor = $derived(grade ? beltRingColor(grade.beltColor, grade.beltColor2) : null);
+  // Trial candidates, non-members and people who left get a chip; active members none
+  let status = $derived(statusChip(member.membership_status));
   let needsMembership = $derived(
     trialAttendedCount !== undefined &&
       trialProgress(trialAttendedCount, clubConfig.trialSessionThreshold) === 'convert'
@@ -182,6 +185,11 @@
             <Fa icon={faTriangleExclamation} size="xs" />
             {$_('page.probetraining.tab.convert')} · {trialAttendedCount}×
           </span>
+        {/if}
+        {#if status}
+          <span class="chip preset-tonal-surface text-xs mr-1 px-1.5 py-0.5"
+            >{$_(`page.members.status.${status}`)}</span
+          >
         {/if}
         <Labels labels={member.labels ? member.labels : []} />
       </dd>

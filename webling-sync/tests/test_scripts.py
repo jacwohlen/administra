@@ -1,5 +1,6 @@
 """The sync scripts against a fake Supabase / Webling (no network)."""
 import importlib
+import json
 import sys
 
 import pytest
@@ -179,6 +180,8 @@ def test_one_broken_member_does_not_stop_the_others(monkeypatch, capsys):
     monkeypatch.setattr(webling, 'get_label', lambda parents: ['03_Austritt'])
     upserted = []
     monkeypatch.setattr(webling, 'upsert', lambda table, data: upserted.append(data['id']) or True)
+    monkeypatch.setattr(webling.requests, 'post', lambda url, headers=None, data=None: Response(201))
+    monkeypatch.setattr(webling.requests, 'get', lambda url, headers=None: Response(200, []))
 
     assert webling.sync_members() == 1
     assert upserted == [1, 3]
@@ -187,3 +190,134 @@ def test_one_broken_member_does_not_stop_the_others(monkeypatch, capsys):
     assert 'member 2' in out
     # Group titles (leaving and billing states) never reach the public log
     assert '03_Austritt' not in out
+
+
+def sync_members_with(monkeypatch, link_response, links=(), in_range=(), calls=None, accept=None):
+    if accept is not None:
+        monkeypatch.setenv('WEBLING_ACCEPT_GONE', accept)
+    webling = load('webling', monkeypatch)
+    members = [
+        {'id': 1001, 'parents': [10], 'properties': {
+            'Vorname': 'Anna', 'Name': 'Muster', 'Geburtstag': None, 'Mobile': None}},
+        {'id': 1002, 'parents': [10], 'properties': {'Vorname': 'Ben'}},
+        {'id': 1003, 'parents': [10], 'properties': {
+            'Vorname': 'Cleo', 'Name': 'Beispiel', 'Geburtstag': None, 'Mobile': None}},
+    ]
+    monkeypatch.setattr(webling, 'webling_get', lambda *args, **kwargs: Response(200, members))
+    monkeypatch.setattr(webling, 'get_label', lambda parents: ['Aktiv'])
+    monkeypatch.setattr(webling, 'upsert', lambda table, data: True)
+    calls = calls if calls is not None else []
+
+    def post(url, headers=None, data=None):
+        calls.append(('post', url, headers, data))
+        return link_response if not calls[:-1] else Response(201)
+
+    def get(url, headers=None):
+        if '/member_links?' in url:
+            return Response(200, [{'external_id': str(i), 'member_id': i, 'gone_at': None} for i in links])
+        return Response(200, [{'id': i} for i in in_range])
+
+    def patch(url, headers=None, data=None):
+        calls.append(('patch', url, headers, data))
+        return Response(204)
+
+    monkeypatch.setattr(webling.requests, 'post', post)
+    monkeypatch.setattr(webling.requests, 'get', get)
+    monkeypatch.setattr(webling.requests, 'patch', patch)
+    return webling.sync_members(), calls
+
+
+def test_synced_members_are_linked_to_webling(monkeypatch):
+    failed, calls = sync_members_with(monkeypatch, Response(201), links=(1001, 1003), in_range=(1001, 1002, 1003))
+
+    assert failed == 1  # member 1002 has no last name property
+    assert len(calls) == 1
+    _, url, headers, data = calls[0]
+    assert url == 'https://db.example/rest/v1/member_links'
+    assert 'resolution=merge-duplicates' in headers['Prefer']
+    rows = json.loads(data)
+    assert [(r['external_id'], r['member_id'], r['gone_at']) for r in rows] == [
+        ('1001', 1001, None),
+        ('1003', 1003, None),
+    ]
+    assert all(r['last_seen_at'] for r in rows)
+
+
+def test_missing_link_table_is_not_an_error(monkeypatch, capsys):
+    response = Response(404, {'code': 'PGRST205', 'message': "Could not find the table 'public.member_links'"})
+    failed, calls = sync_members_with(monkeypatch, response)
+
+    assert failed == 1  # only member 1002
+    assert 'links skipped' in capsys.readouterr().out
+    assert [c[0] for c in calls] == ['post']
+
+
+def test_failed_link_write_fails_the_run(monkeypatch):
+    failed, _ = sync_members_with(monkeypatch, Response(500, {'code': 'XX000', 'message': 'boom'}))
+    assert failed == 2
+
+
+def test_members_gone_from_webling_are_marked(monkeypatch, capsys):
+    # 1001 and 1003 synced, 1002 failed but is still in Webling; 1004 is gone,
+    # 1005 was never linked and is not in Webling
+    failed, calls = sync_members_with(
+        monkeypatch, Response(201), links=(1001, 1002, 1003, 1004), in_range=range(1001, 1006))
+
+    assert failed == 1
+    # Ids only in the bodies, never in a URL (it shows up in errors)
+    assert [(c[0], c[1]) for c in calls[1:]] == [
+        ('post', 'https://db.example/rest/v1/member_links'),
+        ('post', 'https://db.example/rest/v1/member_links'),
+    ]
+    assert 'resolution=merge-duplicates' in calls[1][2]['Prefer']
+    marked = json.loads(calls[1][3])
+    assert [(r['external_id'], r['member_id']) for r in marked] == [('1004', 1004)]
+    assert marked[0]['gone_at']
+    assert 'resolution=ignore-duplicates' in calls[2][2]['Prefer']
+    adopted = json.loads(calls[2][3])
+    assert [(r['external_id'], r['member_id']) for r in adopted] == [('1005', 1005)]
+    assert adopted[0]['gone_at']
+    out = capsys.readouterr().out
+    assert '1 members are no longer in Webling' in out
+    assert '1 former Webling members recorded as gone' in out
+
+
+def test_mass_gone_is_refused(monkeypatch):
+    failed, calls = sync_members_with(
+        monkeypatch, Response(201), links=range(1001, 1040), in_range=range(1001, 1040))
+
+    assert [c[0] for c in calls] == ['post']  # links written, nothing marked gone
+    assert failed == 2  # member 1002, and the refused marking
+
+
+def test_mass_gone_goes_ahead_with_the_exact_accepted_count(monkeypatch, capsys):
+    # 1004-1039 are gone (36 of 39): refused unless exactly 36 is accepted
+    failed, calls = sync_members_with(
+        monkeypatch, Response(201), links=range(1001, 1040), in_range=range(1001, 1040), accept='36')
+
+    assert failed == 1  # only member 1002
+    assert [c[0] for c in calls] == ['post', 'post']
+    assert len(json.loads(calls[1][3])) == 36
+    assert '36 members are no longer in Webling' in capsys.readouterr().out
+
+
+def test_mass_gone_with_a_wrong_accepted_count_is_refused(monkeypatch, capsys):
+    failed, calls = sync_members_with(
+        monkeypatch, Response(201), links=range(1001, 1040), in_range=range(1001, 1040), accept='35')
+
+    assert failed == 2
+    assert [c[0] for c in calls] == ['post']
+    assert 'accept_gone=36' in capsys.readouterr().out
+
+
+def test_network_error_prints_no_url(monkeypatch, capsys):
+    webling = load('webling', monkeypatch)
+
+    def fail(url, **kwargs):
+        raise webling.requests.ConnectionError(f'Max retries exceeded with url: {url}')
+
+    monkeypatch.setattr(webling.requests, 'post', fail)
+    assert webling.supabase('post', 'member_links?external_id=in.(1004)') is None
+    out = capsys.readouterr().out
+    assert 'ConnectionError' in out
+    assert '1004' not in out

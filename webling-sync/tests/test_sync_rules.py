@@ -7,7 +7,9 @@ from sync_rules import (
     club_today,
     confirmed_member_ids,
     member_row,
+    missing_table,
     plan_participants,
+    plan_gone,
     registrations_open,
 )
 
@@ -128,3 +130,50 @@ def test_registrations_open(event_date, expected):
 
 def test_club_today_is_a_date():
     assert isinstance(club_today(), date)
+
+
+def test_missing_table():
+    assert missing_table(404, {'code': 'PGRST205', 'message': 'Could not find the table'})
+    assert missing_table(404, {'code': '42P01'})
+    assert not missing_table(404, {'code': 'PGRST116'})
+    assert not missing_table(400, {'code': 'PGRST205'})
+    assert not missing_table(404, None)
+
+
+def links(*ids, gone=()):
+    return [{'external_id': str(i), 'gone_at': '2026-10-01' if i in gone else None} for i in ids]
+
+
+def test_plan_gone_marks_members_webling_dropped():
+    to_mark, to_adopt, too_many = plan_gone(links(*range(1001, 1101)), range(1001, 1101), range(1003, 1101))
+    assert to_mark == ['1001', '1002']
+    assert to_adopt == []
+    assert not too_many
+
+
+def test_plan_gone_records_never_linked_rows():
+    # First run: Webling returned 1001-1003, the database also has 1004-1006
+    to_mark, to_adopt, too_many = plan_gone(links(1001, 1002, 1003), range(1001, 1007), [1001, 1002, 1003])
+    assert to_mark == []
+    assert to_adopt == [1004, 1005, 1006]
+    assert not too_many
+
+
+def test_plan_gone_leaves_gone_links_alone():
+    to_mark, to_adopt, _ = plan_gone(links(1001, 1002, gone=(1002,)), [1001, 1002], [1001])
+    assert to_mark == []
+    assert to_adopt == []
+
+
+def test_plan_gone_refuses_mass_marking():
+    active = links(*range(1001, 1101))
+    assert plan_gone(active, [], range(1001, 1050))[2]  # 51 of 100 gone at once
+    assert plan_gone(active, [], [])[2]  # Webling returned nobody
+    assert not plan_gone(links(1001, 1002, 1003), [], [1001])[2]  # up to 5 at once
+
+
+def test_plan_gone_accepts_the_exact_confirmed_count():
+    active = links(*range(1001, 1101))
+    assert not plan_gone(active, [], range(1001, 1050), accept=51)[2]
+    assert plan_gone(active, [], range(1001, 1050), accept=50)[2]
+    assert plan_gone(active, [], [], accept=100)[2]  # an empty answer never

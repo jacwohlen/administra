@@ -108,3 +108,43 @@ def registrations_open(event_date, today):
         return date.fromisoformat(event_date) >= today
     except (TypeError, ValueError):
         return False
+
+
+def missing_table(status_code, body):
+    """PostgREST's answer for a table that does not exist (yet).
+
+    The sync runs from main against prod before a migration is promoted to
+    prod, so a new table can be missing there for a while.
+    """
+    code = body.get('code') if isinstance(body, dict) else None
+    return status_code == 404 and code in ('PGRST205', '42P01')
+
+
+# Members.id range of Webling members: app ids are below 1'000 or from
+# 10'000'001 on (supabase/migrations/20261025220000_fence_member_event_ids.sql)
+WEBLING_ID_MIN = 1000
+WEBLING_ID_MAX = 10000000
+
+
+def plan_gone(links, webling_range_ids, webling_ids, accept=None):
+    """Which members Webling no longer has (deleted or merged there).
+
+    links:             the 'webling' member_links ({external_id, gone_at})
+    webling_range_ids: members.id of every row in the Webling id range
+    webling_ids:       the member ids Webling returned in this run
+
+    Returns (external ids of links to mark gone, member ids to record as gone
+    that were never linked, whether that is too many to do unattended). A gone
+    member counts as having left and is editable and deletable in Administra
+    again. Marking more than a tenth of the members still in Webling (at
+    least 5) at once, e.g. after a bad Webling answer, is refused instead,
+    unless accept is exactly that number (someone checked Webling and
+    confirmed it); an empty answer is always refused.
+    """
+    current = {str(i) for i in webling_ids}
+    linked = {link['external_id'] for link in links}
+    active = [link['external_id'] for link in links if link.get('gone_at') is None]
+    to_mark = sorted((e for e in active if e not in current), key=int)
+    to_adopt = sorted(i for i in webling_range_ids if str(i) not in linked and str(i) not in current)
+    too_many = not current or (len(to_mark) > max(5, len(active) // 10) and accept != len(to_mark))
+    return to_mark, to_adopt, too_many
