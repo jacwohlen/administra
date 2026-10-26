@@ -170,3 +170,10 @@ def test_plan_gone_refuses_mass_marking():
     assert plan_gone(active, [], range(1001, 1050))[2]  # 51 of 100 gone at once
     assert plan_gone(active, [], [])[2]  # Webling returned nobody
     assert not plan_gone(links(1001, 1002, 1003), [], [1001])[2]  # up to 5 at once
+
+
+def test_plan_gone_accepts_the_exact_confirmed_count():
+    active = links(*range(1001, 1101))
+    assert not plan_gone(active, [], range(1001, 1050), accept=51)[2]
+    assert plan_gone(active, [], range(1001, 1050), accept=50)[2]
+    assert plan_gone(active, [], [], accept=100)[2]  # an empty answer never

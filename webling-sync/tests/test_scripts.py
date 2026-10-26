@@ -192,7 +192,9 @@ def test_one_broken_member_does_not_stop_the_others(monkeypatch, capsys):
     assert '03_Austritt' not in out
 
 
-def sync_members_with(monkeypatch, link_response, links=(), in_range=(), calls=None):
+def sync_members_with(monkeypatch, link_response, links=(), in_range=(), calls=None, accept=None):
+    if accept is not None:
+        monkeypatch.setenv('WEBLING_ACCEPT_GONE', accept)
     webling = load('webling', monkeypatch)
     members = [
         {'id': 1001, 'parents': [10], 'properties': {
@@ -212,7 +214,7 @@ def sync_members_with(monkeypatch, link_response, links=(), in_range=(), calls=N
 
     def get(url, headers=None):
         if '/member_links?' in url:
-            return Response(200, [{'external_id': str(i), 'gone_at': None} for i in links])
+            return Response(200, [{'external_id': str(i), 'member_id': i, 'gone_at': None} for i in links])
         return Response(200, [{'id': i} for i in in_range])
 
     def patch(url, headers=None, data=None):
@@ -262,12 +264,16 @@ def test_members_gone_from_webling_are_marked(monkeypatch, capsys):
         monkeypatch, Response(201), links=(1001, 1002, 1003, 1004), in_range=range(1001, 1006))
 
     assert failed == 1
-    kinds = [(c[0], c[1]) for c in calls[1:]]
-    assert kinds == [
-        ('patch', 'https://db.example/rest/v1/member_links?connection=eq.webling&external_id=in.(1004)'),
+    # Ids only in the bodies, never in a URL (it shows up in errors)
+    assert [(c[0], c[1]) for c in calls[1:]] == [
+        ('post', 'https://db.example/rest/v1/member_links'),
         ('post', 'https://db.example/rest/v1/member_links'),
     ]
-    assert json.loads(calls[1][3])['gone_at']
+    assert 'resolution=merge-duplicates' in calls[1][2]['Prefer']
+    marked = json.loads(calls[1][3])
+    assert [(r['external_id'], r['member_id']) for r in marked] == [('1004', 1004)]
+    assert marked[0]['gone_at']
+    assert 'resolution=ignore-duplicates' in calls[2][2]['Prefer']
     adopted = json.loads(calls[2][3])
     assert [(r['external_id'], r['member_id']) for r in adopted] == [('1005', 1005)]
     assert adopted[0]['gone_at']
@@ -282,3 +288,36 @@ def test_mass_gone_is_refused(monkeypatch):
 
     assert [c[0] for c in calls] == ['post']  # links written, nothing marked gone
     assert failed == 2  # member 1002, and the refused marking
+
+
+def test_mass_gone_goes_ahead_with_the_exact_accepted_count(monkeypatch, capsys):
+    # 1004-1039 are gone (36 of 39): refused unless exactly 36 is accepted
+    failed, calls = sync_members_with(
+        monkeypatch, Response(201), links=range(1001, 1040), in_range=range(1001, 1040), accept='36')
+
+    assert failed == 1  # only member 1002
+    assert [c[0] for c in calls] == ['post', 'post']
+    assert len(json.loads(calls[1][3])) == 36
+    assert '36 members are no longer in Webling' in capsys.readouterr().out
+
+
+def test_mass_gone_with_a_wrong_accepted_count_is_refused(monkeypatch, capsys):
+    failed, calls = sync_members_with(
+        monkeypatch, Response(201), links=range(1001, 1040), in_range=range(1001, 1040), accept='35')
+
+    assert failed == 2
+    assert [c[0] for c in calls] == ['post']
+    assert 'accept_gone=36' in capsys.readouterr().out
+
+
+def test_network_error_prints_no_url(monkeypatch, capsys):
+    webling = load('webling', monkeypatch)
+
+    def fail(url, **kwargs):
+        raise webling.requests.ConnectionError(f'Max retries exceeded with url: {url}')
+
+    monkeypatch.setattr(webling.requests, 'post', fail)
+    assert webling.supabase('post', 'member_links?external_id=in.(1004)') is None
+    out = capsys.readouterr().out
+    assert 'ConnectionError' in out
+    assert '1004' not in out

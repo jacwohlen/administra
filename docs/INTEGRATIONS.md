@@ -80,7 +80,10 @@ When Webling no longer returns a member (deleted or merged there), the sync
 sets `gone_at` on its link: the member has left. If more than a tenth of
 the members still in Webling (at least 5) would go at once, or Webling
 returns nobody, the sync refuses and the run turns red: check Webling
-first. A member that is back in Webling gets its link revived.
+first. If the deletions are intended, start **Actions → Webling Sync → Run
+workflow** with `accept_gone` set to the number from the error line; only
+that exact number is accepted, and only for that run. A member that is back
+in Webling gets its link revived.
 
 Rows in the Webling id range that were never linked are recorded as gone on
 the first run: in October 2026 prod had 537 such rows, but Webling returned

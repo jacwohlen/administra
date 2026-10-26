@@ -126,7 +126,7 @@ WEBLING_ID_MIN = 1000
 WEBLING_ID_MAX = 10000000
 
 
-def plan_gone(links, webling_range_ids, webling_ids):
+def plan_gone(links, webling_range_ids, webling_ids, accept=None):
     """Which members Webling no longer has (deleted or merged there).
 
     links:             the 'webling' member_links ({external_id, gone_at})
@@ -137,13 +137,14 @@ def plan_gone(links, webling_range_ids, webling_ids):
     that were never linked, whether that is too many to do unattended). A gone
     member counts as having left and is editable and deletable in Administra
     again. Marking more than a tenth of the members still in Webling (at
-    least 5) at once, e.g. after a bad Webling answer, is refused instead;
-    an empty answer records nothing.
+    least 5) at once, e.g. after a bad Webling answer, is refused instead,
+    unless accept is exactly that number (someone checked Webling and
+    confirmed it); an empty answer is always refused.
     """
     current = {str(i) for i in webling_ids}
     linked = {link['external_id'] for link in links}
     active = [link['external_id'] for link in links if link.get('gone_at') is None]
     to_mark = sorted((e for e in active if e not in current), key=int)
     to_adopt = sorted(i for i in webling_range_ids if str(i) not in linked and str(i) not in current)
-    too_many = not current or len(to_mark) > max(5, len(active) // 10)
+    too_many = not current or (len(to_mark) > max(5, len(active) // 10) and accept != len(to_mark))
     return to_mark, to_adopt, too_many

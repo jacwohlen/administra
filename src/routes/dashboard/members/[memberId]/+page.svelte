@@ -213,16 +213,19 @@
     isDeleting = true;
 
     try {
-      // First remove profile picture from storage if it exists
-      if (data.imgUploaded) {
-        await removeOldProfilePictureFromStorage(data.imgUploaded);
-      }
-
-      // Delete the member from the database
+      // Delete the member from the database first: it may refuse (a member
+      // still in Webling, attendance history), and the photo must survive that
       const { error } = await supabaseClient.from('members').delete().eq('id', data.id);
 
       if (error) {
         throw error;
+      }
+
+      // A leftover file is harmless, so this must not fail the delete
+      if (data.imgUploaded) {
+        await removeOldProfilePictureFromStorage(data.imgUploaded).catch((e) =>
+          console.error('Error removing profile picture:', e)
+        );
       }
 
       // Show success toast
@@ -232,7 +235,11 @@
       goto('/dashboard/members');
     } catch (error) {
       console.error('Error deleting member:', error);
-      toaster.error({ title: $_('page.members.deleteError') });
+      toaster.error({
+        title: isManagedByProviderError(error)
+          ? $_('page.members.managedError', { values: { provider: provider ?? 'Webling' } })
+          : $_('page.members.deleteError')
+      });
       isDeleting = false;
     }
   }

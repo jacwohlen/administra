@@ -26,7 +26,9 @@ run). Administra then shows its name, birthday, contact and groups as
 maintained in Webling and does not let staff change them. On a database
 without that table yet (migration not promoted) the links are skipped with
 a warning. Members Webling no longer returns are marked as gone and count
-as having left (more than a tenth at once is refused and fails the run);
+as having left (more than a tenth at once is refused and fails the run;
+after checking Webling, a manual run with `accept_gone` set to the number
+from the error line goes ahead);
 the first run also records the rows in the Webling id range Webling no
 longer has. The membership status follows the groups, see
 `docs/INTEGRATIONS.md`.

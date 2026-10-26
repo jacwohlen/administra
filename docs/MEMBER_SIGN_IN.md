@@ -25,9 +25,11 @@ profile via the avatar menu → _Mein Profil_.
    admin email (`is_bootstrap_admin()`) likewise only becomes admin once it
    is confirmed.
 3. No match → the account stays `pending` and the pending page explains why.
-   As soon as a trainer adds the email to a member (or Webling syncs it), the
+   As soon as the email is on a member record, the
    `grant_member_access_on_member_change` trigger lets the person in; they
-   just tap _Aktualisieren_.
+   just tap _Aktualisieren_. For a member that is in Webling the email is
+   entered in Webling and arrives with the next sync; for a member created
+   in Administra (or gone from Webling) a trainer adds it here.
 
 Trial candidates (label `probetraining` / `Probetraining`) never grant
 access: the public trial form lets anyone create such a record with any
@@ -36,8 +38,7 @@ email. Once a trainer takes them on (removes the label), access follows.
 Every member record also has a `membership_status` (trial, active, passive,
 non-member, left; see `docs/INTEGRATIONS.md`). It does not affect sign-in
 yet. Once it does, only active and passive members grant access; admins can
-see beforehand which accounts that affects under _Benutzer_. For members
-from Webling the email can only be changed in Webling.
+see beforehand which accounts that affects under _Benutzer_. While a member is in Webling, the email can only be changed there.
 
 Admins can still approve anybody manually and change a member's role in
 _Benutzer_; disabled accounts are never re-enabled automatically.
