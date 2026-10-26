@@ -28,7 +28,7 @@
       "disabledTitle": "Account disabled",
       "disabledMessage": "Your account has been disabled. Please contact an administrator.",
       "signedInAs": "Signed in as",
-      "noMemberMatch": "This email address isn't on file for any member. Sign in with the email the club has for you – or ask your trainer to add it. You'll get in automatically afterwards.",
+      "noMemberMatch": "This email address isn't on file for any member. Sign in with the email the club has for you – or ask the club to add it to your membership record. You'll get in automatically afterwards.",
       "otherEmail": "Use a different email"
     },
     "users": {
@@ -77,6 +77,11 @@
       "disableConfirm": {
         "title": "Disable user?",
         "message": "{name} will no longer be able to sign in until you re-enable the account."
+      },
+      "accessReport": {
+        "title": "Lose access once membership counts",
+        "description": "These member accounts are approved, but none of their member records is active or passive (e.g. non-members or people who left). Nothing has changed yet: only once sign-in requires an active or passive membership do these accounts go back to \"Pending\".",
+        "noMember": "no member record"
       }
     },
     "settings": {
@@ -326,7 +331,18 @@
       "archived": "Archived on {date} – not shown in the member list and search.",
       "archivedLink": "Restore from the trial archive",
       "empty": "No members yet.",
-      "noResults": "No members match your search"
+      "noResults": "No members match your search",
+      "status": {
+        "trial": "Trial",
+        "active": "Active",
+        "passive": "Passive",
+        "non_member": "Non-member",
+        "left": "Left"
+      },
+      "showAll": "Also show non-members and people who left",
+      "managedBy": "Name, birthday, phone, e-mail and groups come from {provider} and are changed there, leaving the club too.",
+      "managedError": "These details come from {provider} and can only be changed there.",
+      "hiddenMatches": "{count, plural, one {# match} other {# matches}} among non-members and people who left."
     },
     "stats": {
       "all": "All",
@@ -1132,7 +1148,8 @@
     "editMember": {
       "title": "Edit Member",
       "updateSuccess": "Member updated successfully",
-      "updateError": "Error updating member"
+      "updateError": "Error updating member",
+      "managedHint": "Name, birthday, phone, e-mail and groups come from {provider} and are changed there. You can edit the notes here."
     },
     "confirm": {
       "title": "Please Confirm",

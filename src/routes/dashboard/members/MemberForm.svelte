@@ -15,6 +15,7 @@
     isSubmitting = false,
     isEditing = false,
     id = '',
+    managedBy = null,
     onclose,
     onsubmit
   }: {
@@ -28,6 +29,8 @@
     isSubmitting?: boolean;
     isEditing?: boolean;
     id?: string;
+    /** Provider the member comes from (e.g. 'Webling'): its fields are read-only, notes stay editable */
+    managedBy?: string | null;
     onclose?: () => void;
     onsubmit?: (data: {
       id: string;
@@ -84,6 +87,11 @@
 </script>
 
 <form class="space-y-4">
+  {#if managedBy}
+    <p class="text-sm text-surface-600-400">
+      {$_('dialog.editMember.managedHint', { values: { provider: managedBy } })}
+    </p>
+  {/if}
   <label class="label">
     <span>{$_('dialog.newMember.lastName')} *</span>
     <input
@@ -92,6 +100,7 @@
       type="text"
       placeholder={$_('dialog.newMember.lastNamePlaceholder')}
       required
+      disabled={!!managedBy}
     />
   </label>
   <label class="label">
@@ -102,19 +111,38 @@
       type="text"
       placeholder={$_('dialog.newMember.firstNamePlaceholder')}
       required
+      disabled={!!managedBy}
     />
   </label>
   <label class="label">
     <span>{$_('page.members.birthday')}</span>
-    <input class="input" bind:value={formData.birthday} type="date" placeholder="YYYY-MM-DD" />
+    <input
+      class="input"
+      bind:value={formData.birthday}
+      type="date"
+      placeholder="YYYY-MM-DD"
+      disabled={!!managedBy}
+    />
   </label>
   <label class="label">
     <span>{$_('page.members.mobile')}</span>
-    <input class="input" bind:value={formData.mobile} type="tel" placeholder="+41 79 123 45 67" />
+    <input
+      class="input"
+      bind:value={formData.mobile}
+      type="tel"
+      placeholder="+41 79 123 45 67"
+      disabled={!!managedBy}
+    />
   </label>
   <label class="label">
     <span>{$_('page.members.email')}</span>
-    <input class="input" bind:value={formData.email} type="email" placeholder="name@example.com" />
+    <input
+      class="input"
+      bind:value={formData.email}
+      type="email"
+      placeholder="name@example.com"
+      disabled={!!managedBy}
+    />
   </label>
   <label class="label">
     <span>{$_('page.members.notes')}</span>
@@ -129,17 +157,21 @@
     <span>{$_('page.members.labels')}</span>
     <div class="flex flex-wrap gap-1 mb-2">
       {#each formData.labels as label (label)}
-        <button
-          type="button"
-          class="chip preset-tonal-secondary flex items-center gap-1"
-          onclick={() => removeLabel(label)}
-        >
-          {label}
-          <Fa icon={faXmark} size="xs" />
-        </button>
+        {#if managedBy}
+          <span class="chip preset-tonal-secondary">{label}</span>
+        {:else}
+          <button
+            type="button"
+            class="chip preset-tonal-secondary flex items-center gap-1"
+            onclick={() => removeLabel(label)}
+          >
+            {label}
+            <Fa icon={faXmark} size="xs" />
+          </button>
+        {/if}
       {/each}
     </div>
-    <div class="flex gap-2">
+    <div class="flex gap-2" class:hidden={!!managedBy}>
       <input
         class="input flex-1"
         bind:value={labelInput}
@@ -157,7 +189,7 @@
   <button class="btn preset-tonal-surface" onclick={cancel}>{$_('button.cancel')}</button>
   <button
     class="btn preset-filled-primary-500"
-    disabled={!formData.firstname || !formData.lastname || isSubmitting}
+    disabled={(!managedBy && (!formData.firstname || !formData.lastname)) || isSubmitting}
     onclick={onFormSubmit}
   >
     {#if isSubmitting}

@@ -226,6 +226,33 @@
   {/each}
 </ul>
 
+{#if data.accessReport.length > 0}
+  <details class="card border border-surface-200-800 p-4 mt-6">
+    <summary class="cursor-pointer font-bold">
+      {$_('page.users.accessReport.title')}
+      <span class="text-sm text-surface-600-400 font-normal">({data.accessReport.length})</span>
+    </summary>
+    <p class="text-sm text-surface-600-400 mt-2 mb-3">
+      {$_('page.users.accessReport.description')}
+    </p>
+    <ul class="flex flex-col gap-1">
+      {#each data.accessReport as r (r.user_id)}
+        <li class="flex flex-wrap items-center gap-1 text-sm">
+          <span class="font-medium">{r.full_name || r.email}</span>
+          {#if r.full_name}<span class="text-surface-600-400">{r.email}</span>{/if}
+          {#each r.statuses as s (s)}
+            <span class="chip preset-tonal-surface text-xs">{$_(`page.members.status.${s}`)}</span>
+          {:else}
+            <span class="chip preset-tonal-surface text-xs"
+              >{$_('page.users.accessReport.noMember')}</span
+            >
+          {/each}
+        </li>
+      {/each}
+    </ul>
+  </details>
+{/if}
+
 {#if confirmDisable}
   <ConfirmDialog
     title={$_('page.users.disableConfirm.title')}

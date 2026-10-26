@@ -45,3 +45,9 @@ updates:
     directory: /
     schedule:
       interval: weekly
+
+  # requests for the Webling sync, plus pytest and ruff for its CI job
+  - package-ecosystem: pip
+    directory: /webling-sync
+    schedule:
+      interval: weekly

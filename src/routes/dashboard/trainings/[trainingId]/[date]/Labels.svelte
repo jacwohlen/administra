@@ -1,5 +1,9 @@
 <script lang="ts">
-  let { labels = [] }: { labels?: string[] } = $props();
+  import { visibleLabels } from '$lib/memberStatus';
+
+  let { labels: allLabels = [] }: { labels?: string[] } = $props();
+  // Without status groups and Webling bookkeeping
+  let labels = $derived(visibleLabels(allLabels));
 </script>
 
 {#each labels as l, i (l)}
