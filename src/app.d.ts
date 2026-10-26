@@ -4,6 +4,7 @@
 
 import type { SupabaseClient, Session, User } from '@supabase/supabase-js';
 import type { UserProfile } from '$lib/models';
+import type { AssistantKind } from '$lib/assistant/types';
 
 declare global {
   // Injected by the `define` block in vite.config.js.
@@ -24,6 +25,10 @@ declare global {
     interface PageData {
       session: Session | null;
       userProfile: UserProfile | null;
+    }
+    interface PageState {
+      /** The ?assistant=<kind> request of this history entry was answered (autoOpen.ts) */
+      assistantTaken?: AssistantKind;
     }
     // interface Platform {}
   }

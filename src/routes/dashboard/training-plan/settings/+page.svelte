@@ -1,5 +1,11 @@
 <script lang="ts">
+  import { onMount } from 'svelte';
   import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
+  import AssistantButton from '$lib/components/assistant/AssistantButton.svelte';
+  import AssistantDialog from '$lib/components/assistant/AssistantDialog.svelte';
+  import TrainingPlanReview from './TrainingPlanReview.svelte';
+  import { takeAssistantRequest } from '$lib/assistant/autoOpen';
+  import { loadAssistantStatus } from '$lib/assistant/client';
   import Fa from 'svelte-fa';
   import {
     faArrowLeft,
@@ -22,10 +28,34 @@
   let busy = $state(false);
   let confirmRemove = $state<TrainingPlanBreak | null>(null);
   let form = $state({ title: '', date_from: '', date_to: '', cancels_training: false });
+  let showAssistant = $state(false);
+  /** The holidays as the assistant read them again after a partial save, while it is open */
+  let assistantBreaks = $state.raw<TrainingPlanBreak[] | null>(null);
+  /** The assistant saved something (or tried: a failed write may still commit): reload on close */
+  let assistantSaved = false;
 
   async function refresh() {
     await invalidate('training-plan:settings');
   }
+
+  function closeAssistant() {
+    showAssistant = false;
+    assistantBreaks = null;
+    if (assistantSaved) {
+      assistantSaved = false;
+      refresh();
+    }
+  }
+
+  // Opened from the Daten-Assistent overview with ?assistant=training_plan
+  onMount(() => {
+    if (!takeAssistantRequest('training_plan') || !data.canPlanTrainings) return;
+    if (data.plannedTrainings.length === 0) {
+      toaster.warning({ title: $_('page.trainingPlan.import.noTrainings') });
+      return;
+    }
+    loadAssistantStatus().then((s) => (showAssistant = s.configured));
+  });
 
   async function toggleTraining(id: number, planned: boolean) {
     busy = true;
@@ -218,7 +248,16 @@
 </section>
 
 <section class="mt-8">
-  <h3>{$_('page.trainingPlan.import.title')}</h3>
+  <div class="flex flex-wrap items-center justify-between gap-2">
+    <h3>{$_('page.trainingPlan.import.title')}</h3>
+    {#if data.canPlanTrainings && data.plannedTrainings.length > 0}
+      <AssistantButton
+        iconOnly
+        label={$_('assistant.kinds.training_plan.title')}
+        onclick={() => (showAssistant = true)}
+      />
+    {/if}
+  </div>
   <ImportSheet
     trainings={data.plannedTrainings}
     members={data.members}
@@ -226,6 +265,30 @@
     onimported={refresh}
   />
 </section>
+
+{#if showAssistant && data.canPlanTrainings}
+  <AssistantDialog kind="training_plan" onclose={closeAssistant}>
+    {#snippet review(proposal, back)}
+      <TrainingPlanReview
+        {proposal}
+        trainings={data.plannedTrainings}
+        members={data.members}
+        breaks={assistantBreaks ?? data.breaks}
+        onback={back}
+        oncancel={closeAssistant}
+        onapplied={() => {
+          assistantSaved = true;
+          closeAssistant();
+        }}
+        onpartial={(breaks) => {
+          // The review stays open; a new reading compares against these
+          assistantBreaks = breaks;
+          assistantSaved = true;
+        }}
+      />
+    {/snippet}
+  </AssistantDialog>
+{/if}
 
 {#if confirmRemove}
   {@const b = confirmRemove}

@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { csvCell } from '$lib/csv';
   import type { PageData } from './$types';
   import Fa from 'svelte-fa';
   import { faArrowLeft, faDownload } from '@fortawesome/free-solid-svg-icons';
@@ -18,7 +19,7 @@
   // Convert data to CSV format
   function convertToCSV(data: Athletes[]) {
     const headers = Object.keys(data[0]).join(',') + '\n'; // Get the keys for headers
-    const rows = data.map((row) => Object.values(row).join(',')).join('\n'); // Get the rows
+    const rows = data.map((row) => Object.values(row).map(csvCell).join(',')).join('\n'); // Get the rows
     return headers + rows;
   }
 

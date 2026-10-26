@@ -19,7 +19,8 @@
       "noTrainingsToday": "Heute findet kein Training statt!",
       "settings": "Einstellungen",
       "myProfile": "Mein Profil",
-      "exams": "Q-Prüfungen"
+      "exams": "Q-Prüfungen",
+      "assistant": "Daten-Assistent"
     },
     "pending": {
       "title": "Zugriff ausstehend",
@@ -1348,5 +1349,394 @@
     "lastDaysAgo": "Zuletzt vor {n} Tagen",
     "last30": "{n, plural, one {# Training} other {# Trainings}} in den letzten 30 Tagen",
     "cell": "{date}: {n, plural, =0 {kein Training} one {# Training} other {# Trainings}}"
+  },
+  "assistant": {
+    "button": "Mit KI erfassen",
+    "title": "Daten-Assistent",
+    "chooseFiles": "Datei wählen",
+    "fileTypes": "Fotos, PDF, TXT oder CSV; höchstens {max} Fotos oder PDFs",
+    "takePhoto": "Foto aufnehmen",
+    "preparing": "Datei wird vorbereitet …",
+    "attachments": "Gewählte Dateien",
+    "pasteText": "Text einfügen",
+    "pasteTextPlaceholder": "Oder Text einfügen, auch aus Excel, z. B. {example}",
+    "hint": "Hinweis für die Auswertung (optional)",
+    "hintPlaceholder": "z. B. «Die zweite Spalte ist der Leiter»",
+    "privacy": "Fotos und Text gehen an Claude (Anthropic), ohne Mitgliederdaten aus Administra. Gespeichert wird erst nach deiner Prüfung.",
+    "analyze": "Auswerten",
+    "working": "Claude liest die Unterlagen …",
+    "workingSeconds": "{seconds} s – das dauert meist 10 bis 40 Sekunden.",
+    "remaining": "Heute noch {count, plural, one {# Auswertung} other {# Auswertungen}}",
+    "remainingShort": "Heute noch {count}",
+    "modelWarnings": "Hinweise zur Vorlage",
+    "kinds": {
+      "grades": {
+        "title": "Judo-Pass einlesen",
+        "hint": "Fotografiere die Seiten mit den Prüfungen (Kyu und Dan).",
+        "description": "Kyu- und Dan-Prüfungen aus dem Judo-Pass eines Mitglieds übernehmen.",
+        "example": "«5. Kyu am 12. Juni 2019, 4. Kyu am 3. Mai 2021»"
+      },
+      "attendance": {
+        "title": "Präsenzliste einlesen",
+        "button": "Liste einlesen",
+        "hint": "Liste eines Trainings oder Tabelle über mehrere Daten.",
+        "description": "Anwesenheiten aus einer Präsenzliste auf Papier oder in Excel erfassen.",
+        "example": "«Anwesend: Lena Müller, Tim Weber, Anna Keller; Leitung Beni Keller»"
+      },
+      "training_plan": {
+        "title": "Trainingsplan einlesen",
+        "hint": "Plan mit Datum, Training, Leiter, Thema, Ausfällen und Ferien. Grosse Pläne am besten monatsweise.",
+        "description": "Leiter, Themen, Ausfälle und Ferien aus einem bestehenden Plan übernehmen.",
+        "example": "«2. November Kampftraining mit Sandra, Thema Ne-Waza; am 9. November fällt es aus»"
+      },
+      "lesson_plan": {
+        "title": "Lektionsplan einlesen",
+        "hint": "Der Lektionsplan für dieses Training, von Hand oder gedruckt.",
+        "description": "Einen Lektionsplan (Aufwärmen, Hauptteil, Ausklang) für ein Training und Datum erstellen.",
+        "example": "«Aufwärmen: Laufen und Fallschule. Hauptteil: O-Goshi in Paaren. Ausklang: Randori»"
+      },
+      "events": {
+        "title": "Termine einlesen",
+        "hint": "Wettkämpfe, Kurse, Lager oder Anlässe, z. B. aus einer Ausschreibung.",
+        "description": "Wettkämpfe, Kurse und Anlässe aus einer Liste oder Ausschreibung übernehmen.",
+        "example": "«Kids Cup am 14. November in Wohlen, 9 bis 16 Uhr»"
+      }
+    },
+    "errors": {
+      "not_configured": "Der Assistent ist auf dieser Installation nicht eingerichtet.",
+      "unauthorized": "Bitte melde dich erneut an.",
+      "forbidden": "Dafür fehlt dir die Berechtigung.",
+      "quota": "Das Tageslimit für Auswertungen ist erreicht. Morgen geht es weiter.",
+      "too_large": "Die Dateien sind zu gross. Zusammen höchstens 3.5 MB.",
+      "too_many_pages": "Das PDF ist zu umfangreich. Bitte nur die nötigen Seiten hochladen, etwa 30 Seiten oder weniger.",
+      "too_many_files": "Höchstens 4 Fotos oder PDFs pro Auswertung.",
+      "invalid_request": "Die Anfrage war unvollständig. Bitte die Dateien prüfen und nochmals versuchen.",
+      "not_found": "Die zugehörigen Daten wurden nicht gefunden, z. B. kein Training im Plan.",
+      "refused": "Claude hat die Auswertung abgelehnt. Versuche es mit einem anderen Ausschnitt.",
+      "incomplete": "Die Vorlage ist zu umfangreich. Bitte in kleinere Teile aufteilen, z. B. einen Monat.",
+      "invalid_output": "Die Antwort war unbrauchbar. Bitte nochmals versuchen.",
+      "timeout": "Die Auswertung hat zu lange gedauert. Versuche es mit weniger Seiten oder einem kleineren Ausschnitt.",
+      "busy": "Der KI-Dienst ist gerade ausgelastet. Bitte in einer Minute nochmals versuchen.",
+      "failed": "Die Auswertung ist fehlgeschlagen. Bitte nochmals versuchen.",
+      "network": "Keine Verbindung. Bitte die Internetverbindung prüfen.",
+      "heic": "HEIC-Fotos werden nicht unterstützt. Bitte als JPEG speichern oder auf dem Handy direkt mit «Foto aufnehmen» fotografieren.",
+      "unsupported_file": "Dieser Dateityp wird nicht unterstützt. Möglich sind Fotos (JPEG, PNG, WebP), PDF und Text- oder CSV-Dateien.",
+      "unreadable": "Die Datei konnte nicht gelesen werden.",
+      "text_too_long": "Der Text ist zu lang (höchstens 30 000 Zeichen). Bitte in kleinere Teile aufteilen, z. B. einen Monat."
+    },
+    "review": {
+      "apply": "{count, plural, one {# Eintrag übernehmen} other {# Einträge übernehmen}}",
+      "applying": "Wird gespeichert …",
+      "nothing": "Nichts zu übernehmen.",
+      "back": "Zurück zum Upload",
+      "uncertain": "Unsicher – bitte prüfen",
+      "status": {
+        "new": "Neu",
+        "exists": "Schon erfasst",
+        "changed": "Abweichend",
+        "invalid": "Unvollständig",
+        "duplicate": "Doppelt"
+      },
+      "done": "{count, plural, one {# Eintrag gespeichert} other {# Einträge gespeichert}}",
+      "partial": "{saved} gespeichert, {failed} fehlgeschlagen",
+      "error": "Speichern fehlgeschlagen",
+      "pickMember": "Mitglied wählen …",
+      "noMatch": "Kein passendes Mitglied gefunden",
+      "skip": "Nicht übernehmen"
+    },
+    "page": {
+      "intro": "Der Assistent hilft beim Einstieg: Bestehende Unterlagen auf Papier, als PDF oder in Excel werden eingelesen, statt alles von Hand abzutippen.",
+      "step1": "Foto, PDF oder Text hochladen, z. B. einen Judo-Pass, eine Präsenzliste oder einen Trainingsplan.",
+      "step2": "Claude liest die Unterlagen und macht einen Vorschlag.",
+      "step3": "Du prüfst den Vorschlag, ergänzt Fehlendes und korrigierst Abweichungen; Unsicheres ist markiert.",
+      "step4": "Erst wenn du «Übernehmen» drückst, wird gespeichert, mit deinen normalen Berechtigungen.",
+      "safety": "Die KI kann nichts selbst ändern: Sie liefert nur einen Vorschlag in einem festen Format, sieht keine Mitgliederdaten aus Administra und wählt keine Mitglieder aus. Namen werden hier im Browser zugeordnet.",
+      "notConfigured": "Der Assistent ist auf dieser Installation noch nicht eingerichtet. Ein Admin muss dafür einen API-Schlüssel von Anthropic hinterlegen (siehe docs/AI_ASSISTANT.md).",
+      "member": "Mitglied",
+      "memberPlaceholder": "Name suchen …",
+      "training": "Training",
+      "trainingPlaceholder": "Training wählen …",
+      "date": "Datum",
+      "start": "Starten"
+    },
+    "grades": {
+      "inPass": "Im Pass",
+      "inProfile": "Im Profil",
+      "holder": {
+        "doubt": "Name oder Geburtsdatum im Pass passen nicht zu {name}. Ist das der richtige Pass?",
+        "confirm": "Ja, das ist der Pass von {name}",
+        "profileUnchanged": "Name und Geburtsdatum im Profil werden nicht geändert. Falls sie falsch sind, korrigiere sie in Webling.",
+        "unknown": "Im Pass wurde kein Name erkannt. Prüfe, ob es der Pass von {name} ist."
+      },
+      "empty": "Im Pass wurden keine Prüfungen erkannt.",
+      "pickGrade": "Grad wählen …",
+      "recordedOn": "Schon erfasst am {date}, es wird nichts geändert.",
+      "correct": "Erfasst am {recorded} – Datum auf {date} korrigieren",
+      "duplicateOf": "Gleicher Grad wie Zeile {row}, wird nur einmal gespeichert.",
+      "plan": "Zu speichern: {inserts, plural, =0 {keine neue Prüfung} one {# neue Prüfung} other {# neue Prüfungen}} und {updates, plural, =0 {keine Datumskorrektur} one {# Datumskorrektur} other {# Datumskorrekturen}}.",
+      "progress": "Wird gespeichert … {done} von {total}",
+      "confirmFirst": "Bestätige zuerst oben, dass es der richtige Pass ist.",
+      "blocked": "{count, plural, one {Eine Zeile braucht} other {# Zeilen brauchen}} noch eine Angabe: ergänze sie oder wähle «Nicht übernehmen».",
+      "issues": {
+        "noGrade": "Grad nicht erkannt – bitte wählen.",
+        "noDate": "Datum fehlt – bitte eintragen.",
+        "partialDate": "Im Pass ist nur «{written}» lesbar – bitte das ganze Datum eintragen.",
+        "badDate": "Kein gültiges Datum.",
+        "futureDate": "Das Datum liegt in der Zukunft.",
+        "beforeBirthday": "Liegt vor dem Geburtsdatum im Profil ({birthday}).",
+        "beforeLower": "Früher datiert als der tiefere {grade} ({date}) – Reihenfolge prüfen.",
+        "afterHigher": "Später datiert als der höhere {grade} ({date}) – Reihenfolge prüfen.",
+        "mismatch": "Im Pass steht «{written}», das passt nicht zum gewählten Grad.",
+        "dan": "Dan-Grad: wird zum aktuellen Gurt{badge, select, true { und vergibt das Abzeichen «{badgeName}»} other {}}."
+      },
+      "saved": "Gespeichert",
+      "saveFailed": {
+        "failed": "Nicht gespeichert – versuche es nochmals oder lass die Zeile weg.",
+        "notUpdated": "Nicht gespeichert: Die Prüfung wurde inzwischen gelöscht, oder du darfst sie nicht ändern."
+      },
+      "retry": "{count, plural, one {Eine Prüfung wurde} other {# Prüfungen wurden}} nicht gespeichert. Versuche es nochmals oder schliesse den Assistenten – was gespeichert ist, bleibt gespeichert."
+    },
+    "attendance": {
+      "loading": "Mitglieder und bisherige Anwesenheiten werden geladen …",
+      "loadingExisting": "Bisherige Anwesenheiten werden geladen …",
+      "loadError": "Mitglieder oder bisherige Anwesenheiten konnten nicht geladen werden. Bitte nochmals laden.",
+      "noEntries": "Auf der Liste wurden keine Namen erkannt.",
+      "training": "Training: {training}",
+      "listTraining": "Auf der Liste: «{text}»",
+      "otherWeekday": "Die Liste nennt {written}, dieses Training ist am {weekday}. Prüfe, ob es wirklich die Liste dieses Trainings ist.",
+      "dates": {
+        "titleSingle": "Datum",
+        "titleGrid": "Daten auf der Liste",
+        "date": "Datum",
+        "include": "Datum {date} übernehmen",
+        "marked": "{count, plural, one {# Person} other {# Personen}}",
+        "listDate": "Auf der Liste steht {dates}. Übernommen wird das Datum oben.",
+        "notPageDate": "Nicht das Datum dieser Seite ({date}) – eingetragen wird das Datum hier.",
+        "cancelled": "Laut Trainingsplan fällt das Training an diesem Tag aus.",
+        "excluded": "Datum wird nicht übernommen",
+        "issues": {
+          "invalid": "Kein gültiges Datum",
+          "future": "Liegt in der Zukunft – wird nicht übernommen",
+          "weekday": "Ein {weekday}, das Training ist am {training}. Nur mit Häkchen übernehmen.",
+          "duplicate": "Datum kommt doppelt vor – wird nicht übernommen"
+        }
+      },
+      "people": {
+        "title": "{count, plural, one {# Name auf der Liste} other {# Namen auf der Liste}}",
+        "member": "Mitglied",
+        "role": "Rolle",
+        "filter": "Mitglied suchen …",
+        "search": "Anderes Mitglied suchen",
+        "suggestions": "Vorschläge",
+        "allMembers": "Alle Mitglieder",
+        "createNew": "Neues Mitglied erfassen",
+        "confirm": "Bestätigen",
+        "swapNames": "Vor- und Nachname tauschen",
+        "createWarning": "Erfasse nur Personen, die es noch nicht gibt – auch nicht in Webling. Sonst entsteht ein Duplikat, das später von Hand zusammengeführt werden muss.",
+        "similar": "Ähnliche Mitglieder: {names}",
+        "notOnRoster": "Kommt neu auf die Teilnehmerliste dieses Trainings.",
+        "duplicateOf": "Steht schon weiter oben («{name}») und wird damit zusammengeführt. Hat die Person an einem Datum zwei Rollen, gilt die höhere.",
+        "overwrite": "Schon erfasst als {roles} – mit der Rolle von der Liste überschreiben",
+        "skipOpen": "Offene nicht übernehmen",
+        "present": "Am {date} anwesend",
+        "confirmRoster": "{count, plural, one {# Vorschlag von der Teilnehmerliste bestätigen} other {# Vorschläge von der Teilnehmerliste bestätigen}}",
+        "notOnRosterConfirm": "Steht nicht auf der Teilnehmerliste dieses Trainings und kommt mit der Bestätigung neu darauf.",
+        "saved": "Gespeichert.",
+        "option": "{name} ({details})",
+        "details": {
+          "roster": "auf der Teilnehmerliste",
+          "notRoster": "nicht auf der Teilnehmerliste",
+          "former": "ausgetreten",
+          "passive": "passiv",
+          "trial": "Probetraining",
+          "new": "neu erfasst",
+          "id": "Nr. {id}"
+        }
+      },
+      "problems": {
+        "pick": "Wähle ein Mitglied, erfasse die Person neu oder übernimm sie nicht.",
+        "confirm": "Ist das die richtige Person? Bestätige die Zuordnung oder wähle ein anderes Mitglied.",
+        "name": "Für ein neues Mitglied braucht es Vor- und Nachname."
+      },
+      "status": {
+        "confirm": "Bitte bestätigen",
+        "empty": "Kein Datum"
+      },
+      "hints": {
+        "former": "Laut Webling ausgetreten.",
+        "passive": "Passivmitglied.",
+        "trial": "Probetraining-Kandidat/in. Kommt sie oder er auf die Teilnehmerliste, gilt das Probetraining als zugeteilt."
+      },
+      "roles": {
+        "attendee": "Teilnehmer/in",
+        "mainTrainer": "Haupttrainer/in",
+        "assistant": "Hilfstrainer/in"
+      },
+      "summary": "{checkIns, plural, one {# Anwesenheit} other {# Anwesenheiten}} an {dates, plural, one {# Datum} other {# Daten}}",
+      "summaryCreates": "{count, plural, one {# neues Mitglied} other {# neue Mitglieder}}",
+      "summaryRoster": "{count, plural, one {# Person kommt} other {# Personen kommen}} neu auf die Teilnehmerliste",
+      "open": "{count, plural, one {# Name braucht} other {# Namen brauchen}} noch eine Entscheidung.",
+      "onlyPresent": "Es werden nur Anwesenheiten eingetragen, nie welche entfernt. Bei älteren Daten dauert das Speichern etwas länger, weil die Abzeichen neu berechnet werden.",
+      "progress": "Wird gespeichert … {done} von {total}",
+      "failed": {
+        "create": "Das neue Mitglied konnte nicht erfasst werden, die Anwesenheit ist nicht gespeichert. Versuche es nochmals oder übernimm die Person nicht.",
+        "createdAnyway": "Das neue Mitglied wurde trotz Fehlermeldung erfasst und ist oben gewählt. Bestätige es, dann wird die Anwesenheit nochmals gespeichert.",
+        "roster": "Konnte nicht auf die Teilnehmerliste gesetzt werden, die Anwesenheit ist nicht gespeichert. Versuche es nochmals.",
+        "checkIn": "Anwesenheit nicht gespeichert: {dates}. Versuche es nochmals."
+      },
+      "partialHint": "Bei {count} Namen hat das Speichern nicht geklappt (rot markiert). Gespeichertes ist als «Schon erfasst» markiert und wird nicht nochmals gespeichert. Übernimm den Rest nochmals oder schliesse den Dialog.",
+      "reload": "Neu laden"
+    },
+    "trainingPlan": {
+      "summary": "{count, plural, one {# Termin} other {# Termine}} vom {from} bis {to}",
+      "keepHint": "Leere Felder im Dokument lassen die bestehende Planung unverändert, leere Felder der bestehenden Planung werden ergänzt. Ein anderer Leiter, ein anderes Thema oder ein Ausfall ersetzt die bestehende Planung nur, wenn du es beim Termin ankreuzt.",
+      "empty": "Im Dokument wurden keine Termine und keine Ferien erkannt.",
+      "loading": "Bestehende Planung wird geladen …",
+      "loadError": "Die bestehende Planung konnte nicht geladen werden. Ohne Vergleich wird nichts gespeichert.",
+      "retry": "Nochmals laden",
+      "leaders": "Leiter",
+      "leadersHint": "Zuordnung der Namen zu Mitgliedern, gilt für alle Termine mit diesem Namen. Ohne Zuordnung (z. B. Gasttrainer) bleibt der Name in der Bemerkung.",
+      "leaderCount": "{count, plural, one {# Termin} other {# Termine}}",
+      "leaderSuggested": "Bitte prüfen",
+      "confirmLeader": "Stimmt",
+      "inDocument": "Im Dokument",
+      "noTraining": "Kein Training gewählt",
+      "pickTraining": "Training wählen …",
+      "editDone": "Fertig",
+      "otherMember": "anderes Mitglied",
+      "status": {
+        "fill": "Ergänzung"
+      },
+      "fillHint": "Ergänzt die bestehende Planung:",
+      "changedHint": "Weicht von der bestehenden Planung ab:",
+      "exists": "Schon so geplant, es wird nichts geändert.",
+      "overwrite": "Bestehende Planung ersetzen",
+      "duplicateOf": "Gleicher Termin wie Zeile {row}, wird nur einmal gespeichert.",
+      "issues": {
+        "badDate": "Datum fehlt oder ist ungültig.",
+        "noTraining": "Kein geplantes Training erkannt – bitte wählen.",
+        "weekday": "Das Training ist am {training}, das Datum ist ein {date}. Bitte Datum oder Training korrigieren.",
+        "empty": "Nichts eingetragen – wird nicht übernommen.",
+        "trainerUnconfirmed": "«{name}» ist vermutlich {member} – bitte bestätigen oder anders zuordnen.",
+        "trainerUnmatched": "Kein Mitglied für «{name}», der Name steht in der Bemerkung.",
+        "closedBreak": "Dojo geschlossen ({title}): Das Training fällt trotzdem aus.",
+        "unusualYear": "Ungewöhnliches Jahr – stimmt das Datum?",
+        "trainingUnconfirmed": "Im Dokument steht kein geplantes Training, nach dem Wochentag wäre es dieses. Bitte bestätigen oder ein anderes wählen."
+      },
+      "holidays": "Ferien",
+      "holidaysHint": "Werden zu den Ferien und Ausfallzeiten hinzugefügt. «Dojo zu» lässt alle geplanten Trainings in dieser Zeit ausfallen.",
+      "addHoliday": "Übernehmen",
+      "holidayExists": "Schon erfasst, wird nicht nochmals hinzugefügt.",
+      "holidayDuplicate": "Gleiche Ferien wie Zeile {row}, werden nur einmal hinzugefügt.",
+      "holidayOverlaps": "Überschneidet sich mit «{title}» ({range}).",
+      "holidayIssues": {
+        "noTitle": "Bezeichnung fehlt.",
+        "badDates": "Zeitraum fehlt oder ist ungültig."
+      },
+      "plan": "Zu speichern: {sessions, plural, =0 {kein Termin} one {# Termin} other {# Termine}} und {breaks, plural, =0 {keine Ferien} one {# Ferieneintrag} other {# Ferieneinträge}}.",
+      "progress": "Wird gespeichert … {done} von {total}",
+      "blocked": "{count, plural, one {Eine Zeile braucht} other {# Zeilen brauchen}} noch eine Angabe: ergänze sie oder wähle «Nicht übernehmen».",
+      "skipIncomplete": "Unvollständige nicht übernehmen",
+      "confirmTraining": "Training stimmt",
+      "confirmTrainingGroup": "Stimmt für alle {count} Termine «{name}»",
+      "guessDuplicateOf": "Im Dokument steht kein geplantes Training; nach dem Wochentag wäre es der gleiche Termin wie Zeile {row}. Wird nicht übernommen – wähle ein Training, wenn der Termin doch dazugehört.",
+      "saved": "Gespeichert",
+      "saveFailed": "Nicht gespeichert – versuche es nochmals oder lass den Termin weg.",
+      "holidaySaveFailed": "Nicht gespeichert – versuche es nochmals oder entferne das Häkchen bei «Übernehmen».",
+      "saveRetry": "{count, plural, one {Ein Eintrag wurde} other {# Einträge wurden}} nicht gespeichert. Versuche es nochmals oder schliesse den Assistenten – was gespeichert ist, bleibt gespeichert.",
+      "holidayNotPreselected": "Nicht vorgewählt, weil sich der Zeitraum mit erfassten Ferien überschneidet. Kreuze «Übernehmen» nur an, wenn es zusätzliche Ferien sind.",
+      "holidayOverlapsRow": "Überschneidet sich mit Zeile {row}, «{title}» ({range}).",
+      "holidayClosesOpen": "Überschneidet sich mit «{title}» ({range}), erfasst ohne «Dojo zu»: Dort findet das Training statt. Mit «Dojo zu» fallen in der Überschneidung alle geplanten Trainings aus."
+    },
+    "lessonPlan": {
+      "forDate": "Lektionsplan für den {date}",
+      "same": "Genau dieser Plan ist schon gespeichert.",
+      "contained": "Dieser Text steht schon im bisherigen Plan.",
+      "date": {
+        "differs": "Auf dem Plan steht der {written}, gespeichert wird er aber für den {date} – das Datum dieser Seite.",
+        "otherPage": "Gehört er zu einem anderen Tag, brich ab und lies ihn auf der Seite des Trainings an jenem Datum ein.",
+        "confirm": "Trotzdem für den {date} speichern"
+      },
+      "existing": {
+        "text": "Für diesen Tag gibt es schon einen Lektionsplan.",
+        "mode": "Was soll mit dem bisherigen Plan passieren?",
+        "replace": "Bisherigen Plan ersetzen",
+        "append": "Bisherigen Text behalten und den eingelesenen unten anhängen",
+        "show": "Bisherigen Inhalt anzeigen"
+      },
+      "file": {
+        "exists": "Für diesen Tag ist eine Datei als Lektionsplan hinterlegt: «{name}».",
+        "replaced": "Ein Lektionsplan ist entweder Text oder eine Datei. Speicherst du den eingelesenen Text, wird die Datei gelöscht – wie wenn du im Editor zu «Inhalt schreiben» wechselst und speicherst. Lade sie vorher herunter, wenn du sie behalten willst.",
+        "confirm": "Datei «{name}» löschen und durch den Text ersetzen",
+        "notRemoved": "Lektionsplan gespeichert, die alte Datei konnte aber nicht gelöscht werden."
+      },
+      "previousTitle": "Bisher: «{title}»",
+      "content": "Inhalt",
+      "contentAppend": "Inhalt, der unten angehängt wird",
+      "contentHelp": "Eine Zeile pro Eintrag: «## » beginnt einen Abschnitt, «- » einen Punkt.",
+      "preview": "Vorschau",
+      "previewEmpty": "Noch kein Inhalt.",
+      "errors": {
+        "target": "Training oder Datum dieser Seite sind ungültig, hier kann kein Lektionsplan gespeichert werden.",
+        "empty": "Der Inhalt ist leer. Ergänze ihn oder geh zurück zum Upload.",
+        "tooLong": "Der eingelesene Inhalt ist zu lang (höchstens {max} Zeichen).",
+        "fileNotConfirmed": "Bestätige zuerst, dass die Datei ersetzt werden darf.",
+        "dateNotConfirmed": "Bestätige zuerst das Datum."
+      },
+      "changedMeanwhile": "Der Lektionsplan wurde inzwischen geändert oder konnte nicht gespeichert werden. Der aktuelle Stand ist neu geladen – prüfe ihn und übernimm nochmals.",
+      "saveFailed": "Nicht gespeichert. Der Lektionsplan ist neu geladen – prüfe ihn und versuche es nochmals."
+    },
+    "events": {
+      "intro": "{count, plural, one {# Termin gelesen} other {# Termine gelesen}}. Angehakte Termine werden als neue Events erstellt, bestehende Events bleiben unverändert.",
+      "defaultSection": "Sektion für Termine ohne Sektion",
+      "defaultSectionNone": "Keine – pro Termin wählen",
+      "useDefault": "Standard: {section}",
+      "multiDay": "Mehrtägig",
+      "multiDayInfo": "Events haben kein Enddatum: Ein mehrtägiger Termin wird am ersten Tag erstellt, und «bis …» steht in der ersten Zeile der Beschreibung.",
+      "dateTo": "Bis (mehrtägig)",
+      "untilLine": "bis {date}",
+      "descriptionStarts": "Die Beschreibung beginnt mit «{line}».",
+      "include": "Als Event erstellen",
+      "includeAnyway": "Trotzdem als neues Event erstellen",
+      "duplicateOf": "Ähnliches Event schon erfasst: «{title}» am {date}",
+      "duplicateOfRow": "Gleicher Termin wie Nr. {row}",
+      "fromWebling": "Kommt aus Webling und wird automatisch synchronisiert. Nur erstellen, wenn es ein anderer Termin ist.",
+      "empty": "Im Dokument wurden keine Termine gefunden.",
+      "progress": "{done} von {total} gespeichert …",
+      "blocked": "{count, plural, one {# Termin ist unvollständig: korrigieren oder abwählen.} other {# Termine sind unvollständig: korrigieren oder abwählen.}}",
+      "issues": {
+        "noTitle": "Titel fehlt.",
+        "noDate": "Datum fehlt.",
+        "badDate": "Kein gültiges Datum.",
+        "noSection": "Sektion wählen.",
+        "unknownSection": "Die Sektion «{written}» gibt es hier nicht: bitte eine wählen.",
+        "badTimeFrom": "Startzeit als HH:MM angeben.",
+        "badTimeTo": "Endzeit als HH:MM angeben.",
+        "timeOrder": "Die Endzeit liegt nicht nach der Startzeit – endet der Anlass nach Mitternacht?",
+        "badDateTo": "Das Enddatum muss nach dem Datum liegen.",
+        "past": "Liegt in der Vergangenheit.",
+        "farFuture": "Liegt mehr als zwei Jahre in der Zukunft: Jahr prüfen."
+      },
+      "comparing": "Die bestehenden Events werden zum Vergleich geladen …",
+      "compareFailed": "Die bestehenden Events konnten nicht geladen werden. Ohne diesen Vergleich wird nichts gespeichert, damit kein Termin doppelt entsteht.",
+      "compareRetry": "Nochmals laden",
+      "saved": "Gespeichert",
+      "saveFailed": "Nicht gespeichert – versuche es nochmals oder wähle den Termin ab.",
+      "recordedAnyway": "Ein passendes Event ist jetzt erfasst, wohl trotz der Fehlermeldung. Der Termin bleibt abgewählt, damit er nicht doppelt entsteht.",
+      "failedTitles": "Nicht gespeichert: {titles}",
+      "retry": "{count, plural, one {# Termin wurde nicht gespeichert (rot markiert).} other {# Termine wurden nicht gespeichert (rot markiert).}} Gespeicherte sind markiert und werden nicht nochmals erstellt. Übernimm den Rest nochmals oder schliesse den Dialog."
+    },
+    "textLength": "{count} von {max} Zeichen",
+    "dictation": {
+      "start": "Diktieren",
+      "stop": "Diktieren beenden",
+      "listening": "Hört auf Deutsch zu … sprich in ganzen Sätzen, Namen deutlich.",
+      "privacy": "Die Spracherkennung macht dein Browser: Chrome und Edge über Google bzw. Microsoft, Safari über Apple.",
+      "errors": {
+        "denied": "Kein Zugriff auf das Mikrofon. Erlaube es in den Einstellungen des Browsers.",
+        "noSpeech": "Nichts gehört. Bitte nochmals versuchen.",
+        "failed": "Die Spracherkennung ist fehlgeschlagen. Tippe den Text oder versuche es nochmals."
+      }
+    }
   }
 }

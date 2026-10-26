@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { csvCell } from '$lib/csv';
   import { rpcRows } from '$lib/supabase';
   import type { TrainerTrackingRecord, TrainerRole } from '$lib/models';
   import Fa from 'svelte-fa';
@@ -93,18 +94,10 @@
     // Convert to CSV string with proper escaping
     const csvContent = [
       headers.join(','),
-      ...rows.map((row) => row.map((cell) => escapeCSVCell(cell)).join(','))
+      ...rows.map((row) => row.map((cell) => csvCell(cell)).join(','))
     ].join('\n');
 
     return csvContent;
-  }
-
-  function escapeCSVCell(cell: string): string {
-    // If cell contains comma, quote, or newline, wrap in quotes and escape internal quotes
-    if (cell.includes(',') || cell.includes('"') || cell.includes('\n')) {
-      return `"${cell.replace(/"/g, '""')}"`;
-    }
-    return cell;
   }
 
   function getRoleLabel(role: TrainerRole): string {

@@ -12,6 +12,7 @@ A modern attendance tracking system designed specifically for martial arts clubs
 - **Member Self-Service** - Members sign in with the email the club has on file and see their own profile and the member directory
 - **Q-Prüfungen (Kyu Gradings)** - Members register for exam days, examiners score candidates on their phone, passing records the new belt; the TK and examiners are exam roles set in the user management (see `docs/Q_EXAMS.md`)
 - **Trainingsplanung (Training Plan)** - The TK plans trainers, topics, rotations and holidays of the adult trainings for the year, replacing the shared document (see `docs/TRAINING_PLAN.md`)
+- **Daten-Assistent (AI Import)** - Read Judo passes, attendance lists, training plans, lesson plans and club dates from a photo, PDF or pasted text with Claude; the user reviews, completes and corrects the proposal before anything is saved, and the model can do nothing but propose (see `docs/AI_ASSISTANT.md`)
 - **Multi-language Support** - Built-in internationalization (German/English)
 - **Responsive Design** - Works seamlessly across desktop and mobile devices
 
@@ -237,6 +238,7 @@ supabase db push
 - `events` - General events and activities
 - `exams`, `exam_candidates`, `exam_scores`, `exam_programs` - Kyu gradings (`docs/Q_EXAMS.md`)
 - `training_plan_trainings`, `training_plan_sessions`, `training_plan_breaks` - The TK's training plan (`docs/TRAINING_PLAN.md`)
+- `ai_imports` - Usage log and daily limits of the Daten-Assistent, no content (`docs/AI_ASSISTANT.md`)
 
 **Views and Functions:**
 
@@ -271,6 +273,9 @@ npm run build
    (production vs. deploy previews), add any of the `PUBLIC_CLUB_*` /
    `PUBLIC_TRIAL_*` / `PUBLIC_DEFAULT_LOCALE` variables listed in
    `.env.example`. Unset variables keep their defaults.
+
+   For the Daten-Assistent add `PRIVATE_ANTHROPIC_API_KEY` (secret, not for
+   Deploy Previews), see [docs/AI_ASSISTANT.md](docs/AI_ASSISTANT.md).
 
    For error monitoring add `PUBLIC_SENTRY_DSN` (and `SENTRY_AUTH_TOKEN`,
    `SENTRY_ORG`, `SENTRY_PROJECT` for readable stack traces), see
