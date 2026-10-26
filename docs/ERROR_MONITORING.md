@@ -10,6 +10,10 @@ Without `PUBLIC_SENTRY_DSN` nothing is sent (local development, tests, CI).
   routes, crashes in the Netlify function) and in the browser (uncaught
   errors and promise rejections, failed navigations).
 - Expected errors such as 404 or a `redirect` are not.
+- Neither are dropped connections in the browser ("Failed to fetch", "Load
+  failed") or files from an old deploy that a page preloaded: they say
+  nothing about our code (`browserNetworkNoise` in `src/lib/sentry.ts`), and
+  SvelteKit reloads the page by itself.
 - Each report has the page (route), browser, release (Git commit) and the
   steps leading up to it (navigation, clicks, requests).
 
