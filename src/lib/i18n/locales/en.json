@@ -1345,7 +1345,7 @@
     "pasteTextPlaceholder": "Or paste text, also from Excel, e.g. {example}",
     "hint": "Hint for reading it (optional)",
     "hintPlaceholder": "e.g. “The second column is the leader”",
-    "privacy": "Photos and text go to Claude (Anthropic) without member data. Nothing is saved until you have checked it.",
+    "privacy": "Photos and text go to Claude (Anthropic), without any member data from Administra. Nothing is saved until you have checked it.",
     "analyze": "Read",
     "working": "Claude is reading the material …",
     "workingSeconds": "{seconds} s – this usually takes 10 to 40 seconds.",

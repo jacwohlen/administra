@@ -1345,7 +1345,7 @@
     "pasteTextPlaceholder": "Oder Text einfügen, auch aus Excel, z. B. {example}",
     "hint": "Hinweis für die Auswertung (optional)",
     "hintPlaceholder": "z. B. «Die zweite Spalte ist der Leiter»",
-    "privacy": "Fotos und Text gehen ohne Mitgliederdaten an Claude (Anthropic). Gespeichert wird erst nach deiner Prüfung.",
+    "privacy": "Fotos und Text gehen an Claude (Anthropic), ohne Mitgliederdaten aus Administra. Gespeichert wird erst nach deiner Prüfung.",
     "analyze": "Auswerten",
     "working": "Claude liest die Unterlagen …",
     "workingSeconds": "{seconds} s – das dauert meist 10 bis 40 Sekunden.",

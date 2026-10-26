@@ -102,7 +102,10 @@
       (fileCount > 0 || pastedText.trim().length > 0) &&
       remaining !== 0
   );
-  const shownError = $derived(textTooLong ? 'text_too_long' : error);
+  // At 0 left the quota message says why «Auswerten» is disabled
+  const shownError = $derived(
+    textTooLong ? 'text_too_long' : (error ?? (remaining === 0 ? 'quota' : null))
+  );
   const showLength = $derived(pastedText.length > ASSISTANT_LIMITS.maxTextLength * 0.8);
 
   function uploadIcon(upload: PreparedUpload) {
@@ -246,18 +249,16 @@
     aria-describedby={step === 'input' ? `${uid}-about` : undefined}
     onclick={(e) => e.stopPropagation()}
   >
-    <header class="flex items-center gap-2">
-      <h3 class="mb-0! flex min-w-0 flex-1 items-center gap-2">
+    <!-- The count moves below the title where both do not fit -->
+    <header class="flex flex-wrap items-center gap-x-2 gap-y-1">
+      <h3 class="mb-0! flex min-w-0 grow items-center gap-2">
         <Fa icon={faWandMagicSparkles} class="flex-none text-primary-500" />
-        <span class="truncate">{title ?? $_(`assistant.kinds.${kind}.title`)}</span>
+        <span>{title ?? $_(`assistant.kinds.${kind}.title`)}</span>
       </h3>
       {#if step === 'input' && remaining !== null}
         <!-- Outside the h3, so it is not part of the dialog's name -->
         <span
-          class={[
-            'flex-none text-xs',
-            remaining === 0 ? 'text-error-600-400' : 'text-surface-600-400'
-          ]}
+          class="ml-auto flex-none text-xs text-surface-600-400"
           title={$_('assistant.remaining', { values: { count: remaining } })}
         >
           <span aria-hidden="true">
@@ -360,7 +361,7 @@
         <div class="flex flex-wrap items-start gap-2">
           <textarea
             class="textarea min-w-0 flex-1 text-sm"
-            rows="3"
+            rows="4"
             aria-label={$_('assistant.pasteText')}
             aria-describedby={showLength ? `${uid}-length` : undefined}
             placeholder={$_('assistant.pasteTextPlaceholder', {
@@ -389,7 +390,7 @@
         <div>
           <button
             type="button"
-            class="flex w-full min-w-0 items-center gap-2 py-1.5 text-left text-sm text-surface-600-400 hover:text-surface-950-50 pointer-coarse:min-h-11"
+            class="flex w-full min-w-0 flex-wrap items-center gap-x-2 py-1.5 text-left text-sm text-surface-600-400 hover:text-surface-950-50 pointer-coarse:min-h-11"
             aria-expanded={hintOpen}
             aria-controls={hintOpen ? `${uid}-hint` : undefined}
             onclick={toggleHint}
@@ -399,9 +400,10 @@
               size="xs"
               class="flex-none transition-transform {hintOpen ? 'rotate-90' : ''}"
             />
-            <span class="flex-none">{$_('assistant.hint')}</span>
+            <span class="min-w-0 flex-1">{$_('assistant.hint')}</span>
+            <!-- Folded: what will be sent, on a line of its own -->
             {#if !hintOpen && hint.trim()}
-              <span class="min-w-0 truncate text-surface-950-50">– {hint.trim()}</span>
+              <span class="basis-full truncate pl-4 text-surface-950-50">{hint.trim()}</span>
             {/if}
           </button>
           {#if hintOpen}
@@ -435,7 +437,7 @@
           </div>
         {/if}
 
-        <footer class="flex justify-end gap-2 pt-1">
+        <footer class="flex flex-wrap justify-end gap-2 pt-1">
           <button type="button" class="btn preset-tonal-surface" onclick={close}>
             {$_('button.cancel')}
           </button>
