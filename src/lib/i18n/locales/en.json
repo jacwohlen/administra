@@ -19,7 +19,8 @@
       "noTrainingsToday": "There are no trainings happening today!",
       "settings": "Settings",
       "myProfile": "My profile",
-      "exams": "Gradings"
+      "exams": "Gradings",
+      "assistant": "Data assistant"
     },
     "pending": {
       "title": "Access pending",
@@ -1348,5 +1349,394 @@
     "lastDaysAgo": "Last trained {n} days ago",
     "last30": "{n, plural, one {# training} other {# trainings}} in the last 30 days",
     "cell": "{date}: {n, plural, =0 {no training} one {# training} other {# trainings}}"
+  },
+  "assistant": {
+    "button": "Capture with AI",
+    "title": "Data assistant",
+    "chooseFiles": "Choose file",
+    "fileTypes": "Photos, PDF, TXT or CSV; at most {max} photos or PDFs",
+    "takePhoto": "Take photo",
+    "preparing": "Preparing file …",
+    "attachments": "Chosen files",
+    "pasteText": "Paste text",
+    "pasteTextPlaceholder": "Or paste text, also from Excel, e.g. {example}",
+    "hint": "Hint for reading it (optional)",
+    "hintPlaceholder": "e.g. “The second column is the leader”",
+    "privacy": "Photos and text go to Claude (Anthropic), without any member data from Administra. Nothing is saved until you have checked it.",
+    "analyze": "Read",
+    "working": "Claude is reading the material …",
+    "workingSeconds": "{seconds} s – this usually takes 10 to 40 seconds.",
+    "remaining": "{count, plural, one {# reading} other {# readings}} left today",
+    "remainingShort": "{count} left today",
+    "modelWarnings": "Notes on the material",
+    "kinds": {
+      "grades": {
+        "title": "Read a judo pass",
+        "hint": "Take photos of the pages with the gradings (kyu and dan).",
+        "description": "Import kyu and dan gradings from a member's judo pass.",
+        "example": "“5th kyu on 12 June 2019, 4th kyu on 3 May 2021”"
+      },
+      "attendance": {
+        "title": "Read an attendance list",
+        "button": "Read list",
+        "hint": "The list of one session or a table covering several dates.",
+        "description": "Record attendance from a paper or Excel list of a training.",
+        "example": "“Present: Lena Müller, Tim Weber, Anna Keller; led by Beni Keller”"
+      },
+      "training_plan": {
+        "title": "Read a training plan",
+        "hint": "A plan with date, training, leader, topic, cancellations and holidays. Large plans are best done month by month.",
+        "description": "Import leaders, topics, cancellations and holidays from an existing plan.",
+        "example": "“2 November randori with Sandra, topic ne-waza; 9 November cancelled”"
+      },
+      "lesson_plan": {
+        "title": "Read a lesson plan",
+        "hint": "The lesson plan for this training, handwritten or printed.",
+        "description": "Create a lesson plan (warm-up, main part, cool-down) for a training and date.",
+        "example": "“Warm-up: running and breakfalls. Main part: o-goshi in pairs. Cool-down: randori”"
+      },
+      "events": {
+        "title": "Read events",
+        "hint": "Competitions, courses, camps or club events, e.g. from an invitation.",
+        "description": "Import competitions, courses and club events from a list or an invitation.",
+        "example": "“Kids Cup on 14 November in Wohlen, 9 am to 4 pm”"
+      }
+    },
+    "errors": {
+      "not_configured": "The assistant is not set up on this installation.",
+      "unauthorized": "Please sign in again.",
+      "forbidden": "You are not allowed to do this.",
+      "quota": "The daily limit of readings is reached. Try again tomorrow.",
+      "too_large": "The files are too large. At most 3.5 MB together.",
+      "too_many_pages": "The PDF is too long. Please upload only the pages needed, about 30 pages or fewer.",
+      "too_many_files": "At most 4 photos or PDFs per reading.",
+      "invalid_request": "The request was incomplete. Please check the files and try again.",
+      "not_found": "The related data was not found, e.g. no training in the plan.",
+      "refused": "Claude declined to read this. Try a different section of the document.",
+      "incomplete": "The material is too long. Please split it into smaller parts, e.g. one month.",
+      "invalid_output": "The answer was unusable. Please try again.",
+      "timeout": "Reading took too long. Try fewer pages or a smaller section.",
+      "busy": "The AI service is busy. Please try again in a minute.",
+      "failed": "Reading failed. Please try again.",
+      "network": "No connection. Please check your internet connection.",
+      "heic": "HEIC photos are not supported. Please save as JPEG or, on a phone, use “Take photo”.",
+      "unsupported_file": "This file type is not supported. Supported are photos (JPEG, PNG, WebP), PDF, and text or CSV files.",
+      "unreadable": "The file could not be read.",
+      "text_too_long": "The text is too long (at most 30,000 characters). Please split it into smaller parts, e.g. one month."
+    },
+    "review": {
+      "apply": "{count, plural, one {Apply # entry} other {Apply # entries}}",
+      "applying": "Saving …",
+      "nothing": "Nothing to apply.",
+      "back": "Back to upload",
+      "uncertain": "Uncertain – please check",
+      "status": {
+        "new": "New",
+        "exists": "Already recorded",
+        "changed": "Differs",
+        "invalid": "Incomplete",
+        "duplicate": "Duplicate"
+      },
+      "done": "{count, plural, one {# entry saved} other {# entries saved}}",
+      "partial": "{saved} saved, {failed} failed",
+      "error": "Saving failed",
+      "pickMember": "Choose member …",
+      "noMatch": "No matching member found",
+      "skip": "Don't apply"
+    },
+    "page": {
+      "intro": "The assistant helps you get started: existing records on paper, as PDF or in Excel are read in instead of typing everything by hand.",
+      "step1": "Upload a photo, PDF or text, e.g. a judo pass, an attendance list or a training plan.",
+      "step2": "Claude reads the material and makes a proposal.",
+      "step3": "You check the proposal, fill in what is missing and correct differences; uncertain values are marked.",
+      "step4": "Only when you press “Apply” is anything saved, with your normal permissions.",
+      "safety": "The AI cannot change anything itself: it only returns a proposal in a fixed format, sees no member data from Administra and never picks members. Names are matched here in the browser.",
+      "notConfigured": "The assistant is not set up on this installation yet. An admin has to add an Anthropic API key (see docs/AI_ASSISTANT.md).",
+      "member": "Member",
+      "memberPlaceholder": "Search name …",
+      "training": "Training",
+      "trainingPlaceholder": "Choose training …",
+      "date": "Date",
+      "start": "Start"
+    },
+    "grades": {
+      "inPass": "In the pass",
+      "inProfile": "In the profile",
+      "holder": {
+        "doubt": "The name or birthday in the pass does not match {name}. Is this the right pass?",
+        "confirm": "Yes, this is {name}’s pass",
+        "profileUnchanged": "The name and birthday in the profile are not changed. If they are wrong, correct them in Webling.",
+        "unknown": "No name was found in the pass. Check that it is {name}’s pass."
+      },
+      "empty": "No gradings were found in the pass.",
+      "pickGrade": "Choose grade …",
+      "recordedOn": "Already recorded on {date}; nothing is changed.",
+      "correct": "Recorded on {recorded} – correct the date to {date}",
+      "duplicateOf": "Same grade as row {row}; saved only once.",
+      "plan": "To save: {inserts, plural, =0 {no new grading} one {# new grading} other {# new gradings}} and {updates, plural, =0 {no date correction} one {# date correction} other {# date corrections}}.",
+      "progress": "Saving … {done} of {total}",
+      "confirmFirst": "First confirm above that this is the right pass.",
+      "blocked": "{count, plural, one {One row still needs} other {# rows still need}} a value: complete it or choose “Don't apply”.",
+      "issues": {
+        "noGrade": "Grade not recognised – please choose one.",
+        "noDate": "Date missing – please enter it.",
+        "partialDate": "Only “{written}” is legible in the pass – please enter the full date.",
+        "badDate": "Not a valid date.",
+        "futureDate": "The date is in the future.",
+        "beforeBirthday": "Before the birthday in the profile ({birthday}).",
+        "beforeLower": "Dated before the lower {grade} ({date}) – check the order.",
+        "afterHigher": "Dated after the higher {grade} ({date}) – check the order.",
+        "mismatch": "The pass says “{written}”, which does not match the chosen grade.",
+        "dan": "Dan grade: becomes the current belt{badge, select, true { and awards the “{badgeName}” badge} other {}}."
+      },
+      "saved": "Saved",
+      "saveFailed": {
+        "failed": "Not saved – try again or leave the row out.",
+        "notUpdated": "Not saved: the grading was removed in the meantime, or you may not change it."
+      },
+      "retry": "{count, plural, one {One grading was} other {# gradings were}} not saved. Try again or close the assistant – what was saved stays saved."
+    },
+    "attendance": {
+      "loading": "Loading members and recorded attendance …",
+      "loadingExisting": "Loading recorded attendance …",
+      "loadError": "Members or recorded attendance could not be loaded. Please try again.",
+      "noEntries": "No names were found on the list.",
+      "training": "Training: {training}",
+      "listTraining": "On the list: “{text}”",
+      "otherWeekday": "The list says {written}, but this training is on {weekday}. Check that it really is this training's list.",
+      "dates": {
+        "titleSingle": "Date",
+        "titleGrid": "Dates on the list",
+        "date": "Date",
+        "include": "Apply date {date}",
+        "marked": "{count, plural, one {# person} other {# people}}",
+        "listDate": "The list says {dates}. The date above is applied.",
+        "notPageDate": "Not the date of this page ({date}) – attendance is recorded on the date here.",
+        "cancelled": "According to the training plan, the training was cancelled on this day.",
+        "excluded": "Date is not applied",
+        "issues": {
+          "invalid": "Not a valid date",
+          "future": "In the future – not applied",
+          "weekday": "A {weekday}, but the training is on {training}. Only applied if ticked.",
+          "duplicate": "Date appears twice – not applied"
+        }
+      },
+      "people": {
+        "title": "{count, plural, one {# name on the list} other {# names on the list}}",
+        "member": "Member",
+        "role": "Role",
+        "filter": "Search member …",
+        "search": "Search another member",
+        "suggestions": "Suggestions",
+        "allMembers": "All members",
+        "createNew": "Create new member",
+        "confirm": "Confirm",
+        "swapNames": "Swap first and last name",
+        "createWarning": "Only create people who don't exist yet – in Webling either. Otherwise you create a duplicate that has to be merged by hand later.",
+        "similar": "Similar members: {names}",
+        "notOnRoster": "Will be added to this training's participant list.",
+        "duplicateOf": "Already listed above (“{name}”) and merged with it. Where the person has two roles on one date, the higher one applies.",
+        "overwrite": "Already recorded as {roles} – overwrite with the role from the list",
+        "skipOpen": "Don't apply open ones",
+        "present": "Present on {date}",
+        "confirmRoster": "{count, plural, one {Confirm # suggestion from the participant list} other {Confirm # suggestions from the participant list}}",
+        "notOnRosterConfirm": "Not on this training's participant list; confirming adds them to it.",
+        "saved": "Saved.",
+        "option": "{name} ({details})",
+        "details": {
+          "roster": "on the participant list",
+          "notRoster": "not on the participant list",
+          "former": "left the club",
+          "passive": "passive",
+          "trial": "trial training",
+          "new": "newly added",
+          "id": "no. {id}"
+        }
+      },
+      "problems": {
+        "pick": "Choose a member, create the person or don't apply them.",
+        "confirm": "Is this the right person? Confirm the match or choose another member.",
+        "name": "A new member needs a first and last name."
+      },
+      "status": {
+        "confirm": "Please confirm",
+        "empty": "No date"
+      },
+      "hints": {
+        "former": "Left the club according to Webling.",
+        "passive": "Passive member.",
+        "trial": "Trial training candidate. Adding them to the participant list marks their trial as assigned."
+      },
+      "roles": {
+        "attendee": "Participant",
+        "mainTrainer": "Main trainer",
+        "assistant": "Assistant trainer"
+      },
+      "summary": "{checkIns, plural, one {# attendance} other {# attendances}} on {dates, plural, one {# date} other {# dates}}",
+      "summaryCreates": "{count, plural, one {# new member} other {# new members}}",
+      "summaryRoster": "{count, plural, one {# person is} other {# people are}} added to the participant list",
+      "open": "{count, plural, one {# name still needs} other {# names still need}} a decision.",
+      "onlyPresent": "Attendance is only ever added, never removed. Older dates take a little longer to save because badges are recalculated.",
+      "progress": "Saving … {done} of {total}",
+      "failed": {
+        "create": "The new member could not be created, so their attendance is not saved. Try again or don't apply this person.",
+        "createdAnyway": "The new member was created despite the error and is selected above. Confirm them to save their attendance again.",
+        "roster": "Could not be added to the participant list, so their attendance is not saved. Try again.",
+        "checkIn": "Attendance not saved: {dates}. Try again."
+      },
+      "partialHint": "{count, plural, one {Saving failed for # name} other {Saving failed for # names}} (marked in red). What was saved shows as “Already recorded” and is not saved again. Apply the rest again or close the dialog.",
+      "reload": "Reload"
+    },
+    "trainingPlan": {
+      "summary": "{count, plural, one {# session} other {# sessions}} from {from} to {to}",
+      "keepHint": "Empty fields in the document leave the existing plan as it is, and empty fields of the existing plan are filled in. Another leader, another topic or a cancellation only replaces the existing plan when you tick it for that session.",
+      "empty": "No sessions or holidays were found in the document.",
+      "loading": "Loading the existing plan …",
+      "loadError": "The existing plan could not be loaded. Without a comparison, nothing is saved.",
+      "retry": "Load again",
+      "leaders": "Leaders",
+      "leadersHint": "Which member each name stands for, for all sessions with that name. Without a member (e.g. a guest trainer), the name stays in the note.",
+      "leaderCount": "{count, plural, one {# session} other {# sessions}}",
+      "leaderSuggested": "Please check",
+      "confirmLeader": "Correct",
+      "inDocument": "In the document",
+      "noTraining": "No training chosen",
+      "pickTraining": "Choose training …",
+      "editDone": "Done",
+      "otherMember": "another member",
+      "status": {
+        "fill": "Addition"
+      },
+      "fillHint": "Adds to the existing plan:",
+      "changedHint": "Differs from the existing plan:",
+      "exists": "Already planned like this, nothing changes.",
+      "overwrite": "Replace the existing plan",
+      "duplicateOf": "Same session as row {row}, saved only once.",
+      "issues": {
+        "badDate": "Date missing or invalid.",
+        "noTraining": "No planned training found – please choose one.",
+        "weekday": "The training is on {training}, but the date is a {date}. Please correct the date or the training.",
+        "empty": "Nothing entered – not applied.",
+        "trainerUnconfirmed": "“{name}” is probably {member} – please confirm or choose someone else.",
+        "trainerUnmatched": "No member for “{name}”, the name stays in the note.",
+        "closedBreak": "Dojo closed ({title}): the training is cancelled anyway.",
+        "unusualYear": "Unusual year – is the date right?",
+        "trainingUnconfirmed": "The document names no planned training; by the weekday it would be this one. Please confirm or choose another."
+      },
+      "holidays": "Holidays",
+      "holidaysHint": "Added to the holidays and closures. “Dojo closed” cancels all planned trainings during that time.",
+      "addHoliday": "Add",
+      "holidayExists": "Already recorded, not added again.",
+      "holidayDuplicate": "Same holidays as row {row}, added only once.",
+      "holidayOverlaps": "Overlaps with “{title}” ({range}).",
+      "holidayIssues": {
+        "noTitle": "Name missing.",
+        "badDates": "Period missing or invalid."
+      },
+      "plan": "To save: {sessions, plural, =0 {no session} one {# session} other {# sessions}} and {breaks, plural, =0 {no holidays} one {# holiday entry} other {# holiday entries}}.",
+      "progress": "Saving … {done} of {total}",
+      "blocked": "{count, plural, one {One row still needs} other {# rows still need}} a value: add it or choose “Don't apply”.",
+      "skipIncomplete": "Don't apply incomplete rows",
+      "confirmTraining": "Training is correct",
+      "confirmTrainingGroup": "Correct for all {count} sessions “{name}”",
+      "guessDuplicateOf": "The document names no planned training; by the weekday it would be the same session as row {row}. Not applied – choose a training if the session does belong to the plan.",
+      "saved": "Saved",
+      "saveFailed": "Not saved – try again or leave the session out.",
+      "holidaySaveFailed": "Not saved – try again or untick “Add”.",
+      "saveRetry": "{count, plural, one {One entry was} other {# entries were}} not saved. Try again or close the assistant – what was saved stays saved.",
+      "holidayNotPreselected": "Not preselected because the period overlaps recorded holidays. Only tick “Add” if these are additional holidays.",
+      "holidayOverlapsRow": "Overlaps with row {row}, “{title}” ({range}).",
+      "holidayClosesOpen": "Overlaps with “{title}” ({range}), recorded without “Dojo closed”: the trainings take place then. With “Dojo closed”, all planned trainings in the overlap are cancelled."
+    },
+    "lessonPlan": {
+      "forDate": "Lesson plan for {date}",
+      "same": "This exact plan is already saved.",
+      "contained": "This text is already part of the existing plan.",
+      "date": {
+        "differs": "The plan says {written}, but it will be saved for {date}, the date of this page.",
+        "otherPage": "If it belongs to another day, cancel and read it in on the training's page for that date.",
+        "confirm": "Save it for {date} anyway"
+      },
+      "existing": {
+        "text": "There is already a lesson plan for this day.",
+        "mode": "What should happen to the existing plan?",
+        "replace": "Replace the existing plan",
+        "append": "Keep the existing text and add the new one below",
+        "show": "Show the existing content"
+      },
+      "file": {
+        "exists": "A file is stored as the lesson plan for this day: “{name}”.",
+        "replaced": "A lesson plan is either text or a file. Saving the text deletes the file, just like switching the editor to “Write Content” and saving. Download it first if you want to keep it.",
+        "confirm": "Delete “{name}” and replace it with the text",
+        "notRemoved": "Lesson plan saved, but the old file could not be deleted."
+      },
+      "previousTitle": "Before: “{title}”",
+      "content": "Content",
+      "contentAppend": "Content added below",
+      "contentHelp": "One line per entry: “## ” starts a section, “- ” a bullet point.",
+      "preview": "Preview",
+      "previewEmpty": "No content yet.",
+      "errors": {
+        "target": "The training or date of this page is invalid, no lesson plan can be saved here.",
+        "empty": "The content is empty. Fill it in or go back to the upload.",
+        "tooLong": "The imported content is too long (at most {max} characters).",
+        "fileNotConfirmed": "First confirm that the file may be replaced.",
+        "dateNotConfirmed": "First confirm the date."
+      },
+      "changedMeanwhile": "The lesson plan was changed in the meantime or could not be saved. The current version has been reloaded; check it and apply again.",
+      "saveFailed": "Not saved. The lesson plan has been reloaded; check it and try again."
+    },
+    "events": {
+      "intro": "{count, plural, one {# event read} other {# events read}}. Ticked events are created as new events; existing events stay as they are.",
+      "defaultSection": "Section for events without one",
+      "defaultSectionNone": "None – choose per event",
+      "useDefault": "Default: {section}",
+      "multiDay": "Several days",
+      "multiDayInfo": "Events have no end date: an event over several days is created on its first day, with \"until …\" on the first line of its description.",
+      "dateTo": "Until (several days)",
+      "untilLine": "until {date}",
+      "descriptionStarts": "The description starts with \"{line}\".",
+      "include": "Create as event",
+      "includeAnyway": "Create as a new event anyway",
+      "duplicateOf": "A similar event is already recorded: \"{title}\" on {date}",
+      "duplicateOfRow": "Same date as no. {row}",
+      "fromWebling": "Comes from Webling and is synced automatically. Only create it if it is a different event.",
+      "empty": "No events were found in the document.",
+      "progress": "{done} of {total} saved …",
+      "blocked": "{count, plural, one {# event is incomplete: fix it or untick it.} other {# events are incomplete: fix or untick them.}}",
+      "issues": {
+        "noTitle": "Title missing.",
+        "noDate": "Date missing.",
+        "badDate": "Not a valid date.",
+        "noSection": "Choose a section.",
+        "unknownSection": "There is no section \"{written}\" here: please choose one.",
+        "badTimeFrom": "Enter the start time as HH:MM.",
+        "badTimeTo": "Enter the end time as HH:MM.",
+        "timeOrder": "The end time is not after the start time – does the event end after midnight?",
+        "badDateTo": "The end date must be after the date.",
+        "past": "This date is in the past.",
+        "farFuture": "More than two years ahead: check the year."
+      },
+      "comparing": "Loading the existing events to compare with …",
+      "compareFailed": "The existing events could not be loaded. Without this comparison nothing is saved, so no event is created twice.",
+      "compareRetry": "Load again",
+      "saved": "Saved",
+      "saveFailed": "Not saved – try again or untick the event.",
+      "recordedAnyway": "A matching event is recorded now, probably despite the error. The event stays unticked so it is not created twice.",
+      "failedTitles": "Not saved: {titles}",
+      "retry": "{count, plural, one {# event was not saved (marked in red).} other {# events were not saved (marked in red).}} Saved ones are marked and not created again. Apply the rest again or close the dialog."
+    },
+    "textLength": "{count} of {max} characters",
+    "dictation": {
+      "start": "Dictate",
+      "stop": "Stop dictation",
+      "listening": "Listening in English … speak in full sentences and say names clearly.",
+      "privacy": "Your browser does the speech recognition: Chrome and Edge through Google or Microsoft, Safari through Apple.",
+      "errors": {
+        "denied": "No access to the microphone. Allow it in the browser settings.",
+        "noSpeech": "Nothing heard. Please try again.",
+        "failed": "Speech recognition failed. Type the text or try again."
+      }
+    }
   }
 }

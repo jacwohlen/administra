@@ -1,19 +1,51 @@
 <script lang="ts">
+  import { onMount } from 'svelte';
+  import { invalidateAll } from '$app/navigation';
   import type { PageData } from './$types';
   import Fa from 'svelte-fa';
   import {
     faCalendarDays,
     faLocationDot,
     faUsers,
-    faPlus,
     faChevronRight
   } from '@fortawesome/free-solid-svg-icons';
   import { _ } from 'svelte-i18n';
   import dayjs from 'dayjs';
+  import CreateButton from '$lib/components/assistant/CreateButton.svelte';
+  import AssistantDialog from '$lib/components/assistant/AssistantDialog.svelte';
+  import EventsReview from '$lib/components/assistant/EventsReview.svelte';
+  import { takeAssistantRequest } from '$lib/assistant/autoOpen';
+  import { loadAssistantStatus } from '$lib/assistant/client';
 
   let { data }: { data: PageData } = $props();
 
   let searchTerm = $state('');
+  let showAssistant = $state(false);
+
+  // Opened from the Daten-Assistent overview with ?assistant=events
+  onMount(() => {
+    if (!takeAssistantRequest('events') || !data.canWrite) return;
+    loadAssistantStatus().then((s) => (showAssistant = s.configured));
+  });
+
+  /** The review saved part of the events and stays open: reload the list once it closes */
+  let assistantSavedSome = false;
+
+  async function assistantApplied() {
+    assistantSavedSome = false;
+    // Closed first, so the review does not show the new events as duplicates of themselves
+    showAssistant = false;
+    await invalidateAll();
+  }
+
+  function closeAssistant() {
+    showAssistant = false;
+    if (!assistantSavedSome) return;
+    assistantSavedSome = false;
+    invalidateAll().catch((err) =>
+      console.error('Error reloading the events after the assistant:', err)
+    );
+  }
 
   function formatEventDate(date: string) {
     return dayjs(date).format('DD.MM.YYYY');
@@ -55,12 +87,29 @@
 <div class="page-header">
   <h1>{$_('page.events.title')}</h1>
   {#if data.canWrite}
-    <a href="/dashboard/events/new" class="btn preset-filled-primary-500">
-      <Fa icon={faPlus} />
-      <span>{$_('page.events.create_event')}</span>
-    </a>
+    <CreateButton
+      href="/dashboard/events/new"
+      label={$_('page.events.create_event')}
+      assistantLabel={$_('assistant.kinds.events.title')}
+      onassistant={() => (showAssistant = true)}
+    />
   {/if}
 </div>
+
+{#if showAssistant && data.canWrite}
+  <AssistantDialog kind="events" onclose={closeAssistant}>
+    {#snippet review(proposal, back)}
+      <EventsReview
+        {proposal}
+        known={data.events}
+        onback={back}
+        oncancel={closeAssistant}
+        onapplied={assistantApplied}
+        onpartial={() => (assistantSavedSome = true)}
+      />
+    {/snippet}
+  </AssistantDialog>
+{/if}
 
 <!-- Search Input -->
 <div class="mb-4">

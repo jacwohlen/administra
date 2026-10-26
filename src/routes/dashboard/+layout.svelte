@@ -15,7 +15,8 @@
     faGear,
     faCalendarDays,
     faSun,
-    faMoon
+    faMoon,
+    faWandMagicSparkles
   } from '@fortawesome/free-solid-svg-icons';
   import type { SubmitFunction } from '@sveltejs/kit';
   import { supabaseClient } from '$lib/supabase';
@@ -25,10 +26,20 @@
   import type { Snippet } from 'svelte';
   import AppToaster from '$lib/components/AppToaster.svelte';
   import LanguageSwitcher from '$lib/components/LanguageSwitcher.svelte';
+  import { loadAssistantStatus } from '$lib/assistant/client';
 
   let { data, children }: { data: LayoutData; children: Snippet } = $props();
 
   let isAdmin = $derived(data.userProfile?.role === 'admin');
+
+  // Daten-Assistent: for whoever may save one of its proposals, and only
+  // where it is set up (PRIVATE_ANTHROPIC_API_KEY)
+  let assistantConfigured = $state(false);
+  $effect(() => {
+    if (data.canWrite || data.canPlanTrainings) {
+      loadAssistantStatus().then((s) => (assistantConfigured = s.configured));
+    }
+  });
 
   const submitLogout: SubmitFunction = async ({ cancel }) => {
     const { error } = await supabaseClient.auth.signOut({ scope: 'local' });
@@ -249,6 +260,16 @@
               <Fa icon={faGear} />
               <span>{$_('page.dashboard.settings')}</span>
             </button>
+          {/if}
+          {#if assistantConfigured && (data.canWrite || data.canPlanTrainings)}
+            <a
+              href="/dashboard/assistant"
+              class="btn preset-tonal-surface w-full mb-2"
+              onclick={() => (popoverOpen = false)}
+            >
+              <Fa icon={faWandMagicSparkles} />
+              <span>{$_('page.dashboard.assistant')}</span>
+            </a>
           {/if}
           <a
             href="/club"

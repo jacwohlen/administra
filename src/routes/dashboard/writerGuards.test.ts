@@ -21,6 +21,7 @@ import { load as editEvent } from './events/[eventId]/edit/+page';
 import { load as newExam } from './exams/new/+page';
 import { load as editExam } from './exams/[examId]/edit/+page';
 import { load as trainingPlanSettings } from './training-plan/settings/+page';
+import { load as assistant } from './assistant/+page';
 
 // Create/edit pages send viewers back to the read-only page they came from;
 // exam days and the training plan settings need the TK (canManageExams /
@@ -90,4 +91,15 @@ describe('TK-only exam pages', () => {
       expect(await redirectTarget(load, tk, params)).toBeNull();
     });
   }
+});
+
+describe('Daten-Assistent overview', () => {
+  it('redirects viewers to the dashboard', async () => {
+    expect(await redirectTarget(assistant as Load, viewer)).toBe('/dashboard');
+  });
+
+  it('lets trainers, admins and the TK in', async () => {
+    expect(await redirectTarget(assistant as Load, trainer)).toBeNull();
+    expect(await redirectTarget(assistant as Load, tk)).toBeNull();
+  });
 });

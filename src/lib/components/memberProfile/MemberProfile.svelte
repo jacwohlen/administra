@@ -230,6 +230,7 @@
         definitions={achievements.gradeDefinitions}
         onchanged={editing?.onchanged}
         readonly={!editing}
+        member={{ firstname, lastname, birthday: details?.birthday }}
       />
     </section>
     <section class="card border border-surface-200-800 p-4">

@@ -6,9 +6,11 @@ and injected code do with the app.
 - `X-Content-Type-Options: nosniff`
 - `Referrer-Policy: strict-origin-when-cross-origin`: other sites see the
   origin only, never a path such as `/probetraining/status/<token>`.
-- `Permissions-Policy`: camera, microphone, geolocation, payment and USB off
-  (not used; the profile photo upload is a file input and needs no
-  permission).
+- `Permissions-Policy`: camera, geolocation, payment and USB off (not used;
+  the profile photo upload is a file input and needs no permission). The
+  microphone is allowed for the app's own pages only (`microphone=(self)`),
+  for dictation in the Daten-Assistent (docs/AI_ASSISTANT.md); the browser
+  still asks the user first.
 - `Content-Security-Policy`: only `frame-ancestors`, who may show a page in
   a frame (enforced).
 - `Content-Security-Policy-Report-Only`: the content policy, where scripts,
