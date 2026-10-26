@@ -1361,6 +1361,7 @@
       },
       "attendance": {
         "title": "Read an attendance list",
+        "button": "Read list",
         "hint": "The list of one session or a table covering several dates.",
         "description": "Record attendance from a paper or Excel list of a training.",
         "example": "“Present: Lena Müller, Tim Weber, Anna Keller; led by Beni Keller”"

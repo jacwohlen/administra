@@ -17,9 +17,9 @@ completes and corrects it, and only then is it saved.
 On these pages the assistant is the small wand attached to the page's own
 create button (_Prüfung erfassen_, _Event erstellen_, _Lektionsplan
 erstellen_ or _Bearbeiten_), so it takes no extra room. Where there is no
-create button it stays out of the way: a quiet _Präsenzliste einlesen_
-button below the participant list on the check-in page, a wand icon on the
-training plan import. Without the API key only the create button shows. The overview
+create button it stays out of the way: a quiet _Liste einlesen_ next to
+the attendance count on the check-in page, a wand icon on the training
+plan import. Without the API key only the create button shows. The overview
 `/dashboard/assistant` (avatar menu → _Daten-Assistent_) explains the steps
 and leads to these pages: pick a member or a training and date there, and
 the target page opens the assistant right away (`?assistant=<kind>`).

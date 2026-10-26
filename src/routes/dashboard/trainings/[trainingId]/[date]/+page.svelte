@@ -379,7 +379,7 @@
 
 {#if !showLessonPlan}
   <!-- Stats bar -->
-  <div class="flex gap-2 mb-3 flex-wrap">
+  <div class="flex items-center gap-2 mb-3 flex-wrap">
     <span class="chip bg-surface-100-900 text-surface-900-50">
       <Fa icon={faUserCheck} size="sm" />
       <span>{presentParticipants.length} / {filteredData.length}</span>
@@ -395,6 +395,15 @@
         <Fa icon={faChalkboardTeacher} size="sm" />
         <span>{assistantTrainers.length}</span>
       </span>
+    {/if}
+    <!-- Daten-Assistent: a paper or Excel list, quiet beside the count. The
+         negative margin keeps the 44px touch target from heightening the row. -->
+    {#if data.canWrite && assistantTraining}
+      <AssistantButton
+        class="btn btn-sm -my-2.5 ml-auto text-surface-600-400 hover:bg-surface-200-800"
+        label={$_('assistant.kinds.attendance.button')}
+        onclick={() => (showAssistant = true)}
+      />
     {/if}
   </div>
 
@@ -454,17 +463,6 @@
       </li>
     {/if}
   </ul>
-
-  <!-- Daten-Assistent: a paper or Excel list, kept out of the way of the check-in itself -->
-  {#if data.canWrite && assistantTraining}
-    <div class="flex justify-center">
-      <AssistantButton
-        class="btn btn-sm mt-4 text-surface-600-400 hover:bg-surface-200-800"
-        label={$_('assistant.kinds.attendance.title')}
-        onclick={() => (showAssistant = true)}
-      />
-    </div>
-  {/if}
 {:else}
   <LessonPlan
     trainingId={data.trainingId}

@@ -1361,6 +1361,7 @@
       },
       "attendance": {
         "title": "Präsenzliste einlesen",
+        "button": "Liste einlesen",
         "hint": "Liste eines Trainings oder Tabelle über mehrere Daten.",
         "description": "Anwesenheiten aus einer Präsenzliste auf Papier oder in Excel erfassen.",
         "example": "«Anwesend: Lena Müller, Tim Weber, Anna Keller; Leitung Beni Keller»"
