@@ -4,17 +4,12 @@ import { PUBLIC_MODE } from '$env/static/public';
 import { homePath } from '$lib/roles';
 import type { PageServerLoad } from './$types';
 
-export const load: PageServerLoad = async ({ locals: { safeGetSession, supabase } }) => {
-  const { user } = await safeGetSession();
-  if (!user) return {};
+export const load: PageServerLoad = async ({ parent }) => {
+  // The root layout has the profile and, for member accounts, my_access()
+  const { session, userProfile, access } = await parent();
+  if (!session) return {};
 
-  const { data: profile } = await supabase
-    .from('user_profiles')
-    .select('status, role')
-    .eq('user_id', user.id)
-    .maybeSingle();
-
-  redirect(303, homePath(profile));
+  redirect(303, homePath(userProfile, access));
 };
 
 export const actions: Actions = {

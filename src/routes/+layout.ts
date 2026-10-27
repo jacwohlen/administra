@@ -14,6 +14,7 @@ export const load: LayoutLoad = async ({ data }) => {
   await Promise.all([loadAppSettings(), waitLocale()]);
   return {
     session: data.session,
-    userProfile: data.userProfile
+    userProfile: data.userProfile,
+    access: data.access
   };
 };
