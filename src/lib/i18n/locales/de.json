@@ -982,7 +982,7 @@
       "previousYear": "Vorheriges Jahr",
       "nextYear": "Nächstes Jahr",
       "print": "Drucken",
-      "empty": "Noch keine Trainings in der Planung. Die TK wählt unter «Trainings & Ferien» aus, welche Trainings geplant werden, und kann dort den bisherigen Plan einlesen lassen.",
+      "empty": "Noch keine Trainings in der Planung. Die TK wählt unter «Trainings & Ferien» aus, welche Trainings geplant werden.",
       "nothingShown": "Keine Termine für diese Auswahl",
       "onlyOpen": "Trainer offen ({count})",
       "showPast": "Vergangene anzeigen",
@@ -1066,7 +1066,7 @@
       "mainTrainer": "Haupttrainer",
       "import": {
         "title": "Bestehenden Plan einlesen",
-        "hint": "Foto, PDF oder Tabelle des bisherigen Plans, auch direkt aus dem Google Sheet kopiert. Die KI liest Leiter, Themen, Ausfälle und Ferien; du prüfst alles, bevor etwas gespeichert wird.",
+        "hint": "Foto, PDF oder Tabelle des bisherigen Plans, auch direkt aus dem Google Sheet kopiert, am besten einen Monat aufs Mal. Die KI liest Leiter, Themen, Ausfälle und Ferien; du prüfst alles, bevor etwas gespeichert wird.",
         "noTrainings": "Zuerst oben die geplanten Trainings wählen."
       },
       "view": {

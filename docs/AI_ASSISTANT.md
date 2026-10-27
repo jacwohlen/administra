@@ -131,10 +131,13 @@ ticked.
 **Trainingsplan** (_Trainingsplanung → Trainings & Ferien_). It replaces the
 former Google Sheet import: a copied sheet (one row per day: KW, Tag, Datum,
 Trainingstyp, Von, Bis, Leiter, Thema, Info / Bemerkung) is pasted like any
-table, and the prompt carries the sheet's rules (rows on weekdays without a
-planned training are left out, «kein Training» is a cancellation with the
-info as note, another training type is the topic, holidays in the info go
-to the holidays). Every session
+table, one month at a time, and the prompt carries the sheet's rules (rows
+on weekdays without a planned training are left out and counted in the
+warnings, «kein Training» as _Trainingstyp_ is a cancellation with the
+leader and the info as note, another training type is the topic, holidays
+in the info go to the holidays). A table of more than about two months is
+read only for its first two, with a warning, so a pasted year does not run
+into the time limit. Every session
 is checked against the planned trainings (right weekday) and compared with
 the plan: _Neu_ and sessions that only fill empty fields are saved,
 _Schon erfasst_ is skipped, sessions that would replace a planned trainer,

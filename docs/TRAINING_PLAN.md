@@ -64,27 +64,31 @@ Only the TK edits (see _Roles_):
 _Trainings & Ferien → Bestehenden Plan einlesen → Trainingsplan einlesen_
 opens the Daten-Assistent (`docs/AI_ASSISTANT.md`, kind `training_plan`):
 a photo, a PDF or a table of the plan, also rows copied straight from the
-Google Sheet or a CSV download of it. Claude
-reads it into a proposal, the review shows every session and holiday
-against what is planned, and only what the TK confirms is saved:
+Google Sheet. Read it **one month at a time** (copy that month's rows with
+the header row): a whole year is too long for one reading, which has to
+finish within the function's time limit. Claude reads it into a proposal,
+the review shows every session and holiday against what is planned, and
+only what the TK confirms is saved:
 
 - each row goes to the planned training of its weekday (by the type's name
   when a weekday has several); rows on weekdays without a planned training
-  are left out
+  are left out, and the warnings say how many
 - _Leiter_ are matched to members by name ("Beni Muster" also finds Benjamin
   Muster, to confirm); names without a member (guest trainer, "Gesamt
   Trainersitzung") stay in the note
 - _Thema_ becomes the topic; another training type than the training's own
-  ("freies Training", "Heimkampf") becomes the topic too
-- "kein Training" or an empty type cancels the training; the info says why
-  (Karfreitag, Brückentag nach Auffahrt, GV JACW)
+  ("freies Training", "Heimkampf") becomes the topic too, with the _Thema_
+  after a colon
+- "kein Training" or an empty _Trainingstyp_ cancels the training; the info
+  says why (Karfreitag, Brückentag nach Auffahrt, GV JACW). "kein Training"
+  as _Leiter_ only means no leader
 - holidays in the info (… ferien, Weihnachten) are offered as holidays, with
   or without _Dojo zu_
 
 Unlike the former sheet import, what is already planned is not replaced
 without asking: a session that contradicts the plan is only written when
 ticked. Without `PRIVATE_ANTHROPIC_API_KEY` there is no import; the plan is
-then entered in the table. Large plans are best read month by month.
+then entered in the table.
 
 ## Roles
 

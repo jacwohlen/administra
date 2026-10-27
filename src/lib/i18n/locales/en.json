@@ -982,7 +982,7 @@
       "previousYear": "Previous year",
       "nextYear": "Next year",
       "print": "Print",
-      "empty": "No trainings in the plan yet. The technical committee picks the planned trainings under \"Trainings & holidays\" and can have the existing plan read in there.",
+      "empty": "No trainings in the plan yet. The technical committee picks the planned trainings under \"Trainings & holidays\".",
       "nothingShown": "No dates for this selection",
       "onlyOpen": "Trainer open ({count})",
       "showPast": "Show past",
@@ -1066,7 +1066,7 @@
       "mainTrainer": "main trainer",
       "import": {
         "title": "Read in the existing plan",
-        "hint": "A photo, PDF or table of the current plan, also copied straight from the Google Sheet. The AI reads leaders, topics, cancellations and holidays; you check everything before anything is saved.",
+        "hint": "A photo, PDF or table of the current plan, also copied straight from the Google Sheet, best one month at a time. The AI reads leaders, topics, cancellations and holidays; you check everything before anything is saved.",
         "noTrainings": "Pick the planned trainings above first."
       },
       "view": {
