@@ -42,6 +42,11 @@ describe('cleaning values', () => {
     expect(isIsoDate('1850-01-01')).toBe(false);
     expect(cleanDate('2026-02-31')).toBe('');
     expect(cleanDate('05.03.2024')).toBe('2024-03-05');
+    expect(cleanDate('5.1.26')).toBe('2026-01-05');
+    expect(cleanDate('2026-1-5 00:00:00')).toBe('2026-01-05');
+    expect(cleanDate('Mo, 05.01.2026')).toBe('2026-01-05');
+    expect(cleanDate('31.02.2026')).toBe('');
+    expect(cleanDate('KW')).toBe('');
     expect(cleanDate('morgen')).toBe('');
     expect(cleanDate(null)).toBe('');
   });

@@ -982,7 +982,7 @@
       "previousYear": "Previous year",
       "nextYear": "Next year",
       "print": "Print",
-      "empty": "No trainings in the plan yet. The technical committee picks the planned trainings under \"Trainings & holidays\" and can import the existing plan from the Google Sheet there.",
+      "empty": "No trainings in the plan yet. The technical committee picks the planned trainings under \"Trainings & holidays\".",
       "nothingShown": "No dates for this selection",
       "onlyOpen": "Trainer open ({count})",
       "showPast": "Show past",
@@ -1065,24 +1065,9 @@
       "breakOpen": "Adult training takes place",
       "mainTrainer": "main trainer",
       "import": {
-        "title": "Import from the Google Sheet",
-        "hint": "In the sheet \"Trainingsplanung\", select the rows including the header (KW, Tag, Datum, Trainingstyp, …, Leiter, Thema, Info / Bemerkung), copy and paste them here, or download the sheet as CSV and pick it. Pick the planned trainings above first: each row goes to the training of its weekday.",
-        "noTrainings": "Pick the planned trainings above first.",
-        "placeholder": "KW\tTag\tDatum\tTrainingstyp\t…",
-        "file": "or CSV file:",
-        "noHeader": "No header row with \"Datum\" found. Please copy the header row too.",
-        "nothing": "No rows for the planned trainings found.",
-        "summary": "{sessions} dates from {from} to {to}, {cancelled} of them without training.",
-        "skipped": "{count, plural, one {# row} other {# rows}} on weekdays without a planned training are skipped.",
-        "leaders": "Leaders",
-        "leadersHint": "Matched to members. Without a match (e.g. a guest trainer) the name stays in the note.",
-        "holidays": "Holidays",
-        "holidaysHint": "From the column \"Info / Bemerkung\". \"Dojo closed\" is suggested when no planned training took place during that time.",
-        "exists": "already entered",
-        "overwrite": "Whatever is already planned on these dates is replaced by the sheet.",
-        "run": "Import {count} dates",
-        "done": "{sessions} dates and {breaks} holidays imported",
-        "error": "Error importing the sheet"
+        "title": "Read in the existing plan",
+        "hint": "A photo, PDF or table of the current plan, also copied straight from the Google Sheet, best one month at a time. The AI reads leaders, topics, cancellations and holidays; you check everything before anything is saved.",
+        "noTrainings": "Pick the planned trainings above first."
       },
       "view": {
         "list": "Overview",
@@ -1385,7 +1370,7 @@
       },
       "training_plan": {
         "title": "Read a training plan",
-        "hint": "A plan with date, training, leader, topic, cancellations and holidays. Large plans are best done month by month.",
+        "hint": "A plan with date, training, leader, topic, cancellations and holidays, e.g. copied from the Google Sheet. Large plans are best done month by month.",
         "description": "Import leaders, topics, cancellations and holidays from an existing plan.",
         "example": "“2 November randori with Sandra, topic ne-waza; 9 November cancelled”"
       },
