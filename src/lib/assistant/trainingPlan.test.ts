@@ -218,7 +218,7 @@ describe('the leaders', () => {
     expect(leaders.get('gast trainerin')).toMatchObject({ memberId: null, kind: 'none' });
   });
 
-  it('keeps a name without a member in the notes, like the sheet import', () => {
+  it('keeps a name without a member in the notes', () => {
     expect(withLeaderNote('', 'Gast Trainerin', true)).toBe('Gast Trainerin');
     expect(withLeaderNote('SMM Training 1', 'Gast Trainerin', true)).toBe(
       'Gast Trainerin, SMM Training 1'
@@ -322,7 +322,7 @@ describe('comparing with the plan', () => {
     expect(rows[9].existing?.id).toBe(103);
   });
 
-  it('writes new sessions with exactly the columns of the sheet import', () => {
+  it('writes new sessions with exactly the columns of training_plan_sessions', () => {
     const rows = review(confirmTraining(review(initial()), initial(), 3));
     expect(rows[0].write).toEqual({
       training_id: 27,

@@ -20,7 +20,6 @@
   import { supabaseClient } from '$lib/supabase';
   import { toaster } from '$lib/toast';
   import type { TrainingPlanBreak } from '$lib/models';
-  import ImportSheet from './ImportSheet.svelte';
   import type { PageData } from './$types';
 
   let { data }: { data: PageData } = $props();
@@ -29,6 +28,9 @@
   let confirmRemove = $state<TrainingPlanBreak | null>(null);
   let form = $state({ title: '', date_from: '', date_to: '', cancels_training: false });
   let showAssistant = $state(false);
+  // The plan is imported only by the Daten-Assistent: no section without its key
+  let assistantConfigured = $state(false);
+  loadAssistantStatus().then((s) => (assistantConfigured = s.configured));
   /** The holidays as the assistant read them again after a partial save, while it is open */
   let assistantBreaks = $state.raw<TrainingPlanBreak[] | null>(null);
   /** The assistant saved something (or tried: a failed write may still commit): reload on close */
@@ -247,24 +249,20 @@
   {/if}
 </section>
 
-<section class="mt-8">
-  <div class="flex flex-wrap items-center justify-between gap-2">
+{#if assistantConfigured && data.canPlanTrainings}
+  <section class="mt-8 space-y-3">
     <h3>{$_('page.trainingPlan.import.title')}</h3>
-    {#if data.canPlanTrainings && data.plannedTrainings.length > 0}
+    {#if data.plannedTrainings.length === 0}
+      <div class="empty-state"><p>{$_('page.trainingPlan.import.noTrainings')}</p></div>
+    {:else}
+      <p class="text-sm text-surface-600-400">{$_('page.trainingPlan.import.hint')}</p>
       <AssistantButton
-        iconOnly
         label={$_('assistant.kinds.training_plan.title')}
         onclick={() => (showAssistant = true)}
       />
     {/if}
-  </div>
-  <ImportSheet
-    trainings={data.plannedTrainings}
-    members={data.members}
-    breaks={data.breaks}
-    onimported={refresh}
-  />
-</section>
+  </section>
+{/if}
 
 {#if showAssistant && data.canPlanTrainings}
   <AssistantDialog kind="training_plan" onclose={closeAssistant}>

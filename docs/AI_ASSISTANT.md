@@ -18,8 +18,10 @@ On these pages the assistant is the small wand attached to the page's own
 create button (_Prüfung erfassen_, _Event erstellen_, _Lektionsplan
 erstellen_ or _Bearbeiten_), so it takes no extra room. Where there is no
 create button it stays out of the way: a quiet _Liste einlesen_ next to
-the attendance count on the check-in page, a wand icon on the training
-plan import. Without the API key only the create button shows. The overview
+the attendance count on the check-in page. The training plan has no manual
+import, so there the assistant is a labelled button, _Trainingsplan
+einlesen_ under _Bestehenden Plan einlesen_. Without the API key only the
+create buttons show, and the training plan has no import. The overview
 `/dashboard/assistant` (avatar menu → _Daten-Assistent_) explains the steps
 and leads to these pages: pick a member or a training and date there, and
 the target page opens the assistant right away (`?assistant=<kind>`).
@@ -126,7 +128,13 @@ need a confirmation. People not on the roster are added to it. Existing
 check-ins are never removed, and a different role is only overwritten when
 ticked.
 
-**Trainingsplan** (_Trainingsplanung → Trainings & Ferien_). Every session
+**Trainingsplan** (_Trainingsplanung → Trainings & Ferien_). It replaces the
+former Google Sheet import: a copied sheet (one row per day: KW, Tag, Datum,
+Trainingstyp, Von, Bis, Leiter, Thema, Info / Bemerkung) is pasted like any
+table, and the prompt carries the sheet's rules (rows on weekdays without a
+planned training are left out, «kein Training» is a cancellation with the
+info as note, another training type is the topic, holidays in the info go
+to the holidays). Every session
 is checked against the planned trainings (right weekday) and compared with
 the plan: _Neu_ and sessions that only fill empty fields are saved,
 _Schon erfasst_ is skipped, sessions that would replace a planned trainer,

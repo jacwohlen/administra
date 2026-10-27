@@ -982,7 +982,7 @@
       "previousYear": "Vorheriges Jahr",
       "nextYear": "Nächstes Jahr",
       "print": "Drucken",
-      "empty": "Noch keine Trainings in der Planung. Die TK wählt unter «Trainings & Ferien» aus, welche Trainings geplant werden, und kann dort den bisherigen Plan aus dem Google Sheet übernehmen.",
+      "empty": "Noch keine Trainings in der Planung. Die TK wählt unter «Trainings & Ferien» aus, welche Trainings geplant werden, und kann dort den bisherigen Plan einlesen lassen.",
       "nothingShown": "Keine Termine für diese Auswahl",
       "onlyOpen": "Trainer offen ({count})",
       "showPast": "Vergangene anzeigen",
@@ -1065,24 +1065,9 @@
       "breakOpen": "Erwachsenentraining findet statt",
       "mainTrainer": "Haupttrainer",
       "import": {
-        "title": "Aus dem Google Sheet übernehmen",
-        "hint": "Im Sheet «Trainingsplanung» die Zeilen samt Kopfzeile (KW, Tag, Datum, Trainingstyp, …, Leiter, Thema, Info / Bemerkung) markieren, kopieren und hier einfügen, oder das Blatt als CSV herunterladen und wählen. Zuerst oben die geplanten Trainings wählen: die Zeilen gehen an das Training ihres Wochentags.",
-        "noTrainings": "Zuerst oben die geplanten Trainings wählen.",
-        "placeholder": "KW\tTag\tDatum\tTrainingstyp\t…",
-        "file": "oder CSV-Datei:",
-        "noHeader": "Keine Kopfzeile mit «Datum» gefunden. Bitte die Kopfzeile mitkopieren.",
-        "nothing": "Keine Zeilen für die geplanten Trainings gefunden.",
-        "summary": "{sessions} Termine vom {from} bis {to}, davon {cancelled} ohne Training.",
-        "skipped": "{count, plural, one {# Zeile} other {# Zeilen}} an Wochentagen ohne geplantes Training werden übersprungen.",
-        "leaders": "Leiter",
-        "leadersHint": "Zuordnung zu den Mitgliedern. Ohne Zuordnung (z. B. Gasttrainer) bleibt der Name in der Bemerkung.",
-        "holidays": "Ferien",
-        "holidaysHint": "Aus der Spalte «Info / Bemerkung». «Dojo zu» ist vorgeschlagen, wenn in dieser Zeit kein geplantes Training stattfand.",
-        "exists": "schon erfasst",
-        "overwrite": "Was an diesen Daten schon geplant ist, wird durch das Sheet ersetzt.",
-        "run": "{count} Termine übernehmen",
-        "done": "{sessions} Termine und {breaks} Ferien übernommen",
-        "error": "Fehler beim Übernehmen des Sheets"
+        "title": "Bestehenden Plan einlesen",
+        "hint": "Foto, PDF oder Tabelle des bisherigen Plans, auch direkt aus dem Google Sheet kopiert. Die KI liest Leiter, Themen, Ausfälle und Ferien; du prüfst alles, bevor etwas gespeichert wird.",
+        "noTrainings": "Zuerst oben die geplanten Trainings wählen."
       },
       "view": {
         "list": "Übersicht",
@@ -1385,7 +1370,7 @@
       },
       "training_plan": {
         "title": "Trainingsplan einlesen",
-        "hint": "Plan mit Datum, Training, Leiter, Thema, Ausfällen und Ferien. Grosse Pläne am besten monatsweise.",
+        "hint": "Plan mit Datum, Training, Leiter, Thema, Ausfällen und Ferien, z. B. aus dem Google Sheet kopiert. Grosse Pläne am besten monatsweise.",
         "description": "Leiter, Themen, Ausfälle und Ferien aus einem bestehenden Plan übernehmen.",
         "example": "«2. November Kampftraining mit Sandra, Thema Ne-Waza; am 9. November fällt es aus»"
       },

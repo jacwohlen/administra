@@ -42,7 +42,8 @@ const KIND_PROMPTS: Record<AssistantKind, string> = {
 - One session per training and date. "training" is the key of the matching training from <trainings>, matched by weekday, time and title; empty if none fits.
 - "cancelled": true when the session does not take place. Then leave "trainer" and "topic" empty.
 - "trainer": the leader's name as written, empty if none.
-- Holidays or closures spanning several days go to "holidays"; "closed" is true when the dojo is closed and no training takes place at all, false for school holidays during which some trainings continue.`,
+- Holidays or closures spanning several days go to "holidays"; "closed" is true when the dojo is closed and no training takes place at all, false for school holidays during which some trainings continue.
+- A table with one row per day, like the club's former Google Sheet «Trainingsplanung» (KW, Tag, Datum, Trainingstyp, Von, Bis, Leiter, Thema, Info / Bemerkung): each row belongs to the training from <trainings> on its weekday, by "Trainingstyp" when a weekday has several. Leave out rows on weekdays without a training in <trainings>. «kein Training» or an empty "Trainingstyp" means cancelled, with the reason from "Info / Bemerkung" (Karfreitag, GV) in "notes". A "Trainingstyp" other than the training's own (freies Training, Heimkampf) is the topic. Holidays named in "Info / Bemerkung" (…ferien, Weihnachten) go to "holidays", the rest of it to "notes"; "-" means empty.`,
 
   lesson_plan: `Document: the lesson plan (Lektionsplan) of one training session: warm-up, main part, cool-down, notes; exercises, techniques, games.
 - Split it into parts with a short heading and one item per exercise, technique or note, keeping the original wording and language.

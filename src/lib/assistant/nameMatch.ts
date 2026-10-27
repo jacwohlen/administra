@@ -62,8 +62,7 @@ function levenshtein(a: string, b: string): number {
 /**
  * How well one written word fits one name word, 0–1. First names also
  * match by a short form ("Chris" for Christian) and by their first three
- * letters, like matchLeader in $lib/trainingPlanImport ("Beni" for
- * Benjamin). A last name that is only similar (a prefix, one letter off)
+ * letters ("Beni" for Benjamin). A last name that is only similar (a prefix, one letter off)
  * scores at most LAST_NAME_SIMILAR: Meier is not Meierhans or Maier, and
  * such a candidate must always be confirmed.
  */

@@ -1,6 +1,5 @@
 import dayjs from 'dayjs';
 import type { TrainingPlanBreak, TrainingPlanSession } from '$lib/models';
-import type { ImportBreak, ImportSession } from '$lib/trainingPlanImport';
 import type { PlanTraining } from '$lib/trainingPlanUtils';
 import { SUGGEST_SCORE, bestMatch, normalizeName, type MatchableMember } from './nameMatch';
 import { MAX_LENGTH, cleanText, isIsoDate } from './proposals';
@@ -20,10 +19,23 @@ import type { HolidayEntry, PlanSessionEntry } from './types';
  * user ticks it.
  */
 
-/** The written columns of training_plan_sessions, exactly as the sheet import writes them */
-export type PlanSessionWrite = ImportSession;
+/** The written columns of training_plan_sessions */
+export interface PlanSessionWrite {
+  training_id: number;
+  date: string;
+  trainer_id: number | null;
+  topic: string | null;
+  notes: string | null;
+  cancelled: boolean | null;
+}
+
 /** The written columns of training_plan_breaks */
-export type PlanBreakWrite = ImportBreak;
+export interface PlanBreakWrite {
+  title: string;
+  date_from: string;
+  date_to: string;
+  cancels_training: boolean;
+}
 
 /** A member a session can be planned for (PlanMember of the training plan) */
 export interface PlanReviewMember extends MatchableMember {
@@ -43,7 +55,7 @@ export type PlannedBreak = Pick<
   'title' | 'date_from' | 'date_to' | 'cancels_training'
 >;
 
-/** Rows per upsert, like the sheet import */
+/** Rows per upsert */
 export const PORTION = 200;
 
 const WEEKDAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
@@ -140,9 +152,9 @@ export function matchLeaders(
 }
 
 /**
- * The notes with the written leader name in front, as the sheet import
- * keeps leaders without a member, or with it taken out again once a member
- * is chosen.
+ * The notes with the written leader name in front, so a leader without a
+ * member (a guest trainer) is not lost, or with it taken out again once a
+ * member is chosen.
  */
 export function withLeaderNote(notes: string, name: string, inNotes: boolean): string {
   const n = name.trim();

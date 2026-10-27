@@ -63,8 +63,8 @@
    * Review step of the Daten-Assistent for a training plan: every session
    * the model read, mapped to a planned training and a member and compared
    * with what the TK planned already, plus the holidays. New sessions and
-   * ones that only fill empty fields are saved like the sheet import;
-   * sessions that contradict the plan only when the user ticks it.
+   * ones that only fill empty fields are saved right away; sessions that
+   * contradict the plan only when the user ticks it.
    *
    * When some writes fail, the review stays open: saved rows are marked and
    * left out, failed ones say so, and the plan and the holidays are read
@@ -399,7 +399,7 @@
     failedSessions = {};
     failedHolidays = {};
 
-    // Sessions in portions like the sheet import; a failed portion is
+    // Sessions in portions of PORTION rows; a failed portion is
     // retried row by row so the failures are known per session (an upsert
     // on training and date: writing one twice changes nothing)
     const savedSessions = await writeInPortions(
