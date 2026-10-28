@@ -1,4 +1,3 @@
-import { parseSheetDate } from '$lib/trainingPlanImport';
 import type { TrainerRole } from '$lib/models';
 import {
   CONFIDENCES,
@@ -139,13 +138,23 @@ export function isIsoDate(value: string): boolean {
   return date.getUTCFullYear() === y && date.getUTCMonth() === mo - 1 && date.getUTCDate() === d;
 }
 
+/** The date in «2026-01-05 00:00», «05.01.2026», «5.1.26» or «Mo, 05.01.2026», unchecked */
+function findDate(value: string): string | null {
+  const iso = /(\d{4})-(\d{1,2})-(\d{1,2})/.exec(value);
+  if (iso) return `${iso[1]}-${iso[2].padStart(2, '0')}-${iso[3].padStart(2, '0')}`;
+  const swiss = /(\d{1,2})\.(\d{1,2})\.(\d{2,4})/.exec(value);
+  if (!swiss) return null;
+  const year = swiss[3].length === 2 ? `20${swiss[3]}` : swiss[3].padStart(4, '0');
+  return `${year}-${swiss[2].padStart(2, '0')}-${swiss[1].padStart(2, '0')}`;
+}
+
 /** YYYY-MM-DD, also from 05.03.2024 or 5.3.24; '' when not a real date. */
 export function cleanDate(value: unknown): string {
   if (typeof value !== 'string') return '';
   const v = value.trim();
   if (isIsoDate(v)) return v;
-  const parsed = v ? parseSheetDate(v) : null;
-  return parsed && isIsoDate(parsed) ? parsed : '';
+  const found = v ? findDate(v) : null;
+  return found && isIsoDate(found) ? found : '';
 }
 
 /**

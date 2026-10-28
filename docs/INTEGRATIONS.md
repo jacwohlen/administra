@@ -9,8 +9,8 @@ The work runs in phases; each one ships on its own.
 | Phase                        | What                                                                                                   | State       |
 | ---------------------------- | ------------------------------------------------------------------------------------------------------ | ----------- |
 | 0 Stop the damage            | The sync keeps registrations entered in the app; app ids fenced away from Webling ids; CI for the sync | done (#165) |
-| 1a Status and links          | `membership_status`, `member_links`, Webling fields read-only in the app, access report                | this phase  |
-| 1b Enforce sign-in by status | Sign-in, directory and auto-approval require an active or passive membership                           | next        |
+| 1a Status and links          | `membership_status`, `member_links`, Webling fields read-only in the app, access report                | done (#166) |
+| 1b Enforce sign-in by status | Member accounts, directory and auto-approval require an active or passive membership                   | this phase  |
 | 1c Safe merge                | Merge a duplicate (e.g. trial row and later Webling row) moving every reference in one transaction     | planned     |
 | 2 Integration layer          | Provider-neutral ingest in SQL (stage, apply, finish), mapping as configuration, run log               | planned     |
 | 3 Webling on the new layer   | Webling adapter on a shared Python core; group/calendar mapping from config instead of code            | planned     |
@@ -42,17 +42,17 @@ The work runs in phases; each one ships on its own.
 link by `member_status_from_labels()` whenever either changes. Never set it
 directly.
 
-| Labels (exact spelling)                     | Status       | Sign-in (from phase 1b) |
-| ------------------------------------------- | ------------ | ----------------------- |
-| any, but Webling no longer has the member   | `left`       | no                      |
-| `03_Austritt`                               | `left`       | no                      |
-| `Aktiv`                                     | `active`     | yes                     |
-| `Passiv`, `Ehrenmitglieder`                 | `passive`    | yes                     |
-| `Nicht-Mitglieder`                          | `non_member` | no                      |
-| `probetraining` (app trial candidate)       | `trial`      | no                      |
-| `Probetraining` (Webling legacy, see below) | `non_member` | no                      |
-| none of these, member comes from Webling    | `non_member` | no                      |
-| none of these, member created in Administra | `active`     | yes                     |
+| Labels (exact spelling)                     | Status       | Member accounts get in |
+| ------------------------------------------- | ------------ | ---------------------- |
+| any, but Webling no longer has the member   | `left`       | no                     |
+| `03_Austritt`                               | `left`       | no                     |
+| `Aktiv`                                     | `active`     | yes                    |
+| `Passiv`, `Ehrenmitglieder`                 | `passive`    | yes                    |
+| `Nicht-Mitglieder`                          | `non_member` | no                     |
+| `probetraining` (app trial candidate)       | `trial`      | no                     |
+| `Probetraining` (Webling legacy, see below) | `non_member` | no                     |
+| none of these, member comes from Webling    | `non_member` | no                     |
+| none of these, member created in Administra | `active`     | yes                    |
 
 Checked in this order, so `03_Austritt` wins over `Aktiv`. The labels are
 Webling group titles, except that the sync renames Webling's legacy trial
@@ -104,18 +104,65 @@ address entered in Administra before the fields became read-only stays, and
 cannot be removed there either. Once those addresses are in Webling (see
 below), the sync can own the field completely.
 
-## Enforcing sign-in by status (phase 1b)
+## Sign-in by membership status (phase 1b)
 
-Before switching, an admin reviews **Benutzer → Verlieren den Zugang,
-sobald die Mitgliedschaft zählt** (`member_access_report()`): the approved
-member accounts none of whose member records is active or passive. Then:
+An account with the role `member` may use Administra only while at least one
+of its member records counts: `membership_status` `active` or `passive`, not
+archived, no trial label (`member_grants_access()`). Its records are the
+member an admin linked under _Benutzer_ and every member carrying the
+account's e-mail (case and surrounding spaces ignored). Non-members, people
+who left and trial candidates get nothing, also when an admin approved the
+account by hand or linked it. Staff accounts (viewer, trainer, admin; exam
+roles only exist on top of these) get in by their role, whatever their
+member records say.
 
-1. Check the list for people who should keep access; fix their groups in
-   Webling (the next sync updates the status).
-2. Members whose e-mail exists only in Administra (entered before the
-   fields became read-only) keep it, but it should be entered in Webling too.
-3. The phase 1b migration changes `grant_member_access`, `my_member_ids` and
-   `get_member_directory` to require an active or passive membership and
-   sets the listed accounts back to _Ausstehend_.
+The rule is checked on every request, never stored
+(`20261027120000_member_access_requires_membership.sql`):
 
-Until then nothing about sign-in has changed.
+- `is_approved_user()` and `my_member_ids()` apply it to member accounts.
+  Every policy and function that lets members read club data goes through
+  one of them, so a member account without a record that counts reads
+  nothing: no trainings, events, grades, badges, photos or directory.
+- `my_member_ids()` returns only the records that count: a parent sees and
+  registers for exams only the children whose membership counts. Staff keep
+  all of theirs ("Mein Profil" of a trainer who is no member in Webling).
+- The member directory lists only members that count.
+- `user_profiles.status` keeps meaning what an admin (or the automatic
+  approval) decided. Nobody is set back to _Ausstehend_: when the sync
+  changes a status (groups changed, gone from Webling, back again), a member
+  is archived or deleted, or an e-mail changes, the next request already
+  follows it, and access comes back by itself once a record counts again.
+- Automatic approval (`grant_member_access()`) needs a record that counts and
+  only approves accounts waiting as `member`. It runs at every sign-in and
+  whenever a member's e-mail, groups, status or archive date changes, so a
+  member back in Webling is let in by that night's sync.
+- New accounts wait with the role `member`. Approving one by hand gives
+  member access, which follows the membership; for trainers and board
+  members pick the staff role first (an account waiting with a staff role is
+  never approved automatically).
+- `my_access()` tells the app whether the account is let in (the same check)
+  and the reason per record. The pending page says which case it is: e-mail
+  not on file, trial candidate, or on file without an active or passive
+  membership (with the status from the member register).
+- _Benutzer_ marks approved member accounts without access (_Kein Zugang_,
+  list _Mitglieder-Konten ohne Zugang_) and waiting member accounts that
+  would get none, with the reason per record (`member_access_report()`:
+  `archived`, `trial` for an active record with a trial label, otherwise the
+  status). The member link shows the status of members who are not active.
+- A member the sync has just added counts as coming from Webling before its
+  link is written (`trigger_set_membership_status()`, Webling id range): one
+  without a status group is a non-member from the start, not active until
+  the end of the run.
+
+Known gaps:
+
+- An e-mail removed in Webling stays in Administra (the sync only sends
+  addresses Webling has), so the old address keeps matching.
+- If Webling renames `Aktiv` or `Passiv`, or the label mapping breaks, every
+  member account loses access at once (staff do not); it comes back with
+  the first good sync. Unlike `gone_at`, label changes have no guard yet.
+- An app trial candidate whose trial label a trainer removes counts as an
+  active member (1a rule); phase 1c merges it with the Webling record.
+
+`supabase/checks/member_access.sql` (CI job `db-validate`) walks through these
+cases as member, admin and sync.

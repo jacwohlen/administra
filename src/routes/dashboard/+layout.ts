@@ -12,12 +12,12 @@ import {
 import type { LayoutLoad } from './$types';
 
 export const load: LayoutLoad = async ({ parent, depends }) => {
-  const { session, userProfile } = await parent();
+  const { session, userProfile, access } = await parent();
   if (!session) {
     redirect(303, '/');
   }
   if (!userProfile || !isStaff(userProfile)) {
-    redirect(303, homePath(userProfile));
+    redirect(303, homePath(userProfile, access));
   }
 
   depends('users:pending');

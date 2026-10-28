@@ -29,7 +29,14 @@
       "disabledMessage": "Dein Konto wurde deaktiviert. Bitte wende dich an einen Administrator.",
       "signedInAs": "Angemeldet als",
       "noMemberMatch": "Diese E-Mail-Adresse ist bei keinem Mitglied hinterlegt. Melde dich mit der E-Mail an, die der Verein von dir hat – oder bitte den Verein, sie bei deinem Mitgliedereintrag zu hinterlegen. Danach bist du automatisch drin.",
-      "otherEmail": "Mit anderer E-Mail anmelden"
+      "otherEmail": "Mit anderer E-Mail anmelden",
+      "noAccessTitle": "Kein Zugang",
+      "inactiveTitle": "Keine aktive Mitgliedschaft",
+      "inactiveMessage": "Diese E-Mail-Adresse ist beim Verein hinterlegt, aber bei keiner aktiven oder passiven Mitgliedschaft. Laut Mitgliederliste:",
+      "endedMessage": "Dein Zugang ruht: Keiner deiner Mitgliedereinträge ist mehr aktiv oder passiv, zum Beispiel nach einem Austritt. Laut Mitgliederliste:",
+      "inactiveHelp": "Administra steht aktiven und passiven Mitgliedern offen. Stimmt das nicht – oder bist du inzwischen (wieder) Mitglied –, melde dich beim Verein. Die Mitgliederliste wird dort nachgeführt und kommt über Nacht in Administra an; danach bist du automatisch drin. Tippe dann auf «Aktualisieren».",
+      "trialMessage": "Du bist für ein Probetraining angemeldet. Administra steht Mitgliedern offen: Sobald du Mitglied bist, bist du mit dieser E-Mail-Adresse automatisch drin.",
+      "contact": "Kontakt:"
     },
     "users": {
       "title": "Benutzer",
@@ -78,9 +85,11 @@
         "title": "Benutzer deaktivieren?",
         "message": "{name} kann sich danach nicht mehr anmelden, bis du das Konto wieder aktivierst."
       },
+      "noAccess": "Kein Zugang",
+      "approveWithoutMembership": "Keine aktive oder passive Mitgliedschaft: Als Mitglied freigegeben, bekommt das Konto erst Zugang, wenn eine hinterlegt ist. Für Trainer und Vorstand zuerst die Rolle wählen.",
       "accessReport": {
-        "title": "Verlieren den Zugang, sobald die Mitgliedschaft zählt",
-        "description": "Diese Mitglieder-Konten sind freigegeben, aber keiner ihrer Mitglieder-Einträge ist aktiv oder passiv (z. B. Nicht-Mitglieder oder Ausgetretene). Noch hat sich nichts geändert: Erst wenn die Anmeldung eine aktive oder passive Mitgliedschaft voraussetzt, gehen diese Konten zurück auf «Ausstehend».",
+        "title": "Mitglieder-Konten ohne Zugang",
+        "description": "Diese Konten sind als Mitglied freigegeben, aber keiner ihrer Mitglieder-Einträge ist eine aktive oder passive Mitgliedschaft (z. B. Nicht-Mitglieder, Ausgetretene, Probetraining oder archiviert). Sie sehen nichts und erfahren beim Anmelden, warum. Sobald ein Eintrag wieder aktiv oder passiv ist (Gruppe in Webling), haben sie automatisch wieder Zugang. Trainer und Vorstand bekommen ihren Zugang über die Rolle.",
         "noMember": "kein Mitglied-Eintrag"
       }
     },
@@ -337,7 +346,8 @@
         "active": "Aktiv",
         "passive": "Passiv",
         "non_member": "Nicht-Mitglied",
-        "left": "Ausgetreten"
+        "left": "Ausgetreten",
+        "archived": "Archiviert"
       },
       "showAll": "Auch Nicht-Mitglieder und Ausgetretene anzeigen",
       "managedBy": "Name, Geburtstag, Telefon, E-Mail und Gruppen kommen aus {provider} und werden dort geändert, auch ein Austritt.",
@@ -982,7 +992,7 @@
       "previousYear": "Vorheriges Jahr",
       "nextYear": "Nächstes Jahr",
       "print": "Drucken",
-      "empty": "Noch keine Trainings in der Planung. Die TK wählt unter «Trainings & Ferien» aus, welche Trainings geplant werden, und kann dort den bisherigen Plan aus dem Google Sheet übernehmen.",
+      "empty": "Noch keine Trainings in der Planung. Die TK wählt unter «Trainings & Ferien» aus, welche Trainings geplant werden.",
       "nothingShown": "Keine Termine für diese Auswahl",
       "onlyOpen": "Trainer offen ({count})",
       "showPast": "Vergangene anzeigen",
@@ -1065,24 +1075,9 @@
       "breakOpen": "Erwachsenentraining findet statt",
       "mainTrainer": "Haupttrainer",
       "import": {
-        "title": "Aus dem Google Sheet übernehmen",
-        "hint": "Im Sheet «Trainingsplanung» die Zeilen samt Kopfzeile (KW, Tag, Datum, Trainingstyp, …, Leiter, Thema, Info / Bemerkung) markieren, kopieren und hier einfügen, oder das Blatt als CSV herunterladen und wählen. Zuerst oben die geplanten Trainings wählen: die Zeilen gehen an das Training ihres Wochentags.",
-        "noTrainings": "Zuerst oben die geplanten Trainings wählen.",
-        "placeholder": "KW\tTag\tDatum\tTrainingstyp\t…",
-        "file": "oder CSV-Datei:",
-        "noHeader": "Keine Kopfzeile mit «Datum» gefunden. Bitte die Kopfzeile mitkopieren.",
-        "nothing": "Keine Zeilen für die geplanten Trainings gefunden.",
-        "summary": "{sessions} Termine vom {from} bis {to}, davon {cancelled} ohne Training.",
-        "skipped": "{count, plural, one {# Zeile} other {# Zeilen}} an Wochentagen ohne geplantes Training werden übersprungen.",
-        "leaders": "Leiter",
-        "leadersHint": "Zuordnung zu den Mitgliedern. Ohne Zuordnung (z. B. Gasttrainer) bleibt der Name in der Bemerkung.",
-        "holidays": "Ferien",
-        "holidaysHint": "Aus der Spalte «Info / Bemerkung». «Dojo zu» ist vorgeschlagen, wenn in dieser Zeit kein geplantes Training stattfand.",
-        "exists": "schon erfasst",
-        "overwrite": "Was an diesen Daten schon geplant ist, wird durch das Sheet ersetzt.",
-        "run": "{count} Termine übernehmen",
-        "done": "{sessions} Termine und {breaks} Ferien übernommen",
-        "error": "Fehler beim Übernehmen des Sheets"
+        "title": "Bestehenden Plan einlesen",
+        "hint": "Foto, PDF oder Tabelle des bisherigen Plans, auch direkt aus dem Google Sheet kopiert, am besten einen Monat aufs Mal. Die KI liest Leiter, Themen, Ausfälle und Ferien; du prüfst alles, bevor etwas gespeichert wird.",
+        "noTrainings": "Zuerst oben die geplanten Trainings wählen."
       },
       "view": {
         "list": "Übersicht",
@@ -1385,7 +1380,7 @@
       },
       "training_plan": {
         "title": "Trainingsplan einlesen",
-        "hint": "Plan mit Datum, Training, Leiter, Thema, Ausfällen und Ferien. Grosse Pläne am besten monatsweise.",
+        "hint": "Plan mit Datum, Training, Leiter, Thema, Ausfällen und Ferien, z. B. aus dem Google Sheet kopiert. Grosse Pläne am besten monatsweise.",
         "description": "Leiter, Themen, Ausfälle und Ferien aus einem bestehenden Plan übernehmen.",
         "example": "«2. November Kampftraining mit Sandra, Thema Ne-Waza; am 9. November fällt es aus»"
       },

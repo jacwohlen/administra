@@ -128,18 +128,19 @@ supabase start && supabase db reset
 E2E_USER_EMAIL=test@example.com E2E_USER_PASSWORD=testpass npm run test:e2e
 ```
 
-Authenticated tests cover dashboard navigation, members list/search/profile, trainings list/attendance, and stats page.
+Authenticated tests cover dashboard navigation, members list/search/profile, trainings list/attendance, and stats page; `memberAccess.spec` signs in as the seeded `member@example.com` and `former@example.com`.
 
 ### CI Pipeline
 
-GitHub Actions runs automatically on pushes to `main` and pull requests. The pipeline has 4 parallel jobs:
+GitHub Actions runs automatically on pushes to `main` and pull requests. The pipeline has these jobs:
 
-| Job                | What it runs                                               |
-| ------------------ | ---------------------------------------------------------- |
-| **lint-and-check** | Prettier, ESLint, svelte-check                             |
-| **unit-tests**     | All Vitest unit and component tests                        |
-| **e2e-tests**      | Playwright browser tests (uploads HTML report as artifact) |
-| **build**          | Production build (waits for lint + unit tests to pass)     |
+| Job                | What it runs                                                                                                          |
+| ------------------ | --------------------------------------------------------------------------------------------------------------------- |
+| **lint-and-check** | Prettier, ESLint, svelte-check                                                                                        |
+| **unit-tests**     | All Vitest unit and component tests                                                                                   |
+| **e2e-tests**      | Playwright browser tests (uploads HTML report as artifact)                                                            |
+| **db-validate**    | Migrations + seed on a fresh database, `supabase db lint`, member access checks (`supabase/checks/member_access.sql`) |
+| **build**          | Production build (waits for lint + unit tests to pass)                                                                |
 
 ### Project Structure
 
@@ -244,8 +245,8 @@ supabase db push
 
 - Views for statistics aggregation (`view_logs_summary`)
 - Functions for generating checklists and leaderboards
-- `user_profiles` with status (`pending` / `approved` / `disabled`) and role (`viewer` / `trainer` / `admin`); a trigger on `auth.users` creates and syncs the profile, admins approve new accounts under `/dashboard/users`
-- RLS helper functions `is_approved_user()`, `is_writer()`, `is_admin()` used by every table and storage policy
+- `user_profiles` with status (`pending` / `approved` / `disabled`) and role (`member` / `viewer` / `trainer` / `admin`); a trigger on `auth.users` creates and syncs the profile, admins approve new accounts under `/dashboard/users`; member accounts only get in while a member record is active or passive (`docs/MEMBER_SIGN_IN.md`)
+- RLS helper functions `is_approved_user()` (staff, or a member account whose membership counts), `my_member_ids()`, `is_writer()`, `is_admin()` used by every table and storage policy
 
 All SQL schemas, functions, and policies are version-controlled in the `supabase/migrations/` directory. The initial schema is in `20250814155759_remote_schema.sql`.
 
