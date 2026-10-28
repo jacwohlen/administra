@@ -186,7 +186,7 @@ def link(event_id):
 def events_world(confirmed):
     world = World()
     world.calendars = {501: {'title': 'Judo Agenda', 'events': [e[0] for e in EVENTS if e[1] == 501]},
-                       502: {'title': 'Aikido', 'events': [e[0] for e in EVENTS if e[1] == 502] + [61099]}}
+                       502: {'title': 'Aikido Agenda', 'events': [e[0] for e in EVENTS if e[1] == 502] + [61099]}}
     world.events = {e[0]: {'title': f' {e[2]} ', 'begin': e[3], 'end': e[4], 'place': e[5],
                            'maxParticipants': e[6]} for e in EVENTS}
     world.events[61099] = {'title': 'Serie', 'begin': '1970-01-01 00:00:00', 'end': None}
