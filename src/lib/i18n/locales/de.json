@@ -511,7 +511,7 @@
         "required": "Bitte Vorname, Nachname, Geburtsdatum und E-Mail ausfüllen.",
         "invalid": "Bitte prüfe deine Angaben, vor allem E-Mail-Adresse und Geburtsdatum."
       },
-      "metaDescription": "Melde dich unverbindlich für ein Probetraining an – Judo und Aikido in Wohlen.",
+      "metaDescription": "{club} – {sections}: Melde dich unverbindlich für ein Probetraining an.",
       "backToWebsite": "Zur Vereinswebsite",
       "contactHint": "Fragen vorab? Schreib uns:",
       "submitError": "Die Anmeldung konnte gerade nicht gesendet werden. Bitte versuche es später noch einmal.",
@@ -684,7 +684,25 @@
       "errorSend": "Der Code konnte nicht gesendet werden. Bitte prüfe die E-Mail-Adresse.",
       "errorCode": "Der Code ist falsch oder abgelaufen. Versuch es nochmals.",
       "errorRateLimit": "Zu viele Versuche. Bitte warte einen Moment und versuch es dann nochmals.",
-      "errorOAuth": "Die Anmeldung hat nicht geklappt: {reason}"
+      "errorOAuth": "Die Anmeldung hat nicht geklappt: {reason}",
+      "demo": {
+        "title": "Administra ausprobieren",
+        "intro": "Wähle eine Rolle – du bist sofort angemeldet. Der Budo-Club Musterwil ist erfunden; alle Daten werden jede Woche zurückgesetzt.",
+        "admin": {
+          "title": "Vorstand",
+          "description": "Alles sehen und verwalten: Mitglieder, Statistiken, Benutzer und Einstellungen."
+        },
+        "trainer": {
+          "title": "Trainerin oder Trainer",
+          "description": "Präsenz erfassen, Probetrainings zuteilen und Gurtprüfungen bewerten."
+        },
+        "member": {
+          "title": "Mitglied oder Eltern",
+          "description": "Fortschritte der eigenen Kinder sehen und sie für die Gurtprüfung anmelden."
+        },
+        "errorUnknownRole": "Diese Rolle gibt es in der Demo nicht. Wähle eine der Rollen oben.",
+        "errorSignIn": "Die Anmeldung hat gerade nicht geklappt. Versuch es in ein paar Minuten nochmals."
+      }
     },
     "club": {
       "myProfile": "Mein Profil",
@@ -1733,5 +1751,9 @@
         "failed": "Die Spracherkennung ist fehlgeschlagen. Tippe den Text oder versuche es nochmals."
       }
     }
+  },
+  "demo": {
+    "banner": "Demo – alle Daten sind erfunden und werden jede Woche zurückgesetzt.",
+    "learnMore": "Mehr über Administra"
   }
 }

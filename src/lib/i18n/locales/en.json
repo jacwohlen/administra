@@ -511,7 +511,7 @@
         "required": "Please fill in first name, last name, date of birth, and email.",
         "invalid": "Please check your details, especially the e-mail address and date of birth."
       },
-      "metaDescription": "Sign up for a free, no-obligation trial training session – Judo and Aikido in Wohlen.",
+      "metaDescription": "{club} – {sections}: sign up for a free, no-obligation trial training session.",
       "backToWebsite": "To the club website",
       "contactHint": "Questions? Write to us:",
       "submitError": "Your registration could not be sent right now. Please try again later.",
@@ -684,7 +684,25 @@
       "errorSend": "We couldn't send the code. Please check the email address.",
       "errorCode": "That code is wrong or has expired. Please try again.",
       "errorRateLimit": "Too many attempts. Please wait a moment and try again.",
-      "errorOAuth": "Could not log in: {reason}"
+      "errorOAuth": "Could not log in: {reason}",
+      "demo": {
+        "title": "Try Administra",
+        "intro": "Pick a role and you're signed in right away. Budo-Club Musterwil is made up; all data is reset every week.",
+        "admin": {
+          "title": "Board",
+          "description": "See and manage everything: members, statistics, users and settings."
+        },
+        "trainer": {
+          "title": "Trainer",
+          "description": "Take attendance, assign trial trainings and score belt gradings."
+        },
+        "member": {
+          "title": "Member or parent",
+          "description": "Follow your own children's progress and sign them up for a belt grading."
+        },
+        "errorUnknownRole": "That role doesn't exist in the demo. Pick one of the roles above.",
+        "errorSignIn": "Signing in didn't work just now. Please try again in a few minutes."
+      }
     },
     "club": {
       "myProfile": "My profile",
@@ -1733,5 +1751,9 @@
         "failed": "Speech recognition failed. Type the text or try again."
       }
     }
+  },
+  "demo": {
+    "banner": "Demo – all data is made up and reset every week.",
+    "learnMore": "More about Administra"
   }
 }
