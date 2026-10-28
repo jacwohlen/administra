@@ -59,6 +59,21 @@ marks such accounts (_Kein Zugang_) and shows the status of each record. For
 trainers and board members pick the staff role before approving: staff get
 in by their role. Disabled accounts are never re-enabled automatically.
 
+### Duplicate members
+
+When an admin merges a duplicate (`docs/INTEGRATIONS.md`, "Merging
+duplicates"), an account linked to the removed record is linked to the one
+that stays; if both records are linked to accounts, the merge is refused
+until one link is removed under _Benutzer_. The e-mail of the removed
+record is only taken over by a record without one that is not in Webling,
+and never from a trial registration. An account that found the removed
+record only by its e-mail loses it: the preview lists each account whose
+access changes (only member accounts can lose it) or that no longer finds
+the record. Link it under _Benutzer_ or put the e-mail on the record that
+stays (in Webling for Webling members); the merge never links an account
+by e-mail, as a trainer's or a parent's address would link the wrong
+person.
+
 ## Access rules
 
 | Data                                                                                  | member (active/passive)    | viewer+ |

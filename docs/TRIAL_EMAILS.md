@@ -76,6 +76,13 @@ Both actions go through SECURITY DEFINER functions keyed by the token,
 `get_trial_status(token)` and `cancel_trial(token)`
 (`supabase/migrations/20260928090000_trial_status_page.sql`).
 
+When a candidate's trial registration is merged into their Webling record
+(`docs/INTEGRATIONS.md`, "Merging duplicates"), the token and trial history
+move with it, so the link keeps working and shows "member"; the e-mails
+sent are listed on the record that stays. If that record already had a
+trial history or a status link of its own, it keeps its own and the merged
+registration's link stops working (the preview warns).
+
 ## SMTP setup (Netlify)
 
 Set these environment variables for the **Production** and branch

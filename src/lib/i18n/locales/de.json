@@ -352,7 +352,114 @@
       "showAll": "Auch Nicht-Mitglieder und Ausgetretene anzeigen",
       "managedBy": "Name, Geburtstag, Telefon, E-Mail und Gruppen kommen aus {provider} und werden dort geändert, auch ein Austritt.",
       "managedError": "Diese Angaben kommen aus {provider} und können nur dort geändert werden.",
-      "hiddenMatches": "{count, plural, one {# Treffer} other {# Treffer}} unter Nicht-Mitgliedern und Ausgetretenen."
+      "hiddenMatches": "{count, plural, one {# Treffer} other {# Treffer}} unter Nicht-Mitgliedern und Ausgetretenen.",
+      "merge": {
+        "action": "Duplikat zusammenführen",
+        "title": "Duplikat zusammenführen",
+        "intro": "Wähle den anderen Eintrag derselben Person. Alles vom entfernten Eintrag geht auf den bleibenden über, dann wird er gelöscht.",
+        "search": "Mitglied suchen…",
+        "noMatches": "Kein Mitglied gefunden",
+        "keep": "Bleibt",
+        "drop": "Wird entfernt",
+        "swap": "Tauschen",
+        "swapBlocked": "Der Eintrag aus {provider} muss bleiben.",
+        "inProvider": "aus {provider}",
+        "loadError": "Mitglieder konnten nicht geladen werden.",
+        "previewLoading": "Vorschau wird berechnet…",
+        "previewTitle": "Was übernommen wird",
+        "nothingToMove": "Der entfernte Eintrag hat keine Trainings, Anlässe, Graduierungen oder anderen Daten.",
+        "moved": "{count} übernommen",
+        "merged": "{count} zusammengelegt",
+        "removed": "{count} entfernt",
+        "refs": {
+          "attendance": "Trainingsbesuche",
+          "trainings": "Trainingszuteilungen",
+          "eventRegistrations": "Anmeldungen zu Anlässen",
+          "eventAttendance": "Teilnahmen an Anlässen",
+          "grades": "Graduierungen",
+          "medals": "Medaillen",
+          "badges": "Abzeichen",
+          "exams": "Q-Prüfungen",
+          "trialEmails": "Probetraining-E-Mails",
+          "planSessions": "Einträge im Trainingsplan",
+          "mainTrainer": "Haupttrainer von Trainings",
+          "account": "Benutzerkonto",
+          "links": "Webling-Verknüpfung (ausgetreten)",
+          "earlierMerges": "Frühere Zusammenführungen",
+          "other": "Weitere ({ref})"
+        },
+        "conflictsTitle": "Bei beiden vorhanden",
+        "conflict": {
+          "gradeExam": "{grade} ({section}): Die Graduierung aus der Q-Prüfung bleibt, die Notizen werden zusammengefügt.",
+          "gradeKeep": "{grade} ({section}): Die Graduierung des bleibenden Eintrags bleibt, die Notizen werden zusammengefügt.",
+          "medal": "{competition}: {kept} bleibt, {dropped} fällt weg.",
+          "medalSame": "{competition}: bei beiden {medal}, die Medaille bleibt einmal.",
+          "examSheet": "Q-Prüfung {title} ({date}): Die Anmeldung mit dem begonnenen Prüfungsblatt bleibt.",
+          "examStatus": "Q-Prüfung {title} ({date}): Eine Anmeldung bleibt, leere Angaben kommen von der anderen.",
+          "other": "{ref}: Ein Eintrag bleibt."
+        },
+        "fieldsTitle": "Angaben des bleibenden Eintrags",
+        "statusSame": "Status bleibt: {status}",
+        "statusChanges": "Status: {before} → {after}",
+        "field": {
+          "birthday": "Geburtstag",
+          "mobile": "Mobiltelefon",
+          "email": "E-Mail"
+        },
+        "fieldDecision": {
+          "from_drop": "{field}: wird übernommen ({value})",
+          "kept_differs": "{field}: bleibt; der andere Wert ({value}) wird nicht übernommen",
+          "not_copied_provider": "{field}: kommt aus {provider}, {value} wird nicht übernommen. Ändere es dort.",
+          "not_copied_trial": "{field}: {value} stammt aus der Probetraining-Anmeldung und wird nicht übernommen. Trag es von Hand ein, wenn es stimmt."
+        },
+        "notesJoined": "Die Notizen beider Einträge werden zusammengefügt.",
+        "photoFromDrop": "Das Foto des entfernten Eintrags wird übernommen.",
+        "photoKeptBoth": "Das Foto des bleibenden Eintrags bleibt, das andere wird gelöscht.",
+        "unarchived": "Der bleibende Eintrag wird aus dem Archiv geholt.",
+        "trialFromDrop": "Der Probetraining-Verlauf und der Status-Link werden übernommen.",
+        "labelsNotCarried": "Nicht übernommene Labels: {labels}",
+        "badges": "Abzeichen werden neu berechnet: {added} neu, {removed} entfallen.",
+        "othersChanged": "{count, plural, one {# Saison-Abzeichen} other {# Saison-Abzeichen}} anderer Mitglieder ändern sich.",
+        "accountsTitle": "Benutzerkonten",
+        "account": {
+          "losesAccess": "{email} verliert den Zugang zu Administra. Verknüpfe das Konto unter Benutzer mit dem bleibenden Eintrag oder trag die E-Mail dort ein (bei Webling-Mitgliedern in Webling).",
+          "gainsAccess": "{email} bekommt Zugang zu Administra.",
+          "losesRecord": "{email} findet den Eintrag danach nicht mehr (Mein Profil). Verknüpfe das Konto unter Benutzer, wenn es dazugehört."
+        },
+        "warning": {
+          "TRIAL_LINK_ENDS": "Der Status-Link der Probetraining-Anmeldung funktioniert danach nicht mehr.",
+          "ACCOUNT_LOSES_ACCESS": "{count, plural, one {# Mitgliederkonto verliert} other {# Mitgliederkonten verlieren}} den Zugang zu Administra."
+        },
+        "confirmTitle": "Zusammenführen bestätigen",
+        "confirmMessage": "{drop} (#{dropId}) wird gelöscht, alles geht auf {keep} (#{keepId}) über. Das lässt sich nicht rückgängig machen.",
+        "confirm": "Zusammenführen",
+        "success": "Einträge zusammengeführt",
+        "error": {
+          "NOT_ALLOWED": "Nur Admins können Mitglieder zusammenführen.",
+          "SAME_MEMBER": "Wähle einen anderen Eintrag.",
+          "MEMBER_NOT_FOUND": "Einer der Einträge existiert nicht mehr.",
+          "BOTH_IN_PROVIDER": "Beide Einträge kommen aus {provider}. Führe sie zuerst dort zusammen.",
+          "KEEP_PROVIDER_ROW": "Der Eintrag aus {provider} muss bleiben.",
+          "ACCOUNT_CONFLICT": "Beide Einträge sind mit einem Benutzerkonto verknüpft. Löse zuerst eine Verknüpfung unter Benutzer.",
+          "EXAM_CONFLICT": "Beide Einträge wurden am selben Prüfungstag geprüft. Kläre das zuerst in den Q-Prüfungen.",
+          "UNHANDLED_REFERENCE": "Zusammenführen ist gesperrt: Die Datenbank hat eine neue Verknüpfung zu Mitgliedern, die das Zusammenführen noch nicht kennt.",
+          "unknown": "Zusammenführen fehlgeschlagen."
+        }
+      },
+      "duplicates": {
+        "link": "Duplikate",
+        "title": "Mögliche Duplikate",
+        "intro": "Einträge, die wahrscheinlich dieselbe Person sind. Prüf jedes Paar, bevor du es zusammenführst.",
+        "empty": "Keine möglichen Duplikate gefunden.",
+        "count": "{count, plural, one {# Paar} other {# Paare}}",
+        "reason": {
+          "name_birthday": "Name und Geburtstag",
+          "email_name": "E-Mail und Vorname",
+          "trial_name": "Probetraining mit gleichem Namen"
+        },
+        "merge": "Zusammenführen",
+        "mergeInProvider": "In {provider} zusammenführen"
+      }
     },
     "stats": {
       "all": "Alle",

@@ -10,6 +10,7 @@
     faArrowsRotate,
     faBoxArchive,
     faCamera,
+    faCodeMerge,
     faEdit,
     faTrash,
     faUpload
@@ -22,6 +23,8 @@
   import dayjs, { type Dayjs } from 'dayjs';
   import { goto, invalidate } from '$app/navigation';
   import MemberForm from '../MemberForm.svelte';
+  import MergeMemberDialog from './MergeMemberDialog.svelte';
+  import { avatarPath } from '$lib/memberMerge';
   import { toaster } from '$lib/toast';
   import {
     isManagedByProviderError,
@@ -36,6 +39,7 @@
   let isEditing = $state(false);
   let showEditFormDialog = $state(false);
   let showDeleteConfirm = $state(false);
+  let showMergeDialog = $state(false);
 
   let memberId = $derived(Number(data.id));
   // Viewers get the profile read-only; the database enforces the same
@@ -85,7 +89,7 @@
 
   async function removeOldProfilePictureFromStorage(timestamp: string | Dayjs | undefined) {
     if (timestamp) {
-      const oldFileName = data.id + '_' + timestamp.valueOf() + '.webp';
+      const oldFileName = avatarPath(data.id, timestamp);
       const { error: deleteError } = await supabaseClient.storage
         .from('avatars')
         .remove([oldFileName]);
@@ -97,7 +101,7 @@
   }
 
   async function uploadNewProfilePictureToStorage(timestamp: Dayjs, file: File) {
-    const newFileName = data.id + '_' + timestamp.valueOf() + '.webp';
+    const newFileName = avatarPath(data.id, timestamp);
     const blob = await fromBlob(file, { quality: 80, width: 512, format: 'webp' });
     const url = await blobToDataUrl(blob);
 
@@ -266,21 +270,36 @@
         >
           <Fa icon={faEdit} />
         </button>
-        <!-- A provider's members are not deleted here: they keep their history and leave in the provider -->
-        {#if !provider}
+        <!-- A provider's members are not deleted here: they keep their history and leave in the provider.
+             Admins merge duplicates, also into a provider's member. -->
+        {#if !provider || data.isAdmin}
           <MoreMenu>
             {#snippet items(close)}
-              <button
-                class="btn w-full justify-start text-error-600-400"
-                onclick={() => {
-                  close();
-                  confirmDelete();
-                }}
-                disabled={isDeleting}
-              >
-                <Fa icon={faTrash} />
-                <span>{$_('button.delete')}</span>
-              </button>
+              {#if data.isAdmin}
+                <button
+                  class="btn w-full justify-start"
+                  onclick={() => {
+                    close();
+                    showMergeDialog = true;
+                  }}
+                >
+                  <Fa icon={faCodeMerge} />
+                  <span>{$_('page.members.merge.action')}</span>
+                </button>
+              {/if}
+              {#if !provider}
+                <button
+                  class="btn w-full justify-start text-error-600-400"
+                  onclick={() => {
+                    close();
+                    confirmDelete();
+                  }}
+                  disabled={isDeleting}
+                >
+                  <Fa icon={faTrash} />
+                  <span>{$_('button.delete')}</span>
+                </button>
+              {/if}
             {/snippet}
           </MoreMenu>
         {/if}
@@ -344,6 +363,30 @@
         />
       </div>
     </div>
+  {/if}
+
+  {#if showMergeDialog}
+    <MergeMemberDialog
+      first={{
+        id: memberId,
+        firstname: data.firstname,
+        lastname: data.lastname,
+        birthday: data.birthday,
+        mobile: data.mobile,
+        email: data.email,
+        labels: data.labels,
+        membership_status: data.membership_status,
+        archivedAt: data.archivedAt,
+        trialRegisteredAt: data.trialRegisteredAt
+      }}
+      onclose={() => (showMergeDialog = false)}
+      onmerged={(keepId) => {
+        showMergeDialog = false;
+        invalidate('members:list');
+        if (keepId === memberId) refresh();
+        else goto(`/dashboard/members/${keepId}`);
+      }}
+    />
   {/if}
 
   {#if showDeleteConfirm}

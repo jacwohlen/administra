@@ -11,7 +11,7 @@ import type {
 import { supabaseClient } from '$lib/supabase';
 import { getBadgeDefinitions, getGradeDefinitions } from '$lib/referenceData';
 import { blobToDataUrl } from '$lib/imageUtils';
-import dayjs from 'dayjs';
+import { avatarPath } from '$lib/memberMerge';
 
 export interface MemberProfileData extends MemberAchievements {
   member: DirectoryMember;
@@ -30,7 +30,7 @@ async function loadPhoto(member: DirectoryMember): Promise<string | null> {
   if (!member.img || !member.imgUploaded) return member.img ?? null;
   const { data } = await supabaseClient.storage
     .from('avatars')
-    .download(member.id + '_' + dayjs(member.imgUploaded).valueOf() + '.webp');
+    .download(avatarPath(member.id, member.imgUploaded));
   return data ? await blobToDataUrl(data) : member.img;
 }
 

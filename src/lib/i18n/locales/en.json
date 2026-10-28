@@ -352,7 +352,114 @@
       "showAll": "Also show non-members and people who left",
       "managedBy": "Name, birthday, phone, e-mail and groups come from {provider} and are changed there, leaving the club too.",
       "managedError": "These details come from {provider} and can only be changed there.",
-      "hiddenMatches": "{count, plural, one {# match} other {# matches}} among non-members and people who left."
+      "hiddenMatches": "{count, plural, one {# match} other {# matches}} among non-members and people who left.",
+      "merge": {
+        "action": "Merge duplicate",
+        "title": "Merge duplicate",
+        "intro": "Pick the other record of the same person. Everything of the removed record moves to the one that stays, then it is deleted.",
+        "search": "Search members…",
+        "noMatches": "No member found",
+        "keep": "Stays",
+        "drop": "Removed",
+        "swap": "Swap",
+        "swapBlocked": "The record from {provider} must stay.",
+        "inProvider": "from {provider}",
+        "loadError": "Members could not be loaded.",
+        "previewLoading": "Calculating preview…",
+        "previewTitle": "What moves",
+        "nothingToMove": "The removed record has no trainings, events, grades or other data.",
+        "moved": "{count} moved",
+        "merged": "{count} combined",
+        "removed": "{count} removed",
+        "refs": {
+          "attendance": "Training attendance",
+          "trainings": "Training assignments",
+          "eventRegistrations": "Event registrations",
+          "eventAttendance": "Event attendance",
+          "grades": "Grades",
+          "medals": "Medals",
+          "badges": "Badges",
+          "exams": "Kyu gradings",
+          "trialEmails": "Trial e-mails",
+          "planSessions": "Training plan entries",
+          "mainTrainer": "Main trainer of trainings",
+          "account": "User account",
+          "links": "Webling link (left)",
+          "earlierMerges": "Earlier merges",
+          "other": "Other ({ref})"
+        },
+        "conflictsTitle": "On both records",
+        "conflict": {
+          "gradeExam": "{grade} ({section}): the grade from the kyu grading stays, the notes are combined.",
+          "gradeKeep": "{grade} ({section}): the grade of the record that stays is kept, the notes are combined.",
+          "medal": "{competition}: {kept} stays, {dropped} is dropped.",
+          "medalSame": "{competition}: {medal} on both, kept once.",
+          "examSheet": "Kyu grading {title} ({date}): the registration with the started exam sheet stays.",
+          "examStatus": "Kyu grading {title} ({date}): one registration stays, empty details come from the other.",
+          "other": "{ref}: one entry stays."
+        },
+        "fieldsTitle": "Details of the record that stays",
+        "statusSame": "Status stays: {status}",
+        "statusChanges": "Status: {before} → {after}",
+        "field": {
+          "birthday": "Birthday",
+          "mobile": "Mobile",
+          "email": "E-mail"
+        },
+        "fieldDecision": {
+          "from_drop": "{field}: taken over ({value})",
+          "kept_differs": "{field}: stays; the other value ({value}) is not taken over",
+          "not_copied_provider": "{field}: comes from {provider}, {value} is not taken over. Change it there.",
+          "not_copied_trial": "{field}: {value} comes from the trial registration and is not taken over. Enter it by hand if it is right."
+        },
+        "notesJoined": "The notes of both records are combined.",
+        "photoFromDrop": "The photo of the removed record is taken over.",
+        "photoKeptBoth": "The photo of the record that stays is kept, the other one is deleted.",
+        "unarchived": "The record that stays is taken out of the archive.",
+        "trialFromDrop": "The trial history and status link are taken over.",
+        "labelsNotCarried": "Labels not taken over: {labels}",
+        "badges": "Badges are recalculated: {added} new, {removed} dropped.",
+        "othersChanged": "{count, plural, one {# season badge} other {# season badges}} of other members change.",
+        "accountsTitle": "User accounts",
+        "account": {
+          "losesAccess": "{email} loses access to Administra. Link the account to the record that stays under Users, or enter the e-mail there (in Webling for Webling members).",
+          "gainsAccess": "{email} gets access to Administra.",
+          "losesRecord": "{email} no longer finds the record (My profile). Link the account under Users if it belongs to it."
+        },
+        "warning": {
+          "TRIAL_LINK_ENDS": "The status link of the trial registration stops working.",
+          "ACCOUNT_LOSES_ACCESS": "{count, plural, one {# member account loses} other {# member accounts lose}} access to Administra."
+        },
+        "confirmTitle": "Confirm merge",
+        "confirmMessage": "{drop} (#{dropId}) will be deleted and everything moves to {keep} (#{keepId}). This cannot be undone.",
+        "confirm": "Merge",
+        "success": "Records merged",
+        "error": {
+          "NOT_ALLOWED": "Only admins can merge members.",
+          "SAME_MEMBER": "Pick another record.",
+          "MEMBER_NOT_FOUND": "One of the records no longer exists.",
+          "BOTH_IN_PROVIDER": "Both records come from {provider}. Merge them there first.",
+          "KEEP_PROVIDER_ROW": "The record from {provider} must stay.",
+          "ACCOUNT_CONFLICT": "Both records are linked to a user account. Unlink one under Users first.",
+          "EXAM_CONFLICT": "Both records were examined on the same exam day. Sort that out in the kyu gradings first.",
+          "UNHANDLED_REFERENCE": "Merging is blocked: the database has a new link to members that merging does not handle yet.",
+          "unknown": "Merging failed."
+        }
+      },
+      "duplicates": {
+        "link": "Duplicates",
+        "title": "Possible duplicates",
+        "intro": "Records that are probably the same person. Check each pair before merging it.",
+        "empty": "No possible duplicates found.",
+        "count": "{count, plural, one {# pair} other {# pairs}}",
+        "reason": {
+          "name_birthday": "Name and birthday",
+          "email_name": "E-mail and first name",
+          "trial_name": "Trial with the same name"
+        },
+        "merge": "Merge",
+        "mergeInProvider": "Merge in {provider}"
+      }
     },
     "stats": {
       "all": "All",
