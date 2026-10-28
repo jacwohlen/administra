@@ -3,7 +3,6 @@
   import { _ } from 'svelte-i18n';
   import Fa from 'svelte-fa';
   import {
-    faCalendarDays,
     faCheck,
     faCircleExclamation,
     faClone,
@@ -18,7 +17,6 @@
   import {
     buildEventInserts,
     comparisonSpan,
-    eventDescription,
     formatDay,
     initialDefaultSection,
     initialInputs,
@@ -29,15 +27,19 @@
     spanCovers,
     summarizeEvents,
     untickRecorded,
+    withEventProviders,
     type ComparisonSet,
     type DateSpan,
     type EventIssue,
+    type EventLinkRow,
     type EventReviewRow,
     type EventRowInput,
     type EventRowStatus,
     type KnownEvent
   } from '$lib/assistant/events';
   import { clubToday, isIsoDate, MAX_LENGTH } from '$lib/assistant/proposals';
+  import { isMissingSchemaError } from '$lib/eventLinks';
+  import { providerName } from '$lib/memberStatus';
   import type { EventsProposal } from '$lib/assistant/types';
 
   /**
@@ -116,7 +118,6 @@
   let rows = $derived(reviewEvents(proposal.events, inputs, ctxFor(compared)));
   let summary = $derived(summarizeEvents(rows));
   let count = $derived(summary.inserts);
-  let multiDay = $derived(rows.some((r) => r.input.dateTo));
 
   let span = $derived(comparisonSpan(inputs));
   // Primitives, so typing in a title does not start a load
@@ -155,17 +156,21 @@
     loading = true;
     loadFailed = false;
     try {
-      // events has no end date: an event's date is its first day
-      const events = await fetchAllRows<KnownEvent>((from, to) =>
-        supabaseClient
-          .from('events')
-          .select('id, title, date, timeFrom, location, description')
-          .gte('date', days.from)
-          .lte('date', days.to)
-          .order('id')
-          .range(from, to)
-      );
+      // Duplicates are found by their first day (findKnown)
+      const [rows, links] = await Promise.all([
+        fetchAllRows<KnownEvent>((from, to) =>
+          supabaseClient
+            .from('events')
+            .select('id, title, date, timeFrom, location, description')
+            .gte('date', days.from)
+            .lte('date', days.to)
+            .order('id')
+            .range(from, to)
+        ),
+        loadLinks(days)
+      ]);
       if (seq !== loadSeq) return;
+      const events = withEventProviders(rows, links);
       loaded = { span: days, events };
       settle(events);
     } catch (err) {
@@ -174,6 +179,29 @@
       loadFailed = true;
     } finally {
       if (seq === loadSeq) loading = false;
+    }
+  }
+
+  /**
+   * Which provider keeps each event up to date (event_links). None on a
+   * database without the integration layer or when they cannot be read:
+   * the Webling portal link in the description tells then.
+   */
+  async function loadLinks(days: DateSpan): Promise<EventLinkRow[]> {
+    try {
+      return await fetchAllRows<EventLinkRow>((from, to) =>
+        supabaseClient
+          .from('event_links')
+          .select('event_id, connection, gone_at, events!inner(date)')
+          .gte('events.date', days.from)
+          .lte('events.date', days.to)
+          .order('connection')
+          .order('external_id')
+          .range(from, to)
+      );
+    } catch (err) {
+      if (!isMissingSchemaError(err)) console.error('Error loading the event links:', err);
+      return [];
     }
   }
 
@@ -215,11 +243,6 @@
     return isIsoDate(date) ? formatDay(date) : date;
   }
 
-  /** First line of a multi-day event's description */
-  function untilLine(dateTo: string): string {
-    return $_('assistant.events.untilLine', { values: { date: formatDay(dateTo) } });
-  }
-
   function has(row: EventReviewRow, ...codes: EventIssue['code'][]): boolean {
     return row.errors.some((e) => codes.includes(e.code));
   }
@@ -256,7 +279,7 @@
     // canApply implies the comparison set for the rows' days is loaded
     const before = loaded;
     if (!canApply || !before) return;
-    const writes = buildEventInserts(rows, sections, untilLine);
+    const writes = buildEventInserts(rows, sections);
     if (writes.length === 0) return;
     failures = [];
     recorded = [];
@@ -370,13 +393,6 @@
     </p>
   {/if}
 
-  {#if multiDay}
-    <p class="flex items-start gap-2 p-3 rounded-lg preset-tonal-surface text-sm">
-      <Fa icon={faCalendarDays} class="mt-0.5 flex-none" />
-      <span>{$_('assistant.events.multiDayInfo')}</span>
-    </p>
-  {/if}
-
   {#if rows.length === 0}
     <p class="text-sm text-surface-600-400">{$_('assistant.events.empty')}</p>
   {:else}
@@ -439,8 +455,12 @@
                   {#if event.timeFrom}· {event.timeFrom}{/if}
                   {#if event.location}· {event.location}{/if}
                 </p>
-                {#if row.duplicate.webling}
-                  <p class="font-semibold">{$_('assistant.events.fromWebling')}</p>
+                {#if row.duplicate.provider}
+                  <p class="font-semibold">
+                    {$_('assistant.events.fromProvider', {
+                      values: { provider: providerName(row.duplicate.provider) }
+                    })}
+                  </p>
                 {/if}
               </div>
             </div>
@@ -555,14 +575,6 @@
                     disabled={busy}
                   ></textarea>
                 </label>
-                {#if input.dateTo && !has(row, 'badDateTo', 'noDate', 'badDate')}
-                  {@const description = eventDescription(input, untilLine)}
-                  <p class="text-xs text-surface-600-400 break-words">
-                    {$_('assistant.events.descriptionStarts', {
-                      values: { line: description.split('\n')[0] }
-                    })}
-                  </p>
-                {/if}
               </div>
             </div>
           {:else}

@@ -49,10 +49,10 @@ export type PlannedSession = Pick<
   'id' | 'training_id' | 'date' | 'trainer_id' | 'topic' | 'notes' | 'cancelled'
 >;
 
-/** A holiday period, recorded or about to be */
+/** A holiday period, recorded or about to be; `connection` set: a provider's (Webling) */
 export type PlannedBreak = Pick<
   TrainingPlanBreak,
-  'title' | 'date_from' | 'date_to' | 'cancels_training'
+  'title' | 'date_from' | 'date_to' | 'cancels_training' | 'connection'
 >;
 
 /** Rows per upsert */
@@ -676,7 +676,8 @@ export interface HolidayInput {
   saved: boolean;
 }
 
-export type HolidayStatus = 'new' | 'exists' | 'duplicate' | 'invalid';
+/** 'provider': the period is a provider's holiday (Webling), never added by the import */
+export type HolidayStatus = 'new' | 'exists' | 'duplicate' | 'invalid' | 'provider';
 
 export type HolidayIssue = { code: 'noTitle' } | { code: 'badDates' };
 
@@ -686,6 +687,8 @@ export interface HolidayReviewRow {
   status: HolidayStatus;
   /** The recorded holiday with the same title and dates */
   existing: PlannedBreak | null;
+  /** The provider's holiday this period is (status 'provider') */
+  provider: PlannedBreak | null;
   /** Recorded holidays the period overlaps (other title or dates) */
   overlaps: PlannedBreak[];
   /**
@@ -717,6 +720,23 @@ function sameBreak(a: BreakPeriod, b: BreakPeriod): boolean {
 /** At least one day in common */
 function overlap(a: BreakPeriod, b: BreakPeriod): boolean {
   return a.date_from <= b.date_to && b.date_from <= a.date_to;
+}
+
+/**
+ * A provider's holiday (Webling's "Ferien und Feiertage") the period is:
+ * the same dates under any title, or the same title over overlapping
+ * dates. The provider maintains it, so the import never adds it again.
+ */
+function providerHoliday(breaks: PlannedBreak[], b: BreakPeriod): PlannedBreak | null {
+  return (
+    breaks.find(
+      (e) =>
+        !!e.connection &&
+        overlap(e, b) &&
+        ((e.date_from === b.date_from && e.date_to === b.date_to) ||
+          normalizeName(e.title) === normalizeName(b.title))
+    ) ?? null
+  );
 }
 
 function asBreak(input: HolidayInput): BreakPeriod {
@@ -753,7 +773,8 @@ export function initialHolidayInputs(
 }
 
 /**
- * One row per holiday period. 'exists' when the same title and dates are
+ * One row per holiday period. 'provider' when it is a provider's holiday
+ * (see providerHoliday), 'exists' when the same title and dates are
  * recorded (never added twice), 'duplicate' for a second row of the same
  * period, 'invalid' while the title or the dates are missing or wrong.
  * Overlaps with recorded holidays and with the other periods being added
@@ -774,11 +795,17 @@ export function reviewHolidays(
       errors.push({ code: 'badDates' });
     }
     const existing = breaks.find((e) => sameBreak(e, b)) ?? null;
-    const overlaps = errors.length > 0 ? [] : breaks.filter((e) => e !== existing && overlap(e, b));
+    const provider = errors.length > 0 ? null : providerHoliday(breaks, b);
+    const overlaps =
+      errors.length > 0
+        ? []
+        : breaks.filter((e) => e !== existing && e !== provider && overlap(e, b));
     let status: HolidayStatus;
     let duplicateOf: number | null = null;
     if (errors.length > 0) {
       status = 'invalid';
+    } else if (provider) {
+      status = 'provider';
     } else if (existing) {
       status = 'exists';
     } else {
@@ -796,6 +823,7 @@ export function reviewHolidays(
       input,
       status,
       existing,
+      provider,
       overlaps,
       closesOpen: input.closed ? overlaps.filter((e) => !e.cancels_training) : [],
       overlapsRows: [],

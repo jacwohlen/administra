@@ -11,6 +11,8 @@
   } from '@fortawesome/free-solid-svg-icons';
   import { _ } from 'svelte-i18n';
   import dayjs from 'dayjs';
+  import type { Event } from '$lib/models';
+  import { eventPhase, formatEventDates, type EventPhase } from '$lib/eventUtils';
   import CreateButton from '$lib/components/assistant/CreateButton.svelte';
   import AssistantDialog from '$lib/components/assistant/AssistantDialog.svelte';
   import EventsReview from '$lib/components/assistant/EventsReview.svelte';
@@ -47,21 +49,7 @@
     );
   }
 
-  function formatEventDate(date: string) {
-    return dayjs(date).format('DD.MM.YYYY');
-  }
-
-  function isUpcoming(date: string) {
-    return dayjs(date).isAfter(dayjs(), 'day');
-  }
-
-  function isPast(date: string) {
-    return dayjs(date).isBefore(dayjs(), 'day');
-  }
-
-  function isToday(date: string) {
-    return dayjs(date).isSame(dayjs(), 'day');
-  }
+  const today = dayjs().format('YYYY-MM-DD');
 
   // Filter events based on search term - make it reactive
   let filteredEvents = $derived(
@@ -82,7 +70,54 @@
       );
     })
   );
+
+  // Today (also a multi-day event under way), upcoming, past once its last day is over
+  let byPhase = $derived.by(() => {
+    const groups: Record<EventPhase, Event[]> = { today: [], upcoming: [], past: [] };
+    for (const event of filteredEvents) groups[eventPhase(event, today)].push(event);
+    return groups;
+  });
+  const PHASES: EventPhase[] = ['today', 'upcoming', 'past'];
 </script>
+
+{#snippet eventItem(event: Event)}
+  <li>
+    <a href="/dashboard/events/{event.id}" class="list-item list-item-link">
+      <div class="relative inline-block flex-none">
+        <div class="entity-badge">
+          <Fa icon={faCalendarDays} size="lg" />
+        </div>
+      </div>
+      <span class="list-item-content">
+        <dt class="font-bold truncate">
+          {event.title}
+        </dt>
+        {#if event.description}
+          <dd class="text-surface-600-400 text-sm truncate">
+            {event.description}
+          </dd>
+        {/if}
+        <dd class="flex items-center gap-2 text-sm text-surface-600-400">
+          <span class="meta-item">
+            <Fa icon={faCalendarDays} size="sm" />
+            {formatEventDates(event)}
+          </span>
+          {#if event.location}
+            <span class="meta-item truncate">
+              <Fa icon={faLocationDot} size="sm" />
+              {event.location}
+            </span>
+          {/if}
+          <span class="meta-item">
+            <Fa icon={faUsers} size="sm" />
+            {event.section}
+          </span>
+        </dd>
+      </span>
+      <Fa icon={faChevronRight} class="text-surface-400-600 flex-none" />
+    </a>
+  </li>
+{/snippet}
 
 <div class="page-header">
   <h1>{$_('page.events.title')}</h1>
@@ -127,147 +162,17 @@
   <p class="empty-state">{$_('page.events.no_events_found')}</p>
 {:else}
   <div class="space-y-6">
-    <!-- Today's Events -->
-    {#if filteredEvents.some((e) => isToday(e.date))}
-      <section>
-        <h3>{$_('page.events.today')}</h3>
-        <ul class="flex flex-col gap-2">
-          {#each filteredEvents.filter((e) => isToday(e.date)) as event (event.id)}
-            <li>
-              <a href="/dashboard/events/{event.id}" class="list-item list-item-link">
-                <div class="relative inline-block flex-none">
-                  <div class="entity-badge">
-                    <Fa icon={faCalendarDays} size="lg" />
-                  </div>
-                </div>
-                <span class="list-item-content">
-                  <dt class="font-bold truncate">
-                    {event.title}
-                  </dt>
-                  {#if event.description}
-                    <dd class="text-surface-600-400 text-sm truncate">
-                      {event.description}
-                    </dd>
-                  {/if}
-                  <dd class="flex items-center gap-2 text-sm text-surface-600-400">
-                    <span class="meta-item">
-                      <Fa icon={faCalendarDays} size="sm" />
-                      {formatEventDate(event.date)}
-                    </span>
-                    {#if event.location}
-                      <span class="meta-item truncate">
-                        <Fa icon={faLocationDot} size="sm" />
-                        {event.location}
-                      </span>
-                    {/if}
-                    <span class="meta-item">
-                      <Fa icon={faUsers} size="sm" />
-                      {event.section}
-                    </span>
-                  </dd>
-                </span>
-                <Fa icon={faChevronRight} class="text-surface-400-600 flex-none" />
-              </a>
-            </li>
-          {/each}
-        </ul>
-      </section>
-    {/if}
-
-    <!-- Upcoming Events -->
-    {#if filteredEvents.some((e) => isUpcoming(e.date))}
-      <section>
-        <h3>
-          {$_('page.events.upcoming')}
-        </h3>
-        <ul class="flex flex-col gap-2">
-          {#each filteredEvents.filter((e) => isUpcoming(e.date)) as event (event.id)}
-            <li>
-              <a href="/dashboard/events/{event.id}" class="list-item list-item-link">
-                <div class="relative inline-block flex-none">
-                  <div class="entity-badge">
-                    <Fa icon={faCalendarDays} size="lg" />
-                  </div>
-                </div>
-                <span class="list-item-content">
-                  <dt class="font-bold truncate">
-                    {event.title}
-                  </dt>
-                  {#if event.description}
-                    <dd class="text-surface-600-400 text-sm truncate">
-                      {event.description}
-                    </dd>
-                  {/if}
-                  <dd class="flex items-center gap-2 text-sm text-surface-600-400">
-                    <span class="meta-item">
-                      <Fa icon={faCalendarDays} size="sm" />
-                      {formatEventDate(event.date)}
-                    </span>
-                    {#if event.location}
-                      <span class="meta-item truncate">
-                        <Fa icon={faLocationDot} size="sm" />
-                        {event.location}
-                      </span>
-                    {/if}
-                    <span class="meta-item">
-                      <Fa icon={faUsers} size="sm" />
-                      {event.section}
-                    </span>
-                  </dd>
-                </span>
-                <Fa icon={faChevronRight} class="text-surface-400-600 flex-none" />
-              </a>
-            </li>
-          {/each}
-        </ul>
-      </section>
-    {/if}
-
-    <!-- Past Events -->
-    {#if filteredEvents.some((e) => isPast(e.date))}
-      <section>
-        <h3>{$_('page.events.past')}</h3>
-        <ul class="flex flex-col gap-2">
-          {#each filteredEvents.filter((e) => isPast(e.date)) as event (event.id)}
-            <li>
-              <a href="/dashboard/events/{event.id}" class="list-item list-item-link">
-                <div class="relative inline-block flex-none">
-                  <div class="entity-badge">
-                    <Fa icon={faCalendarDays} size="lg" />
-                  </div>
-                </div>
-                <span class="list-item-content">
-                  <dt class="font-bold truncate">
-                    {event.title}
-                  </dt>
-                  {#if event.description}
-                    <dd class="text-surface-600-400 text-sm truncate">
-                      {event.description}
-                    </dd>
-                  {/if}
-                  <dd class="flex items-center gap-2 text-sm text-surface-600-400">
-                    <span class="meta-item">
-                      <Fa icon={faCalendarDays} size="sm" />
-                      {formatEventDate(event.date)}
-                    </span>
-                    {#if event.location}
-                      <span class="meta-item truncate">
-                        <Fa icon={faLocationDot} size="sm" />
-                        {event.location}
-                      </span>
-                    {/if}
-                    <span class="meta-item">
-                      <Fa icon={faUsers} size="sm" />
-                      {event.section}
-                    </span>
-                  </dd>
-                </span>
-                <Fa icon={faChevronRight} class="text-surface-400-600 flex-none" />
-              </a>
-            </li>
-          {/each}
-        </ul>
-      </section>
-    {/if}
+    {#each PHASES as phase (phase)}
+      {#if byPhase[phase].length > 0}
+        <section>
+          <h3>{$_(`page.events.${phase}`)}</h3>
+          <ul class="flex flex-col gap-2">
+            {#each byPhase[phase] as event (event.id)}
+              {@render eventItem(event)}
+            {/each}
+          </ul>
+        </section>
+      {/if}
+    {/each}
   </div>
 {/if}

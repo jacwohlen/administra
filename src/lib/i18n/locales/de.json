@@ -20,7 +20,9 @@
       "settings": "Einstellungen",
       "myProfile": "Mein Profil",
       "exams": "Q-Prüfungen",
-      "assistant": "Daten-Assistent"
+      "assistant": "Daten-Assistent",
+      "integrations": "Integrationen",
+      "integrationsAlert": "Eine Integration braucht deine Aufmerksamkeit"
     },
     "pending": {
       "title": "Zugriff ausstehend",
@@ -183,6 +185,214 @@
         "locale": {
           "de": "Deutsch",
           "en": "Englisch"
+        }
+      }
+    },
+    "integrations": {
+      "title": "Integrationen",
+      "intro": "Woher Mitglieder, Events und Ferien kommen: was die letzten Läufe gebracht haben, was offen ist und wie Gruppen und Kalender zugeordnet sind.",
+      "notAvailable": "Die Integrationsschicht ist auf dieser Datenbank noch nicht eingerichtet. Sie kommt mit der nächsten Freigabe.",
+      "empty": "Keine Verbindung eingerichtet.",
+      "runsIn": {
+        "sync": "Läuft in GitHub Actions",
+        "app": "Läuft in der App"
+      },
+      "disabled": "Ausgeschaltet",
+      "kpi": {
+        "membersLinked": "Mitglieder verknüpft",
+        "membersGone": "Mitglieder weg",
+        "eventsLinked": "Events verknüpft",
+        "breaks": "Ferien",
+        "issues": "Offene Probleme",
+        "toReview": "Neu zu prüfen"
+      },
+      "kind": {
+        "members": "Mitglieder",
+        "events": "Events",
+        "config": "Zuordnung"
+      },
+      "status": {
+        "running": "Läuft",
+        "applied": "Läuft",
+        "refused": "Gestoppt",
+        "ok": "OK",
+        "warning": "Warnung",
+        "failed": "Fehlgeschlagen"
+      },
+      "trigger": {
+        "schedule": "Zeitplan",
+        "manual": "Manuell",
+        "app": "App"
+      },
+      "dryRun": "Probelauf",
+      "never": "Noch nie gelaufen",
+      "stale": "Veraltet",
+      "lastSuccess": "zuletzt erfolgreich {ago}",
+      "alert": {
+        "refused": "Der letzte Lauf ({kind}) wurde gestoppt.",
+        "failed": "Der letzte Lauf ({kind}) ist fehlgeschlagen ({error}). Sieh im Actions-Log nach.",
+        "stale": "{kind}: zuletzt {ago} erfolgreich, das ist über {hours} Stunden her.",
+        "staleNever": "{kind}: noch kein erfolgreicher Lauf.",
+        "errors": "{count, plural, one {# Fehler ist offen} other {# Fehler sind offen}}, siehe Probleme."
+      },
+      "refused": {
+        "empty_snapshot": "{provider} hat niemanden geliefert. Prüfe {provider} und den API-Schlüssel und starte den Lauf neu.",
+        "members_gone": "{count} Mitglieder wären auf einmal weg. Prüfe zuerst {provider}.",
+        "status_drop": "{count} Mitglieder würden ihre Mitgliedschaft verlieren. Eine neue oder umbenannte Statusgruppe? Ordne sie unten zu und starte den Lauf neu.",
+        "status_gain": "{count} Mitglieder würden neu als Mitglied zählen und automatisch freigeschaltet. Prüfe die Gruppen in {provider}.",
+        "events_gone": "{count} Events wären auf einmal weg. Prüfe den Kalender in {provider}.",
+        "unknown": "Eine Sperre hat den Lauf gestoppt ({code})."
+      },
+      "override": {
+        "sync": "Ist es gewollt: Actions → Webling Sync → Run workflow mit {key} = {count}.",
+        "app": "Ist es gewollt: den Lauf mit {key} = {count} wiederholen."
+      },
+      "runs": {
+        "title": "Läufe",
+        "empty": "Noch keine Läufe.",
+        "started": "Start",
+        "kind": "Art",
+        "status": "Status",
+        "counts": "Zahlen",
+        "error": "Fehler",
+        "noChange": "keine Änderung",
+        "adapterErrors": "{count} Abruffehler"
+      },
+      "count": {
+        "received": "{count} gelesen",
+        "inserted": "{count} neu",
+        "adopted": "{count} übernommen",
+        "revived": "{count} wieder da",
+        "updated": "{count} geändert",
+        "gone": "{count} weg",
+        "former": "{count} alte Einträge weg",
+        "statuses_recomputed": "{count} Status neu berechnet",
+        "held": "{count} zurückgehalten",
+        "invalid": "{count} ungültig",
+        "conflicts": "{count} Konflikte",
+        "write_failed": "{count} nicht geschrieben",
+        "deleted": "{count} gelöscht",
+        "kept": "{count} behalten",
+        "breaks_inserted": "{count} Ferien neu",
+        "breaks_adopted": "{count} Ferien übernommen",
+        "breaks_updated": "{count} Ferien geändert",
+        "breaks_deleted": "{count} Ferien gelöscht",
+        "holiday_events_deleted": "{count} Ferien-Events ersetzt",
+        "holiday_events_kept": "{count} Ferien-Events behalten",
+        "registrations_added": "{count} Anmeldungen neu",
+        "registrations_removed": "{count} Anmeldungen entfernt",
+        "registrations_adopted": "{count} Anmeldungen übernommen",
+        "groups": "{count} Gruppen",
+        "calendars": "{count} Kalender",
+        "statuses_changed": "{count} Status geändert"
+      },
+      "issues": {
+        "title": "Probleme",
+        "empty": "Keine offenen Probleme.",
+        "dismissed": "Ausgeblendet",
+        "dismissedCount": "{count} ausgeblendet",
+        "record": "{provider}-Nr. {id}",
+        "participant": "Teilnehmer:in {provider}-Nr. {id}",
+        "merge": "Zusammenführen",
+        "notDuplicate": "Kein Duplikat",
+        "dismiss": "Ausblenden",
+        "reopen": "Wieder öffnen",
+        "severity": {
+          "error": "Fehler",
+          "warning": "Warnung",
+          "info": "Info"
+        },
+        "match": {
+          "email": "gleiche E-Mail",
+          "name_birthday": "gleicher Name und Geburtstag"
+        },
+        "code": {
+          "possible_duplicate": "Mögliche Duplikate",
+          "invalid_record": "Nicht übernommene Datensätze",
+          "invalid_event": "Nicht übernommene Events",
+          "id_conflict": "Konflikte",
+          "write_failed": "Nicht geschrieben",
+          "invalid_value": "Ungültige Werte",
+          "event_gone_kept": "Weg, aber behalten",
+          "unknown_participant": "Unbekannte Teilnehmende"
+        },
+        "help": {
+          "members": {
+            "possible_duplicate": "Gleiche E-Mail oder gleicher Name und Geburtstag wie ein Mitglied, das nicht aus dieser Verbindung kommt. Führe sie zusammen oder markiere sie als kein Duplikat.",
+            "invalid_record": "Datensätze, die der Lauf nicht schreiben konnte, z. B. weil ein Pflichtfeld fehlt. Korrigiere sie beim Anbieter.",
+            "id_conflict": "Der Datensatz gehört schon zu einem anderen Mitglied oder Anbieter.",
+            "write_failed": "Die Datenbank hat den Datensatz abgelehnt (Code). Die anderen wurden geschrieben.",
+            "invalid_value": "Ein Wert ist hier nicht gültig (z. B. ein Geburtstag, den es nicht gibt); der bisherige bleibt."
+          },
+          "events": {
+            "invalid_event": "Events ohne gültiges Datum beim Anbieter; sie werden nicht übernommen.",
+            "id_conflict": "Das Event ist schon mit einem anderen Anbieter verknüpft.",
+            "write_failed": "Die Datenbank hat das Event abgelehnt (Code). Die anderen wurden geschrieben.",
+            "invalid_value": "Ein Wert ist hier nicht gültig; der bisherige bleibt.",
+            "event_gone_kept": "Beim Anbieter gelöscht, aber in der App benutzt (Anmeldungen, Anwesenheit): es bleibt und gehört jetzt der App.",
+            "unknown_participant": "Beim Anbieter angemeldet, aber kein verknüpftes Mitglied hier."
+          }
+        },
+        "toast": {
+          "dismissed": "Ausgeblendet",
+          "reopened": "Wieder geöffnet",
+          "error": "Das hat nicht geklappt. Versuch es noch einmal."
+        }
+      },
+      "mapping": {
+        "title": "Zuordnung",
+        "toReview": "{count} neu",
+        "intro": "Was die Gruppen und Kalender von {provider} in Administra bedeuten. Neue erscheinen hier als «Neu», bis du sie prüfst.",
+        "beforeSwitch": "Der Sync läuft noch nicht über die neue Integrationsschicht. Ändere die Zuordnung erst nach der Umstellung: bis dahin sagt der alte Sync die Mitgliedschaft mit festen Regeln voraus und würde nach einer Änderung hier stoppen oder falsch vorhersagen.",
+        "groups": "Gruppen",
+        "groupsHelp": "Hat ein Mitglied mehrere Statusgruppen, gilt die mit dem kleinsten Rang. Ausgeblendete Gruppen erscheinen nicht als Chip.",
+        "noGroups": "Noch keine Gruppen.",
+        "group": "Gruppe",
+        "asLabel": "als «{label}»",
+        "status": "Mitgliedschaft",
+        "noStatus": "–",
+        "rank": "Rang",
+        "hidden": "Ausblenden",
+        "role": "Rolle",
+        "noRole": "–",
+        "roleTrainer": "Trainer:in",
+        "reviewed": "Geprüft",
+        "new": "Neu",
+        "calendars": "Kalender",
+        "calendarsHelp": "Events landen in der Sparte, Ferien in der Trainingsplanung. Ferien bis zur angegebenen Anzahl Tage schliessen das Dojo, leer heisst immer. Gilt ab dem nächsten Event-Lauf.",
+        "noCalendars": "Noch keine Kalender.",
+        "calendar": "Kalender",
+        "target": "Ziel",
+        "targets": {
+          "event": "Events",
+          "break": "Ferien",
+          "ignore": "Ignorieren"
+        },
+        "section": "Sparte",
+        "closedMaxDays": "Dojo zu bis (Tage)",
+        "invalid": "Rang und Tage sind Zahlen von 0 bis 999.",
+        "preview": "Vorschau",
+        "save": "Speichern",
+        "reset": "Zurücksetzen",
+        "previewResult": "{groups} Gruppen und {calendars} Kalender ändern sich, {statuses} Mitglieder bekommen einen anderen Status.",
+        "dropping": "{count} Mitglieder verlieren ihre Mitgliedschaft (Sperre ab mehr als {limit}).",
+        "droppingStatus": "{count} Mitglieder mit Status «{status}» verlieren ihre Mitgliedschaft: mehr als die Hälfte dieses Status.",
+        "droppingStatuses": "{count} Mitglieder verlieren ihre Mitgliedschaft ({list}): bei einem dieser Status mehr als die Hälfte.",
+        "statusCount": "{count} {status}",
+        "gaining": "{count} Mitglieder zählen neu als Mitglied und werden automatisch freigeschaltet (Sperre ab mehr als {limit}).",
+        "overGuard": "Das ist mehr, als die Sperre erlaubt. Speichern bestätigt genau diese Zahl.",
+        "calendarsLater": "Kalender wirken ab dem nächsten Event-Lauf.",
+        "previewOutdated": "Die Eingaben haben sich seither geändert: zeig die Vorschau noch einmal.",
+        "confirmTitle": "Zuordnung speichern?",
+        "confirmOverride": "Damit bestätigst du die Zahlen über der Sperre.",
+        "toast": {
+          "saved": "Zuordnung gespeichert",
+          "refused": "Die Zahlen haben sich geändert. Prüfe die neue Vorschau."
+        },
+        "error": {
+          "invalid": "Diese Zuordnung nimmt die Datenbank nicht an.",
+          "notAllowed": "Dazu fehlt dir die Berechtigung.",
+          "failed": "Das hat nicht geklappt. Versuch es noch einmal."
         }
       }
     },
@@ -352,7 +562,115 @@
       "showAll": "Auch Nicht-Mitglieder und Ausgetretene anzeigen",
       "managedBy": "Name, Geburtstag, Telefon, E-Mail und Gruppen kommen aus {provider} und werden dort geändert, auch ein Austritt.",
       "managedError": "Diese Angaben kommen aus {provider} und können nur dort geändert werden.",
-      "hiddenMatches": "{count, plural, one {# Treffer} other {# Treffer}} unter Nicht-Mitgliedern und Ausgetretenen."
+      "hiddenMatches": "{count, plural, one {# Treffer} other {# Treffer}} unter Nicht-Mitgliedern und Ausgetretenen.",
+      "merge": {
+        "action": "Duplikat zusammenführen",
+        "title": "Duplikat zusammenführen",
+        "intro": "Wähle den anderen Eintrag derselben Person. Alles vom entfernten Eintrag geht auf den bleibenden über, dann wird er gelöscht.",
+        "search": "Mitglied suchen…",
+        "noMatches": "Kein Mitglied gefunden",
+        "keep": "Bleibt",
+        "drop": "Wird entfernt",
+        "swap": "Tauschen",
+        "swapBlocked": "Der Eintrag aus {provider} muss bleiben.",
+        "inProvider": "aus {provider}",
+        "loadError": "Mitglieder konnten nicht geladen werden.",
+        "previewLoading": "Vorschau wird berechnet…",
+        "previewTitle": "Was übernommen wird",
+        "nothingToMove": "Der entfernte Eintrag hat keine Trainings, Anlässe, Graduierungen oder anderen Daten.",
+        "moved": "{count} übernommen",
+        "merged": "{count} zusammengelegt",
+        "removed": "{count} entfernt",
+        "refs": {
+          "attendance": "Trainingsbesuche",
+          "trainings": "Trainingszuteilungen",
+          "eventRegistrations": "Anmeldungen zu Anlässen",
+          "eventAttendance": "Teilnahmen an Anlässen",
+          "grades": "Graduierungen",
+          "medals": "Medaillen",
+          "badges": "Abzeichen",
+          "exams": "Q-Prüfungen",
+          "trialEmails": "Probetraining-E-Mails",
+          "planSessions": "Einträge im Trainingsplan",
+          "mainTrainer": "Haupttrainer von Trainings",
+          "account": "Benutzerkonto",
+          "links": "Webling-Verknüpfung (ausgetreten)",
+          "earlierMerges": "Frühere Zusammenführungen",
+          "other": "Weitere ({ref})"
+        },
+        "conflictsTitle": "Bei beiden vorhanden",
+        "conflict": {
+          "gradeExam": "{grade} ({section}): Die Graduierung aus der Q-Prüfung bleibt, die Notizen werden zusammengefügt.",
+          "gradeKeep": "{grade} ({section}): Die Graduierung des bleibenden Eintrags bleibt, die Notizen werden zusammengefügt.",
+          "medal": "{competition}: {kept} bleibt, {dropped} fällt weg.",
+          "medalSame": "{competition}: bei beiden {medal}, die Medaille bleibt einmal.",
+          "examSheet": "Q-Prüfung {title} ({date}): Die Anmeldung mit dem begonnenen Prüfungsblatt bleibt. Sie bekommt den weiteren Status beider (aufgeboten vor angemeldet vor abgemeldet) und die Notizen beider.",
+          "examStatus": "Q-Prüfung {title} ({date}): Die Anmeldung mit dem weiteren Status bleibt (aufgeboten vor angemeldet vor abgemeldet). Die Notizen werden zusammengefügt, leere Angaben kommen von der anderen.",
+          "other": "{ref}: Ein Eintrag bleibt."
+        },
+        "fieldsTitle": "Angaben des bleibenden Eintrags",
+        "statusSame": "Status bleibt: {status}",
+        "statusChanges": "Status: {before} → {after}",
+        "field": {
+          "birthday": "Geburtstag",
+          "mobile": "Mobiltelefon",
+          "email": "E-Mail"
+        },
+        "fieldDecision": {
+          "from_drop": "{field}: wird übernommen ({value})",
+          "kept_differs": "{field}: bleibt; der andere Wert ({value}) wird nicht übernommen",
+          "not_copied_provider": "{field}: kommt aus {provider}, {value} wird nicht übernommen. Ändere es dort.",
+          "not_copied_trial": "{field}: {value} stammt aus der Probetraining-Anmeldung und wird nicht übernommen. Trag es von Hand ein, wenn es stimmt."
+        },
+        "notesJoined": "Die Notizen beider Einträge werden zusammengefügt.",
+        "photoFromDrop": "Das Foto des entfernten Eintrags wird übernommen.",
+        "photoKeptBoth": "Das Foto des bleibenden Eintrags bleibt, das andere wird gelöscht.",
+        "unarchived": "Der bleibende Eintrag wird aus dem Archiv geholt.",
+        "trialFromDrop": "Der Probetraining-Verlauf und der Status-Link werden übernommen.",
+        "labelsNotCarried": "Nicht übernommene Labels: {labels}",
+        "badges": "Abzeichen werden neu berechnet: {added} neu, {removed} entfallen.",
+        "othersChanged": "{count, plural, one {# Saison-Abzeichen} other {# Saison-Abzeichen}} anderer Mitglieder ändern sich.",
+        "accountsTitle": "Benutzerkonten",
+        "account": {
+          "losesAccess": "{email} verliert den Zugang zu Administra. Verknüpfe das Konto unter Benutzer mit dem bleibenden Eintrag oder trag die E-Mail dort ein (bei Webling-Mitgliedern in Webling).",
+          "gainsAccess": "{email} bekommt Zugang zu Administra.",
+          "losesRecord": "{email} sieht den Eintrag danach nicht mehr (Mein Profil, Mitgliederbereich). Verknüpfe das Konto unter Benutzer, wenn es dazugehört. Ein Mitgliederkonto sieht ihn nur, solange er als aktives oder passives Mitglied zählt.",
+          "gainsRecord": "{email} sieht den Eintrag danach (Mein Profil, Mitgliederbereich)."
+        },
+        "warning": {
+          "TRIAL_LINK_ENDS": "Der Status-Link der Probetraining-Anmeldung funktioniert danach nicht mehr.",
+          "ACCOUNT_LOSES_ACCESS": "{count, plural, one {# Mitgliederkonto verliert} other {# Mitgliederkonten verlieren}} den Zugang zu Administra."
+        },
+        "confirmTitle": "Zusammenführen bestätigen",
+        "confirmMessage": "{drop} (#{dropId}) wird gelöscht, alles geht auf {keep} (#{keepId}) über. Das lässt sich nicht rückgängig machen.",
+        "confirm": "Zusammenführen",
+        "success": "Einträge zusammengeführt",
+        "error": {
+          "NOT_ALLOWED": "Nur Admins können Mitglieder zusammenführen.",
+          "SAME_MEMBER": "Wähle einen anderen Eintrag.",
+          "MEMBER_NOT_FOUND": "Einer der Einträge existiert nicht mehr.",
+          "BOTH_IN_PROVIDER": "Beide Einträge kommen aus {provider}. Führe sie zuerst dort zusammen.",
+          "KEEP_PROVIDER_ROW": "Der Eintrag aus {provider} muss bleiben.",
+          "ACCOUNT_CONFLICT": "Beide Einträge sind mit einem Benutzerkonto verknüpft. Löse zuerst eine Verknüpfung unter Benutzer.",
+          "EXAM_CONFLICT": "Beide Einträge wurden am selben Prüfungstag geprüft. Kläre das zuerst in den Q-Prüfungen.",
+          "UNHANDLED_REFERENCE": "Zusammenführen ist gesperrt: Die Datenbank hat eine neue Verknüpfung zu Mitgliedern, die das Zusammenführen noch nicht kennt.",
+          "unknown": "Zusammenführen fehlgeschlagen."
+        }
+      },
+      "duplicates": {
+        "link": "Duplikate",
+        "title": "Mögliche Duplikate",
+        "intro": "Einträge, die wahrscheinlich dieselbe Person sind. Prüf jedes Paar, bevor du es zusammenführst.",
+        "empty": "Keine möglichen Duplikate gefunden.",
+        "count": "{count, plural, one {# Paar} other {# Paare}}",
+        "reason": {
+          "name_birthday": "Name und Geburtstag",
+          "email_name": "E-Mail und Vorname",
+          "trial_name": "Probetraining mit gleichem Namen"
+        },
+        "merge": "Zusammenführen",
+        "mergeInProvider": "In {provider} zusammenführen"
+      }
     },
     "stats": {
       "all": "Alle",
@@ -421,6 +739,7 @@
       "today": "Heutige Events",
       "upcoming": "Kommende Events",
       "past": "Vergangene Events",
+      "allDay": "Ganztägig",
       "no_events": "Keine Events gefunden",
       "no_events_found": "Keine Events entsprechen deiner Suche",
       "search_placeholder": "Events suchen…",
@@ -458,6 +777,9 @@
         "description": "Beschreibung",
         "description_placeholder": "Beschreibe worum es bei diesem Event geht…",
         "date": "Datum",
+        "date_to": "Bis",
+        "date_to_hint": "Letzter Tag eines mehrtägigen Events, sonst leer lassen",
+        "all_day": "Ganztägig (ohne Zeiten)",
         "time_from": "Startzeit",
         "time_to": "Endzeit",
         "location": "Ort",
@@ -469,7 +791,8 @@
         "registration_deadline": "Anmeldeschluss"
       },
       "validation": {
-        "required_fields": "Bitte alle Pflichtfelder ausfüllen"
+        "required_fields": "Bitte alle Pflichtfelder ausfüllen",
+        "date_to": "Der letzte Tag kann nicht vor dem Datum liegen"
       },
       "deleteConfirmTitle": "Event löschen",
       "deleteConfirmMessage": "Bist du sicher, dass du das Event löschen möchtest",
@@ -488,7 +811,10 @@
       "createError": "Fehler beim Erstellen des Events",
       "updateError": "Fehler beim Aktualisieren des Events",
       "backToList": "Zurück zu den Events",
-      "backToEvent": "Zurück zum Event"
+      "backToEvent": "Zurück zum Event",
+      "managedBy": "Dieses Event kommt aus {provider}: die gesperrten Felder werden dort geändert. Teilnehmer, Anwesenheit und alles andere erfasst du hier.",
+      "lockedByProvider": "Dieses Event kommt aus {provider}. Gesperrte Felder änderst du dort, die übrigen wie den Anmeldeschluss hier.",
+      "openInProvider": "In {provider} öffnen"
     },
     "trialRegistration": {
       "title": "Anmeldung Probetraining",
@@ -1065,7 +1391,8 @@
         "breakDeleteConfirm": "«{title}» löschen?",
         "noBreaks": "Noch keine Ferien erfasst",
         "closed": "Dojo geschlossen: alle geplanten Trainings fallen aus",
-        "closedShort": "Dojo zu"
+        "closedShort": "Dojo zu",
+        "fromProvider": "Aus {provider}: dort gepflegt, hier nur «Dojo zu»"
       },
       "checkin": {
         "cancelled": "Laut Trainingsplan fällt dieses Training aus",
@@ -1600,7 +1927,8 @@
       "editDone": "Fertig",
       "otherMember": "anderes Mitglied",
       "status": {
-        "fill": "Ergänzung"
+        "fill": "Ergänzung",
+        "provider": "Synchronisiert"
       },
       "fillHint": "Ergänzt die bestehende Planung:",
       "changedHint": "Weicht von der bestehenden Planung ab:",
@@ -1622,6 +1950,7 @@
       "holidaysHint": "Werden zu den Ferien und Ausfallzeiten hinzugefügt. «Dojo zu» lässt alle geplanten Trainings in dieser Zeit ausfallen.",
       "addHoliday": "Übernehmen",
       "holidayExists": "Schon erfasst, wird nicht nochmals hinzugefügt.",
+      "holidayFromProvider": "Kommt als «{title}» ({range}) aus {provider} und wird dort gepflegt, darum nicht übernommen.",
       "holidayDuplicate": "Gleiche Ferien wie Zeile {row}, werden nur einmal hinzugefügt.",
       "holidayOverlaps": "Überschneidet sich mit «{title}» ({range}).",
       "holidayIssues": {
@@ -1687,15 +2016,12 @@
       "defaultSectionNone": "Keine – pro Termin wählen",
       "useDefault": "Standard: {section}",
       "multiDay": "Mehrtägig",
-      "multiDayInfo": "Events haben kein Enddatum: Ein mehrtägiger Termin wird am ersten Tag erstellt, und «bis …» steht in der ersten Zeile der Beschreibung.",
       "dateTo": "Bis (mehrtägig)",
-      "untilLine": "bis {date}",
-      "descriptionStarts": "Die Beschreibung beginnt mit «{line}».",
       "include": "Als Event erstellen",
       "includeAnyway": "Trotzdem als neues Event erstellen",
       "duplicateOf": "Ähnliches Event schon erfasst: «{title}» am {date}",
       "duplicateOfRow": "Gleicher Termin wie Nr. {row}",
-      "fromWebling": "Kommt aus Webling und wird automatisch synchronisiert. Nur erstellen, wenn es ein anderer Termin ist.",
+      "fromProvider": "Kommt aus {provider} und wird automatisch synchronisiert. Nur erstellen, wenn es ein anderer Termin ist.",
       "empty": "Im Dokument wurden keine Termine gefunden.",
       "progress": "{done} von {total} gespeichert …",
       "blocked": "{count, plural, one {# Termin ist unvollständig: korrigieren oder abwählen.} other {# Termine sind unvollständig: korrigieren oder abwählen.}}",

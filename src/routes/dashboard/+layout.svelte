@@ -16,6 +16,7 @@
     faCalendarDays,
     faSun,
     faMoon,
+    faPlug,
     faWandMagicSparkles
   } from '@fortawesome/free-solid-svg-icons';
   import type { SubmitFunction } from '@sveltejs/kit';
@@ -59,6 +60,7 @@
     if (page.route.id?.startsWith('/dashboard/stats')) return 'stats';
     if (page.route.id?.startsWith('/dashboard/users')) return 'users';
     if (page.route.id?.startsWith('/dashboard/settings')) return 'settings';
+    if (page.route.id?.startsWith('/dashboard/integrations')) return 'integrations';
     return 'today';
   }
 
@@ -196,7 +198,7 @@
         class="nav-avatar relative cursor-pointer flex items-center justify-center"
         onclick={() => (popoverOpen = !popoverOpen)}
       >
-        {#if isAdmin && data.pendingUsers > 0}
+        {#if isAdmin && (data.pendingUsers > 0 || data.integrationAlert)}
           <span
             class="absolute -top-1 -right-0 size-3 rounded-full bg-warning-500 ring-2 ring-surface-100-900"
             aria-hidden="true"
@@ -259,6 +261,25 @@
             >
               <Fa icon={faGear} />
               <span>{$_('page.dashboard.settings')}</span>
+            </button>
+            <button
+              type="button"
+              class="btn preset-tonal-surface w-full mb-2"
+              onclick={() => {
+                popoverOpen = false;
+                goto('/dashboard/integrations', { invalidateAll: true });
+              }}
+            >
+              <Fa icon={faPlug} />
+              <span>{$_('page.dashboard.integrations')}</span>
+              {#if data.integrationAlert}
+                <span
+                  class="size-2.5 rounded-full bg-warning-500"
+                  role="img"
+                  aria-label={$_('page.dashboard.integrationsAlert')}
+                  title={$_('page.dashboard.integrationsAlert')}
+                ></span>
+              {/if}
             </button>
           {/if}
           {#if assistantConfigured && (data.canWrite || data.canPlanTrainings)}

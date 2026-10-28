@@ -9,7 +9,15 @@ import re
 import requests
 from safe_log import WeblingError, postgrest_error, webling_check, webling_get
 from datetime import datetime, timezone
-from sync_rules import WEBLING_ID_MAX, WEBLING_ID_MIN, member_row, missing_table, plan_gone
+from sync_rules import (
+    WEBLING_ID_MAX,
+    WEBLING_ID_MIN,
+    member_row,
+    missing_table,
+    plan_gone,
+    plan_status_drop,
+    status_after_run,
+)
 WEBLING_API_KEY=os.environ.get('WEBLING_API_KEY')
 WEBLING_DOMAIN=os.environ.get('WEBLING_DOMAIN')
 
@@ -21,6 +29,16 @@ SUPABASE_SERVICE_ROLE_KEY=os.environ.get('SUPABASE_SERVICE_ROLE_KEY')
 # accept_gone) after checking the deletions in Webling.
 ACCEPT_GONE = os.environ.get('WEBLING_ACCEPT_GONE', '').strip()
 ACCEPT_GONE = int(ACCEPT_GONE) if ACCEPT_GONE.isdigit() else None
+
+# The same for members that would lose their active or passive membership
+# (workflow input accept_status_drop, see plan_status_drop in sync_rules.py)
+ACCEPT_STATUS_DROP = os.environ.get('WEBLING_ACCEPT_STATUS_DROP', '').strip()
+ACCEPT_STATUS_DROP = int(ACCEPT_STATUS_DROP) if ACCEPT_STATUS_DROP.isdigit() else None
+
+# Status, archive date and labels of the members in the Webling id range: the
+# columns exist on prod since phase 1a, so the guard needs no newer migration
+MEMBER_STATUS_QUERY = (f"members?select=id,membership_status,archivedAt,labels"
+                       f"&id=gte.{WEBLING_ID_MIN}&id=lt.{WEBLING_ID_MAX}&order=id")
 
 # Every target except prod must get anonymized members. No default on purpose:
 # a forgotten setting must stop the run, not leak real data or overwrite prod.
@@ -118,7 +136,7 @@ def sync_members():
 
   members = response.json()
   failed = 0
-  synced_ids = []
+  rows = []
   for e in members:
     # One broken member must not stop the others, so each one fails on its own.
     # Logs only show ids and counts: they end up in GitHub Actions, which must
@@ -141,18 +159,111 @@ def sync_members():
       continue
     if ANONYMIZE:
       data = anonymize(e['id'], data)
+    rows.append(data)
+
+  # Nothing is written before the guard: a run that would take too many
+  # members out of the club area at once writes no member, link or gone mark
+  current, state = get_all(MEMBER_STATUS_QUERY)
+  if state != 'ok':
+    print("Error: the current membership statuses could not be read; no member written")
+    return failed + 1
+  rule = database_status_rule(rows)
+  if rule is None:
+    print("Error: the database's membership status rule could not be asked; no member written")
+    return failed + 1
+  plan = plan_status_drop(current, rows, ACCEPT_STATUS_DROP, rule)
+  if plan.too_many:
+    print(status_drop_error(plan))
+    return failed + 1
+  if plan.dropping:
+    # A record of the nightly churn, so a drift over several nights shows
+    print(status_drop_info(plan))
+
+  synced_ids = []
+  for data in rows:
     if upsert('members', data):
-      synced_ids.append(e['id'])
+      synced_ids.append(data['id'])
     else:
       failed += 1
   print(f"Synced {len(members) - failed} of {len(members)} members")
   now = datetime.now(timezone.utc).isoformat()
   if not write_links(synced_ids, now):
     failed += 1
-  # Every id Webling returned counts as still there, also members that failed above
-  elif not mark_gone({e['id'] for e in members}, now):
-    failed += 1
+  else:
+    # Every id Webling returned counts as still there, also members that failed above
+    if not mark_gone({e['id'] for e in members}, now):
+      failed += 1
+    if not check_statuses(current, plan, synced_ids):
+      failed += 1
   return failed
+
+def database_status_rule(rows):
+  """The status the database derives for each label set this run writes,
+  with an active link, as the guard's predict function; None (error
+  printed) when the database could not be asked.
+
+  member_status_from_labels() is on prod since phase 1a, so the guard
+  always predicts with the rule the trigger will run, also while a changed
+  rule waits on main for its promotion. One call per distinct label set
+  (a few dozen); the labels never reach the log.
+  """
+  statuses = {}
+  for row in rows:
+    key = json.dumps(row.get('labels'))
+    if key in statuses:
+      continue
+    response = supabase('post', 'rpc/member_status_from_labels', headers=HEADERS,
+                        data=json.dumps({'p_labels': row.get('labels'), 'p_link': 'active'}))
+    if response is None:
+      return None
+    if response.status_code != 200 or not isinstance(response.json(), str):
+      print(f"Error: membership status rule: {postgrest_error(response)}")
+      return None
+    statuses[key] = response.json()
+  return lambda labels: statuses[json.dumps(labels)]
+
+def became(plan):
+  """What the members that stop counting become, e.g. 'left: 2, non_member: 1'.
+  Counts and status names only: the log is public, and labels (leaving and
+  billing states) or ids would tell who left."""
+  return ', '.join(f"{status}: {n}" for status, n in sorted(plan.by_status.items()))
+
+def status_drop_error(plan):
+  """The refusal line (counts only, see became())."""
+  return (f"Error: {plan.dropping} of {plan.counting} members with an active or passive "
+          f"membership would lose it in this run (now {became(plan)}); nothing written. Their "
+          "member accounts would be locked out. Check the membership groups in Webling "
+          "(renamed or emptied?); if the changes are intended, run the workflow by hand "
+          f"with accept_status_drop={plan.dropping}")
+
+def status_drop_info(plan):
+  """The line of a run that goes ahead while members stop counting (counts
+  only, see became())."""
+  accepted = "; accepted with accept_status_drop" if plan.accepted else ""
+  return (f"{plan.dropping} of {plan.counting} members lose their active or passive "
+          f"membership in this run ({became(plan)}{accepted})")
+
+def check_statuses(current, plan, synced_ids):
+  """After the run: the statuses the database derived, against the guard's
+  prediction (the database's own rule, with an active link). A difference
+  means the trigger saw more than labels and link (or the rule changed
+  during the run): a warning, and an error if more members stopped counting
+  than the guard allows."""
+  after, state = get_all(MEMBER_STATUS_QUERY)
+  if state != 'ok':
+    print("Warning: membership statuses not checked after the run (could not be read)")
+    return True
+  predicted = {i: plan.predicted[i] for i in synced_ids}
+  surprises, dropped, too_many = status_after_run(current, after, predicted, ACCEPT_STATUS_DROP)
+  if surprises:
+    print(f"::warning::{surprises} members got another membership status than the sync "
+          "predicted from the database's member_status_from_labels(); check "
+          "trigger_set_membership_status()")
+  if too_many:
+    print(f"Error: {dropped} members lost their active or passive membership in this run, "
+          "more than the guard allows (it predicted fewer). Check Webling and the status rules")
+    return False
+  return True
 
 def write_links(member_ids, now):
   """Record that these members come from Webling (member_links).

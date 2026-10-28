@@ -180,6 +180,36 @@ jobs:
           psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres"
           -v ON_ERROR_STOP=1 -q -f supabase/checks/member_access.sql
 
+      # What member accounts see of other members (badges, grades, medals and
+      # photos of the club's members only, staff everything), probed over
+      # every table, view and RPC; fails for an API function bypassing RLS
+      # that is not listed there with its guard
+      - name: Check member data rules
+        run: >-
+          psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres"
+          -v ON_ERROR_STOP=1 -q -f supabase/checks/member_data.sql
+
+      # Merging a duplicate member: every reference moves, the preview equals
+      # the merge, refusals, and every foreign key to members is handled
+      - name: Check merging duplicate members
+        run: >-
+          psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres"
+          -v ON_ERROR_STOP=1 -q -f supabase/checks/merge_members.sql
+
+      # The integration layer: the seeded mapping is the old status rule, the
+      # legacy sync keeps working, guards, identity, events, holidays, run log
+      - name: Check integration layer
+        run: >-
+          psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres"
+          -v ON_ERROR_STOP=1 -q -f supabase/checks/integration_layer.sql
+
+      # End dates and all day: the legacy sync's writes, the overlap filters,
+      # capabilities version 2, Webling's holidays as the plan's breaks
+      - name: Check event dates and holidays
+        run: >-
+          psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres"
+          -v ON_ERROR_STOP=1 -q -f supabase/checks/event_dates.sql
+
   build:
     runs-on: ubuntu-latest
     needs: [lint-and-check, unit-tests]

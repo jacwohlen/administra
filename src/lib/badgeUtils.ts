@@ -16,7 +16,8 @@ export type TrailState = 'done' | 'next' | 'lock';
 export interface TrailStep {
   def: BadgeDefinition;
   state: TrailState;
-  current: number;
+  /** Count towards the next tier; null when the progress is not known */
+  current: number | null;
   pct: number;
 }
 
@@ -96,14 +97,16 @@ export function progressPercent(p: BadgeProgress): number {
  * Lay out every tier of each ladder category as a trail: earned tiers are done,
  * the first unearned tier is next (with the member's current count against its
  * threshold), everything after it is locked. Categories without tiers are skipped.
+ * Without progress (null: another member's profile in the club area, whose
+ * counts are attendance) the next tier has no count.
  */
 export function buildBadgeTrails(
   definitions: BadgeDefinition[],
   badges: Badge[],
-  progress: BadgeProgress[]
+  progress: BadgeProgress[] | null
 ): BadgeTrail[] {
   const earned = new Set(badges.filter((b) => !b.season).map((b) => b.badgeId));
-  const current = new Map(progress.map((p) => [p.category, p.current_count]));
+  const current = new Map((progress ?? []).map((p) => [p.category, p.current_count]));
 
   return TRAIL_CATEGORIES.map((category) => {
     const tiers = definitions
@@ -118,6 +121,7 @@ export function buildBadgeTrails(
       }
       if (!nextFound) {
         nextFound = true;
+        if (!progress) return { def, state: 'next', current: null, pct: 0 };
         const c = current.get(category) ?? 0;
         const pct = threshold > 0 ? Math.min(Math.round((c / threshold) * 100), 100) : 0;
         return { def, state: 'next', current: c, pct };
