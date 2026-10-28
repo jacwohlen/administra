@@ -812,7 +812,7 @@
       "updateError": "Error updating event",
       "backToList": "Back to events",
       "backToEvent": "Back to event",
-      "managedBy": "This event comes from {provider} and is changed there. You record participants, attendance and the registration deadline here.",
+      "managedBy": "This event comes from {provider}: the locked fields are changed there. You record participants, attendance and everything else here.",
       "lockedByProvider": "This event comes from {provider}. Change locked fields there, and the others, such as the registration deadline, here.",
       "openInProvider": "Open in {provider}"
     },

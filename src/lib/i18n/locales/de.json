@@ -812,7 +812,7 @@
       "updateError": "Fehler beim Aktualisieren des Events",
       "backToList": "Zurück zu den Events",
       "backToEvent": "Zurück zum Event",
-      "managedBy": "Dieses Event kommt aus {provider} und wird dort geändert. Teilnehmer, Anwesenheit und Anmeldeschluss erfasst du hier.",
+      "managedBy": "Dieses Event kommt aus {provider}: die gesperrten Felder werden dort geändert. Teilnehmer, Anwesenheit und alles andere erfasst du hier.",
       "lockedByProvider": "Dieses Event kommt aus {provider}. Gesperrte Felder änderst du dort, die übrigen wie den Anmeldeschluss hier.",
       "openInProvider": "In {provider} öffnen"
     },
