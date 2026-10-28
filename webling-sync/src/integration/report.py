@@ -151,6 +151,14 @@ def final_lines(kind, run_id, applied, finished, dry=False):
     final = code((finished or {}).get('status')) if finished else 'failed'
     if final == 'refused' and isinstance(applied, dict):
         lines.append(refusal_line(kind, run_id, applied.get('guard') or {}, applied.get('hint'), dry))
+    elif final == 'failed' and finished is None and isinstance(applied, dict) \
+            and applied.get('status') in ('applied', 'refused'):
+        # The apply committed on its own; only closing the run failed. The
+        # database closes it after an hour, and a re-run until then gets
+        # RUN_IN_PROGRESS.
+        lines.append(f"Error: layer {kind} run {run_id} was {code(applied.get('status'))} but "
+                     "could not be closed; it closes itself after an hour (a re-run gets "
+                     "RUN_IN_PROGRESS until then)")
     elif final == 'failed':
         error = (finished or {}).get('error') or (applied or {}).get('error')
         lines.append(f"Error: layer {kind} run {run_id} failed ({code(error) if error else 'not applied'})")

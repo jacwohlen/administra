@@ -84,6 +84,13 @@ def test_final_lines():
         'Error: layer members run 5 failed (23514 members_check)', 'Final: failed']
     # finish itself failed
     assert report.final_lines('events', 5, None, None)[-1] == 'Final: failed'
+    # The apply committed, closing the run failed: never "not applied"
+    lines = report.final_lines('members', 41, {'status': 'applied', 'error': None}, None)
+    assert lines == [
+        'Error: layer members run 41 was applied but could not be closed; it closes itself '
+        'after an hour (a re-run gets RUN_IN_PROGRESS until then)',
+        'Final: failed']
+    assert 'not applied' not in report.final_lines('members', 41, {'status': 'refused'}, None)[0]
 
 
 def test_warning_lines():
