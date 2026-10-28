@@ -15,6 +15,7 @@
   import type { TrainingPlanBreak } from '$lib/models';
   import { supabaseClient } from '$lib/supabase';
   import { toaster } from '$lib/toast';
+  import { providerName } from '$lib/memberStatus';
   import type { PlanTraining } from '$lib/trainingPlanUtils';
   import { MAX_LENGTH, clubToday, isIsoDate } from '$lib/assistant/proposals';
   import {
@@ -196,7 +197,8 @@
     fill: 'preset-tonal-primary',
     changed: 'preset-tonal-warning',
     duplicate: 'preset-tonal-surface',
-    invalid: 'preset-tonal-error'
+    invalid: 'preset-tonal-error',
+    provider: 'preset-tonal-surface'
   };
 
   let memberById = $derived(new Map(members.map((m) => [m.id, m])));
@@ -288,8 +290,8 @@
   }
 
   function statusText(status: PlanRowStatus | HolidayStatus): string {
-    return status === 'fill'
-      ? $_('assistant.trainingPlan.status.fill')
+    return status === 'fill' || status === 'provider'
+      ? $_(`assistant.trainingPlan.status.${status}`)
       : $_(`assistant.review.status.${status}`);
   }
 
@@ -360,7 +362,7 @@
     try {
       const { data, error } = await supabaseClient
         .from('training_plan_breaks')
-        .select('id, title, date_from, date_to, cancels_training')
+        .select('id, title, date_from, date_to, cancels_training, connection')
         .order('date_from', { ascending: false })
         .returns<TrainingPlanBreak[]>();
       if (error) throw error;
@@ -375,7 +377,7 @@
     try {
       const { data, error } = await supabaseClient
         .from('training_plan_breaks')
-        .select('title, date_from, date_to, cancels_training')
+        .select('title, date_from, date_to, cancels_training, connection')
         .lte('date_from', span.to)
         .gte('date_to', span.from)
         .returns<PlannedBreak[]>();
@@ -874,7 +876,7 @@
                     type="checkbox"
                     bind:checked={holidayInputs[i].use}
                     aria-describedby="{uid}-holiday-{i}"
-                    disabled={busy || h.status === 'exists'}
+                    disabled={busy || h.status === 'exists' || h.status === 'provider'}
                   />
                   <span>{$_('assistant.trainingPlan.addHoliday')}</span>
                 </label>
@@ -886,7 +888,10 @@
                   type="checkbox"
                   bind:checked={holidayInputs[i].closed}
                   aria-describedby="{uid}-holiday-{i}"
-                  disabled={locked || !holidayInputs[i].use || h.status === 'exists'}
+                  disabled={locked ||
+                    !holidayInputs[i].use ||
+                    h.status === 'exists' ||
+                    h.status === 'provider'}
                 />
                 <span>{$_('page.trainingPlan.settings.closedShort')}</span>
               </label>
@@ -925,6 +930,16 @@
             </div>
             {#if h.input.saved}
               <!-- Added: nothing to choose any more -->
+            {:else if h.status === 'provider' && h.provider?.connection}
+              <p class="text-xs text-surface-600-400">
+                {$_('assistant.trainingPlan.holidayFromProvider', {
+                  values: {
+                    title: h.provider.title,
+                    range: period(h.provider.date_from, h.provider.date_to),
+                    provider: providerName(h.provider.connection)
+                  }
+                })}
+              </p>
             {:else if h.status === 'exists'}
               <p class="text-xs text-surface-600-400">
                 {$_('assistant.trainingPlan.holidayExists')}

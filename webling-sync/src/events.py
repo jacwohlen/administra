@@ -336,7 +336,6 @@ def sync_events(selected_calendars=None):
             continue
             
         calendar_title = calendar_details["properties"].get("title", f"Calendar {calendar_id}")
-        print(f"Calendar: {calendar_title}")
         
         # Get calendar events from children
         calendar_events = calendar_details.get("children", {}).get("calendarevent", [])
@@ -345,7 +344,8 @@ def sync_events(selected_calendars=None):
             print(f"No events found for calendar {calendar_id}")
             continue
             
-        print(f"Found {len(calendar_events)} events in {calendar_title}")
+        # Ids only, never titles: the log is public (GitHub Actions)
+        print(f"Found {len(calendar_events)} events in calendar {calendar_id}")
         
         section = transform_section(calendar_title)
         
@@ -382,11 +382,11 @@ def sync_events(selected_calendars=None):
                     event_year = int(begin_date.split('-')[0])
                     current_year = today.year
                     if event_year < current_year:
-                        print(f"    Skipping past event: {title} ({begin_date})")
+                        print(f"    Skipping past event: {event_id} ({begin_date})")
                         continue
                 except (ValueError, IndexError):
                     # If we can't parse the year, skip the event
-                    print(f"    Skipping event with invalid date format: {title} ({begin_date})")
+                    print(f"    Skipping event with invalid date format: {event_id}")
                     continue
                 
                 event_data = {
@@ -404,7 +404,7 @@ def sync_events(selected_calendars=None):
                 # Remove None values
                 event_data = {k: v for k, v in event_data.items() if v is not None}
                 
-                print(f"  - {event_data['title']} on {event_data['date']}")
+                print(f"  - {event_id} on {event_data['date']}")
                 
                 if upsert('events', event_data):
                     synced_count += 1
@@ -421,7 +421,7 @@ def sync_events(selected_calendars=None):
                         sync_event_participants(event_id, participants)
 
             except Exception as e:
-                record_error(f"Error processing event {event_id}: {e}")
+                record_error(f"Error processing event {event_id}: {type(e).__name__}")
                 continue
     
     print(f"\nSync completed! Synced {synced_count} events total.")

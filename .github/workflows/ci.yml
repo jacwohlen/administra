@@ -196,6 +196,20 @@ jobs:
           psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres"
           -v ON_ERROR_STOP=1 -q -f supabase/checks/merge_members.sql
 
+      # The integration layer: the seeded mapping is the old status rule, the
+      # legacy sync keeps working, guards, identity, events, holidays, run log
+      - name: Check integration layer
+        run: >-
+          psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres"
+          -v ON_ERROR_STOP=1 -q -f supabase/checks/integration_layer.sql
+
+      # End dates and all day: the legacy sync's writes, the overlap filters,
+      # capabilities version 2, Webling's holidays as the plan's breaks
+      - name: Check event dates and holidays
+        run: >-
+          psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres"
+          -v ON_ERROR_STOP=1 -q -f supabase/checks/event_dates.sql
+
       # The public demo (docs/DEMO.md) gets supabase/demo/seed.sql on top of
       # the migrations alone, every week; prove it still loads and passes its
       # checks with this branch's migrations

@@ -240,7 +240,9 @@ SELECT pg_temp.eq('no member-like column without a foreign key',
      AND NOT EXISTS (SELECT 1 FROM pg_constraint k
                      WHERE k.contype IN ('f', 'p') AND k.conrelid = c.oid AND a.attnum = ANY (k.conkey))),
   -- member_merges.dropped_id names a row that no longer exists
-  'member_merges.dropped_id');
+  -- integration issues name members without a foreign key on purpose: the
+  -- next run no longer observes a merged-away member and resolves them
+  'integration_issues.member_id,integration_issues.other_member_id,member_merges.dropped_id');
 SELECT pg_temp.eq('JSON columns (none holds member ids)',
   (SELECT string_agg(c.relname || '.' || a.attname, ',' ORDER BY c.relname, a.attname)
    FROM pg_attribute a
@@ -248,7 +250,12 @@ SELECT pg_temp.eq('JSON columns (none holds member ids)',
    WHERE c.relnamespace = 'public'::regnamespace AND c.relkind IN ('r', 'p')
      AND a.attnum > 0 AND NOT a.attisdropped
      AND a.atttypid IN ('json'::regtype, 'jsonb'::regtype, 'int4[]'::regtype, 'int8[]'::regtype)),
-  'app_settings.value,exam_candidates.program,exam_programs.parts,member_merges.dropped,member_merges.result,members.labels');
+  -- integration_records.data holds a staged record's link_to for the
+  -- seconds its run is open (deleted by integration_finish)
+  'app_settings.value,exam_candidates.program,exam_programs.parts,integration_connections.field_policy,'
+  || 'integration_connections.settings,integration_records.data,integration_records.labels,'
+  || 'integration_runs.accepted,integration_runs.adapter,integration_runs.guard,integration_runs.result,'
+  || 'integration_runs.scope,member_merges.dropped,member_merges.result,members.labels');
 
 SELECT pg_temp.ok('the merge itself is not callable through the API', NOT (
      has_function_privilege('authenticated', 'public.merge_members_apply(integer, integer)', 'EXECUTE')

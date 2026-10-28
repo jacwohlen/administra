@@ -14,7 +14,10 @@ shows one calendar year (arrows switch the year), grouped by month:
   someone else is planned
 - holidays: grey band for school holidays (the adults train on), orange band
   when the dojo is closed and the trainings it drops
-- Webling events (Anlässe) on the same day, and event days without training
+- Webling events (Anlässe) on the same day, and event days without training;
+  a multi-day event (camp, course weekend) is a band from its first day and
+  shows on every training it covers, also one that began in December of the
+  year before
 
 Filters show single trainings or only dates whose trainer is still open;
 _Einsätze pro Trainer_ counts the sessions each trainer leads, to keep the
@@ -31,7 +34,8 @@ Only the TK edits (see _Roles_):
    day (public holiday, bridge day) with the same from and to date. As in the
    club's agenda, school holidays only drop the kids' trainings; tick _Dojo
    geschlossen_ for Christmas and public holidays, which drops every planned
-   training in the period.
+   training in the period. Holidays from Webling (see _Data_) are listed with
+   their source: only _Dojo zu_ can be changed, they cannot be deleted.
 2. **Rotation → Trainer** – fills a training's trainers in turn over a
    period. The order is a list of positions, each a trainer, _Trainer offen_
    or _Kein Training_:
@@ -83,7 +87,9 @@ only what the TK confirms is saved:
   says why (Karfreitag, Brückentag nach Auffahrt, GV JACW). "kein Training"
   as _Leiter_ only means no leader
 - holidays in the info (… ferien, Weihnachten) are offered as holidays, with
-  or without _Dojo zu_
+  or without _Dojo zu_; a holiday Webling already brings (same dates, or the
+  same name over overlapping dates) is shown as _Synchronisiert_ and never
+  added again
 
 Unlike the former sheet import, what is already planned is not replaced
 without asking: a session that contradicts the plan is only written when
@@ -123,6 +129,13 @@ moves its dates. Trainers offered first are members labelled
 _Erwachsenentrainer_ in Webling, main trainers of the planned trainings in
 the last year and everyone already planned.
 
-Webling holds the holidays too (agenda "Ferien"), but the event sync only
-keeps an event's first day, so they are entered here (or read in with the
+Webling holds the holidays too (calendar "Ferien und Feiertage"). Since
+integrations phase 4 (`docs/INTEGRATIONS.md`, "End dates and holidays")
+the Webling sync on the integration layer brings them as holidays
+(`connection`, `external_id`): a period of up to three days closes the dojo,
+a longer one is school holidays, and a TK entry with the same name and
+dates is taken over. Their title and dates are Webling's (read-only, no
+delete); "Dojo zu" stays the TK's and later runs never change it. Until
+the sync is switched to the layer (phase 3), Webling's holidays stay
+events, as before, and holidays are entered here (or read in with the
 plan).

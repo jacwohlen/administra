@@ -34,6 +34,7 @@ vi.mock('@sveltejs/kit', () => ({
 }));
 
 import { load } from './[eventId]/+page';
+import { load as layoutLoad } from './[eventId]/+layout';
 
 // The loader queries, in order: event_participants, event_logs, member_medals, members
 function mockQueries(...results: { data: unknown; error: unknown }[]) {
@@ -139,5 +140,56 @@ describe('event detail load', () => {
     await expect(
       load({ params: { eventId: 'evt-1' }, parent: mockParent } as never)
     ).rejects.toThrow();
+  });
+});
+
+// The layout queries, in order: events, event_links
+describe('event layout load', () => {
+  const mockEvent = { id: 51830, title: 'Kurs', date: '2026-11-01', section: 'Judo' };
+  const params = { eventId: '51830' };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('returns the event and its live provider link', async () => {
+    const link = {
+      connection: 'webling',
+      url: 'https://club.webling.ch/portal#/calendar/event/51830'
+    };
+    mockQueries(ok(mockEvent), ok([link]));
+
+    const result = await layoutLoad({ params } as never);
+
+    expect(result.event).toEqual(mockEvent);
+    expect(result.eventLink).toEqual(link);
+    expect(mockSupabase.from).toHaveBeenCalledWith('events');
+    expect(mockSupabase.from).toHaveBeenCalledWith('event_links');
+  });
+
+  it("an event without a live link is the app's", async () => {
+    mockQueries(ok(mockEvent), ok([]));
+
+    const result = await layoutLoad({ params } as never);
+
+    expect(result.eventLink).toBeNull();
+  });
+
+  it('a database without event_links (before the promotion) means not linked', async () => {
+    mockQueries(ok(mockEvent), {
+      data: null,
+      error: { code: 'PGRST205', message: "Could not find the table 'public.event_links'" }
+    });
+
+    const result = await layoutLoad({ params } as never);
+
+    expect(result.event).toEqual(mockEvent);
+    expect(result.eventLink).toBeNull();
+  });
+
+  it('throws 404 when the event cannot be loaded', async () => {
+    mockQueries({ data: null, error: { message: 'not found' } }, ok([]));
+
+    await expect(layoutLoad({ params } as never)).rejects.toThrow();
   });
 });

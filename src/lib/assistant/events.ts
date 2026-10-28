@@ -132,9 +132,52 @@ export function isTime(value: string): boolean {
   return /^([01]\d|2[0-3]):[0-5]\d$/.test(value);
 }
 
-/** Whether the event was created by the Webling sync (and is kept up to date by it). */
+/**
+ * Whether the description is the Webling portal link the legacy sync
+ * writes: tells Webling events apart where event_links cannot (see eventProvider).
+ */
 export function isWeblingEvent(description: string | null | undefined): boolean {
   return !!description && description.includes(WEBLING_MARK);
+}
+
+/**
+ * The connection that keeps an event up to date, null for the app's own:
+ * its live event_links row. Without any link row (event_links not loaded,
+ * a database without the integration layer, or an event the legacy sync
+ * wrote before the layer's first run linked it) the Webling portal link in
+ * the description tells. An event whose links are all gone is the app's.
+ */
+export function eventProvider(event: Pick<KnownEvent, 'description' | 'provider'>): string | null {
+  if (event.provider !== undefined) return event.provider;
+  return isWeblingEvent(event.description) ? 'webling' : null;
+}
+
+/** An event_links row as the review loads it */
+export interface EventLinkRow {
+  event_id: number | string;
+  connection: string;
+  gone_at: string | null;
+}
+
+/**
+ * The events with `provider` from their links: the live link's connection,
+ * null when every link is gone; events without a link row stay as they are
+ * (eventProvider falls back to the description).
+ */
+export function withEventProviders<E extends KnownEvent>(
+  events: readonly E[],
+  links: readonly EventLinkRow[]
+): E[] {
+  const byEvent = new Map<string, string | null>();
+  for (const link of links) {
+    const id = String(link.event_id);
+    if (link.gone_at == null) byEvent.set(id, link.connection);
+    else if (!byEvent.has(id)) byEvent.set(id, null);
+  }
+  return events.map((event) => {
+    const provider = byEvent.get(String(event.id));
+    return provider === undefined ? event : { ...event, provider };
+  });
 }
 
 /** The club section the model's wording stands for ('judo' → 'Judo'), '' if none. */
@@ -154,6 +197,11 @@ export interface KnownEvent {
   timeFrom?: string | null;
   location?: string | null;
   description?: string | null;
+  /**
+   * The connection of its live event_links row, null when it has only gone
+   * links; left out when no link row was found (see eventProvider)
+   */
+  provider?: string | null;
 }
 
 /** What the user can change per row. */
@@ -205,7 +253,8 @@ export type EventIssue =
 
 /** The event a row seems to repeat. */
 export type EventDuplicate =
-  | { kind: 'existing'; event: KnownEvent; webling: boolean }
+  /** provider: the connection that keeps the event up to date (eventProvider) */
+  | { kind: 'existing'; event: KnownEvent; provider: string | null }
   /** An earlier row of the same document */
   | { kind: 'row'; index: number };
 
@@ -394,7 +443,7 @@ export function reviewEvents(
     if (title && date) {
       const known = findKnown(title, date, byDate);
       if (known) {
-        duplicate = { kind: 'existing', event: known, webling: isWeblingEvent(known.description) };
+        duplicate = { kind: 'existing', event: known, provider: eventProvider(known) };
       } else {
         const index = inputs
           .slice(0, i)
@@ -485,33 +534,19 @@ export function spanCovers(loaded: DateSpan | null, needed: DateSpan | null): bo
 
 // ----- What is written -----
 
-/** Exactly the columns of the "Event erstellen" form (dashboard/events/new). */
+/** The columns of the "Event erstellen" form (dashboard/events/new) the assistant fills. */
 export interface EventInsert {
   title: string;
   description: string | null;
   date: string;
+  /** Last day of a multi-day event, null for one day */
+  date_to: string | null;
   timeFrom: string | null;
   timeTo: string | null;
   location: string | null;
   section: string;
   maxParticipants: null;
   registrationDeadline: null;
-}
-
-/**
- * The description as saved. events has no end date, so a multi-day event
- * is created on its first day with `untilLine(dateTo)` ("bis 16.11.2026")
- * as the description's first line.
- */
-export function eventDescription(
-  input: Pick<EventRowInput, 'date' | 'dateTo' | 'description'>,
-  untilLine: (dateTo: string) => string
-): string {
-  const text = cleanText(input.description, MAX_LENGTH.description, true);
-  const multiDay = isIsoDate(input.date) && isIsoDate(input.dateTo) && input.dateTo > input.date;
-  if (!multiDay) return text;
-  const line = untilLine(input.dateTo);
-  return text.startsWith(line) ? text : `${line}\n${text}`.trim();
 }
 
 /** One event to create, with the review row it comes from */
@@ -528,8 +563,7 @@ export interface EventWrite {
  */
 export function buildEventInserts(
   rows: EventReviewRow[],
-  sections: readonly string[],
-  untilLine: (dateTo: string) => string
+  sections: readonly string[]
 ): EventWrite[] {
   const writes: EventWrite[] = [];
   rows.forEach((row, index) => {
@@ -540,8 +574,10 @@ export function buildEventInserts(
       row: index,
       values: {
         title: cleanText(input.title, MAX_LENGTH.title),
-        description: eventDescription(input, untilLine) || null,
+        description: cleanText(input.description, MAX_LENGTH.description, true) || null,
         date: input.date,
+        // Checked by inputErrors: a real date after the first day
+        date_to: input.dateTo || null,
         timeFrom: input.timeFrom || null,
         timeTo: input.timeTo || null,
         location: cleanText(input.location, MAX_LENGTH.location) || null,

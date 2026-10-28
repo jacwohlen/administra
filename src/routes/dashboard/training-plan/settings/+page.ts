@@ -22,9 +22,10 @@ export const load: PageLoad = async ({ parent, depends }) => {
       .from('training_plan_trainings')
       .select('training_id')
       .returns<{ training_id: number }[]>(),
+    // connection: a provider's holiday (Webling) is read-only but for "Dojo zu"
     supabaseClient
       .from('training_plan_breaks')
-      .select('id, title, date_from, date_to, cancels_training')
+      .select('id, title, date_from, date_to, cancels_training, connection')
       .order('date_from', { ascending: false })
       .returns<TrainingPlanBreak[]>()
   ]);
