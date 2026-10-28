@@ -20,7 +20,9 @@
       "settings": "Settings",
       "myProfile": "My profile",
       "exams": "Gradings",
-      "assistant": "Data assistant"
+      "assistant": "Data assistant",
+      "integrations": "Integrations",
+      "integrationsAlert": "An integration needs your attention"
     },
     "pending": {
       "title": "Access pending",
@@ -183,6 +185,212 @@
         "locale": {
           "de": "German",
           "en": "English"
+        }
+      }
+    },
+    "integrations": {
+      "title": "Integrations",
+      "intro": "Where members, events and holidays come from: what the latest runs did, what is open and how groups and calendars are mapped.",
+      "notAvailable": "The integration layer is not set up on this database yet. It comes with the next release.",
+      "empty": "No connection set up.",
+      "runsIn": {
+        "sync": "Runs in GitHub Actions",
+        "app": "Runs in the app"
+      },
+      "disabled": "Disabled",
+      "kpi": {
+        "membersLinked": "Members linked",
+        "membersGone": "Members gone",
+        "eventsLinked": "Events linked",
+        "breaks": "Holidays",
+        "issues": "Open issues",
+        "toReview": "New to review"
+      },
+      "kind": {
+        "members": "Members",
+        "events": "Events",
+        "config": "Mapping"
+      },
+      "status": {
+        "running": "Running",
+        "applied": "Running",
+        "refused": "Refused",
+        "ok": "OK",
+        "warning": "Warning",
+        "failed": "Failed"
+      },
+      "trigger": {
+        "schedule": "Schedule",
+        "manual": "Manual",
+        "app": "App"
+      },
+      "dryRun": "Dry run",
+      "never": "Never run",
+      "stale": "Stale",
+      "lastSuccess": "last successful {ago}",
+      "alert": {
+        "refused": "The latest run ({kind}) was refused.",
+        "failed": "The latest run ({kind}) failed ({error}). Check the Actions log.",
+        "stale": "{kind}: last successful {ago}, more than {hours} hours ago.",
+        "staleNever": "{kind}: no successful run yet.",
+        "errors": "{count, plural, one {# error is open} other {# errors are open}}, see issues."
+      },
+      "refused": {
+        "empty_snapshot": "{provider} returned nobody. Check {provider} and the API key, then run again.",
+        "members_gone": "{count} members would be gone at once. Check {provider} first.",
+        "status_drop": "{count} members would lose their membership. A new or renamed status group? Map it below and run again.",
+        "status_gain": "{count} members would start counting as members and be approved automatically. Check the groups in {provider}.",
+        "events_gone": "{count} events would be gone at once. Check the calendar in {provider}.",
+        "unknown": "A guard refused the run ({code})."
+      },
+      "override": {
+        "sync": "If it is intended: Actions → Webling Sync → Run workflow with {key} = {count}.",
+        "app": "If it is intended: run it again with {key} = {count}."
+      },
+      "runs": {
+        "title": "Runs",
+        "empty": "No runs yet.",
+        "started": "Started",
+        "kind": "Kind",
+        "status": "Status",
+        "counts": "Counts",
+        "error": "Error",
+        "noChange": "no change",
+        "adapterErrors": "{count} fetch errors"
+      },
+      "count": {
+        "received": "{count} read",
+        "inserted": "{count} new",
+        "adopted": "{count} adopted",
+        "revived": "{count} back",
+        "updated": "{count} updated",
+        "gone": "{count} gone",
+        "former": "{count} old rows gone",
+        "statuses_recomputed": "{count} statuses recomputed",
+        "held": "{count} held back",
+        "invalid": "{count} invalid",
+        "conflicts": "{count} conflicts",
+        "write_failed": "{count} not written",
+        "deleted": "{count} deleted",
+        "kept": "{count} kept",
+        "breaks_inserted": "{count} holidays new",
+        "breaks_adopted": "{count} holidays adopted",
+        "breaks_updated": "{count} holidays updated",
+        "breaks_deleted": "{count} holidays deleted",
+        "registrations_added": "{count} registrations added",
+        "registrations_removed": "{count} registrations removed",
+        "registrations_adopted": "{count} registrations adopted",
+        "groups": "{count} groups",
+        "calendars": "{count} calendars",
+        "statuses_changed": "{count} statuses changed"
+      },
+      "issues": {
+        "title": "Issues",
+        "empty": "No open issues.",
+        "dismissed": "Dismissed",
+        "dismissedCount": "{count} dismissed",
+        "record": "{provider} no. {id}",
+        "participant": "Participant {provider} no. {id}",
+        "merge": "Merge",
+        "notDuplicate": "Not a duplicate",
+        "dismiss": "Dismiss",
+        "reopen": "Reopen",
+        "severity": {
+          "error": "Error",
+          "warning": "Warning",
+          "info": "Info"
+        },
+        "match": {
+          "email": "same e-mail",
+          "name_birthday": "same name and birthday"
+        },
+        "code": {
+          "possible_duplicate": "Possible duplicates",
+          "invalid_record": "Records not taken over",
+          "invalid_event": "Events not taken over",
+          "id_conflict": "Conflicts",
+          "write_failed": "Not written",
+          "invalid_value": "Invalid values",
+          "event_gone_kept": "Gone, but kept",
+          "unknown_participant": "Unknown participants"
+        },
+        "help": {
+          "members": {
+            "possible_duplicate": "Same e-mail, or same name and birthday, as a member that does not come from this connection. Merge them or mark them as not a duplicate.",
+            "invalid_record": "Records the run could not write, e.g. a required field is missing. Fix them at the provider.",
+            "id_conflict": "The record already belongs to another member or provider.",
+            "write_failed": "The database refused the record (code). The others were written.",
+            "invalid_value": "A value is not valid here (e.g. a birthday that does not exist); the current one stays."
+          },
+          "events": {
+            "invalid_event": "Events without a valid date at the provider; they are not taken over.",
+            "id_conflict": "The event is already linked to another provider.",
+            "write_failed": "The database refused the event (code). The others were written.",
+            "invalid_value": "A value is not valid here; the current one stays.",
+            "event_gone_kept": "Deleted at the provider but used in the app (registrations, attendance): it stays and is the app’s now.",
+            "unknown_participant": "Registered at the provider, but no linked member here."
+          }
+        },
+        "toast": {
+          "dismissed": "Dismissed",
+          "reopened": "Reopened",
+          "error": "That did not work. Please try again."
+        }
+      },
+      "mapping": {
+        "title": "Mapping",
+        "toReview": "{count} new",
+        "intro": "What the groups and calendars of {provider} mean in Administra. New ones show as “New” until you review them.",
+        "beforeSwitch": "The sync does not run through the new integration layer yet. Change the mapping only after the switch: until then the old sync predicts memberships with fixed rules and would refuse or mispredict after a change here.",
+        "groups": "Groups",
+        "groupsHelp": "With several status groups, the one with the lowest rank counts. Hidden groups show no chip.",
+        "noGroups": "No groups yet.",
+        "group": "Group",
+        "asLabel": "as “{label}”",
+        "status": "Membership",
+        "noStatus": "–",
+        "rank": "Rank",
+        "hidden": "Hide",
+        "role": "Role",
+        "noRole": "–",
+        "roleTrainer": "Trainer",
+        "reviewed": "Reviewed",
+        "new": "New",
+        "calendars": "Calendars",
+        "calendarsHelp": "Events go to the section, holidays to the training plan. Holidays up to the number of days given close the dojo, empty means always. Applies from the next events run.",
+        "noCalendars": "No calendars yet.",
+        "calendar": "Calendar",
+        "target": "Target",
+        "targets": {
+          "event": "Events",
+          "break": "Holidays",
+          "ignore": "Ignore"
+        },
+        "section": "Section",
+        "closedMaxDays": "Dojo closed up to (days)",
+        "invalid": "Rank and days are numbers from 0 to 999.",
+        "preview": "Preview",
+        "save": "Save",
+        "reset": "Reset",
+        "previewResult": "{groups} groups and {calendars} calendars change, {statuses} members get another status.",
+        "dropping": "{count} members lose their membership (guard above {limit}).",
+        "droppingStatus": "{count} members with status “{status}” lose their membership: more than half of that status.",
+        "droppingStatuses": "{count} members lose their membership ({list}): more than half of one of these statuses.",
+        "statusCount": "{count} {status}",
+        "gaining": "{count} members start counting as members and are approved automatically (guard above {limit}).",
+        "overGuard": "That is more than the guard allows. Saving confirms exactly this number.",
+        "calendarsLater": "Calendars apply from the next events run.",
+        "previewOutdated": "The inputs changed since: show the preview again.",
+        "confirmTitle": "Save the mapping?",
+        "confirmOverride": "This confirms the numbers above the guard.",
+        "toast": {
+          "saved": "Mapping saved",
+          "refused": "The numbers changed. Check the new preview."
+        },
+        "error": {
+          "invalid": "The database does not accept this mapping.",
+          "notAllowed": "You are not allowed to do this.",
+          "failed": "That did not work. Please try again."
         }
       }
     },
@@ -1806,7 +2014,7 @@
       "includeAnyway": "Create as a new event anyway",
       "duplicateOf": "A similar event is already recorded: \"{title}\" on {date}",
       "duplicateOfRow": "Same date as no. {row}",
-      "fromWebling": "Comes from Webling and is synced automatically. Only create it if it is a different event.",
+      "fromProvider": "Comes from {provider} and is synced automatically. Only create it if it is a different event.",
       "empty": "No events were found in the document.",
       "progress": "{done} of {total} saved …",
       "blocked": "{count, plural, one {# event is incomplete: fix it or untick it.} other {# events are incomplete: fix or untick them.}}",

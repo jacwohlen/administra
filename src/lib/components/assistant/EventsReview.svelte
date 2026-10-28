@@ -29,15 +29,19 @@
     spanCovers,
     summarizeEvents,
     untickRecorded,
+    withEventProviders,
     type ComparisonSet,
     type DateSpan,
     type EventIssue,
+    type EventLinkRow,
     type EventReviewRow,
     type EventRowInput,
     type EventRowStatus,
     type KnownEvent
   } from '$lib/assistant/events';
   import { clubToday, isIsoDate, MAX_LENGTH } from '$lib/assistant/proposals';
+  import { isMissingSchemaError } from '$lib/eventLinks';
+  import { providerName } from '$lib/memberStatus';
   import type { EventsProposal } from '$lib/assistant/types';
 
   /**
@@ -156,16 +160,20 @@
     loadFailed = false;
     try {
       // events has no end date: an event's date is its first day
-      const events = await fetchAllRows<KnownEvent>((from, to) =>
-        supabaseClient
-          .from('events')
-          .select('id, title, date, timeFrom, location, description')
-          .gte('date', days.from)
-          .lte('date', days.to)
-          .order('id')
-          .range(from, to)
-      );
+      const [rows, links] = await Promise.all([
+        fetchAllRows<KnownEvent>((from, to) =>
+          supabaseClient
+            .from('events')
+            .select('id, title, date, timeFrom, location, description')
+            .gte('date', days.from)
+            .lte('date', days.to)
+            .order('id')
+            .range(from, to)
+        ),
+        loadLinks(days)
+      ]);
       if (seq !== loadSeq) return;
+      const events = withEventProviders(rows, links);
       loaded = { span: days, events };
       settle(events);
     } catch (err) {
@@ -174,6 +182,29 @@
       loadFailed = true;
     } finally {
       if (seq === loadSeq) loading = false;
+    }
+  }
+
+  /**
+   * Which provider keeps each event up to date (event_links). None on a
+   * database without the integration layer or when they cannot be read:
+   * the Webling portal link in the description tells then.
+   */
+  async function loadLinks(days: DateSpan): Promise<EventLinkRow[]> {
+    try {
+      return await fetchAllRows<EventLinkRow>((from, to) =>
+        supabaseClient
+          .from('event_links')
+          .select('event_id, connection, gone_at, events!inner(date)')
+          .gte('events.date', days.from)
+          .lte('events.date', days.to)
+          .order('connection')
+          .order('external_id')
+          .range(from, to)
+      );
+    } catch (err) {
+      if (!isMissingSchemaError(err)) console.error('Error loading the event links:', err);
+      return [];
     }
   }
 
@@ -439,8 +470,12 @@
                   {#if event.timeFrom}· {event.timeFrom}{/if}
                   {#if event.location}· {event.location}{/if}
                 </p>
-                {#if row.duplicate.webling}
-                  <p class="font-semibold">{$_('assistant.events.fromWebling')}</p>
+                {#if row.duplicate.provider}
+                  <p class="font-semibold">
+                    {$_('assistant.events.fromProvider', {
+                      values: { provider: providerName(row.duplicate.provider) }
+                    })}
+                  </p>
                 {/if}
               </div>
             </div>

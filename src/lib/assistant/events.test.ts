@@ -6,6 +6,7 @@ import {
   comparisonSpan,
   daysBetween,
   eventDescription,
+  eventProvider,
   formatDay,
   initialDefaultSection,
   initialInputs,
@@ -21,6 +22,7 @@ import {
   titleSimilarity,
   titleWords,
   untickRecorded,
+  withEventProviders,
   type ComparisonSet,
   type EventReviewContext,
   type EventRowInput,
@@ -165,6 +167,34 @@ describe('helpers', () => {
     expect(isWeblingEvent(null)).toBe(false);
   });
 
+  it('tells the provider of an event by its link, else by the Webling portal link', () => {
+    const portal = 'https://jacwohlen.webling.ch/portal#/calendar/event/4711';
+    expect(eventProvider({ description: portal })).toBe('webling');
+    expect(eventProvider({ description: 'Mitbringen: Judogi' })).toBeNull();
+    // Links loaded: the live link decides, a gone one makes it the app's
+    expect(eventProvider({ description: null, provider: 'csv' })).toBe('csv');
+    expect(eventProvider({ description: portal, provider: null })).toBeNull();
+  });
+
+  it('gives events the provider of their links', () => {
+    const events: KnownEvent[] = [
+      { id: 4711, title: 'Cup', date: '2026-11-14' },
+      { id: '12', title: 'Kyu', date: '2026-11-20' },
+      { id: 13, title: 'Essen', date: '2025-12-06' },
+      { id: 14, title: 'Lager', date: '2026-07-06' }
+    ];
+    const result = withEventProviders(events, [
+      { event_id: '4711', connection: 'webling', gone_at: null },
+      { event_id: 12, connection: 'webling', gone_at: '2026-10-01T00:00:00Z' },
+      // A gone link and a live one of another connection: the live one counts
+      { event_id: 14, connection: 'webling', gone_at: '2026-10-01T00:00:00Z' },
+      { event_id: 14, connection: 'csv', gone_at: null }
+    ]);
+    expect(result.map((e) => e.provider)).toEqual(['webling', null, undefined, 'csv']);
+    // Without a link row the event is left as it was
+    expect(result[2]).toBe(events[2]);
+  });
+
   it('maps the section written to a club section', () => {
     expect(matchSection('judo', SECTIONS)).toBe('Judo');
     expect(matchSection(' AIKIDO ', SECTIONS)).toBe('Aikido');
@@ -223,14 +253,14 @@ describe('review', () => {
     const [cup] = reviewEvents(proposal.events, inputs(), ctx());
     expect(cup.status).toBe('duplicate');
     expect(cup.selected).toBe(false);
-    expect(cup.duplicate).toEqual({ kind: 'existing', event: known[0], webling: true });
+    expect(cup.duplicate).toEqual({ kind: 'existing', event: known[0], provider: 'webling' });
     expect(cup.blocking).toBe(false);
   });
 
   it('finds a recorded event a day off', () => {
     const shifted = inputs([{}, {}, {}, {}, { date: '2026-11-21', title: 'Kyu Prüfung' }]);
     const gv = reviewEvents(proposal.events, shifted, ctx())[4];
-    expect(gv.duplicate).toEqual({ kind: 'existing', event: known[1], webling: false });
+    expect(gv.duplicate).toEqual({ kind: 'existing', event: known[1], provider: null });
     const twoDays = inputs([{}, {}, {}, {}, { date: '2026-11-22', title: 'Kyu Prüfung' }]);
     expect(reviewEvents(proposal.events, twoDays, ctx())[4].duplicate).toBeNull();
   });
