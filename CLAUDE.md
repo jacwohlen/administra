@@ -22,6 +22,7 @@ Attendance tracking app for martial arts clubs. SvelteKit frontend + Supabase (P
 - **Trial e-mails:** thank-you, waiting-list and training mails to trial candidates go through the club's SMTP server (`PRIVATE_SMTP_*`, `src/lib/server/mailer.ts`), logged in `trial_emails`; see `docs/TRIAL_EMAILS.md`
 - **Error monitoring:** Sentry (`@sentry/sveltekit`, EU region) in `hooks.server.ts` / `hooks.client.ts`; reports are scrubbed by `src/lib/sentryScrub.ts` (no e-mails, OAuth codes, IPs). Off without `PUBLIC_SENTRY_DSN`; see `docs/ERROR_MONITORING.md`. Uptime: an external monitor calls `/api/health`; the Webling sync reports each run to healthchecks.io (`docs/UPTIME_MONITORING.md`)
 - **Deployment:** Netlify via `@sveltejs/adapter-netlify`
+- **Public demo:** app.administra.ch runs the app with `PUBLIC_MODE=DEMO` (one-click role logins through the `demo` form action, demo banner) on its own Supabase project, reset weekly with `supabase/demo/seed.sql` by `.github/workflows/demo-reset.yml`; see `docs/DEMO.md`. The marketing site administra.ch is static HTML in `marketing/` (own Netlify site, see `marketing/README.md`)
 - **External sync:** Python scripts in `/webling-sync/` sync members/events from Webling API, scheduled daily by `.github/workflows/webling-sync.yml`. Webling ids are written into `members.id` / `events.id`; the app's own ids start at 10'000'001 so they never collide. Registrations the sync inserts are marked by `notes` starting with `Imported from Webling`; it only ever removes those, never rows added in the app. `member_links` records which members come from Webling (`gone_at` once Webling no longer has them: status `left`); while in Webling their name, birthday, contact and groups are read-only in the app (`trigger_guard_provider_fields`). `members.membership_status` is derived from the labels (`member_status_from_labels()`, helpers in `src/lib/memberStatus.ts`); integration plan and decisions in `docs/INTEGRATIONS.md`
 
 ## Project Structure
@@ -32,7 +33,9 @@ Attendance tracking app for martial arts clubs. SvelteKit frontend + Supabase (P
 - `src/lib/supabase.ts` - Supabase client setup
 - `src/lib/i18n/` - Internationalization with locale JSON files
 - `supabase/migrations/` - Versioned SQL migrations
-- `supabase/seed.sql` - Database seed data
+- `supabase/seed.sql` - Database seed data (local, CI, preview branches)
+- `supabase/demo/seed.sql` - The made-up demo club for app.administra.ch, all dates relative to the reset day; checked by `supabase/checks/demo_seed.sql`
+- `marketing/` - The marketing site administra.ch (static HTML/CSS)
 - `static/brand/` - Brand guide extracted from the app (logo, `tokens.css`/`tokens.json`, style sheet at `/brand/`); not imported by the app, update it when the theme or `src/app.css` changes
 
 ## Conventions
@@ -66,6 +69,11 @@ the club sites build. So migrations must work while the previous release is
 still deployed, must not depend on `config.toml` or seed data, and must not
 hard-code JAC Wohlen specifics (addresses, sections) — use settings or
 `bootstrap_admins` instead.
+
+The public demo loads `supabase/demo/seed.sql` onto the migrations alone
+(no `seed.sql`), and CI (`db-validate`) checks it on every PR: when a
+migration changes a table the demo seed fills, update the demo seed in the
+same PR (see `docs/DEMO.md`).
 
 ## Production Releases
 
