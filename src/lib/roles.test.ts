@@ -7,6 +7,7 @@ import {
   canUseClub,
   followsMembership,
   homePath,
+  isAdmin,
   isApproved,
   isStaff,
   isWriter
@@ -86,6 +87,15 @@ describe('roles', () => {
     expect(isWriter({ status: 'approved', role: 'member' })).toBe(false);
     expect(isWriter({ status: 'pending', role: 'admin' })).toBe(false);
     expect(isWriter(null)).toBe(false);
+  });
+
+  it('counts only approved admins as admins', () => {
+    expect(isAdmin({ status: 'approved', role: 'admin' })).toBe(true);
+    expect(isAdmin({ status: 'approved', role: 'trainer' })).toBe(false);
+    expect(isAdmin({ status: 'approved', role: 'member' })).toBe(false);
+    expect(isAdmin({ status: 'pending', role: 'admin' })).toBe(false);
+    expect(isAdmin({ status: 'disabled', role: 'admin' })).toBe(false);
+    expect(isAdmin(null)).toBe(false);
   });
 
   it('gives exam roles to staff only, and everything to admins', () => {

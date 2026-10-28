@@ -91,19 +91,16 @@ past events are never touched.
 
 **Runtime:** Slower (~1-2 minutes, fetches participants for each event)
 
-### 3. Duplicate Management (`src/duplicates.py`)
+### Duplicates
 
-Searches for duplicate members.
-
-```bash
-python src/duplicates.py search <lastname>  # Search for members by lastname
-```
-
-`merge` is disabled. It moved only training attendance and participations to
-the kept member and then deleted the other one, which also deleted that
-member's event registrations and attendance, grades, medals, badges, exam
-candidates and trial e-mails, and unlinked their sign-in account. A merge that
-moves every reference in one transaction will replace it.
+Duplicate members (a trial registration and the later Webling member, two
+app rows for one person) are merged in Administra by an admin: _Mitglieder →
+Duplikate_, or _Duplikat zusammenführen_ on a member page. The merge moves
+every reference in one transaction and keeps the Webling row, so this sync
+finds the member under its Webling id as before (`docs/INTEGRATIONS.md`,
+"Merging duplicates"). Two Webling members are merged in Webling. The old
+`src/duplicates.py` (search with the service-role key, and a merge that
+deleted grades, medals and badges) is gone.
 
 ### Tests
 
@@ -213,7 +210,7 @@ systemctl --user disable --now webling-sync-events.timer webling-sync-members.ti
 ## Local Setup
 
 The steps below are for running the scripts by hand (e.g. `list`,
-`--calendar`, `duplicates.py`) or as a fallback scheduler with systemd.
+`--calendar`) or as a fallback scheduler with systemd.
 
 ### 1. Clone/Download this repository
 
@@ -346,9 +343,6 @@ python src/events.py --calendar 22333 21780
 
 # Sync events from calendars matching name patterns
 python src/events.py --calendar judo aikido club
-
-# Search for duplicate members
-python src/duplicates.py search Smith
 ```
 
 ## Systemd Service Management
@@ -423,8 +417,7 @@ webling-sync/
 │   ├── webling.py           # Member sync script
 │   ├── events.py            # Events & participants sync script
 │   ├── sync_rules.py        # Rules without network access (member mapping, registrations), unit-tested
-│   ├── safe_log.py          # Webling requests and error messages without personal data or keys
-│   └── duplicates.py        # Duplicate search
+│   └── safe_log.py          # Webling requests and error messages without personal data or keys
 ├── tests/                   # pytest (no network, no credentials)
 ├── .env/                    # Python virtual environment
 ├── logs/                    # Log files

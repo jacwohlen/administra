@@ -306,3 +306,19 @@ def test_status_after_run_compares_with_the_database():
     after = [db(r['id'], 'non_member', r['labels']) for r in current[:10]] + current[10:]
     assert status_after_run(current, after, plan.predicted) == (10, 10, True)
     assert status_after_run(current, after, plan.predicted, accept=10) == (10, 10, False)
+
+
+# Phase 1c: merge_members() keeps the Webling row and moves the app data of
+# the dropped one onto it (notes, photo, trial history, registrations). The
+# nightly sync must leave that data alone.
+
+def test_member_row_never_writes_app_fields():
+    row = member_row(4711, PROPERTIES, ['Aktiv'])
+    assert not set(row) & {'notes', 'img', 'imgUploaded', 'archivedAt', 'trialToken', 'trialStatus',
+                           'trialRegisteredAt', 'trialSection', 'trialLocale', 'trialSelfCancelled'}
+
+
+def test_plan_participants_keeps_a_registration_merged_from_the_app():
+    # The merge clears the Webling note when either row was entered in the app
+    existing = [{'memberId': 4711, 'attendanceStatus': 'registered', 'notes': None}]
+    assert plan_participants(existing, confirmed=set(), attended=set()) == ([], [])

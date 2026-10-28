@@ -189,6 +189,13 @@ jobs:
           psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres"
           -v ON_ERROR_STOP=1 -q -f supabase/checks/member_data.sql
 
+      # Merging a duplicate member: every reference moves, the preview equals
+      # the merge, refusals, and every foreign key to members is handled
+      - name: Check merging duplicate members
+        run: >-
+          psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres"
+          -v ON_ERROR_STOP=1 -q -f supabase/checks/merge_members.sql
+
   build:
     runs-on: ubuntu-latest
     needs: [lint-and-check, unit-tests]

@@ -6,6 +6,7 @@ import {
   canManageExams,
   canPlanTrainings,
   homePath,
+  isAdmin,
   isStaff,
   isWriter
 } from '$lib/roles';
@@ -22,7 +23,7 @@ export const load: LayoutLoad = async ({ parent, depends }) => {
 
   depends('users:pending');
   let pendingUsers = 0;
-  if (userProfile.role === 'admin') {
+  if (isAdmin(userProfile)) {
     const { count } = await supabaseClient
       .from('user_profiles')
       .select('user_id', { count: 'exact', head: true })
@@ -36,6 +37,8 @@ export const load: LayoutLoad = async ({ parent, depends }) => {
     pendingUsers,
     // Viewers browse read-only; pages hide their add/edit/delete controls
     canWrite: isWriter(userProfile),
+    // User management, merging duplicate members
+    isAdmin: isAdmin(userProfile),
     // Q-Prüfungen: the TK runs exam days and programs, examiners score
     canManageExams: canManageExams(userProfile),
     canGrade: canGrade(userProfile),

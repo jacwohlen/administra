@@ -386,6 +386,8 @@ INSERT INTO api_guard VALUES
   ('get_members_medal_counts',   'is_staff\('),
   ('get_recent_achievements',    'is_staff\('),
   ('member_access_report',       'is_admin\('),
+  ('merge_members',              'is_admin\('),
+  ('merge_members_preview',      'is_admin\('),
   ('refresh_all_member_badges',  'is_writer\('),
   ('ai_import_begin',            'is_writer\('),
   ('ai_import_remaining',        'is_writer\('),
