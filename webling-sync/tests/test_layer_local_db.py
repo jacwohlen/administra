@@ -261,7 +261,7 @@ def test_holidays_and_end_dates_from_version_2(db, monkeypatch, capsys):
                  VALUES (61201, 'Weihnachten', '{link(61201)}', '2026-12-24', '00:00', '00:00', 'General')""")
     world = events_world([(members[0], 'confirmed'), (members[1], 'declined')])
     world.calendars[503] = {'title': 'Ferien und Feiertage', 'events': [61201]}
-    world.events[61201] = {'title': 'Weihnachten', 'begin': '2026-12-24 00:00:00', 'end': '2026-12-26 00:00:00',
+    world.events[61201] = {'title': 'Weihnachten', 'begin': '2026-12-24 00:00:00', 'end': '2026-12-27 00:00:00',
                            'place': None, 'maxParticipants': None}
     world.calendars[501]['events'].append(61202)
     world.events[61202] = {'title': 'Lager', 'begin': '2026-11-13 18:00:00', 'end': '2026-11-15 14:00:00',
