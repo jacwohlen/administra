@@ -277,6 +277,8 @@
         "breaks_adopted": "{count} Ferien übernommen",
         "breaks_updated": "{count} Ferien geändert",
         "breaks_deleted": "{count} Ferien gelöscht",
+        "holiday_events_deleted": "{count} Ferien-Events ersetzt",
+        "holiday_events_kept": "{count} Ferien-Events behalten",
         "registrations_added": "{count} Anmeldungen neu",
         "registrations_removed": "{count} Anmeldungen entfernt",
         "registrations_adopted": "{count} Anmeldungen übernommen",

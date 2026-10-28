@@ -261,7 +261,7 @@ prod/dev → Environment variables**).
    events (`adopted` about 85, `updated 0`); from the second night on they
    are `unchanged`.
 
-If the end dates migration (phase 4, Promotion 3) is on prod before the
+If the end dates migration (phase 4) is on prod before the
 switch, the shadow and first nights differ: the calendar "Ferien und
 Feiertage" brings holidays (`breaks_inserted` and `holiday_events_deleted`
 about the number of this year's holidays, `adopted` the other calendars'

@@ -277,6 +277,8 @@
         "breaks_adopted": "{count} holidays adopted",
         "breaks_updated": "{count} holidays updated",
         "breaks_deleted": "{count} holidays deleted",
+        "holiday_events_deleted": "{count} holiday events replaced",
+        "holiday_events_kept": "{count} holiday events kept",
         "registrations_added": "{count} registrations added",
         "registrations_removed": "{count} registrations removed",
         "registrations_adopted": "{count} registrations adopted",

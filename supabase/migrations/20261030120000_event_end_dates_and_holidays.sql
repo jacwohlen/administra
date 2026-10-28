@@ -112,8 +112,9 @@ CREATE INDEX events_date_span_idx ON public.events (date, (coalesce(date_to, dat
 -- falls on or before its start (events_date_to_check would refuse that
 -- upsert every night). Only for the sync's own writes (service_role through
 -- PostgREST): staff send both days and the form checks them; the layer
--- writes the last day itself, from SECURITY DEFINER functions, where
--- current_user is their owner.
+-- writes the last day itself: its event writers (integration_write_event(s),
+-- revoked from the API roles) run only inside integration_apply, SECURITY
+-- DEFINER, where current_user is the owner, never service_role.
 CREATE OR REPLACE FUNCTION public.trigger_event_keep_span()
 RETURNS trigger
 LANGUAGE plpgsql
@@ -504,7 +505,11 @@ BEGIN
        WHERE run_id = p_run AND external_id = r.external_id;
     EXCEPTION WHEN OTHERS THEN
       GET STACKED DIAGNOSTICS v_state = RETURNED_SQLSTATE;
-      UPDATE public.integration_records SET action = 'error', result = 'error', error = lower(v_state)
+      -- A failed insert created no row: the planned id (the provider's)
+      -- must not end up in the issue as a member or event that exists
+      UPDATE public.integration_records
+         SET action = 'error', result = 'error', error = lower(v_state),
+             target_id = CASE WHEN action = 'insert' THEN NULL ELSE target_id END
        WHERE run_id = p_run AND external_id = r.external_id;
     END;
   END LOOP;
@@ -751,8 +756,9 @@ $$;
 -----------------
 
 -- The portal link is the link's url (the event page links to it), so the
--- description is the app's for linked events too (it stays read-only on the
--- page while linked; the field is free in the database)
+-- description is the app's for linked events too: staff edit it while the
+-- event is linked (trigger_guard_provider_event goes by this policy, the
+-- edit page by lockedEventFields()). All day is Webling's, like the times.
 UPDATE public.integration_connections
    SET field_policy = (field_policy - 'event.description') || '{"event.all_day": "owned"}',
        updated_at = now()

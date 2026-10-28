@@ -227,6 +227,46 @@ describe('the event form', () => {
     expect(eventDateValues({ ...base, dateTo: '2026-11-12' })).toBe('dateToBeforeDate');
   });
 
+  it('checks a start moved onto a locked last day (edit page of a linked event)', () => {
+    const linked = {
+      date: '2026-11-16',
+      dateTo: '2026-11-16',
+      allDay: true,
+      timeFrom: '',
+      timeTo: ''
+    };
+    // the last day is not sent: the database would keep it, on the start
+    expect(eventDateValues(linked, new Set(['date_to']))).toBe('dateToBeforeDate');
+    expect(eventDateValues({ ...linked, date: '2026-11-17' }, new Set(['date_to']))).toBe(
+      'dateToBeforeDate'
+    );
+    expect(eventDateValues({ ...linked, date: '2026-11-15' }, new Set(['date_to']))).toMatchObject({
+      date: '2026-11-15',
+      date_to: '2026-11-16'
+    });
+    // both locked: the stored days, nothing to refuse
+    expect(
+      eventDateValues({ ...linked, date: '2026-11-13' }, new Set(['date', 'date_to']))
+    ).toMatchObject({ date: '2026-11-13', date_to: '2026-11-16' });
+    // unlocked, the same day is one day
+    expect(eventDateValues(linked)).toMatchObject({ date_to: null });
+  });
+
+  it('saves only what the edit page sends: all day locked, no retry', async () => {
+    const calls: object[] = [];
+    // the edit page's unlocked fields (a Partial of the form's columns)
+    const unlocked: { description: string; registrationDeadline: null; all_day?: boolean } = {
+      description: 'Mit Übernachtung',
+      registrationDeadline: null
+    };
+    const result = await saveEventRow(unlocked, async (values) => {
+      calls.push(values);
+      return { error: { code: 'PGRST204', message: "Could not find the 'x' column" } };
+    });
+    expect(result.error?.code).toBe('PGRST204');
+    expect(calls).toEqual([{ description: 'Mit Übernachtung', registrationDeadline: null }]);
+  });
+
   it('fills in a stored event', () => {
     expect(
       eventDateInput({

@@ -558,9 +558,10 @@ app (_Bis_) or an earlier layer run set, the trigger `events_keep_span`
 moves the last day by as many days: the event keeps its length, and the
 upsert does not fail on `events_date_to_check` once the start passes the
 old last day. Only for the sync's direct writes (`service_role`): staff
-send both days (the form checks them), and the layer writes the last day
-Webling sends (its functions are SECURITY DEFINER, `current_user` is
-their owner).
+send both days (the form checks them; on a linked event the days Webling
+owns are locked and not sent), and the layer writes the last day Webling
+sends (its event writers run only inside `integration_apply`, SECURITY
+DEFINER: `current_user` is the owner, also when the sync calls it).
 
 **Deploy order.** On a database that already has phase 2
 (`events.date_to`, `training_plan_breaks.connection`), an app deployed
@@ -581,7 +582,14 @@ portal link is the link's url (`event_links.url`, the event page links to
 it). Descriptions that are only that url are cleared, by the migration for
 the linked events and by the layer for events it links later (the switch
 may come after this migration). `integration_field_policy_ok()` knows
-`event.all_day`.
+`event.all_day`. On the edit page of a linked Webling event the
+description is open from then on, while _Datum_, _Bis_, _Ganztägig_ and
+the times stay locked (`lockedEventFields()` in `src/lib/eventLinks.ts`:
+all day and the times go together, as either changes the other). The
+migration replaces `integration_write_event(s)`, `integration_normalize_event`,
+`integration_field_policy_ok` and `integration_begin` with the phase 2
+versions (review fixes included) plus `all_day`; a failed insert still
+leaves its issue without an event id.
 
 **Webling adapter.** `ends_on` and `all_day` are sent only when the
 database's capabilities have version 2 (`webling_adapter/dates.span()`),
@@ -636,10 +644,16 @@ the Daten-Assistent's holiday import never adds one again: a period with
 the same dates, or the same title over overlapping dates, is shown as
 _Synchronisiert_ (`src/lib/assistant/trainingPlan.ts`).
 
+Issues (phase 2's rule, unchanged): a holiday's issue names its record
+and calendar, no event, and waits for a run of that calendar; an unknown
+participant of an event under way stays open until the list is read again
+or the event's last day (`ends_on`) is over.
+
 `supabase/checks/event_dates.sql` (CI job `db-validate`) checks what the
 migration left, the legacy sync's writes, the date checks, the overlap
-filters, capabilities and policy, the layer's end dates and all day, and
-the holidays before and after the switch and after a rollback.
+filters, capabilities and policy, the layer's end dates and all day, the
+holidays before and after the switch and after a rollback, and the issues
+of holidays and multi-day events.
 
 ## Integrations page (phase 5)
 

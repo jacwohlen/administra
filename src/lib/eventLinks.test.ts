@@ -104,7 +104,7 @@ describe('canDeleteEvent', () => {
 
 describe('lockedEventFields', () => {
   const link = { connection: 'webling', url: null };
-  // as seeded for Webling in the integration layer migration
+  // as seeded for Webling in the integration layer migration (phase 2)
   const webling = {
     'member.firstname': 'owned',
     'event.title': 'owned',
@@ -124,10 +124,40 @@ describe('lockedEventFields', () => {
     expect(lockedEventFields(undefined, null)).toEqual([]);
   });
 
+  // from phase 4: all day owned, the description the app's
+  const weblingPhase4: Record<string, string> = { ...webling, 'event.all_day': 'owned' };
+  delete weblingPhase4['event.description'];
+
   it('locks what the provider owns or fills, never the registration deadline', () => {
     const locked = lockedEventFields(link, webling);
+    // all day too: Webling fills the times (and a database before phase 4 has no all_day)
     expect(locked).toEqual([...PROVIDER_EVENT_FIELDS]);
     expect(locked).not.toContain('registrationDeadline');
+  });
+
+  it('leaves Webling events their description from phase 4, dates and all day locked', () => {
+    expect(lockedEventFields(link, weblingPhase4)).toEqual([
+      'title',
+      'date',
+      'date_to',
+      'all_day',
+      'timeFrom',
+      'timeTo',
+      'location',
+      'section',
+      'maxParticipants'
+    ]);
+  });
+
+  it('locks all day and the times together', () => {
+    for (const field of ['all_day', 'timeFrom', 'timeTo']) {
+      expect(lockedEventFields(link, { [`event.${field}`]: 'fill' })).toEqual([
+        'all_day',
+        'timeFrom',
+        'timeTo'
+      ]);
+    }
+    expect(lockedEventFields(link, { 'event.date_to': 'owned' })).toEqual(['date_to']);
   });
 
   it('leaves the app what the policy does not give the provider', () => {

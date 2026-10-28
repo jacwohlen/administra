@@ -97,6 +97,10 @@ describe('events a provider maintains', () => {
     expect(await (editEvent as Load)(linked(trainer))).toEqual({
       lockedFields: [...PROVIDER_EVENT_FIELDS]
     });
+    // the days and all day (phase 4) among them
+    expect(PROVIDER_EVENT_FIELDS).toEqual(
+      expect.arrayContaining(['date', 'date_to', 'all_day', 'timeFrom', 'timeTo'])
+    );
   });
 });
 

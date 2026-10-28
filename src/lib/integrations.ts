@@ -325,6 +325,8 @@ export const RUN_COUNT_KEYS: Record<RunKind, readonly string[]> = {
     'breaks_adopted',
     'breaks_updated',
     'breaks_deleted',
+    'holiday_events_deleted',
+    'holiday_events_kept',
     'registrations_added',
     'registrations_removed',
     'registrations_adopted',

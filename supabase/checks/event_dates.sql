@@ -17,6 +17,9 @@
 --   L  the layer writes end dates and all day
 --   H  "Ferien und Feiertage" fills the holidays; the legacy sync's holiday
 --      events before the switch, and after a rollback to it
+--   I  issues of phase 4's records (integration_note_event_issues of the
+--      integration layer): a holiday's issue names its calendar, no event;
+--      an event under way is not over until its last day
 
 \set ON_ERROR_STOP 1
 \o /dev/null
@@ -541,6 +544,68 @@ BEGIN
   RESET ROLE;
   PERFORM pg_temp.eq('H5 but sets "Dojo zu"',
     (SELECT cancels_training::text FROM public.training_plan_breaks WHERE external_id = '94003'), 'true');
+END $$;
+ROLLBACK TO SAVEPOINT s;
+
+-----------------
+-- I Issues of holidays and multi-day events
+-----------------
+SAVEPOINT s;
+DO $$
+DECLARE
+  v_cal text := pg_temp.holidays();
+  v_bad jsonb := jsonb_build_array(pg_temp.rec(95001, pg_temp.holidays(), 'Ferien und Feiertage', 'Feiertag',
+                   jsonb_build_object('starts_on', pg_temp.d(30), 'all_day', 'ja')));
+  v_part jsonb := '[{"member": "9999999", "state": "confirmed"}]';
+  r jsonb;
+BEGIN
+  PERFORM pg_temp.as_sync();
+  r := pg_temp.run('events', pg_temp.scope(v_cal), v_bad);
+  RESET ROLE;
+  PERFORM pg_temp.eq('I1 a holiday with an invalid value: written, the issue names its calendar and no event',
+    (SELECT concat_ws(' ', r->'result'->>'breaks_inserted', code, external_id, coalesce(event_id::text, '-'),
+                      calendar, detail)
+       FROM public.integration_issues WHERE kind = 'events' AND resolved_at IS NULL),
+    '1 invalid_value 95001 - ' || v_cal || ' all_day');
+
+  PERFORM pg_temp.as_sync();
+  r := pg_temp.run('events', pg_temp.scope('c1'), jsonb_build_array(
+         pg_temp.rec(95002, 'c1', 'Judo Agenda', 'Training', jsonb_build_object('starts_on', pg_temp.d(5)))));
+  RESET ROLE;
+  PERFORM pg_temp.eq('I2 a complete run of another calendar leaves the holiday''s issue open',
+    (SELECT (resolved_at IS NULL)::text FROM public.integration_issues WHERE external_id = '95001'), 'true');
+
+  PERFORM pg_temp.as_sync();
+  r := pg_temp.run('events', pg_temp.scope(v_cal), jsonb_set(v_bad, '{0,data,all_day}', 'true'));
+  RESET ROLE;
+  PERFORM pg_temp.eq('I3 the holiday calendar read with the record fixed resolves it',
+    (SELECT (resolved_at IS NOT NULL)::text FROM public.integration_issues WHERE external_id = '95001'), 'true');
+
+  -- A camp under way since the day before yesterday, until the day after tomorrow
+  PERFORM pg_temp.as_sync();
+  r := pg_temp.run('events', '{"complete": false}', jsonb_build_array(
+         pg_temp.rec(95003, 'c1', 'Judo Agenda', 'Lager', jsonb_build_object('starts_on', pg_temp.d(-2),
+                     'ends_on', pg_temp.d(2), 'all_day', true, 'participants', v_part))));
+  RESET ROLE;
+  PERFORM pg_temp.eq('I4 an unknown participant of a camp under way, with the calendar',
+    (SELECT concat_ws(' ', (resolved_at IS NULL)::text, calendar) FROM public.integration_issues
+      WHERE code = 'unknown_participant' AND external_id = '9999999'), 'true c1');
+  PERFORM pg_temp.as_sync();
+  r := pg_temp.run('events', '{"complete": false}', jsonb_build_array(
+         pg_temp.rec(95003, 'c1', 'Judo Agenda', 'Lager', jsonb_build_object('starts_on', pg_temp.d(-2),
+                     'ends_on', pg_temp.d(2), 'all_day', true))));
+  RESET ROLE;
+  PERFORM pg_temp.eq('I4 its list could not be read while under way (begun before today): still open',
+    (SELECT (resolved_at IS NULL)::text FROM public.integration_issues
+      WHERE code = 'unknown_participant' AND external_id = '9999999'), 'true');
+  PERFORM pg_temp.as_sync();
+  r := pg_temp.run('events', '{"complete": false}', jsonb_build_array(
+         pg_temp.rec(95003, 'c1', 'Judo Agenda', 'Lager', jsonb_build_object('starts_on', pg_temp.d(-4),
+                     'ends_on', pg_temp.d(-1), 'all_day', true))));
+  RESET ROLE;
+  PERFORM pg_temp.eq('I4 over after its last day: staged without its list, the issue resolves',
+    concat_ws(' ', r->>'final', (SELECT (resolved_at IS NOT NULL)::text FROM public.integration_issues
+                                  WHERE code = 'unknown_participant' AND external_id = '9999999')), 'ok true');
 END $$;
 ROLLBACK TO SAVEPOINT s;
 
