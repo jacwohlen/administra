@@ -324,9 +324,10 @@ label, a status with a rank, hidden (no chip) and a role (`trainer`);
 `integration_calendars` maps each calendar to events with a section, to
 holidays (`training_plan_breaks`) or to nothing. Rows are bound to the
 provider's id when first seen, so a group renamed in Webling keeps its
-status: the label of every member of the connection follows the new name
-in the same run, also of members the run does not write (a record with a
-problem, a partial run, a link gone). Statuses are looked up by the label
+status: the label of every member whose status the connection decides
+follows the new name in the same run, also of members the run does not
+write (a record with a problem, a partial run, a link gone), but not of a
+member another provider has now. Statuses are looked up by the label
 text, so a group's label is unique per connection: a group whose name
 another group's label already has (a second `Passiv`, or a group renamed
 to `Aktiv`) gets the provider's id in its label (`Passiv (123)`) and never
@@ -413,11 +414,13 @@ overrides, the adapter's counters, an error code) and `integration_issues`.
 Both hold codes, ids and counts, never names, titles or values; staged
 records (`integration_records`) are read by nobody and deleted when the run
 ends. Issues persist until a run that checks them no longer sees them (an
-issue about a record: a complete run, or a partial run that staged the
-record; the scan for duplicates and kept events: every run); an admin can
-dismiss one (`integration_dismiss_issue`) and it stays dismissed. An issue
-about a new record whose insert failed names the record (`external_id`),
-no member or event.
+issue about a record: a run that staged it, or a complete run, for events
+one that read the record's calendar, or every calendar when the layer does
+not know it; never a run that could not fetch it; the scan for duplicates
+and kept events: every run); an admin can dismiss one
+(`integration_dismiss_issue`) and it stays dismissed. An issue about a new
+record whose insert failed, or about a holiday, names the record
+(`external_id`), no member or event.
 A run ends `ok`, `warning` (records it could not write, or adapter errors),
 `refused` or `failed`. An unset Webling date and possible duplicates are
 reported but do not change the run's status. Runs are kept 400 days, closed

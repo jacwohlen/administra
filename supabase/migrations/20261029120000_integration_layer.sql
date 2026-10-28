@@ -1338,11 +1338,31 @@ $$;
 -- Membership status guard
 -----------------
 
+-- Whether the connection decides a member's status (member_status_for()):
+-- a link of it and no live link of another connection (all links gone:
+-- 'left'), or no link at all and a row in its external id range. A member
+-- another provider has now (adopted by a CSV import, merged) is that
+-- provider's, also with a gone link of this one.
+CREATE OR REPLACE FUNCTION public.integration_decides(p_c public.integration_connections, p_member_id integer)
+RETURNS boolean
+LANGUAGE sql
+STABLE
+SET search_path = public, pg_temp
+AS $$
+  SELECT CASE
+    WHEN EXISTS (SELECT 1 FROM public.member_links l WHERE l.member_id = p_member_id AND l.connection = p_c.id)
+      THEN NOT EXISTS (SELECT 1 FROM public.member_links o
+                        WHERE o.member_id = p_member_id AND o.gone_at IS NULL AND o.connection <> p_c.id)
+    ELSE p_c.member_ids = 'external' AND p_member_id >= p_c.external_id_min AND p_member_id < p_c.external_id_max
+         AND NOT EXISTS (SELECT 1 FROM public.member_links l WHERE l.member_id = p_member_id)
+  END;
+$$;
+
 -- The members whose status a run (or a mapping change) of this connection
 -- can change, with their status and whether they count now
--- (member_grants_access): linked to the connection, members staged records
--- name (link_to) or target, rows in its external id range. Taken before the
--- plan, which already rewrites labels of a renamed group. {id: [status, counts]}.
+-- (member_grants_access): those it decides (integration_decides()), and
+-- members staged records name (link_to) or target. Taken before the plan,
+-- which already rewrites labels of a renamed group. {id: [status, counts]}.
 CREATE OR REPLACE FUNCTION public.integration_status_snapshot(p_c public.integration_connections, p_run bigint)
 RETURNS jsonb
 LANGUAGE sql
@@ -1354,12 +1374,11 @@ AS $$
            coalesce(public.member_grants_access(m.membership_status, m."archivedAt", m.labels), false))),
          '{}'::jsonb)
     FROM public.members m
-   WHERE m.id IN (SELECT l.member_id FROM public.member_links l WHERE l.connection = p_c.id)
+   WHERE public.integration_decides(p_c, m.id)
       OR m.id IN (SELECT r.target_id FROM public.integration_records r
                    WHERE r.run_id = p_run AND r.target_id IS NOT NULL)
       OR m.id IN (SELECT (r.data->>'link_to')::integer FROM public.integration_records r
-                   WHERE r.run_id = p_run AND r.data ? 'link_to')
-      OR (p_c.member_ids = 'external' AND m.id >= p_c.external_id_min AND m.id < p_c.external_id_max);
+                   WHERE r.run_id = p_run AND r.data ? 'link_to');
 $$;
 
 -- Compares the members of a snapshot with now: dropping (counted, no
@@ -1439,8 +1458,9 @@ BEGIN
     FROM public.integration_runs WHERE id = p_run;
 
   -- Renamed in the provider: the catalog follows, and so does the label of
-  -- every member whose status this connection decides (any link of it, or
-  -- a row in its id range without a link), not only of the records written
+  -- every member whose status this connection decides (integration_decides():
+  -- live or gone link, or a row in its id range without a link; not a
+  -- member another provider has now), not only of the records written
   -- below: a status is looked up by the label text, so a member left with
   -- the old label (a problem record, a partial run) would lose its status.
   -- A label set apart ('Probetraining') stays; one with the provider's id
@@ -1470,9 +1490,7 @@ BEGIN
                                         ORDER BY y.o)
                          FROM jsonb_array_elements(m.labels) WITH ORDINALITY y(x, o))
        WHERE jsonb_typeof(m.labels) = 'array' AND m.labels ? g.old_label
-         AND (EXISTS (SELECT 1 FROM public.member_links l WHERE l.member_id = m.id AND l.connection = p_c.id)
-              OR (p_c.member_ids = 'external' AND m.id >= p_c.external_id_min AND m.id < p_c.external_id_max
-                  AND NOT EXISTS (SELECT 1 FROM public.member_links l WHERE l.member_id = m.id)));
+         AND public.integration_decides(p_c, m.id);
     END IF;
   END LOOP;
 
@@ -1819,8 +1837,8 @@ $$;
 -- Issues of a members run: noted, and the ones a run that checks them no
 -- longer observes resolved. Dismissed ones stay closed. Codes and ids only.
 -- An issue about a record is checked by a complete run, or by a partial run
--- that staged that record; the duplicate scan of linked members checks
--- every run.
+-- that staged that record, never by a run that could not fetch it
+-- (fetch_failed); the duplicate scan of linked members checks every run.
 CREATE OR REPLACE FUNCTION public.integration_note_member_issues(p_run bigint, p_c public.integration_connections)
 RETURNS jsonb
 LANGUAGE plpgsql
@@ -1900,6 +1918,9 @@ BEGIN
      AND i.last_run IS DISTINCT FROM p_run
      AND ((i.code = 'possible_duplicate' AND i.member_id IS NOT NULL)
           OR (i.code IN ('invalid_record', 'id_conflict', 'write_failed', 'invalid_value', 'possible_duplicate')
+              AND NOT EXISTS (SELECT 1 FROM public.integration_records r
+                               WHERE r.run_id = p_run AND r.external_id = i.external_id
+                                 AND r.problem = 'fetch_failed')
               AND (v_complete OR EXISTS (SELECT 1 FROM public.integration_records r
                                           WHERE r.run_id = p_run AND r.external_id = i.external_id))));
   GET DIAGNOSTICS v_resolved = ROW_COUNT;
@@ -2348,9 +2369,14 @@ BEGIN
 END;
 $$;
 
--- As for members: an issue about a record is checked by a complete run, or
--- by a partial run that staged that record (an unknown participant: its
--- event, with the participant list); kept gone events are scanned every run
+-- Issues of an events run. An issue about a record (an unknown participant:
+-- its event) is checked by a run that staged the record (with the
+-- participant list), or by a complete run that read the record's calendar
+-- (its event_links or training_plan_breaks row says which; a record the
+-- layer never linked, e.g. one without date, only by a run that read every
+-- calendar), never by a run that could not fetch it (fetch_failed). Kept
+-- gone events are scanned every run. Holidays are no events: their issues
+-- name the record only (event_id NULL).
 CREATE OR REPLACE FUNCTION public.integration_note_event_issues(p_run bigint, p_c public.integration_connections)
 RETURNS jsonb
 LANGUAGE plpgsql
@@ -2358,29 +2384,39 @@ SET search_path = public, pg_temp
 AS $$
 DECLARE
   v_complete boolean;
+  v_calendars jsonb;
+  v_all_read boolean;
   v_today text := to_char((now() AT TIME ZONE 'Europe/Zurich')::date, 'YYYY-MM-DD');
   v_noted integer;
   v_resolved integer;
 BEGIN
-  SELECT coalesce((scope->>'complete')::boolean, false) INTO v_complete
+  SELECT coalesce((scope->>'complete')::boolean, false),
+         CASE WHEN jsonb_typeof(scope->'calendars') = 'array' THEN scope->'calendars' ELSE '[]'::jsonb END
+    INTO v_complete, v_calendars
     FROM public.integration_runs WHERE id = p_run;
+  -- Every calendar of the connection read completely
+  v_all_read := v_complete AND NOT EXISTS (
+    SELECT 1 FROM public.integration_calendars ic
+     WHERE ic.connection = p_c.id AND ic.external_id IS NOT NULL AND NOT v_calendars ? ic.external_id);
 
   WITH seen (code, severity, external_id, event_id, detail) AS (
     -- Records the run could not write; a date the provider left unset is expected (info)
-    SELECT 'invalid_event', 'info', r.external_id, r.target_id::integer, r.problem
+    -- (event_id: an event of this run's records; a holiday's id is no event)
+    SELECT 'invalid_event', 'info', r.external_id, CASE WHEN r.route = 'event' THEN r.target_id::integer END,
+           r.problem
       FROM public.integration_records r
      WHERE r.run_id = p_run AND r.action = 'invalid' AND coalesce(r.problem, '') <> 'fetch_failed'
     UNION ALL
-    SELECT 'id_conflict', 'error', r.external_id, r.target_id::integer, r.match
+    SELECT 'id_conflict', 'error', r.external_id, CASE WHEN r.route = 'event' THEN r.target_id::integer END, r.match
       FROM public.integration_records r
      WHERE r.run_id = p_run AND r.action = 'conflict'
     UNION ALL
     -- (no event for a failed insert: the issue names the record only)
-    SELECT 'write_failed', 'error', r.external_id, r.target_id::integer, r.error
+    SELECT 'write_failed', 'error', r.external_id, CASE WHEN r.route = 'event' THEN r.target_id::integer END, r.error
       FROM public.integration_records r
      WHERE r.run_id = p_run AND r.action = 'error'
     UNION ALL
-    SELECT 'invalid_value', 'info', r.external_id, r.target_id::integer, f
+    SELECT 'invalid_value', 'info', r.external_id, CASE WHEN r.route = 'event' THEN r.target_id::integer END, f
       FROM public.integration_records r, jsonb_array_elements_text(r.data->'invalid') f
      WHERE r.run_id = p_run AND r.result IN ('inserted', 'adopted', 'revived', 'updated', 'unchanged')
     UNION ALL
@@ -2415,17 +2451,32 @@ BEGIN
   GET DIAGNOSTICS v_noted = ROW_COUNT;
 
   UPDATE public.integration_issues i SET resolved_at = now()
-   WHERE i.connection = p_c.id AND i.kind = 'events' AND i.resolved_at IS NULL
-     AND i.last_run IS DISTINCT FROM p_run
+    FROM (SELECT i2.id,
+                 -- the record the issue is about
+                 CASE WHEN i2.code = 'unknown_participant'
+                      THEN (SELECT l.external_id FROM public.event_links l
+                             WHERE l.connection = p_c.id AND l.event_id = i2.event_id)
+                      ELSE i2.external_id END AS rec
+            FROM public.integration_issues i2
+           WHERE i2.connection = p_c.id AND i2.kind = 'events' AND i2.resolved_at IS NULL
+             AND i2.last_run IS DISTINCT FROM p_run) c
+    LEFT JOIN public.integration_records r ON r.run_id = p_run AND r.external_id = c.rec
+   WHERE i.id = c.id
      AND (i.code = 'event_gone_kept'
           OR (i.code IN ('invalid_event', 'invalid_value', 'unknown_participant', 'id_conflict', 'write_failed')
-              AND (v_complete
-                   OR EXISTS (SELECT 1 FROM public.integration_records r
-                               WHERE r.run_id = p_run
-                                 AND CASE WHEN i.code = 'unknown_participant'
-                                          THEN r.target_id = i.event_id
-                                               AND jsonb_typeof(r.data->'participants') = 'array'
-                                          ELSE r.external_id = i.external_id END))));
+              AND coalesce(r.problem, '') <> 'fetch_failed'
+              AND CASE WHEN r.external_id IS NOT NULL
+                       THEN i.code <> 'unknown_participant' OR jsonb_typeof(r.data->'participants') = 'array'
+                       ELSE v_all_read
+                            OR (v_complete AND EXISTS (
+                                  SELECT 1 FROM public.integration_calendars ic
+                                   WHERE ic.connection = p_c.id AND v_calendars ? ic.external_id
+                                     AND ic.id IN (SELECT l.calendar_id FROM public.event_links l
+                                                    WHERE l.connection = p_c.id AND l.external_id = c.rec
+                                                   UNION ALL
+                                                   SELECT b.calendar_id FROM public.training_plan_breaks b
+                                                    WHERE b.connection = p_c.id AND b.external_id = c.rec)))
+                  END));
   GET DIAGNOSTICS v_resolved = ROW_COUNT;
 
   RETURN jsonb_build_object(
@@ -2912,6 +2963,7 @@ REVOKE EXECUTE ON FUNCTION
   public.integration_is_service(),
   public.integration_authorize(text, boolean, uuid),
   public.integration_group_label(text, text, text, bigint),
+  public.integration_decides(public.integration_connections, integer),
   public.integration_register_groups(bigint, public.integration_connections),
   public.integration_register_calendars(bigint, public.integration_connections),
   public.integration_status_snapshot(public.integration_connections, bigint),

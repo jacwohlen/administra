@@ -845,6 +845,82 @@ BEGIN
 END $$;
 ROLLBACK TO SAVEPOINT s;
 
+-- A record the adapter could not fetch was not checked: its open issue
+-- stays, in a partial and in a complete run
+SAVEPOINT s;
+DO $$
+DECLARE
+  v_snap jsonb := pg_temp.webling_snapshot();
+  v_id text := (pg_temp.linked('active', 1))[1];
+  r jsonb;
+BEGIN
+  ALTER TABLE public.members ADD CONSTRAINT zz_check_boom CHECK (firstname <> 'BOOM') NOT VALID;
+  PERFORM pg_temp.as_sync();
+  r := pg_temp.run('webling', 'members', '{"complete": true}', pg_temp.with_record(v_snap, v_id, '{"firstname": "BOOM"}'));
+  RESET ROLE;
+  PERFORM pg_temp.eq('M15 a member the database refuses: write_failed open',
+    (SELECT count(*)::text FROM public.integration_issues
+      WHERE code = 'write_failed' AND external_id = v_id AND resolved_at IS NULL), '1');
+  PERFORM pg_temp.as_sync();
+  r := pg_temp.run('webling', 'members', '{"complete": false}',
+         jsonb_build_array(jsonb_build_object('external_id', v_id, 'data', '{"lastname": "X", "problem": "fetch_failed"}'::jsonb)));
+  r := pg_temp.run('webling', 'members', '{"complete": true}', pg_temp.with_record(v_snap, v_id, '{"problem": "fetch_failed"}'));
+  RESET ROLE;
+  PERFORM pg_temp.eq('M15 runs that could not fetch it leave the issue open',
+    (SELECT count(*)::text FROM public.integration_issues
+      WHERE code = 'write_failed' AND external_id = v_id AND resolved_at IS NULL), '1');
+  PERFORM pg_temp.as_sync();
+  r := pg_temp.run('webling', 'members', '{"complete": false}', pg_temp.without(v_snap,
+         ARRAY(SELECT x->>'external_id' FROM jsonb_array_elements(v_snap) x WHERE x->>'external_id' <> v_id)));
+  RESET ROLE;
+  PERFORM pg_temp.eq('M15 a partial run that read it again resolves it',
+    (SELECT count(*)::text FROM public.integration_issues
+      WHERE code = 'write_failed' AND external_id = v_id AND resolved_at IS NULL), '0');
+END $$;
+ROLLBACK TO SAVEPOINT s;
+
+-- A member another provider has now (a CSV import linked it after it left
+-- Webling) keeps that provider's label and status when Webling renames a group
+SAVEPOINT s;
+INSERT INTO public.integration_connections (id, provider, display_name, runs_in, default_status, field_policy)
+VALUES ('csv', 'csv', 'CSV-Import', 'app', 'non_member',
+        '{"member.firstname": "owned", "member.lastname": "owned", "member.labels": "owned"}');
+INSERT INTO public.integration_member_groups (connection, external_id, name, status, rank, hidden, reviewed)
+VALUES ('csv', 'Aktiv', 'Aktiv', 'active', 20, true, true);
+DO $$
+DECLARE
+  v_admin uuid := pg_temp.sign_up('a0000000-0000-0000-0000-000000000016', 'm16-admin@example.com', 'admin');
+  v_snap jsonb := pg_temp.webling_snapshot();
+  v_id text := (pg_temp.linked('active', 1))[1];
+  v_renamed jsonb;
+  r jsonb;
+BEGIN
+  PERFORM pg_temp.as_sync();
+  r := pg_temp.run('webling', 'members', '{"complete": true}', v_snap);
+  RESET ROLE;
+  UPDATE public.member_links SET gone_at = now() - interval '1 day' WHERE connection = 'webling' AND external_id = v_id;
+  PERFORM pg_temp.act_as(v_admin);
+  r := pg_temp.run('csv', 'members', '{"complete": false}', (
+         SELECT jsonb_build_array(jsonb_build_object('external_id', 'k1', 'data', jsonb_build_object(
+                  'firstname', firstname, 'lastname', lastname, 'groups', jsonb_build_array('Aktiv'), 'link_to', id)))
+           FROM public.members WHERE id = v_id::integer));
+  RESET ROLE;
+  PERFORM pg_temp.eq('M16 a member gone from Webling, linked by a CSV import: active through the CSV',
+    concat_ws(' ', r->>'final', pg_temp.st(v_id::integer), (SELECT labels::text FROM public.members WHERE id = v_id::integer)),
+    'ok active ["Aktiv"]');
+  SELECT jsonb_agg(jsonb_set(x, '{data,groups}', (SELECT coalesce(jsonb_agg(CASE WHEN g->>'name' = 'Aktiv'
+                      THEN jsonb_build_object('id', g->>'id', 'name', 'Aktiv Judo') ELSE g END), '[]')
+                      FROM jsonb_array_elements(x->'data'->'groups') g)))
+    INTO v_renamed FROM jsonb_array_elements(pg_temp.without(v_snap, ARRAY[v_id])) x;
+  PERFORM pg_temp.as_sync();
+  r := pg_temp.run('webling', 'members', '{"complete": true}', v_renamed);
+  RESET ROLE;
+  PERFORM pg_temp.eq('M16 ... keeps its CSV label and status when Webling renames Aktiv',
+    concat_ws(' ', r->>'final', pg_temp.st(v_id::integer), (SELECT labels::text FROM public.members WHERE id = v_id::integer)),
+    'ok active ["Aktiv"]');
+END $$;
+ROLLBACK TO SAVEPOINT s;
+
 -----------------
 -- C A CSV connection, run by an admin in the app
 -----------------
@@ -1281,6 +1357,94 @@ BEGIN
   PERFORM pg_temp.ok('V11 ... and nothing written for it',
     NOT EXISTS (SELECT 1 FROM public.events WHERE id = 61998)
     AND NOT EXISTS (SELECT 1 FROM public.event_links WHERE external_id = '61998'));
+END $$;
+ROLLBACK TO SAVEPOINT s;
+
+-- A complete run checks only the records of the calendars it read; a
+-- record that could not be fetched was not checked either
+SAVEPOINT s;
+DO $$
+DECLARE
+  r jsonb;
+BEGIN
+  PERFORM pg_temp.fx_setup();
+  PERFORM pg_temp.as_sync();
+  r := pg_temp.run('webling', 'events', pg_temp.ev_scope(), pg_temp.ev_snapshot());
+  RESET ROLE;
+  -- the database refuses the new title of 61035 (calendar c2)
+  ALTER TABLE public.events ADD CONSTRAINT zz_check_boom CHECK (title <> 'BOOM') NOT VALID;
+  UPDATE fx_events SET title = 'BOOM' WHERE id = 61035;
+  PERFORM pg_temp.as_sync();
+  r := pg_temp.run('webling', 'events', pg_temp.ev_scope(), pg_temp.ev_snapshot());
+  RESET ROLE;
+  PERFORM pg_temp.eq('V12 a Webling event the database refuses: write_failed open',
+    (SELECT concat_ws(' ', event_id, resolved_at IS NULL) FROM public.integration_issues
+      WHERE code = 'write_failed' AND external_id = '61035'), '61035 t');
+  PERFORM pg_temp.as_sync();
+  r := pg_temp.run('webling', 'events', '{"complete": false}', jsonb_build_array(jsonb_build_object(
+         'external_id', '61035', 'data', jsonb_build_object('calendar', jsonb_build_object('id', 'c2', 'name', 'Aikido'),
+         'title', 'Kurs 35', 'problem', 'fetch_failed'))));
+  RESET ROLE;
+  PERFORM pg_temp.eq('V12 a partial run that could not fetch it leaves it open',
+    (SELECT (resolved_at IS NULL)::text FROM public.integration_issues
+      WHERE code = 'write_failed' AND external_id = '61035'), 'true');
+  -- (each step after a run that observes it again)
+  PERFORM pg_temp.as_sync();
+  r := pg_temp.run('webling', 'events', pg_temp.ev_scope(), pg_temp.ev_snapshot());
+  r := pg_temp.run('webling', 'events', pg_temp.ev_scope('{c1}'), (SELECT jsonb_agg(x)
+         FROM jsonb_array_elements(pg_temp.ev_snapshot()) x WHERE x->'data'->'calendar'->>'id' = 'c1'));
+  RESET ROLE;
+  PERFORM pg_temp.eq('V12 a complete run that read only c1 leaves the c2 issue open',
+    concat_ws(' ', r->>'final', (SELECT resolved_at IS NULL FROM public.integration_issues
+                                  WHERE code = 'write_failed' AND external_id = '61035')), 'ok t');
+  PERFORM pg_temp.as_sync();
+  r := pg_temp.run('webling', 'events', pg_temp.ev_scope(), pg_temp.ev_snapshot());
+  r := pg_temp.run('webling', 'events', pg_temp.ev_scope('{c2}'), (SELECT jsonb_agg(CASE WHEN x->>'external_id' = '61035'
+         THEN jsonb_set(x, '{data,problem}', '"fetch_failed"') ELSE x END)
+         FROM jsonb_array_elements(pg_temp.ev_snapshot()) x WHERE x->'data'->'calendar'->>'id' = 'c2'));
+  RESET ROLE;
+  PERFORM pg_temp.eq('V12 a complete run of c2 that could not fetch it leaves it open',
+    (SELECT (resolved_at IS NULL)::text FROM public.integration_issues
+      WHERE code = 'write_failed' AND external_id = '61035'), 'true');
+  UPDATE fx_events SET title = 'Kurs 35' WHERE id = 61035;
+  PERFORM pg_temp.as_sync();
+  r := pg_temp.run('webling', 'events', pg_temp.ev_scope('{c2}'), (SELECT jsonb_agg(x)
+         FROM jsonb_array_elements(pg_temp.ev_snapshot()) x WHERE x->'data'->'calendar'->>'id' = 'c2'));
+  RESET ROLE;
+  PERFORM pg_temp.eq('V12 a run that read c2 with the record fixed resolves it',
+    concat_ws(' ', r->>'final', (SELECT resolved_at IS NOT NULL FROM public.integration_issues
+                                  WHERE code = 'write_failed' AND external_id = '61035')), 'ok t');
+END $$;
+ROLLBACK TO SAVEPOINT s;
+
+-- A holiday is no event: its issues name the record, never an event id
+SAVEPOINT s;
+DO $$
+DECLARE
+  v_cal jsonb := jsonb_build_object('id', 'c9', 'name', 'Ferien und Feiertage');
+  v_recs jsonb;
+  r jsonb;
+BEGIN
+  UPDATE public.integration_calendars SET target = 'break' WHERE connection = 'webling' AND name = 'Ferien und Feiertage';
+  v_recs := jsonb_build_array(
+    jsonb_build_object('external_id', '71001', 'data', jsonb_build_object('calendar', v_cal,
+      'title', 'Herbstferien', 'starts_on', pg_temp.fx_date(10), 'ends_on', pg_temp.fx_date(23))),
+    jsonb_build_object('external_id', '71002', 'data', jsonb_build_object('calendar', v_cal,
+      'title', 'Feiertag', 'starts_on', pg_temp.fx_date(30))));
+  PERFORM pg_temp.as_sync();
+  r := pg_temp.run('webling', 'events', pg_temp.ev_scope('{c9}'), v_recs);
+  RESET ROLE;
+  ALTER TABLE public.training_plan_breaks ADD CONSTRAINT zz_check_boom CHECK (title <> 'BOOM') NOT VALID;
+  v_recs := pg_temp.with_record(pg_temp.with_record(v_recs, '71001', '{"time_from": "99:99"}'),
+                                '71002', '{"title": "BOOM"}');
+  PERFORM pg_temp.as_sync();
+  r := pg_temp.run('webling', 'events', pg_temp.ev_scope('{c9}'), v_recs);
+  RESET ROLE;
+  PERFORM pg_temp.eq('V13 issues of holidays (invalid value, refused write) carry no event id',
+    concat_ws(' ', r->'result'->>'breaks_inserted', r->'result'->>'write_failed',
+              (SELECT string_agg(code || ' ' || external_id || ' ' || coalesce(event_id::text, '-'), ',' ORDER BY code)
+                 FROM public.integration_issues WHERE kind = 'events' AND external_id IN ('71001', '71002'))),
+    '0 1 invalid_value 71001 -,write_failed 71002 -');
 END $$;
 ROLLBACK TO SAVEPOINT s;
 
