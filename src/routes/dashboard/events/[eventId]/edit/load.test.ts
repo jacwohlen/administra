@@ -47,6 +47,28 @@ describe('edit event load', () => {
     expect(from).toHaveBeenCalledWith('integration_connections');
   });
 
+  it("leaves a Webling event's description to the app from phase 4", async () => {
+    maybeSingle.mockResolvedValue({
+      data: {
+        field_policy: {
+          'event.title': 'owned',
+          'event.date': 'owned',
+          'event.date_to': 'owned',
+          'event.all_day': 'owned',
+          'event.timeFrom': 'fill',
+          'event.timeTo': 'fill',
+          'event.location': 'fill',
+          'event.maxParticipants': 'fill',
+          'event.section': 'owned'
+        }
+      },
+      error: null
+    });
+    const { lockedFields } = await run(true, link);
+    expect(lockedFields).toEqual(PROVIDER_EVENT_FIELDS.filter((f) => f !== 'description'));
+    expect(lockedFields).toEqual(expect.arrayContaining(['date_to', 'all_day']));
+  });
+
   it('locks every provider field when the policy cannot be read', async () => {
     const log = vi.spyOn(console, 'error').mockImplementation(() => {});
     maybeSingle.mockResolvedValue({ data: null, error: { code: 'PGRST205', message: 'missing' } });

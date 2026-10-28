@@ -758,6 +758,37 @@ describe('holidays', () => {
     expect(reviewHolidays(HOLIDAYS, inputs, BREAKS)[3].blocking).toBe(false);
   });
 
+  it('never adds a holiday Webling maintains, but a closure within it', () => {
+    const recorded: PlannedBreak[] = [
+      {
+        title: 'Herbstferien',
+        date_from: '2026-10-03',
+        date_to: '2026-10-18',
+        cancels_training: false,
+        connection: 'webling'
+      }
+    ];
+    const proposed: HolidayEntry[] = [
+      // Same dates, another title
+      { title: 'Herbstferien Schule', dateFrom: '2026-10-03', dateTo: '2026-10-18', closed: false },
+      // Same title, dates read a bit off
+      { title: 'herbstferien', dateFrom: '2026-10-05', dateTo: '2026-10-16', closed: false },
+      // The dojo closed for a weekend within them: the TK's own
+      { title: 'Dojo zu', dateFrom: '2026-10-10', dateTo: '2026-10-11', closed: true }
+    ];
+    const ticked = initialHolidayInputs(proposed, recorded).map((i) => ({ ...i, use: true }));
+    const rows = reviewHolidays(proposed, ticked, recorded);
+    expect(rows.map((r) => r.status)).toEqual(['provider', 'provider', 'new']);
+    expect(rows[0]).toMatchObject({ provider: recorded[0], overlaps: [], write: null });
+    expect(rows[1].blocking).toBe(false);
+    expect(rows[2]).toMatchObject({ overlaps: recorded, closesOpen: recorded });
+    expect(buildBreakWrites(rows).map((w) => w.title)).toEqual(['Dojo zu']);
+    // The TK's own holiday with the same title and dates is simply recorded
+    const own = [{ ...recorded[0], connection: null }];
+    expect(reviewHolidays(proposed, ticked, own)[0].status).toBe('new');
+    expect(reviewHolidays(proposed.slice(1), ticked.slice(1), own)[0].status).toBe('new');
+  });
+
   it('leaves out incomplete periods at once, keeping the others', () => {
     const inputs = initialHolidayInputs(HOLIDAYS, BREAKS);
     inputs[0] = { ...inputs[0], use: true };

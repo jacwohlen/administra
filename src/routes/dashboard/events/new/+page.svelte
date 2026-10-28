@@ -5,12 +5,18 @@
   import Fa from 'svelte-fa';
   import { faSave, faArrowLeft } from '@fortawesome/free-solid-svg-icons';
   import { clubConfig } from '$lib/clubConfig';
+  import { eventDateValues, saveEventRow, type EventDateInput } from '$lib/eventUtils';
+  import EventDateFields from '../EventDateFields.svelte';
 
   let title = '';
   let description = '';
-  let date = '';
-  let timeFrom = '';
-  let timeTo = '';
+  let dates = $state<EventDateInput>({
+    date: '',
+    dateTo: '',
+    allDay: false,
+    timeFrom: '',
+    timeTo: ''
+  });
   let location = '';
   let section = '';
   let maxParticipants: number | undefined = undefined;
@@ -21,8 +27,13 @@
   const sections = clubConfig.sections;
 
   async function createEvent() {
-    if (!title || !date || !section) {
+    if (!title || !dates.date || !section) {
       error = $_('page.events.validation.required_fields');
+      return;
+    }
+    const when = eventDateValues(dates);
+    if (when === 'dateToBeforeDate') {
+      error = $_('page.events.validation.date_to');
       return;
     }
 
@@ -30,21 +41,18 @@
     error = '';
 
     try {
-      const { error: insertError, data } = await supabaseClient
-        .from('events')
-        .insert({
+      const { error: insertError, data } = await saveEventRow(
+        {
           title,
           description: description || null,
-          date,
-          timeFrom: timeFrom || null,
-          timeTo: timeTo || null,
+          ...when,
           location: location || null,
           section,
           maxParticipants: maxParticipants || null,
           registrationDeadline: registrationDeadline || null
-        })
-        .select()
-        .single();
+        },
+        (values) => supabaseClient.from('events').insert(values).select().single()
+      );
 
       if (insertError) {
         console.error('Error creating event:', insertError);
@@ -111,13 +119,13 @@
       />
     </div>
 
-    <!-- Date -->
-    <div>
-      <label class="label" for="date">
-        <span>{$_('page.events.form.date')} *</span>
-      </label>
-      <input id="date" type="date" class="input" bind:value={date} required />
-    </div>
+    <EventDateFields
+      bind:date={dates.date}
+      bind:dateTo={dates.dateTo}
+      bind:allDay={dates.allDay}
+      bind:timeFrom={dates.timeFrom}
+      bind:timeTo={dates.timeTo}
+    />
 
     <!-- Section -->
     <div>
@@ -132,24 +140,8 @@
       </select>
     </div>
 
-    <!-- Time From -->
-    <div>
-      <label class="label" for="timeFrom">
-        <span>{$_('page.events.form.time_from')}</span>
-      </label>
-      <input id="timeFrom" type="time" class="input" bind:value={timeFrom} />
-    </div>
-
-    <!-- Time To -->
-    <div>
-      <label class="label" for="timeTo">
-        <span>{$_('page.events.form.time_to')}</span>
-      </label>
-      <input id="timeTo" type="time" class="input" bind:value={timeTo} />
-    </div>
-
     <!-- Location -->
-    <div class="md:col-span-2">
+    <div>
       <label class="label" for="location">
         <span>{$_('page.events.form.location')}</span>
       </label>

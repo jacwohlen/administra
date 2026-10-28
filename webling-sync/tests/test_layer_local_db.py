@@ -78,6 +78,20 @@ def rows_version(db, table):
     return value(db, f"SELECT md5(string_agg(id::text || ':' || xmin::text, ',' ORDER BY id)) FROM public.{table}")
 
 
+def has_end_dates(db):
+    """The database has phase 4 (20261030120000: all_day, capabilities version 2)."""
+    return value(db, "SELECT count(*) FROM information_schema.columns WHERE table_schema = 'public' "
+                     "AND table_name = 'events' AND column_name = 'all_day'") == '1'
+
+
+def events_but_description(db):
+    """The events' values, but the description (and updatedAt)."""
+    return value(db, """SELECT md5(string_agg(concat_ws('|', id, title, date, date_to, "timeFrom", "timeTo",
+                                                        location, section, "maxParticipants",
+                                                        "registrationDeadline"), ',' ORDER BY id))
+                          FROM public.events""")
+
+
 def sync_run(db, monkeypatch, world, kind, dry_run=False, **env):
     set_env(monkeypatch, INTEGRATION_MODE='layer', INTEGRATION_RUNNER='local:test',
             INTEGRATION_DRY_RUN='true' if dry_run else None, **env)
@@ -195,6 +209,7 @@ def test_events_first_run_adopts_the_legacy_events(db, monkeypatch, capsys):
                         (61001, {members[1]}, 'registered', '{WEBLING_NOTE}'),
                         (61001, {members[2]}, 'registered', NULL)""")
     before = rows_version(db, 'events')
+    before_values = events_but_description(db)
     world = events_world([(members[0], 'confirmed'), (members[1], 'confirmed')])
     status, run = sync_run(db, monkeypatch, world, 'events', dry_run=True)
     assert status == 0, capsys.readouterr().out
@@ -211,7 +226,13 @@ def test_events_first_run_adopts_the_legacy_events(db, monkeypatch, capsys):
             result['registrations_removed']) == (2, 0, 0)
     assert result['invalid'] == 1  # the epoch event: info, the run stays ok
     assert run['scope']['calendars'] == ['501', '502'] and run['scope']['complete']
-    assert rows_version(db, 'events') == before
+    if has_end_dates(db):
+        # Phase 4: the portal link leaves the description (the link's url has it), nothing else changes
+        assert events_but_description(db) == before_values
+        assert value(db, "SELECT count(*) FROM public.events WHERE id BETWEEN 61001 AND 61005 "
+                         "AND description IS NOT NULL") == '0'
+    else:
+        assert rows_version(db, 'events') == before
     assert value(db, "SELECT count(*) FROM public.event_links WHERE gone_at IS NULL") == '5'
     assert value(db, "SELECT count(*) FROM public.integration_issues WHERE code = 'invalid_event' "
                      "AND detail = 'no_date'") == '1'
@@ -229,6 +250,36 @@ def test_events_second_run_is_unchanged_and_follows_webling(db, monkeypatch, cap
     assert value(db, 'SELECT string_agg("memberId"::text, \',\' ORDER BY "memberId") '
                      'FROM public.event_participants WHERE "eventId" = 61001') == \
         ','.join(str(m) for m in sorted([members[0], members[2]]))
+
+
+def test_holidays_and_end_dates_from_version_2(db, monkeypatch, capsys):
+    if not has_end_dates(db):
+        pytest.skip('the database has no end dates yet (20261030120000)')
+    members = STATE['participants']
+    # A holiday the legacy sync wrote as an event before the switch
+    db.query(f"""INSERT INTO public.events (id, title, description, date, "timeFrom", "timeTo", section)
+                 VALUES (61201, 'Weihnachten', '{link(61201)}', '2026-12-24', '00:00', '00:00', 'General')""")
+    world = events_world([(members[0], 'confirmed'), (members[1], 'declined')])
+    world.calendars[503] = {'title': 'Ferien und Feiertage', 'events': [61201]}
+    world.events[61201] = {'title': 'Weihnachten', 'begin': '2026-12-24 00:00:00', 'end': '2026-12-26 00:00:00',
+                           'place': None, 'maxParticipants': None}
+    world.calendars[501]['events'].append(61202)
+    world.events[61202] = {'title': 'Lager', 'begin': '2026-11-13 18:00:00', 'end': '2026-11-15 14:00:00',
+                           'place': None, 'maxParticipants': None}
+    world.participants.update({61201: [], 61202: []})
+    status, run = sync_run(db, monkeypatch, world, 'events')
+    assert status == 0, capsys.readouterr().out
+    result = run['result']
+    assert (result['inserted'], result['unchanged'], result['breaks_inserted'],
+            result['holiday_events_deleted'], result['gone']) == (1, 5, 1, 1, 0)
+    # The holiday is the training plan's now (3 days: the dojo is closed), its event is gone
+    assert value(db, "SELECT concat_ws('|', title, date_from, date_to, cancels_training::text) "
+                     "FROM public.training_plan_breaks WHERE external_id = '61201'") == \
+        'Weihnachten|2026-12-24|2026-12-26|true'
+    assert value(db, "SELECT count(*) FROM public.events WHERE id = 61201") == '0'
+    # The camp ends on its last day, with its times
+    assert value(db, """SELECT concat_ws('|', date, date_to, all_day::text, "timeFrom", "timeTo", description)
+                          FROM public.events WHERE id = 61202""") == '2026-11-13|2026-11-15|false|18:00|14:00'
 
 
 def test_a_database_without_the_layer_falls_back(monkeypatch, capsys):

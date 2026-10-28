@@ -30,6 +30,7 @@
     type PlanRow
   } from '$lib/trainingPlanUtils';
   import type { TrainingPlanBreak } from '$lib/models';
+  import { eventEnd, formatEventDates } from '$lib/eventUtils';
   import SessionDialog from './SessionDialog.svelte';
   import PlanGrid from './PlanGrid.svelte';
   import RotationDialog from './RotationDialog.svelte';
@@ -97,8 +98,9 @@
     | { kind: 'event'; date: string; event: PlanEvent }
     | { kind: 'break'; date: string; brk: TrainingPlanBreak };
 
-  // Rows, events without a training that day and the start of each break,
-  // grouped by month
+  // Rows, events without a training that day, the start of each break and
+  // of each multi-day event (from the first day shown: the list may start
+  // inside it, e.g. on January 1), grouped by month
   let months = $derived.by(() => {
     const start = showPast || data.year !== dayjs().year() ? data.from : today;
     const shown = rows.filter(
@@ -111,7 +113,11 @@
     const items: Item[] = shown.map((row) => ({ kind: 'row', date: row.date, row }));
     if (!onlyOpen) {
       for (const event of data.events) {
-        if (event.date >= start && !trainingDays.has(event.date)) {
+        if (eventEnd(event) > event.date) {
+          if (eventEnd(event) >= start) {
+            items.push({ kind: 'event', date: event.date < start ? start : event.date, event });
+          }
+        } else if (event.date >= start && !trainingDays.has(event.date)) {
           items.push({ kind: 'event', date: event.date, event });
         }
       }
@@ -404,6 +410,9 @@
                   >
                     <Fa icon={faCalendarDays} size="sm" class="flex-none" />
                     <span class="truncate">{item.event.title}</span>
+                    {#if eventEnd(item.event) > item.event.date}
+                      <span class="whitespace-nowrap">{formatEventDates(item.event)}</span>
+                    {/if}
                   </a>
                 </li>
               {:else}

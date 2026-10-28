@@ -159,9 +159,8 @@ storage only once the text is saved. A document with another date than the
 page needs a tick too.
 
 **Termine** (_Anlässe_). One event per date, with section, times and place;
-multi-day events are saved on their first day with "bis …" in the
-description (events have no end date); an end time before the start time
-is only a warning (overnight events). Events similar to an existing event
+a multi-day event gets its last day (`date_to`); an end time before the
+start time is only a warning (overnight events). Events similar to an existing event
 within a day (also ones synced from Webling) are marked _Doppelt_ and not
 created unless ticked; the review loads the existing events of the period
 itself and saves only once they are loaded.

@@ -1,5 +1,6 @@
 import dayjs from 'dayjs';
 import type { TrainingPlanBreak, TrainingPlanSession } from './models';
+import { eventDays } from './eventUtils';
 
 const WEEKDAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
@@ -13,11 +14,13 @@ export interface PlanTraining {
   mainTrainerId?: number | null;
 }
 
-/** An event (Webling Anlass) shown next to the trainings of its date */
+/** An event (Webling Anlass) shown next to the trainings of its dates */
 export interface PlanEvent {
   id: number;
   title: string;
   date: string;
+  /** Last day of a multi-day event (inclusive) */
+  date_to?: string | null;
   section?: string | null;
 }
 
@@ -34,7 +37,7 @@ export interface PlanRow {
   trainerId: number | null;
   /** trainerId is the training's main trainer, not planned for the date */
   defaultTrainer: boolean;
-  /** Events on the same date */
+  /** Events on the date (one-day ones, and multi-day ones under way) */
   events: PlanEvent[];
 }
 
@@ -87,9 +90,11 @@ export function buildPlan(
   const sessionMap = new Map(sessions.map((s) => [`${s.training_id}|${s.date}`, s]));
   const eventMap = new Map<string, PlanEvent[]>();
   for (const e of events) {
-    const list = eventMap.get(e.date) ?? [];
-    list.push(e);
-    eventMap.set(e.date, list);
+    for (const day of eventDays(e, from, to)) {
+      const list = eventMap.get(day) ?? [];
+      list.push(e);
+      eventMap.set(day, list);
+    }
   }
 
   const rows: PlanRow[] = [];

@@ -43,11 +43,15 @@ const event = {
   registrationDeadline: '2026-11-10'
 };
 
-function renderWith(eventLink: object | null, lockedFields: string[]) {
+function renderWith(eventLink: object | null, lockedFields: string[], stored: object = event) {
   return render(Page, {
-    props: { data: { event, eventLink, lockedFields, canWrite: true } } as never
+    props: { data: { event: stored, eventLink, lockedFields, canWrite: true } } as never
   });
 }
+
+const webling = { connection: 'webling', url: null };
+// lockedEventFields() for Webling's policy from phase 4: the description is the app's
+const weblingLocked = PROVIDER_EVENT_FIELDS.filter((field) => field !== 'description');
 
 describe('edit event page', () => {
   it('locks the fields of a linked event its provider owns, not the registration deadline', async () => {
@@ -59,6 +63,8 @@ describe('edit event page', () => {
       'title',
       'description',
       'date',
+      'dateTo',
+      'allDay',
       'section',
       'timeFrom',
       'timeTo',
@@ -80,13 +86,75 @@ describe('edit event page', () => {
     const { container } = renderWith(null, []);
     expect(screen.queryByText('page.events.lockedByProvider')).not.toBeInTheDocument();
     expect(container.querySelector('#title')).toBeEnabled();
+    expect(container.querySelector('#dateTo')).toBeEnabled();
+    expect(container.querySelector('#allDay')).toBeEnabled();
+    await fireEvent.input(container.querySelector('#dateTo') as HTMLInputElement, {
+      target: { value: '2026-11-22' }
+    });
     await fireEvent.submit(container.querySelector('form') as HTMLFormElement);
+    expect(update).toHaveBeenCalledWith({
+      title: 'Kurs',
+      description: 'https://club.webling.ch/portal#/calendar/event/61001',
+      date: '2026-11-20',
+      date_to: '2026-11-22',
+      all_day: false,
+      timeFrom: '18:30',
+      timeTo: '20:00',
+      location: 'Dojo',
+      section: 'Judo',
+      maxParticipants: 20,
+      registrationDeadline: '2026-11-10'
+    });
+  });
+
+  it("leaves a Webling event's description to the app from phase 4, dates and all day locked", async () => {
+    const camp = {
+      ...event,
+      description: null,
+      date_to: '2026-11-22',
+      all_day: true,
+      timeFrom: null,
+      timeTo: null
+    };
+    const { container } = renderWith(webling, weblingLocked, camp);
+    for (const id of ['title', 'date', 'dateTo', 'allDay', 'section', 'location']) {
+      expect(container.querySelector(`#${id}`)).toBeDisabled();
+    }
+    expect((container.querySelector('#dateTo') as HTMLInputElement).value).toBe('2026-11-22');
+    expect((container.querySelector('#allDay') as HTMLInputElement).checked).toBe(true);
+    // all day: no times shown
+    expect(container.querySelector('#timeFrom')).toBeNull();
+    const description = container.querySelector('#description') as HTMLTextAreaElement;
+    expect(description).toBeEnabled();
+
+    await fireEvent.input(description, { target: { value: 'Mit Übernachtung' } });
+    await fireEvent.submit(container.querySelector('form') as HTMLFormElement);
+    expect(update).toHaveBeenCalledWith({
+      description: 'Mit Übernachtung',
+      registrationDeadline: '2026-11-10'
+    });
+  });
+
+  it('refuses a start moved onto a last day the provider keeps', async () => {
+    const camp = { ...event, date_to: '2026-11-22' };
+    const { container } = renderWith(webling, ['date_to'], camp);
+    expect(container.querySelector('#date')).toBeEnabled();
+    expect(container.querySelector('#dateTo')).toBeDisabled();
+    await fireEvent.input(container.querySelector('#date') as HTMLInputElement, {
+      target: { value: '2026-11-22' }
+    });
+    await fireEvent.submit(container.querySelector('form') as HTMLFormElement);
+    expect(update).not.toHaveBeenCalled();
+    expect(screen.getByText('page.events.validation.date_to')).toBeInTheDocument();
+
+    await fireEvent.input(container.querySelector('#date') as HTMLInputElement, {
+      target: { value: '2026-11-21' }
+    });
+    await fireEvent.submit(container.querySelector('form') as HTMLFormElement);
+    // the last day is not sent: the database keeps it
     expect(update).toHaveBeenCalledWith(
-      expect.objectContaining({
-        title: 'Kurs',
-        location: 'Dojo',
-        registrationDeadline: '2026-11-10'
-      })
+      expect.not.objectContaining({ date_to: expect.anything() })
     );
+    expect(update).toHaveBeenCalledWith(expect.objectContaining({ date: '2026-11-21' }));
   });
 });

@@ -1,20 +1,33 @@
 """Webling's date-times: 'YYYY-MM-DD HH:MM:SS' in the club's local time,
 taken as they are (never converted between time zones)."""
 from collections import namedtuple
-from datetime import datetime
+from datetime import date, datetime, timedelta
 
 # Webling keeps an unset date as the epoch (1970-01-01 00:00): such an
 # event has no date. The layer counts it as seen and notes it as info.
 FIRST_REAL_YEAR = 1971
 
+# Webling's all-day flag of a calendar event, when it sends one (a JSON
+# boolean); without it an entry from 00:00 to 00:00 (or without an end) is
+# all day, which is how the legacy sync wrote Webling's all-day entries.
+ALL_DAY_PROPERTY = 'isAllDay'
+
+# ASSUMPTION, not verified against Webling (docs/INTEGRATIONS.md, phase 4):
+# the end of an all-day entry is its last day, inclusive. Herbstferien from
+# Saturday 03.10. to Sunday 18.10. end on '2026-10-18 00:00:00'. Were
+# Webling's end exclusive (the day after, as in iCalendar), every holiday
+# would come one day too long: check one holiday in the Webling portal
+# against the first run's training plan, and set this to False if so.
+ALL_DAY_END_INCLUSIVE = True
+
 When = namedtuple('When', 'date time problem')
+Span = namedtuple('Span', 'ends_on all_day')
 
 
 def split(value):
     """(date 'YYYY-MM-DD', time 'HH:MM', problem): problem 'no_date' for an
     unset date (missing, empty, before 1971), 'invalid_date' for one that
-    cannot be read. End dates (ends_on, all-day) follow in phase 4, sent
-    only to a database whose capabilities have version 2."""
+    cannot be read."""
     if value is None or value == '':
         return When(None, None, 'no_date')
     try:
@@ -24,3 +37,23 @@ def split(value):
     if moment.year < FIRST_REAL_YEAR:
         return When(None, None, 'no_date')
     return When(moment.strftime('%Y-%m-%d'), moment.strftime('%H:%M'), None)
+
+
+def span(properties, begin, end):
+    """(ends_on, all_day) of an event whose begin could be read (split):
+    ends_on is the last day when it is after the first, else None (one
+    day, also for an end that is unset, unreadable or before the begin).
+    A timed event that ends at midnight (19:00 to 00:00 the next day) ends
+    on the day before. Sent only to a database whose capabilities have
+    version 2."""
+    flag = properties.get(ALL_DAY_PROPERTY)
+    if isinstance(flag, bool):
+        all_day = flag
+    else:
+        all_day = begin.time == '00:00' and (end.problem is not None or end.time == '00:00')
+    if end.problem:
+        return Span(None, all_day)
+    last = end.date
+    if (all_day and not ALL_DAY_END_INCLUSIVE) or (not all_day and end.time == '00:00'):
+        last = (date.fromisoformat(end.date) - timedelta(days=1)).isoformat()
+    return Span(last if last > begin.date else None, all_day)

@@ -2,11 +2,17 @@
 
 The values are the ones the legacy sync writes (events.py): title trimmed
 ('Untitled Event' when empty), date and start time from begin, end time
-from end, place trimmed, the limit, and the Webling portal link as
-description (until phase 4) and as the link's url. The calendar goes up
-with its id and title; the layer's catalog gives the section.
+from end, place trimmed, the limit, and the Webling portal link as the
+link's url. The calendar goes up with its id and title; the layer's
+catalog gives the section (or makes the calendar's entries holidays).
 
-Registrations: an event from today on carries its participants as
+A database whose capabilities have version 2 (phase 4) also gets the last
+day (ends_on, see dates.span) and all_day (an all-day event goes up without
+times), and no description: the portal link is the link's url, the
+description the app's. Version 1 gets the link as description, as the
+legacy sync writes it, and neither of the two.
+
+Registrations: an event not over by today carries its participants as
 [{member, state}] (member = the Webling member id, state as Webling has
 it); the layer keeps the confirmed ones. participants stays None (the key
 is left out: registrations untouched) for past events and whenever the
@@ -58,10 +64,11 @@ def participant_list(objects, state_property):
     return out
 
 
-def event_record(event_id, properties, calendar, domain, participants=None):
-    """One W6 event as a record. A begin Webling left unset ('no_date') or
-    that cannot be read ('invalid_date') makes a problem record: seen (so
-    the event is never taken as gone), not written."""
+def event_record(event_id, properties, calendar, domain, participants=None, version=1):
+    """One W6 event as a record for a database of capabilities `version`.
+    A begin Webling left unset ('no_date') or that cannot be read
+    ('invalid_date') makes a problem record: seen (so the event is never
+    taken as gone), not written."""
     begin = dates.split(properties.get('begin'))
     if begin.problem:
         return {'external_id': str(event_id),
@@ -81,6 +88,13 @@ def event_record(event_id, properties, calendar, domain, participants=None):
         'description': link,
         'url': link,
     }
+    if version >= 2:
+        ends_on, all_day = dates.span(properties, begin, end)
+        data['ends_on'] = ends_on
+        data['all_day'] = all_day
+        if all_day:
+            data['time_from'] = data['time_to'] = None
+        del data['description']
     if participants is not None:
         data['participants'] = participants
     return {'external_id': str(event_id), 'data': data}
@@ -120,9 +134,18 @@ def calendars(api, selectors, counters):
     return chosen, errors
 
 
+def last_day(properties, begin, version):
+    """The day an event ends, for the window and the registrations: its
+    last day from version 2 on (a multi-day event under way still counts),
+    else its first, as the legacy sync."""
+    if version >= 2:
+        return dates.span(properties, begin, dates.split(properties.get('end'))).ends_on or begin.date
+    return begin.date
+
+
 def event_records(api, chosen, run, domain, counters):
     """W6 (or one list call per calendar), W5, W7 and W8: the records of
-    the chosen calendars. Events before the run's window (scope.from,
+    the chosen calendars. Events over before the run's window (scope.from,
     January 1 by default, as the legacy sync skips earlier years) are not
     sent. Returns (records, fetch errors)."""
     # The database's day (Zurich); the runner's clock only if it said none
@@ -152,11 +175,12 @@ def event_records(api, chosen, run, domain, counters):
                 counters[begin.problem] += 1
                 records.append(problem_record(event_id, calendar, begin.problem))
                 continue
-            if begin.date < window:
+            last = last_day(props, begin, run.version)
+            if last < window:
                 counters['before_window'] += 1
                 continue
             participants = None
-            if begin.date >= today:
+            if last >= today:
                 if logged_in is None:
                     logged_in = api.login()
                     if not logged_in:
@@ -170,7 +194,7 @@ def event_records(api, chosen, run, domain, counters):
                     else:
                         counters['participant_lists'] += 1
                         participants = participant_list(objects, state_property)
-            records.append(event_record(event_id, props, calendar, domain, participants))
+            records.append(event_record(event_id, props, calendar, domain, participants, run.version))
     print(f"Webling: {counters['events']} events, {counters['before_window']} before this year "
           f"(not sent), {counters['no_date']} without date, {counters['fetch_failed']} could not be read, "
           f"{counters['participant_lists']} participant lists read")

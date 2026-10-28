@@ -19,6 +19,7 @@
   import { invalidate } from '$app/navigation';
   import { supabaseClient } from '$lib/supabase';
   import { toaster } from '$lib/toast';
+  import { providerName } from '$lib/memberStatus';
   import type { TrainingPlanBreak } from '$lib/models';
   import type { PageData } from './$types';
 
@@ -223,6 +224,13 @@
           <div class="list-item-content">
             <div class="font-semibold truncate">{b.title}</div>
             <div class="text-sm text-surface-600-400 tabular-nums">{range(b)}</div>
+            {#if b.connection}
+              <div class="text-xs text-surface-600-400">
+                {$_('page.trainingPlan.settings.fromProvider', {
+                  values: { provider: providerName(b.connection) }
+                })}
+              </div>
+            {/if}
           </div>
           <label class="flex items-center gap-1.5 min-h-11 text-sm flex-none cursor-pointer">
             <input
@@ -234,15 +242,20 @@
             />
             <span>{$_('page.trainingPlan.settings.closedShort')}</span>
           </label>
-          <button
-            class="btn-icon size-11 p-0 flex-none text-error-600-400 hover:preset-tonal-error"
-            onclick={() => (confirmRemove = b)}
-            disabled={busy}
-            title={$_('button.delete')}
-            aria-label="{$_('button.delete')}: {b.title}"
-          >
-            <Fa icon={faTrash} />
-          </button>
+          {#if b.connection}
+            <!-- Maintained in the provider: it goes when the provider drops it -->
+            <span class="size-11 flex-none"></span>
+          {:else}
+            <button
+              class="btn-icon size-11 p-0 flex-none text-error-600-400 hover:preset-tonal-error"
+              onclick={() => (confirmRemove = b)}
+              disabled={busy}
+              title={$_('button.delete')}
+              aria-label="{$_('button.delete')}: {b.title}"
+            >
+              <Fa icon={faTrash} />
+            </button>
+          {/if}
         </li>
       {/each}
     </ul>

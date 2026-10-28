@@ -6,16 +6,16 @@ should mean writing an adapter, not changing the schema or the app.
 
 The work runs in phases; each one ships on its own.
 
-| Phase                        | What                                                                                                   | State       |
-| ---------------------------- | ------------------------------------------------------------------------------------------------------ | ----------- |
-| 0 Stop the damage            | The sync keeps registrations entered in the app; app ids fenced away from Webling ids; CI for the sync | done (#165) |
-| 1a Status and links          | `membership_status`, `member_links`, Webling fields read-only in the app, access report                | done (#166) |
-| 1b Enforce sign-in by status | Member accounts, directory and auto-approval require an active or passive membership                   | done (#171) |
-| 1c Safe merge                | Merge a duplicate (e.g. trial row and later Webling row) moving every reference in one transaction     | done (#175) |
-| 2 Integration layer          | Provider-neutral ingest in SQL (stage, apply, finish), mapping as configuration, run log               | this phase  |
-| 3 Webling on the new layer   | Webling adapter on a shared Python core; group/calendar mapping from config instead of code            | planned     |
-| 4 End dates and holidays     | Multi-day events, Webling "Ferien" into `training_plan_breaks`                                         | planned     |
-| 5 Integrations page          | Read-only status of connections, runs and issues                                                       | planned     |
+| Phase                        | What                                                                                                                                           | State                                  |
+| ---------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------- |
+| 0 Stop the damage            | The sync keeps registrations entered in the app; app ids fenced away from Webling ids; CI for the sync                                         | done (#165)                            |
+| 1a Status and links          | `membership_status`, `member_links`, Webling fields read-only in the app, access report                                                        | done (#166)                            |
+| 1b Enforce sign-in by status | Member accounts, directory and auto-approval require an active or passive membership                                                           | done (#171)                            |
+| 1c Safe merge                | Merge a duplicate (e.g. trial row and later Webling row) moving every reference in one transaction                                             | done (#175)                            |
+| 2 Integration layer          | Provider-neutral ingest in SQL (stage, apply, finish), mapping as configuration, run log                                                       | done (#176)                            |
+| 3 Webling on the new layer   | Webling adapter on a shared Python core behind `INTEGRATION_MODE` (3a); the app reads the configuration (3b); the switch is an operations step | code done (#177, #178); switch pending |
+| 4 End dates and holidays     | Multi-day and all-day events, Webling "Ferien" into `training_plan_breaks`                                                                     | this phase                             |
+| 5 Integrations page          | Status of connections, runs and issues; group and calendar mapping editor                                                                      | done (#178)                            |
 
 ## Decisions (October 2026)
 
@@ -361,16 +361,18 @@ and filled fields are read-only for staff while linked
 (`MANAGED_BY_PROVIDER`), for members, events and holidays; linked events
 and holidays cannot be deleted in the app. Webling owns name, birthday,
 mobile and groups and fills the e-mail; it owns event title, dates, section
-and description (the portal link, until phase 4) and fills times, place and
-limit; it owns holiday title and dates, while "Dojo zu" stays the TK's. The
-event page hides delete of an event its provider still has (`event_links`
-without `gone_at`) and links to it there; its edit page locks the fields
-the connection's `field_policy` gives the provider (all a provider may
-write when the policy cannot be read) and leaves the rest, such as the
-registration deadline, to the app. Deleting an event deletes its
-registrations and attendance with it (foreign keys), so a refused delete
-loses nothing. An app without the migration (Netlify deploys before a
-promotion) treats every event as not linked.
+and (from phase 4) all day, and fills times, place and limit (until phase 4
+it owned the description too, which held the portal link); it owns holiday
+title and dates, while "Dojo zu" stays the TK's. The event page hides
+delete of an event its provider still has (`event_links` without
+`gone_at`) and links to it there; its edit page locks the fields the
+connection's `field_policy` gives the provider (all a provider may write
+when the policy cannot be read; all day and the times together, as each
+changes the other) and leaves the rest, such as the registration deadline
+and, from phase 4, Webling's description, to the app. Deleting an event
+deletes its registrations and attendance with it (foreign keys), so a
+refused delete loses nothing. An app without the migration (Netlify
+deploys before a promotion) treats every event as not linked.
 
 **Identity.** Through the link first (a gone link is revived); then an
 admin's `link_to` from an import review; for Webling, a row with the
@@ -392,7 +394,7 @@ notes start with the provider's note: notes changed in the app (by staff,
 or by a merge that keeps the Webling registration with the app's notes)
 make it the app's. Rows entered in the app, and rows with attendance, are
 never removed. `events.date_to` (multi-day events) exists from now on and is
-shown from phase 4.
+shown since phase 4.
 
 **Guards.** A refused or dry apply writes nothing but its run row and new
 catalog rows. The override is the exact number from the refusal, for that
@@ -477,7 +479,7 @@ merge to `main` changes nothing on prod until the variable is set.
 The core in `src/integration/` knows no provider; `src/webling_adapter/`
 makes the legacy scripts' Webling calls and sends what they write (names
 trimmed, values as Webling has them, the portal link as description and
-url). A member Webling cannot fully answer is sent as a problem
+url; from phase 4 the link as url only, with `ends_on` and `all_day`). A member Webling cannot fully answer is sent as a problem
 (`missing_field`, `fetch_failed`): seen, so never gone, and not written.
 The events scope is the calendars Webling answered completely, so an
 unanswered calendar cannot lose events; Webling's unset date is
@@ -522,6 +524,136 @@ Without the configuration (member accounts, which may not read it; a
 database without the layer, as when Netlify deploys the app before a
 promotion; a failed load, tried again at the next navigation) the built-in
 rules apply, which are what the seeded catalog says.
+
+## End dates and holidays (phase 4)
+
+`20261030120000_event_end_dates_and_holidays.sql`. Events have a last day
+(`events.date_to`, inclusive, NULL for one day) and `events.all_day` (no
+times). Every date filter of the app is an overlap, `date <= day AND
+coalesce(date_to, date) >= day` (`endsOnOrAfter()` in
+`src/lib/eventUtils.ts`): the dashboard's events of the day, the events
+list (today and under way, upcoming, past once the last day is over), the
+event page (range chip, attendance from the first day to the last), the
+exam days' event choice, and the training plan (a multi-day event is a band
+from its first day shown and a chip on each training it covers, also one
+that begins in December of the year before). The event form has _Bis_ and
+_Ganztägig_; the Daten-Assistent writes `date_to` (until now it put
+"bis 16.11.2026" as the description's first line: the migration moves such
+lines of events no provider maintains into `date_to`). `events.date` has to
+be `YYYY-MM-DD` (a CHECK, `NOT VALID`: an old row written otherwise stays
+readable, but cannot be updated until its date is fixed), and an index
+serves the overlap.
+
+**All day.** The legacy sync writes Webling's all-day entries as 00:00 to
+00:00. The migration turns such rows into `all_day` without times, and the
+trigger `events_all_day` keeps doing so for every writer (the legacy sync
+goes on writing 00:00 until the switch); real times written to an all-day
+event make it timed again, all day set by the app or the layer drops the
+times.
+
+**The last day and the legacy sync.** The legacy sync (until the switch,
+and again after a rollback to it) upserts a Webling event's start but
+knows no last day. When it moves the start of an event whose last day the
+app (_Bis_) or an earlier layer run set, the trigger `events_keep_span`
+moves the last day by as many days: the event keeps its length, and the
+upsert does not fail on `events_date_to_check` once the start passes the
+old last day. Only for the sync's direct writes (`service_role`): staff
+send both days (the form checks them; on a linked event the days Webling
+owns are locked and not sent), and the layer writes the last day Webling
+sends (its event writers run only inside `integration_apply`, SECURITY
+DEFINER: `current_user` is the owner, also when the sync calls it).
+
+**Deploy order.** On a database that already has phase 2
+(`events.date_to`, `training_plan_breaks.connection`), an app deployed
+before this migration (Netlify can be first) saves without `all_day`
+(`saveEventRow()` retries without the column) and reads every event as
+timed. Prod is not such a database: the promotion that carries phase 4
+carries phase 2 (`20261029120000`) as well, and until Supabase has applied
+both migrations (about a minute after the merge) the training plan and its
+settings page fail to load, the dashboard's events of the day and the exam
+days' event choice are empty, and saving an event (form or Daten-Assistent)
+fails. Note it in that promotion's release notes; reloading after the
+minute is enough.
+
+**The layer, capabilities version 2.** `integration_begin` answers
+`version: 2` and takes `all_day` in event records; `ends_on` becomes
+`date_to`. Webling owns `event.all_day` and no longer the description: the
+portal link is the link's url (`event_links.url`, the event page links to
+it). Descriptions that are only that url are cleared, by the migration for
+the linked events and by the layer for events it links later (the switch
+may come after this migration). `integration_field_policy_ok()` knows
+`event.all_day`. On the edit page of a linked Webling event the
+description is open from then on, while _Datum_, _Bis_, _Ganztägig_ and
+the times stay locked (`lockedEventFields()` in `src/lib/eventLinks.ts`:
+all day and the times go together, as either changes the other). The
+migration replaces `integration_write_event(s)`, `integration_normalize_event`,
+`integration_field_policy_ok` and `integration_begin` with the phase 2
+versions (review fixes included) plus `all_day`; a failed insert still
+leaves its issue without an event id.
+
+**Webling adapter.** `ends_on` and `all_day` are sent only when the
+database's capabilities have version 2 (`webling_adapter/dates.span()`),
+and the description only to version 1, so the adapter on `main` works
+with a database before and after the promotion. All day is Webling's flag
+`isAllDay` when an event has it, else an entry from 00:00 to 00:00 (or
+without an end), as the legacy sync wrote them. A timed event that ends
+at midnight (19:00 to 00:00 the next day) ends on the day before.
+**Not verified against Webling:** whether the end of an all-day entry is
+its last day (assumed, `ALL_DAY_END_INCLUSIVE = True`) or the day after.
+Check one holiday in the
+Webling portal against the training plan after the first layer run; if
+every holiday is a day too long, set the constant to `False` (tested both
+ways). From version 2 on the window and the registrations go by the last
+day: a camp that began before January 1 is still sent, one under way still
+gets its participants.
+
+**Holidays.** Webling's calendar "Ferien und Feiertage" holds holidays now
+(`integration_calendars.target = 'break'`, `closed_max_days = 3`: a period
+of up to three days closes the dojo, a longer one is school holidays; the
+TK's "Dojo zu" wins afterwards). The migration flips the seeded row (left
+alone when an admin mapped it otherwise) and handles the calendar's events
+the layer had linked: unused ones of this year are deleted, the others
+stay as the app's (gone link); in the migration, so the next run does not
+count them under the events gone guard. Holidays reach
+`training_plan_breaks` only through the layer:
+
+- **Before the switch** (prod until phase 3 sets `INTEGRATION_MODE=layer`,
+  nothing linked): the legacy sync goes on writing the holidays as events
+  in the General section, as before; the TK enters holidays by hand (or
+  reads them in with the plan). The migration changes nothing there.
+- **The first layer run** brings them as holidays (a TK entry with the same
+  title and dates is taken over) and replaces the events the legacy sync
+  wrote for them, recognised by the Webling id and the portal link as
+  description: deleted when unused, else kept as the app's with a gone
+  link (`event_gone_kept`). The run counts `breaks_inserted`,
+  `holiday_events_deleted` and `holiday_events_kept`; none of it is under
+  the events gone guard. In shadow mode the dry run shows these numbers,
+  and `adopted` is the other calendars' events only.
+- **A rollback to legacy** writes the holidays as events again; the next
+  layer run replaces them again.
+
+Known gaps: a Webling event changed from timed to all day while the legacy
+sync still runs is stored without times but not as all day (the trigger
+cannot tell the legacy upsert's 00:00 from a cleared time); the first layer
+run of version 2 sets it. The legacy sync skips events that began before
+January 1, so a camp over New Year arrives only through the layer.
+
+A provider's holiday is read-only in the app but for "Dojo zu"
+(_Trainings & Ferien_ shows where it comes from and offers no delete), and
+the Daten-Assistent's holiday import never adds one again: a period with
+the same dates, or the same title over overlapping dates, is shown as
+_Synchronisiert_ (`src/lib/assistant/trainingPlan.ts`).
+
+Issues (phase 2's rule, unchanged): a holiday's issue names its record
+and calendar, no event, and waits for a run of that calendar; an unknown
+participant of an event under way stays open until the list is read again
+or the event's last day (`ends_on`) is over.
+
+`supabase/checks/event_dates.sql` (CI job `db-validate`) checks what the
+migration left, the legacy sync's writes, the date checks, the overlap
+filters, capabilities and policy, the layer's end dates and all day, the
+holidays before and after the switch and after a rollback, and the issues
+of holidays and multi-day events.
 
 ## Integrations page (phase 5)
 

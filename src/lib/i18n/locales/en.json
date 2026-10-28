@@ -277,6 +277,8 @@
         "breaks_adopted": "{count} holidays adopted",
         "breaks_updated": "{count} holidays updated",
         "breaks_deleted": "{count} holidays deleted",
+        "holiday_events_deleted": "{count} holiday events replaced",
+        "holiday_events_kept": "{count} holiday events kept",
         "registrations_added": "{count} registrations added",
         "registrations_removed": "{count} registrations removed",
         "registrations_adopted": "{count} registrations adopted",
@@ -737,6 +739,7 @@
       "today": "Today's Events",
       "upcoming": "Upcoming Events",
       "past": "Past Events",
+      "allDay": "All day",
       "no_events": "No events found",
       "no_events_found": "No events match your search",
       "search_placeholder": "Search events…",
@@ -774,6 +777,9 @@
         "description": "Description",
         "description_placeholder": "Describe what this event is about…",
         "date": "Date",
+        "date_to": "Until",
+        "date_to_hint": "Last day of an event over several days, otherwise leave empty",
+        "all_day": "All day (no times)",
         "time_from": "Start Time",
         "time_to": "End Time",
         "location": "Location",
@@ -785,7 +791,8 @@
         "registration_deadline": "Registration Deadline"
       },
       "validation": {
-        "required_fields": "Please fill in all required fields"
+        "required_fields": "Please fill in all required fields",
+        "date_to": "The last day cannot be before the date"
       },
       "deleteConfirmTitle": "Delete Event",
       "deleteConfirmMessage": "Are you sure you want to delete the event",
@@ -805,7 +812,7 @@
       "updateError": "Error updating event",
       "backToList": "Back to events",
       "backToEvent": "Back to event",
-      "managedBy": "This event comes from {provider} and is changed there. You record participants, attendance and the registration deadline here.",
+      "managedBy": "This event comes from {provider}: the locked fields are changed there. You record participants, attendance and everything else here.",
       "lockedByProvider": "This event comes from {provider}. Change locked fields there, and the others, such as the registration deadline, here.",
       "openInProvider": "Open in {provider}"
     },
@@ -1384,7 +1391,8 @@
         "breakDeleteConfirm": "Delete \"{title}\"?",
         "noBreaks": "No holidays yet",
         "closed": "Dojo closed: all planned trainings are cancelled",
-        "closedShort": "Dojo closed"
+        "closedShort": "Dojo closed",
+        "fromProvider": "From {provider}: maintained there, only \"Dojo closed\" here"
       },
       "checkin": {
         "cancelled": "According to the training plan this training is cancelled",
@@ -1919,7 +1927,8 @@
       "editDone": "Done",
       "otherMember": "another member",
       "status": {
-        "fill": "Addition"
+        "fill": "Addition",
+        "provider": "Synced"
       },
       "fillHint": "Adds to the existing plan:",
       "changedHint": "Differs from the existing plan:",
@@ -1941,6 +1950,7 @@
       "holidaysHint": "Added to the holidays and closures. “Dojo closed” cancels all planned trainings during that time.",
       "addHoliday": "Add",
       "holidayExists": "Already recorded, not added again.",
+      "holidayFromProvider": "Comes from {provider} as \"{title}\" ({range}) and is maintained there, so it is not added.",
       "holidayDuplicate": "Same holidays as row {row}, added only once.",
       "holidayOverlaps": "Overlaps with “{title}” ({range}).",
       "holidayIssues": {
@@ -2006,10 +2016,7 @@
       "defaultSectionNone": "None – choose per event",
       "useDefault": "Default: {section}",
       "multiDay": "Several days",
-      "multiDayInfo": "Events have no end date: an event over several days is created on its first day, with \"until …\" on the first line of its description.",
       "dateTo": "Until (several days)",
-      "untilLine": "until {date}",
-      "descriptionStarts": "The description starts with \"{line}\".",
       "include": "Create as event",
       "includeAnyway": "Create as a new event anyway",
       "duplicateOf": "A similar event is already recorded: \"{title}\" on {date}",

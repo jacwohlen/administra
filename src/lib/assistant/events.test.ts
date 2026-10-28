@@ -5,7 +5,6 @@ import {
   buildEventInserts,
   comparisonSpan,
   daysBetween,
-  eventDescription,
   eventProvider,
   formatDay,
   initialDefaultSection,
@@ -109,8 +108,6 @@ const ctx = (values: Partial<EventReviewContext> = {}): EventReviewContext => ({
   today: TODAY,
   ...values
 });
-
-const until = (date: string) => `bis ${formatDay(date)}`;
 
 function inputs(changes: Partial<EventRowInput>[] = []): EventRowInput[] {
   return initialInputs(proposal, SECTIONS).map((input, i) => ({ ...input, ...changes[i] }));
@@ -378,7 +375,7 @@ describe('review', () => {
     });
     expect(rows[3].warnings).toEqual([{ code: 'timeOrder' }]);
     // Saved with both times as read
-    const writes = buildEventInserts(rows, SECTIONS, until);
+    const writes = buildEventInserts(rows, SECTIONS);
     expect(writes.find((w) => w.row === 2)?.values).toMatchObject({
       title: 'Silvesterparty',
       date: '2026-12-31',
@@ -388,7 +385,8 @@ describe('review', () => {
     expect(writes.find((w) => w.row === 1)?.values).toMatchObject({
       timeFrom: '18:00',
       timeTo: '14:00',
-      description: 'bis 16.11.2026'
+      date_to: '2026-11-16',
+      description: null
     });
   });
 
@@ -423,28 +421,6 @@ describe('review', () => {
 });
 
 describe('writes', () => {
-  it('puts the last day of a multi-day event into the description', () => {
-    expect(
-      eventDescription({ date: '2026-11-14', dateTo: '2026-11-16', description: '' }, until)
-    ).toBe('bis 16.11.2026');
-    expect(
-      eventDescription(
-        { date: '2026-11-14', dateTo: '2026-11-16', description: 'Mit Übernachtung' },
-        until
-      )
-    ).toBe('bis 16.11.2026\nMit Übernachtung');
-    // Typed in already
-    expect(
-      eventDescription(
-        { date: '2026-11-14', dateTo: '2026-11-16', description: 'bis 16.11.2026, Tenero' },
-        until
-      )
-    ).toBe('bis 16.11.2026, Tenero');
-    expect(
-      eventDescription({ date: '2026-11-14', dateTo: '', description: ' Halle 2 ' }, until)
-    ).toBe('Halle 2');
-  });
-
   it('builds exactly the columns of the event form', () => {
     const edited = inputs([
       {},
@@ -454,13 +430,14 @@ describe('writes', () => {
       { include: false }
     ]);
     const rows = reviewEvents(proposal.events, edited, ctx());
-    const writes = buildEventInserts(rows, SECTIONS, until);
+    const writes = buildEventInserts(rows, SECTIONS);
     expect(writes.map((w) => w.row)).toEqual([1, 2]);
     expect(writes.map((w) => w.values)).toEqual([
       {
         title: 'Herbstlager',
-        description: 'bis 16.11.2026\nMit Übernachtung',
+        description: 'Mit Übernachtung',
         date: '2026-11-14',
+        date_to: '2026-11-16',
         timeFrom: null,
         timeTo: null,
         location: 'Tenero',
@@ -472,6 +449,7 @@ describe('writes', () => {
         title: 'Aikido Lehrgang mit Sensei Tanaka',
         description: null,
         date: '2026-12-05',
+        date_to: null,
         timeFrom: '10:00',
         timeTo: '12:30',
         location: 'Dojo Wohlen',
@@ -488,7 +466,7 @@ describe('writes', () => {
       inputs([{ include: true }, { include: false }, { include: false }, {}, { include: false }]),
       ctx({ defaultSection: 'Judo' })
     );
-    const inserts = buildEventInserts(rows, SECTIONS, until).map((w) => w.values);
+    const inserts = buildEventInserts(rows, SECTIONS).map((w) => w.values);
     expect(inserts.map((r) => [r.title, r.section])).toEqual([
       ['Kids Cup', 'Judo'],
       ['Chlausabend', 'Judo']
@@ -499,18 +477,18 @@ describe('writes', () => {
   it('never writes a row with errors, even when its flags say otherwise', () => {
     const rows = reviewEvents(proposal.events, inputs(), ctx());
     const forged = rows.map((row) => ({ ...row, selected: true, errors: [] }));
-    const titles = buildEventInserts(forged, SECTIONS, until).map((w) => w.values.title);
+    const titles = buildEventInserts(forged, SECTIONS).map((w) => w.values.title);
     // Chlausabend has no club section, the Generalversammlung no date
     expect(titles).toEqual(['Kids Cup', 'Herbstlager', 'Aikido Lehrgang mit Sensei Tanaka']);
     // A section that is no longer the club's
     const aikido = rows.map((row) => ({ ...row, selected: true }));
-    expect(buildEventInserts(aikido, ['Judo'], until).map((w) => w.values.title)).not.toContain(
+    expect(buildEventInserts(aikido, ['Judo']).map((w) => w.values.title)).not.toContain(
       'Aikido Lehrgang mit Sensei Tanaka'
     );
     // A row saved before, whatever its flags say
     const saved = reviewEvents(proposal.events, markSaved(inputs(), [1]), ctx());
     const again = saved.map((row) => ({ ...row, selected: true }));
-    expect(buildEventInserts(again, SECTIONS, until).map((w) => w.row)).not.toContain(1);
+    expect(buildEventInserts(again, SECTIONS).map((w) => w.row)).not.toContain(1);
   });
 });
 
@@ -566,7 +544,7 @@ describe('after a partial save', () => {
       inserts: 0,
       byStatus: { new: 0, duplicate: 1, invalid: 2, saved: 2 }
     });
-    expect(buildEventInserts(rows, SECTIONS, until)).toEqual([]);
+    expect(buildEventInserts(rows, SECTIONS)).toEqual([]);
   });
 
   it('unticks a failed row that was recorded after all', () => {
@@ -648,6 +626,7 @@ describe('saving', () => {
       title,
       description: null,
       date: '2026-11-14',
+      date_to: null,
       timeFrom: null,
       timeTo: null,
       location: null,
@@ -704,5 +683,11 @@ describe('saving', () => {
     expect(taken).toHaveBeenCalledTimes(ID_RETRIES + 1);
     const offline = vi.fn().mockRejectedValue(new Error('Failed to fetch'));
     expect((await insertEvents([row('Kids Cup')], offline)).failed).toHaveLength(1);
+  });
+});
+
+describe('formatDay', () => {
+  it('writes a date as the club reads it', () => {
+    expect(formatDay('2026-11-16')).toBe('16.11.2026');
   });
 });

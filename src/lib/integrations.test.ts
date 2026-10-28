@@ -277,6 +277,25 @@ describe('runs', () => {
       ['groups', 1]
     ]);
     expect(runCounts({ kind: 'events', result: {} })).toEqual([]);
+    // The first layer run after phase 4: holidays replace the legacy sync's events
+    expect(
+      runCounts({
+        kind: 'events',
+        result: {
+          received: 60,
+          holiday_events_kept: 1,
+          breaks_inserted: 9,
+          holiday_events_deleted: 8,
+          adopted: 51
+        }
+      })
+    ).toEqual([
+      ['received', 60],
+      ['adopted', 51],
+      ['breaks_inserted', 9],
+      ['holiday_events_deleted', 8],
+      ['holiday_events_kept', 1]
+    ]);
   });
 
   it('shows the overrides used and the fetch errors', () => {
@@ -393,6 +412,23 @@ describe('groupIssues', () => {
     });
     expect(issueShown(conflict, loaded)).toBe(true);
     expect(issueShown(kept, loaded)).toBe(true);
+  });
+
+  it("shows a holiday's issue, which names no event, by its record number", () => {
+    // Webling's "Ferien und Feiertage" fill training_plan_breaks (phase 4)
+    const holiday = issue({
+      id: 4,
+      kind: 'events',
+      code: 'invalid_value',
+      severity: 'info',
+      external_id: '94002',
+      member_id: null,
+      other_member_id: null,
+      event_id: null,
+      detail: 'all_day'
+    });
+    expect(issueShown(holiday, loaded)).toBe(true);
+    expect(groupIssues([holiday], loaded).map((g) => g.open.length)).toEqual([1]);
   });
 
   it('leaves out only what has nothing else to show it by', () => {
