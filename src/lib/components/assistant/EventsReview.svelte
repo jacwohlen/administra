@@ -3,7 +3,6 @@
   import { _ } from 'svelte-i18n';
   import Fa from 'svelte-fa';
   import {
-    faCalendarDays,
     faCheck,
     faCircleExclamation,
     faClone,
@@ -18,7 +17,6 @@
   import {
     buildEventInserts,
     comparisonSpan,
-    eventDescription,
     formatDay,
     initialDefaultSection,
     initialInputs,
@@ -120,7 +118,6 @@
   let rows = $derived(reviewEvents(proposal.events, inputs, ctxFor(compared)));
   let summary = $derived(summarizeEvents(rows));
   let count = $derived(summary.inserts);
-  let multiDay = $derived(rows.some((r) => r.input.dateTo));
 
   let span = $derived(comparisonSpan(inputs));
   // Primitives, so typing in a title does not start a load
@@ -159,7 +156,7 @@
     loading = true;
     loadFailed = false;
     try {
-      // events has no end date: an event's date is its first day
+      // Duplicates are found by their first day (findKnown)
       const [rows, links] = await Promise.all([
         fetchAllRows<KnownEvent>((from, to) =>
           supabaseClient
@@ -246,11 +243,6 @@
     return isIsoDate(date) ? formatDay(date) : date;
   }
 
-  /** First line of a multi-day event's description */
-  function untilLine(dateTo: string): string {
-    return $_('assistant.events.untilLine', { values: { date: formatDay(dateTo) } });
-  }
-
   function has(row: EventReviewRow, ...codes: EventIssue['code'][]): boolean {
     return row.errors.some((e) => codes.includes(e.code));
   }
@@ -287,7 +279,7 @@
     // canApply implies the comparison set for the rows' days is loaded
     const before = loaded;
     if (!canApply || !before) return;
-    const writes = buildEventInserts(rows, sections, untilLine);
+    const writes = buildEventInserts(rows, sections);
     if (writes.length === 0) return;
     failures = [];
     recorded = [];
@@ -398,13 +390,6 @@
     <p class="flex items-center gap-2 text-sm text-surface-600-400" aria-live="polite">
       <Fa icon={faSpinner} spin />
       <span>{$_('assistant.events.comparing')}</span>
-    </p>
-  {/if}
-
-  {#if multiDay}
-    <p class="flex items-start gap-2 p-3 rounded-lg preset-tonal-surface text-sm">
-      <Fa icon={faCalendarDays} class="mt-0.5 flex-none" />
-      <span>{$_('assistant.events.multiDayInfo')}</span>
     </p>
   {/if}
 
@@ -590,14 +575,6 @@
                     disabled={busy}
                   ></textarea>
                 </label>
-                {#if input.dateTo && !has(row, 'badDateTo', 'noDate', 'badDate')}
-                  {@const description = eventDescription(input, untilLine)}
-                  <p class="text-xs text-surface-600-400 break-words">
-                    {$_('assistant.events.descriptionStarts', {
-                      values: { line: description.split('\n')[0] }
-                    })}
-                  </p>
-                {/if}
               </div>
             </div>
           {:else}

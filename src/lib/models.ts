@@ -319,8 +319,13 @@ export interface Event {
   title: string;
   description?: string;
   date: string;
-  /** Last day of a multi-day event (inclusive), null for one day; shown from integrations phase 4 on */
+  /** Last day of a multi-day event (inclusive), null for one day */
   date_to?: string | null;
+  /**
+   * The whole day (or days): no times. Missing on a database before
+   * 20261030120000 (Netlify can deploy the app first): read as false.
+   */
+  all_day?: boolean;
   timeFrom?: string;
   timeTo?: string;
   location?: string;
@@ -637,4 +642,10 @@ export interface TrainingPlanBreak {
   date_to: string;
   /** Dojo closed: planned trainings are dropped. False: holidays, the adults train on */
   cancels_training: boolean;
+  /**
+   * The provider the holiday comes from (integration_connections, e.g.
+   * Webling's "Ferien und Feiertage"), null for the TK's own: such a
+   * holiday is read-only but for "Dojo zu"
+   */
+  connection?: string | null;
 }

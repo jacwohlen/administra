@@ -78,9 +78,9 @@ def world(monkeypatch):
     return World().install(monkeypatch)
 
 
-def run_info(today='2026-10-28', scope=None, settings=None):
+def run_info(today='2026-10-28', scope=None, settings=None, version=1):
     return SimpleNamespace(today=today, scope=scope or {'from': '2026-01-01'},
-                           settings=settings or {'participant_state_property': '594'}, version=1)
+                           settings=settings or {'participant_state_property': '594'}, version=version)
 
 
 def test_member_records_fetch_each_group_once(world, monkeypatch):
@@ -130,6 +130,78 @@ def test_event_record_defaults():
     assert data['location'] is None and data['max_participants'] is None
     # Not read (or a past event): the key is left out, registrations stay
     assert 'participants' not in data
+
+
+# end dates and all day (phase 4: capabilities version 2) ------------------
+
+def span_of(begin, end, **extra):
+    return tuple(dates.span(extra, dates.split(begin), dates.split(end)))
+
+
+@pytest.mark.parametrize('begin, end, extra, expected', [
+    # A timed event, on one day and over several
+    ('2026-11-05 18:00:00', '2026-11-05 20:00:00', {}, (None, False)),
+    ('2026-11-13 18:00:00', '2026-11-15 14:00:00', {}, ('2026-11-15', False)),
+    # Over midnight: it ends the next day
+    ('2026-12-31 20:00:00', '2027-01-01 01:00:00', {}, ('2027-01-01', False)),
+    # All day as the legacy sync wrote it: 00:00 to 00:00, the end inclusive (assumed)
+    ('2026-10-03 00:00:00', '2026-10-18 00:00:00', {}, ('2026-10-18', True)),
+    ('2026-12-25 00:00:00', '2026-12-25 00:00:00', {}, (None, True)),
+    ('2026-12-25', '2026-12-26', {}, ('2026-12-26', True)),
+    # Without an end, or an end that cannot be read or lies before the start: one day
+    ('2026-12-25 00:00:00', None, {}, (None, True)),
+    ('2026-11-05 18:00:00', 'morgen', {}, (None, False)),
+    ('2026-11-05 18:00:00', '2026-11-04 20:00:00', {}, (None, False)),
+    # Webling's own flag wins over the times
+    ('2026-10-03 00:00:00', '2026-10-18 00:00:00', {'isAllDay': False}, ('2026-10-18', False)),
+    ('2026-10-03 08:00:00', '2026-10-04 12:00:00', {'isAllDay': True}, ('2026-10-04', True)),
+    ('2026-10-03 08:00:00', '2026-10-04 12:00:00', {'isAllDay': 'ja'}, ('2026-10-04', False)),
+])
+def test_span(begin, end, extra, expected):
+    assert span_of(begin, end, **extra) == expected
+
+
+def test_span_if_webling_ends_all_day_entries_the_day_after(monkeypatch):
+    # The switch for an exclusive end (see ALL_DAY_END_INCLUSIVE)
+    monkeypatch.setattr(dates, 'ALL_DAY_END_INCLUSIVE', False)
+    assert span_of('2026-10-03 00:00:00', '2026-10-19 00:00:00') == ('2026-10-18', True)
+    assert span_of('2026-12-25 00:00:00', '2026-12-26 00:00:00') == (None, True)
+    # Timed events are not concerned
+    assert span_of('2026-11-13 18:00:00', '2026-11-15 14:00:00') == ('2026-11-15', False)
+
+
+def test_event_record_for_version_2():
+    link = 'https://club.webling.ch/portal#/calendar/event/7001'
+    holiday = event_record(7001, props(begin='2026-10-03 00:00:00', end='2026-10-18 00:00:00'),
+                           CAL, 'club', version=2)['data']
+    assert holiday == {
+        'calendar': {'id': '501', 'name': 'Judo Agenda'}, 'title': 'Kyu Prüfung',
+        'starts_on': '2026-10-03', 'ends_on': '2026-10-18', 'all_day': True,
+        'time_from': None, 'time_to': None, 'location': 'Dojo', 'max_participants': 12, 'url': link}
+    timed = event_record(7001, props(), CAL, 'club', version=2)['data']
+    assert (timed['ends_on'], timed['all_day'], timed['time_from'], timed['time_to']) == (
+        None, False, '18:00', '20:00')
+    assert 'description' not in timed
+    # Version 1: as the legacy sync, without the two keys
+    old = event_record(7001, props(begin='2026-10-03 00:00:00', end='2026-10-18 00:00:00'), CAL, 'club')
+    assert 'ends_on' not in old['data'] and 'all_day' not in old['data']
+    assert (old['data']['time_from'], old['data']['description']) == ('00:00', link)
+
+
+def test_version_2_counts_a_multi_day_event_until_its_end(world):
+    world.calendars = {1: {'title': 'Club', 'events': [11, 12]}}
+    # Begun before the window, ends inside it; under way today
+    world.events = {11: props(begin='2025-12-30 00:00:00', end='2026-01-02 00:00:00'),
+                    12: props(begin='2026-10-26 09:00:00', end='2026-10-30 17:00:00')}
+    world.participants = {12: [participant(1, [1001])]}
+    adapter = WeblingAdapter('club', 'key', 'sync@example.com', 'pw')
+    plan = adapter.plan('events')
+    old = {r['external_id']: r['data'] for r in adapter.records(plan, run_info())}
+    assert sorted(old) == ['12'] and 'participants' not in old['12']
+    adapter = WeblingAdapter('club', 'key', 'sync@example.com', 'pw')
+    records = {r['external_id']: r['data'] for r in adapter.records(adapter.plan('events'), run_info(version=2))}
+    assert records['11']['ends_on'] == '2026-01-02'
+    assert records['12']['participants'] == [{'member': '1001', 'state': 'confirmed'}]
 
 
 @pytest.mark.parametrize('value, sent', [(12, 12), ('12', 12), (None, None), ('zwölf', 'zwölf')])

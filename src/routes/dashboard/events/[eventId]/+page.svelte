@@ -29,7 +29,8 @@
     isRegistrationOpen as _isRegistrationOpen,
     canAddParticipants,
     attendanceTimestamp,
-    calculateAttendanceRate
+    calculateAttendanceRate,
+    formatEventDates
   } from '$lib/eventUtils';
   import type { Medal } from '$lib/models';
   import { MEDALS, medalEmoji } from '$lib/gradeUtils';
@@ -57,8 +58,13 @@
     return time || '';
   }
 
+  // From the first day on (every day of a multi-day event)
   function canTrackAttendance() {
     return _canTrackAttendance(data.event.date);
+  }
+
+  function attendedAt() {
+    return attendanceTimestamp(data.event.date, data.event.timeFrom, data.event.date_to);
   }
 
   function isRegistrationOpen() {
@@ -148,7 +154,7 @@
           eventId: data.event.id,
           memberId: memberId,
           isCoach: isCoach,
-          attendedAt: attendanceTimestamp(data.event.date, data.event.timeFrom)
+          attendedAt: attendedAt()
         });
 
         if (error) {
@@ -333,9 +339,14 @@
     <div class="flex flex-wrap gap-3 text-sm text-surface-600-400">
       <span class="meta-item">
         <Fa icon={faCalendarDays} size="sm" />
-        {formatEventDate(data.event.date)}
+        {formatEventDates(data.event)}
       </span>
-      {#if data.event.timeFrom}
+      {#if data.event.all_day}
+        <span class="meta-item">
+          <Fa icon={faClock} size="sm" />
+          {$_('page.events.allDay')}
+        </span>
+      {:else if data.event.timeFrom}
         <span class="meta-item">
           <Fa icon={faClock} size="sm" />
           {formatTime(data.event.timeFrom)}{#if data.event.timeTo}
@@ -436,9 +447,7 @@
             <AddEventParticipant
               eventId={data.event.id}
               existingParticipants={existingParticipantIds}
-              attendedAt={addAsAttended
-                ? () => attendanceTimestamp(data.event.date, data.event.timeFrom)
-                : undefined}
+              attendedAt={addAsAttended ? attendedAt : undefined}
               onadded={onParticipantAdded}
             />
           </div>

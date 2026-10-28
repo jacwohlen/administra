@@ -15,6 +15,7 @@
   import { _ } from 'svelte-i18n';
   import RecentAchievements from '$lib/components/RecentAchievements.svelte';
   import { compareTrainings, formatTime } from '$lib/trainingUtils';
+  import { endsOnOrAfter, formatEventDates } from '$lib/eventUtils';
 
   let date: Dayjs = utils.getMostRecentDateByWeekday(dayjs().day());
   const dateFormat = 'YYYY-MM-DD';
@@ -33,10 +34,6 @@
     getTodayEvents();
   }
 
-  function formatEventDate(date: string) {
-    return dayjs(date).format('DD.MM.YYYY');
-  }
-
   async function getTrainingsForDay() {
     const { data } = await supabaseClient
       .from('trainings')
@@ -47,13 +44,18 @@
     if (data) trainings = [...data].sort(compareTrainings);
   }
 
+  // The events on the day: one-day events of that day and multi-day events
+  // under way (first day on or before it, last day on or after it); all-day
+  // ones (no time) first
   async function getTodayEvents() {
     const today = date.format('YYYY-MM-DD');
     const { data } = await supabaseClient
       .from('events')
       .select('*')
-      .eq('date', today)
-      .order('timeFrom', { ascending: true })
+      .lte('date', today)
+      .or(endsOnOrAfter(today))
+      .order('timeFrom', { ascending: true, nullsFirst: true })
+      .order('date', { ascending: true })
       .returns<Event[]>();
 
     if (data) todayEvents = data;
@@ -140,7 +142,7 @@
             <dd class="flex items-center gap-2 text-sm text-surface-600-400">
               <span class="meta-item">
                 <Fa icon={faCalendarDays} size="sm" />
-                {formatEventDate(event.date)}
+                {formatEventDates(event)}
               </span>
               {#if event.location}
                 <span class="meta-item truncate">

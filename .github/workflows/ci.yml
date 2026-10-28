@@ -203,6 +203,13 @@ jobs:
           psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres"
           -v ON_ERROR_STOP=1 -q -f supabase/checks/integration_layer.sql
 
+      # End dates and all day: the legacy sync's writes, the overlap filters,
+      # capabilities version 2, Webling's holidays as the plan's breaks
+      - name: Check event dates and holidays
+        run: >-
+          psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres"
+          -v ON_ERROR_STOP=1 -q -f supabase/checks/event_dates.sql
+
   build:
     runs-on: ubuntu-latest
     needs: [lint-and-check, unit-tests]

@@ -1196,15 +1196,22 @@ DECLARE
   r jsonb;
 BEGIN
   PERFORM pg_temp.fx_setup();
-  v_xmin := (SELECT jsonb_object_agg(id, xmin::text) FROM public.events WHERE id > 61000);
+  -- Everything but the description, which held the portal link (now the
+  -- link's url: cleared on adoption since phase 4)
+  v_xmin := (SELECT jsonb_object_agg(id, md5(row(title, date, date_to, all_day, "timeFrom", "timeTo", location,
+                                                 section, "maxParticipants", "registrationDeadline")::text))
+               FROM public.events WHERE id > 61000);
   PERFORM pg_temp.as_sync();
   r := pg_temp.run('webling', 'events', pg_temp.ev_scope(), pg_temp.ev_snapshot());
   RESET ROLE;
   PERFORM pg_temp.eq('V1 first run on the legacy events: all adopted, none changed',
     concat_ws('/', r->>'final', r->'result'->>'adopted', r->'result'->>'updated', r->'result'->>'inserted',
               r->'result'->>'gone'), 'ok/40/0/0/0');
-  PERFORM pg_temp.eq('V1 no event row rewritten',
-    (SELECT count(*)::text FROM public.events e WHERE e.id > 61000 AND e.xmin::text <> v_xmin->>(e.id::text)), '0');
+  PERFORM pg_temp.eq('V1 no event changed but the portal link leaving the description',
+    (SELECT count(*)::text FROM public.events e WHERE e.id > 61000
+        AND (e.description IS NOT NULL
+             OR md5(row(title, date, date_to, all_day, "timeFrom", "timeTo", location, section, "maxParticipants",
+                        "registrationDeadline")::text) <> v_xmin->>(e.id::text))), '0');
   PERFORM pg_temp.eq('V1 the legacy registrations become Webling''s, none added or removed',
     concat_ws('/', r->'result'->>'registrations_adopted', r->'result'->>'registrations_added',
               r->'result'->>'registrations_removed'), '6/0/0');
@@ -1594,11 +1601,11 @@ BEGIN
   INSERT INTO public.training_plan_breaks (title, date_from, date_to, cancels_training)
   VALUES ('Herbstferien', pg_temp.fx_date(10), pg_temp.fx_date(23), false);
   v_recs := jsonb_build_array(
-    jsonb_build_object('external_id', '71001', 'data', jsonb_build_object('calendar', jsonb_build_object('id', 'c9', 'name', 'Ferien und Feiertage'),
+    jsonb_build_object('external_id', '71001', 'data', jsonb_build_object('calendar', jsonb_build_object('id', 'c9', 'name', 'Schulferien'),
       'title', 'Herbstferien', 'starts_on', pg_temp.fx_date(10), 'ends_on', pg_temp.fx_date(23))),
-    jsonb_build_object('external_id', '71002', 'data', jsonb_build_object('calendar', jsonb_build_object('id', 'c9', 'name', 'Ferien und Feiertage'),
+    jsonb_build_object('external_id', '71002', 'data', jsonb_build_object('calendar', jsonb_build_object('id', 'c9', 'name', 'Schulferien'),
       'title', 'Feiertag', 'starts_on', pg_temp.fx_date(30))),
-    jsonb_build_object('external_id', '71003', 'data', jsonb_build_object('calendar', jsonb_build_object('id', 'c9', 'name', 'Ferien und Feiertage'),
+    jsonb_build_object('external_id', '71003', 'data', jsonb_build_object('calendar', jsonb_build_object('id', 'c9', 'name', 'Schulferien'),
       'title', 'Weihnachtsferien', 'starts_on', pg_temp.fx_date(50), 'ends_on', pg_temp.fx_date(64))));
   PERFORM pg_temp.as_sync();
   r := pg_temp.run('webling', 'events', pg_temp.ev_scope('{c9}'), v_recs);
@@ -1608,7 +1615,7 @@ BEGIN
   SELECT id INTO v_cal FROM public.integration_calendars WHERE external_id = 'c9';
   PERFORM pg_temp.act_as(v_admin);
   r := public.integration_set_mapping('webling', jsonb_build_object('calendars', jsonb_build_array(
-         jsonb_build_object('id', v_cal, 'target', 'break'))));
+         jsonb_build_object('id', v_cal, 'target', 'break', 'closed_max_days', 3))));
   RESET ROLE;
   PERFORM pg_temp.as_sync();
   r := pg_temp.run('webling', 'events', pg_temp.ev_scope('{c9}'), v_recs);

@@ -534,33 +534,19 @@ export function spanCovers(loaded: DateSpan | null, needed: DateSpan | null): bo
 
 // ----- What is written -----
 
-/** Exactly the columns of the "Event erstellen" form (dashboard/events/new). */
+/** The columns of the "Event erstellen" form (dashboard/events/new) the assistant fills. */
 export interface EventInsert {
   title: string;
   description: string | null;
   date: string;
+  /** Last day of a multi-day event, null for one day */
+  date_to: string | null;
   timeFrom: string | null;
   timeTo: string | null;
   location: string | null;
   section: string;
   maxParticipants: null;
   registrationDeadline: null;
-}
-
-/**
- * The description as saved. events has no end date, so a multi-day event
- * is created on its first day with `untilLine(dateTo)` ("bis 16.11.2026")
- * as the description's first line.
- */
-export function eventDescription(
-  input: Pick<EventRowInput, 'date' | 'dateTo' | 'description'>,
-  untilLine: (dateTo: string) => string
-): string {
-  const text = cleanText(input.description, MAX_LENGTH.description, true);
-  const multiDay = isIsoDate(input.date) && isIsoDate(input.dateTo) && input.dateTo > input.date;
-  if (!multiDay) return text;
-  const line = untilLine(input.dateTo);
-  return text.startsWith(line) ? text : `${line}\n${text}`.trim();
 }
 
 /** One event to create, with the review row it comes from */
@@ -577,8 +563,7 @@ export interface EventWrite {
  */
 export function buildEventInserts(
   rows: EventReviewRow[],
-  sections: readonly string[],
-  untilLine: (dateTo: string) => string
+  sections: readonly string[]
 ): EventWrite[] {
   const writes: EventWrite[] = [];
   rows.forEach((row, index) => {
@@ -589,8 +574,10 @@ export function buildEventInserts(
       row: index,
       values: {
         title: cleanText(input.title, MAX_LENGTH.title),
-        description: eventDescription(input, untilLine) || null,
+        description: cleanText(input.description, MAX_LENGTH.description, true) || null,
         date: input.date,
+        // Checked by inputErrors: a real date after the first day
+        date_to: input.dateTo || null,
         timeFrom: input.timeFrom || null,
         timeTo: input.timeTo || null,
         location: cleanText(input.location, MAX_LENGTH.location) || null,

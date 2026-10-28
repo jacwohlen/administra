@@ -136,6 +136,12 @@ Webling (the same calls as the legacy scripts) and builds the records.
   January 1 of this year are not sent; an event that cannot be read is sent
   as `fetch_failed`, Webling's unset date (1970) as `no_date`. Participants
   go up for events from today on, and only when Webling's list was read.
+  A database whose `capabilities` have version 2 (integrations phase 4)
+  gets the last day (`ends_on`) and `all_day` (Webling's `isAllDay`, else
+  00:00 to 00:00), no description (the portal link is the link's url),
+  and the window and participants go by the last day. That the end of an
+  all-day entry is its last day (inclusive) is an assumption, see
+  `ALL_DAY_END_INCLUSIVE` in `src/webling_adapter/dates.py`.
 - Records are staged 500 per call, each with only the keys the database
   lists in `capabilities` (a newer adapter never sends what an older
   database does not know). `integration_finish` is always called once the
@@ -253,6 +259,13 @@ prod/dev → Environment variables**).
 3. **Prod:** set `INTEGRATION_MODE=layer`. The first night adopts the
    events (`adopted` about 85, `updated 0`); from the second night on they
    are `unchanged`.
+
+If the end dates migration (phase 4, Promotion 3) is on prod before the
+switch, the shadow and first nights differ: the calendar "Ferien und
+Feiertage" brings holidays (`breaks_inserted` and `holiday_events_deleted`
+about the number of this year's holidays, `adopted` the other calendars'
+events only), and adopted events lose the portal link as description and
+get their last day and all day.
 
 **Rollback:** set `INTEGRATION_MODE` back to `legacy` (or delete it). Safe
 only while no merge has moved a Webling link and no group status was

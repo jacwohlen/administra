@@ -737,6 +737,7 @@
       "today": "Heutige Events",
       "upcoming": "Kommende Events",
       "past": "Vergangene Events",
+      "allDay": "Ganztägig",
       "no_events": "Keine Events gefunden",
       "no_events_found": "Keine Events entsprechen deiner Suche",
       "search_placeholder": "Events suchen…",
@@ -774,6 +775,9 @@
         "description": "Beschreibung",
         "description_placeholder": "Beschreibe worum es bei diesem Event geht…",
         "date": "Datum",
+        "date_to": "Bis",
+        "date_to_hint": "Letzter Tag eines mehrtägigen Events, sonst leer lassen",
+        "all_day": "Ganztägig (ohne Zeiten)",
         "time_from": "Startzeit",
         "time_to": "Endzeit",
         "location": "Ort",
@@ -785,7 +789,8 @@
         "registration_deadline": "Anmeldeschluss"
       },
       "validation": {
-        "required_fields": "Bitte alle Pflichtfelder ausfüllen"
+        "required_fields": "Bitte alle Pflichtfelder ausfüllen",
+        "date_to": "Der letzte Tag kann nicht vor dem Datum liegen"
       },
       "deleteConfirmTitle": "Event löschen",
       "deleteConfirmMessage": "Bist du sicher, dass du das Event löschen möchtest",
@@ -1384,7 +1389,8 @@
         "breakDeleteConfirm": "«{title}» löschen?",
         "noBreaks": "Noch keine Ferien erfasst",
         "closed": "Dojo geschlossen: alle geplanten Trainings fallen aus",
-        "closedShort": "Dojo zu"
+        "closedShort": "Dojo zu",
+        "fromProvider": "Aus {provider}: dort gepflegt, hier nur «Dojo zu»"
       },
       "checkin": {
         "cancelled": "Laut Trainingsplan fällt dieses Training aus",
@@ -1919,7 +1925,8 @@
       "editDone": "Fertig",
       "otherMember": "anderes Mitglied",
       "status": {
-        "fill": "Ergänzung"
+        "fill": "Ergänzung",
+        "provider": "Synchronisiert"
       },
       "fillHint": "Ergänzt die bestehende Planung:",
       "changedHint": "Weicht von der bestehenden Planung ab:",
@@ -1941,6 +1948,7 @@
       "holidaysHint": "Werden zu den Ferien und Ausfallzeiten hinzugefügt. «Dojo zu» lässt alle geplanten Trainings in dieser Zeit ausfallen.",
       "addHoliday": "Übernehmen",
       "holidayExists": "Schon erfasst, wird nicht nochmals hinzugefügt.",
+      "holidayFromProvider": "Kommt als «{title}» ({range}) aus {provider} und wird dort gepflegt, darum nicht übernommen.",
       "holidayDuplicate": "Gleiche Ferien wie Zeile {row}, werden nur einmal hinzugefügt.",
       "holidayOverlaps": "Überschneidet sich mit «{title}» ({range}).",
       "holidayIssues": {
@@ -2006,10 +2014,7 @@
       "defaultSectionNone": "Keine – pro Termin wählen",
       "useDefault": "Standard: {section}",
       "multiDay": "Mehrtägig",
-      "multiDayInfo": "Events haben kein Enddatum: Ein mehrtägiger Termin wird am ersten Tag erstellt, und «bis …» steht in der ersten Zeile der Beschreibung.",
       "dateTo": "Bis (mehrtägig)",
-      "untilLine": "bis {date}",
-      "descriptionStarts": "Die Beschreibung beginnt mit «{line}».",
       "include": "Als Event erstellen",
       "includeAnyway": "Trotzdem als neues Event erstellen",
       "duplicateOf": "Ähnliches Event schon erfasst: «{title}» am {date}",

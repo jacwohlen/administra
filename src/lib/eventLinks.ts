@@ -49,14 +49,15 @@ export function canDeleteEvent(canWrite: boolean, link: EventLink | null | undef
 
 /**
  * Event fields a provider may own or fill (integration_field_policy_ok() in
- * the integration layer migration). The registration deadline is never one
- * of them: it always stays the app's.
+ * the integration layer migration; all_day from phase 4). The registration
+ * deadline is never one of them: it always stays the app's.
  */
 export const PROVIDER_EVENT_FIELDS = [
   'title',
   'description',
   'date',
   'date_to',
+  'all_day',
   'timeFrom',
   'timeTo',
   'location',
@@ -66,12 +67,16 @@ export const PROVIDER_EVENT_FIELDS = [
 
 export type ProviderEventField = (typeof PROVIDER_EVENT_FIELDS)[number];
 
+/** All day and the times: the database derives one from the other (events_all_day). */
+const ALL_DAY_AND_TIMES: readonly ProviderEventField[] = ['all_day', 'timeFrom', 'timeTo'];
+
 /**
  * The fields of an event the app cannot change while its provider has it:
  * those the connection's field_policy marks 'owned' or 'fill' (what
- * trigger_guard_provider_event() refuses). Without a readable policy, every
- * field a provider may write, so the edit page never offers a change the
- * database would refuse.
+ * trigger_guard_provider_event() refuses). All day and the times are locked
+ * together: times written to an all-day event make it timed, all day drops
+ * the times. Without a readable policy, every field a provider may write,
+ * so the edit page never offers a change the database would refuse.
  */
 export function lockedEventFields(
   link: EventLink | null | undefined,
@@ -84,7 +89,10 @@ export function lockedEventFields(
     return [...PROVIDER_EVENT_FIELDS];
   }
   const policy = fieldPolicy as Record<string, unknown>;
-  return PROVIDER_EVENT_FIELDS.filter((field) =>
-    ['owned', 'fill'].includes(policy[`event.${field}`] as string)
+  const owned = (field: ProviderEventField) =>
+    ['owned', 'fill'].includes(policy[`event.${field}`] as string);
+  const timesLocked = ALL_DAY_AND_TIMES.some(owned);
+  return PROVIDER_EVENT_FIELDS.filter(
+    (field) => owned(field) || (timesLocked && ALL_DAY_AND_TIMES.includes(field))
   );
 }

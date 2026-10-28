@@ -6,15 +6,20 @@
   import Fa from 'svelte-fa';
   import { faSave, faArrowLeft, faArrowsRotate } from '@fortawesome/free-solid-svg-icons';
   import { clubConfig } from '$lib/clubConfig';
+  import {
+    eventDateInput,
+    eventDateValues,
+    saveEventRow,
+    type EventDateInput
+  } from '$lib/eventUtils';
+  import EventDateFields from '../../EventDateFields.svelte';
   import { isManagedByProviderError, providerName } from '$lib/memberStatus';
 
   let { data }: { data: PageData } = $props();
 
   let title = data.event.title;
   let description = data.event.description || '';
-  let date = data.event.date;
-  let timeFrom = data.event.timeFrom || '';
-  let timeTo = data.event.timeTo || '';
+  let dates = $state<EventDateInput>(eventDateInput(data.event));
   let location = data.event.location || '';
   let section = data.event.section;
   let maxParticipants: number | undefined = data.event.maxParticipants || undefined;
@@ -31,20 +36,25 @@
 
   async function updateEvent() {
     const missing = (field: string, value: unknown) => !locked.has(field) && !value;
-    if (missing('title', title) || missing('date', date) || missing('section', section)) {
+    if (missing('title', title) || missing('date', dates.date) || missing('section', section)) {
       error = $_('page.events.validation.required_fields');
+      return;
+    }
+    // Locked date fields keep their stored values, so the days are checked
+    // as they will be stored
+    const when = eventDateValues(dates, locked);
+    if (when === 'dateToBeforeDate') {
+      error = $_('page.events.validation.date_to');
       return;
     }
 
     loading = true;
     error = '';
 
-    const fields: Record<string, unknown> = {
+    const fields = {
       title,
       description: description || null,
-      date,
-      timeFrom: timeFrom || null,
-      timeTo: timeTo || null,
+      ...when,
       location: location || null,
       section,
       maxParticipants: maxParticipants || null,
@@ -52,10 +62,12 @@
     };
 
     try {
-      const { error: updateError } = await supabaseClient
-        .from('events')
-        .update(Object.fromEntries(Object.entries(fields).filter(([field]) => !locked.has(field))))
-        .eq('id', data.event.id);
+      const { error: updateError } = await saveEventRow(
+        Object.fromEntries(
+          Object.entries(fields).filter(([field]) => !locked.has(field))
+        ) as Partial<typeof fields>,
+        (values) => supabaseClient.from('events').update(values).eq('id', data.event.id)
+      );
 
       if (updateError) {
         console.error('Error updating event:', updateError);
@@ -140,20 +152,14 @@
       />
     </div>
 
-    <!-- Date -->
-    <div>
-      <label class="label" for="date">
-        <span>{$_('page.events.form.date')} *</span>
-      </label>
-      <input
-        id="date"
-        type="date"
-        class="input"
-        bind:value={date}
-        required
-        disabled={locked.has('date')}
-      />
-    </div>
+    <EventDateFields
+      bind:date={dates.date}
+      bind:dateTo={dates.dateTo}
+      bind:allDay={dates.allDay}
+      bind:timeFrom={dates.timeFrom}
+      bind:timeTo={dates.timeTo}
+      {locked}
+    />
 
     <!-- Section -->
     <div>
@@ -174,36 +180,8 @@
       </select>
     </div>
 
-    <!-- Time From -->
-    <div>
-      <label class="label" for="timeFrom">
-        <span>{$_('page.events.form.time_from')}</span>
-      </label>
-      <input
-        id="timeFrom"
-        type="time"
-        class="input"
-        bind:value={timeFrom}
-        disabled={locked.has('timeFrom')}
-      />
-    </div>
-
-    <!-- Time To -->
-    <div>
-      <label class="label" for="timeTo">
-        <span>{$_('page.events.form.time_to')}</span>
-      </label>
-      <input
-        id="timeTo"
-        type="time"
-        class="input"
-        bind:value={timeTo}
-        disabled={locked.has('timeTo')}
-      />
-    </div>
-
     <!-- Location -->
-    <div class="md:col-span-2">
+    <div>
       <label class="label" for="location">
         <span>{$_('page.events.form.location')}</span>
       </label>
