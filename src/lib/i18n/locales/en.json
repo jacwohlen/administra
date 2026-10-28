@@ -596,7 +596,9 @@
       "createError": "Error creating event",
       "updateError": "Error updating event",
       "backToList": "Back to events",
-      "backToEvent": "Back to event"
+      "backToEvent": "Back to event",
+      "managedBy": "This event comes from {provider} and is changed there. You record participants and attendance here.",
+      "openInProvider": "Open in {provider}"
     },
     "trialRegistration": {
       "title": "Trial Training Registration",

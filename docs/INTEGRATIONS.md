@@ -11,8 +11,8 @@ The work runs in phases; each one ships on its own.
 | 0 Stop the damage            | The sync keeps registrations entered in the app; app ids fenced away from Webling ids; CI for the sync | done (#165) |
 | 1a Status and links          | `membership_status`, `member_links`, Webling fields read-only in the app, access report                | done (#166) |
 | 1b Enforce sign-in by status | Member accounts, directory and auto-approval require an active or passive membership                   | done (#171) |
-| 1c Safe merge                | Merge a duplicate (e.g. trial row and later Webling row) moving every reference in one transaction     | this phase  |
-| 2 Integration layer          | Provider-neutral ingest in SQL (stage, apply, finish), mapping as configuration, run log               | planned     |
+| 1c Safe merge                | Merge a duplicate (e.g. trial row and later Webling row) moving every reference in one transaction     | done (#175) |
+| 2 Integration layer          | Provider-neutral ingest in SQL (stage, apply, finish), mapping as configuration, run log               | this phase  |
 | 3 Webling on the new layer   | Webling adapter on a shared Python core; group/calendar mapping from config instead of code            | planned     |
 | 4 End dates and holidays     | Multi-day events, Webling "Ferien" into `training_plan_breaks`                                         | planned     |
 | 5 Integrations page          | Read-only status of connections, runs and issues                                                       | planned     |
@@ -40,7 +40,9 @@ The work runs in phases; each one ships on its own.
 
 `members.membership_status` is derived from the labels and the provider
 link by `member_status_from_labels()` whenever either changes. Never set it
-directly.
+directly. From phase 2 on, a linked member's status comes from the
+provider's group catalog (`integration_member_groups`, see "Integration
+layer" below), whose seeded rows are exactly this table.
 
 | Labels (exact spelling)                     | Status       | Member accounts get in |
 | ------------------------------------------- | ------------ | ---------------------- |
@@ -189,14 +191,17 @@ Known gaps:
 
 - An e-mail removed in Webling stays in Administra (the sync only sends
   addresses Webling has), so the old address keeps matching.
-- A status group renamed in Webling on purpose needs the new title in
-  `member_status_from_labels()` (a migration) and that migration promoted
-  to prod; until then the guard above refuses the run, or a manual run with
+- A status group renamed in Webling on purpose: from phase 3 on (the sync
+  on the integration layer), renamed groups keep their status (phase 2,
+  bound by id); a new status group is mapped on the Integrations page
+  (`integration_set_mapping`). Until then the legacy sync writes the new
+  title as a label, the guard above refuses the run, and a manual run with
   `accept_status_drop` lets the drop through. `status_from_labels()` in
   `webling-sync/src/sync_rules.py` is only the tests' copy of the rule.
 - Changes under the guard's limits go through (the run only logs their
   number), also a large change spread over several nights. Mass changes
-  the other way (many members starting to count) have no guard.
+  the other way (many members starting to count): from phase 3 on,
+  `status_gain`.
 - An app trial candidate whose trial label a trainer removes counts as an
   active member (1a rule); merge it into the Webling record (below).
 
@@ -291,3 +296,130 @@ that has one.
 The Webling sync needs no change: the kept Webling row keeps its id, and the
 sync never writes notes, photo, trial fields or registrations entered in the
 app. `webling-sync/src/duplicates.py` is removed.
+
+## Integration layer (phase 2)
+
+`20261029120000_integration_layer.sql`. Every provider makes the same four
+calls. The adapter only fetches and translates; the database does the rest,
+one transaction per apply: `integration_begin(connection, kind, options)`
+opens a run of `members` or `events` and returns the scope, today in
+Zurich, the connection's settings and the record keys this database
+understands (`capabilities`); `integration_stage(run, records)` takes up to
+1000 records per call; `integration_apply(run, options)` resolves identity,
+maps, applies the guards and writes; `integration_finish(run, report)`
+closes the run and deletes the staged records. The sync calls them with the
+service role key. An admin may call them only for a connection that runs in
+the app (`runs_in = 'app'`, e.g. a CSV upload) and only on runs that admin
+started. Webling is never fed by hand. At most one run per connection and
+kind is open; one left open for an hour is closed at the next begin.
+
+Records carry ids, never names as ids. A field left out stays as it is. A
+record with a `problem` (e.g. `fetch_failed`, or `no_date` for Webling's
+unset dates) counts as seen, so it never goes as gone, but is not written.
+Values are stored as sent; names and titles are trimmed. One record the
+database refuses is noted as `write_failed`; the others are written.
+
+**Mapping.** `integration_member_groups` maps each provider group to a
+label, a status with a rank, hidden (no chip) and a role (`trainer`);
+`integration_calendars` maps each calendar to events with a section, to
+holidays (`training_plan_breaks`) or to nothing. Rows are bound to the
+provider's id when first seen, so a group renamed in Webling keeps its
+status. New groups come without a status, hidden when they look like
+bookkeeping (`^\d\d_[A-Z]`); new calendars hold events in the section of
+the first matching rule (judo, aikido, club/verein, else General). Both are
+listed as not reviewed. A linked member's status is the status group with
+the lowest rank among its labels (`03_Austritt` first; the app's own
+`probetraining` ranks right after `Nicht-Mitglieder`), else the connection's default
+(`non_member`); all links gone: `left`; no link: the rule above
+(`member_status_for()`). With the seeded rows this is exactly the table
+above; the migration fails if one stored status would change. Admins
+change a mapping with `integration_set_mapping`: preview first (dry run);
+the statuses are derived again at once under the guards below, and the
+change is logged as a `config` run. Identity rules, owned fields and guard
+limits change only by migration. Staff read the connections and catalogs;
+nobody writes them through the API.
+
+**Owned fields.** `integration_connections.field_policy` says, per field,
+whether the provider owns it (written as sent, also cleared), fills it
+(written only when it has a value) or sets it only once (`initial`). Owned
+and filled fields are read-only for staff while linked
+(`MANAGED_BY_PROVIDER`), for members, events and holidays; linked events
+and holidays cannot be deleted in the app. Webling owns name, birthday,
+mobile and groups and fills the e-mail; it owns event title, dates, section
+and description (the portal link, until phase 4) and fills times, place and
+limit; it owns holiday title and dates, while "Dojo zu" stays the TK's. The
+event page hides edit and delete of an event its provider still has
+(`event_links` without `gone_at`) and links to it there; deleting an event
+deletes its registrations and attendance with it (foreign keys), so a
+refused delete loses nothing. An app without the migration (Netlify
+deploys before a promotion) treats every event as not linked.
+
+**Identity.** Through the link first (a gone link is revived); then an
+admin's `link_to` from an import review; for Webling, a row with the
+Webling id that has no link yet; otherwise a new row. A member has at most
+one live link. A new member gets its e-mail only after its link, so
+automatic approval only ever sees the provider's status. A record that
+looks like a member the connection does not have (same e-mail, or same name
+and birthday) is reported as `possible_duplicate`, never merged; a
+connection with `on_possible_duplicate = 'skip'` holds it back until it is
+linked or merged. Events work like members (`event_links`, one live link
+per event): the first run links every current-year event the legacy sync
+wrote. Holidays are found through their link, else a TK entry with the same
+title and dates. Registrations the provider manages carry
+`event_participants.source_connection` (backfilled from the "Imported from
+Webling" notes); confirmed participants are found through live member
+links. Rows entered in the app, and rows with attendance, are never
+removed. `events.date_to` (multi-day events) exists from now on and is
+shown from phase 4.
+
+**Guards.** A refused or dry apply writes nothing but its run row and new
+catalog rows. The override is the exact number from the refusal, for that
+run only:
+
+| Refused                                                                                                                             | Override             |
+| ----------------------------------------------------------------------------------------------------------------------------------- | -------------------- |
+| Complete snapshot without records                                                                                                   | none                 |
+| Members gone (and rows in the Webling range never linked) > max(5, a tenth of the live links)                                       | `accept_gone`        |
+| Members losing an active or passive membership (apart from those gone) > max(5, a tenth of those counting), or > half of one status | `accept_status_drop` |
+| Members starting to count (new members excluded) > max(5, a tenth)                                                                  | `accept_status_gain` |
+| Events or holidays gone from calendars read completely, within the window, > max(5, a tenth)                                        | `accept_events_gone` |
+
+A partial run (one calendar, a partial member list) never marks anything
+gone. A future event gone from the provider that nobody used in the app
+(attendance, app registrations, exams, medals) is deleted; any other is kept
+as the app's and reported.
+
+**Run log and issues.** Admins read `integration_runs` (kind, scope,
+trigger, runner, dry run, status, counts, guard numbers, accepted
+overrides, the adapter's counters, an error code) and `integration_issues`.
+Both hold codes, ids and counts, never names, titles or values; staged
+records (`integration_records`) are read by nobody and deleted when the run
+ends. Issues persist until a run that checks them no longer sees them; an
+admin can dismiss one (`integration_dismiss_issue`) and it stays dismissed.
+A run ends `ok`, `warning` (records it could not write, or adapter errors),
+`refused` or `failed`. An unset Webling date and possible duplicates are
+reported but do not change the run's status. Runs are kept 400 days, closed
+issues 180 days. `integration_status()` sums it up for the Integrations
+page.
+
+The legacy sync keeps working unchanged until phase 3 switches it (its
+nightly link upsert no longer rewrites every member). Until then, change no
+mapping with `integration_set_mapping`: the legacy sync's guard predicts
+statuses with `member_status_from_labels()`, which only agrees with the
+seeded catalog.
+`supabase/checks/integration_layer.sql` (CI job `db-validate`) checks the
+seeded mapping against the old rule, the legacy sync's writes, who may do
+what, identity, guards, events, holidays and the run log.
+
+### When the sync is red (phase 3 on)
+
+| Run                      | Meaning                                                           | Do                                                                                                               |
+| ------------------------ | ----------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| refused `empty_snapshot` | Webling answered no members                                       | Check Webling and the API key, run again                                                                         |
+| refused `members_gone`   | Many members gone at once                                         | Check Webling; if intended, **Actions → Webling Sync → Run workflow** with `accept_gone` = the number in the log |
+| refused `status_drop`    | Many members would lose their membership                          | A new or renamed status group: map it on the Integrations page, run again; if intended, `accept_status_drop`     |
+| refused `status_gain`    | Many members would start counting (and be approved automatically) | Check the groups; if intended, `accept_status_gain`                                                              |
+| refused `events_gone`    | Many events gone at once                                          | Check the calendar in Webling; if intended, `accept_events_gone`                                                 |
+| failed `<sqlstate>`      | The apply failed as a whole                                       | Actions log, then a bug report                                                                                   |
+| warning                  | Records not written, or fetch errors                              | Integrations page → issues (`invalid_record`, `id_conflict`, `write_failed`, held duplicates)                    |
+| `RUN_IN_PROGRESS`        | Another run of the same kind is open                              | Wait an hour: an abandoned run is closed then                                                                    |

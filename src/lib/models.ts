@@ -319,6 +319,8 @@ export interface Event {
   title: string;
   description?: string;
   date: string;
+  /** Last day of a multi-day event (inclusive), null for one day; shown from integrations phase 4 on */
+  date_to?: string | null;
   timeFrom?: string;
   timeTo?: string;
   location?: string;
@@ -328,6 +330,17 @@ export interface Event {
   createdAt: string;
   updatedAt: string;
   participants?: Member[];
+}
+
+/**
+ * The provider an event comes from while the provider still has it
+ * (event_links without gone_at, docs/INTEGRATIONS.md). Its fields are the
+ * provider's: the database refuses edits and deletes (MANAGED_BY_PROVIDER).
+ */
+export interface EventLink {
+  connection: string;
+  /** The event in the provider (Webling portal link) */
+  url: string | null;
 }
 
 export interface EventParticipant {

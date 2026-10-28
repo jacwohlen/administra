@@ -74,6 +74,22 @@ describe('writer-only dashboard pages', () => {
   }
 });
 
+describe('events a provider maintains', () => {
+  it('edit event: sends trainers and admins back to the event', async () => {
+    const linked = {
+      parent: async () => ({ ...trainer, eventLink: { connection: 'webling', url: null } }),
+      params: { eventId: '51830' },
+      depends: () => {}
+    } as never;
+    try {
+      await (editEvent as Load)(linked);
+      expect.unreachable('a linked event must not open the edit page');
+    } catch (e) {
+      expect(isRedirect(e) && e.location).toBe('/dashboard/events/51830');
+    }
+  });
+});
+
 describe('TK-only exam pages', () => {
   const cases: [string, Load, Record<string, string>, string][] = [
     ['new exam day', newExam as Load, {}, '/dashboard/exams'],

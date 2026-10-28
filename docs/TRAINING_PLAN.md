@@ -125,4 +125,7 @@ the last year and everyone already planned.
 
 Webling holds the holidays too (agenda "Ferien"), but the event sync only
 keeps an event's first day, so they are entered here (or read in with the
-plan).
+plan). From integrations phase 4 on they come from Webling: the integration
+layer (phase 2, `docs/INTEGRATIONS.md`) already knows holidays from a
+provider (`connection`, `external_id`); their title and dates are read-only
+and they cannot be deleted, while "Dojo zu" stays the TK's.

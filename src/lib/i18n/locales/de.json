@@ -596,7 +596,9 @@
       "createError": "Fehler beim Erstellen des Events",
       "updateError": "Fehler beim Aktualisieren des Events",
       "backToList": "Zurück zu den Events",
-      "backToEvent": "Zurück zum Event"
+      "backToEvent": "Zurück zum Event",
+      "managedBy": "Dieses Event kommt aus {provider} und wird dort geändert. Teilnehmer und Anwesenheit erfasst du hier.",
+      "openInProvider": "In {provider} öffnen"
     },
     "trialRegistration": {
       "title": "Anmeldung Probetraining",

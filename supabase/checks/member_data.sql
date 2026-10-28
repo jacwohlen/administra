@@ -391,6 +391,15 @@ INSERT INTO api_guard VALUES
   ('refresh_all_member_badges',  'is_writer\('),
   ('ai_import_begin',            'is_writer\('),
   ('ai_import_remaining',        'is_writer\('),
+  -- integration layer: the sync (service role), or admins
+  -- (20261029120000_integration_layer.sql, docs/INTEGRATIONS.md)
+  ('integration_begin',          'integration_authorize\('),
+  ('integration_stage',          'integration_authorize\('),
+  ('integration_apply',          'integration_authorize\('),
+  ('integration_finish',         'integration_authorize\('),
+  ('integration_set_mapping',    'is_admin\('),
+  ('integration_dismiss_issue',  'is_admin\('),
+  ('integration_status',         'is_admin\('),
   -- the caller's own account, or no member data
   ('ai_import_finish',           'auth\.uid\('),
   ('my_access',                  'auth\.uid\('),

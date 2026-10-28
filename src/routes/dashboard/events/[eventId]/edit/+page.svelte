@@ -6,6 +6,7 @@
   import Fa from 'svelte-fa';
   import { faSave, faArrowLeft } from '@fortawesome/free-solid-svg-icons';
   import { clubConfig } from '$lib/clubConfig';
+  import { isManagedByProviderError, providerName } from '$lib/memberStatus';
 
   let { data }: { data: PageData } = $props();
 
@@ -50,7 +51,12 @@
 
       if (updateError) {
         console.error('Error updating event:', updateError);
-        error = $_('page.events.updateError');
+        // Linked after this page loaded (the load sends linked events back)
+        error = isManagedByProviderError(updateError)
+          ? $_('page.events.managedBy', {
+              values: { provider: providerName(data.eventLink?.connection ?? 'webling') }
+            })
+          : $_('page.events.updateError');
         return;
       }
 
