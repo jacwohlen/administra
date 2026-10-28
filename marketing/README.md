@@ -43,20 +43,36 @@ The demo it links to (app.administra.ch) is described in
    them with [`scripts/marketing-screenshots.mjs`](../scripts/marketing-screenshots.mjs)
    whenever the app's look changes.
 
+## Releasing
+
+The marketing site deploys from **`main`**, not `prod`: a change goes live
+as soon as its pull request is merged, without a `main` → `prod` promotion.
+The app keeps its own release flow; the two are separate Netlify sites and
+never wait for each other. Every pull request gets a Deploy Preview of the
+site (placeholders allowed there).
+
+Keep in mind that the demo (app.administra.ch) builds `prod`: describe a
+new app feature on the site only once it is promoted, or the screenshots
+and the demo disagree.
+
 ## Netlify setup (once)
 
-1. Netlify → Add new site → Import from Git → this repository.
+The project already exists: **administra-marketing** in the team
+"Andreas Schmid’s team" (https://app.netlify.com/projects/administra-marketing),
+form detection on. What is left:
+
+1. Project configuration → Build & deploy → **Link repository** → GitHub →
+   `jacwohlen/administra`.
 2. **Base directory: `marketing`**. Build command and publish directory
    come from [`marketing/netlify.toml`](netlify.toml) (`node
-check-placeholders.mjs`, `public`). Production branch: `prod` (like the
-   app; marketing changes are released with the next promotion).
+check-placeholders.mjs`, `public`). **Production branch: `main`**.
 3. Domains: `administra.ch` as primary domain, `www.administra.ch` as alias
    (redirected to the apex by `netlify.toml`). Netlify issues the
    certificates once DNS points at it.
-4. **Forms**: Site configuration → Forms → enable form detection, then add
-   an e-mail notification for the form `kontakt` to your address. Netlify
-   detects the form at deploy time from `data-netlify="true"`; spam is
-   filtered by the honeypot field `website` and Netlify's spam filter.
+4. **Forms**: add an e-mail notification for the form `kontakt` to your
+   address (Forms → Notifications). Netlify detects the form at deploy time
+   from `data-netlify="true"`; spam is filtered by the honeypot field
+   `website` and Netlify's spam filter.
 
 The app's own Netlify site (repository root, `netlify.toml` there) does not
 publish anything from `marketing/`.
