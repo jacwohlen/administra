@@ -63,11 +63,13 @@ group `04_Probetraining` to `Probetraining` (`transform_label()` in
 (Erwachsenentrainer, Kindertrainer, Hilfstrainer, Vorstand, J&S) do not
 change the status.
 
-Status groups, the app's label `new` and Webling bookkeeping groups
-(`01_Anmeldung` … `04_Pass bestellt`, `Test`) are not shown as chips
-(`visibleLabels()` in `src/lib/memberStatus.ts`, exact spelling like the
-SQL); the status is its own chip, except `active`, on the member list, the
-member page and the check-in cards.
+Status groups, the app's labels `new` and `probetraining` and Webling
+bookkeeping groups (`01_Anmeldung` … `04_Pass bestellt`, `Test`) are not
+shown as chips (`visibleLabels()` in `src/lib/memberStatus.ts`, exact
+spelling like the SQL); the status is its own chip, except `active`, on the
+member list, the member page and the check-in cards. From phase 3b on the
+app reads which ones from the integration catalog (see "The app reads the
+configuration" below); the built-in list is the seeded catalog.
 
 ## Provider links
 
@@ -432,7 +434,8 @@ The legacy sync keeps working unchanged until phase 3 switches it (its
 nightly link upsert no longer rewrites every member). Until then, change no
 mapping with `integration_set_mapping`: the legacy sync's guard predicts
 statuses with `member_status_from_labels()`, which only agrees with the
-seeded catalog.
+seeded catalog (the Integrations page says so in its mapping editor while
+the layer has not run a members run of its own).
 `supabase/checks/integration_layer.sql` (CI job `db-validate`) checks the
 seeded mapping against the old rule, the legacy sync's writes, who may do
 what, identity, guards, events, holidays and the run log.
@@ -490,3 +493,70 @@ Rollback: `INTEGRATION_MODE=legacy`, safe only while no merge has moved a
 Webling link and no group status was changed with
 `integration_set_mapping`. PR 3c removes the legacy path after two weeks
 in layer mode.
+
+## The app reads the configuration (phase 3b)
+
+The dashboard layout loads `integration_connections` and
+`integration_member_groups` once per app session for staff
+(`src/lib/integrationConfigLoad.ts`, `src/lib/integrationConfig.ts`); after
+a mapping change on the Integrations page it loads them again. From them:
+
+- **Chips** (`visibleLabels()`): a label is hidden when its catalog group
+  is (`hidden`; the label is the group's `label`, else its name); a label
+  the catalog does not know yet (the legacy sync writes labels without
+  registering groups) when it matches the connection's
+  `settings.hidden_group_pattern`; the app's own `new` and `probetraining`
+  always.
+- **Trainers** in the training plan (`hasTrainerLabel()`): members of
+  groups with `role = 'trainer'` are offered first (seeded:
+  Erwachsenentrainer); a label the catalog does not know keeps the built-in
+  rule (contains "erwachsenentrainer", case ignored).
+- **Provider names** (`providerName()`): `display_name` of the connection.
+- **Daten-Assistent** (club dates): an existing event is the provider's
+  when it has a live `event_links` row; without any link row (events the
+  legacy sync wrote before the layer's first run) the Webling portal link
+  in the description still tells; an event whose links are all gone is the
+  app's.
+
+Without the configuration (member accounts, which may not read it; a
+database without the layer, as when Netlify deploys the app before a
+promotion; a failed load, tried again at the next navigation) the built-in
+rules apply, which are what the seeded catalog says.
+
+## Integrations page (phase 5)
+
+`/dashboard/integrations`, admins only (avatar menu, like Benutzer and
+Einstellungen; `src/routes/dashboard/integrations/`, helpers in
+`src/lib/integrations.ts`). One card per connection of
+`integration_status()`:
+
+- **What needs you**: the latest members or events run refused (with the
+  guard's numbers and the exact override, e.g. "Actions → Webling Sync →
+  Run workflow mit accept_gone = 60", computed from the run's `guard`) or
+  failed (its error code), no successful run for 36 hours, open errors.
+  The same conditions put a warning dot on the avatar and the menu entry
+  (`dashboard/+layout.ts`); a kind the layer never ran raises nothing, so
+  there is no dot before phase 3's switch.
+- **Numbers**: members and events linked, members gone, holidays, open
+  issues (errors and warnings), catalog rows to review; the latest run and
+  success per kind with "vor …" and a stale chip.
+- **Runs**: the latest 50 `integration_runs` (mapping previews left out)
+  with trigger, status, dry run, the counts other than zero, overrides used,
+  the adapter's fetch errors and the error or refusal code.
+- **Issues**: open and dismissed ones grouped by code; issues about a
+  member or event that no longer exists are left out (the next run
+  resolves them). A possible duplicate links both member pages and opens
+  the merge dialog (phase 1c); "Kein Duplikat" dismisses it
+  (`integration_dismiss_issue`), any other issue can be dismissed too, and
+  a dismissed one can be reopened.
+- **Mapping**: status, rank, hidden and role per group; target, section
+  and "Dojo zu" days per calendar; new rows marked "Neu" and confirmed with
+  "Geprüft". Preview is `integration_set_mapping`'s dry run (how many
+  members get another status, how many lose or gain a membership, whether
+  that is over the guard); Save, after a confirmation, sends exactly the
+  numbers the preview was over the guard with; if they changed meanwhile
+  the save is refused and shows the new preview. While the connection has
+  no members run of the layer (before phase 3's switch) the editor warns
+  not to change anything.
+
+A database without the layer shows "noch nicht eingerichtet" instead.

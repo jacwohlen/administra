@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   canBeTrainer,
+  hasTrainerLabel,
   isCurrentMember,
   isManagedByProviderError,
   providerName,
@@ -70,6 +71,15 @@ describe('visibleLabels', () => {
   it('copes with missing labels', () => {
     expect(visibleLabels(null)).toEqual([]);
     expect(visibleLabels(undefined)).toEqual([]);
+  });
+});
+
+describe('hasTrainerLabel (built-in rule)', () => {
+  it('knows Webling adult trainers, in any case', () => {
+    expect(hasTrainerLabel(['Aktiv', 'Erwachsenentrainer'])).toBe(true);
+    expect(hasTrainerLabel(['erwachsenentrainer'])).toBe(true);
+    expect(hasTrainerLabel(['Kindertrainer', 'Vorstand'])).toBe(false);
+    expect(hasTrainerLabel(null)).toBe(false);
   });
 });
 
