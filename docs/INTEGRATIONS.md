@@ -250,7 +250,7 @@ list; `supabase/checks/merge_members.sql` fails when a foreign key to
 | `member_grades.memberId`            | The grade an exam sheet recorded stays, otherwise the kept one; notes of both                                                                                         |
 | `member_medals.memberId`            | The better medal per competition, with category and section of the other where it has none; exact duplicates without event removed                                    |
 | `member_badges.memberId`            | Earliest earn date; then every badge of the kept member is recomputed, and the season badges of each section and year the dropped one trained in (and the year after) |
-| `exam_candidates.member_id`         | The one with a sheet stays (both: refused), else the furthest status; empty fields filled                                                                             |
+| `exam_candidates.member_id`         | The one with a sheet stays (both: refused), else the furthest status; it takes the furthest status, notes of both, empty fields; the other is kept in the log         |
 | `trial_emails.member_id`            | Moved                                                                                                                                                                 |
 | `training_plan_sessions.trainer_id` | Moved                                                                                                                                                                 |
 | `trainings.mainTrainerId`           | Moved                                                                                                                                                                 |
@@ -272,13 +272,15 @@ has trainings (a `cancelled` would remove them).
 The preview lists every value not taken over, each row both members had
 and which one stays, the kept member's status before and after, and the
 sign-in accounts linked to either member or matching either e-mail whose
-access changes or that no longer find the member (`accounts`: before and
-after, as `is_approved_user()` and `my_member_ids()` decide). Only member
-accounts can lose access (`ACCOUNT_LOSES_ACCESS`); staff get in by their
-role and at most lose "Mein Profil". An existing account link moves, but
-nothing is linked by e-mail: a trainer's or a parent's address would link
-the wrong person. Old links to `/dashboard/members/<dropped id>` end in
-"not found".
+access changes or that no longer find, or newly find, the member
+(`accounts`: before and after, as `is_approved_user()` and
+`my_member_ids()` decide). A member account finds a record only while it
+counts: a parent who keeps access through one child no longer finds the
+other when the record that stays is no member. Only member accounts can
+lose access (`ACCOUNT_LOSES_ACCESS`); staff get in by their role and at
+most lose "Mein Profil". An existing account link moves, but nothing is
+linked by e-mail: a trainer's or a parent's address would link the wrong
+person. Old links to `/dashboard/members/<dropped id>` end in "not found".
 
 Badge triggers are paused for the merge with `set_config(..., true)` and
 everything is recomputed once at the end. A `SET app.… = …` clause on the

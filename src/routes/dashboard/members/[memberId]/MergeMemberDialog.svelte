@@ -461,7 +461,7 @@
               <h4 class="font-semibold pt-2">{$_('page.members.merge.accountsTitle')}</h4>
               <ul class="list-disc pl-5 space-y-1">
                 {#each accounts as { account, change } (account.userId)}
-                  <li class={change === 'gainsAccess' ? '' : 'text-warning-800-200'}>
+                  <li class={change.startsWith('gains') ? '' : 'text-warning-800-200'}>
                     {$_(`page.members.merge.account.${change}`, {
                       values: { email: account.email ?? account.userId }
                     })}

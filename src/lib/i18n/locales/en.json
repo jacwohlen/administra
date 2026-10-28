@@ -394,8 +394,8 @@
           "gradeKeep": "{grade} ({section}): the grade of the record that stays is kept, the notes are combined.",
           "medal": "{competition}: {kept} stays, {dropped} is dropped.",
           "medalSame": "{competition}: {medal} on both, kept once.",
-          "examSheet": "Kyu grading {title} ({date}): the registration with the started exam sheet stays.",
-          "examStatus": "Kyu grading {title} ({date}): one registration stays, empty details come from the other.",
+          "examSheet": "Kyu grading {title} ({date}): the registration with the started exam sheet stays. It gets the further status of both (called up before registered before withdrawn) and the notes of both.",
+          "examStatus": "Kyu grading {title} ({date}): the registration with the further status stays (called up before registered before withdrawn). The notes are combined, empty details come from the other.",
           "other": "{ref}: one entry stays."
         },
         "fieldsTitle": "Details of the record that stays",
@@ -424,7 +424,8 @@
         "account": {
           "losesAccess": "{email} loses access to Administra. Link the account to the record that stays under Users, or enter the e-mail there (in Webling for Webling members).",
           "gainsAccess": "{email} gets access to Administra.",
-          "losesRecord": "{email} no longer finds the record (My profile). Link the account under Users if it belongs to it."
+          "losesRecord": "{email} no longer sees the record (My profile, member area). Link the account under Users if it belongs to it. A member account only sees it while it counts as an active or passive member.",
+          "gainsRecord": "{email} sees the record afterwards (My profile, member area)."
         },
         "warning": {
           "TRIAL_LINK_ENDS": "The status link of the trial registration stops working.",

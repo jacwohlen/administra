@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import dayjs from 'dayjs';
 import type { MemberMergeResult } from './models';
 import {
@@ -167,7 +167,14 @@ describe('conflictText', () => {
           title: 'Kyu-Prüfung',
           date: '2026-11-07',
           kept: 'keep',
-          reason: 'sheet'
+          reason: 'sheet',
+          removed: {
+            status: 'invited',
+            grade: '4. Kyu',
+            trainer: 'Eva',
+            note: 'Brille',
+            staffNote: null
+          }
         },
         t
       )
@@ -214,12 +221,33 @@ describe('accountChanges', () => {
     ]);
   });
 
-  it('says nothing about an account that never got in and still does not', () => {
+  it('names a member account that keeps access but loses or finds the person', () => {
+    // A parent who still gets in through another child
     expect(
       accountChanges(
-        result({ accounts: [{ ...account, before: false, after: false, findsBefore: false }] })
-      )
-    ).toEqual([]);
+        result({
+          accounts: [
+            { ...account, userId: 'u5', findsAfter: false },
+            { ...account, userId: 'u6', findsBefore: false }
+          ]
+        })
+      ).map((c) => [c.account.userId, c.change])
+    ).toEqual([
+      ['u5', 'losesRecord'],
+      ['u6', 'gainsRecord']
+    ]);
+  });
+
+  it('says nothing about an account that never got in and still does not', () => {
+    // Waiting, so it finds nobody either (my_member_ids)
+    const waiting = {
+      ...account,
+      before: false,
+      after: false,
+      findsBefore: false,
+      findsAfter: false
+    };
+    expect(accountChanges(result({ accounts: [waiting] }))).toEqual([]);
   });
 });
 
@@ -227,6 +255,11 @@ describe('mergeWithPhoto', () => {
   const uploaded = '2024-05-01T10:00:00.123Z';
   const keep = 4321;
   const drop = 10_000_005;
+  const dropFile = '10000005_1714557600123.webp';
+  const keepFile = '4321_1714557600123.webp';
+  // As Storage answers: a file that does not exist, and a server error
+  const notFound = { statusCode: '404', message: 'Object not found' };
+  const serverError = { statusCode: '500', message: 'Internal Server Error' };
 
   function storage(copyError: unknown = null): AvatarStorage & {
     copy: ReturnType<typeof vi.fn>;
@@ -240,31 +273,44 @@ describe('mergeWithPhoto', () => {
   const withPhoto = (photo: MemberMergeResult['fields']['photo'], at: string | null = uploaded) =>
     result({ fields: { ...result().fields, photo, dropPhotoUploaded: at } });
   const takesPhoto = withPhoto('from_drop');
+  // Failed copies are logged
+  let quiet: ReturnType<typeof vi.spyOn>;
+  beforeEach(() => {
+    quiet = vi.spyOn(console, 'error').mockImplementation(() => {});
+  });
+  afterEach(() => quiet.mockRestore());
 
   it('copies the photo the database names before the merge and removes the dropped file after', async () => {
     const s = storage();
     const merge = vi.fn().mockResolvedValue(takesPhoto);
     await mergeWithPhoto(s, takesPhoto, keep, drop, merge);
-    expect(s.copy).toHaveBeenCalledWith('10000005_1714557600123.webp', '4321_1714557600123.webp');
+    expect(s.copy).toHaveBeenCalledTimes(1);
+    expect(s.copy).toHaveBeenCalledWith(dropFile, keepFile);
     expect(s.copy.mock.invocationCallOrder[0]).toBeLessThan(merge.mock.invocationCallOrder[0]);
-    expect(s.remove).toHaveBeenCalledWith(['10000005_1714557600123.webp']);
+    expect(s.remove).toHaveBeenCalledWith([dropFile]);
   });
 
-  it('removes the copy again when the merge fails', async () => {
+  it('removes the copy again when the merge is refused', async () => {
     const s = storage();
     const merge = vi.fn().mockRejectedValue(new Error('EXAM_CONFLICT'));
     await expect(mergeWithPhoto(s, takesPhoto, keep, drop, merge)).rejects.toThrow('EXAM_CONFLICT');
-    expect(s.remove).toHaveBeenCalledWith(['4321_1714557600123.webp']);
+    expect(s.remove).toHaveBeenCalledWith([keepFile]);
+  });
+
+  it('keeps the copy when the merge fails otherwise: it may have gone through', async () => {
+    const s = storage();
+    const merge = vi.fn().mockRejectedValue(new Error('Failed to fetch'));
+    await expect(mergeWithPhoto(s, takesPhoto, keep, drop, merge)).rejects.toThrow(
+      'Failed to fetch'
+    );
+    expect(s.remove).not.toHaveBeenCalled();
   });
 
   it('removes an unused copy when the merge decided otherwise', async () => {
     const s = storage();
     const merge = vi.fn().mockResolvedValue(withPhoto('kept_both'));
     await mergeWithPhoto(s, takesPhoto, keep, drop, merge);
-    expect(s.remove).toHaveBeenCalledWith([
-      '10000005_1714557600123.webp',
-      '4321_1714557600123.webp'
-    ]);
+    expect(s.remove).toHaveBeenCalledWith([dropFile, keepFile]);
   });
 
   it('follows a photo changed between preview and merge', async () => {
@@ -272,12 +318,76 @@ describe('mergeWithPhoto', () => {
     const newer = '2024-06-01T08:00:00.000Z';
     const merge = vi.fn().mockResolvedValue(withPhoto('from_drop', newer));
     await mergeWithPhoto(s, takesPhoto, keep, drop, merge);
-    // The copy names a file the kept row does not point at: both old files go
-    expect(s.remove).toHaveBeenCalledWith([
-      '10000005_1714557600123.webp',
+    // The kept row points at the new photo: copied under its name before
+    // anything goes, then the old file, the new source and the unused copy go
+    expect(s.copy).toHaveBeenLastCalledWith(
       `10000005_${Date.parse(newer)}.webp`,
-      '4321_1714557600123.webp'
+      `4321_${Date.parse(newer)}.webp`
+    );
+    expect(s.copy.mock.invocationCallOrder[1]).toBeLessThan(s.remove.mock.invocationCallOrder[0]);
+    expect(s.remove).toHaveBeenCalledWith([
+      dropFile,
+      `10000005_${Date.parse(newer)}.webp`,
+      keepFile
     ]);
+  });
+
+  it('keeps the new photo when copying it after the merge fails', async () => {
+    const s = storage();
+    s.copy.mockResolvedValueOnce({ error: null }).mockResolvedValueOnce({ error: serverError });
+    const newer = '2024-06-01T08:00:00.000Z';
+    await mergeWithPhoto(
+      s,
+      takesPhoto,
+      keep,
+      drop,
+      vi.fn().mockResolvedValue(withPhoto('from_drop', newer))
+    );
+    expect(s.remove).toHaveBeenCalledWith([dropFile, keepFile]);
+  });
+
+  it('keeps the dropped file when the copy fails for another reason than a missing file', async () => {
+    const s = storage(serverError);
+    const merge = vi.fn().mockResolvedValue(takesPhoto);
+    await expect(mergeWithPhoto(s, takesPhoto, keep, drop, merge)).resolves.toBe(takesPhoto);
+    // Tried again after the merge, then left alone
+    expect(s.copy).toHaveBeenCalledTimes(2);
+    expect(s.remove).not.toHaveBeenCalled();
+  });
+
+  it('keeps the dropped file when the copy throws', async () => {
+    const s = storage();
+    s.copy.mockRejectedValue(new Error('network'));
+    const merge = vi.fn().mockResolvedValue(takesPhoto);
+    await expect(mergeWithPhoto(s, takesPhoto, keep, drop, merge)).resolves.toBe(takesPhoto);
+    expect(merge).toHaveBeenCalled();
+    expect(s.remove).not.toHaveBeenCalled();
+  });
+
+  it('copies after the merge when the copy before failed', async () => {
+    const s = storage();
+    s.copy.mockResolvedValueOnce({ error: serverError }).mockResolvedValueOnce({ error: null });
+    await mergeWithPhoto(s, takesPhoto, keep, drop, vi.fn().mockResolvedValue(takesPhoto));
+    expect(s.copy).toHaveBeenCalledTimes(2);
+    expect(s.copy).toHaveBeenLastCalledWith(dropFile, keepFile);
+    // Only once the second copy is there
+    expect(s.copy.mock.invocationCallOrder[1]).toBeLessThan(s.remove.mock.invocationCallOrder[0]);
+    expect(s.remove).toHaveBeenCalledWith([dropFile]);
+  });
+
+  it('copies after the merge when the photo was only taken there', async () => {
+    const s = storage();
+    // The preview saw the kept member's photo, which was removed before the merge
+    await mergeWithPhoto(
+      s,
+      withPhoto('kept_both'),
+      keep,
+      drop,
+      vi.fn().mockResolvedValue(takesPhoto)
+    );
+    expect(s.copy).toHaveBeenCalledTimes(1);
+    expect(s.copy).toHaveBeenCalledWith(dropFile, keepFile);
+    expect(s.remove).toHaveBeenCalledWith([dropFile]);
   });
 
   it('removes the dropped file when the kept member keeps its own photo', async () => {
@@ -285,23 +395,21 @@ describe('mergeWithPhoto', () => {
     const keptBoth = withPhoto('kept_both');
     await mergeWithPhoto(s, keptBoth, keep, drop, vi.fn().mockResolvedValue(keptBoth));
     expect(s.copy).not.toHaveBeenCalled();
-    expect(s.remove).toHaveBeenCalledWith(['10000005_1714557600123.webp']);
+    expect(s.remove).toHaveBeenCalledWith([dropFile]);
   });
 
   it('merges anyway when there is no file to copy (thumbnail only)', async () => {
-    const s = storage({ message: 'Object not found' });
+    const s = storage(notFound);
     const merge = vi.fn().mockResolvedValue(takesPhoto);
     await expect(mergeWithPhoto(s, takesPhoto, keep, drop, merge)).resolves.toBe(takesPhoto);
-    expect(s.remove).toHaveBeenCalledWith(['10000005_1714557600123.webp']);
+    expect(s.remove).toHaveBeenCalledWith([dropFile]);
   });
 
   it('does not fail the merge when removing fails', async () => {
     const s = storage();
     s.remove.mockRejectedValue(new Error('network'));
-    const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
     const merge = vi.fn().mockResolvedValue(takesPhoto);
     await expect(mergeWithPhoto(s, takesPhoto, keep, drop, merge)).resolves.toBe(takesPhoto);
-    spy.mockRestore();
   });
 
   it('touches no files without photos', async () => {

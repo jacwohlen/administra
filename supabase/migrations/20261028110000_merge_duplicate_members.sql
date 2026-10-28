@@ -99,7 +99,7 @@ AS $$
     ('member_medals.memberId', 'fk',
      'Moved. Same competition (event) under both: the better medal stays and takes category and section from the other where it has none. Without an event: exact duplicates are removed.'),
     ('exam_candidates.member_id', 'fk',
-     'Moved. Same exam day under both: the one with a sheet stays (both with a sheet: EXAM_CONFLICT), otherwise the furthest status (invited > registered > withdrawn); empty fields filled from the other.'),
+     'Moved. Same exam day under both: the one with a sheet stays (both with a sheet: EXAM_CONFLICT), otherwise the one with the furthest status (invited > registered > withdrawn). It takes the furthest status of both, the notes and staff notes of both and empty fields from the other; the removed registration (status, grade, trainer, notes) is kept in the conflict entry.'),
     ('trial_emails.member_id', 'fk', 'Moved.'),
     ('training_plan_sessions.trainer_id', 'fk', 'Moved (the admin shows as last editor of those plan entries).'),
     ('trainings.mainTrainerId', 'fk', 'Moved.'),
@@ -111,9 +111,9 @@ AS $$
     ('members', 'other',
      'Kept row: name, labels and status stay. Birthday, mobile, e-mail only filled where empty and only on a row not in Webling, e-mail never from a trial registration. Notes of both. Photo of the dropped row when the kept one has none. Archived only if both were. Trial history and status link of the dropped row when the kept one has neither.'),
     ('storage avatars/<id>_<ms>.webp', 'other',
-     'Not reachable from SQL: the browser copies the dropped member''s file (fields.dropPhotoUploaded) when the kept member takes over its photo (fields.photo = from_drop) and removes the dropped one''s file afterwards.'),
+     'Not reachable from SQL: the browser copies the dropped member''s file (fields.dropPhotoUploaded) when the kept member takes over its photo (fields.photo = from_drop), and removes the dropped one''s file afterwards only once the kept one''s exists, the photo was not taken or the file is missing (src/lib/memberMerge.ts, mergeWithPhoto).'),
     ('accounts', 'other',
-     'Accounts linked to either member or matching either e-mail: whether they get in and find the member, before and after (accounts); ACCOUNT_LOSES_ACCESS when a member account loses its access. Nothing is linked automatically.');
+     'Accounts linked to either member or matching either e-mail: whether they get in (is_approved_user) and find the member (my_member_ids), before and after (accounts); ACCOUNT_LOSES_ACCESS when a member account loses its access. Nothing is linked automatically.');
 $$;
 
 COMMENT ON FUNCTION public.merge_member_references() IS
@@ -169,6 +169,27 @@ AS $$
       OR EXISTS (SELECT 1 FROM public.exam_examiners e WHERE e.candidate_id = p_candidate_id);
 $$;
 
+-- Whether an account finds this member record, by the rule of
+-- my_member_ids() (20261027120000_member_access_requires_membership.sql):
+-- an approved account, linked to it or with its e-mail (not on a trial
+-- row), and for a member account only while the record counts. Linked or
+-- matched alone would miss a parent who keeps access through one child
+-- and loses another whose record stops counting.
+CREATE FUNCTION public.merge_members_account_finds(p public.user_profiles, m public.members)
+RETURNS boolean
+LANGUAGE sql
+STABLE
+SET search_path = public
+AS $$
+  SELECT coalesce(
+    p.status = 'approved'
+    AND (p.member_id = m.id
+         OR (m.email IS NOT NULL AND NOT public.has_trial_label(m.labels)
+             AND public.normalize_email(p.email) = public.normalize_email(m.email)))
+    AND (p.role <> 'member' OR public.member_grants_access(m.membership_status, m."archivedAt", m.labels)),
+    false);
+$$;
+
 -----------------------------------------------------------------------
 -- 3. The merge
 -----------------------------------------------------------------------
@@ -212,6 +233,8 @@ DECLARE
   v_trial_from_drop boolean;
   v_trial_status text;
   v_email text;
+  v_drop_wins boolean;
+  v_removed jsonb;
 BEGIN
   IF NOT public.is_admin() THEN
     RAISE EXCEPTION 'NOT_ALLOWED' USING ERRCODE = '42501', HINT = 'Only admins merge members.';
@@ -295,19 +318,15 @@ BEGIN
       FROM public.member_links WHERE member_id = p_drop), '[]'));
 
   -- Sign-in accounts linked to either row or matching either e-mail: do
-  -- they get in (is_approved_user()), and do they find the person (the
-  -- link, or the e-mail of a row without trial label, as my_member_ids())?
+  -- they get in (is_approved_user()), and do they find the person
+  -- (my_member_ids(): for a member account only a record that counts)?
   -- Compared with the same after the merge, so the preview names who loses
-  -- or gains access instead of guessing from e-mails: staff get in by their
-  -- role either way.
+  -- or gains access or the person instead of guessing from e-mails: staff
+  -- get in by their role either way.
   SELECT coalesce(jsonb_object_agg(p.user_id::text, jsonb_build_object(
            'access', p.status = 'approved'
                      AND (p.role <> 'member' OR public.member_account_has_access(p.member_id, p.email)),
-           'finds', coalesce(p.member_id IN (p_keep, p_drop), false)
-                    OR coalesce(NOT public.has_trial_label(k.labels)
-                                AND public.normalize_email(p.email) = public.normalize_email(k.email), false)
-                    OR coalesce(NOT public.has_trial_label(d.labels)
-                                AND public.normalize_email(p.email) = public.normalize_email(d.email), false))), '{}')
+           'finds', public.merge_members_account_finds(p, k) OR public.merge_members_account_finds(p, d))), '{}')
     INTO v_accounts_before
   FROM public.user_profiles p
   WHERE p.member_id IN (p_keep, p_drop)
@@ -530,12 +549,19 @@ BEGIN
 
   ---------------------------------------------------------------------
   -- exam_candidates.member_id (EXAM_CONFLICT checked above). The row with
-  -- a sheet, or else the further one, stays; it takes the other's empty
-  -- fields. The other has no sheet, so no scores or examiners go with it.
+  -- a sheet, or else the further one, stays. It takes the further status
+  -- of both (invited > registered > withdrawn), also when its sheet won: a
+  -- status only moves up here, which guard_exam_grading() allows on a
+  -- sheet too (calling up a graded candidate, or back from withdrawn
+  -- before a result). Notes and staff notes of both are joined, empty
+  -- fields come from the other. The other has no sheet, so no scores or
+  -- examiners go with it; its registration as it was (status, grade,
+  -- trainer, notes) goes into the conflict entry, so member_merges keeps
+  -- what the stayed row does not show.
   ---------------------------------------------------------------------
   v_m := 0;
   FOR v_rec IN
-    SELECT x.id AS drop_id, l.id AS keep_id, e.title, e.date,
+    SELECT x.id AS drop_id, l.id AS keep_id, e.title, e.date, x.status AS drop_status, l.status AS keep_status,
            public.exam_candidate_has_sheet(x.id) AS drop_sheet,
            public.exam_candidate_has_sheet(l.id) AS keep_sheet,
            coalesce(array_position(ARRAY['withdrawn', 'registered', 'invited'], x.status), 0)
@@ -547,34 +573,34 @@ BEGIN
     ORDER BY x.id
   LOOP
     v_m := v_m + 1;
-    IF v_rec.drop_sheet OR (NOT v_rec.keep_sheet AND v_rec.drop_further) THEN
-      UPDATE public.exam_candidates w
-         SET belt_length_cm = coalesce(w.belt_length_cm, o.belt_length_cm),
-             trainer = coalesce(nullif(btrim(w.trainer), ''), o.trainer),
-             note = coalesce(nullif(btrim(w.note), ''), o.note),
-             staff_note = coalesce(nullif(btrim(w.staff_note), ''), o.staff_note),
-             group_name = coalesce(nullif(btrim(w.group_name), ''), o.group_name),
-             call_time = coalesce(w.call_time, o.call_time)
-        FROM public.exam_candidates o
-       WHERE w.id = v_rec.drop_id AND o.id = v_rec.keep_id;
+    v_drop_wins := v_rec.drop_sheet OR (NOT v_rec.keep_sheet AND v_rec.drop_further);
+    -- w stays, o goes. The staff note keeps to its 2000 characters
+    -- (column check); the conflict entry has the removed one in full.
+    UPDATE public.exam_candidates w
+       SET status = CASE WHEN v_rec.drop_further THEN v_rec.drop_status ELSE v_rec.keep_status END,
+           belt_length_cm = coalesce(w.belt_length_cm, o.belt_length_cm),
+           trainer = coalesce(nullif(btrim(w.trainer), ''), o.trainer),
+           note = public.merge_members_join_text(w.note, o.note, ' / '),
+           staff_note = left(public.merge_members_join_text(w.staff_note, o.staff_note, ' / '), 2000),
+           group_name = coalesce(nullif(btrim(w.group_name), ''), o.group_name),
+           call_time = coalesce(w.call_time, o.call_time)
+      FROM public.exam_candidates o
+     WHERE w.id = CASE WHEN v_drop_wins THEN v_rec.drop_id ELSE v_rec.keep_id END
+       AND o.id = CASE WHEN v_drop_wins THEN v_rec.keep_id ELSE v_rec.drop_id END
+    RETURNING jsonb_build_object('status', o.status, 'grade', o.grade, 'trainer', o.trainer,
+                                 'note', o.note, 'staffNote', o.staff_note)
+      INTO v_removed;
+    IF v_drop_wins THEN
       DELETE FROM public.exam_candidates WHERE id = v_rec.keep_id;
       UPDATE public.exam_candidates SET member_id = p_keep WHERE id = v_rec.drop_id;
     ELSE
-      UPDATE public.exam_candidates w
-         SET belt_length_cm = coalesce(w.belt_length_cm, o.belt_length_cm),
-             trainer = coalesce(nullif(btrim(w.trainer), ''), o.trainer),
-             note = coalesce(nullif(btrim(w.note), ''), o.note),
-             staff_note = coalesce(nullif(btrim(w.staff_note), ''), o.staff_note),
-             group_name = coalesce(nullif(btrim(w.group_name), ''), o.group_name),
-             call_time = coalesce(w.call_time, o.call_time)
-        FROM public.exam_candidates o
-       WHERE w.id = v_rec.keep_id AND o.id = v_rec.drop_id;
       DELETE FROM public.exam_candidates WHERE id = v_rec.drop_id;
     END IF;
     v_conflicts := v_conflicts || jsonb_build_object(
       'ref', 'exam_candidates.member_id', 'title', v_rec.title, 'date', v_rec.date,
-      'kept', CASE WHEN v_rec.drop_sheet OR (NOT v_rec.keep_sheet AND v_rec.drop_further) THEN 'drop' ELSE 'keep' END,
-      'reason', CASE WHEN v_rec.drop_sheet OR v_rec.keep_sheet THEN 'sheet' ELSE 'status' END);
+      'kept', CASE WHEN v_drop_wins THEN 'drop' ELSE 'keep' END,
+      'reason', CASE WHEN v_rec.drop_sheet OR v_rec.keep_sheet THEN 'sheet' ELSE 'status' END,
+      'removed', v_removed);
   END LOOP;
   UPDATE public.exam_candidates SET member_id = p_keep WHERE member_id = p_drop;
   GET DIAGNOSTICS v_n = ROW_COUNT;
@@ -730,14 +756,12 @@ BEGIN
            'after', p.status = 'approved'
                     AND (p.role <> 'member' OR public.member_account_has_access(p.member_id, p.email)),
            'findsBefore', (b.value->>'finds')::boolean,
-           'findsAfter', coalesce(p.member_id = p_keep, false)
-                         OR coalesce(NOT public.has_trial_label(m.labels)
-                                     AND public.normalize_email(p.email) = public.normalize_email(m.email), false))
+           'findsAfter', public.merge_members_account_finds(p, m))
            ORDER BY p.email, p.user_id), '[]')
     INTO v_accounts
   FROM jsonb_each(v_accounts_before) AS b(user_id, value)
   JOIN public.user_profiles p ON p.user_id = b.user_id::uuid
-  CROSS JOIN (SELECT labels, email FROM public.members WHERE id = p_keep) m;
+  JOIN public.members m ON m.id = p_keep;
 
   IF d."trialToken" IS NOT NULL AND NOT v_trial_from_drop THEN
     v_warnings := v_warnings || '"TRIAL_LINK_ENDS"'::jsonb;
@@ -879,6 +903,7 @@ REVOKE EXECUTE ON FUNCTION public.merge_member_references() FROM PUBLIC, anon, a
 REVOKE EXECUTE ON FUNCTION public.merge_members_join_text(text, text, text) FROM PUBLIC, anon, authenticated, service_role;
 REVOKE EXECUTE ON FUNCTION public.merge_members_field_rule(text, text, boolean, boolean) FROM PUBLIC, anon, authenticated, service_role;
 REVOKE EXECUTE ON FUNCTION public.exam_candidate_has_sheet(bigint) FROM PUBLIC, anon, authenticated, service_role;
+REVOKE EXECUTE ON FUNCTION public.merge_members_account_finds(public.user_profiles, public.members) FROM PUBLIC, anon, authenticated, service_role;
 REVOKE EXECUTE ON FUNCTION public.merge_members_apply(integer, integer) FROM PUBLIC, anon, authenticated, service_role;
 -- Signed-in accounts reach the wrappers, which let admins only; preview
 -- branches grant nothing on functions, so grant explicitly

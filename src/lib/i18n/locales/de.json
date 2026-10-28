@@ -394,8 +394,8 @@
           "gradeKeep": "{grade} ({section}): Die Graduierung des bleibenden Eintrags bleibt, die Notizen werden zusammengefügt.",
           "medal": "{competition}: {kept} bleibt, {dropped} fällt weg.",
           "medalSame": "{competition}: bei beiden {medal}, die Medaille bleibt einmal.",
-          "examSheet": "Q-Prüfung {title} ({date}): Die Anmeldung mit dem begonnenen Prüfungsblatt bleibt.",
-          "examStatus": "Q-Prüfung {title} ({date}): Eine Anmeldung bleibt, leere Angaben kommen von der anderen.",
+          "examSheet": "Q-Prüfung {title} ({date}): Die Anmeldung mit dem begonnenen Prüfungsblatt bleibt. Sie bekommt den weiteren Status beider (aufgeboten vor angemeldet vor abgemeldet) und die Notizen beider.",
+          "examStatus": "Q-Prüfung {title} ({date}): Die Anmeldung mit dem weiteren Status bleibt (aufgeboten vor angemeldet vor abgemeldet). Die Notizen werden zusammengefügt, leere Angaben kommen von der anderen.",
           "other": "{ref}: Ein Eintrag bleibt."
         },
         "fieldsTitle": "Angaben des bleibenden Eintrags",
@@ -424,7 +424,8 @@
         "account": {
           "losesAccess": "{email} verliert den Zugang zu Administra. Verknüpfe das Konto unter Benutzer mit dem bleibenden Eintrag oder trag die E-Mail dort ein (bei Webling-Mitgliedern in Webling).",
           "gainsAccess": "{email} bekommt Zugang zu Administra.",
-          "losesRecord": "{email} findet den Eintrag danach nicht mehr (Mein Profil). Verknüpfe das Konto unter Benutzer, wenn es dazugehört."
+          "losesRecord": "{email} sieht den Eintrag danach nicht mehr (Mein Profil, Mitgliederbereich). Verknüpfe das Konto unter Benutzer, wenn es dazugehört. Ein Mitgliederkonto sieht ihn nur, solange er als aktives oder passives Mitglied zählt.",
+          "gainsRecord": "{email} sieht den Eintrag danach (Mein Profil, Mitgliederbereich)."
         },
         "warning": {
           "TRIAL_LINK_ENDS": "Der Status-Link der Probetraining-Anmeldung funktioniert danach nicht mehr.",

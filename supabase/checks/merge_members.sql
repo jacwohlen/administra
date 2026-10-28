@@ -258,7 +258,8 @@ SELECT pg_temp.ok('the merge itself is not callable through the API', NOT (
   OR has_function_privilege('authenticated', 'public.merge_members_join_text(text, text, text)', 'EXECUTE')
   OR has_function_privilege('authenticated', 'public.merge_members_field_rule(text, text, boolean, boolean)', 'EXECUTE')
   OR has_function_privilege('authenticated', 'public.exam_candidate_has_sheet(bigint)', 'EXECUTE')
-  OR has_function_privilege('service_role', 'public.exam_candidate_has_sheet(bigint)', 'EXECUTE')));
+  OR has_function_privilege('service_role', 'public.exam_candidate_has_sheet(bigint)', 'EXECUTE')
+  OR has_function_privilege('authenticated', 'public.merge_members_account_finds(public.user_profiles, public.members)', 'EXECUTE')));
 SELECT pg_temp.ok('merge and preview: signed-in accounts only (admins checked inside)',
   has_function_privilege('authenticated', 'public.merge_members(integer, integer)', 'EXECUTE')
   AND has_function_privilege('authenticated', 'public.merge_members_preview(integer, integer)', 'EXECUTE')
@@ -438,13 +439,13 @@ BEGIN
     || ' ' || "trialRegisteredAt"::date FROM public.members WHERE id = 5901), 'assigned Judo true 2023-12-20');
   PERFORM pg_temp.eq('status page answers member', public.get_trial_status(v_token)->>'status', 'member');
   PERFORM pg_temp.ok('the status link cannot cancel a member', NOT public.cancel_trial(v_token));
-  -- T's account waits (a trial row lets nobody in) and still finds Mira
-  -- through its moved link
+  -- T's account waits (a trial row lets nobody in): its link moved to
+  -- Mira, but a waiting account finds nobody (my_member_ids), before or after
   PERFORM pg_temp.eq('account report',
     (SELECT string_agg((a->>'email') || ' ' || (a->>'role') || ' ' || (a->>'before') || '>' || (a->>'after')
                        || ' finds ' || (a->>'findsBefore') || '>' || (a->>'findsAfter'), ',')
      FROM jsonb_array_elements(v_result->'accounts') a),
-    'mira.trial@test.ch member false>false finds true>true');
+    'mira.trial@test.ch member false>false finds false>false');
   PERFORM pg_temp.ok('no account loses access', NOT v_result->'warnings' @> '[{"code": "ACCOUNT_LOSES_ACCESS"}]');
 
   -- The log
@@ -613,6 +614,72 @@ END $$;
 ROLLBACK TO SAVEPOINT s;
 
 -----------------
+-- 'Finds' is my_member_ids(): a parent who keeps access through one child
+-- and loses the other, whose record that stays does not count, is
+-- reported; so is an account that starts to find a record that counts
+-----------------
+
+SAVEPOINT s;
+DO $$
+DECLARE
+  v_parent uuid := '20000000-0000-4000-8000-000000000031';
+  v_other uuid := '20000000-0000-4000-8000-000000000032';
+  v_report text;
+  v_result jsonb;
+BEGIN
+  -- Child A (950) has the parent's e-mail; the account is linked to child
+  -- B's app row 951, whose Webling record 5950 is no member
+  INSERT INTO public.members (id, firstname, lastname, labels, email) VALUES
+    (950, 'Ari', 'Eltern', '[]', 'eltern@test.ch'),
+    (951, 'Bea', 'Eltern', '[]', NULL),
+    (5950, 'Bea', 'Eltern', '["Nicht-Mitglieder"]', NULL);
+  INSERT INTO public.member_links (connection, external_id, member_id, last_seen_at) VALUES ('webling', '5950', 5950, now());
+  PERFORM pg_temp.sign_up(v_parent, 'eltern@test.ch');
+  UPDATE public.user_profiles SET member_id = 951 WHERE user_id = v_parent;
+  PERFORM pg_temp.act_as(v_parent);
+  PERFORM pg_temp.eq('fixture: the parent finds both children',
+    (SELECT string_agg(i::text, ',' ORDER BY i) FROM public.my_member_ids() i), '950,951');
+  RESET ROLE;
+
+  PERFORM pg_temp.as_admin();
+  v_report := (SELECT string_agg((a->>'email') || ' ' || (a->>'role') || ' ' || (a->>'before') || '>' || (a->>'after')
+                                 || ' finds ' || (a->>'findsBefore') || '>' || (a->>'findsAfter'), ',')
+               FROM jsonb_array_elements(public.merge_members_preview(5950, 951)->'accounts') a);
+  PERFORM public.merge_members(5950, 951);
+  PERFORM pg_temp.act_as(v_parent);
+  PERFORM pg_temp.eq('after the merge the parent finds only the child who counts',
+    (SELECT string_agg(i::text, ',' ORDER BY i) FROM public.my_member_ids() i), '950');
+  RESET ROLE;
+  PERFORM pg_temp.eq('and the preview said so', v_report, 'eltern@test.ch member true>true finds true>false');
+
+  -- The other way: an account linked to a trial row (it got in through
+  -- another record) finds the Webling member it is merged into
+  INSERT INTO public.members (id, firstname, lastname, labels, email) VALUES
+    (952, 'Cleo', 'Eltern', '[]', 'cleo.family@test.ch'),
+    (10000953, 'Dan', 'Eltern', '["probetraining"]', NULL),
+    (5953, 'Dan', 'Eltern', '["Aktiv"]', NULL);
+  INSERT INTO public.member_links (connection, external_id, member_id, last_seen_at) VALUES ('webling', '5953', 5953, now());
+  PERFORM pg_temp.sign_up(v_other, 'cleo.family@test.ch');
+  UPDATE public.user_profiles SET member_id = 10000953 WHERE user_id = v_other;
+  PERFORM pg_temp.act_as(v_other);
+  PERFORM pg_temp.eq('fixture: a trial row is not found',
+    (SELECT string_agg(i::text, ',' ORDER BY i) FROM public.my_member_ids() i), '952');
+  RESET ROLE;
+  PERFORM pg_temp.as_admin();
+  v_result := public.merge_members(5953, 10000953);
+  PERFORM pg_temp.act_as(v_other);
+  PERFORM pg_temp.eq('after the merge it finds the Webling member',
+    (SELECT string_agg(i::text, ',' ORDER BY i) FROM public.my_member_ids() i), '952,5953');
+  RESET ROLE;
+  PERFORM pg_temp.eq('reported as finding it',
+    (SELECT string_agg((a->>'email') || ' ' || (a->>'before') || '>' || (a->>'after')
+                       || ' finds ' || (a->>'findsBefore') || '>' || (a->>'findsAfter'), ',')
+     FROM jsonb_array_elements(v_result->'accounts') a),
+    'cleo.family@test.ch true>true finds false>true');
+END $$;
+ROLLBACK TO SAVEPOINT s;
+
+-----------------
 -- A kept row with a status link of its own keeps it: the dropped row's
 -- trial history does not overwrite it, and its link is reported as ending
 -----------------
@@ -675,21 +742,67 @@ ROLLBACK TO SAVEPOINT s;
 
 SAVEPOINT s;
 DO $$
+DECLARE
+  v_result jsonb;
+  v_conflict jsonb;
 BEGIN
   INSERT INTO public.members (id, firstname, lastname, labels) VALUES
-    (906, 'Eva', 'Exam', '[]'), (907, 'Eva', 'Exam', '[]'), (908, 'Udo', 'User', '[]'), (909, 'Udo', 'User', '[]');
-  -- Both registered for exam 2; only 907's sheet was started
-  INSERT INTO public.exam_candidates (id, exam_id, member_id, section, grade, note, belt_length_cm) VALUES
-    (990002, 2, 906, 'Judo', '4. Kyu', 'Kommt mit Vater', 240),
-    (990003, 2, 907, 'Judo', '4. Kyu', NULL, NULL);
+    (906, 'Eva', 'Exam', '[]'), (907, 'Eva', 'Exam', '[]'), (908, 'Udo', 'User', '[]'), (909, 'Udo', 'User', '[]'),
+    (916, 'Ina', 'Exam', '[]'), (917, 'Ina', 'Exam', '[]'), (918, 'Ole', 'Exam', '[]'), (919, 'Ole', 'Exam', '[]');
+  -- Both on exam 2, each with its own trainer and notes: 906 called up by
+  -- the TK, 907's sheet started
+  INSERT INTO public.exam_candidates (id, exam_id, member_id, section, grade, status, trainer, note, staff_note, belt_length_cm) VALUES
+    (990002, 2, 906, 'Judo', '4. Kyu', 'invited', 'Eva', 'Brille', 'Mutter holt ab 18:00', 240),
+    (990003, 2, 907, 'Judo', '4. Kyu', 'registered', 'Hans', 'Gürtel 220', 'Knie verletzt: nur Kata', NULL);
   UPDATE public.exam_candidates SET started_at = now() WHERE id = 990003;
 
   PERFORM pg_temp.as_admin();
-  PERFORM public.merge_members(906, 907);
+  v_result := public.merge_members(906, 907);
   RESET ROLE;
-  PERFORM pg_temp.eq('the started sheet stays and takes the empty fields',
-    (SELECT string_agg(id || ' ' || member_id || ' ' || note || ' ' || belt_length_cm, ',') FROM public.exam_candidates WHERE exam_id = 2 AND member_id IN (906, 907)),
-    '990003 906 Kommt mit Vater 240');
+  PERFORM pg_temp.eq('the started sheet stays, called up, with the notes of both and the empty fields filled',
+    (SELECT string_agg(id || ' ' || member_id || ' ' || status || ' ' || trainer || ' | ' || note || ' | ' || staff_note
+                       || ' | ' || belt_length_cm, ',')
+     FROM public.exam_candidates WHERE exam_id = 2 AND member_id IN (906, 907)),
+    '990003 906 invited Hans | Gürtel 220 / Brille | Knie verletzt: nur Kata / Mutter holt ab 18:00 | 240');
+  v_conflict := (SELECT c FROM jsonb_array_elements(v_result->'conflicts') c WHERE c->>'ref' = 'exam_candidates.member_id');
+  PERFORM pg_temp.eq('exam conflict: the removed registration as it was',
+    (v_conflict->>'kept') || ' ' || (v_conflict->>'reason') || ' ' || (v_conflict->'removed')::text,
+    'drop sheet ' || '{"status": "invited", "grade": "4. Kyu", "trainer": "Eva", "note": "Brille", "staffNote": "Mutter holt ab 18:00"}'::jsonb::text);
+  PERFORM pg_temp.ok('and the log keeps it', (SELECT result->'conflicts' @> jsonb_build_array(v_conflict)
+    FROM public.member_merges WHERE id = (v_result->>'mergeId')::bigint));
+
+  -- No sheet: the further registration stays (another grade here) and
+  -- takes the other's notes and trainer
+  INSERT INTO public.exam_candidates (id, exam_id, member_id, section, grade, status, trainer, note, staff_note) VALUES
+    (990005, 2, 916, 'Judo', '4. Kyu', 'withdrawn', 'Eva', 'Doppelt angemeldet', NULL),
+    (990006, 2, 917, 'Judo', '3. Kyu', 'registered', NULL, 'Neu', 'Zahlt bar');
+  PERFORM pg_temp.as_admin();
+  v_result := public.merge_members(916, 917);
+  RESET ROLE;
+  PERFORM pg_temp.eq('no sheet: the further one stays with the other''s notes and trainer',
+    (SELECT string_agg(id || ' ' || member_id || ' ' || status || ' ' || grade || ' ' || trainer || ' | ' || note || ' | ' || staff_note, ',')
+     FROM public.exam_candidates WHERE exam_id = 2 AND member_id IN (916, 917)),
+    '990006 916 registered 3. Kyu Eva | Neu / Doppelt angemeldet | Zahlt bar');
+  v_conflict := (SELECT c FROM jsonb_array_elements(v_result->'conflicts') c WHERE c->>'ref' = 'exam_candidates.member_id');
+  PERFORM pg_temp.eq('its conflict entry names the removed grade and status',
+    concat_ws(' ', v_conflict->>'kept', v_conflict->>'reason', v_conflict->'removed'->>'status', v_conflict->'removed'->>'grade'),
+    'drop status withdrawn 4. Kyu');
+
+  -- The kept member's sheet, withdrawn after it started: it stays and is
+  -- back with the other's status
+  INSERT INTO public.exam_candidates (id, exam_id, member_id, section, grade, status, trainer, note) VALUES
+    (990007, 2, 918, 'Judo', '4. Kyu', 'withdrawn', NULL, 'Verletzt'),
+    (990008, 2, 919, 'Judo', '4. Kyu', 'registered', 'Hans', 'Wieder fit');
+  UPDATE public.exam_candidates SET started_at = now() WHERE id = 990007;
+  PERFORM pg_temp.as_admin();
+  v_result := public.merge_members(918, 919);
+  RESET ROLE;
+  PERFORM pg_temp.eq('kept sheet: stays, further status, notes of both',
+    (SELECT string_agg(id || ' ' || member_id || ' ' || status || ' ' || trainer || ' | ' || note, ',')
+     FROM public.exam_candidates WHERE exam_id = 2 AND member_id IN (918, 919)),
+    '990007 918 registered Hans | Verletzt / Wieder fit');
+  PERFORM pg_temp.eq('reported as the kept sheet',
+    (SELECT (c->>'kept') || ' ' || (c->>'reason') FROM jsonb_array_elements(v_result->'conflicts') c), 'keep sheet');
 
   -- Both examined on the same day: refused
   INSERT INTO public.members (id, firstname, lastname, labels) VALUES (910, 'Eva', 'Exam', '[]');

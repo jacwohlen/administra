@@ -125,12 +125,21 @@ export type MergeConflict =
       kept: 'keep' | 'drop';
       /** 'sheet': the one with a started exam sheet stays */
       reason: 'sheet' | 'status';
+      /** The registration removed, as it was (the one that stays has its notes too) */
+      removed: {
+        status: string;
+        grade: string;
+        trainer: string | null;
+        note: string | null;
+        staffNote: string | null;
+      };
     };
 
 /**
  * An account linked to either member or matching either e-mail: whether it
- * gets in (is_approved_user) and finds the person (link, or e-mail of a row
- * without trial label) before and after the merge
+ * gets in (is_approved_user) and finds the person (my_member_ids: approved,
+ * the link or the e-mail of a row without trial label, for a member account
+ * only a record that counts) before and after the merge
  */
 export interface MergeAccount {
   userId: string;

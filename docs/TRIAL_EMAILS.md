@@ -78,10 +78,13 @@ Both actions go through SECURITY DEFINER functions keyed by the token,
 
 When a candidate's trial registration is merged into their Webling record
 (`docs/INTEGRATIONS.md`, "Merging duplicates"), the token and trial history
-move with it, so the link keeps working and shows "member"; the e-mails
-sent are listed on the record that stays. If that record already had a
-trial history or a status link of its own, it keeps its own and the merged
-registration's link stops working (the preview warns).
+move with it, so the link keeps working and shows "member". The e-mails
+sent move to the record that stays (and are counted in the merge log), but
+no page lists them any more: _Probetraining_ only shows records with the
+trial label, and the member page does not show trial e-mails. If that
+record already had a trial history or a status link of its own, it keeps
+its own and the merged registration's link stops working (the preview
+warns).
 
 ## SMTP setup (Netlify)
 

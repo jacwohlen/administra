@@ -67,12 +67,14 @@ that stays; if both records are linked to accounts, the merge is refused
 until one link is removed under _Benutzer_. The e-mail of the removed
 record is only taken over by a record without one that is not in Webling,
 and never from a trial registration. An account that found the removed
-record only by its e-mail loses it: the preview lists each account whose
-access changes (only member accounts can lose it) or that no longer finds
-the record. Link it under _Benutzer_ or put the e-mail on the record that
-stays (in Webling for Webling members); the merge never links an account
-by e-mail, as a trainer's or a parent's address would link the wrong
-person.
+record only by its e-mail loses it, and a member account also loses a
+record that stays but does not count (a parent keeps access through
+another child but no longer sees this one): the preview lists each
+account whose access changes (only member accounts can lose it) or that
+no longer finds, or newly finds, the record. Link it under _Benutzer_ or
+put the e-mail on the record that stays (in Webling for Webling members);
+the merge never links an account by e-mail, as a trainer's or a parent's
+address would link the wrong person.
 
 ## Access rules
 
