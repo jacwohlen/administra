@@ -1546,6 +1546,39 @@ BEGIN
 END $$;
 ROLLBACK TO SAVEPOINT s;
 
+-- An open issue follows its record into another calendar: an event moved
+-- to c3, staged without its list, is not checked by a run that read only
+-- c1 and c2
+SAVEPOINT s;
+DO $$
+DECLARE
+  v_moved jsonb;
+  r jsonb;
+BEGIN
+  PERFORM pg_temp.fx_setup();
+  INSERT INTO fx_part VALUES (61001, '9999999');
+  PERFORM pg_temp.as_sync();
+  r := pg_temp.run('webling', 'events', pg_temp.ev_scope('{c1,c2,c3}'), pg_temp.ev_snapshot());
+  RESET ROLE;
+  SELECT jsonb_agg(CASE WHEN x->>'external_id' = '61001'
+                        THEN jsonb_set(x #- '{data,participants}', '{data,calendar}',
+                                       '{"id": "c3", "name": "Saisonkurse"}') ELSE x END)
+    INTO v_moved FROM jsonb_array_elements(pg_temp.ev_snapshot()) x;
+  PERFORM pg_temp.as_sync();
+  r := pg_temp.run('webling', 'events', pg_temp.ev_scope('{c1,c2,c3}'), v_moved);
+  RESET ROLE;
+  PERFORM pg_temp.eq('V16 61001 moved to c3 without its list: the open issue moves along',
+    (SELECT concat_ws(' ', resolved_at IS NULL, to_jsonb(i)->>'calendar') FROM public.integration_issues i
+      WHERE code = 'unknown_participant' AND external_id = '9999999'), 't c3');
+  PERFORM pg_temp.as_sync();
+  r := pg_temp.run('webling', 'events', pg_temp.ev_scope('{c1,c2}'), pg_temp.without(v_moved, ARRAY['61001']));
+  RESET ROLE;
+  PERFORM pg_temp.eq('V16 ... and a complete run over c1 and c2 leaves it open',
+    concat_ws(' ', r->>'final', (SELECT (resolved_at IS NULL)::text FROM public.integration_issues
+                                  WHERE code = 'unknown_participant' AND external_id = '9999999')), 'ok true');
+END $$;
+ROLLBACK TO SAVEPOINT s;
+
 -- Holidays: a calendar mapped to breaks
 SAVEPOINT s;
 DO $$

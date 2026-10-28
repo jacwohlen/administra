@@ -2480,6 +2480,21 @@ BEGIN
                   END));
   GET DIAGNOSTICS v_resolved = ROW_COUNT;
 
+  -- An open issue follows its record into another calendar (staged without
+  -- being observed again: an event moved, its list not read)
+  UPDATE public.integration_issues i SET calendar = r.data->'calendar'->>'key'
+    FROM (SELECT i2.id,
+                 CASE WHEN i2.code = 'unknown_participant'
+                      THEN (SELECT l.external_id FROM public.event_links l
+                             WHERE l.connection = p_c.id AND l.event_id = i2.event_id)
+                      ELSE i2.external_id END AS rec
+            FROM public.integration_issues i2
+           WHERE i2.connection = p_c.id AND i2.kind = 'events' AND i2.resolved_at IS NULL) c
+    JOIN public.integration_records r ON r.run_id = p_run AND r.external_id = c.rec
+   WHERE i.id = c.id AND coalesce(r.problem, '') <> 'fetch_failed'
+     AND r.data->'calendar'->>'key' <> '' AND length(r.data->'calendar'->>'key') <= 200
+     AND i.calendar IS DISTINCT FROM r.data->'calendar'->>'key';
+
   RETURN jsonb_build_object(
     'noted', v_noted,
     'resolved', v_resolved,
