@@ -1,5 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { isRedirect } from '@sveltejs/kit';
+import { PROVIDER_EVENT_FIELDS } from '$lib/eventLinks';
 
 // The edit training page loads its main trainer options; every query comes
 // back empty here.
@@ -72,6 +73,31 @@ describe('writer-only dashboard pages', () => {
       expect(await redirectTarget(load, trainer, params)).toBeNull();
     });
   }
+});
+
+describe('events a provider maintains', () => {
+  const linked = (flags: Flags) =>
+    ({
+      parent: async () => ({ ...flags, eventLink: { connection: 'webling', url: null } }),
+      params: { eventId: '51830' },
+      depends: () => {}
+    }) as never;
+
+  it('edit event: still sends viewers back to the event', async () => {
+    try {
+      await (editEvent as Load)(linked(viewer));
+      expect.unreachable('a viewer must not open the edit page');
+    } catch (e) {
+      expect(isRedirect(e) && e.location).toBe('/dashboard/events/51830');
+    }
+  });
+
+  it('edit event: lets trainers and admins in for the registration deadline, the rest locked', async () => {
+    // no policy readable here: every field a provider may write is locked
+    expect(await (editEvent as Load)(linked(trainer))).toEqual({
+      lockedFields: [...PROVIDER_EVENT_FIELDS]
+    });
+  });
 });
 
 describe('TK-only exam pages', () => {
