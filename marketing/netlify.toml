@@ -1,0 +1,30 @@
+# administra.ch — the marketing site (a separate Netlify site with base
+# directory "marketing"; the app has its own netlify.toml at the repo root).
+# Static files only: no framework, no JavaScript. See marketing/README.md.
+
+[build]
+  # Fails production deploys while the legal pages still contain
+  # [[placeholders]]; previews only warn.
+  command = "node check-placeholders.mjs"
+  publish = "public"
+
+[build.environment]
+  NODE_VERSION = "22"
+
+[[redirects]]
+  from = "https://www.administra.ch/*"
+  to = "https://administra.ch/:splat"
+  status = 301
+  force = true
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    # Everything is same-origin; no scripts at all. form-action covers the
+    # Netlify Forms POST to /danke/.
+    Content-Security-Policy = "default-src 'none'; style-src 'self'; img-src 'self' data:; form-action 'self'; base-uri 'none'; frame-ancestors 'none'"
+    X-Content-Type-Options = "nosniff"
+    X-Frame-Options = "DENY"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Permissions-Policy = "camera=(), microphone=(), geolocation=(), payment=(), usb=(), browsing-topics=()"
+    Strict-Transport-Security = "max-age=31536000"

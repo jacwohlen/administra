@@ -35,7 +35,7 @@ export default defineConfig({
     svelteTesting()
   ],
   test: {
-    include: ['src/**/*.{test,spec}.{js,ts}', 'scripts/**/*.test.js'],
+    include: ['src/**/*.{test,spec}.{js,ts}', 'scripts/**/*.test.js', 'marketing/**/*.test.js'],
     environment: 'jsdom',
     setupFiles: ['./src/lib/test/setup.ts']
   }
