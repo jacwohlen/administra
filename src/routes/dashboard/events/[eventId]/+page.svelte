@@ -33,7 +33,7 @@
   } from '$lib/eventUtils';
   import type { Medal } from '$lib/models';
   import { MEDALS, medalEmoji } from '$lib/gradeUtils';
-  import { canChangeEvent } from '$lib/eventLinks';
+  import { canDeleteEvent } from '$lib/eventLinks';
   import { isManagedByProviderError, providerName } from '$lib/memberStatus';
 
   let { data }: { data: PageData } = $props();
@@ -44,9 +44,10 @@
   let showDeleteConfirm = $state(false);
   let confirmRemoveId = $state<string | null>(null);
 
-  // An event its provider still has is maintained there: no edit, no delete
+  // An event its provider still has is maintained there: no delete, and the
+  // edit page locks what the provider owns (the registration deadline stays ours)
   let provider = $derived(data.eventLink ? providerName(data.eventLink.connection) : null);
-  let canChange = $derived(canChangeEvent(data.canWrite, data.eventLink));
+  let canDelete = $derived(canDeleteEvent(data.canWrite, data.eventLink));
 
   function formatEventDate(date: string) {
     return dayjs(date).format('DD.MM.YYYY');
@@ -274,7 +275,7 @@
       <Fa icon={faArrowLeft} />
     </a>
     <h1 class="flex-1 min-w-0 truncate">{data.event.title}</h1>
-    {#if canChange}
+    {#if data.canWrite}
       <div class="flex gap-2 flex-shrink-0">
         <a
           href="/dashboard/events/{data.event.id}/edit"
@@ -284,21 +285,23 @@
         >
           <Fa icon={faEdit} />
         </a>
-        <MoreMenu>
-          {#snippet items(close)}
-            <button
-              class="btn w-full justify-start text-error-600-400"
-              onclick={() => {
-                close();
-                confirmDelete();
-              }}
-              disabled={isDeleting}
-            >
-              <Fa icon={faTrash} />
-              <span>{$_('button.delete')}</span>
-            </button>
-          {/snippet}
-        </MoreMenu>
+        {#if canDelete}
+          <MoreMenu>
+            {#snippet items(close)}
+              <button
+                class="btn w-full justify-start text-error-600-400"
+                onclick={() => {
+                  close();
+                  confirmDelete();
+                }}
+                disabled={isDeleting}
+              >
+                <Fa icon={faTrash} />
+                <span>{$_('button.delete')}</span>
+              </button>
+            {/snippet}
+          </MoreMenu>
+        {/if}
       </div>
     {/if}
   </div>

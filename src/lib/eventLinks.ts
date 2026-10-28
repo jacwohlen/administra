@@ -37,7 +37,54 @@ export function eventLinkFromResult(result: { data: unknown; error: unknown }): 
   };
 }
 
-/** Edit and delete: writers, for events no provider maintains */
-export function canChangeEvent(canWrite: boolean, link: EventLink | null | undefined): boolean {
+/**
+ * Delete: writers, for events no provider maintains (the database refuses
+ * it: the next run would bring the event back without its attendance).
+ * Writers edit every event; a linked one only in the fields its provider
+ * leaves to the app (lockedEventFields).
+ */
+export function canDeleteEvent(canWrite: boolean, link: EventLink | null | undefined): boolean {
   return canWrite && !link;
+}
+
+/**
+ * Event fields a provider may own or fill (integration_field_policy_ok() in
+ * the integration layer migration). The registration deadline is never one
+ * of them: it always stays the app's.
+ */
+export const PROVIDER_EVENT_FIELDS = [
+  'title',
+  'description',
+  'date',
+  'date_to',
+  'timeFrom',
+  'timeTo',
+  'location',
+  'section',
+  'maxParticipants'
+] as const;
+
+export type ProviderEventField = (typeof PROVIDER_EVENT_FIELDS)[number];
+
+/**
+ * The fields of an event the app cannot change while its provider has it:
+ * those the connection's field_policy marks 'owned' or 'fill' (what
+ * trigger_guard_provider_event() refuses). Without a readable policy, every
+ * field a provider may write, so the edit page never offers a change the
+ * database would refuse.
+ */
+export function lockedEventFields(
+  link: EventLink | null | undefined,
+  fieldPolicy: unknown
+): ProviderEventField[] {
+  if (!link) {
+    return [];
+  }
+  if (!fieldPolicy || typeof fieldPolicy !== 'object' || Array.isArray(fieldPolicy)) {
+    return [...PROVIDER_EVENT_FIELDS];
+  }
+  const policy = fieldPolicy as Record<string, unknown>;
+  return PROVIDER_EVENT_FIELDS.filter((field) =>
+    ['owned', 'fill'].includes(policy[`event.${field}`] as string)
+  );
 }

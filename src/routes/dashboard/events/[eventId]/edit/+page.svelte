@@ -4,7 +4,7 @@
   import { goto, invalidateAll } from '$app/navigation';
   import { _ } from 'svelte-i18n';
   import Fa from 'svelte-fa';
-  import { faSave, faArrowLeft } from '@fortawesome/free-solid-svg-icons';
+  import { faSave, faArrowLeft, faArrowsRotate } from '@fortawesome/free-solid-svg-icons';
   import { clubConfig } from '$lib/clubConfig';
   import { isManagedByProviderError, providerName } from '$lib/memberStatus';
 
@@ -22,10 +22,16 @@
   let loading = $state(false);
   let error = $state('');
 
+  // An event its provider maintains: what the provider owns or fills is
+  // shown, not sent (the database would refuse a change)
+  let locked = $derived(new Set<string>(data.lockedFields));
+  let provider = $derived(data.eventLink ? providerName(data.eventLink.connection) : null);
+
   const sections = clubConfig.sections;
 
   async function updateEvent() {
-    if (!title || !date || !section) {
+    const missing = (field: string, value: unknown) => !locked.has(field) && !value;
+    if (missing('title', title) || missing('date', date) || missing('section', section)) {
       error = $_('page.events.validation.required_fields');
       return;
     }
@@ -33,25 +39,27 @@
     loading = true;
     error = '';
 
+    const fields: Record<string, unknown> = {
+      title,
+      description: description || null,
+      date,
+      timeFrom: timeFrom || null,
+      timeTo: timeTo || null,
+      location: location || null,
+      section,
+      maxParticipants: maxParticipants || null,
+      registrationDeadline: registrationDeadline || null
+    };
+
     try {
       const { error: updateError } = await supabaseClient
         .from('events')
-        .update({
-          title,
-          description: description || null,
-          date,
-          timeFrom: timeFrom || null,
-          timeTo: timeTo || null,
-          location: location || null,
-          section,
-          maxParticipants: maxParticipants || null,
-          registrationDeadline: registrationDeadline || null
-        })
+        .update(Object.fromEntries(Object.entries(fields).filter(([field]) => !locked.has(field))))
         .eq('id', data.event.id);
 
       if (updateError) {
         console.error('Error updating event:', updateError);
-        // Linked after this page loaded (the load sends linked events back)
+        // Linked (or its policy changed) after this page loaded
         error = isManagedByProviderError(updateError)
           ? $_('page.events.managedBy', {
               values: { provider: providerName(data.eventLink?.connection ?? 'webling') }
@@ -84,6 +92,15 @@
   <h1>{$_('page.events.edit_event')}</h1>
 </div>
 
+{#if provider}
+  <div
+    class="mb-4 flex items-center gap-2 rounded-md border border-surface-300-700 bg-surface-100-900 px-3 py-2 text-sm"
+  >
+    <Fa icon={faArrowsRotate} class="text-surface-500 flex-shrink-0" />
+    <span>{$_('page.events.lockedByProvider', { values: { provider } })}</span>
+  </div>
+{/if}
+
 <form
   onsubmit={(e: SubmitEvent) => {
     e.preventDefault();
@@ -103,6 +120,7 @@
         class="input"
         bind:value={title}
         required
+        disabled={locked.has('title')}
         placeholder={$_('page.events.form.title_placeholder')}
       />
     </div>
@@ -117,6 +135,7 @@
         class="textarea"
         bind:value={description}
         rows="3"
+        disabled={locked.has('description')}
         placeholder={$_('page.events.form.description_placeholder')}
       />
     </div>
@@ -126,7 +145,14 @@
       <label class="label" for="date">
         <span>{$_('page.events.form.date')} *</span>
       </label>
-      <input id="date" type="date" class="input" bind:value={date} required />
+      <input
+        id="date"
+        type="date"
+        class="input"
+        bind:value={date}
+        required
+        disabled={locked.has('date')}
+      />
     </div>
 
     <!-- Section -->
@@ -134,7 +160,13 @@
       <label class="label" for="section">
         <span>{$_('page.events.form.section')} *</span>
       </label>
-      <select id="section" class="select" bind:value={section} required>
+      <select
+        id="section"
+        class="select"
+        bind:value={section}
+        required
+        disabled={locked.has('section')}
+      >
         <option value="">{$_('page.events.form.select_section')}</option>
         {#each sections as s}
           <option value={s}>{s}</option>
@@ -147,7 +179,13 @@
       <label class="label" for="timeFrom">
         <span>{$_('page.events.form.time_from')}</span>
       </label>
-      <input id="timeFrom" type="time" class="input" bind:value={timeFrom} />
+      <input
+        id="timeFrom"
+        type="time"
+        class="input"
+        bind:value={timeFrom}
+        disabled={locked.has('timeFrom')}
+      />
     </div>
 
     <!-- Time To -->
@@ -155,7 +193,13 @@
       <label class="label" for="timeTo">
         <span>{$_('page.events.form.time_to')}</span>
       </label>
-      <input id="timeTo" type="time" class="input" bind:value={timeTo} />
+      <input
+        id="timeTo"
+        type="time"
+        class="input"
+        bind:value={timeTo}
+        disabled={locked.has('timeTo')}
+      />
     </div>
 
     <!-- Location -->
@@ -168,6 +212,7 @@
         type="text"
         class="input"
         bind:value={location}
+        disabled={locked.has('location')}
         placeholder={$_('page.events.form.location_placeholder')}
       />
     </div>
@@ -182,6 +227,7 @@
         type="number"
         class="input"
         bind:value={maxParticipants}
+        disabled={locked.has('maxParticipants')}
         min="1"
         placeholder={$_('page.events.form.max_participants_placeholder')}
       />

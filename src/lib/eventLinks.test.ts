@@ -1,5 +1,11 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { canChangeEvent, eventLinkFromResult, isMissingSchemaError } from './eventLinks';
+import {
+  PROVIDER_EVENT_FIELDS,
+  canDeleteEvent,
+  eventLinkFromResult,
+  isMissingSchemaError,
+  lockedEventFields
+} from './eventLinks';
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -78,20 +84,66 @@ describe('eventLinkFromResult', () => {
   });
 });
 
-describe('canChangeEvent', () => {
+describe('canDeleteEvent', () => {
   const link = { connection: 'webling', url: null };
 
-  it('lets writers change events no provider maintains', () => {
-    expect(canChangeEvent(true, null)).toBe(true);
-    expect(canChangeEvent(true, undefined)).toBe(true);
+  it('lets writers delete events no provider maintains', () => {
+    expect(canDeleteEvent(true, null)).toBe(true);
+    expect(canDeleteEvent(true, undefined)).toBe(true);
   });
 
-  it('keeps everyone from changing a linked event', () => {
-    expect(canChangeEvent(true, link)).toBe(false);
-    expect(canChangeEvent(false, link)).toBe(false);
+  it('keeps everyone from deleting a linked event', () => {
+    expect(canDeleteEvent(true, link)).toBe(false);
+    expect(canDeleteEvent(false, link)).toBe(false);
   });
 
-  it('keeps viewers from changing any event', () => {
-    expect(canChangeEvent(false, null)).toBe(false);
+  it('keeps viewers from deleting any event', () => {
+    expect(canDeleteEvent(false, null)).toBe(false);
+  });
+});
+
+describe('lockedEventFields', () => {
+  const link = { connection: 'webling', url: null };
+  // as seeded for Webling in the integration layer migration
+  const webling = {
+    'member.firstname': 'owned',
+    'event.title': 'owned',
+    'event.date': 'owned',
+    'event.date_to': 'owned',
+    'event.timeFrom': 'fill',
+    'event.timeTo': 'fill',
+    'event.location': 'fill',
+    'event.maxParticipants': 'fill',
+    'event.section': 'owned',
+    'event.description': 'owned',
+    'break.title': 'owned'
+  };
+
+  it('locks nothing on an event no provider maintains', () => {
+    expect(lockedEventFields(null, webling)).toEqual([]);
+    expect(lockedEventFields(undefined, null)).toEqual([]);
+  });
+
+  it('locks what the provider owns or fills, never the registration deadline', () => {
+    const locked = lockedEventFields(link, webling);
+    expect(locked).toEqual([...PROVIDER_EVENT_FIELDS]);
+    expect(locked).not.toContain('registrationDeadline');
+  });
+
+  it('leaves the app what the policy does not give the provider', () => {
+    expect(
+      lockedEventFields(link, {
+        'event.title': 'owned',
+        'event.location': 'initial',
+        'event.date': 'fill'
+      })
+    ).toEqual(['title', 'date']);
+    expect(lockedEventFields(link, {})).toEqual([]);
+  });
+
+  it('locks every field a provider may write when the policy is unknown', () => {
+    for (const policy of [null, undefined, 'owned', ['event.title'], 42]) {
+      expect(lockedEventFields(link, policy)).toEqual([...PROVIDER_EVENT_FIELDS]);
+    }
   });
 });

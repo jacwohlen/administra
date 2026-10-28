@@ -731,6 +731,120 @@ BEGIN
 END $$;
 ROLLBACK TO SAVEPOINT s;
 
+-- A renamed status group: members the run does not write (a problem
+-- record, a partial run, a link gone) get the new label too and keep
+-- their status, which is looked up by the label text
+SAVEPOINT s;
+DO $$
+DECLARE
+  v_snap jsonb := pg_temp.webling_snapshot();
+  v_ids text[] := pg_temp.linked('active', 4);
+  v_active bigint;
+  v_renamed jsonb;
+  r jsonb;
+BEGIN
+  PERFORM pg_temp.as_sync();
+  r := pg_temp.run('webling', 'members', '{"complete": true}', v_snap);
+  RESET ROLE;
+  UPDATE public.member_links SET gone_at = now() - interval '1 day'
+   WHERE connection = 'webling' AND external_id = v_ids[4];
+  v_snap := pg_temp.without(v_snap, ARRAY[v_ids[4]]);
+  v_active := (SELECT count(*) FROM public.members WHERE membership_status = 'active');
+  -- Webling renames Aktiv (same id); two of its members cannot be fetched
+  SELECT jsonb_agg(jsonb_set(x, '{data,groups}', (SELECT coalesce(jsonb_agg(CASE WHEN g->>'name' = 'Aktiv'
+                      THEN jsonb_build_object('id', g->>'id', 'name', 'Aktiv Judo') ELSE g END), '[]')
+                      FROM jsonb_array_elements(x->'data'->'groups') g)))
+    INTO v_renamed FROM jsonb_array_elements(v_snap) x;
+  v_renamed := pg_temp.with_record(v_renamed, v_ids[1], '{"problem": "fetch_failed"}');
+  v_renamed := pg_temp.with_record(v_renamed, v_ids[2], '{"problem": "fetch_failed"}');
+  PERFORM pg_temp.as_sync();
+  r := pg_temp.run('webling', 'members', '{"complete": true}', v_renamed);
+  RESET ROLE;
+  PERFORM pg_temp.eq('M12 Aktiv renamed while two of its members could not be fetched: no status changes',
+    concat_ws(' ', r->>'final', r->'result'->>'statuses_recomputed', r->'guard'->'status'->>'dropping',
+              (SELECT count(*) FROM public.members WHERE membership_status = 'active') - v_active), 'warning 0 0 0');
+  PERFORM pg_temp.eq('M12 ... the two carry the new label and stay active',
+    (SELECT string_agg(membership_status || ' ' || (labels ? 'Aktiv Judo') || ' ' || (labels ? 'Aktiv'), ','
+                       ORDER BY id)
+       FROM public.members WHERE id IN (v_ids[1]::integer, v_ids[2]::integer)), 'active true false,active true false');
+  PERFORM pg_temp.eq('M12 ... as does a member gone from Webling',
+    (SELECT membership_status || ' ' || (labels ? 'Aktiv Judo') FROM public.members WHERE id = v_ids[4]::integer),
+    'left true');
+
+  -- renamed again, in a partial run with one member only
+  PERFORM pg_temp.as_sync();
+  r := pg_temp.run('webling', 'members', '{"complete": false}', (
+         SELECT jsonb_agg(jsonb_set(x, '{data,groups}', (SELECT coalesce(jsonb_agg(CASE WHEN g->>'name' = 'Aktiv Judo'
+                            THEN jsonb_build_object('id', g->>'id', 'name', 'Aktivmitglieder') ELSE g END), '[]')
+                            FROM jsonb_array_elements(x->'data'->'groups') g)))
+           FROM jsonb_array_elements(v_renamed) x WHERE x->>'external_id' = v_ids[3]));
+  RESET ROLE;
+  PERFORM pg_temp.eq('M12 a partial run renames the label of every member of the group',
+    concat_ws(' ', r->>'final', (SELECT count(*) FROM public.members WHERE labels ? 'Aktiv Judo'),
+              (SELECT count(*) FROM public.members WHERE membership_status = 'active') - v_active,
+              pg_temp.st(v_ids[1]::integer)), 'ok 0 0 active');
+END $$;
+ROLLBACK TO SAVEPOINT s;
+
+-- A member back in Webling is written before its link comes back: the
+-- automatic approval only sees the labels it comes back with
+SAVEPOINT s;
+DO $$
+DECLARE
+  v_snap jsonb := pg_temp.webling_snapshot();
+  v_ids text[] := pg_temp.linked('active', 2);
+  v_account uuid[];
+  r jsonb;
+BEGIN
+  UPDATE public.members SET email = 'zurueck.' || id || '@example.com'
+   WHERE id IN (v_ids[1]::integer, v_ids[2]::integer);
+  UPDATE public.member_links SET gone_at = now() - interval '1 day'
+   WHERE connection = 'webling' AND external_id = ANY (v_ids);
+  v_account := ARRAY[pg_temp.sign_up('b0000000-0000-0000-0000-000000000011', 'zurueck.' || v_ids[1] || '@example.com'),
+                     pg_temp.sign_up('b0000000-0000-0000-0000-000000000012', 'zurueck.' || v_ids[2] || '@example.com')];
+  PERFORM pg_temp.eq('M13 accounts of members gone from Webling (still labelled Aktiv) wait',
+    (SELECT string_agg(p.status::text, ',' ORDER BY p.user_id) FROM public.user_profiles p
+      WHERE p.user_id = ANY (v_account)), 'pending,pending');
+  -- the first comes back as a non-member, the second as active
+  v_snap := pg_temp.with_record(v_snap, v_ids[1], (SELECT jsonb_build_object('firstname', firstname, 'lastname', lastname,
+              'email', email, 'groups', jsonb_build_array(jsonb_build_object('id', pg_temp.gid('Nicht-Mitglieder'),
+              'name', 'Nicht-Mitglieder'))) FROM public.members WHERE id = v_ids[1]::integer));
+  v_snap := pg_temp.with_record(v_snap, v_ids[2], (SELECT jsonb_build_object('firstname', firstname, 'lastname', lastname,
+              'email', email, 'groups', jsonb_build_array(jsonb_build_object('id', pg_temp.gid('Aktiv'), 'name', 'Aktiv')))
+              FROM public.members WHERE id = v_ids[2]::integer));
+  PERFORM pg_temp.as_sync();
+  r := pg_temp.run('webling', 'members', '{"complete": true}', v_snap);
+  RESET ROLE;
+  PERFORM pg_temp.eq('M13 back as a non-member: its account keeps waiting',
+    concat_ws(' ', r->'result'->>'revived', pg_temp.st(v_ids[1]::integer),
+              (SELECT status::text FROM public.user_profiles WHERE user_id = v_account[1])), '2 non_member pending');
+  PERFORM pg_temp.eq('M13 back as active: its account is approved',
+    concat_ws(' ', pg_temp.st(v_ids[2]::integer),
+              (SELECT status::text FROM public.user_profiles WHERE user_id = v_account[2])), 'active approved');
+END $$;
+ROLLBACK TO SAVEPOINT s;
+
+-- A new member the database refuses: the issue names the record, not a
+-- member with the Webling id (none was created)
+SAVEPOINT s;
+DO $$
+DECLARE
+  r jsonb;
+BEGIN
+  ALTER TABLE public.members ADD CONSTRAINT zz_check_boom CHECK (firstname <> 'BOOM') NOT VALID;
+  PERFORM pg_temp.as_sync();
+  r := pg_temp.run('webling', 'members', '{"complete": true}', pg_temp.with_record(pg_temp.webling_snapshot(), '77003',
+         '{"firstname": "BOOM", "lastname": "Neu", "groups": []}'));
+  RESET ROLE;
+  PERFORM pg_temp.eq('M14 a new member whose insert fails: an issue by external id, without member',
+    (SELECT concat_ws(' ', r->'result'->>'write_failed', external_id, coalesce(member_id::text, '-'), detail)
+       FROM public.integration_issues WHERE code = 'write_failed'), '1 77003 - 23514');
+  PERFORM pg_temp.ok('M14 ... and nothing written for it',
+    NOT EXISTS (SELECT 1 FROM public.members WHERE id = 77003)
+    AND NOT EXISTS (SELECT 1 FROM public.member_links WHERE external_id = '77003'));
+END $$;
+ROLLBACK TO SAVEPOINT s;
+
 -----------------
 -- C A CSV connection, run by an admin in the app
 -----------------
@@ -776,6 +890,17 @@ BEGIN
     (SELECT concat_ws(' ', external_id, other_member_id = v_app, detail) FROM public.integration_issues
       WHERE connection = 'csv' AND code = 'possible_duplicate'), 'r3 t name_birthday');
 
+  -- a later partial import did not check r3: it is still held back
+  PERFORM pg_temp.act_as(v_admin);
+  r := pg_temp.run('csv', 'members', '{"complete": false}', jsonb_build_array(
+    jsonb_build_object('external_id', 'r9', 'data', jsonb_build_object('firstname', 'Nur', 'lastname', 'Neun',
+                       'groups', '[]'::jsonb))));
+  RESET ROLE;
+  PERFORM pg_temp.eq('C5 a partial import without the held record leaves its issue open',
+    concat_ws(' ', r->>'final', r->'result'->>'inserted',
+              (SELECT resolved_at IS NULL FROM public.integration_issues
+                WHERE connection = 'csv' AND code = 'possible_duplicate' AND external_id = 'r3')), 'ok 1 t');
+
   -- the admin links the held record to the member in a second import
   PERFORM pg_temp.act_as(v_admin);
   r := pg_temp.run('csv', 'members', '{"complete": false}', jsonb_build_array(
@@ -791,7 +916,7 @@ BEGIN
     (SELECT detail FROM public.integration_issues WHERE connection = 'csv' AND code = 'id_conflict' AND external_id = 'r4'),
     'link_to');
   PERFORM pg_temp.ok('C2 the held record''s issue is resolved by the link',
-    (SELECT resolved_at IS NOT NULL OR last_run IS DISTINCT FROM (SELECT max(id) FROM public.integration_runs)
+    (SELECT resolved_at IS NOT NULL
        FROM public.integration_issues WHERE connection = 'csv' AND code = 'possible_duplicate' AND external_id = 'r3'));
 
   -- the CSV owns names, e-mail and labels, not the birthday
@@ -877,6 +1002,75 @@ BEGIN
     pg_temp.err($q$SELECT public.integration_set_mapping('webling', '{"guard": {"gone_min": 1000}}')$q$),
     '22023 INVALID_MAPPING');
   RESET ROLE;
+END $$;
+ROLLBACK TO SAVEPOINT s;
+
+-- A group called like a status group (a new one, or one renamed to it)
+-- never hands out that status: its label gets the provider's id
+SAVEPOINT s;
+DO $$
+DECLARE
+  v_snap jsonb := pg_temp.webling_snapshot();
+  v_ids text[] := pg_temp.linked('non_member', 2);
+  v_nm jsonb := jsonb_build_object('id', pg_temp.gid('Nicht-Mitglieder'), 'name', 'Nicht-Mitglieder');
+  r jsonb;
+BEGIN
+  PERFORM pg_temp.as_sync();
+  r := pg_temp.run('webling', 'members', '{"complete": true}', v_snap);
+  RESET ROLE;
+  -- an archive subgroup Webling also calls Passiv; Vorstand seen (and bound) for the first time
+  v_snap := pg_temp.with_record(v_snap, v_ids[1], jsonb_build_object('groups', jsonb_build_array(
+              v_nm, jsonb_build_object('id', 'gARCHIV2019PASSIV', 'name', 'Passiv'))));
+  v_snap := pg_temp.with_record(v_snap, v_ids[2], jsonb_build_object('groups', jsonb_build_array(
+              v_nm, jsonb_build_object('id', pg_temp.gid('Vorstand'), 'name', 'Vorstand'))));
+  PERFORM pg_temp.as_sync();
+  r := pg_temp.run('webling', 'members', '{"complete": true}', v_snap);
+  RESET ROLE;
+  PERFORM pg_temp.eq('G4 a new group called Passiv gets its id in the label, no status',
+    (SELECT concat_ws(' ', label, coalesce(status, '-'), reviewed) FROM public.integration_member_groups
+      WHERE external_id = 'gARCHIV2019PASSIV'), 'Passiv (gARCHIV2019PASSIV) - f');
+  PERFORM pg_temp.eq('G4 ... its member stays a non-member',
+    concat_ws(' ', r->>'final', pg_temp.st(v_ids[1]::integer),
+              (SELECT labels ? 'Passiv (gARCHIV2019PASSIV)' FROM public.members WHERE id = v_ids[1]::integer)),
+    'ok non_member t');
+
+  -- Webling renames Vorstand (same id) to Aktiv
+  v_snap := pg_temp.with_record(v_snap, v_ids[2], jsonb_build_object('groups', jsonb_build_array(
+              v_nm, jsonb_build_object('id', pg_temp.gid('Vorstand'), 'name', 'Aktiv'))));
+  PERFORM pg_temp.as_sync();
+  r := pg_temp.run('webling', 'members', '{"complete": true}', v_snap);
+  RESET ROLE;
+  PERFORM pg_temp.eq('G4 a group renamed to a status group''s name keeps its own status (none)',
+    concat_ws(' ', r->>'final', pg_temp.st(v_ids[2]::integer),
+              (SELECT label FROM public.integration_member_groups WHERE external_id = pg_temp.gid('Vorstand')),
+              (SELECT labels ? ('Aktiv (' || pg_temp.gid('Vorstand') || ')') FROM public.members
+                WHERE id = v_ids[2]::integer)),
+    'ok non_member Aktiv (' || pg_temp.gid('Vorstand') || ') t');
+  PERFORM pg_temp.ok('G4 every group of a connection writes its own label',
+    NOT EXISTS (SELECT 1 FROM public.integration_member_groups
+                 GROUP BY connection, coalesce(label, name) HAVING count(*) > 1));
+END $$;
+ROLLBACK TO SAVEPOINT s;
+
+-- Two groups called Passiv on first sight: which one the seeded row means
+-- is unknown, so it binds to neither and their members would drop: refused
+SAVEPOINT s;
+DO $$
+DECLARE
+  v_ids text[] := pg_temp.linked('non_member', 1);
+  r jsonb;
+BEGIN
+  PERFORM pg_temp.as_sync();
+  r := pg_temp.run('webling', 'members', '{"complete": true}', pg_temp.with_record(pg_temp.webling_snapshot(), v_ids[1],
+         jsonb_build_object('groups', jsonb_build_array(jsonb_build_object('id', 'gARCHIV2019PASSIV', 'name', 'Passiv')))));
+  RESET ROLE;
+  PERFORM pg_temp.eq('G4 two groups called Passiv on first sight: neither takes its status, refused as a drop',
+    concat_ws(' ', r->>'final', r->'guard'->>'refused',
+              -- the seeded row unbound, both groups with their id in the label
+              (SELECT count(*) FILTER (WHERE external_id IS NULL AND label IS NULL) || '/'
+                      || count(*) FILTER (WHERE label = 'Passiv (' || external_id || ')')
+                 FROM public.integration_member_groups WHERE name = 'Passiv')),
+    'refused status_drop 1/2');
 END $$;
 ROLLBACK TO SAVEPOINT s;
 
@@ -980,6 +1174,105 @@ BEGIN
   PERFORM pg_temp.eq('V7 an event without date: ok, info issue',
     concat_ws(' ', r->>'final', (SELECT severity || ' ' || detail FROM public.integration_issues WHERE external_id = '61999')),
     'ok info no_date');
+
+  -- A partial run checks only the records it staged
+  PERFORM pg_temp.as_sync();
+  r := pg_temp.run('webling', 'events', '{"complete": false}', (SELECT jsonb_agg(x)
+         FROM jsonb_array_elements(pg_temp.ev_snapshot()) x WHERE x->>'external_id' = '61001'));
+  RESET ROLE;
+  PERFORM pg_temp.eq('V7 a partial run without the event leaves its issue open',
+    (SELECT (resolved_at IS NULL)::text FROM public.integration_issues WHERE external_id = '61999'), 'true');
+  PERFORM pg_temp.as_sync();
+  r := pg_temp.run('webling', 'events', '{"complete": false}', jsonb_build_array(
+         jsonb_build_object('external_id', '61999', 'data', jsonb_build_object(
+           'calendar', jsonb_build_object('id', 'c1', 'name', 'Judo Agenda'), 'title', 'Serie',
+           'starts_on', pg_temp.fx_date(5)))));
+  RESET ROLE;
+  PERFORM pg_temp.eq('V7 a partial run with the event, dated now, resolves it',
+    concat_ws(' ', r->'result'->>'inserted',
+              (SELECT (resolved_at IS NOT NULL)::text FROM public.integration_issues WHERE external_id = '61999')),
+    '1 true');
+END $$;
+ROLLBACK TO SAVEPOINT s;
+
+-- Provenance follows the notes, as for the legacy sync: a merge that keeps
+-- the Webling registration with the app's notes, and staff changing the
+-- notes, make the registration the app's; the layer removes only its own
+SAVEPOINT s;
+DO $$
+DECLARE
+  v_admin uuid := pg_temp.sign_up('a0000000-0000-0000-0000-000000000014', 'v-admin@example.com', 'admin');
+  v_trainer uuid := pg_temp.sign_up('a0000000-0000-0000-0000-000000000015', 'v-trainer2@example.com', 'trainer');
+  v_ext text[];
+  v_m integer[];
+  v_dup integer;
+  r jsonb;
+BEGIN
+  PERFORM pg_temp.fx_setup();
+  PERFORM pg_temp.as_sync();
+  r := pg_temp.run('webling', 'events', pg_temp.ev_scope(), pg_temp.ev_snapshot());
+  RESET ROLE;
+  -- the three Webling members registered for 61001 and 61002
+  SELECT array_agg(p.external_id ORDER BY p.external_id), array_agg(l.member_id ORDER BY p.external_id)
+    INTO v_ext, v_m
+    FROM fx_part p JOIN public.member_links l ON l.connection = 'webling' AND l.external_id = p.external_id
+   WHERE p.event_id = 61002;
+  -- the first one's duplicate from the app, registered for 61002 in the app, merged into it
+  INSERT INTO public.members (firstname, lastname, labels) VALUES ('Doppel', 'Gaenger', '[]') RETURNING id INTO v_dup;
+  INSERT INTO public.event_participants ("eventId", "memberId", "attendanceStatus", notes)
+  VALUES (61002, v_dup, 'registered', 'im App angemeldet');
+  PERFORM pg_temp.act_as(v_admin);
+  PERFORM public.merge_members(v_m[1], v_dup);
+  RESET ROLE;
+  PERFORM pg_temp.eq('V10 a merge keeps the Webling registration with the app''s notes: the app''s now',
+    (SELECT concat_ws(' ', notes, coalesce(source_connection, 'app')) FROM public.event_participants
+      WHERE "eventId" = 61002 AND "memberId" = v_m[1]), 'im App angemeldet app');
+  PERFORM pg_temp.act_as(v_trainer);
+  UPDATE public.event_participants SET notes = 'zahlt bar' WHERE "eventId" = 61002 AND "memberId" = v_m[2];
+  UPDATE public.event_participants SET notes = notes || ' (bezahlt)' WHERE "eventId" = 61001 AND "memberId" = v_m[3];
+  PERFORM pg_temp.eq('V10 staff still cannot make a registration the provider''s',
+    pg_temp.err(format($q$UPDATE public.event_participants SET source_connection = 'webling',
+                            notes = 'Imported from Webling' WHERE "eventId" = 61002 AND "memberId" = %s$q$, v_m[1])),
+    'P0001 MANAGED_BY_PROVIDER');
+  RESET ROLE;
+  PERFORM pg_temp.eq('V10 notes changed in the app: the app''s; a remark after the provider''s note: still Webling''s',
+    (SELECT string_agg(coalesce(source_connection, 'app'), ',' ORDER BY "eventId" DESC) FROM public.event_participants
+      WHERE ("eventId" = 61002 AND "memberId" = v_m[2]) OR ("eventId" = 61001 AND "memberId" = v_m[3])), 'app,webling');
+
+  -- Webling withdraws all three from 61002 and the third from 61001
+  DELETE FROM fx_part WHERE event_id = 61002 OR (event_id = 61001 AND external_id = v_ext[3]);
+  PERFORM pg_temp.as_sync();
+  r := pg_temp.run('webling', 'events', pg_temp.ev_scope(), pg_temp.ev_snapshot());
+  RESET ROLE;
+  PERFORM pg_temp.eq('V10 the next run removes only the provider''s rows, the app''s stay',
+    concat_ws(' ', r->'result'->>'registrations_removed',
+              (SELECT string_agg("memberId"::text, ',' ORDER BY "memberId") FROM public.event_participants
+                WHERE "eventId" = 61002),
+              (SELECT count(*) FROM public.event_participants WHERE "eventId" = 61001 AND "memberId" = v_m[3])),
+    concat_ws(' ', 2, (SELECT string_agg(x::text, ',' ORDER BY x) FROM unnest(v_m[1:2]) x), 0));
+END $$;
+ROLLBACK TO SAVEPOINT s;
+
+-- A new event the database refuses: the issue names the record, not an
+-- event with the Webling id (none was created)
+SAVEPOINT s;
+DO $$
+DECLARE
+  r jsonb;
+BEGIN
+  ALTER TABLE public.events ADD CONSTRAINT zz_check_boom CHECK (title <> 'BOOM') NOT VALID;
+  PERFORM pg_temp.as_sync();
+  r := pg_temp.run('webling', 'events', '{"complete": false}', jsonb_build_array(
+         jsonb_build_object('external_id', '61998', 'data', jsonb_build_object(
+           'calendar', jsonb_build_object('id', 'c1', 'name', 'Judo Agenda'), 'title', 'BOOM',
+           'starts_on', pg_temp.fx_date(7)))));
+  RESET ROLE;
+  PERFORM pg_temp.eq('V11 a new event whose insert fails: an issue by external id, without event',
+    (SELECT concat_ws(' ', r->>'final', r->'result'->>'write_failed', external_id, coalesce(event_id::text, '-'), detail)
+       FROM public.integration_issues WHERE code = 'write_failed'), 'warning 1 61998 - 23514');
+  PERFORM pg_temp.ok('V11 ... and nothing written for it',
+    NOT EXISTS (SELECT 1 FROM public.events WHERE id = 61998)
+    AND NOT EXISTS (SELECT 1 FROM public.event_links WHERE external_id = '61998'));
 END $$;
 ROLLBACK TO SAVEPOINT s;
 

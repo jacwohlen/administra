@@ -324,10 +324,18 @@ label, a status with a rank, hidden (no chip) and a role (`trainer`);
 `integration_calendars` maps each calendar to events with a section, to
 holidays (`training_plan_breaks`) or to nothing. Rows are bound to the
 provider's id when first seen, so a group renamed in Webling keeps its
-status. New groups come without a status, hidden when they look like
-bookkeeping (`^\d\d_[A-Z]`); new calendars hold events in the section of
-the first matching rule (judo, aikido, club/verein, else General). Both are
-listed as not reviewed. A linked member's status is the status group with
+status: the label of every member of the connection follows the new name
+in the same run, also of members the run does not write (a record with a
+problem, a partial run, a link gone). Statuses are looked up by the label
+text, so a group's label is unique per connection: a group whose name
+another group's label already has (a second `Passiv`, or a group renamed
+to `Aktiv`) gets the provider's id in its label (`Passiv (123)`) and never
+that group's status; two groups with a seeded name on first sight bind
+neither, and the status drop guard stops the run until an admin maps them.
+New groups come without a status, hidden when they look like bookkeeping
+(`^\d\d_[A-Z]`); new calendars hold events in the section of the first
+matching rule (judo, aikido, club/verein, else General). Both are listed as
+not reviewed. A linked member's status is the status group with
 the lowest rank among its labels (`03_Austritt` first; the app's own
 `probetraining` ranks right after `Nicht-Mitglieder`), else the connection's default
 (`non_member`); all links gone: `left`; no link: the rule above
@@ -348,17 +356,21 @@ and holidays cannot be deleted in the app. Webling owns name, birthday,
 mobile and groups and fills the e-mail; it owns event title, dates, section
 and description (the portal link, until phase 4) and fills times, place and
 limit; it owns holiday title and dates, while "Dojo zu" stays the TK's. The
-event page hides edit and delete of an event its provider still has
-(`event_links` without `gone_at`) and links to it there; deleting an event
-deletes its registrations and attendance with it (foreign keys), so a
-refused delete loses nothing. An app without the migration (Netlify
-deploys before a promotion) treats every event as not linked.
+event page hides delete of an event its provider still has (`event_links`
+without `gone_at`) and links to it there; its edit page locks the fields
+the connection's `field_policy` gives the provider (all a provider may
+write when the policy cannot be read) and leaves the rest, such as the
+registration deadline, to the app. Deleting an event deletes its
+registrations and attendance with it (foreign keys), so a refused delete
+loses nothing. An app without the migration (Netlify deploys before a
+promotion) treats every event as not linked.
 
 **Identity.** Through the link first (a gone link is revived); then an
 admin's `link_to` from an import review; for Webling, a row with the
 Webling id that has no link yet; otherwise a new row. A member has at most
-one live link. A new member gets its e-mail only after its link, so
-automatic approval only ever sees the provider's status. A record that
+one live link. A new member gets its e-mail only after its link, and a
+member back in the provider gets its fields and labels before its link
+comes back, so automatic approval only ever sees the provider's status. A record that
 looks like a member the connection does not have (same e-mail, or same name
 and birthday) is reported as `possible_duplicate`, never merged; a
 connection with `on_possible_duplicate = 'skip'` holds it back until it is
@@ -368,8 +380,11 @@ wrote. Holidays are found through their link, else a TK entry with the same
 title and dates. Registrations the provider manages carry
 `event_participants.source_connection` (backfilled from the "Imported from
 Webling" notes); confirmed participants are found through live member
-links. Rows entered in the app, and rows with attendance, are never
-removed. `events.date_to` (multi-day events) exists from now on and is
+links. As for the legacy sync, a row stays the provider's only while its
+notes start with the provider's note: notes changed in the app (by staff,
+or by a merge that keeps the Webling registration with the app's notes)
+make it the app's. Rows entered in the app, and rows with attendance, are
+never removed. `events.date_to` (multi-day events) exists from now on and is
 shown from phase 4.
 
 **Guards.** A refused or dry apply writes nothing but its run row and new
@@ -394,8 +409,12 @@ trigger, runner, dry run, status, counts, guard numbers, accepted
 overrides, the adapter's counters, an error code) and `integration_issues`.
 Both hold codes, ids and counts, never names, titles or values; staged
 records (`integration_records`) are read by nobody and deleted when the run
-ends. Issues persist until a run that checks them no longer sees them; an
-admin can dismiss one (`integration_dismiss_issue`) and it stays dismissed.
+ends. Issues persist until a run that checks them no longer sees them (an
+issue about a record: a complete run, or a partial run that staged the
+record; the scan for duplicates and kept events: every run); an admin can
+dismiss one (`integration_dismiss_issue`) and it stays dismissed. An issue
+about a new record whose insert failed names the record (`external_id`),
+no member or event.
 A run ends `ok`, `warning` (records it could not write, or adapter errors),
 `refused` or `failed`. An unset Webling date and possible duplicates are
 reported but do not change the run's status. Runs are kept 400 days, closed
