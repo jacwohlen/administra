@@ -33,6 +33,20 @@ the first run also records the rows in the Webling id range Webling no
 longer has. The membership status follows the groups, see
 `docs/INTEGRATIONS.md`.
 
+Before writing any member the sync reads the current statuses and refuses
+the run if too many members would lose their active or passive membership
+at once (more than a tenth, at least 5, or more than half of the active or
+the passive ones): nothing is written and the run ends red. After checking
+the groups in Webling, a manual run with `accept_status_drop` set to the
+number from the error line goes ahead. The prediction comes from the
+database's own `member_status_from_labels()`, asked once per distinct set of
+groups, so it is always the rule prod runs; if the statuses cannot be read
+or the rule cannot be asked, the run writes nothing either. A run that goes
+ahead logs how many members lost their membership and what they became
+(counts only). After the run, a status the database derived differently
+from the prediction is reported as a warning. `status_from_labels()` in
+`src/sync_rules.py` is only the tests' copy of the rule.
+
 ### 2. Events Sync (`src/events.py`)
 
 Fetches calendar events from Webling calendars and syncs them to Administra. Only syncs events from the current year onwards (skips past events). Supports syncing all calendars or filtering by specific calendar IDs or names.

@@ -69,7 +69,11 @@ export async function loadMemberProfile(memberId: number): Promise<MemberProfile
     loadPhoto(member),
     loadDetails(member),
     supabaseClient.rpc('get_member_badges', { p_member_id: memberId }),
-    supabaseClient.rpc('get_member_badge_progress', { p_member_id: memberId }),
+    // Training, event and streak counts are attendance: own members only
+    // (get_member_badge_progress refuses the others)
+    member.isMine
+      ? supabaseClient.rpc('get_member_badge_progress', { p_member_id: memberId })
+      : null,
     getBadgeDefinitions(),
     supabaseClient.rpc('get_member_current_grades', { p_member_id: memberId }),
     supabaseClient
@@ -93,7 +97,7 @@ export async function loadMemberProfile(memberId: number): Promise<MemberProfile
     photo,
     details,
     badges: list<Badge>(badgeResult),
-    badgeProgress: list<BadgeProgress>(progressResult),
+    badgeProgress: progressResult ? list<BadgeProgress>(progressResult) : null,
     badgeDefinitions,
     currentGrades: list<MemberCurrentGrade>(currentGradeResult),
     gradeHistory: list<MemberGrade>(gradeHistoryResult),

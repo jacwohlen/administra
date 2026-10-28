@@ -6,11 +6,15 @@ from sync_rules import (
     WEBLING_NOTE,
     club_today,
     confirmed_member_ids,
+    counts,
     member_row,
     missing_table,
     plan_participants,
     plan_gone,
+    plan_status_drop,
     registrations_open,
+    status_after_run,
+    status_from_labels,
 )
 
 PROPERTIES = {
@@ -177,3 +181,128 @@ def test_plan_gone_accepts_the_exact_confirmed_count():
     assert not plan_gone(active, [], range(1001, 1050), accept=51)[2]
     assert plan_gone(active, [], range(1001, 1050), accept=50)[2]
     assert plan_gone(active, [], [], accept=100)[2]  # an empty answer never
+
+
+# The table in docs/INTEGRATIONS.md, rule by rule, in the SQL's order
+@pytest.mark.parametrize('labels, link, status', [
+    (['Aktiv'], 'gone', 'left'),
+    (['Aktiv', '03_Austritt'], 'active', 'left'),
+    (['Aktiv', 'Vorstand'], 'active', 'active'),
+    (['Passiv'], 'active', 'passive'),
+    (['Ehrenmitglieder'], 'active', 'passive'),
+    (['Passiv', 'Nicht-Mitglieder'], 'active', 'passive'),
+    (['Nicht-Mitglieder'], 'active', 'non_member'),
+    (['probetraining'], None, 'trial'),
+    (['Probetraining'], 'active', 'non_member'),
+    (['Vorstand'], 'active', 'non_member'),  # from Webling without a status group
+    ([], None, 'active'),  # created in Administra
+    (['aktiv'], 'active', 'non_member'),  # exact spelling only
+    (None, 'active', 'non_member'),
+    ({'Aktiv': True}, None, 'active'),  # not a list: no labels
+])
+def test_status_from_labels_follows_the_database(labels, link, status):
+    assert status_from_labels(labels, link) == status
+
+
+def test_counts_like_member_grants_access():
+    assert counts('active', None, ['Aktiv'])
+    assert counts('passive', None, [])
+    assert not counts('non_member', None, [])
+    assert not counts('active', '2026-01-01T00:00:00+00:00', ['Aktiv'])  # archived
+    assert not counts('active', None, ['Aktiv', 'PROBETRAINING'])  # trial label, any case
+    assert not counts(None, None, [])
+
+
+def db(member_id, status, labels=None, archived=None):
+    return {'id': member_id, 'membership_status': status, 'archivedAt': archived,
+            'labels': labels if labels is not None else []}
+
+
+def club(active, passive=0):
+    """Rows of a club with that many active (ids from 1001) and passive members."""
+    rows = [db(1001 + i, 'active', ['Aktiv']) for i in range(active)]
+    return rows + [db(1001 + active + i, 'passive', ['Passiv']) for i in range(passive)]
+
+
+def webling(rows, labels):
+    return [{'id': row['id'], 'labels': labels} for row in rows]
+
+
+def test_status_drop_within_a_tenth_goes_ahead():
+    current = club(269, 30)  # prod, October 2026: 299 count, so up to 29 may go at once
+    leaving = webling(current[:29], ['03_Austritt'])
+    plan = plan_status_drop(current, leaving + webling(current[29:], ['Aktiv']))
+    assert (plan.dropping, plan.counting, plan.too_many, plan.accepted) == (29, 299, False, False)
+    assert plan.by_status == {'left': 29}
+
+
+def test_status_drop_of_more_than_a_tenth_is_refused():
+    current = club(269, 30)
+    plan = plan_status_drop(current, webling(current[:30], ['03_Austritt']))
+    assert (plan.dropping, plan.too_many) == (30, True)
+
+
+def test_renamed_aktiv_group_is_refused():
+    current = club(269, 30)
+    plan = plan_status_drop(current, webling(current[:269], ['Aktive Mitglieder']))
+    assert plan.too_many
+    assert plan.by_status == {'non_member': 269}
+
+
+def test_renamed_passiv_group_alone_is_refused():
+    # 20 of 30 passive members drop: under a tenth of 299, but more than half of the passive
+    current = club(269, 30)
+    plan = plan_status_drop(current, webling(current[269:289], ['Passivmitglieder']))
+    assert (plan.dropping, plan.too_many) == (20, True)
+    assert not plan_status_drop(current, webling(current[269:284], ['Passivmitglieder'])).too_many
+
+
+def test_small_clubs_may_lose_five_at_once():
+    current = club(10)
+    assert not plan_status_drop(current, webling(current[:5], ['03_Austritt'])).too_many
+    assert plan_status_drop(current, webling(current[:6], ['03_Austritt'])).too_many
+
+
+def test_status_drop_goes_ahead_with_the_exact_accepted_count():
+    current = club(269, 30)
+    renamed = webling(current[:269], ['Aktive Mitglieder'])
+    plan = plan_status_drop(current, renamed, accept=269)
+    assert (plan.too_many, plan.accepted) == (False, True)
+    plan = plan_status_drop(current, renamed, accept=268)
+    assert (plan.too_many, plan.accepted) == (True, False)
+
+
+def test_an_accepted_count_under_the_limit_is_not_needed():
+    current = club(269, 30)
+    plan = plan_status_drop(current, webling(current[:3], ['03_Austritt']), accept=3)
+    assert (plan.dropping, plan.too_many, plan.accepted) == (3, False, False)
+
+
+def test_members_that_do_not_count_now_cannot_drop():
+    current = [
+        db(1001, 'active', ['Aktiv'], archived='2026-01-01T00:00:00+00:00'),
+        db(1002, 'active', ['Aktiv', 'Probetraining']),
+        db(1003, 'non_member', ['Nicht-Mitglieder']),
+        db(1004, 'left', ['03_Austritt']),
+        {'id': 1005, 'labels': ['Aktiv']},  # no membership_status: ignored
+    ]
+    plan = plan_status_drop(current, webling(current, ['03_Austritt']) + [{'id': 2000, 'labels': []}])
+    assert (plan.dropping, plan.counting, plan.too_many) == (0, 0, False)
+    assert plan.predicted[2000] == 'non_member'  # new from Webling, without a status group
+
+
+def test_a_trial_label_takes_a_member_out():
+    current = club(3)
+    plan = plan_status_drop(current, webling(current[:1], ['Aktiv', 'probetraining']))
+    assert plan.dropping == 1
+    assert plan.by_status == {'trial': 1}
+
+
+def test_status_after_run_compares_with_the_database():
+    current = club(40)
+    plan = plan_status_drop(current, webling(current, ['Aktiv']))
+    assert status_after_run(current, current, plan.predicted) == (0, 0, False)
+    # The database took 10 out although the rules here predicted no change
+    after = [db(r['id'], 'non_member', r['labels']) for r in current[:10]] + current[10:]
+    assert status_after_run(current, after, plan.predicted) == (10, 10, True)
+    assert status_after_run(current, after, plan.predicted, accept=10) == (10, 10, False)

@@ -45,7 +45,8 @@ export interface PrivateDetails {
 /** Grades, medals and badges shown on every member profile */
 export interface MemberAchievements {
   badges: Badge[];
-  badgeProgress: BadgeProgress[];
+  /** null when not shown: other members' progress is attendance (club area) */
+  badgeProgress: BadgeProgress[] | null;
   badgeDefinitions: BadgeDefinition[];
   currentGrades: MemberCurrentGrade[];
   gradeHistory: MemberGrade[];

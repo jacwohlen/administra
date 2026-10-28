@@ -5,7 +5,9 @@
 -- or a preview branch) as postgres, inside one transaction that is rolled
 -- back; each scenario sits in a savepoint. A failed check raises and stops:
 --   psql "$DB_URL" -v ON_ERROR_STOP=1 -f supabase/checks/member_access.sql
--- S1 … S27 are the lifecycle cases listed in docs/INTEGRATIONS.md.
+-- S1 … S27 are the lifecycle cases listed in docs/INTEGRATIONS.md. What
+-- member accounts with access see of other members is checked in
+-- supabase/checks/member_data.sql.
 --
 -- Accounts act through the API roles: pg_temp.act_as() sets the JWT claims
 -- and SET LOCAL ROLE authenticated; the Webling sync acts as service_role.
@@ -422,6 +424,7 @@ DO $$
 DECLARE
   v_member uuid := 'b2c3d4e5-f6a7-8901-bcde-f12345678901';
   v_reg107 bigint;
+  v_badges107 bigint := (SELECT count(*) FROM public.member_badges WHERE "memberId" = 107);
   v_ok boolean;
 BEGIN
   PERFORM pg_temp.act_as(v_member);
@@ -435,6 +438,10 @@ BEGIN
   PERFORM pg_temp.eq('S10 members readable', (SELECT string_agg(id::text, ',') FROM public.members), '103');
   PERFORM pg_temp.ok('S10 attendance only of the active child', NOT EXISTS (SELECT 1 FROM public.logs WHERE "memberId" <> 103));
   PERFORM pg_temp.eq('S10 my_access', pg_temp.access(), 'true {active,left}');
+  PERFORM pg_temp.ok('S10 no badges of the child who left',
+    v_badges107 > 0
+    AND (SELECT count(*) FROM public.get_member_badges(107)) = 0
+    AND NOT EXISTS (SELECT 1 FROM public.member_badges WHERE "memberId" = 107));
   PERFORM pg_temp.eq('S10 registrations only of the active child',
     (SELECT count(*) FROM public.get_my_exam_registrations() WHERE member_id = 107)::text, '0');
   PERFORM pg_temp.ok('S10 registers the active child', public.register_for_exam(990001, 103, '2. Kyu') IS NOT NULL);

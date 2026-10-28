@@ -5,7 +5,7 @@ import sys
 
 import pytest
 
-from sync_rules import WEBLING_NOTE
+from sync_rules import WEBLING_NOTE, status_from_labels
 
 ENV = {
     'WEBLING_DOMAIN': 'club',
@@ -18,11 +18,16 @@ ENV = {
 }
 
 
-def load(module, monkeypatch):
+def load(module, monkeypatch, ask_database=False):
     for key, value in ENV.items():
         monkeypatch.setenv(key, value)
     sys.modules.pop(module, None)
-    return importlib.import_module(module)
+    loaded = importlib.import_module(module)
+    if module == 'webling' and not ask_database:
+        # The database's status rule answers like the port in sync_rules
+        monkeypatch.setattr(loaded, 'database_status_rule',
+                            lambda rows: lambda labels: status_from_labels(labels, 'active'))
+    return loaded
 
 
 class Response:
@@ -308,6 +313,203 @@ def test_mass_gone_with_a_wrong_accepted_count_is_refused(monkeypatch, capsys):
     assert failed == 2
     assert [c[0] for c in calls] == ['post']
     assert 'accept_gone=36' in capsys.readouterr().out
+
+
+def sync_statuses(monkeypatch, labels, current, after=None, accept=None, status_code=200,
+                  rule=False):
+    """sync_members with Webling members {id: labels}, the database's members
+    rows before the run (current) and after it (after, default: current),
+    and the database's status rule (rule: labels -> status, None when it
+    cannot be asked; default: the port in sync_rules).
+    Returns (failed, upserted ids, posted urls)."""
+    if accept is not None:
+        monkeypatch.setenv('WEBLING_ACCEPT_STATUS_DROP', accept)
+    webling = load('webling', monkeypatch)
+    if rule is not False:
+        monkeypatch.setattr(webling, 'database_status_rule', lambda rows: rule)
+    members = [{'id': i, 'parents': [i], 'properties': {
+        'Vorname': 'Anna', 'Name': 'Muster', 'Geburtstag': None, 'Mobile': None}} for i in labels]
+    monkeypatch.setattr(webling, 'webling_get', lambda *args, **kwargs: Response(200, members))
+    monkeypatch.setattr(webling, 'get_label', lambda parents: labels[parents[0]])
+    upserted, posted = [], []
+    monkeypatch.setattr(webling, 'upsert', lambda table, data: upserted.append(data['id']) or True)
+    reads = []
+
+    def get(url, headers=None):
+        if '/member_links?' in url:
+            return Response(200, [{'external_id': str(i), 'member_id': i, 'gone_at': None} for i in labels])
+        reads.append(url)
+        if status_code != 200:
+            return Response(status_code, {'code': 'XX000', 'message': 'boom'})
+        return Response(200, current if len(reads) == 1 or after is None else after)
+
+    def post(url, headers=None, data=None):
+        posted.append(url)
+        return Response(201)
+
+    monkeypatch.setattr(webling.requests, 'get', get)
+    monkeypatch.setattr(webling.requests, 'post', post)
+    return webling.sync_members(), upserted, posted
+
+
+def active_rows(ids, labels=('Aktiv',)):
+    return [{'id': i, 'membership_status': 'active', 'archivedAt': None, 'labels': list(labels)}
+            for i in ids]
+
+
+def test_mass_status_drop_writes_nothing(monkeypatch, capsys):
+    # Webling renamed Aktiv: all 40 members would lose their membership
+    ids = range(1001, 1041)
+    failed, upserted, posted = sync_statuses(
+        monkeypatch, {i: ['Aktive Mitglieder'] for i in ids}, active_rows(ids))
+
+    assert failed == 1
+    assert upserted == [] and posted == []  # no member, link or gone mark
+    out = capsys.readouterr().out
+    assert '40 of 40 members with an active or passive membership' in out
+    assert 'non_member: 40' in out
+    assert 'accept_status_drop=40' in out
+    # Neither group titles nor ids reach the public log
+    assert 'Aktiv' not in out
+    assert '1001' not in out
+
+
+def test_mass_status_drop_goes_ahead_with_the_exact_accepted_count(monkeypatch, capsys):
+    ids = range(1001, 1041)
+    after = [{**row, 'membership_status': 'non_member'} for row in active_rows(ids)]
+    failed, upserted, posted = sync_statuses(
+        monkeypatch, {i: ['Aktive Mitglieder'] for i in ids}, active_rows(ids), after=after,
+        accept='40')
+
+    assert failed == 0
+    assert upserted == list(ids)
+    assert posted == ['https://db.example/rest/v1/member_links']
+    out = capsys.readouterr().out
+    assert ('40 of 40 members lose their active or passive membership in this run '
+            '(non_member: 40; accepted with accept_status_drop)') in out
+    assert 'warning' not in out
+
+
+def test_mass_status_drop_with_a_wrong_accepted_count_writes_nothing(monkeypatch, capsys):
+    ids = range(1001, 1041)
+    failed, upserted, _ = sync_statuses(
+        monkeypatch, {i: ['Aktive Mitglieder'] for i in ids}, active_rows(ids), accept='39')
+
+    assert failed == 1
+    assert upserted == []
+    assert 'accept_status_drop=40' in capsys.readouterr().out
+
+
+def test_a_few_members_leaving_are_synced_and_counted(monkeypatch, capsys):
+    ids = range(1001, 1041)
+    labels = {i: ['Aktiv'] for i in ids} | {1001: ['03_Austritt'], 1002: ['Nicht-Mitglieder']}
+    failed, upserted, _ = sync_statuses(monkeypatch, labels, active_rows(ids))
+
+    assert failed == 0
+    assert upserted == list(ids)
+    out = capsys.readouterr().out
+    assert ('2 of 40 members lose their active or passive membership in this run '
+            '(left: 1, non_member: 1)') in out
+    assert 'accept' not in out
+    assert 'Austritt' not in out and 'Nicht-Mitglieder' not in out and '1001' not in out
+
+
+def test_a_run_without_status_changes_says_nothing_about_them(monkeypatch, capsys):
+    ids = range(1001, 1041)
+    failed, upserted, _ = sync_statuses(monkeypatch, {i: ['Aktiv'] for i in ids}, active_rows(ids))
+
+    assert failed == 0
+    assert upserted == list(ids)
+    assert 'membership' not in capsys.readouterr().out
+
+
+def test_status_read_has_no_member_id_in_the_url(monkeypatch):
+    webling = load('webling', monkeypatch)
+    assert webling.MEMBER_STATUS_QUERY == (
+        'members?select=id,membership_status,archivedAt,labels&id=gte.1000&id=lt.10000000&order=id')
+
+
+def test_unreadable_statuses_write_nothing(monkeypatch, capsys):
+    failed, upserted, posted = sync_statuses(
+        monkeypatch, {1001: ['Aktiv']}, [], status_code=500)
+
+    assert failed == 1
+    assert upserted == [] and posted == []
+    assert 'no member written' in capsys.readouterr().out
+
+
+def test_database_status_unlike_the_prediction_is_reported(monkeypatch, capsys):
+    # The rules here predict no change, the database takes 10 of 40 out
+    ids = range(1001, 1041)
+    after = active_rows(ids)
+    for row in after[:10]:
+        row['membership_status'] = 'non_member'
+    failed, upserted, _ = sync_statuses(
+        monkeypatch, {i: ['Aktiv'] for i in ids}, active_rows(ids), after=after)
+
+    assert upserted == list(ids)  # written: the guard saw nothing
+    assert failed == 1
+    out = capsys.readouterr().out
+    assert '::warning::10 members got another membership status' in out
+    assert 'Error: 10 members lost their active or passive membership' in out
+
+
+def test_guard_predicts_with_the_database_rule(monkeypatch, capsys):
+    # A changed rule on main must not decide: the database (still the old
+    # rule on prod) takes the members out, so the guard refuses
+    ids = range(1001, 1041)
+    failed, upserted, posted = sync_statuses(
+        monkeypatch, {i: ['Aktiv'] for i in ids}, active_rows(ids), rule=lambda labels: 'non_member')
+
+    assert failed == 1
+    assert upserted == [] and posted == []
+    assert '40 of 40 members with an active or passive membership' in capsys.readouterr().out
+
+
+def test_status_rule_that_cannot_be_asked_writes_nothing(monkeypatch, capsys):
+    failed, upserted, posted = sync_statuses(
+        monkeypatch, {1001: ['Aktiv']}, active_rows([1001]), rule=None)
+
+    assert failed == 1
+    assert upserted == [] and posted == []
+    assert "status rule could not be asked; no member written" in capsys.readouterr().out
+
+
+def test_status_rule_asks_the_database_once_per_label_set(monkeypatch):
+    webling = load('webling', monkeypatch, ask_database=True)
+    asked = []
+
+    def post(url, headers=None, data=None):
+        asked.append((url, json.loads(data)))
+        labels = json.loads(data)['p_labels']
+        return Response(200, 'non_member' if 'Aktive Mitglieder' in labels else 'active')
+
+    monkeypatch.setattr(webling.requests, 'post', post)
+    rule = webling.database_status_rule([
+        {'id': 1001, 'labels': ['Aktiv']},
+        {'id': 1002, 'labels': ['Aktiv']},
+        {'id': 1003, 'labels': ['Aktive Mitglieder']},
+    ])
+
+    assert [url for url, _ in asked] == ['https://db.example/rest/v1/rpc/member_status_from_labels'] * 2
+    assert asked[0][1] == {'p_labels': ['Aktiv'], 'p_link': 'active'}
+    assert rule(['Aktiv']) == 'active'
+    assert rule(['Aktive Mitglieder']) == 'non_member'
+
+
+@pytest.mark.parametrize('answer', [
+    Response(500, {'code': 'XX000', 'message': 'boom'}),
+    Response(404, {'code': 'PGRST202', 'message': 'Could not find the function'}),
+    Response(200, None),
+])
+def test_status_rule_that_fails_is_none(monkeypatch, capsys, answer):
+    webling = load('webling', monkeypatch, ask_database=True)
+    monkeypatch.setattr(webling.requests, 'post', lambda url, headers=None, data=None: answer)
+
+    assert webling.database_status_rule([{'id': 1001, 'labels': ['Aktiv', '03_Austritt']}]) is None
+    out = capsys.readouterr().out
+    assert 'membership status rule' in out
+    assert 'Austritt' not in out and '1001' not in out
 
 
 def test_network_error_prints_no_url(monkeypatch, capsys):
