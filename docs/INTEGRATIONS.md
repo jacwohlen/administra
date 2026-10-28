@@ -333,7 +333,8 @@ another group's label already has (a second `Passiv`, or a group renamed
 to `Aktiv`) gets the provider's id in its label (`Passiv (123)`) and never
 that group's status. Only on first sight, several groups with a seeded
 row's name (an archive folder called `Passiv`) keep the old rule, which
-went by the title: the seeded row binds to the lowest id, each other one
+went by the title: the seeded row binds to the lowest id (numeric ids in
+numeric order), each other one
 copies its mapping with its id in the label, not reviewed, so the first
 run changes nobody's status.
 New groups come without a status, hidden when they look like bookkeeping
@@ -414,10 +415,10 @@ overrides, the adapter's counters, an error code) and `integration_issues`.
 Both hold codes, ids and counts, never names, titles or values; staged
 records (`integration_records`) are read by nobody and deleted when the run
 ends. Issues persist until a run that checks them no longer sees them (an
-issue about a record: a run that staged it, or a complete run, for events
-one that read the record's calendar, or every calendar when the layer does
-not know it; never a run that could not fetch it; the scan for duplicates
-and kept events: every run); an admin can dismiss one
+issue about a record: a run that staged it, an unknown participant's event
+with its list or once over, or a complete run, for events one that read
+the calendar noted with the issue; never a run that could not fetch it;
+the scan for duplicates and kept events: every run); an admin can dismiss one
 (`integration_dismiss_issue`) and it stays dismissed. An issue about a new
 record whose insert failed, or about a holiday, names the record
 (`external_id`), no member or event.

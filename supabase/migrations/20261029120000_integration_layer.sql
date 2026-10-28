@@ -395,6 +395,9 @@ CREATE TABLE public.integration_issues (
   member_id integer,
   other_member_id integer,
   event_id integer,
+  -- Events: the provider calendar of the record (its id), so a complete run
+  -- that did not read that calendar leaves the issue open
+  calendar text CHECK (calendar <> '' AND length(calendar) <= 200),
   -- A code ('email', 'missing_lastname', '23514'), never a value
   detail text CHECK (detail ~ '^[a-z0-9_]{1,40}$'),
   first_run bigint REFERENCES public.integration_runs (id) ON DELETE SET NULL,
@@ -1236,7 +1239,8 @@ BEGIN
         ON mg.connection = p_c.id AND mg.external_id IS NULL AND mg.name = s.name
      WHERE NOT EXISTS (SELECT 1 FROM public.integration_member_groups x
                         WHERE x.connection = p_c.id AND x.external_id = s.key)
-     ORDER BY mg.id, s.key
+     -- numeric ids (Webling's) in numeric order: 512 before 1078
+     ORDER BY mg.id, s.key !~ '^[0-9]+$', CASE WHEN s.key ~ '^[0-9]+$' THEN length(s.key) END, s.key
   ), bound AS (
     UPDATE public.integration_member_groups mg SET external_id = b.key
       FROM bind b WHERE mg.id = b.id
@@ -1257,7 +1261,10 @@ BEGIN
      WHERE r.run_id = p_run AND r.problem IS NULL
      GROUP BY 1
   ), fresh AS (
-    SELECT s.key, s.name, row_number() OVER (PARTITION BY s.name ORDER BY s.key) AS n
+    SELECT s.key, s.name,
+           row_number() OVER (PARTITION BY s.name
+                              ORDER BY s.key !~ '^[0-9]+$', CASE WHEN s.key ~ '^[0-9]+$' THEN length(s.key) END,
+                                       s.key) AS n
       FROM staged s
      WHERE NOT EXISTS (SELECT 1 FROM public.integration_member_groups x
                         WHERE x.connection = p_c.id AND x.external_id = s.key)
@@ -2370,13 +2377,12 @@ END;
 $$;
 
 -- Issues of an events run. An issue about a record (an unknown participant:
--- its event) is checked by a run that staged the record (with the
--- participant list), or by a complete run that read the record's calendar
--- (its event_links or training_plan_breaks row says which; a record the
--- layer never linked, e.g. one without date, only by a run that read every
--- calendar), never by a run that could not fetch it (fetch_failed). Kept
--- gone events are scanned every run. Holidays are no events: their issues
--- name the record only (event_id NULL).
+-- its event) is checked by a run that staged the record (an unknown
+-- participant: with the participant list, or the event is over), or by a
+-- complete run that read the record's calendar (noted with the issue; one
+-- without a calendar by any complete run), never by a run that could not
+-- fetch it (fetch_failed). Kept gone events are scanned every run.
+-- Holidays are no events: their issues name the record only (event_id NULL).
 CREATE OR REPLACE FUNCTION public.integration_note_event_issues(p_run bigint, p_c public.integration_connections)
 RETURNS jsonb
 LANGUAGE plpgsql
@@ -2385,7 +2391,6 @@ AS $$
 DECLARE
   v_complete boolean;
   v_calendars jsonb;
-  v_all_read boolean;
   v_today text := to_char((now() AT TIME ZONE 'Europe/Zurich')::date, 'YYYY-MM-DD');
   v_noted integer;
   v_resolved integer;
@@ -2394,40 +2399,40 @@ BEGIN
          CASE WHEN jsonb_typeof(scope->'calendars') = 'array' THEN scope->'calendars' ELSE '[]'::jsonb END
     INTO v_complete, v_calendars
     FROM public.integration_runs WHERE id = p_run;
-  -- Every calendar of the connection read completely
-  v_all_read := v_complete AND NOT EXISTS (
-    SELECT 1 FROM public.integration_calendars ic
-     WHERE ic.connection = p_c.id AND ic.external_id IS NOT NULL AND NOT v_calendars ? ic.external_id);
 
-  WITH seen (code, severity, external_id, event_id, detail) AS (
+  WITH seen (code, severity, external_id, event_id, calendar, detail) AS (
     -- Records the run could not write; a date the provider left unset is expected (info)
     -- (event_id: an event of this run's records; a holiday's id is no event)
     SELECT 'invalid_event', 'info', r.external_id, CASE WHEN r.route = 'event' THEN r.target_id::integer END,
-           r.problem
+           r.data->'calendar'->>'key', r.problem
       FROM public.integration_records r
      WHERE r.run_id = p_run AND r.action = 'invalid' AND coalesce(r.problem, '') <> 'fetch_failed'
     UNION ALL
-    SELECT 'id_conflict', 'error', r.external_id, CASE WHEN r.route = 'event' THEN r.target_id::integer END, r.match
+    SELECT 'id_conflict', 'error', r.external_id, CASE WHEN r.route = 'event' THEN r.target_id::integer END,
+           r.data->'calendar'->>'key', r.match
       FROM public.integration_records r
      WHERE r.run_id = p_run AND r.action = 'conflict'
     UNION ALL
     -- (no event for a failed insert: the issue names the record only)
-    SELECT 'write_failed', 'error', r.external_id, CASE WHEN r.route = 'event' THEN r.target_id::integer END, r.error
+    SELECT 'write_failed', 'error', r.external_id, CASE WHEN r.route = 'event' THEN r.target_id::integer END,
+           r.data->'calendar'->>'key', r.error
       FROM public.integration_records r
      WHERE r.run_id = p_run AND r.action = 'error'
     UNION ALL
-    SELECT 'invalid_value', 'info', r.external_id, CASE WHEN r.route = 'event' THEN r.target_id::integer END, f
+    SELECT 'invalid_value', 'info', r.external_id, CASE WHEN r.route = 'event' THEN r.target_id::integer END,
+           r.data->'calendar'->>'key', f
       FROM public.integration_records r, jsonb_array_elements_text(r.data->'invalid') f
      WHERE r.run_id = p_run AND r.result IN ('inserted', 'adopted', 'revived', 'updated', 'unchanged')
     UNION ALL
     -- Gone from the provider but kept, because the app used it
-    SELECT 'event_gone_kept', 'warning', l.external_id, l.event_id, NULL::text
+    SELECT 'event_gone_kept', 'warning', l.external_id, l.event_id, NULL::text, NULL::text
       FROM public.event_links l JOIN public.events e ON e.id = l.event_id
      WHERE l.connection = p_c.id AND l.gone_at IS NOT NULL AND e.date >= v_today
        AND NOT EXISTS (SELECT 1 FROM public.event_links o WHERE o.event_id = l.event_id AND o.gone_at IS NULL)
     UNION ALL
     -- Confirmed in the provider, but no live member of this connection
-    SELECT DISTINCT 'unknown_participant', 'warning', x->>'member', r.target_id::integer, NULL::text
+    SELECT DISTINCT 'unknown_participant', 'warning', x->>'member', r.target_id::integer,
+           r.data->'calendar'->>'key', NULL::text
       FROM public.integration_records r, jsonb_array_elements(r.data->'participants') x
      WHERE r.run_id = p_run AND r.route = 'event' AND r.result IS NOT NULL AND r.result <> 'error'
        AND jsonb_typeof(r.data->'participants') = 'array'
@@ -2436,16 +2441,17 @@ BEGIN
                         WHERE l.connection = p_c.id AND l.external_id = x->>'member' AND l.gone_at IS NULL)
   )
   INSERT INTO public.integration_issues AS i (connection, kind, code, severity, external_id, event_id,
-                                              detail, first_run, last_run)
+                                              calendar, detail, first_run, last_run)
   SELECT DISTINCT ON (s.code, coalesce(s.external_id, ''), coalesce(s.event_id, 0))
          p_c.id, 'events', s.code, s.severity, coalesce(s.external_id, ''), s.event_id,
+         CASE WHEN s.calendar <> '' AND length(s.calendar) <= 200 THEN s.calendar END,
          CASE WHEN s.detail ~ '^[a-z0-9_]{1,40}$' THEN s.detail END, p_run, p_run
     FROM seen s
    ORDER BY s.code, coalesce(s.external_id, ''), coalesce(s.event_id, 0)
   ON CONFLICT (connection, kind, code, external_id, (coalesce(member_id, 0)),
                (coalesce(other_member_id, 0)), (coalesce(event_id, 0)))
   DO UPDATE SET last_run = p_run, last_seen_at = now(), detail = EXCLUDED.detail,
-                severity = EXCLUDED.severity, resolved_at = NULL,
+                severity = EXCLUDED.severity, calendar = EXCLUDED.calendar, resolved_at = NULL,
                 first_run = CASE WHEN i.resolved_at IS NOT NULL THEN p_run ELSE i.first_run END,
                 first_seen_at = CASE WHEN i.resolved_at IS NOT NULL THEN now() ELSE i.first_seen_at END;
   GET DIAGNOSTICS v_noted = ROW_COUNT;
@@ -2466,16 +2472,11 @@ BEGIN
           OR (i.code IN ('invalid_event', 'invalid_value', 'unknown_participant', 'id_conflict', 'write_failed')
               AND coalesce(r.problem, '') <> 'fetch_failed'
               AND CASE WHEN r.external_id IS NOT NULL
-                       THEN i.code <> 'unknown_participant' OR jsonb_typeof(r.data->'participants') = 'array'
-                       ELSE v_all_read
-                            OR (v_complete AND EXISTS (
-                                  SELECT 1 FROM public.integration_calendars ic
-                                   WHERE ic.connection = p_c.id AND v_calendars ? ic.external_id
-                                     AND ic.id IN (SELECT l.calendar_id FROM public.event_links l
-                                                    WHERE l.connection = p_c.id AND l.external_id = c.rec
-                                                   UNION ALL
-                                                   SELECT b.calendar_id FROM public.training_plan_breaks b
-                                                    WHERE b.connection = p_c.id AND b.external_id = c.rec)))
+                       THEN i.code <> 'unknown_participant'
+                            OR jsonb_typeof(r.data->'participants') = 'array'
+                            -- an event that is over is staged without its list
+                            OR coalesce(r.data->>'ends_on', r.data->>'starts_on') < v_today
+                       ELSE v_complete AND (i.calendar IS NULL OR v_calendars ? i.calendar)
                   END));
   GET DIAGNOSTICS v_resolved = ROW_COUNT;
 

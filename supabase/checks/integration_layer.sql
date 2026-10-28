@@ -1158,6 +1158,32 @@ BEGIN
 END $$;
 ROLLBACK TO SAVEPOINT s;
 
+-- The same with Webling's numeric ids: the lowest is the smaller number
+SAVEPOINT s;
+DO $$
+DECLARE
+  v_ids text[] := pg_temp.linked('passive', 1);
+  v_snap jsonb;
+  r jsonb;
+BEGIN
+  -- Passiv is group 512 in Webling, its archive folder 1078
+  SELECT jsonb_agg(jsonb_set(x, '{data,groups}', (SELECT coalesce(jsonb_agg(CASE WHEN g->>'name' = 'Passiv'
+                      THEN jsonb_build_object('id', '512', 'name', 'Passiv') ELSE g END), '[]')
+                      FROM jsonb_array_elements(x->'data'->'groups') g)))
+    INTO v_snap FROM jsonb_array_elements(pg_temp.webling_snapshot()) x;
+  v_snap := pg_temp.with_record(v_snap, v_ids[1], jsonb_build_object('groups', jsonb_build_array(
+              jsonb_build_object('id', '1078', 'name', 'Passiv'))));
+  PERFORM pg_temp.as_sync();
+  r := pg_temp.run('webling', 'members', '{"complete": true}', v_snap);
+  RESET ROLE;
+  PERFORM pg_temp.eq('G4 numeric ids: the seeded row binds to 512, not 1078',
+    concat_ws(' ', r->>'final',
+              (SELECT string_agg(external_id || '=' || coalesce(label, name) || '/' || reviewed, ',' ORDER BY id)
+                 FROM public.integration_member_groups WHERE connection = 'webling' AND name = 'Passiv')),
+    'ok 512=Passiv/true,1078=Passiv (1078)/false');
+END $$;
+ROLLBACK TO SAVEPOINT s;
+
 -----------------
 -- V Events, registrations, holidays
 -----------------
@@ -1445,6 +1471,78 @@ BEGIN
               (SELECT string_agg(code || ' ' || external_id || ' ' || coalesce(event_id::text, '-'), ',' ORDER BY code)
                  FROM public.integration_issues WHERE kind = 'events' AND external_id IN ('71001', '71002'))),
     '0 1 invalid_value 71001 -,write_failed 71002 -');
+END $$;
+ROLLBACK TO SAVEPOINT s;
+
+-- A calendar the provider no longer has (deleted, or no access) does not
+-- keep the other calendars' issues open: each issue knows its record's
+-- calendar, and only that calendar's issues wait until it is read again
+SAVEPOINT s;
+DO $$
+DECLARE
+  v_c3 jsonb := jsonb_build_object('id', 'c3', 'name', 'Saisonkurse');
+  r jsonb;
+BEGIN
+  PERFORM pg_temp.fx_setup();
+  PERFORM pg_temp.as_sync();
+  r := pg_temp.run('webling', 'events', pg_temp.ev_scope('{c1,c2,c3}'), (
+         SELECT jsonb_agg(CASE WHEN x->>'external_id' = '61005'
+                               THEN jsonb_set(x, '{data,time_from}', '"99:99"') ELSE x END)
+           FROM jsonb_array_elements(pg_temp.ev_snapshot()) x) || jsonb_build_array(
+         jsonb_build_object('external_id', '61997', 'data', jsonb_build_object(
+           'calendar', jsonb_build_object('id', 'c1', 'name', 'Judo Agenda'), 'title', 'Serie', 'problem', 'no_date')),
+         jsonb_build_object('external_id', '63001', 'data', jsonb_build_object(
+           'calendar', v_c3, 'title', 'Saison', 'problem', 'no_date'))));
+  RESET ROLE;
+  PERFORM pg_temp.eq('V14 issues of c1 (no date, an invalid value) and c3 (no date), each with its calendar',
+    (SELECT string_agg(i.code || ' ' || i.external_id || ' ' || coalesce(to_jsonb(i)->>'calendar', '-'), ','
+                       ORDER BY i.external_id)
+       FROM public.integration_issues i WHERE i.kind = 'events' AND i.resolved_at IS NULL),
+    'invalid_value 61005 c1,invalid_event 61997 c1,invalid_event 63001 c3');
+  -- c3 is gone from Webling, and so are 61997 and 61005 (deleted with it: future, unused)
+  DELETE FROM fx_events WHERE id = 61005;
+  PERFORM pg_temp.as_sync();
+  r := pg_temp.run('webling', 'events', pg_temp.ev_scope('{c1,c2}'), pg_temp.ev_snapshot());
+  RESET ROLE;
+  PERFORM pg_temp.eq('V14 a complete run over c1 and c2 resolves c1''s issues, c3''s stays open',
+    concat_ws(' ', r->>'final', r->'result'->>'deleted',
+              (SELECT string_agg(external_id || '=' || (resolved_at IS NULL), ',' ORDER BY external_id)
+                 FROM public.integration_issues WHERE kind = 'events')),
+    'ok 1 61005=false,61997=false,63001=true');
+END $$;
+ROLLBACK TO SAVEPOINT s;
+
+-- An unknown participant of an event that is over: the event is staged
+-- without its list, which is no longer read, and the issue resolves; a
+-- future event whose list could not be read keeps it
+SAVEPOINT s;
+DO $$
+DECLARE
+  r jsonb;
+BEGIN
+  PERFORM pg_temp.fx_setup();
+  INSERT INTO fx_part VALUES (61001, '9999999');
+  PERFORM pg_temp.as_sync();
+  r := pg_temp.run('webling', 'events', pg_temp.ev_scope(), pg_temp.ev_snapshot());
+  RESET ROLE;
+  PERFORM pg_temp.eq('V15 an unknown participant of 61001 is reported',
+    (SELECT (resolved_at IS NULL)::text FROM public.integration_issues
+      WHERE code = 'unknown_participant' AND external_id = '9999999'), 'true');
+  PERFORM pg_temp.as_sync();
+  r := pg_temp.run('webling', 'events', pg_temp.ev_scope(), (SELECT jsonb_agg(CASE WHEN x->>'external_id' = '61001'
+         THEN x #- '{data,participants}' ELSE x END) FROM jsonb_array_elements(pg_temp.ev_snapshot()) x));
+  RESET ROLE;
+  PERFORM pg_temp.eq('V15 the list of the future event could not be read: still open',
+    (SELECT (resolved_at IS NULL)::text FROM public.integration_issues
+      WHERE code = 'unknown_participant' AND external_id = '9999999'), 'true');
+  -- 61001 is over (moved to yesterday): staged without its list
+  UPDATE fx_events SET day = -1 WHERE id = 61001;
+  PERFORM pg_temp.as_sync();
+  r := pg_temp.run('webling', 'events', pg_temp.ev_scope(), pg_temp.ev_snapshot());
+  RESET ROLE;
+  PERFORM pg_temp.eq('V15 once the event is over, the issue resolves',
+    concat_ws(' ', r->>'final', (SELECT (resolved_at IS NOT NULL)::text FROM public.integration_issues
+                                  WHERE code = 'unknown_participant' AND external_id = '9999999')), 'ok true');
 END $$;
 ROLLBACK TO SAVEPOINT s;
 
