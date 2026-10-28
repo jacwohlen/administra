@@ -1052,25 +1052,33 @@ BEGIN
 END $$;
 ROLLBACK TO SAVEPOINT s;
 
--- Two groups called Passiv on first sight: which one the seeded row means
--- is unknown, so it binds to neither and their members would drop: refused
+-- Two groups called Passiv on first sight (an archive folder): the seeded
+-- row binds to the lowest id, the other copies its mapping until an admin
+-- reviews it, so the first run changes nobody's status (the old rule went
+-- by the title)
 SAVEPOINT s;
 DO $$
 DECLARE
-  v_ids text[] := pg_temp.linked('non_member', 1);
+  v_ids text[] := pg_temp.linked('passive', 1);
+  v_status jsonb := (SELECT jsonb_object_agg(id, membership_status) FROM public.members);
+  v_keys text[] := ARRAY(SELECT k FROM unnest(ARRAY[pg_temp.gid('Passiv'), 'gARCHIV2019PASSIV']) k ORDER BY k);
   r jsonb;
 BEGIN
   PERFORM pg_temp.as_sync();
   r := pg_temp.run('webling', 'members', '{"complete": true}', pg_temp.with_record(pg_temp.webling_snapshot(), v_ids[1],
          jsonb_build_object('groups', jsonb_build_array(jsonb_build_object('id', 'gARCHIV2019PASSIV', 'name', 'Passiv')))));
   RESET ROLE;
-  PERFORM pg_temp.eq('G4 two groups called Passiv on first sight: neither takes its status, refused as a drop',
-    concat_ws(' ', r->>'final', r->'guard'->>'refused',
-              -- the seeded row unbound, both groups with their id in the label
-              (SELECT count(*) FILTER (WHERE external_id IS NULL AND label IS NULL) || '/'
-                      || count(*) FILTER (WHERE label = 'Passiv (' || external_id || ')')
-                 FROM public.integration_member_groups WHERE name = 'Passiv')),
-    'refused status_drop 1/2');
+  PERFORM pg_temp.eq('G4 two groups called Passiv on first sight: the run goes through, no status changes',
+    concat_ws(' ', r->>'final', r->'guard'->'status'->>'dropping', r->'guard'->'status'->>'gaining',
+              (SELECT count(*) FROM public.members m WHERE m.membership_status IS DISTINCT FROM v_status->>(m.id::text)),
+              pg_temp.st(v_ids[1]::integer)), 'ok 0 0 0 passive');
+  PERFORM pg_temp.eq('G4 ... the seeded row binds to the lowest id',
+    (SELECT string_agg(concat_ws(' ', external_id, coalesce(label, '-'), status, reviewed), ',')
+       FROM public.integration_member_groups
+      WHERE connection = 'webling' AND name = 'Passiv' AND label IS NULL), v_keys[1] || ' - passive t');
+  PERFORM pg_temp.eq('G4 ... the other copies its mapping, with its id in the label, to be reviewed',
+    (SELECT concat_ws(' ', label, status, rank, hidden, coalesce(role, '-'), reviewed) FROM public.integration_member_groups
+      WHERE connection = 'webling' AND external_id = v_keys[2]), 'Passiv (' || v_keys[2] || ') passive 30 t - f');
 END $$;
 ROLLBACK TO SAVEPOINT s;
 

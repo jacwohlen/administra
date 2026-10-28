@@ -330,8 +330,11 @@ problem, a partial run, a link gone). Statuses are looked up by the label
 text, so a group's label is unique per connection: a group whose name
 another group's label already has (a second `Passiv`, or a group renamed
 to `Aktiv`) gets the provider's id in its label (`Passiv (123)`) and never
-that group's status; two groups with a seeded name on first sight bind
-neither, and the status drop guard stops the run until an admin maps them.
+that group's status. Only on first sight, several groups with a seeded
+row's name (an archive folder called `Passiv`) keep the old rule, which
+went by the title: the seeded row binds to the lowest id, each other one
+copies its mapping with its id in the label, not reviewed, so the first
+run changes nobody's status.
 New groups come without a status, hidden when they look like bookkeeping
 (`^\d\d_[A-Z]`); new calendars hold events in the section of the first
 matching rule (judo, aikido, club/verein, else General). Both are listed as

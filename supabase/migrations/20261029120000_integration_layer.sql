@@ -1220,10 +1220,10 @@ SET search_path = public, pg_temp
 AS $$
 DECLARE
   v_new integer;
+  v_bound bigint[];
 BEGIN
-  -- Seeded rows are bound to the provider's id by their name, unless two
-  -- of the provider's groups have that name (which one is meant is unknown:
-  -- both come as new groups, without a status)
+  -- Seeded rows are bound to the provider's id by their name: to the lowest
+  -- id when several of the provider's groups have that name
   WITH staged AS (
     SELECT g->>'key' AS key, min(g->>'name') AS name
       FROM public.integration_records r, jsonb_array_elements(r.data->'groups') g
@@ -1236,15 +1236,21 @@ BEGIN
         ON mg.connection = p_c.id AND mg.external_id IS NULL AND mg.name = s.name
      WHERE NOT EXISTS (SELECT 1 FROM public.integration_member_groups x
                         WHERE x.connection = p_c.id AND x.external_id = s.key)
-       AND (SELECT count(*) FROM staged s2 WHERE s2.name = s.name) = 1
      ORDER BY mg.id, s.key
+  ), bound AS (
+    UPDATE public.integration_member_groups mg SET external_id = b.key
+      FROM bind b WHERE mg.id = b.id
+    RETURNING mg.id
   )
-  UPDATE public.integration_member_groups mg SET external_id = b.key
-    FROM bind b WHERE mg.id = b.id;
+  SELECT array_agg(id) INTO v_bound FROM bound;
 
   -- New groups: no status (they change nobody's), hidden when they look
   -- like bookkeeping, not reviewed; a name another group's label already
-  -- has (or a second new group's) gets the provider's id in its label
+  -- has (or a second new group's) gets the provider's id in its label.
+  -- Except the other groups with the name of a seeded row bound just now
+  -- (an archive folder titled like a status group): the old rule went by
+  -- the title, so they copy that row's mapping, and nobody's status
+  -- changes on the first run; an admin reviews them.
   WITH staged AS (
     SELECT g->>'key' AS key, min(g->>'name') AS name
       FROM public.integration_records r, jsonb_array_elements(r.data->'groups') g
@@ -1256,13 +1262,17 @@ BEGIN
      WHERE NOT EXISTS (SELECT 1 FROM public.integration_member_groups x
                         WHERE x.connection = p_c.id AND x.external_id = s.key)
   ), ins AS (
-    INSERT INTO public.integration_member_groups (connection, external_id, name, label, hidden, reviewed,
-                                                  last_seen_at)
+    INSERT INTO public.integration_member_groups (connection, external_id, name, label, status, rank, hidden,
+                                                  role, reviewed, last_seen_at)
     SELECT p_c.id, f.key, f.name,
-           CASE WHEN f.n > 1 THEN f.name || ' (' || f.key || ')'
+           CASE WHEN f.n > 1 OR sd.id IS NOT NULL THEN f.name || ' (' || f.key || ')'
                 ELSE public.integration_group_label(p_c.id, f.name, f.key) END,
-           coalesce(f.name ~ (p_c.settings->>'hidden_group_pattern'), false), false, now()
+           sd.status, coalesce(sd.rank, 100),
+           coalesce(sd.hidden, f.name ~ (p_c.settings->>'hidden_group_pattern'), false),
+           sd.role, false, now()
       FROM fresh f
+      LEFT JOIN public.integration_member_groups sd
+        ON sd.id = ANY (coalesce(v_bound, '{}')) AND sd.name = f.name
     ON CONFLICT DO NOTHING
     RETURNING 1
   )
