@@ -368,21 +368,46 @@ export interface IssueGroup {
 
 const SEVERITY_ORDER: Record<IssueSeverity, number> = { error: 0, warning: 1, info: 2 };
 
+/** Which members and events the page loaded */
+export interface IssueRecordsLoaded {
+  member: (id: number) => boolean;
+  event: (id: number) => boolean;
+}
+
+/**
+ * Whether the page can show an issue. Issues have no foreign keys, so the
+ * member or event one names may not exist: merged or deleted since, or never
+ * written (an older row of a new record whose insert failed). Such an issue
+ * still counts in the alerts (a failed insert is noted again by every run),
+ * so it is shown by the provider's record number instead. Left out is only
+ * what has nothing else to show it by: a possible duplicate whose pair is
+ * gone (no duplicate any more; every members run checks those again) and an
+ * issue without a record number.
+ */
+export function issueShown(issue: IntegrationIssue, loaded: IssueRecordsLoaded): boolean {
+  const missing = (id: number | null) => id != null && !loaded.member(id);
+  if (issue.code === 'possible_duplicate') {
+    return !missing(issue.member_id) && !missing(issue.other_member_id);
+  }
+  const gone =
+    missing(issue.member_id) ||
+    missing(issue.other_member_id) ||
+    (issue.event_id != null && !loaded.event(issue.event_id));
+  return !gone || issue.external_id !== '';
+}
+
 /**
  * Issues grouped by connection, kind and code: errors first, then warnings,
- * then info; open ones newest first, dismissed ones apart. Issues about a
- * member or event that no longer exists (merged or deleted; issues have no
- * foreign keys) are left out: the next run resolves them.
+ * then info; open ones newest first, dismissed ones apart. Only those the
+ * page can show (issueShown()).
  */
 export function groupIssues(
   issues: readonly IntegrationIssue[],
-  exists: { member: (id: number) => boolean; event: (id: number) => boolean }
+  loaded: IssueRecordsLoaded
 ): IssueGroup[] {
   const groups = new Map<string, IssueGroup>();
   for (const issue of issues) {
-    if (issue.member_id != null && !exists.member(issue.member_id)) continue;
-    if (issue.other_member_id != null && !exists.member(issue.other_member_id)) continue;
-    if (issue.event_id != null && !exists.event(issue.event_id)) continue;
+    if (!issueShown(issue, loaded)) continue;
     const key = `${issue.connection}\u0000${issue.kind}\u0000${issue.code}`;
     let group = groups.get(key);
     if (!group) {
@@ -506,6 +531,32 @@ export function calendarDraft(row: CalendarRow): CalendarDraft {
   };
 }
 
+/** Whether two drafts hold the same values */
+export function sameDraft<D extends GroupDraft | CalendarDraft>(a: D, b: D): boolean {
+  return (Object.keys(b) as (keyof D)[]).every((k) => a[k] === b[k]);
+}
+
+/**
+ * A draft after its row loaded again (another admin saved, or the page
+ * reloaded after a dismiss or merge). `base` is the draft of the row it was
+ * made from, `fresh` the draft of the row now. A value the admin left as it
+ * was loaded takes the row's value now, so a change saved meanwhile is not
+ * sent back as one of ours; what the admin changed stays. Without a draft
+ * (a new row) or a base: the row's values.
+ */
+export function rebaseDraft<D extends GroupDraft | CalendarDraft>(
+  draft: D | undefined,
+  base: D | undefined,
+  fresh: D
+): D {
+  if (!draft || !base) return { ...fresh };
+  const next = { ...draft };
+  for (const k of Object.keys(fresh) as (keyof D)[]) {
+    if (draft[k] === base[k]) next[k] = fresh[k];
+  }
+  return next;
+}
+
 /** integration_set_mapping()'s p_changes: catalog row ids and the keys that change */
 export interface MappingChanges {
   groups: {
@@ -599,18 +650,24 @@ export interface MappingResult {
   guard: {
     dropping: number;
     gaining: number;
+    /** For all members that count together (per status: more than half of that status) */
     limit: number;
     over_drop: boolean;
     over_gain: boolean;
+    /** Those dropping by the status they had */
+    by_status: Record<string, number>;
     became: Record<string, number>;
   };
   hint: string | null;
 }
 
+function counts(value: unknown): Record<string, number> {
+  return Object.fromEntries(Object.entries(obj(value)).map(([k, v]) => [k, num(v)]));
+}
+
 export function parseMappingResult(data: unknown): MappingResult {
   const d = obj(data);
   const g = obj(d.guard);
-  const became = obj(g.became);
   return {
     run: d.run == null ? null : num(d.run),
     status: d.status === 'ok' || d.status === 'refused' ? d.status : 'dry_run',
@@ -623,10 +680,40 @@ export function parseMappingResult(data: unknown): MappingResult {
       limit: num(g.limit),
       over_drop: g.over_drop === true,
       over_gain: g.over_gain === true,
-      became: Object.fromEntries(Object.entries(became).map(([k, v]) => [k, num(v)]))
+      by_status: counts(g.by_status),
+      became: counts(g.became)
     },
     hint: str(d.hint)
   };
+}
+
+/**
+ * The preview's line about members losing their membership (null: none
+ * do). integration_status_guard() refuses more than its limit for all that
+ * count, or more than half of one status while the total stays within the
+ * limit; the second must not print the limit next to a smaller number, so
+ * it names the status (with several, each one's count: the answer does
+ * not tell which of them is over half).
+ */
+export type DropLine =
+  | { key: 'dropping'; count: number; limit: number }
+  | { key: 'droppingStatus'; count: number; status: string }
+  | { key: 'droppingStatuses'; count: number; statuses: [string, number][] };
+
+export function dropLine(guard: MappingResult['guard']): DropLine | null {
+  const { dropping: count, limit } = guard;
+  if (count <= 0) return null;
+  const statuses = Object.entries(guard.by_status)
+    .filter(([, n]) => n > 0)
+    .sort(([a, x], [b, y]) => y - x || a.localeCompare(b));
+  // Within both rules, or over the limit for all: the total and the limit
+  // (also for an answer without by_status, which tells the total only)
+  if (!guard.over_drop || count > limit || statuses.length === 0) {
+    return { key: 'dropping', count, limit };
+  }
+  return statuses.length === 1
+    ? { key: 'droppingStatus', count, status: statuses[0][0] }
+    : { key: 'droppingStatuses', count, statuses };
 }
 
 /**
@@ -642,7 +729,28 @@ export function mappingAccept(preview: MappingResult): Record<string, number> {
   return accept;
 }
 
-/** The same changes, compared to tell whether a preview still fits the inputs */
-export function changesKey(changes: MappingChanges): string {
-  return JSON.stringify(changes);
+/**
+ * What a preview was made for, compared to tell whether it still fits: the
+ * changes and the rows they apply to as loaded. That is every group (any
+ * group's status or rank can change a member's status, so the numbers
+ * depend on all of them) and the calendars changed. When another admin's
+ * save reloads those rows, the preview no longer fits and Save waits for a
+ * new one.
+ */
+export function changesKey(
+  changes: MappingChanges,
+  groups: readonly MemberGroupRow[],
+  calendars: readonly CalendarRow[]
+): string {
+  const changed = new Set(changes.calendars.map((c) => c.id));
+  return JSON.stringify({
+    changes,
+    groups: [...groups]
+      .sort((a, b) => a.id - b.id)
+      .map((g) => [g.id, g.status, g.rank, g.hidden, g.role, g.reviewed]),
+    calendars: calendars
+      .filter((c) => changed.has(c.id))
+      .sort((a, b) => a.id - b.id)
+      .map((c) => [c.id, c.target, c.section, c.closed_max_days, c.reviewed])
+  });
 }

@@ -280,6 +280,38 @@ describe('integrations page', () => {
     expect(rpc).toHaveBeenCalledWith('integration_dismiss_issue', { p_issue: 2, p_dismiss: true });
   });
 
+  it('shows errors about records that do not exist by their number, never as an empty link', () => {
+    const error = {
+      ...ISSUES[0],
+      code: 'write_failed',
+      severity: 'error',
+      other_member_id: null,
+      detail: '23514',
+      dismissed_at: null
+    };
+    renderPage({
+      ...data(),
+      issues: [
+        ...ISSUES,
+        // The insert of a new record failed: no member, only the record number
+        { ...error, id: 11, external_id: '4711', member_id: null },
+        // An older row named the id the insert would have used
+        { ...error, id: 12, external_id: '4712', member_id: 4712 },
+        // About a member merged away since
+        { ...error, id: 13, code: 'id_conflict', external_id: '3300', member_id: 3300 }
+      ]
+    });
+    expect(screen.getByText('Nicht geschrieben')).toBeInTheDocument();
+    expect(screen.getByText('Webling-Nr. 4711')).toBeInTheDocument();
+    expect(screen.getByText('Webling-Nr. 4712')).toBeInTheDocument();
+    expect(screen.getByText('Konflikte')).toBeInTheDocument();
+    expect(screen.getByText('Webling-Nr. 3300')).toBeInTheDocument();
+    for (const id of [4712, 3300]) {
+      expect(document.querySelector(`a[href="/dashboard/members/${id}"]`)).toBeNull();
+    }
+    expect(screen.queryByText('Keine offenen Probleme.')).not.toBeInTheDocument();
+  });
+
   it('reopens a dismissed issue', async () => {
     rpc.mockResolvedValue({ data: true, error: null });
     renderPage();
@@ -350,6 +382,102 @@ describe('integrations page', () => {
         p_options: { accept_status_drop: 153 }
       })
     );
+  });
+
+  it('names the status when more than half of it would lose the membership', async () => {
+    // As on prod: 269 active and 30 passive counting, so the limit for all is 29
+    rpc.mockResolvedValue({
+      data: {
+        run: 9,
+        status: 'refused',
+        groups: 1,
+        calendars: 0,
+        statuses_changed: 20,
+        hint: 'accept_status_drop=20',
+        guard: {
+          limit: 29,
+          counting: 299,
+          dropping: 20,
+          gaining: 0,
+          by_status: { passive: 20 },
+          became: { non_member: 20 },
+          over_drop: true,
+          over_gain: false
+        }
+      },
+      error: null
+    });
+    renderPage();
+    const aktiv = screen.getByText('Aktiv', { selector: 'span.font-medium' }).closest('tr')!;
+    await fireEvent.change(within(aktiv).getByLabelText('Mitgliedschaft'), {
+      target: { value: '' }
+    });
+    await fireEvent.click(screen.getByRole('button', { name: /Vorschau/ }));
+    await waitFor(() =>
+      expect(
+        screen.getByText(
+          '20 Mitglieder mit Status «Passiv» verlieren ihre Mitgliedschaft: mehr als die Hälfte dieses Status.'
+        )
+      ).toBeInTheDocument()
+    );
+    // Not the limit for all next to a smaller number
+    expect(screen.queryByText(/Sperre ab mehr als 29/)).not.toBeInTheDocument();
+    expect(screen.getByText(/mehr, als die Sperre erlaubt/)).toBeInTheDocument();
+  });
+
+  it('does not save while an input is invalid', async () => {
+    rpc.mockResolvedValue({
+      data: { run: 9, status: 'dry_run', groups: 1, calendars: 0, statuses_changed: 0, guard: {} },
+      error: null
+    });
+    renderPage();
+    const neu = screen.getByText('Mitglieder', { selector: 'span.font-medium' }).closest('tr')!;
+    await fireEvent.click(within(neu).getByLabelText('Geprüft'));
+    await fireEvent.click(screen.getByRole('button', { name: /Vorschau/ }));
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Speichern' })).toBeEnabled());
+    // Another row's rank the database would refuse: left out of the changes,
+    // so the preview still fits them, but saving would drop it without a word
+    const aktiv = screen.getByText('Aktiv', { selector: 'span.font-medium' }).closest('tr')!;
+    await fireEvent.input(within(aktiv).getByLabelText('Rang'), { target: { value: '1000' } });
+    expect(screen.getByText('Rang und Tage sind Zahlen von 0 bis 999.')).toBeInTheDocument();
+    expect(screen.queryByText(/zeig die Vorschau noch einmal/)).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Speichern' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: /Vorschau/ })).toBeDisabled();
+  });
+
+  it('takes another admin’s save into untouched rows when the page reloads', async () => {
+    rpc.mockResolvedValue({
+      data: { run: 9, status: 'dry_run', groups: 1, calendars: 0, statuses_changed: 0, guard: {} },
+      error: null
+    });
+    const { rerender } = renderPage();
+    const neu = () =>
+      screen.getByText('Mitglieder', { selector: 'span.font-medium' }).closest('tr')!;
+    const aktiv = () => screen.getByText('Aktiv', { selector: 'span.font-medium' }).closest('tr')!;
+    await fireEvent.click(within(neu()).getByLabelText('Ausblenden'));
+    await fireEvent.click(screen.getByRole('button', { name: /Vorschau/ }));
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Speichern' })).toBeEnabled());
+
+    // Meanwhile another admin moved Aktiv to rank 25 and confirmed Mitglieder;
+    // a dismiss reloads the page in place
+    const groups = GROUPS.map((g) =>
+      g.id === 2 ? { ...g, rank: 25 } : { ...g, reviewed: true, status: 'passive' }
+    );
+    await rerender({ data: { ...data(), groups } } as never);
+
+    expect(within(aktiv()).getByLabelText('Rang')).toHaveValue('25');
+    expect(within(neu()).getByLabelText('Mitgliedschaft')).toHaveValue('passive');
+    expect(within(neu()).getByLabelText('Ausblenden')).toBeChecked();
+    // The preview was made on other rows
+    expect(screen.getByRole('button', { name: 'Speichern' })).toBeDisabled();
+    expect(screen.getByText(/zeig die Vorschau noch einmal/)).toBeInTheDocument();
+    await fireEvent.click(screen.getByRole('button', { name: /Vorschau/ }));
+    // Only what this admin changed: nothing sets Aktiv back to rank 20
+    expect(rpc).toHaveBeenLastCalledWith('integration_set_mapping', {
+      p_connection: 'webling',
+      p_changes: { groups: [{ id: 17, hidden: true }], calendars: [] },
+      p_options: { dry_run: true }
+    });
   });
 
   it('needs a new preview once the inputs change', async () => {

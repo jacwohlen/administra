@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { untrack } from 'svelte';
   import { _ } from 'svelte-i18n';
   import Fa from 'svelte-fa';
   import { faEye, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
@@ -11,14 +12,18 @@
     beforeLayerSwitch,
     calendarDraft,
     changesKey,
+    dropLine,
     groupDraft,
     mappingAccept,
     mappingChanges,
     parseMappingResult,
+    rebaseDraft,
+    sameDraft,
     type CalendarDraft,
     type CalendarRow,
     type CalendarTarget,
     type ConnectionStatus,
+    type DropLine,
     type GroupDraft,
     type MappingResult,
     type MemberGroupRow
@@ -50,15 +55,50 @@
   const STATUSES: MembershipStatus[] = ['active', 'passive', 'non_member', 'trial', 'left'];
   const TARGETS: CalendarTarget[] = ['event', 'break', 'ignore'];
 
-  // Inputs per catalog row; a row the page loads later gets its own
+  // Inputs per catalog row, and the values each was made from (its base).
+  // The page reloads the rows in place (after a dismiss, a merge, or another
+  // admin's save): a value the admin left as loaded then takes the row's
+  // current one, so a change saved meanwhile is not sent back as ours; a new
+  // row gets its own draft.
   let groupDrafts = $state<Record<number, GroupDraft>>({});
   let calendarDrafts = $state<Record<number, CalendarDraft>>({});
-  $effect.pre(() => {
-    for (const row of groups) if (!groupDrafts[row.id]) groupDrafts[row.id] = groupDraft(row);
-    for (const row of calendars) {
-      if (!calendarDrafts[row.id]) calendarDrafts[row.id] = calendarDraft(row);
+  const groupBases = new Map<number, GroupDraft>();
+  const calendarBases = new Map<number, CalendarDraft>();
+
+  function syncDrafts<R extends { id: number }, D extends GroupDraft | CalendarDraft>(
+    rows: readonly R[],
+    drafts: Record<number, D>,
+    bases: Map<number, D>,
+    toDraft: (row: R) => D
+  ) {
+    for (const row of rows) {
+      const fresh = toDraft(row);
+      const base = bases.get(row.id);
+      if (base && drafts[row.id] && sameDraft(base, fresh)) continue;
+      drafts[row.id] = rebaseDraft(drafts[row.id], base, fresh);
+      bases.set(row.id, fresh);
     }
+  }
+
+  $effect.pre(() => {
+    const groupRows = groups;
+    const calendarRows = calendars;
+    // Only when the rows change, not with every input
+    untrack(() => {
+      syncDrafts(groupRows, groupDrafts, groupBases, groupDraft);
+      syncDrafts(calendarRows, calendarDrafts, calendarBases, calendarDraft);
+    });
   });
+
+  /** All inputs as the rows are now */
+  function resetDrafts() {
+    groupDrafts = {};
+    calendarDrafts = {};
+    groupBases.clear();
+    calendarBases.clear();
+    syncDrafts(groups, groupDrafts, groupBases, groupDraft);
+    syncDrafts(calendars, calendarDrafts, calendarBases, calendarDraft);
+  }
 
   // New rows first, then the status groups by rank, then the rest by name
   let sortedGroups = $derived(
@@ -78,7 +118,7 @@
 
   let current = $derived(mappingChanges(groups, groupDrafts, calendars, calendarDrafts));
   let count = $derived(current.changes.groups.length + current.changes.calendars.length);
-  let key = $derived(changesKey(current.changes));
+  let key = $derived(changesKey(current.changes, groups, calendars));
 
   let busy = $state(false);
   let preview = $state<{ key: string; result: MappingResult } | null>(null);
@@ -125,8 +165,10 @@
   }
 
   async function save() {
-    if (!preview || !previewFits) return;
     confirming = false;
+    // An input the database would refuse is left out of the changes: saving
+    // the others would drop it without a word
+    if (!preview || !previewFits || current.invalid.length > 0) return;
     busy = true;
     const saved = key;
     try {
@@ -141,8 +183,7 @@
       invalidateIntegrationConfig();
       preview = null;
       await onsaved();
-      groupDrafts = {};
-      calendarDrafts = {};
+      resetDrafts();
     } catch (e) {
       console.error('Error saving a mapping change:', e);
       toaster.error({ title: errorMessage(e) });
@@ -152,9 +193,38 @@
   }
 
   function reset() {
-    groupDrafts = {};
-    calendarDrafts = {};
+    resetDrafts();
     preview = null;
+  }
+
+  function statusName(status: string): string {
+    return $_(`page.members.status.${status}`, { default: status });
+  }
+
+  function dropText(line: DropLine): string {
+    switch (line.key) {
+      case 'dropping':
+        return $_('page.integrations.mapping.dropping', {
+          values: { count: line.count, limit: line.limit }
+        });
+      case 'droppingStatus':
+        return $_('page.integrations.mapping.droppingStatus', {
+          values: { count: line.count, status: statusName(line.status) }
+        });
+      case 'droppingStatuses':
+        return $_('page.integrations.mapping.droppingStatuses', {
+          values: {
+            count: line.count,
+            list: line.statuses
+              .map(([status, count]) =>
+                $_('page.integrations.mapping.statusCount', {
+                  values: { count, status: statusName(status) }
+                })
+              )
+              .join(', ')
+          }
+        });
+    }
   }
 
   function summary(result: MappingResult): string {
@@ -378,6 +448,7 @@
 
   {#if preview}
     {@const result = preview.result}
+    {@const drop = dropLine(result.guard)}
     <div
       class="flex flex-col gap-1 p-3 rounded-lg text-sm {result.guard.over_drop ||
       result.guard.over_gain
@@ -386,12 +457,8 @@
       aria-live="polite"
     >
       <p>{summary(result)}</p>
-      {#if result.guard.dropping > 0}
-        <p>
-          {$_('page.integrations.mapping.dropping', {
-            values: { count: result.guard.dropping, limit: result.guard.limit }
-          })}
-        </p>
+      {#if drop}
+        <p>{dropText(drop)}</p>
       {/if}
       {#if result.guard.gaining > 0}
         <p>
@@ -430,7 +497,7 @@
     <button
       type="button"
       class="btn preset-filled-primary-500"
-      disabled={busy || count === 0 || !previewFits}
+      disabled={busy || count === 0 || !previewFits || current.invalid.length > 0}
       onclick={() => (confirming = true)}
     >
       {$_('page.integrations.mapping.save')}

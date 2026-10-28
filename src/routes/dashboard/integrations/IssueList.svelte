@@ -61,9 +61,19 @@
     return $_('page.integrations.issues.record', { values: { provider, id: externalId } });
   }
 
-  function memberName(id: number | null): string | null {
-    const m = id == null ? undefined : members.get(id);
-    return m ? `${m.lastname} ${m.firstname}` : null;
+  /**
+   * Whether the member an issue names is loaded: it may have been merged
+   * away or deleted, or never written (a new record whose insert failed).
+   * Without it the row shows the provider's record number, never an empty
+   * link.
+   */
+  function loaded(id: number | null): id is number {
+    return id != null && members.has(id);
+  }
+
+  function memberName(id: number): string {
+    const m = members.get(id);
+    return m ? `${m.lastname} ${m.firstname}` : '';
   }
 
   async function setDismissed(issue: IntegrationIssue, dismiss: boolean) {
@@ -97,13 +107,13 @@
 
 {#snippet subject(issue: IntegrationIssue)}
   {#if issue.code === 'possible_duplicate'}
-    {#if issue.member_id != null}
+    {#if loaded(issue.member_id)}
       {@render memberLink(issue.member_id)}
     {:else}
       <span>{record(issue.external_id)}</span>
     {/if}
     <span aria-hidden="true">↔</span>
-    {#if issue.other_member_id != null}
+    {#if loaded(issue.other_member_id)}
       {@render memberLink(issue.other_member_id)}
     {/if}
     {#if issue.detail}
@@ -112,7 +122,7 @@
       </span>
     {/if}
   {:else}
-    {#if issue.member_id != null}
+    {#if loaded(issue.member_id)}
       {@render memberLink(issue.member_id)}
     {/if}
     {#if issue.event_id != null && events.get(issue.event_id)}
@@ -126,7 +136,7 @@
           values: { provider, id: issue.external_id }
         })}
       </span>
-    {:else if issue.external_id && (issue.member_id == null || issue.kind === 'events')}
+    {:else if issue.external_id && (!loaded(issue.member_id) || issue.kind === 'events')}
       <span class="text-surface-600-400">{record(issue.external_id)}</span>
     {/if}
     {#if issue.detail}
@@ -170,7 +180,7 @@
                 <span class="flex flex-wrap items-center gap-1 flex-1 min-w-0">
                   {@render subject(issue)}
                 </span>
-                {#if issue.code === 'possible_duplicate' && issue.member_id != null && issue.other_member_id != null}
+                {#if issue.code === 'possible_duplicate' && loaded(issue.member_id) && loaded(issue.other_member_id)}
                   <button
                     type="button"
                     class="btn btn-sm preset-tonal-primary"

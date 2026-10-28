@@ -7,19 +7,23 @@ import {
   calendarDraft,
   changesKey,
   connectionAlerts,
+  dropLine,
   groupDraft,
   groupIssues,
   isLayerMissing,
   isStale,
   issueReferences,
+  issueShown,
   mappingAccept,
   mappingChanges,
   needsAttention,
   parseConnectionStatuses,
   parseMappingResult,
+  rebaseDraft,
   refusalOverride,
   runCounts,
   runStatusClass,
+  sameDraft,
   type CalendarRow,
   type ConnectionStatus,
   type IntegrationIssue,
@@ -345,19 +349,67 @@ describe('groupIssues', () => {
     expect(groups.map((g) => g.code)).toEqual(['invalid_value', 'id_conflict']);
   });
 
-  it('leaves out issues about members or events that no longer exist', () => {
+  // Ids 999 (member) and 77 (event) do not exist: merged, deleted, or never written
+  const loaded = { member: (id: number) => id !== 999, event: (id: number) => id !== 77 };
+  const failedInsert = {
+    code: 'write_failed',
+    severity: 'error' as const,
+    external_id: '4711',
+    other_member_id: null,
+    detail: '23514'
+  };
+
+  it('shows an error about a record that was never written, by its record number', () => {
+    // The insert of a new provider record failed: the counted error must be visible
+    const fresh = issue({ id: 1, ...failedInsert, member_id: null });
+    // An older row named the id the insert would have used
+    const older = issue({ id: 2, ...failedInsert, member_id: 999 });
+    const event = issue({
+      id: 3,
+      kind: 'events',
+      ...failedInsert,
+      external_id: '77',
+      member_id: null,
+      event_id: 77
+    });
+    for (const i of [fresh, older, event]) expect(issueShown(i, loaded)).toBe(true);
+    const groups = groupIssues([fresh, older, event], loaded);
+    expect(groups.map((g) => `${g.kind}:${g.code}:${g.open.length}`)).toEqual([
+      'events:write_failed:1',
+      'members:write_failed:2'
+    ]);
+  });
+
+  it('shows other issues about members or events no longer there by their record number', () => {
+    const conflict = issue({ id: 1, code: 'id_conflict', severity: 'error', member_id: 999 });
+    const kept = issue({
+      id: 2,
+      kind: 'events',
+      code: 'event_gone_kept',
+      external_id: '61001',
+      member_id: null,
+      other_member_id: null,
+      event_id: 77
+    });
+    expect(issueShown(conflict, loaded)).toBe(true);
+    expect(issueShown(kept, loaded)).toBe(true);
+  });
+
+  it('leaves out only what has nothing else to show it by', () => {
     const issues = [
       issue({ id: 1 }),
+      // The pair of a possible duplicate is gone (merged): no duplicate any more
       issue({ id: 2, other_member_id: 999 }),
-      issue({ id: 3, kind: 'events', code: 'event_gone_kept', event_id: 77, member_id: null }),
+      issue({ id: 3, member_id: 999 }),
       // A held record has no member yet: kept
-      issue({ id: 4, member_id: null, other_member_id: 10000001 })
+      issue({ id: 4, member_id: null, other_member_id: 10000001 }),
+      // No record number to fall back on
+      issue({ id: 5, ...failedInsert, external_id: '', member_id: 999 }),
+      // Never named a member: kept as before
+      issue({ id: 6, ...failedInsert, external_id: '', member_id: null })
     ];
-    const groups = groupIssues(issues, {
-      member: (id) => id !== 999,
-      event: (id) => id !== 77
-    });
-    expect(groups.flatMap((g) => g.open.map((i) => i.id)).sort()).toEqual([1, 4]);
+    const groups = groupIssues(issues, loaded);
+    expect(groups.flatMap((g) => g.open.map((i) => i.id)).sort()).toEqual([1, 4, 6]);
   });
 
   it('collects the ids to load names for', () => {
@@ -466,10 +518,85 @@ describe('mappingChanges', () => {
 
   it('keys the changes so a preview can tell it still fits', () => {
     const d = drafts();
-    const before = changesKey(mappingChanges(GROUPS, d.groups, CALENDARS, d.calendars).changes);
+    const key = () =>
+      changesKey(
+        mappingChanges(GROUPS, d.groups, CALENDARS, d.calendars).changes,
+        GROUPS,
+        CALENDARS
+      );
+    const before = key();
     d.groups[2] = { ...d.groups[2], role: 'trainer' };
-    const after = changesKey(mappingChanges(GROUPS, d.groups, CALENDARS, d.calendars).changes);
-    expect(after).not.toBe(before);
+    expect(key()).not.toBe(before);
+  });
+
+  it('keys the rows under the changes, so another admin’s save outdates a preview', () => {
+    const d = drafts();
+    d.groups[17] = { ...d.groups[17], status: 'passive' };
+    const { changes } = mappingChanges(GROUPS, d.groups, CALENDARS, d.calendars);
+    const before = changesKey(changes, GROUPS, CALENDARS);
+    // The same changes now apply to a row another admin moved
+    const moved = GROUPS.map((g) => (g.id === 17 ? { ...g, status: 'left' as const } : g));
+    expect(changesKey(changes, moved, CALENDARS)).not.toBe(before);
+    // Any group's mapping changes the numbers, not only the changed one's
+    const ranked = GROUPS.map((g) => (g.id === 2 ? { ...g, rank: 25 } : g));
+    expect(changesKey(changes, ranked, CALENDARS)).not.toBe(before);
+    // A run only seeing the rows again changes nothing
+    const seen = GROUPS.map((g) => ({ ...g, last_seen_at: '2026-10-28T09:42:09Z' }));
+    expect(changesKey(changes, seen, CALENDARS)).toBe(before);
+    // Calendars count only where they change
+    const other = CALENDARS.map((c) => ({ ...c, section: 'Judo' }));
+    expect(changesKey(changes, GROUPS, other)).toBe(before);
+    d.calendars[6] = { ...d.calendars[6], target: 'break' };
+    const withCalendar = mappingChanges(GROUPS, d.groups, CALENDARS, d.calendars).changes;
+    expect(changesKey(withCalendar, GROUPS, other)).not.toBe(
+      changesKey(withCalendar, GROUPS, CALENDARS)
+    );
+  });
+});
+
+describe('rebaseDraft (rows loaded again)', () => {
+  const passiv: MemberGroupRow = {
+    ...GROUPS[0],
+    id: 5,
+    name: 'Passiv',
+    status: 'passive',
+    rank: 30
+  };
+  // Another admin saved rank 25 and moved the group to left
+  const saved: MemberGroupRow = { ...passiv, status: 'left', rank: 25 };
+
+  it('takes the new values of a row the admin did not touch', () => {
+    const base = groupDraft(passiv);
+    const rebased = rebaseDraft(groupDraft(passiv), base, groupDraft(saved));
+    expect(rebased).toEqual(groupDraft(saved));
+    // So it is no change of ours, and nothing reverts the other admin's save
+    expect(mappingChanges([saved], { 5: rebased }, [], {}).changes.groups).toEqual([]);
+  });
+
+  it('keeps what the admin changed and refreshes the rest', () => {
+    const base = groupDraft(passiv);
+    const touched = { ...groupDraft(passiv), hidden: false, role: 'trainer' as const };
+    const rebased = rebaseDraft(touched, base, groupDraft(saved));
+    expect(rebased).toEqual({ ...groupDraft(saved), hidden: false, role: 'trainer' });
+    expect(mappingChanges([saved], { 5: rebased }, [], {}).changes.groups).toEqual([
+      { id: 5, hidden: false, role: 'trainer' }
+    ]);
+  });
+
+  it('starts a new row, or one without base, from the row', () => {
+    expect(rebaseDraft(undefined, undefined, groupDraft(saved))).toEqual(groupDraft(saved));
+    const c = calendarDraft(CALENDARS[0]);
+    expect(rebaseDraft({ ...c, section: 'Judo' }, undefined, c)).toEqual(c);
+  });
+
+  it('works for calendars and compares drafts by value', () => {
+    const base = calendarDraft(CALENDARS[0]);
+    const now = calendarDraft({ ...CALENDARS[0], closed_max_days: 5 });
+    const touched = { ...base, section: 'Judo' };
+    expect(rebaseDraft(touched, base, now)).toEqual({ ...now, section: 'Judo' });
+    expect(sameDraft(base, calendarDraft(CALENDARS[0]))).toBe(true);
+    expect(sameDraft(base, now)).toBe(false);
+    expect(sameDraft(groupDraft(passiv), groupDraft(saved))).toBe(false);
   });
 });
 
@@ -508,11 +635,61 @@ describe('mapping preview', () => {
         limit: 19,
         over_drop: true,
         over_gain: false,
+        by_status: { active: 153 },
         became: { non_member: 153 }
       },
       hint: 'accept_status_drop=153'
     });
     expect(parseMappingResult(null).status).toBe('dry_run');
+    expect(parseMappingResult(null).guard.by_status).toEqual({});
+  });
+
+  it('says the total and the limit when over the limit for all, or within both rules', () => {
+    expect(dropLine(parseMappingResult(refused).guard)).toEqual({
+      key: 'dropping',
+      count: 153,
+      limit: 19
+    });
+    const within = { ...refused.guard, dropping: 3, by_status: { passive: 3 }, over_drop: false };
+    expect(dropLine(parseMappingResult({ guard: within }).guard)).toEqual({
+      key: 'dropping',
+      count: 3,
+      limit: 19
+    });
+    const none = { ...refused.guard, dropping: 0, by_status: {}, over_drop: false };
+    expect(dropLine(parseMappingResult({ guard: none }).guard)).toBeNull();
+  });
+
+  it('names the status when more than half of it drops while the total is within the limit', () => {
+    // As on prod: 269 active and 30 passive counting, Passiv without status
+    const passive = {
+      limit: 29,
+      counting: 299,
+      dropping: 20,
+      gaining: 0,
+      by_status: { passive: 20 },
+      became: { non_member: 20 },
+      over_drop: true,
+      over_gain: false
+    };
+    expect(dropLine(parseMappingResult({ guard: passive }).guard)).toEqual({
+      key: 'droppingStatus',
+      count: 20,
+      status: 'passive'
+    });
+    // With several statuses the answer does not tell which is over half: each one's count
+    const both = { ...passive, dropping: 26, by_status: { active: 6, passive: 20 } };
+    expect(dropLine(parseMappingResult({ guard: both }).guard)).toEqual({
+      key: 'droppingStatuses',
+      count: 26,
+      statuses: [
+        ['passive', 20],
+        ['active', 6]
+      ]
+    });
+    // An answer without by_status: the total is all there is to say
+    const bare = { ...passive, by_status: undefined };
+    expect(dropLine(parseMappingResult({ guard: bare }).guard)?.key).toBe('dropping');
   });
 
   it('accepts exactly the numbers the preview was over the guard with', () => {

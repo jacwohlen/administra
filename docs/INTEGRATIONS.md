@@ -543,20 +543,29 @@ Einstellungen; `src/routes/dashboard/integrations/`, helpers in
 - **Runs**: the latest 50 `integration_runs` (mapping previews left out)
   with trigger, status, dry run, the counts other than zero, overrides used,
   the adapter's fetch errors and the error or refusal code.
-- **Issues**: open and dismissed ones grouped by code; issues about a
-  member or event that no longer exists are left out (the next run
-  resolves them). A possible duplicate links both member pages and opens
-  the merge dialog (phase 1c); "Kein Duplikat" dismisses it
-  (`integration_dismiss_issue`), any other issue can be dismissed too, and
-  a dismissed one can be reopened.
+- **Issues**: open and dismissed ones grouped by code. An issue whose
+  member or event does not exist (merged or deleted since, or a new record
+  whose insert failed) shows the provider's record number instead: it
+  still counts as open, and every run that sees the record notes it again.
+  Left out is only what has nothing else to show it by: a possible
+  duplicate whose pair is gone (the next members run resolves it) or an
+  issue without a record number. A possible duplicate links both member
+  pages and opens the merge dialog (phase 1c); "Kein Duplikat" dismisses
+  it (`integration_dismiss_issue`), any other issue can be dismissed too,
+  and a dismissed one can be reopened.
 - **Mapping**: status, rank, hidden and role per group; target, section
   and "Dojo zu" days per calendar; new rows marked "Neu" and confirmed with
   "Geprüft". Preview is `integration_set_mapping`'s dry run (how many
   members get another status, how many lose or gain a membership, whether
-  that is over the guard); Save, after a confirmation, sends exactly the
-  numbers the preview was over the guard with; if they changed meanwhile
-  the save is refused and shows the new preview. While the connection has
-  no members run of the layer (before phase 3's switch) the editor warns
-  not to change anything.
+  that is over the guard; when more than half of one status is what trips
+  it, the preview names the status instead of the limit for all); Save,
+  after a confirmation, sends exactly the numbers the preview was over the
+  guard with; if they changed meanwhile the save is refused and shows the
+  new preview. A preview fits only the inputs and the catalog rows it was
+  made on: when the rows reload in place (another admin saved), inputs
+  left as loaded take the new values and Save waits for a new preview.
+  Save also waits while an input is invalid. While the connection has no
+  members run of the layer (before phase 3's switch) the editor warns not
+  to change anything.
 
 A database without the layer shows "noch nicht eingerichtet" instead.
