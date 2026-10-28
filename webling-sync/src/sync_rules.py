@@ -162,9 +162,11 @@ def status_from_labels(labels, link):
     supabase/migrations/20261025230000_membership_status_and_member_links.sql,
     rule by rule (the table in docs/INTEGRATIONS.md).
 
-    The database derives the status itself; the sync only predicts it to
-    guard a run (plan_status_drop) and to check the result (status_after_run,
-    which warns when the two disagree). Change both together.
+    The tests' stand-in for the database's rule. The sync itself asks the
+    database (database_status_rule() in webling.py): a rule changed here
+    would reach prod with the next merge to main, before the changed SQL is
+    promoted, and the guard would then wave through the very drop it exists
+    to stop.
     """
     labels = labels if isinstance(labels, list) else []
     if link == 'gone' or '03_Austritt' in labels:
@@ -230,12 +232,16 @@ def _counting_by_status(before):
     return Counter(row['membership_status'] for row in before.values() if _counts_row(row))
 
 
-def plan_status_drop(current, rows, accept=None):
+def plan_status_drop(current, rows, accept=None, predict=None):
     """Whether this run would take too many members out of the club area.
 
     current: the members rows in the Webling id range before the run
              ({id, membership_status, archivedAt, labels})
     rows:    the rows this run writes ({id, labels, ...})
+    predict: labels -> the status the database derives for them with an
+             active link. The sync passes the database's own rule
+             (database_status_rule() in webling.py); status_from_labels()
+             is the default for the tests.
 
     A member account only gets in while one of its records counts. If
     Webling renames or empties a status group, or the label mapping breaks,
@@ -251,13 +257,14 @@ def plan_status_drop(current, rows, accept=None):
     accept is exactly dropping) and predicted ({id: status} of every
     written row).
     """
+    predict = predict or (lambda labels: status_from_labels(labels, 'active'))
     before = _known(current)
     counting_by_status = _counting_by_status(before)
     predicted = {}
     dropped_from = Counter()
     by_status = Counter()
     for row in rows:
-        status = status_from_labels(row.get('labels'), 'active')
+        status = predict(row.get('labels'))
         predicted[row['id']] = status
         old = before.get(row['id'])
         if old is None or not _counts_row(old):

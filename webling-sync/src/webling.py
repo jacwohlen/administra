@@ -167,7 +167,11 @@ def sync_members():
   if state != 'ok':
     print("Error: the current membership statuses could not be read; no member written")
     return failed + 1
-  plan = plan_status_drop(current, rows, ACCEPT_STATUS_DROP)
+  rule = database_status_rule(rows)
+  if rule is None:
+    print("Error: the database's membership status rule could not be asked; no member written")
+    return failed + 1
+  plan = plan_status_drop(current, rows, ACCEPT_STATUS_DROP, rule)
   if plan.too_many:
     print(status_drop_error(plan))
     return failed + 1
@@ -193,6 +197,31 @@ def sync_members():
       failed += 1
   return failed
 
+def database_status_rule(rows):
+  """The status the database derives for each label set this run writes,
+  with an active link, as the guard's predict function; None (error
+  printed) when the database could not be asked.
+
+  member_status_from_labels() is on prod since phase 1a, so the guard
+  always predicts with the rule the trigger will run, also while a changed
+  rule waits on main for its promotion. One call per distinct label set
+  (a few dozen); the labels never reach the log.
+  """
+  statuses = {}
+  for row in rows:
+    key = json.dumps(row.get('labels'))
+    if key in statuses:
+      continue
+    response = supabase('post', 'rpc/member_status_from_labels', headers=HEADERS,
+                        data=json.dumps({'p_labels': row.get('labels'), 'p_link': 'active'}))
+    if response is None:
+      return None
+    if response.status_code != 200 or not isinstance(response.json(), str):
+      print(f"Error: membership status rule: {postgrest_error(response)}")
+      return None
+    statuses[key] = response.json()
+  return lambda labels: statuses[json.dumps(labels)]
+
 def became(plan):
   """What the members that stop counting become, e.g. 'left: 2, non_member: 1'.
   Counts and status names only: the log is public, and labels (leaving and
@@ -216,9 +245,10 @@ def status_drop_info(plan):
 
 def check_statuses(current, plan, synced_ids):
   """After the run: the statuses the database derived, against the guard's
-  prediction. A difference means sync_rules.status_from_labels() and the
-  database's member_status_from_labels() disagree: a warning, and an error
-  if more members stopped counting than the guard allows."""
+  prediction (the database's own rule, with an active link). A difference
+  means the trigger saw more than labels and link (or the rule changed
+  during the run): a warning, and an error if more members stopped counting
+  than the guard allows."""
   after, state = get_all(MEMBER_STATUS_QUERY)
   if state != 'ok':
     print("Warning: membership statuses not checked after the run (could not be read)")
@@ -227,8 +257,8 @@ def check_statuses(current, plan, synced_ids):
   surprises, dropped, too_many = status_after_run(current, after, predicted, ACCEPT_STATUS_DROP)
   if surprises:
     print(f"::warning::{surprises} members got another membership status than the sync "
-          "predicted; status_from_labels() in sync_rules.py and member_status_from_labels() "
-          "in the database differ")
+          "predicted from the database's member_status_from_labels(); check "
+          "trigger_set_membership_status()")
   if too_many:
     print(f"Error: {dropped} members lost their active or passive membership in this run, "
           "more than the guard allows (it predicted fewer). Check Webling and the status rules")

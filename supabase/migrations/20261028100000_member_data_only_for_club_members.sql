@@ -530,14 +530,15 @@ AS $$
 $$;
 
 -----------------
--- The Webling sync predicts statuses with a port of these two rules, to
--- refuse a run that would lock out many member accounts at once (it runs
--- against prod before migrations are promoted, so it cannot call them)
+-- The Webling sync's guard against a run that would lock out many member
+-- accounts at once asks member_status_from_labels() itself (on prod since
+-- phase 1a), so it predicts with the rule prod runs. member_grants_access()
+-- reaches prod only with this promotion, so the guard has its own copy.
 -----------------
 COMMENT ON FUNCTION public.member_status_from_labels(jsonb, text) IS
-  'membership_status from labels and provider link. Ported to status_from_labels() in webling-sync/src/sync_rules.py (the sync''s guard): change both together.';
+  'membership_status from labels and provider link. The Webling sync''s guard calls it through the API (database_status_rule() in webling-sync/src/webling.py): keep the signature.';
 COMMENT ON FUNCTION public.member_grants_access(text, timestamptz, jsonb) IS
-  'A member record lets a member account in: active or passive, not archived, no trial label (phase 1b). Ported to counts() in webling-sync/src/sync_rules.py: change both together.';
+  'A member record lets a member account in: active or passive, not archived, no trial label (phase 1b). Copied to counts() in webling-sync/src/sync_rules.py: change both together.';
 
 -----------------
 -- Function privileges. New functions are executable by PUBLIC (and on

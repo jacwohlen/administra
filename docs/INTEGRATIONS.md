@@ -89,21 +89,24 @@ Status changes have the same kind of guard, because a member account only
 gets in while a record counts: if Webling renamed or emptied `Aktiv` or
 `Passiv`, every member account would be locked out at once. Before writing,
 the sync reads the status, archive date and labels of the members in the
-Webling id range and predicts each written member's new status from its
-groups (`status_from_labels()` in `webling-sync/src/sync_rules.py`, a port
-of `member_status_from_labels()`; it never calls the SQL, because a sync
-change reaches prod the same night while migrations wait for a promotion).
+Webling id range and asks the database's own `member_status_from_labels()`
+(on prod since phase 1a) for each written member's new status, once per
+distinct set of groups. It must predict with the rule the trigger will run:
+a sync change reaches prod the same night while migrations wait for a
+promotion, so a copy of the rule in the sync could be ahead of prod and let
+the very drop through it should stop.
 If more than a tenth of the members that count now (at least 5; fewer than
 230 members come from Webling, so at most 22), or more than half of the
 active or of the passive ones (at least 5), would stop counting, it writes
 nothing (no member, link or gone mark) and the run turns red with the
 number and what they would become, never names, groups or ids. If the
 changes are intended, run the workflow with `accept_status_drop` set to
-that number. If the statuses cannot be read, it writes nothing either. A run
-that goes ahead logs how many members lost their membership and what they
-became. After the run it reads the statuses again: a member whose status is
-not the predicted one is a warning (the port and the SQL differ; change both
-together), and more members out than the guard allows is an error. Members
+that number. If the statuses cannot be read or the database's rule cannot be
+asked, it writes nothing either. A run that goes ahead logs how many members
+lost their membership and what they became. After the run it reads the
+statuses again: a member whose status is not the predicted one is a warning
+(the trigger saw more than groups and link), and more members out than the
+guard allows is an error. Members
 going because Webling no longer has them are `accept_gone`'s, not this
 guard's.
 
@@ -187,9 +190,10 @@ Known gaps:
 - An e-mail removed in Webling stays in Administra (the sync only sends
   addresses Webling has), so the old address keeps matching.
 - A status group renamed in Webling on purpose needs the new title in
-  `member_status_from_labels()` and in `status_from_labels()`
-  (`webling-sync/src/sync_rules.py`) before the sync runs again; until then
-  the guard above refuses the run.
+  `member_status_from_labels()` (a migration) and that migration promoted
+  to prod; until then the guard above refuses the run, or a manual run with
+  `accept_status_drop` lets the drop through. `status_from_labels()` in
+  `webling-sync/src/sync_rules.py` is only the tests' copy of the rule.
 - Changes under the guard's limits go through (the run only logs their
   number), also a large change spread over several nights. Mass changes
   the other way (many members starting to count) have no guard.
