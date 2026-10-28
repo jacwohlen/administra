@@ -549,9 +549,30 @@ serves the overlap.
 trigger `events_all_day` keeps doing so for every writer (the legacy sync
 goes on writing 00:00 until the switch); real times written to an all-day
 event make it timed again, all day set by the app or the layer drops the
-times. An app deployed before the migration (Netlify can be first) saves
-without `all_day` (`saveEventRow()` retries without the column) and reads
-every event as timed.
+times.
+
+**The last day and the legacy sync.** The legacy sync (until the switch,
+and again after a rollback to it) upserts a Webling event's start but
+knows no last day. When it moves the start of an event whose last day the
+app (_Bis_) or an earlier layer run set, the trigger `events_keep_span`
+moves the last day by as many days: the event keeps its length, and the
+upsert does not fail on `events_date_to_check` once the start passes the
+old last day. Only for the sync's direct writes (`service_role`): staff
+send both days (the form checks them), and the layer writes the last day
+Webling sends (its functions are SECURITY DEFINER, `current_user` is
+their owner).
+
+**Deploy order.** On a database that already has phase 2
+(`events.date_to`, `training_plan_breaks.connection`), an app deployed
+before this migration (Netlify can be first) saves without `all_day`
+(`saveEventRow()` retries without the column) and reads every event as
+timed. Prod is not such a database: the promotion that carries phase 4
+carries phase 2 (`20261029120000`) as well, and until Supabase has applied
+both migrations (about a minute after the merge) the training plan and its
+settings page fail to load, the dashboard's events of the day and the exam
+days' event choice are empty, and saving an event (form or Daten-Assistent)
+fails. Note it in that promotion's release notes; reloading after the
+minute is enough.
 
 **The layer, capabilities version 2.** `integration_begin` answers
 `version: 2` and takes `all_day` in event records; `ends_on` becomes
@@ -567,9 +588,11 @@ database's capabilities have version 2 (`webling_adapter/dates.span()`),
 and the description only to version 1, so the adapter on `main` works
 with a database before and after the promotion. All day is Webling's flag
 `isAllDay` when an event has it, else an entry from 00:00 to 00:00 (or
-without an end), as the legacy sync wrote them. **Not verified against
-Webling:** whether the end of an all-day entry is its last day (assumed,
-`ALL_DAY_END_INCLUSIVE = True`) or the day after. Check one holiday in the
+without an end), as the legacy sync wrote them. A timed event that ends
+at midnight (19:00 to 00:00 the next day) ends on the day before.
+**Not verified against Webling:** whether the end of an all-day entry is
+its last day (assumed, `ALL_DAY_END_INCLUSIVE = True`) or the day after.
+Check one holiday in the
 Webling portal against the training plan after the first layer run; if
 every holiday is a day too long, set the constant to `False` (tested both
 ways). From version 2 on the window and the registrations go by the last

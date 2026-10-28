@@ -210,7 +210,8 @@ type SaveResult = { error: { code?: string; message?: string } | null };
  * Inserts or updates an event row. A database without events.all_day
  * (Netlify may deploy the app before the promotion that adds the column)
  * refuses the column (PGRST204): the row is saved again without it, an
- * all-day event then simply has no times.
+ * all-day event then simply has no times. A database without date_to
+ * (phase 2) still refuses the save (docs/INTEGRATIONS.md, deploy order).
  */
 export async function saveEventRow<V extends { all_day?: boolean }, R extends SaveResult>(
   values: V,

@@ -144,6 +144,10 @@ def span_of(begin, end, **extra):
     ('2026-11-13 18:00:00', '2026-11-15 14:00:00', {}, ('2026-11-15', False)),
     # Over midnight: it ends the next day
     ('2026-12-31 20:00:00', '2027-01-01 01:00:00', {}, ('2027-01-01', False)),
+    # Until midnight: its last day is the day before the end
+    ('2026-11-06 19:00:00', '2026-11-07 00:00:00', {}, (None, False)),
+    ('2026-11-06 19:00:00', '2026-11-08 00:00:00', {}, ('2026-11-07', False)),
+    ('2026-11-06 19:00:00', '2026-11-08', {}, ('2026-11-07', False)),
     # All day as the legacy sync wrote it: 00:00 to 00:00, the end inclusive (assumed)
     ('2026-10-03 00:00:00', '2026-10-18 00:00:00', {}, ('2026-10-18', True)),
     ('2026-12-25 00:00:00', '2026-12-25 00:00:00', {}, (None, True)),
@@ -152,9 +156,10 @@ def span_of(begin, end, **extra):
     ('2026-12-25 00:00:00', None, {}, (None, True)),
     ('2026-11-05 18:00:00', 'morgen', {}, (None, False)),
     ('2026-11-05 18:00:00', '2026-11-04 20:00:00', {}, (None, False)),
-    # Webling's own flag wins over the times
-    ('2026-10-03 00:00:00', '2026-10-18 00:00:00', {'isAllDay': False}, ('2026-10-18', False)),
+    # Webling's own flag wins over the times (timed: until midnight, as above)
+    ('2026-10-03 00:00:00', '2026-10-18 00:00:00', {'isAllDay': False}, ('2026-10-17', False)),
     ('2026-10-03 08:00:00', '2026-10-04 12:00:00', {'isAllDay': True}, ('2026-10-04', True)),
+    ('2026-11-06 19:00:00', '2026-11-07 00:00:00', {'isAllDay': True}, ('2026-11-07', True)),
     ('2026-10-03 08:00:00', '2026-10-04 12:00:00', {'isAllDay': 'ja'}, ('2026-10-04', False)),
 ])
 def test_span(begin, end, extra, expected):
@@ -168,6 +173,7 @@ def test_span_if_webling_ends_all_day_entries_the_day_after(monkeypatch):
     assert span_of('2026-12-25 00:00:00', '2026-12-26 00:00:00') == (None, True)
     # Timed events are not concerned
     assert span_of('2026-11-13 18:00:00', '2026-11-15 14:00:00') == ('2026-11-15', False)
+    assert span_of('2026-11-06 19:00:00', '2026-11-08 00:00:00') == ('2026-11-07', False)
 
 
 def test_event_record_for_version_2():

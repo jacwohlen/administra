@@ -10,6 +10,7 @@
 --   B  what the migration left behind (meaningful on a database that had
 --      events before it: the prod order; trivially true after a reset)
 --   A  all day: 00:00 to 00:00 is all day, whoever writes; the legacy sync
+--      (a start it moves takes the last day along, events_keep_span)
 --   C  the date checks
 --   O  the app's overlap filters (multi-day events, the year boundary)
 --   P  capabilities version 2 and Webling's field policy
@@ -190,12 +191,14 @@ END $$;
 ROLLBACK TO SAVEPOINT s;
 
 -----------------
--- A All day, whoever writes; the legacy sync keeps working
+-- A All day, whoever writes; the legacy sync keeps working (also with a
+--   last day it does not know)
 -----------------
 SAVEPOINT s;
 DO $$
 DECLARE
   v_trainer uuid := pg_temp.sign_up('a0000000-0000-0000-0000-000000000021', 'ed-trainer@example.com', 'trainer');
+  r jsonb;
 BEGIN
   PERFORM pg_temp.as_sync();
   PERFORM pg_temp.legacy_upsert(91001, 'Sommerlager', pg_temp.d(30), '00:00', '00:00');
@@ -236,6 +239,53 @@ BEGIN
   RESET ROLE;
   PERFORM pg_temp.ok('A4 legacy registrations as before',
     EXISTS (SELECT 1 FROM public.event_participants WHERE "eventId" = 91002));
+
+  -- A last day the app (Bis) gave a Webling event, or a layer run before a
+  -- rollback: the legacy sync, which knows none, moves the start
+  PERFORM pg_temp.as_sync();
+  PERFORM pg_temp.legacy_upsert(91005, 'Lager', pg_temp.d(50), '09:00', '17:00', 'Judo');
+  RESET ROLE;
+  PERFORM pg_temp.act_as(v_trainer);
+  UPDATE public.events SET date_to = pg_temp.d(52) WHERE id = 91005;
+  RESET ROLE;
+  PERFORM pg_temp.as_sync();
+  PERFORM pg_temp.legacy_upsert(91005, 'Lager', pg_temp.d(57), '09:00', '17:00', 'Judo');
+  RESET ROLE;
+  PERFORM pg_temp.eq('A5 the legacy sync moves the start later: the last day moves along, no error',
+    pg_temp.ev(91005), pg_temp.d(57) || '|' || pg_temp.d(59) || '|false|09:00|17:00|' || pg_temp.link(91005));
+  PERFORM pg_temp.as_sync();
+  PERFORM pg_temp.legacy_upsert(91005, 'Lager', pg_temp.d(57), '09:00', '17:00', 'Judo');
+  RESET ROLE;
+  PERFORM pg_temp.eq('A5 the same start again: unchanged',
+    pg_temp.ev(91005), pg_temp.d(57) || '|' || pg_temp.d(59) || '|false|09:00|17:00|' || pg_temp.link(91005));
+  PERFORM pg_temp.as_sync();
+  PERFORM pg_temp.legacy_upsert(91005, 'Lager', pg_temp.d(45), '09:00', '17:00', 'Judo');
+  RESET ROLE;
+  PERFORM pg_temp.eq('A5 earlier: still three days, not stretched',
+    pg_temp.ev(91005), pg_temp.d(45) || '|' || pg_temp.d(47) || '|false|09:00|17:00|' || pg_temp.link(91005));
+
+  -- Staff send both days (the form checks them): nothing moves along
+  PERFORM pg_temp.act_as(v_trainer);
+  UPDATE public.events SET date = pg_temp.d(46), date_to = pg_temp.d(47) WHERE id = 91005;
+  PERFORM pg_temp.eq('A6 staff: a start after the last day is refused, not moved along',
+    pg_temp.err(format($q$UPDATE public.events SET date = %L WHERE id = 91005$q$, pg_temp.d(48))),
+    '23514 events_date_to_check');
+  RESET ROLE;
+  PERFORM pg_temp.eq('A6 staff move only the start: the last day stays as sent',
+    pg_temp.ev(91005), pg_temp.d(46) || '|' || pg_temp.d(47) || '|false|09:00|17:00|' || pg_temp.link(91005));
+
+  -- The layer (SECURITY DEFINER, current_user its owner) writes the last day it gets
+  PERFORM pg_temp.as_sync();
+  PERFORM pg_temp.run('events', '{"complete": false}', jsonb_build_array(
+    pg_temp.rec(91006, 'c1', 'Judo Agenda', 'Seminar',
+                jsonb_build_object('starts_on', pg_temp.d(70), 'ends_on', pg_temp.d(74), 'all_day', true))));
+  r := pg_temp.run('events', '{"complete": false}', jsonb_build_array(
+    pg_temp.rec(91006, 'c1', 'Judo Agenda', 'Seminar',
+                jsonb_build_object('starts_on', pg_temp.d(72), 'ends_on', pg_temp.d(74), 'all_day', true))));
+  RESET ROLE;
+  PERFORM pg_temp.eq('A7 a layer run moves the start, the same last day: kept as sent',
+    concat_ws(' ', r->>'final', r->'result'->>'updated', pg_temp.ev(91006)),
+    'ok 1 ' || pg_temp.d(72) || '|' || pg_temp.d(74) || '|true|-|-|-');
 END $$;
 ROLLBACK TO SAVEPOINT s;
 

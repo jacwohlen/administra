@@ -15,8 +15,9 @@
 --
 -- Production runs the legacy sync until phase 3 switches it to the layer:
 -- it upserts events by id with times, title, place, section and the portal
--- link as description, and knows neither date_to nor all_day. All of it
--- keeps working (supabase/checks/event_dates.sql). Holidays reach the plan
+-- link as description, and knows neither date_to nor all_day (a start it
+-- moves takes the last day along, events_keep_span). All of it keeps
+-- working (supabase/checks/event_dates.sql). Holidays reach the plan
 -- only through the layer: until the switch they stay events (as today) and
 -- the TK enters holidays by hand; the first layer run afterwards brings the
 -- calendar's holidays as breaks and deletes the events the legacy sync had
@@ -103,6 +104,39 @@ $$;
 
 -- The overlap filters: date <= day AND coalesce(date_to, date) >= day
 CREATE INDEX events_date_span_idx ON public.events (date, (coalesce(date_to, date)));
+
+-- The legacy sync (until the phase 3 switch, and after a rollback to it)
+-- upserts an event's start but knows no last day. When it moves the start
+-- of an event whose last day the app (Bis) or an earlier layer run set,
+-- the last day moves along: the event keeps its length, and its end never
+-- falls on or before its start (events_date_to_check would refuse that
+-- upsert every night). Only for the sync's own writes (service_role through
+-- PostgREST): staff send both days and the form checks them; the layer
+-- writes the last day itself, from SECURITY DEFINER functions, where
+-- current_user is their owner.
+CREATE OR REPLACE FUNCTION public.trigger_event_keep_span()
+RETURNS trigger
+LANGUAGE plpgsql
+SET search_path = public
+AS $$
+BEGIN
+  IF current_user = 'service_role' THEN
+    BEGIN
+      NEW.date_to := to_char(OLD.date_to::date + (NEW.date::date - OLD.date::date), 'YYYY-MM-DD');
+    EXCEPTION WHEN data_exception THEN
+      NULL; -- not a real day: the date checks refuse the write as before
+    END;
+  END IF;
+  RETURN NEW;
+END;
+$$;
+
+CREATE TRIGGER events_keep_span
+  BEFORE UPDATE OF date ON public.events
+  FOR EACH ROW
+  WHEN (NEW.date IS DISTINCT FROM OLD.date AND NEW.date_to IS NOT DISTINCT FROM OLD.date_to
+        AND OLD.date_to IS NOT NULL)
+  EXECUTE FUNCTION public.trigger_event_keep_span();
 
 -- Until now the Daten-Assistent wrote a multi-day event's last day as the
 -- first line of its description ("bis 16.11.2026", "until 16.11.2026"):
@@ -782,6 +816,7 @@ $$;
 -----------------
 REVOKE EXECUTE ON FUNCTION
   public.trigger_event_all_day(),
+  public.trigger_event_keep_span(),
   public.integration_event_unused(integer, public.integration_connections)
   FROM PUBLIC, anon, authenticated, service_role;
 
