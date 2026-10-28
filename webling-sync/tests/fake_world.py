@@ -21,7 +21,7 @@ ENV = {
     'WEBLING_DOMAIN': 'club',
     'WEBLING_API_KEY': 'webling-key-123',
     'WEBLING_EMAIL': 'sync@example.com',
-    'WEBLING_PASSWORD': 'pw-456',
+    'WEBLING_PASSWORD': 'secret',
     'SUPABASE_URL': 'https://db.example',
     'SUPABASE_SERVICE_ROLE_KEY': 'sb_secret_test',
     'ANONYMIZE': 'false',

@@ -12,7 +12,7 @@ SECRETS = [
     '03_Austritt', '04_Probetraining', 'Aktiv', 'Passiv', 'Vorstand Geheim', 'Rechnung Geheim',
     'Kyu Prüfung Max Geheim', 'Geburtstag von Zora', 'Lehrgang Diskret', 'Dojo Geheimweg',
     'Kalender Geheim', 'Aikido Verborgen',
-    'webling-key-123', 'pw-456', 'sb_secret_test',
+    'webling-key-123', 'secret', 'sb_secret_test',
 ]
 
 GROUPS = {10: 'Aktiv', 11: 'Passiv', 12: '03_Austritt', 13: '04_Probetraining',
