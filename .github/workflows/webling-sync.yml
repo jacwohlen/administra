@@ -67,11 +67,16 @@ jobs:
 
     steps:
       # healthchecks.io alerts when a run fails or no run arrives in time.
-      # A failed ping never fails the sync.
+      # A failed ping never fails the sync, but shows as a warning on the run.
+      # Whitespace is stripped: a line break pasted into the secret made curl
+      # reject the URL ("Malformed input") on every run until October 2026.
       - name: Report start to healthchecks.io
         if: ${{ env.HEALTHCHECK_URL != '' }}
         working-directory: .
-        run: curl -fsS -m 10 --retry 3 -o /dev/null "$HEALTHCHECK_URL/start" || true
+        run: |
+          url=$(printf '%s' "$HEALTHCHECK_URL" | tr -d '[:space:]')
+          curl -fsS -m 10 --retry 3 -o /dev/null "$url/start" ||
+            echo "::warning::healthchecks.io start ping failed, check the HEALTHCHECK_URL secret"
 
       - uses: actions/checkout@v7
 
@@ -100,6 +105,8 @@ jobs:
         working-directory: .
         run: |
           if [ "$JOB_STATUS" = "success" ]; then suffix=""; else suffix="/fail"; fi
-          curl -fsS -m 10 --retry 3 -o /dev/null "$HEALTHCHECK_URL$suffix" || true
+          url=$(printf '%s' "$HEALTHCHECK_URL" | tr -d '[:space:]')
+          curl -fsS -m 10 --retry 3 -o /dev/null "$url$suffix" ||
+            echo "::warning::healthchecks.io result ping failed, check the HEALTHCHECK_URL secret"
         env:
           JOB_STATUS: ${{ job.status }}

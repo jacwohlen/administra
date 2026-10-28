@@ -1,8 +1,11 @@
 import { describe, expect, it } from 'vitest';
+import type { UserRole, UserStatus } from './models';
 import {
   canGrade,
   canManageExams,
   canPlanTrainings,
+  canUseClub,
+  followsMembership,
   homePath,
   isApproved,
   isStaff,
@@ -10,25 +13,70 @@ import {
 } from './roles';
 
 describe('roles', () => {
-  it('sends staff to the dashboard', () => {
+  const withAccess = { has_access: true };
+  const withoutAccess = { has_access: false };
+
+  it('sends staff to the dashboard, whatever their member records say', () => {
     for (const role of ['viewer', 'trainer', 'admin'] as const) {
       expect(isStaff({ status: 'approved', role })).toBe(true);
-      expect(homePath({ status: 'approved', role })).toBe('/dashboard');
+      expect(homePath({ status: 'approved', role }, null)).toBe('/dashboard');
+      expect(homePath({ status: 'approved', role }, withoutAccess)).toBe('/dashboard');
     }
   });
 
-  it('sends approved members to the club area', () => {
+  it('sends approved members to the club area while a membership counts', () => {
     const profile = { status: 'approved', role: 'member' } as const;
     expect(isApproved(profile)).toBe(true);
     expect(isStaff(profile)).toBe(false);
-    expect(homePath(profile)).toBe('/club');
+    expect(canUseClub(profile, withAccess)).toBe(true);
+    expect(homePath(profile, withAccess)).toBe('/club');
+  });
+
+  it('keeps approved members without an active or passive membership out', () => {
+    const profile = { status: 'approved', role: 'member' } as const;
+    expect(canUseClub(profile, withoutAccess)).toBe(false);
+    expect(homePath(profile, withoutAccess)).toBe('/pending');
+  });
+
+  it('routes by the status when access is unknown (call failed, not migrated yet)', () => {
+    const profile = { status: 'approved', role: 'member' } as const;
+    expect(homePath(profile, null)).toBe('/club');
+    expect(homePath(profile, undefined)).toBe('/club');
   });
 
   it('keeps pending, disabled and missing profiles on the pending page', () => {
-    expect(homePath({ status: 'pending', role: 'viewer' })).toBe('/pending');
-    expect(homePath({ status: 'disabled', role: 'admin' })).toBe('/pending');
-    expect(homePath(null)).toBe('/pending');
+    expect(homePath({ status: 'pending', role: 'member' }, withoutAccess)).toBe('/pending');
+    // A record that counts does not skip the approval
+    expect(homePath({ status: 'pending', role: 'member' }, withAccess)).toBe('/pending');
+    expect(homePath({ status: 'pending', role: 'viewer' }, null)).toBe('/pending');
+    expect(homePath({ status: 'disabled', role: 'admin' }, null)).toBe('/pending');
+    expect(homePath({ status: 'disabled', role: 'member' }, withAccess)).toBe('/pending');
+    expect(homePath(null, null)).toBe('/pending');
     expect(isStaff({ status: 'disabled', role: 'admin' })).toBe(false);
+  });
+
+  it('asks for the membership only where it decides', () => {
+    expect(followsMembership({ status: 'approved', role: 'member' })).toBe(true);
+    expect(followsMembership({ status: 'pending', role: 'member' })).toBe(true);
+    expect(followsMembership({ status: 'pending', role: 'trainer' })).toBe(true);
+    expect(followsMembership({ status: 'approved', role: 'trainer' })).toBe(false);
+    expect(followsMembership({ status: 'disabled', role: 'member' })).toBe(false);
+    expect(followsMembership(null)).toBe(false);
+  });
+
+  it('agrees between the guards, so no page sends an account back and forth', () => {
+    const statuses: UserStatus[] = ['pending', 'approved', 'disabled'];
+    const roles: UserRole[] = ['member', 'viewer', 'trainer', 'admin'];
+    const accesses = [withAccess, withoutAccess, null, undefined];
+    for (const status of statuses)
+      for (const role of roles)
+        for (const access of accesses) {
+          const profile = { status, role };
+          const home = homePath(profile, access);
+          // /dashboard lets in exactly isStaff, /club exactly canUseClub, /pending the rest
+          expect(home === '/dashboard').toBe(isStaff(profile));
+          expect(home !== '/pending').toBe(canUseClub(profile, access));
+        }
   });
 
   it('lets only approved trainers and admins write', () => {

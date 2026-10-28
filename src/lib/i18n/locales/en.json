@@ -29,7 +29,14 @@
       "disabledMessage": "Your account has been disabled. Please contact an administrator.",
       "signedInAs": "Signed in as",
       "noMemberMatch": "This email address isn't on file for any member. Sign in with the email the club has for you – or ask the club to add it to your membership record. You'll get in automatically afterwards.",
-      "otherEmail": "Use a different email"
+      "otherEmail": "Use a different email",
+      "noAccessTitle": "No access",
+      "inactiveTitle": "No active membership",
+      "inactiveMessage": "This email address is on file with the club, but not for an active or passive membership. The member register says:",
+      "endedMessage": "Your access is paused: none of your member records is active or passive any more, for example after leaving the club. The member register says:",
+      "inactiveHelp": "Administra is open to active and passive members. If that's wrong – or you've (re)joined since – get in touch with the club. The member register is kept there and reaches Administra overnight; you'll get in automatically afterwards. Then tap Refresh.",
+      "trialMessage": "You're signed up for a trial training. Administra is open to members: once you've joined the club, you'll get in automatically with this email address.",
+      "contact": "Contact:"
     },
     "users": {
       "title": "Users",
@@ -78,9 +85,11 @@
         "title": "Disable user?",
         "message": "{name} will no longer be able to sign in until you re-enable the account."
       },
+      "noAccess": "No access",
+      "approveWithoutMembership": "No active or passive membership: approved as a member, the account only gets access once one is on file. For trainers and board members, pick their role first.",
       "accessReport": {
-        "title": "Lose access once membership counts",
-        "description": "These member accounts are approved, but none of their member records is active or passive (e.g. non-members or people who left). Nothing has changed yet: only once sign-in requires an active or passive membership do these accounts go back to \"Pending\".",
+        "title": "Member accounts without access",
+        "description": "These accounts are approved as members, but none of their member records is an active or passive membership (e.g. non-members, people who left, trial candidates or archived records). They see nothing and are told why when they sign in. As soon as a record is active or passive again (group in Webling), they get access back automatically. Trainers and board members get their access from their role.",
         "noMember": "no member record"
       }
     },
@@ -337,7 +346,8 @@
         "active": "Active",
         "passive": "Passive",
         "non_member": "Non-member",
-        "left": "Left"
+        "left": "Left",
+        "archived": "Archived"
       },
       "showAll": "Also show non-members and people who left",
       "managedBy": "Name, birthday, phone, e-mail and groups come from {provider} and are changed there, leaving the club too.",
