@@ -20,6 +20,11 @@ export function isWriter(profile: ProfileAccess): boolean {
   return isApproved(profile) && WRITER_ROLES.includes(profile!.role);
 }
 
+/** User management, merging duplicate members; mirrors is_admin() in the database. */
+export function isAdmin(profile: ProfileAccess): boolean {
+  return isApproved(profile) && profile!.role === 'admin';
+}
+
 type ExamAccess = Pick<UserProfile, 'status' | 'role' | 'exam_role'> | null | undefined;
 
 /** The TK: exam days and programs; mirrors is_exam_manager() in the database. */

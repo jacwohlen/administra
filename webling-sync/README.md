@@ -33,6 +33,20 @@ the first run also records the rows in the Webling id range Webling no
 longer has. The membership status follows the groups, see
 `docs/INTEGRATIONS.md`.
 
+Before writing any member the sync reads the current statuses and refuses
+the run if too many members would lose their active or passive membership
+at once (more than a tenth, at least 5, or more than half of the active or
+the passive ones): nothing is written and the run ends red. After checking
+the groups in Webling, a manual run with `accept_status_drop` set to the
+number from the error line goes ahead. The prediction comes from the
+database's own `member_status_from_labels()`, asked once per distinct set of
+groups, so it is always the rule prod runs; if the statuses cannot be read
+or the rule cannot be asked, the run writes nothing either. A run that goes
+ahead logs how many members lost their membership and what they became
+(counts only). After the run, a status the database derived differently
+from the prediction is reported as a warning. `status_from_labels()` in
+`src/sync_rules.py` is only the tests' copy of the rule.
+
 ### 2. Events Sync (`src/events.py`)
 
 Fetches calendar events from Webling calendars and syncs them to Administra. Only syncs events from the current year onwards (skips past events). Supports syncing all calendars or filtering by specific calendar IDs or names.
@@ -77,19 +91,16 @@ past events are never touched.
 
 **Runtime:** Slower (~1-2 minutes, fetches participants for each event)
 
-### 3. Duplicate Management (`src/duplicates.py`)
+### Duplicates
 
-Searches for duplicate members.
-
-```bash
-python src/duplicates.py search <lastname>  # Search for members by lastname
-```
-
-`merge` is disabled. It moved only training attendance and participations to
-the kept member and then deleted the other one, which also deleted that
-member's event registrations and attendance, grades, medals, badges, exam
-candidates and trial e-mails, and unlinked their sign-in account. A merge that
-moves every reference in one transaction will replace it.
+Duplicate members (a trial registration and the later Webling member, two
+app rows for one person) are merged in Administra by an admin: _Mitglieder →
+Duplikate_, or _Duplikat zusammenführen_ on a member page. The merge moves
+every reference in one transaction and keeps the Webling row, so this sync
+finds the member under its Webling id as before (`docs/INTEGRATIONS.md`,
+"Merging duplicates"). Two Webling members are merged in Webling. The old
+`src/duplicates.py` (search with the service-role key, and a merge that
+deleted grades, medals and badges) is gone.
 
 ### Tests
 
@@ -199,7 +210,7 @@ systemctl --user disable --now webling-sync-events.timer webling-sync-members.ti
 ## Local Setup
 
 The steps below are for running the scripts by hand (e.g. `list`,
-`--calendar`, `duplicates.py`) or as a fallback scheduler with systemd.
+`--calendar`) or as a fallback scheduler with systemd.
 
 ### 1. Clone/Download this repository
 
@@ -332,9 +343,6 @@ python src/events.py --calendar 22333 21780
 
 # Sync events from calendars matching name patterns
 python src/events.py --calendar judo aikido club
-
-# Search for duplicate members
-python src/duplicates.py search Smith
 ```
 
 ## Systemd Service Management
@@ -409,8 +417,7 @@ webling-sync/
 │   ├── webling.py           # Member sync script
 │   ├── events.py            # Events & participants sync script
 │   ├── sync_rules.py        # Rules without network access (member mapping, registrations), unit-tested
-│   ├── safe_log.py          # Webling requests and error messages without personal data or keys
-│   └── duplicates.py        # Duplicate search
+│   └── safe_log.py          # Webling requests and error messages without personal data or keys
 ├── tests/                   # pytest (no network, no credentials)
 ├── .env/                    # Python virtual environment
 ├── logs/                    # Log files

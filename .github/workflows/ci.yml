@@ -180,6 +180,22 @@ jobs:
           psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres"
           -v ON_ERROR_STOP=1 -q -f supabase/checks/member_access.sql
 
+      # What member accounts see of other members (badges, grades, medals and
+      # photos of the club's members only, staff everything), probed over
+      # every table, view and RPC; fails for an API function bypassing RLS
+      # that is not listed there with its guard
+      - name: Check member data rules
+        run: >-
+          psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres"
+          -v ON_ERROR_STOP=1 -q -f supabase/checks/member_data.sql
+
+      # Merging a duplicate member: every reference moves, the preview equals
+      # the merge, refusals, and every foreign key to members is handled
+      - name: Check merging duplicate members
+        run: >-
+          psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres"
+          -v ON_ERROR_STOP=1 -q -f supabase/checks/merge_members.sql
+
       # The public demo (docs/DEMO.md) gets supabase/demo/seed.sql on top of
       # the migrations alone, every week; prove it still loads and passes its
       # checks with this branch's migrations
