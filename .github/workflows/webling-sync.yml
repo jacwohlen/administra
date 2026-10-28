@@ -22,6 +22,18 @@ on:
         type: choice
         options: [all, members, events]
         default: all
+      mode:
+        description: >-
+          legacy, shadow or layer (see webling-sync/README.md). Empty: the
+          environment's INTEGRATION_MODE variable, else legacy.
+        type: string
+        default: ''
+      dry_run:
+        description: >-
+          Shadow or layer mode only: read Webling and let the layer say what
+          it would do, without writing anything
+        type: boolean
+        default: false
       accept_gone:
         description: >-
           Members gone from Webling to accept although more than a tenth left
@@ -35,6 +47,21 @@ on:
           more than the guard allows at once: the exact number from the failed
           run's error line, after checking the groups in Webling. Empty for
           normal runs.
+        type: string
+        default: ''
+      accept_status_gain:
+        description: >-
+          Layer mode only: members to accept starting to count as active or
+          passive (and being let in) although more than the guard allows at
+          once: the exact number from the refused run's error line. Empty for
+          normal runs.
+        type: string
+        default: ''
+      accept_events_gone:
+        description: >-
+          Layer mode only: events or holidays gone from Webling to accept
+          although more than a tenth went at once: the exact number from the
+          refused run's error line. Empty for normal runs.
         type: string
         default: ''
 
@@ -58,10 +85,21 @@ jobs:
       WEBLING_PASSWORD: ${{ secrets.WEBLING_PASSWORD }}
       SUPABASE_URL: ${{ vars.SUPABASE_URL }}
       SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-      # Manual runs only: see accept_gone / accept_status_drop above and
-      # docs/INTEGRATIONS.md
+      # Manual runs only: see accept_* above and docs/INTEGRATIONS.md. In
+      # layer mode they become the apply's overrides (accept_gone, ...)
       WEBLING_ACCEPT_GONE: ${{ inputs.accept_gone || '' }}
       WEBLING_ACCEPT_STATUS_DROP: ${{ inputs.accept_status_drop || '' }}
+      WEBLING_ACCEPT_STATUS_GAIN: ${{ inputs.accept_status_gain || '' }}
+      WEBLING_ACCEPT_EVENTS_GONE: ${{ inputs.accept_events_gone || '' }}
+      # legacy | shadow | layer (src/sync.py): the manual input, else the
+      # environment's variable, else legacy. Scheduled runs have no input,
+      # so prod stays legacy until INTEGRATION_MODE is set on its
+      # environment (webling-sync/README.md, "Switching to the layer")
+      INTEGRATION_MODE: ${{ inputs.mode || vars.INTEGRATION_MODE || 'legacy' }}
+      INTEGRATION_DRY_RUN: ${{ inputs.dry_run && 'true' || 'false' }}
+      # Recorded in integration_runs (layer and shadow modes)
+      INTEGRATION_TRIGGER: ${{ github.event_name == 'schedule' && 'schedule' || 'manual' }}
+      INTEGRATION_RUNNER: github:${{ github.run_id }}
       # Real member data only goes to prod; every other target gets fake
       # names, birthdays, phone numbers and emails (see anonymize() in webling.py)
       ANONYMIZE: ${{ (inputs.environment || 'prod') == 'prod' && 'false' || 'true' }}
@@ -99,16 +137,17 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
-      # Members first: event participants reference member ids
+      # Members first: event participants reference member ids. In legacy
+      # mode sync.py runs src/webling.py and src/events.py as before.
       - name: Sync members
         if: ${{ (inputs.sync || 'all') != 'events' }}
-        run: python src/webling.py
+        run: python src/sync.py members
 
       # Run even when the member sync failed, so one broken member does not
       # also leave the event registrations stale; the job still ends red
       - name: Sync events
         if: ${{ !cancelled() && (inputs.sync || 'all') != 'members' }}
-        run: python src/events.py
+        run: python src/sync.py events
 
       - name: Report result to healthchecks.io
         if: ${{ always() && env.HEALTHCHECK_URL != '' }}

@@ -2,6 +2,11 @@
 
 This folder contains scripts to sync data from Webling API with Administra's Supabase database.
 
+`src/sync.py` is the entry point (GitHub Actions and local runs). In the
+default mode, `legacy`, it runs the two scripts below unchanged; in `layer`
+mode the Webling adapter feeds the database's integration layer instead
+(see [Modes](#3-modes-legacy-shadow-layer) and `docs/INTEGRATIONS.md`).
+
 ## Scripts
 
 ### 1. Member Sync (`src/webling.py`)
@@ -91,6 +96,64 @@ past events are never touched.
 
 **Runtime:** Slower (~1-2 minutes, fetches participants for each event)
 
+### 3. Modes: legacy, shadow, layer
+
+`python src/sync.py members|events|list [--calendar ID|NAME ...] [--dry-run] [--mode MODE]`
+
+The mode is `--mode`, else the environment variable `INTEGRATION_MODE`,
+else `legacy` (also when the variable is set but empty):
+
+| Mode     | What runs                                                                                                                                                                                                                                                                                                                                     |
+| -------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `legacy` | `src/webling.py` / `src/events.py` exactly as before, in their own process, with their exit status. Nothing of the layer is imported.                                                                                                                                                                                                         |
+| `shadow` | Legacy first (it writes, its exit status is the job's), then the same Webling read as a **dry run** of the layer. Through the layer only its run row and the group and calendar catalog (new rows, Webling ids bound to seeded rows) are written. A dry run that would not end `ok`, or a missing layer, is a `::warning::`, never a failure. |
+| `layer`  | The integration layer: `integration_begin` → `integration_stage` → `integration_apply` → `integration_finish`. Exit 0 only when the run ends `ok`; `warning`, `refused` and `failed` turn the job red.                                                                                                                                        |
+
+In `layer` mode the legacy scripts run instead **only** when the database
+has no `integration_begin` yet (404 `PGRST202` or `42883` on that first
+call, i.e. before Promotion 1), with a `::warning::`. Any other answer
+(`NOT_ALLOWED`, `RUN_IN_PROGRESS`, a 404 later in the run, a network error)
+fails the run. `--dry-run` (`INTEGRATION_DRY_RUN=true`) never falls back:
+legacy has no dry run, so a dry run in `legacy` mode stops with exit 2.
+
+Code: `src/integration/` is the provider-neutral core (Supabase client,
+the four layer calls, the runner, the report); `src/webling_adapter/` reads
+Webling (the same calls as the legacy scripts) and builds the records.
+
+- **Members:** names trimmed, birthday and mobile as Webling has them, the
+  e-mail or `null` (the layer only fills it), groups with their Webling id
+  and title. A missing property is sent as problem `missing_field`, a
+  member whose group could not be read as `fetch_failed`: seen (never
+  gone), not written, and the run ends as a warning. With `ANONYMIZE=true`
+  the records get the same fake values as the legacy sync before they are
+  staged.
+- **Events:** the calendars are read first (list and details); the run's
+  scope is the calendars read completely, so a calendar Webling did not
+  answer can never lose events. One list call per calendar is tried and
+  taken only when it answers exactly the calendar's event ids with full
+  properties; otherwise one call per event, as before
+  (`WEBLING_EVENTS_LIST_CALL=false` turns the list call off). Events before
+  January 1 of this year are not sent; an event that cannot be read is sent
+  as `fetch_failed`, Webling's unset date (1970) as `no_date`. Participants
+  go up for events from today on, and only when Webling's list was read.
+- Records are staged 500 per call, each with only the keys the database
+  lists in `capabilities` (a newer adapter never sends what an older
+  database does not know). `integration_finish` is always called once the
+  run is open, also when the adapter crashes (error `adapter_crash`).
+
+The log of a layer run shows counts, ids and codes only, e.g.:
+
+```text
+Layer members run 41: applied
+  received 538, inserted 0, adopted 0, revived 0, updated 0, unchanged 538, ...
+  gone: 0 of 538 live links, former 0 (limit 53, complete snapshot)
+Final: ok
+```
+
+A refusal names its override: `... run the workflow by hand with
+accept_gone=60`. What each refusal means and what to do:
+`docs/INTEGRATIONS.md`.
+
 ### Duplicates
 
 Duplicate members (a trial registration and the later Webling member, two
@@ -113,6 +176,23 @@ pip install -r requirements-dev.txt
 ruff check . && pytest
 ```
 
+The tests run against a fake Webling and Supabase (`tests/fake_world.py`,
+`tests/fake_layer.py`); among them:
+
+- `test_legacy_golden.py`: the legacy scripts make exactly the HTTP calls,
+  with the same bodies and exit status, as before phase 3
+  (`tests/golden/legacy_calls.json`, recorded on commit `2dc1e7d`).
+- `test_log_privacy.py`: Webling answers with names, titles, groups, notes
+  and e-mails, and none of them reaches stdout or stderr, in all three
+  modes and when Webling or Supabase fail.
+- `test_layer_local_db.py`: `sync.py` in layer mode against a local
+  database with the layer, the SQL functions called through psql as
+  `service_role` (`tests/psql_transport.py`). Skipped unless
+  `LAYER_TEST_PSQL` names a psql command for a fresh database with every
+  migration and the seed, e.g.
+  `LAYER_TEST_PSQL='psql postgresql://postgres:postgres@127.0.0.1:54322/postgres' pytest tests/test_layer_local_db.py`
+  after `supabase db reset`.
+
 ## Scheduled Sync (GitHub Actions)
 
 The sync runs daily from GitHub Actions (`.github/workflows/webling-sync.yml`),
@@ -124,6 +204,14 @@ so it no longer depends on a personal machine being switched on.
   even if the member step failed; the run is still marked failed.
 - **Manual run:** GitHub → Actions → _Webling Sync_ → _Run workflow_. Choose the
   target (`prod` or `dev`) and what to sync (`all`, `members`, `events`).
+  `mode` (empty: the environment's `INTEGRATION_MODE`, else `legacy`) and
+  `dry_run` choose how; `accept_gone`, `accept_status_drop` (both modes)
+  and `accept_status_gain`, `accept_events_gone` (layer mode) take the exact
+  number from a refused run's error line.
+- **Mode:** scheduled runs have no inputs and use the environment's
+  variable `INTEGRATION_MODE`; while it is unset they run `legacy`. The
+  layer records the run as `trigger` `schedule` or `manual` with `runner`
+  `github:<run id>`.
 - **Failures:** both scripts exit non-zero on any error (missing variable,
   Webling/Supabase HTTP error, failed upsert), so the run turns red and GitHub
   emails whoever last changed the workflow's cron schedule (a manual run
@@ -134,6 +222,43 @@ so it no longer depends on a personal machine being switched on.
   show the HTTP status, ids and, for Supabase, the PostgREST error code and
   message without the row data. Use the helpers in `src/safe_log.py` for any
   new request.
+
+### Switching to the layer
+
+Operations only, once the integration layer migration is on the database
+(Promotion 1) and this code is on `main`. The switch is the variable
+`INTEGRATION_MODE` of the GitHub environment (**Settings → Environments →
+prod/dev → Environment variables**).
+
+1. **Dev:** set `INTEGRATION_MODE=layer` on `dev`. Run the workflow on
+   `dev` with `dry_run`, then without. Check that the run rows appear in
+   `integration_runs` and that the anon key and a trainer account get
+   `NOT_ALLOWED` from `rpc/integration_begin` (the service key is allowed).
+2. **Prod, 2 to 3 nights:** set `INTEGRATION_MODE=shadow` on `prod`. The
+   legacy sync keeps writing; after each step the log shows what the layer
+   would have done (`dry run: nothing written`). Accept when, every night:
+   - members: `inserted 0`, `adopted 0`, `updated 0`, `gone 0`,
+     `former 0`, `statuses_recomputed 0`;
+   - events: `adopted` about the number of this year's Webling events
+     (about 85; every shadow night, since a dry run links nothing),
+     `updated 0`, `inserted 0`, `gone 0`, `registrations_added 0`,
+     `registrations_removed 0`; `registrations_adopted` is the number of
+     registrations the legacy sync added since Promotion 1 (older ones
+     were marked by the migration);
+   - `Calendar N: … (list call …)` shows whether Webling answered the one
+     list call per calendar; `updated 0` confirms its values equal what
+     the legacy sync wrote.
+   - Possible duplicates are listed as `::warning::` issues for an admin;
+     they do not fail runs and need no action for the switch.
+3. **Prod:** set `INTEGRATION_MODE=layer`. The first night adopts the
+   events (`adopted` about 85, `updated 0`); from the second night on they
+   are `unchanged`.
+
+**Rollback:** set `INTEGRATION_MODE` back to `legacy` (or delete it). Safe
+only while no merge has moved a Webling link and no group status was
+changed with `integration_set_mapping`: the legacy guard predicts statuses
+with the static rule. Until PR 3c removes the legacy scripts, both paths
+stay in the code.
 
 ### Anonymization (dev / staging)
 
@@ -173,15 +298,16 @@ Webling keep their old values and must be cleaned by hand.
 Create a GitHub environment per target under **Settings → Environments**
 (`prod`, and `dev` if you want to sync the Dev project manually) with:
 
-| Name                        | Kind     | Value                                              |
-| --------------------------- | -------- | -------------------------------------------------- |
-| `WEBLING_DOMAIN`            | Variable | Webling subdomain, e.g. `jacwohlen`                |
-| `SUPABASE_URL`              | Variable | Supabase project URL (`https://<ref>.supabase.co`) |
-| `WEBLING_API_KEY`           | Secret   | Webling API key                                    |
-| `WEBLING_EMAIL`             | Secret   | Webling login, needed for the participant API      |
-| `WEBLING_PASSWORD`          | Secret   | Password of that login                             |
-| `SUPABASE_SERVICE_ROLE_KEY` | Secret   | secret key of that project, see below              |
-| `HEALTHCHECK_URL`           | Secret   | `prod` only: healthchecks.io ping URL (optional)   |
+| Name                        | Kind     | Value                                               |
+| --------------------------- | -------- | --------------------------------------------------- |
+| `WEBLING_DOMAIN`            | Variable | Webling subdomain, e.g. `jacwohlen`                 |
+| `SUPABASE_URL`              | Variable | Supabase project URL (`https://<ref>.supabase.co`)  |
+| `WEBLING_API_KEY`           | Secret   | Webling API key                                     |
+| `WEBLING_EMAIL`             | Secret   | Webling login, needed for the participant API       |
+| `WEBLING_PASSWORD`          | Secret   | Password of that login                              |
+| `SUPABASE_SERVICE_ROLE_KEY` | Secret   | secret key of that project, see below               |
+| `HEALTHCHECK_URL`           | Secret   | `prod` only: healthchecks.io ping URL (optional)    |
+| `INTEGRATION_MODE`          | Variable | `legacy` (or unset), `shadow` or `layer`, see above |
 
 `SUPABASE_SERVICE_ROLE_KEY` takes a secret key (`sb_secret_...`): Supabase
 Dashboard → project → **Settings → API Keys** → _Publishable and secret API
@@ -343,6 +469,13 @@ python src/events.py --calendar 22333 21780
 
 # Sync events from calendars matching name patterns
 python src/events.py --calendar judo aikido club
+
+# The same through the entry point (legacy unless INTEGRATION_MODE says otherwise)
+python src/sync.py members
+python src/sync.py events --calendar judo
+
+# What the layer would do, without writing
+python src/sync.py members --mode layer --dry-run
 ```
 
 ## Systemd Service Management
@@ -414,11 +547,15 @@ webling-sync/
 ├── run-events.sh            # Events sync wrapper (uses $ENV, defaults to prod)
 ├── run-members.sh           # Members sync wrapper (uses $ENV, defaults to prod)
 ├── src/                     # Python source files
-│   ├── webling.py           # Member sync script
-│   ├── events.py            # Events & participants sync script
+│   ├── sync.py              # Entry point: members | events | list, mode legacy | shadow | layer
+│   ├── webling.py           # Member sync script (legacy mode)
+│   ├── events.py            # Events & participants sync script (legacy mode)
 │   ├── sync_rules.py        # Rules without network access (member mapping, registrations), unit-tested
-│   └── safe_log.py          # Webling requests and error messages without personal data or keys
+│   ├── safe_log.py          # Webling requests and error messages without personal data or keys
+│   ├── integration/         # Provider-neutral core: client, layer calls, runner, report, anonymize
+│   └── webling_adapter/     # Webling calls and layer records (members, events, dates)
 ├── tests/                   # pytest (no network, no credentials)
+│   └── golden/              # Legacy HTTP calls as recorded before phase 3
 ├── .env/                    # Python virtual environment
 ├── logs/                    # Log files
 │   ├── events.log

@@ -449,3 +449,44 @@ what, identity, guards, events, holidays and the run log.
 | failed `<sqlstate>`      | The apply failed as a whole                                       | Actions log, then a bug report                                                                                   |
 | warning                  | Records not written, or fetch errors                              | Integrations page → issues (`invalid_record`, `id_conflict`, `write_failed`, held duplicates)                    |
 | `RUN_IN_PROGRESS`        | Another run of the same kind is open                              | Wait an hour: an abandoned run is closed then                                                                    |
+
+## Phase 3: Webling on the layer
+
+`webling-sync/src/sync.py` runs each step (members, then events) in one of
+three modes, `INTEGRATION_MODE`: the workflow input `mode`, else the GitHub
+environment's variable, else `legacy`. Scheduled runs have no input, so a
+merge to `main` changes nothing on prod until the variable is set.
+
+- `legacy`: `webling.py` and `events.py` as before (their log now shows
+  event and calendar ids instead of titles; a golden test pins their HTTP
+  calls).
+- `shadow`: legacy, then the same Webling read as a dry run of the layer.
+  Only the run row and the group and calendar catalog (new rows, Webling
+  ids bound to the seeded rows) are written through the layer; the job's
+  status is legacy's.
+- `layer`: `integration_begin` → `integration_stage` (500 records per
+  call, only the keys in `capabilities`) → `integration_apply` →
+  `integration_finish`, which is always called once the run is open (a
+  crash ends it as `failed`, error `adapter_crash`). Only a missing
+  `integration_begin` (404 `PGRST202` or `42883`) falls back to legacy;
+  anything later fails the run. Exit 0 only when the run ends `ok`.
+
+The core in `src/integration/` knows no provider; `src/webling_adapter/`
+makes the legacy scripts' Webling calls and sends what they write (names
+trimmed, values as Webling has them, the portal link as description and
+url). A member Webling cannot fully answer is sent as a problem
+(`missing_field`, `fetch_failed`): seen, so never gone, and not written.
+The events scope is the calendars Webling answered completely, so an
+unanswered calendar cannot lose events; Webling's unset date is
+`no_date`, and participants go up only for events from today whose list
+was read. The workflow inputs `accept_gone`, `accept_status_drop`,
+`accept_status_gain` and `accept_events_gone` become the apply's
+overrides.
+
+Switch (operations, after Promotion 1): dev in `layer` (a dry run, then a
+real run), prod in `shadow` for 2 to 3 nights against the numbers in
+`webling-sync/README.md` ("Switching to the layer"), then prod in `layer`.
+Rollback: `INTEGRATION_MODE=legacy`, safe only while no merge has moved a
+Webling link and no group status was changed with
+`integration_set_mapping`. PR 3c removes the legacy path after two weeks
+in layer mode.
