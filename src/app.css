@@ -166,6 +166,24 @@ h4,
   max-width: 32rem;
 }
 
+/* Review tables, e.g. the Daten-Assistent */
+.modal-dialog-xl {
+  max-width: 56rem;
+}
+
+/* Two buttons joined into one, e.g. "create" with the assistant's wand */
+.btn-joined-start {
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+.btn-joined-end {
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+  border-left: 1px solid color-mix(in oklab, currentColor 30%, transparent);
+  padding-inline: 0.75rem;
+}
+
 @media (min-width: 640px) {
   .modal-dialog {
     padding: 1.5rem;

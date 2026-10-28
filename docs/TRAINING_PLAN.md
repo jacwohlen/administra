@@ -4,7 +4,7 @@ The TK (technical committee) plans the adult trainings for the year: which
 trainer leads which training, which topic is on, and which dates are dropped
 for holidays or club events. Until now this lived in a Google Sheet (one row
 per day: KW, Tag, Datum, Trainingstyp, Von, Bis, Leiter, Thema, Info /
-Bemerkung), which can be imported (see _Import_).
+Bemerkung), which the Daten-Assistent can read in (see _Import_).
 
 Under _Trainings → Trainingsplanung_ (`/dashboard/training-plan`) the plan
 shows one calendar year (arrows switch the year), grouped by month:
@@ -61,29 +61,34 @@ Only the TK edits (see _Roles_):
 
 ## Import
 
-_Trainings & Ferien → Aus dem Google Sheet übernehmen_ takes the sheet as it
-is: select the rows including the header in Google Sheets, copy and paste
-(or download the sheet as CSV). Columns are found by the header (_Datum_,
-_Trainingstyp_, _Leiter_, _Thema_, _Info / Bemerkung_); dates as 05.01.2026,
-5.1.26 or 2026-01-05. Each row goes to the planned training of its weekday
-(by the type's name when a weekday has several; Thursday rows without a
-planned training are skipped):
+_Trainings & Ferien → Bestehenden Plan einlesen → Trainingsplan einlesen_
+opens the Daten-Assistent (`docs/AI_ASSISTANT.md`, kind `training_plan`):
+a photo, a PDF or a table of the plan, also rows copied straight from the
+Google Sheet. Read it **one month at a time** (copy that month's rows with
+the header row): a whole year is too long for one reading, which has to
+finish within the function's time limit. Claude reads it into a proposal,
+the review shows every session and holiday against what is planned, and
+only what the TK confirms is saved:
 
+- each row goes to the planned training of its weekday (by the type's name
+  when a weekday has several); rows on weekdays without a planned training
+  are left out, and the warnings say how many
 - _Leiter_ are matched to members by name ("Beni Muster" also finds Benjamin
-  Muster); the preview lists every name with its match to correct. Names
-  without a member (guest trainer, "Gesamt Trainersitzung") stay in the note
+  Muster, to confirm); names without a member (guest trainer, "Gesamt
+  Trainersitzung") stay in the note
 - _Thema_ becomes the topic; another training type than the training's own
-  ("freies Training", "Heimkampf", "Training Kerenzerberg") becomes the topic
-  too
-- "kein Training" or an empty type drops the training; the info says why
-  (Karfreitag, Brückentag nach Auffahrt, GV JACW)
-- the info, without the holidays, becomes the note (e.g. "SMM Training 3")
-- holidays in the info (… ferien, Weihnachten) are offered as holidays;
-  _Dojo zu_ is suggested when none of the planned trainings took place
-  during them
+  ("freies Training", "Heimkampf") becomes the topic too, with the _Thema_
+  after a colon
+- "kein Training" or an empty _Trainingstyp_ cancels the training; the info
+  says why (Karfreitag, Brückentag nach Auffahrt, GV JACW). "kein Training"
+  as _Leiter_ only means no leader
+- holidays in the info (… ferien, Weihnachten) are offered as holidays, with
+  or without _Dojo zu_
 
-What is already planned on the imported dates is replaced. The logic lives in
-`src/lib/trainingPlanImport.ts`.
+Unlike the former sheet import, what is already planned is not replaced
+without asking: a session that contradicts the plan is only written when
+ticked. Without `PRIVATE_ANTHROPIC_API_KEY` there is no import; the plan is
+then entered in the table.
 
 ## Roles
 
@@ -119,5 +124,5 @@ _Erwachsenentrainer_ in Webling, main trainers of the planned trainings in
 the last year and everyone already planned.
 
 Webling holds the holidays too (agenda "Ferien"), but the event sync only
-keeps an event's first day, so they are entered here (or imported with the
-sheet).
+keeps an event's first day, so they are entered here (or read in with the
+plan).

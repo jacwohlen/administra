@@ -1,4 +1,4 @@
-import type { UserProfile, UserRole } from './models';
+import type { MyAccess, UserProfile, UserRole } from './models';
 
 type ProfileAccess = Pick<UserProfile, 'status' | 'role'> | null | undefined;
 
@@ -35,9 +35,40 @@ export function canGrade(profile: ExamAccess): boolean {
   return isStaff(profile) && (profile!.role === 'admin' || profile!.exam_role != null);
 }
 
-/** Where a signed-in account belongs: dashboard for staff, club area for members. */
-export function homePath(profile: ProfileAccess): '/dashboard' | '/club' | '/pending' {
+/**
+ * my_access() of the signed-in account (root layout); null when not loaded:
+ * staff and disabled accounts, or the call failed.
+ */
+type Access = Pick<MyAccess, 'has_access'> | null | undefined;
+
+/** Accounts whose access follows their membership, so the root layout asks my_access() */
+export function followsMembership(profile: ProfileAccess): boolean {
+  return (
+    profile?.status === 'pending' || (profile?.status === 'approved' && profile.role === 'member')
+  );
+}
+
+/**
+ * May use the club area: staff by their role, a member account only while
+ * one of its member records counts (my_access().has_access is
+ * is_approved_user(), the check RLS uses). Unknown access falls back to the
+ * status: that only routes, the database still refuses every query, and a
+ * failed call or the app deployed before the migration sends nobody away.
+ */
+export function canUseClub(profile: ProfileAccess, access: Access): boolean {
+  return isStaff(profile) || (isApproved(profile) && access?.has_access !== false);
+}
+
+/**
+ * Where a signed-in account belongs: dashboard for staff, club area for
+ * members with access, the pending page for everybody else. Every guard
+ * routes with this, so no two pages send an account back and forth.
+ */
+export function homePath(
+  profile: ProfileAccess,
+  access: Access
+): '/dashboard' | '/club' | '/pending' {
   if (isStaff(profile)) return '/dashboard';
-  if (isApproved(profile)) return '/club';
+  if (canUseClub(profile, access)) return '/club';
   return '/pending';
 }

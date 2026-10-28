@@ -53,8 +53,40 @@ export interface MemberAchievements {
   gradeDefinitions: GradeDefinition[];
 }
 
+/** members.membership_status, derived from the labels in the database */
+export type MembershipStatus = 'trial' | 'active' | 'passive' | 'non_member' | 'left';
+
+/**
+ * Why a member record does or does not let its account in
+ * (member_access_status() in SQL): the status, or 'trial' / 'archived' for
+ * an active or passive record that does not count
+ */
+export type MemberAccessStatus = MembershipStatus | 'archived';
+
+/**
+ * my_access(): whether the signed-in account may use Administra now
+ * (is_approved_user(), the check RLS uses) and the reason per member record
+ */
+export interface MyAccess {
+  has_access: boolean;
+  member_statuses: MemberAccessStatus[];
+}
+
+/**
+ * member_access_report(): a member account (approved or waiting) none of
+ * whose member records is an active or passive membership
+ */
+export interface MemberAccessReportRow {
+  user_id: string;
+  email: string;
+  full_name: string | null;
+  member_ids: number[];
+  statuses: MemberAccessStatus[];
+}
+
 export interface Member {
   id: string;
+  membership_status?: MembershipStatus;
   firstname: string;
   lastname: string;
   birthday?: string;

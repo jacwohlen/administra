@@ -39,6 +39,13 @@ export default defineConfig({
               ...devices['Desktop Chrome'],
               storageState: 'e2e/.auth/user.json'
             }
+          },
+          // Member accounts (storage state per describe block in the spec)
+          {
+            name: 'member-access',
+            testMatch: /memberAccess\.spec/,
+            dependencies: ['auth-setup'],
+            use: { ...devices['Desktop Chrome'] }
           }
         ]
       : [])

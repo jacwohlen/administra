@@ -1,13 +1,14 @@
 # Member sign-in
 
-Club members sign in themselves with the email address the club has on file
-and get a personal area at `/club`:
+Club members with an active or passive membership sign in themselves with
+the email address the club has on file and get a personal area at `/club`:
 
 - **Mein Profil** – own grades, medals, badges, attendance and contact
-  details. A parent whose email is on file for several children sees all of
-  them and switches between them at the top.
-- **Mitglieder** – directory of active members (trained in the 12 months up
-  to the latest recorded training) with photo, sections, belt and badges.
+  details. A parent whose email is on file for several children sees those
+  whose membership counts and switches between them at the top.
+- **Mitglieder** – directory of active and passive members who trained in
+  the 12 months up to the latest recorded training, with photo, sections,
+  belt and badges.
   Tapping a member shows their public profile (grades, medals, badges – no
   birthday, phone, email or attendance).
 
@@ -19,36 +20,62 @@ profile via the avatar menu → _Mein Profil_.
 1. On the login page the person enters their email and gets a 6-digit code
    (`signInWithOtp`), or uses Google as before.
 2. After the code is verified Supabase marks the email as confirmed. The
-   `handle_auth_user_change` trigger then calls `grant_member_access`: if a
-   member record carries that email (case-insensitive, trial candidates
-   excluded), the account is approved with role `member`. The bootstrap
+   `handle_auth_user_change` trigger then calls `grant_member_access`: if an
+   active or passive member record carries that email (case-insensitive, not
+   archived, trial candidates excluded), the account is approved with role
+   `member`. The bootstrap
    admin email (`is_bootstrap_admin()`) likewise only becomes admin once it
    is confirmed.
-3. No match → the account stays `pending` and the pending page explains why.
-   As soon as a trainer adds the email to a member (or Webling syncs it), the
-   `grant_member_access_on_member_change` trigger lets the person in; they
-   just tap _Aktualisieren_.
+3. Otherwise the account waits (`pending`, role `member`) and the pending
+   page says why: email not on file, trial candidate, or on file without an
+   active or passive membership (with the status from the member register,
+   `my_access()`). As soon as the email is on a record that counts, or a
+   record starts to count (Aktiv in Webling, back in Webling, unarchived),
+   the `grant_member_access_on_member_*` triggers let the person in; they
+   just tap _Aktualisieren_. For a member that is in Webling the email is
+   entered in Webling and arrives with the next sync; for a member created
+   in Administra (or gone from Webling) a trainer adds it here.
 
 Trial candidates (label `probetraining` / `Probetraining`) never grant
 access: the public trial form lets anyone create such a record with any
 email. Once a trainer takes them on (removes the label), access follows.
+While a member is in Webling, the email can only be changed there.
 
-Admins can still approve anybody manually and change a member's role in
-_Benutzer_; disabled accounts are never re-enabled automatically.
+### Losing and regaining access
+
+A member account keeps access only while one of its member records is an
+active or passive membership (`membership_status`, see
+`docs/INTEGRATIONS.md`), checked on every request. When the Webling sync
+marks the member as left or non-member, the member is archived or deleted,
+or the email moves to another address, the account sees nothing from the
+next request on and the app shows the pending page ("Kein Zugang", with the
+status). The account stays approved: once a record counts again, access is
+back without anyone approving it.
+
+New accounts wait with the role `member`. An admin approving one by hand
+gives member access, which still needs a membership that counts; _Benutzer_
+marks such accounts (_Kein Zugang_) and shows the status of each record. For
+trainers and board members pick the staff role before approving: staff get
+in by their role. Disabled accounts are never re-enabled automatically.
 
 ## Access rules
 
-| Data                                                               | member                     | viewer+ |
+| Data                                                               | member (active/passive)    | viewer+ |
 | ------------------------------------------------------------------ | -------------------------- | ------- |
-| Own member row, attendance, event history                          | yes                        | yes     |
-| Other members: name, photo, sections                               | via `get_member_directory` | yes     |
+| Own member rows that count, their attendance and event history     | yes                        | yes     |
+| Active and passive members: name, photo, sections                  | via `get_member_directory` | yes     |
 | Grades, medals, badges                                             | yes                        | yes     |
 | Trainings, events (no participant lists)                           | yes                        | yes     |
 | Exam days, own registrations (results only as the new grade)       | yes (`docs/Q_EXAMS.md`)    | yes     |
 | Contact data, attendance of others, lesson plans, trial candidates | no                         | yes     |
 
+A member account without an active or passive membership gets nothing (the
+pending page says why).
+
 Implemented in `supabase/migrations/20260926090100_member_self_service.sql`
-(`is_staff()`, `my_member_ids()`, `*_read_own` policies).
+(`is_staff()`, `my_member_ids()`, `*_read_own` policies) and
+`20261027120000_member_access_requires_membership.sql` (the membership rule
+in `is_approved_user()` / `my_member_ids()`, `my_access()`).
 
 ## Setup on hosted projects (Dev / Prod)
 
@@ -77,4 +104,7 @@ projects set this once in the Supabase dashboard:
 `supabase/seed.sql` contains `member@example.com` / `testpass`, whose
 email is on file for two siblings (Leo Scott, Brandon Guzman). Use the
 preview test login with it to see the member area (local and Deploy
-Previews only; the dev environment is not seeded).
+Previews only; the dev environment is not seeded). `former@example.com` /
+`testpass` is on file only for a member who left (Joseph Fernandez) and was
+approved by hand: it shows the pending page's "Kein Zugang".
+`supabase/checks/member_access.sql` checks the rules on the database.

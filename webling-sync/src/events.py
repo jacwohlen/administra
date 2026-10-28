@@ -3,14 +3,17 @@
 Webling Events Sync Script
 
 This script syncs calendar events and their participants from Webling to Administra.
-It fetches events from specified calendars and creates attendance logs based on
-participant data from the Webling API.
+It fetches events from specified calendars and the confirmed registrations of
+each event (event_participants) from the Webling API.
 
 Features:
 - Syncs events from Webling calendars to Supabase
 - Fetches participants for each event using the Webling participant query API
 - Only syncs participants with "confirmed" state (property 594 = "confirmed")
-- For events today/future: deletes all existing participants and replaces with Webling data
+- For events today/future (Europe/Zurich): adds members confirmed in Webling and
+  removes registrations the sync added earlier once the member is no longer
+  confirmed in Webling (not listed, or another state); registrations, walk-ins
+  and attendance entered in the app are kept
 - For past events: preserves historical data, skips participant sync
 - Supports filtering by calendar ID or name
 - Skips events from previous years
@@ -26,11 +29,20 @@ Environment Variables Required:
 import os
 import sys
 import json
-from datetime import datetime, date
+from datetime import datetime
 
 # Webling
 import requests
+from urllib.parse import quote
 from safe_log import postgrest_error, webling_get
+from sync_rules import (
+    WEBLING_NOTE,
+    WEBLING_NOTE_PREFIX,
+    club_today,
+    confirmed_member_ids,
+    plan_participants,
+    registrations_open,
+)
 WEBLING_API_KEY=os.environ.get('WEBLING_API_KEY')
 WEBLING_DOMAIN=os.environ.get('WEBLING_DOMAIN')
 WEBLING_EMAIL=os.environ.get('WEBLING_EMAIL')
@@ -93,8 +105,12 @@ def authenticate_webling():
         'password': WEBLING_PASSWORD
     }
     
-    response = session.post(login_url, data=login_data)
-    
+    try:
+        response = session.post(login_url, data=login_data)
+    except requests.RequestException as e:
+        record_error(f"Authentication failed: {type(e).__name__}")
+        return False
+
     # Check if login was successful (204 is also success for session creation)
     if response.status_code in [200, 204]:
         print("Successfully authenticated with Webling")
@@ -150,71 +166,87 @@ def get_calendar_event(event_id):
         return None
 
 def get_event_participants(event_id):
-    """Fetch participants for a specific event using the query API"""
+    """Fetch participants for a specific event using the query API
+
+    Returns the participant objects, [] when the event has none, or None when
+    they could not be read. None must never be treated like an empty list:
+    an empty list removes the event's Webling registrations.
+    """
     api_url = f"https://{WEBLING_DOMAIN}.webling.ch/api/client/query/participant"
-    
+
     # Form data as specified in the API
     form_data = {
         'filter': f'$parents.$id={event_id}',
         'order': '$links.member.$label asc, state desc'
     }
-    
-    response = session.post(api_url, data=form_data)
-    
-    if response.status_code == 200:
-        try:
-            data = response.json()
-            participant_ids = data.get('objects', [])
-            print(f"      Found {len(participant_ids)} participant IDs")
-            
-            if not participant_ids:
-                return []
-            
-            # Fetch all participants in bulk using the object endpoint
-            participants_data = get_participants_bulk(participant_ids)
-            return participants_data
-            
-        except Exception as e:
-            # Never the raw response: it holds participant data
-            record_error(f"      Error parsing participant response for event {event_id}: {type(e).__name__}")
-            return []
-    else:
-        record_error(f"Error fetching participants for event {event_id}: HTTP {response.status_code}")
-        return []
 
-def get_participants_bulk(participant_ids):
-    """Fetch detailed information for multiple participants in bulk"""
+    try:
+        response = session.post(api_url, data=form_data)
+    except requests.RequestException as e:
+        record_error(f"Error fetching participants for event {event_id}: {type(e).__name__}")
+        return None
+
+    if response.status_code != 200:
+        record_error(f"Error fetching participants for event {event_id}: HTTP {response.status_code}")
+        return None
+
+    try:
+        body = response.json()
+    except Exception as e:
+        # Never the raw response: it holds participant data
+        record_error(f"      Error parsing participant response for event {event_id}: {type(e).__name__}")
+        return None
+    # Anything but a list of ids is an unreadable answer, not an empty event
+    participant_ids = body.get('objects') if isinstance(body, dict) else None
+    if not isinstance(participant_ids, list):
+        # Keys only: the values may hold personal data
+        keys = sorted(body.keys()) if isinstance(body, dict) else None
+        record_error(f"      Unexpected participant response for event {event_id}: {type(body).__name__} {keys}")
+        return None
+    print(f"      Found {len(participant_ids)} participant IDs")
+
     if not participant_ids:
         return []
-    
+
+    # Fetch all participants in bulk using the object endpoint
+    return get_participants_bulk(participant_ids)
+
+def get_participants_bulk(participant_ids):
+    """Fetch detailed information for multiple participants in bulk
+
+    Returns the participant objects, or None when they could not be read.
+    """
     # Convert list of IDs to comma-separated string
     ids_string = ','.join(map(str, participant_ids))
     api_url = f"https://{WEBLING_DOMAIN}.webling.ch/api/client/object/{ids_string}"
-    
-    response = session.get(api_url)
-    
-    if response.status_code == 200:
-        try:
-            data = response.json()
-            # The bulk API returns a list of participant objects, but a
-            # single object (not wrapped in a list) when only one id is asked for
-            if isinstance(data, list):
-                return data
-            elif isinstance(data, dict) and 'properties' in data:
-                # That single object carries no id; it is the one we asked for
-                data.setdefault('id', participant_ids[0])
-                return [data]
-            else:
-                # Keys only: the values may hold personal data
-                keys = sorted(data.keys()) if isinstance(data, dict) else None
-                record_error(f"        Unexpected bulk response format: {type(data)} {keys}")
-                return []
-        except Exception as e:
-            record_error(f"        Error parsing bulk participant response: {type(e).__name__}")
-            return []
-    else:
+
+    try:
+        response = session.get(api_url)
+    except requests.RequestException as e:
+        record_error(f"        Error fetching bulk participants: {type(e).__name__}")
+        return None
+
+    if response.status_code != 200:
         record_error(f"        Error fetching bulk participants: HTTP {response.status_code}")
-        return []
+        return None
+
+    try:
+        data = response.json()
+    except Exception as e:
+        record_error(f"        Error parsing bulk participant response: {type(e).__name__}")
+        return None
+    # The bulk API returns a list of participant objects, but a
+    # single object (not wrapped in a list) when only one id is asked for
+    if isinstance(data, list):
+        return data
+    if isinstance(data, dict) and 'properties' in data:
+        # That single object carries no id; it is the one we asked for
+        data.setdefault('id', participant_ids[0])
+        return [data]
+    # Keys only: the values may hold personal data
+    keys = sorted(data.keys()) if isinstance(data, dict) else None
+    record_error(f"        Unexpected bulk response format: {type(data)} {keys}")
+    return None
 
 def parse_webling_datetime(datetime_str):
     """Parse Webling datetime format to date and time components"""
@@ -227,7 +259,7 @@ def parse_webling_datetime(datetime_str):
         date_str = dt.strftime("%Y-%m-%d")
         time_str = dt.strftime("%H:%M")
         return date_str, time_str
-    except:
+    except (TypeError, ValueError):
         return datetime_str, None
 
 def sync_events(selected_calendars=None):
@@ -238,9 +270,13 @@ def sync_events(selected_calendars=None):
     """
     # Authenticate for participant API access
     print("Authenticating with Webling...")
-    if not authenticate_webling():
+    participants_available = authenticate_webling()
+    if not participants_available:
         print("Failed to authenticate. Participant sync will be skipped.")
         # Continue with event sync only
+
+    # One date for the whole run, in the club's time zone (the runner uses UTC)
+    today = club_today()
     
     print("Fetching calendars from Webling...")
     all_calendar_ids = get_calendars()
@@ -344,7 +380,7 @@ def sync_events(selected_calendars=None):
                 # Skip events from previous years (only sync current year and future)
                 try:
                     event_year = int(begin_date.split('-')[0])
-                    current_year = date.today().year
+                    current_year = today.year
                     if event_year < current_year:
                         print(f"    Skipping past event: {title} ({begin_date})")
                         continue
@@ -372,112 +408,102 @@ def sync_events(selected_calendars=None):
                 
                 if upsert('events', event_data):
                     synced_count += 1
-                    
-                    # Fetch and sync participant registrations for this event
+
+                    # Registrations of past events are history and stay as they are
+                    if not participants_available or not registrations_open(begin_date, today):
+                        continue
+
                     print(f"    Fetching participants for event {event_id}...")
                     participants = get_event_participants(event_id)
+                    # None: Webling could not be read (error recorded), so the
+                    # registrations stay as they are. [] is a real empty list.
+                    if participants is not None:
+                        sync_event_participants(event_id, participants)
 
-                    if participants and len(participants) > 0:
-                        participants_synced = sync_event_participants(event_id, participants, begin_date)
-                        print(f"    Synced {participants_synced} participant registrations")
-                    else:
-                        print(f"    No participants found for event {event_id}")
-                    
             except Exception as e:
                 record_error(f"Error processing event {event_id}: {e}")
                 continue
     
     print(f"\nSync completed! Synced {synced_count} events total.")
 
-def delete_all_event_participants(event_id):
-    """Delete all participant registrations for an event from Supabase"""
-    url = f"{SUPABASE_URL}/rest/v1/event_participants?eventId=eq.{event_id}"
-    response = requests.delete(url, headers=HEADERS)
+def rest_url(path, filters):
+    """PostgREST URL with the filter values percent-encoded (a space becomes %20, never '+')"""
+    query = '&'.join(f"{key}={quote(str(value), safe='.,()*')}" for key, value in filters.items())
+    return f"{SUPABASE_URL}/rest/v1/{path}?{query}"
 
-    if response.status_code in [200, 204]:
-        print(f"      Cleared existing participants for event {event_id}")
-        return True
-    else:
-        record_error(f"      Warning: Could not delete existing participants of event {event_id}: {postgrest_error(response)}")
-        return False
+def get_rows(path, filters):
+    """Rows from Supabase, or None (error recorded) when they could not be read"""
+    response = requests.get(rest_url(path, filters), headers=HEADERS)
+    if response.status_code == 200:
+        return response.json()
+    record_error(f"      Error reading {path}: {postgrest_error(response)}")
+    return None
 
-def sync_event_participants(event_id, participants, event_date):
-    """Sync participant registrations for a specific event
+def sync_event_participants(event_id, participants):
+    """Bring the Webling registrations of an event (today or later) in line with Webling
 
-    For events today or in the future:
-    - Deletes all existing participants in Supabase
-    - Inserts confirmed participants from Webling
-
-    For past events:
-    - Skips sync to preserve historical data
+    - Members confirmed in Webling without a row get one ('registered').
+    - Rows the sync inserted earlier are removed when the member is no longer
+      confirmed in Webling, unless the app changed them since (attendance,
+      another status, an event_logs row).
+    - Everything else stays: registrations and walk-ins added in the app, and
+      attendanceStatus and registeredAt of existing rows.
     """
-    # Check if event is today or in the future
-    try:
-        event_date_obj = datetime.strptime(event_date, "%Y-%m-%d").date()
-        today = date.today()
+    confirmed, skipped = confirmed_member_ids(participants)
+    existing = get_rows('event_participants', {
+        'eventId': f'eq.{event_id}',
+        'select': 'memberId,attendanceStatus,notes',
+    })
+    attended = get_rows('event_logs', {'eventId': f'eq.{event_id}', 'select': 'memberId'})
+    if existing is None or attended is None:
+        return
 
-        if event_date_obj < today:
-            print(f"      Skipping participant sync for past event ({event_date})")
-            return 0
-    except (ValueError, TypeError):
-        print(f"      Warning: Invalid event date format ({event_date}), skipping participant sync")
-        return 0
+    to_insert, to_remove = plan_participants(
+        existing, confirmed, {row['memberId'] for row in attended}
+    )
 
-    # Delete all existing participants for this event
-    delete_all_event_participants(event_id)
+    removed = 0
+    if to_remove:
+        # The conditions are checked again here, in case the app changed a
+        # row since it was read
+        response = requests.delete(rest_url('event_participants', {
+            'eventId': f'eq.{event_id}',
+            'memberId': f"in.({','.join(map(str, to_remove))})",
+            'attendanceStatus': 'eq.registered',
+            'notes': f'like.{WEBLING_NOTE_PREFIX}*',
+        }), headers=HEADERS)
+        if response.status_code in [200, 204]:
+            removed = len(to_remove)
+        else:
+            record_error(f"      Error removing registrations of event {event_id}: {postgrest_error(response)}")
 
-    synced_count = 0
+    added = 0
+    for member_id in to_insert:
+        if insert_ignoring_duplicates('event_participants', {
+            "eventId": event_id,
+            "memberId": member_id,
+            "attendanceStatus": "registered",
+            "notes": WEBLING_NOTE,
+        }):
+            added += 1
 
-    for participant in participants:
-        try:
-            # Extract participant information
-            participant_id = participant.get('id')
-            member_id_raw = participant.get('links', {}).get('member')
+    # Counts only: logs end up in GitHub Actions, which must not hold personal data
+    print(f"    Registrations: {len(confirmed)} confirmed in Webling ({skipped} skipped), "
+          f"{added} added, {removed} removed")
 
-            # Property 594 contains the confirmation state
-            properties = participant.get('properties', {})
-            confirmation_state = properties.get('594', None)
-
-            # Ids only: logs end up in GitHub Actions, which must not hold personal data
-            print(f"        Participant: member_id_raw = {member_id_raw}, confirmation = {confirmation_state}")
-
-            # Only sync participants with "confirmed" state
-            if confirmation_state != 'confirmed':
-                print(f"      Skipping participant {participant_id} - not confirmed (state: {confirmation_state})")
-                continue
-
-            # Handle member_id - it might be an array or single value
-            if isinstance(member_id_raw, list):
-                if len(member_id_raw) > 0:
-                    member_id = member_id_raw[0]  # Take first member ID
-                else:
-                    member_id = None
-            else:
-                member_id = member_id_raw
-
-            if not participant_id or not member_id:
-                print(f"      Skipping participant with missing ID or member ID (participant_id={participant_id}, member_id={member_id})")
-                continue
-            
-            # Create event participant registration
-            participant_data = {
-                "eventId": event_id,
-                "memberId": member_id,
-                "attendanceStatus": "registered",  # Default status for imported participants
-                "notes": f"Imported from Webling - Confirmed: {confirmation_state}"
-            }
-            
-            # Remove None values
-            participant_data = {k: v for k, v in participant_data.items() if v is not None}
-            
-            if upsert('event_participants', participant_data):
-                synced_count += 1
-                
-        except Exception as e:
-            record_error(f"      Error processing participant {participant.get('id', 'unknown')}: {e}")
-            continue
-    
-    return synced_count
+def insert_ignoring_duplicates(table_name, data):
+    """Insert a row; a row that exists already (e.g. added in the app meanwhile) is left as it is"""
+    headers = {
+        **AUTH_HEADERS,
+        'Content-Type': 'application/json',
+        'Prefer': 'resolution=ignore-duplicates,return=minimal'
+    }
+    response = requests.post(f"{SUPABASE_URL}/rest/v1/{table_name}", headers=headers, data=json.dumps(data))
+    if response.status_code in [200, 201, 204]:
+        return True
+    # Never the response body: constraint errors contain the whole row
+    record_error(f"    ✗ Error: {table_name}: {postgrest_error(response)}")
+    return False
 
 def upsert(table_name, data):
     """Insert or update data in Supabase table"""
@@ -520,9 +546,10 @@ def print_usage():
     print()
     print("Features:")
     print("  - Syncs events from Webling calendars to Administra")
-    print("  - Fetches participants for each event and creates attendance logs")
+    print("  - Fetches participants for each event and syncs their registrations")
     print("  - Only syncs participants with 'confirmed' state")
-    print("  - For events today/future: replaces all participants (deletes old, inserts confirmed)")
+    print("  - For events today/future: adds confirmed registrations, removes the ones no longer confirmed")
+    print("    (registrations and attendance entered in Administra are kept)")
     print("  - For past events: preserves historical data")
     print("  - Skips events from previous years (current year and future only)")
     print()
@@ -538,7 +565,7 @@ def main():
             return
         elif sys.argv[1] == "--calendar" and len(sys.argv) > 2:
             selected_calendars = sys.argv[2:]
-            print(f"Starting Webling calendar events sync for selected calendars...")
+            print("Starting Webling calendar events sync for selected calendars...")
             sync_events(selected_calendars)
         elif sys.argv[1] in ["-h", "--help", "help"]:
             print_usage()

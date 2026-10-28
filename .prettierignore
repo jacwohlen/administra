@@ -3,6 +3,8 @@ node_modules
 /build
 /.svelte-kit
 /package
+.pytest_cache
+.ruff_cache
 .env
 .env.*
 !.env.example

@@ -5,9 +5,23 @@
   import MemberAvatar from './MemberAvatar.svelte';
   import ClubProfile from './ClubProfile.svelte';
   import ClubExams from './ClubExams.svelte';
+  import { invalidateAll } from '$app/navigation';
   import type { PageData } from './$types';
 
   let { data }: { data: PageData } = $props();
+
+  // A member account always has an own record here. None means its
+  // membership stopped counting since the page loaded (the sync runs at
+  // night, the app may stay open for days): reload once, so the club guard
+  // asks my_access() again and sends the account to the pending page,
+  // instead of offering an empty directory.
+  let rechecked = false;
+  $effect(() => {
+    if (!data.isStaff && data.myMembers.length === 0 && !rechecked) {
+      rechecked = true;
+      invalidateAll();
+    }
+  });
 </script>
 
 <svelte:head>
