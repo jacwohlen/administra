@@ -181,6 +181,38 @@ describe('integrations page load', () => {
     expect(mockSupabase.from).not.toHaveBeenCalledWith('events');
   });
 
+  it('reads the calendars without gone_at on a database before 20261101120000', async () => {
+    const calendars = [{ id: 1, connection: 'webling', name: 'Judo Agenda' }];
+    answer({});
+    let first = true;
+    mockSupabase.from.mockImplementation((table: string) => {
+      if (table !== 'integration_calendars') return chain(table, { data: [], error: null });
+      const missing = first;
+      first = false;
+      return chain(
+        table,
+        missing
+          ? {
+              data: null,
+              error: {
+                code: '42703',
+                message: 'column integration_calendars.gone_at does not exist'
+              }
+            }
+          : { data: calendars, error: null }
+      );
+    });
+    const result = await load(event(admin));
+    expect(result).toMatchObject({ calendars: [{ ...calendars[0], gone_at: null }] });
+    const selects = calls.filter(([t, m]) => t === 'integration_calendars' && m === 'select');
+    expect(selects.map(([, , args]) => String(args[0]).includes('gone_at'))).toEqual([true, false]);
+  });
+
+  it('fails when the calendars cannot be read for another reason', async () => {
+    answer({ integration_calendars: { data: null, error: { code: '42501', message: 'denied' } } });
+    await expect(load(event(admin))).rejects.toMatchObject({ status: 500, message: 'denied' });
+  });
+
   it('fails when the run log cannot be read', async () => {
     answer({ integration_runs: { data: null, error: { message: 'runs failed' } } });
     await expect(load(event(admin))).rejects.toMatchObject({ status: 500, message: 'runs failed' });

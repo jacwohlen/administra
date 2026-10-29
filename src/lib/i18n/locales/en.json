@@ -358,6 +358,7 @@
         "roleTrainer": "Trainer",
         "reviewed": "Reviewed",
         "new": "New",
+        "gone": "No longer in {provider}",
         "calendars": "Calendars",
         "calendarsHelp": "Events go to the section, holidays to the training plan. Holidays up to the number of days given close the dojo, empty means always. Applies from the next events run.",
         "noCalendars": "No calendars yet.",

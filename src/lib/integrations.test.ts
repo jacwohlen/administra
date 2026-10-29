@@ -498,7 +498,8 @@ const CALENDARS: CalendarRow[] = [
     section: 'General',
     closed_max_days: 3,
     reviewed: true,
-    last_seen_at: null
+    last_seen_at: null,
+    gone_at: null
   }
 ];
 

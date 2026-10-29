@@ -1522,6 +1522,114 @@ BEGIN
 END $$;
 ROLLBACK TO SAVEPOINT s;
 
+-- An adapter that sends every calendar the provider has (provider_calendars,
+-- capabilities 3): a calendar missing from that list counts as read, with
+-- no records. Its events go under the same guard, its issues resolve, the
+-- catalog marks it until the provider lists it again.
+SAVEPOINT s;
+DO $$
+DECLARE
+  v_c3 jsonb := jsonb_build_object('id', 'c3', 'name', 'Saisonkurse');
+  v_c1_only jsonb;
+  v_run bigint;
+  r jsonb;
+BEGIN
+  PERFORM pg_temp.fx_setup();
+  PERFORM pg_temp.as_sync();
+  r := pg_temp.run('webling', 'events', pg_temp.ev_scope('{c1,c2,c3}') || '{"provider_calendars": ["c1", "c2", "c3"]}',
+         pg_temp.ev_snapshot() || jsonb_build_array(jsonb_build_object('external_id', '63001', 'data',
+           jsonb_build_object('calendar', v_c3, 'title', 'Saison', 'problem', 'no_date'))));
+  PERFORM pg_temp.eq('V15 capabilities version 3',
+    public.integration_begin('webling', 'members', '{"scope": {"complete": false}}')->'capabilities'->>'version', '3');
+  RESET ROLE;
+  UPDATE public.integration_runs SET status = 'failed', finished_at = now() WHERE status = 'running';
+  PERFORM pg_temp.eq('V15 all three calendars listed: nothing gone, c3 new to review',
+    concat_ws(' ', r->>'final', r->'result'->>'adopted',
+              (SELECT count(*) FROM public.integration_calendars WHERE gone_at IS NOT NULL),
+              (SELECT scope ? 'calendars_gone' FROM public.integration_runs WHERE kind = 'events'
+                ORDER BY id DESC LIMIT 1),
+              (SELECT x->'to_review'->>'calendars' FROM jsonb_array_elements(public.integration_status()) x
+                WHERE x->>'id' = 'webling')),
+    'ok 40 0 t 1');
+
+  -- c2 (ten events, three of them over) and c3 deleted in Webling
+  v_c1_only := (SELECT jsonb_agg(x) FROM jsonb_array_elements(pg_temp.ev_snapshot()) x
+                 WHERE x->'data'->'calendar'->>'id' = 'c1');
+  PERFORM pg_temp.as_sync();
+  r := pg_temp.run('webling', 'events', pg_temp.ev_scope('{c1}') || '{"provider_calendars": ["c1"]}', v_c1_only);
+  RESET ROLE;
+  PERFORM pg_temp.eq('V15 a deleted calendar''s events count for the events gone guard',
+    concat_ws(' ', r->>'final', r->'guard'->>'refused', r->>'hint'), 'refused events_gone accept_events_gone=10');
+  PERFORM pg_temp.eq('V15 the refused run marked both calendars gone and resolved nothing yet',
+    concat_ws(' ', (SELECT scope->>'calendars' || ' ' || (scope->>'calendars_gone')
+                      FROM public.integration_runs WHERE kind = 'events' ORDER BY id DESC LIMIT 1),
+              (SELECT string_agg(external_id, ',' ORDER BY external_id) FROM public.integration_calendars
+                WHERE gone_at IS NOT NULL),
+              (SELECT (resolved_at IS NULL)::text FROM public.integration_issues WHERE external_id = '63001')),
+    '["c1", "c2", "c3"] ["c2", "c3"] c2,c3 true');
+  PERFORM pg_temp.as_sync();
+  r := pg_temp.run('webling', 'events', pg_temp.ev_scope('{c1}') || '{"provider_calendars": ["c1"]}', v_c1_only,
+                   '{"accept_events_gone": 10}');
+  RESET ROLE;
+  PERFORM pg_temp.eq('V15 accepted: c2''s future events deleted, the ones over kept, c3''s issue resolved',
+    concat_ws(' ', r->>'final', r->'result'->>'gone', r->'result'->>'deleted', r->'result'->>'kept',
+              r->'result'->>'unchanged',
+              (SELECT count(*) FROM public.events WHERE id BETWEEN 61031 AND 61040),
+              (SELECT (resolved_at IS NOT NULL)::text FROM public.integration_issues WHERE external_id = '63001')),
+    'ok 10 7 3 30 3 true');
+  PERFORM pg_temp.eq('V15 a gone calendar is nothing left to review',
+    (SELECT x->'to_review'->>'calendars' FROM jsonb_array_elements(public.integration_status()) x
+      WHERE x->>'id' = 'webling'), '0');
+
+  -- Listed again (restored, or access given back): no longer gone
+  PERFORM pg_temp.as_sync();
+  r := pg_temp.run('webling', 'events', pg_temp.ev_scope('{c1}') || '{"provider_calendars": ["c1", "c2"]}', v_c1_only);
+  RESET ROLE;
+  PERFORM pg_temp.eq('V15 c2 listed again is no longer gone, c3 still is',
+    concat_ws(' ', r->>'final', (SELECT string_agg(external_id, ',' ORDER BY external_id)
+                                   FROM public.integration_calendars WHERE gone_at IS NOT NULL)),
+    'ok c3');
+
+  -- An adapter without the list (capabilities 2) changes nothing of it
+  PERFORM pg_temp.as_sync();
+  r := pg_temp.run('webling', 'events', pg_temp.ev_scope('{c1}'), v_c1_only);
+  RESET ROLE;
+  PERFORM pg_temp.eq('V15 a run without provider_calendars settles only what it read',
+    concat_ws(' ', r->>'final', (SELECT scope ? 'calendars_gone' FROM public.integration_runs
+                                  WHERE kind = 'events' ORDER BY id DESC LIMIT 1),
+              (SELECT string_agg(external_id, ',' ORDER BY external_id)
+                 FROM public.integration_calendars WHERE gone_at IS NOT NULL)),
+    'ok f c3');
+
+  -- The list: an array of ids, never empty, holding the calendars read;
+  -- only a complete scope settles from it
+  PERFORM pg_temp.as_sync();
+  PERFORM pg_temp.eq('V15 provider_calendars must be an array',
+    pg_temp.err($q$SELECT public.integration_begin('webling', 'events',
+      '{"scope": {"complete": true, "calendars": ["c1"], "provider_calendars": "c1"}}')$q$), '22023 invalid scope');
+  PERFORM pg_temp.eq('V15 provider_calendars must not be empty',
+    pg_temp.err($q$SELECT public.integration_begin('webling', 'events',
+      '{"scope": {"complete": true, "calendars": [], "provider_calendars": []}}')$q$), '22023 invalid scope');
+  PERFORM pg_temp.eq('V15 provider_calendars holds ids',
+    pg_temp.err($q$SELECT public.integration_begin('webling', 'events',
+      '{"scope": {"complete": true, "calendars": ["c1"], "provider_calendars": ["c1", "Judo Agenda"]}}')$q$),
+    '22023 invalid scope');
+  PERFORM pg_temp.eq('V15 a calendar read must be among them',
+    pg_temp.err($q$SELECT public.integration_begin('webling', 'events',
+      '{"scope": {"complete": true, "calendars": ["c1", "c2"], "provider_calendars": ["c1"]}}')$q$),
+    '22023 invalid scope');
+  v_run := (public.integration_begin('webling', 'events',
+              '{"scope": {"complete": false, "provider_calendars": ["c1"]}}')->>'run')::bigint;
+  RESET ROLE;
+  PERFORM pg_temp.eq('V15 a partial scope settles nothing from the list',
+    concat_ws(' ', (SELECT scope::text FROM public.integration_runs WHERE id = v_run),
+              (SELECT string_agg(external_id, ',' ORDER BY external_id)
+                 FROM public.integration_calendars WHERE gone_at IS NOT NULL)),
+    '{"from": "' || to_char(date_trunc('year', (now() AT TIME ZONE 'Europe/Zurich')::date), 'YYYY-MM-DD')
+      || '", "complete": false, "calendars": []} c3');
+END $$;
+ROLLBACK TO SAVEPOINT s;
+
 -- An unknown participant of an event that is over: the event is staged
 -- without its list, which is no longer read, and the issue resolves; a
 -- future event whose list could not be read keeps it

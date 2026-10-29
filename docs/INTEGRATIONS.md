@@ -413,6 +413,22 @@ gone. A future event gone from the provider that nobody used in the app
 (attendance, app registrations, exams, medals) is deleted; any other is kept
 as the app's and reported.
 
+**A calendar the provider no longer has.** A complete run settles only the
+calendars it read, and a calendar deleted at the provider is never read
+again. An adapter that knows every calendar the provider has sends them as
+`scope.provider_calendars` (capabilities version 3,
+`20261101120000_provider_calendars_gone.sql`; an older database ignores the
+key, an older adapter leaves things as before). A complete run then counts
+the catalog's calendars missing from that list as read, without records
+(`scope.calendars_gone`): their events and holidays within the window go
+under the same guard, their open issues resolve, and
+`integration_calendars.gone_at` marks them ("Nicht mehr in Webling" on the
+Integrations page, nothing left to review) until the provider lists them
+again; the mark is written by every run, a dry or refused one too, like new
+catalog rows. Webling lists the calendars its API user can see: one it
+loses access to looks deleted, which the events gone guard catches beyond
+a few events.
+
 **Run log and issues.** Admins read `integration_runs` (kind, scope,
 trigger, runner, dry run, status, counts, guard numbers, accepted
 overrides, the adapter's counters, an error code) and `integration_issues`.
@@ -684,7 +700,8 @@ Einstellungen; `src/routes/dashboard/integrations/`, helpers in
   and a dismissed one can be reopened.
 - **Mapping**: status, rank, hidden and role per group; target, section
   and "Dojo zu" days per calendar; new rows marked "Neu" and confirmed with
-  "Geprüft". Preview is `integration_set_mapping`'s dry run (how many
+  "Geprüft", calendars the provider no longer lists marked "Nicht mehr in
+  Webling" (and listed last). Preview is `integration_set_mapping`'s dry run (how many
   members get another status, how many lose or gain a membership, whether
   that is over the guard; when more than half of one status is what trips
   it, the preview names the status instead of the limit for all); Save,
