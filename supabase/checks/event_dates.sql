@@ -7,16 +7,16 @@
 -- scenario sits in a savepoint. A failed check raises and stops:
 --   psql "$DB_URL" -v ON_ERROR_STOP=1 -f supabase/checks/event_dates.sql
 --
---   B  what the migration left behind (meaningful on a database that had
---      events before it: the prod order; trivially true after a reset)
---   A  all day: 00:00 to 00:00 is all day, whoever writes; the legacy sync
---      (a start it moves takes the last day along, events_keep_span)
+--   B  what the migrations left behind (meaningful on a database that had
+--      events before them: the prod order; trivially true after a reset)
+--   A  all day: 00:00 to 00:00 is all day, whoever writes; a start moved
+--      alone keeps the last day as sent (events_keep_span is gone)
 --   C  the date checks
 --   O  the app's overlap filters (multi-day events, the year boundary)
 --   P  capabilities version 2 and Webling's field policy
 --   L  the layer writes end dates and all day
---   H  "Ferien und Feiertage" fills the holidays; the legacy sync's holiday
---      events before the switch, and after a rollback to it
+--   H  "Ferien und Feiertage" fills the holidays; the holiday events the
+--      sync wrote before the layer go
 --   I  issues of phase 4's records (integration_note_event_issues of the
 --      integration layer): a holiday's issue names its calendar, no event;
 --      an event under way is not over until its last day
@@ -110,9 +110,10 @@ LANGUAGE sql AS $$ SELECT to_char(current_date + p_day, 'YYYY-MM-DD') $$;
 CREATE FUNCTION pg_temp.link(p_id integer) RETURNS text
 LANGUAGE sql AS $$ SELECT 'https://club.webling.ch/portal#/calendar/event/' || p_id $$;
 
--- The legacy sync's event upsert (events.py: PostgREST merge-duplicates on
--- the primary key, times as Webling has them, portal link as description)
-CREATE FUNCTION pg_temp.legacy_upsert(p_id integer, p_title text, p_date text, p_from text, p_to text,
+-- An event written directly, as the sync did before the layer (PostgREST
+-- merge-duplicates on the primary key, times as Webling has them, portal
+-- link as description)
+CREATE FUNCTION pg_temp.direct_upsert(p_id integer, p_title text, p_date text, p_from text, p_to text,
                                       p_section text DEFAULT 'General') RETURNS void
 LANGUAGE sql AS $$
   INSERT INTO public.events (id, title, description, date, "timeFrom", "timeTo", section)
@@ -190,12 +191,14 @@ BEGIN
   PERFORM pg_temp.ok('B6 the date check (NOT VALID) and the overlap index exist',
     EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'events_date_check' AND conrelid = 'public.events'::regclass)
     AND EXISTS (SELECT 1 FROM pg_indexes WHERE schemaname = 'public' AND indexname = 'events_date_span_idx'));
+  PERFORM pg_temp.ok('B7 the legacy sync''s events_keep_span and its function are gone (20261102120000)',
+    NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'events_keep_span')
+    AND to_regprocedure('public.trigger_event_keep_span()') IS NULL);
 END $$;
 ROLLBACK TO SAVEPOINT s;
 
 -----------------
--- A All day, whoever writes; the legacy sync keeps working (also with a
---   last day it does not know)
+-- A All day, whoever writes; a start moved alone keeps the last day
 -----------------
 SAVEPOINT s;
 DO $$
@@ -204,22 +207,22 @@ DECLARE
   r jsonb;
 BEGIN
   PERFORM pg_temp.as_sync();
-  PERFORM pg_temp.legacy_upsert(91001, 'Sommerlager', pg_temp.d(30), '00:00', '00:00');
-  PERFORM pg_temp.legacy_upsert(91002, 'Training', pg_temp.d(31), '18:30', '20:00', 'Judo');
-  PERFORM pg_temp.legacy_upsert(91003, 'Ohne Ende', pg_temp.d(32), '00:00', NULL);
+  PERFORM pg_temp.direct_upsert(91001, 'Sommerlager', pg_temp.d(30), '00:00', '00:00');
+  PERFORM pg_temp.direct_upsert(91002, 'Training', pg_temp.d(31), '18:30', '20:00', 'Judo');
+  PERFORM pg_temp.direct_upsert(91003, 'Ohne Ende', pg_temp.d(32), '00:00', NULL);
   RESET ROLE;
-  PERFORM pg_temp.eq('A1 the legacy sync''s 00:00 to 00:00 is all day without times',
+  PERFORM pg_temp.eq('A1 a direct write of 00:00 to 00:00 is all day without times',
     pg_temp.ev(91001), pg_temp.d(30) || '|-|true|-|-|' || pg_temp.link(91001));
   PERFORM pg_temp.eq('A1 a timed event stays timed', pg_temp.ev(91002), pg_temp.d(31) || '|-|false|18:30|20:00|' || pg_temp.link(91002));
   PERFORM pg_temp.eq('A1 00:00 without an end is all day', pg_temp.ev(91003), pg_temp.d(32) || '|-|true|-|-|' || pg_temp.link(91003));
 
   PERFORM pg_temp.as_sync();
-  PERFORM pg_temp.legacy_upsert(91001, 'Sommerlager', pg_temp.d(30), '00:00', '00:00');
-  PERFORM pg_temp.legacy_upsert(91003, 'Ohne Ende', pg_temp.d(32), '10:00', '12:00');
+  PERFORM pg_temp.direct_upsert(91001, 'Sommerlager', pg_temp.d(30), '00:00', '00:00');
+  PERFORM pg_temp.direct_upsert(91003, 'Ohne Ende', pg_temp.d(32), '10:00', '12:00');
   RESET ROLE;
-  PERFORM pg_temp.eq('A2 the nightly upsert keeps it all day', pg_temp.ev(91001),
+  PERFORM pg_temp.eq('A2 the same direct write again keeps it all day', pg_temp.ev(91001),
     pg_temp.d(30) || '|-|true|-|-|' || pg_temp.link(91001));
-  PERFORM pg_temp.eq('A2 real times from Webling make it timed again', pg_temp.ev(91003),
+  PERFORM pg_temp.eq('A2 real times written directly make it timed again', pg_temp.ev(91003),
     pg_temp.d(32) || '|-|false|10:00|12:00|' || pg_temp.link(91003));
 
   -- The app (form): all day drops the times; unticked with times: timed
@@ -234,38 +237,9 @@ BEGIN
     pg_temp.d(30) || '|-|false|09:00|17:00|' || pg_temp.link(91001));
   PERFORM pg_temp.eq('A3 ticked: the times go', pg_temp.ev(91002), pg_temp.d(31) || '|-|true|-|-|' || pg_temp.link(91002));
 
-  -- Legacy registrations as before
-  PERFORM pg_temp.as_sync();
-  INSERT INTO public.event_participants ("eventId", "memberId", "attendanceStatus", notes)
-  VALUES (91002, (SELECT min(id) FROM public.members), 'registered', 'Imported from Webling - Confirmed: confirmed')
-  ON CONFLICT DO NOTHING;
-  RESET ROLE;
-  PERFORM pg_temp.ok('A4 legacy registrations as before',
-    EXISTS (SELECT 1 FROM public.event_participants WHERE "eventId" = 91002));
-
-  -- A last day the app (Bis) gave a Webling event, or a layer run before a
-  -- rollback: the legacy sync, which knows none, moves the start
-  PERFORM pg_temp.as_sync();
-  PERFORM pg_temp.legacy_upsert(91005, 'Lager', pg_temp.d(50), '09:00', '17:00', 'Judo');
-  RESET ROLE;
-  PERFORM pg_temp.act_as(v_trainer);
-  UPDATE public.events SET date_to = pg_temp.d(52) WHERE id = 91005;
-  RESET ROLE;
-  PERFORM pg_temp.as_sync();
-  PERFORM pg_temp.legacy_upsert(91005, 'Lager', pg_temp.d(57), '09:00', '17:00', 'Judo');
-  RESET ROLE;
-  PERFORM pg_temp.eq('A5 the legacy sync moves the start later: the last day moves along, no error',
-    pg_temp.ev(91005), pg_temp.d(57) || '|' || pg_temp.d(59) || '|false|09:00|17:00|' || pg_temp.link(91005));
-  PERFORM pg_temp.as_sync();
-  PERFORM pg_temp.legacy_upsert(91005, 'Lager', pg_temp.d(57), '09:00', '17:00', 'Judo');
-  RESET ROLE;
-  PERFORM pg_temp.eq('A5 the same start again: unchanged',
-    pg_temp.ev(91005), pg_temp.d(57) || '|' || pg_temp.d(59) || '|false|09:00|17:00|' || pg_temp.link(91005));
-  PERFORM pg_temp.as_sync();
-  PERFORM pg_temp.legacy_upsert(91005, 'Lager', pg_temp.d(45), '09:00', '17:00', 'Judo');
-  RESET ROLE;
-  PERFORM pg_temp.eq('A5 earlier: still three days, not stretched',
-    pg_temp.ev(91005), pg_temp.d(45) || '|' || pg_temp.d(47) || '|false|09:00|17:00|' || pg_temp.link(91005));
+  -- A Webling event with a last day the app (Bis) or a layer run gave it
+  INSERT INTO public.events (id, title, description, date, date_to, "timeFrom", "timeTo", section)
+  VALUES (91005, 'Lager', pg_temp.link(91005), pg_temp.d(45), pg_temp.d(47), '09:00', '17:00', 'Judo');
 
   -- Staff send both days (the form checks them): nothing moves along
   PERFORM pg_temp.act_as(v_trainer);
@@ -276,6 +250,16 @@ BEGIN
   RESET ROLE;
   PERFORM pg_temp.eq('A6 staff move only the start: the last day stays as sent',
     pg_temp.ev(91005), pg_temp.d(46) || '|' || pg_temp.d(47) || '|false|09:00|17:00|' || pg_temp.link(91005));
+
+  -- A direct write (service_role) gets the same since events_keep_span is gone
+  PERFORM pg_temp.as_sync();
+  PERFORM pg_temp.eq('A6 a direct write of a start after the last day is refused as well',
+    pg_temp.err(format($q$UPDATE public.events SET date = %L WHERE id = 91005$q$, pg_temp.d(48))),
+    '23514 events_date_to_check');
+  UPDATE public.events SET date = pg_temp.d(45) WHERE id = 91005;
+  RESET ROLE;
+  PERFORM pg_temp.eq('A6 a direct write of the start alone: the last day stays',
+    pg_temp.ev(91005), pg_temp.d(45) || '|' || pg_temp.d(47) || '|false|09:00|17:00|' || pg_temp.link(91005));
 
   -- The layer (SECURITY DEFINER, current_user its owner) writes the last day it gets
   PERFORM pg_temp.as_sync();
@@ -309,8 +293,8 @@ BEGIN
                        pg_temp.d(5), pg_temp.d(5))), '23514 events_date_to_check');
   RESET ROLE;
   PERFORM pg_temp.as_sync();
-  PERFORM pg_temp.eq('C3 the legacy sync cannot write a date it could not read either',
-    pg_temp.err($q$SELECT pg_temp.legacy_upsert(91010, 'x', '2026-13-45 10:00:00', NULL, NULL)$q$),
+  PERFORM pg_temp.eq('C3 a direct write (service_role) of a date that is not YYYY-MM-DD is refused too',
+    pg_temp.err($q$SELECT pg_temp.direct_upsert(91010, 'x', '2026-13-45 10:00:00', NULL, NULL)$q$),
     '23514 events_date_check');
   RESET ROLE;
 END $$;
@@ -426,7 +410,7 @@ BEGIN
   PERFORM pg_temp.eq('L3 timed now', pg_temp.ev(93001), pg_temp.d(10) || '|' || pg_temp.d(12) || '|false|09:00|17:00|-');
   PERFORM pg_temp.eq('L3 all day now, the filled times cleared', pg_temp.ev(93002), pg_temp.d(20) || '|-|true|-|-|-');
 
-  -- An adapter of version 1 (no all_day, 00:00 to 00:00 as the legacy sync) changes nothing
+  -- An adapter of version 1 (no all_day, all-day entries as 00:00 to 00:00) changes nothing
   PERFORM pg_temp.as_sync();
   r := pg_temp.run('events', '{"complete": false}', jsonb_build_array(
          pg_temp.rec(93002, 'c1', 'Judo Agenda', 'Training',
@@ -448,9 +432,10 @@ BEGIN
   PERFORM pg_temp.eq('L5 the app''s description stays', (SELECT description FROM public.events WHERE id = 93001),
     'Mit Übernachtung');
 
-  -- A legacy event (portal link as description) adopted: the link is the link's url now
+  -- An event the sync wrote before the layer (portal link as description)
+  -- adopted: the link is the link's url now
   PERFORM pg_temp.as_sync();
-  PERFORM pg_temp.legacy_upsert(93005, 'Altes', pg_temp.d(5), '00:00', '00:00', 'Judo');
+  PERFORM pg_temp.direct_upsert(93005, 'Altes', pg_temp.d(5), '00:00', '00:00', 'Judo');
   r := pg_temp.run('events', '{"complete": false}', jsonb_build_array(
          pg_temp.rec(93005, 'c1', 'Judo Agenda', 'Altes', jsonb_build_object('starts_on', pg_temp.d(5), 'ends_on', pg_temp.d(6),
                      'all_day', true))));
@@ -474,15 +459,15 @@ BEGIN
   INSERT INTO public.training_plan_breaks (title, date_from, date_to, cancels_training)
   VALUES ('Herbstferien', pg_temp.d(10), pg_temp.d(23), false);
 
-  -- Before the switch: the legacy sync writes the holidays as events, as today
+  -- Before the layer: the sync wrote the holidays as events
   PERFORM pg_temp.as_sync();
-  PERFORM pg_temp.legacy_upsert(94001, 'Herbstferien', pg_temp.d(10), '00:00', '00:00');
-  PERFORM pg_temp.legacy_upsert(94002, 'Feiertag', pg_temp.d(30), '00:00', '00:00');
-  PERFORM pg_temp.legacy_upsert(94003, 'Weihnachtsferien', pg_temp.d(50), '00:00', '00:00');
-  PERFORM pg_temp.legacy_upsert(94004, 'Brückentag', pg_temp.d(40), '00:00', '00:00');
-  PERFORM pg_temp.legacy_upsert(94005, 'Auffahrt', pg_temp.d(60), '00:00', '00:00');
+  PERFORM pg_temp.direct_upsert(94001, 'Herbstferien', pg_temp.d(10), '00:00', '00:00');
+  PERFORM pg_temp.direct_upsert(94002, 'Feiertag', pg_temp.d(30), '00:00', '00:00');
+  PERFORM pg_temp.direct_upsert(94003, 'Weihnachtsferien', pg_temp.d(50), '00:00', '00:00');
+  PERFORM pg_temp.direct_upsert(94004, 'Brückentag', pg_temp.d(40), '00:00', '00:00');
+  PERFORM pg_temp.direct_upsert(94005, 'Auffahrt', pg_temp.d(60), '00:00', '00:00');
   RESET ROLE;
-  PERFORM pg_temp.eq('H1 the legacy sync still writes holiday events',
+  PERFORM pg_temp.eq('H1 holiday events as the sync wrote them before the layer',
     (SELECT count(*)::text FROM public.events WHERE id BETWEEN 94001 AND 94005 AND all_day AND section = 'General'), '5');
   -- Used in the app: attendance; another one's description changed in the app
   INSERT INTO public.event_logs ("eventId", "memberId", "attendedAt") VALUES (94004, (SELECT min(id) FROM public.members), now());
@@ -527,14 +512,6 @@ BEGIN
   PERFORM pg_temp.eq('H3 the next run: nothing to replace, holidays unchanged',
     concat_ws('/', r->'result'->>'holiday_events_deleted', r->'result'->>'holiday_events_kept',
               r->'result'->>'breaks_inserted', r->'result'->>'breaks_updated'), '0/0/0/0');
-
-  -- A rollback to the legacy sync writes a holiday event again; back on the layer it goes again
-  PERFORM pg_temp.as_sync();
-  PERFORM pg_temp.legacy_upsert(94002, 'Feiertag', pg_temp.d(30), '00:00', '00:00');
-  r := pg_temp.run('events', pg_temp.scope(pg_temp.holidays()), v_recs);
-  RESET ROLE;
-  PERFORM pg_temp.eq('H4 after a rollback the layer replaces it again',
-    concat_ws('/', r->'result'->>'holiday_events_deleted', (SELECT count(*) FROM public.events WHERE id = 94002)::text), '1/0');
 
   -- The TK: "Dojo zu" only
   PERFORM pg_temp.act_as(v_tk);

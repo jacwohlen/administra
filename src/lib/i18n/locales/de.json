@@ -343,7 +343,6 @@
         "title": "Zuordnung",
         "toReview": "{count} neu",
         "intro": "Was die Gruppen und Kalender von {provider} in Administra bedeuten. Neue erscheinen hier als «Neu», bis du sie prüfst.",
-        "beforeSwitch": "Der Sync läuft noch nicht über die neue Integrationsschicht. Ändere die Zuordnung erst nach der Umstellung: bis dahin sagt der alte Sync die Mitgliedschaft mit festen Regeln voraus und würde nach einer Änderung hier stoppen oder falsch vorhersagen.",
         "groups": "Gruppen",
         "groupsHelp": "Hat ein Mitglied mehrere Statusgruppen, gilt die mit dem kleinsten Rang. Ausgeblendete Gruppen erscheinen nicht als Chip.",
         "noGroups": "Noch keine Gruppen.",

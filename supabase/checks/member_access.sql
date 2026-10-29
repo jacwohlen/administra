@@ -364,8 +364,8 @@ BEGIN
 END $$;
 ROLLBACK TO SAVEPOINT s;
 
--- The same through the Webling sync: a labels upsert, then Webling no longer
--- has the member (mark_gone), then it is back (write_links)
+-- The same through the Webling sync's writes: a labels upsert, then Webling
+-- no longer has the member (link gone), then it is back (link live again)
 SAVEPOINT s;
 DO $$
 DECLARE
@@ -399,14 +399,14 @@ BEGIN
   RESET ROLE;
 
   SET LOCAL ROLE service_role;
-  UPDATE public.member_links SET gone_at = now() WHERE member_id = 5004;  -- mark_gone
+  UPDATE public.member_links SET gone_at = now() WHERE member_id = 5004;
   RESET ROLE;
   PERFORM pg_temp.act_as(u);
   PERFORM pg_temp.eq('S7 gone from Webling: no access', pg_temp.access(), 'false {left}');
   RESET ROLE;
 
   SET LOCAL ROLE service_role;
-  UPDATE public.member_links SET gone_at = NULL WHERE member_id = 5004;  -- write_links
+  UPDATE public.member_links SET gone_at = NULL WHERE member_id = 5004;
   RESET ROLE;
   PERFORM pg_temp.act_as(u);
   PERFORM pg_temp.eq('S8 back in Webling: access', pg_temp.access(), 'true {active}');
@@ -759,7 +759,8 @@ BEGIN
   UPDATE public.user_profiles SET status = 'pending' WHERE user_id = u;
 
   SET LOCAL ROLE service_role;
-  -- What PostgREST makes of the sync's merge-duplicates POSTs
+  -- Upserts that change nothing (the merge-duplicates POSTs of the sync
+  -- before the integration layer)
   INSERT INTO public.members (id, firstname, lastname, labels, email)
   VALUES (5008, 'Otto', 'Same', '["Aktiv"]', 'same@test.ch')
   ON CONFLICT (id) DO UPDATE SET firstname = EXCLUDED.firstname, lastname = EXCLUDED.lastname,

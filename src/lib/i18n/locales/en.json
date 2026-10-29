@@ -343,7 +343,6 @@
         "title": "Mapping",
         "toReview": "{count} new",
         "intro": "What the groups and calendars of {provider} mean in Administra. New ones show as “New” until you review them.",
-        "beforeSwitch": "The sync does not run through the new integration layer yet. Change the mapping only after the switch: until then the old sync predicts memberships with fixed rules and would refuse or mispredict after a change here.",
         "groups": "Groups",
         "groupsHelp": "With several status groups, the one with the lowest rank counts. Hidden groups show no chip.",
         "noGroups": "No groups yet.",

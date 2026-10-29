@@ -6,16 +6,16 @@ should mean writing an adapter, not changing the schema or the app.
 
 The work runs in phases; each one ships on its own.
 
-| Phase                        | What                                                                                                                                           | State                                  |
-| ---------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------- |
-| 0 Stop the damage            | The sync keeps registrations entered in the app; app ids fenced away from Webling ids; CI for the sync                                         | done (#165)                            |
-| 1a Status and links          | `membership_status`, `member_links`, Webling fields read-only in the app, access report                                                        | done (#166)                            |
-| 1b Enforce sign-in by status | Member accounts, directory and auto-approval require an active or passive membership                                                           | done (#171)                            |
-| 1c Safe merge                | Merge a duplicate (e.g. trial row and later Webling row) moving every reference in one transaction                                             | done (#175)                            |
-| 2 Integration layer          | Provider-neutral ingest in SQL (stage, apply, finish), mapping as configuration, run log                                                       | done (#176)                            |
-| 3 Webling on the new layer   | Webling adapter on a shared Python core behind `INTEGRATION_MODE` (3a); the app reads the configuration (3b); the switch is an operations step | code done (#177, #178); switch pending |
-| 4 End dates and holidays     | Multi-day and all-day events, Webling "Ferien" into `training_plan_breaks`                                                                     | this phase                             |
-| 5 Integrations page          | Status of connections, runs and issues; group and calendar mapping editor                                                                      | done (#178)                            |
+| Phase                        | What                                                                                                                                                                                              | State                 |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------- |
+| 0 Stop the damage            | The sync keeps registrations entered in the app; app ids fenced away from Webling ids; CI for the sync                                                                                            | done (#165)           |
+| 1a Status and links          | `membership_status`, `member_links`, Webling fields read-only in the app, access report                                                                                                           | done (#166)           |
+| 1b Enforce sign-in by status | Member accounts, directory and auto-approval require an active or passive membership                                                                                                              | done (#171)           |
+| 1c Safe merge                | Merge a duplicate (e.g. trial row and later Webling row) moving every reference in one transaction                                                                                                | done (#175)           |
+| 2 Integration layer          | Provider-neutral ingest in SQL (stage, apply, finish), mapping as configuration, run log; calendars the provider no longer has                                                                    | done (#176, #184)     |
+| 3 Webling on the new layer   | Webling adapter on a shared Python core (3a); the app reads the configuration (3b); dev on the layer since 2026-10-28, prod since 2026-10-29; the legacy scripts, modes and fallback removed (3c) | done (#177, #178, 3c) |
+| 4 End dates and holidays     | Multi-day and all-day events, Webling "Ferien" into `training_plan_breaks`                                                                                                                        | done (#179, #181)     |
+| 5 Integrations page          | Status of connections, runs and issues; group and calendar mapping editor                                                                                                                         | done (#178)           |
 
 ## Decisions (October 2026)
 
@@ -57,9 +57,9 @@ layer" below), whose seeded rows are exactly this table.
 | none of these, member created in Administra | `active`     | yes                    |
 
 Checked in this order, so `03_Austritt` wins over `Aktiv`. The labels are
-Webling group titles, except that the sync renames Webling's legacy trial
-group `04_Probetraining` to `Probetraining` (`transform_label()` in
-`webling-sync/src/webling.py`). Groups that only describe roles
+Webling group titles, except that Webling's legacy trial group
+`04_Probetraining` gets the label `Probetraining` (its seeded row in
+`integration_member_groups`). Groups that only describe roles
 (Erwachsenentrainer, Kindertrainer, Hilfstrainer, Vorstand, J&S) do not
 change the status.
 
@@ -82,37 +82,30 @@ first run after the migration on. Webling ids lie between 1'000 and
 
 When Webling no longer returns a member (deleted or merged there), the sync
 sets `gone_at` on its link: the member has left. If more than a tenth of
-the members still in Webling (at least 5) would go at once, or Webling
-returns nobody, the sync refuses and the run turns red: check Webling
-first. If the deletions are intended, start **Actions → Webling Sync → Run
+the members still in Webling (at least 5) would go at once
+(`members_gone`), or Webling returns nobody (`empty_snapshot`, no
+override), the sync refuses and the run turns red: check Webling first. If
+the deletions are intended, start **Actions → Webling Sync → Run
 workflow** with `accept_gone` set to the number from the error line; only
 that exact number is accepted, and only for that run. A member that is back
 in Webling gets its link revived.
 
 Status changes have the same kind of guard, because a member account only
 gets in while a record counts: if Webling renamed or emptied `Aktiv` or
-`Passiv`, every member account would be locked out at once. Before writing,
-the sync reads the status, archive date and labels of the members in the
-Webling id range and asks the database's own `member_status_from_labels()`
-(on prod since phase 1a) for each written member's new status, once per
-distinct set of groups. It must predict with the rule the trigger will run:
-a sync change reaches prod the same night while migrations wait for a
-promotion, so a copy of the rule in the sync could be ahead of prod and let
-the very drop through it should stop.
-If more than a tenth of the members that count now (at least 5; fewer than
-230 members come from Webling, so at most 22), or more than half of the
-active or of the passive ones (at least 5), would stop counting, it writes
-nothing (no member, link or gone mark) and the run turns red with the
-number and what they would become, never names, groups or ids. If the
-changes are intended, run the workflow with `accept_status_drop` set to
-that number. If the statuses cannot be read or the database's rule cannot be
-asked, it writes nothing either. A run that goes ahead logs how many members
-lost their membership and what they became. After the run it reads the
-statuses again: a member whose status is not the predicted one is a warning
-(the trigger saw more than groups and link), and more members out than the
-guard allows is an error. Members
-going because Webling no longer has them are `accept_gone`'s, not this
-guard's.
+`Passiv`, every member account would be locked out at once.
+`integration_apply` compares the statuses inside its transaction, as the
+database derives them with the group catalog, so there is no copy of the
+rule that could differ from it. If more than a tenth of the members that
+count now (at least 5; fewer than 230 members come from Webling, so at most
+22), or more than half of the active or of the passive ones (at least 5),
+would stop counting, the run is refused (`status_drop`): nothing is written
+(no member, link or gone mark) and the run turns red with the number and
+what they would become, never names, groups or ids. If the changes are
+intended, run the workflow with `accept_status_drop` set to that number.
+Many members starting to count at once are refused the same way
+(`status_gain`, override `accept_status_gain`). Members going because
+Webling no longer has them are `accept_gone`'s, not this guard's. The
+limits are in the table under "Guards" below.
 
 Rows in the Webling id range that were never linked are recorded as gone on
 the first run: in October 2026 prod had 537 such rows, but Webling returned
@@ -122,8 +115,9 @@ Nicht-Mitglieder) were deleted in Webling.
 While a member is in Webling, the database refuses changes to name,
 birthday, mobile, e-mail, labels and status made through the API by
 signed-in staff, and deleting the member (`trigger_guard_provider_fields`,
-error `MANAGED_BY_PROVIDER`). The sync (service role), migrations and
-SECURITY DEFINER functions are not restricted. The member page shows
+error `MANAGED_BY_PROVIDER`). The sync (through the layer's SECURITY
+DEFINER functions), migrations, other SECURITY DEFINER functions and direct
+service role writes are not restricted. The member page shows
 "kommen aus Webling" and only offers the notes for editing. A member gone
 from Webling is the app's again: editable, and deletable (the link goes
 with it).
@@ -193,17 +187,13 @@ Known gaps:
 
 - An e-mail removed in Webling stays in Administra (the sync only sends
   addresses Webling has), so the old address keeps matching.
-- A status group renamed in Webling on purpose: from phase 3 on (the sync
-  on the integration layer), renamed groups keep their status (phase 2,
-  bound by id); a new status group is mapped on the Integrations page
-  (`integration_set_mapping`). Until then the legacy sync writes the new
-  title as a label, the guard above refuses the run, and a manual run with
-  `accept_status_drop` lets the drop through. `status_from_labels()` in
-  `webling-sync/src/sync_rules.py` is only the tests' copy of the rule.
+- A status group changed in Webling on purpose: a renamed group keeps its
+  status (bound by id); a new group arrives without a status, so its
+  members fall to `non_member` until it is mapped on the Integrations page
+  (`integration_set_mapping`), and `status_drop` refuses a large drop.
 - Changes under the guard's limits go through (the run only logs their
   number), also a large change spread over several nights. Mass changes
-  the other way (many members starting to count): from phase 3 on,
-  `status_gain`.
+  the other way (many members starting to count): `status_gain`.
 - An app trial candidate whose trial label a trainer removes counts as an
   active member (1a rule); merge it into the Webling record (below).
 
@@ -384,12 +374,12 @@ looks like a member the connection does not have (same e-mail, or same name
 and birthday) is reported as `possible_duplicate`, never merged; a
 connection with `on_possible_duplicate = 'skip'` holds it back until it is
 linked or merged. Events work like members (`event_links`, one live link
-per event): the first run links every current-year event the legacy sync
-wrote. Holidays are found through their link, else a TK entry with the same
+per event): the first run linked every current-year event the old sync
+had written. Holidays are found through their link, else a TK entry with the same
 title and dates. Registrations the provider manages carry
 `event_participants.source_connection` (backfilled from the "Imported from
 Webling" notes); confirmed participants are found through live member
-links. As for the legacy sync, a row stays the provider's only while its
+links. As before the layer, a row stays the provider's only while its
 notes start with the provider's note: notes changed in the app (by staff,
 or by a merge that keeps the Webling registration with the app's notes)
 make it the app's. Rows entered in the app, and rows with attendance, are
@@ -448,54 +438,40 @@ reported but do not change the run's status. Runs are kept 400 days, closed
 issues 180 days. `integration_status()` sums it up for the Integrations
 page.
 
-The legacy sync keeps working unchanged until phase 3 switches it (its
-nightly link upsert no longer rewrites every member). Until then, change no
-mapping with `integration_set_mapping`: the legacy sync's guard predicts
-statuses with `member_status_from_labels()`, which only agrees with the
-seeded catalog (the Integrations page says so in its mapping editor while
-the layer has not run a members run of its own).
 `supabase/checks/integration_layer.sql` (CI job `db-validate`) checks the
-seeded mapping against the old rule, the legacy sync's writes, who may do
-what, identity, guards, events, holidays and the run log.
+seeded mapping against the old rule, who may do what, identity, guards,
+events, holidays and the run log.
 
-### When the sync is red (phase 3 on)
+### When the sync is red
 
-| Run                      | Meaning                                                           | Do                                                                                                               |
-| ------------------------ | ----------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
-| refused `empty_snapshot` | Webling answered no members                                       | Check Webling and the API key, run again                                                                         |
-| refused `members_gone`   | Many members gone at once                                         | Check Webling; if intended, **Actions → Webling Sync → Run workflow** with `accept_gone` = the number in the log |
-| refused `status_drop`    | Many members would lose their membership                          | A new or renamed status group: map it on the Integrations page, run again; if intended, `accept_status_drop`     |
-| refused `status_gain`    | Many members would start counting (and be approved automatically) | Check the groups; if intended, `accept_status_gain`                                                              |
-| refused `events_gone`    | Many events gone at once                                          | Check the calendar in Webling; if intended, `accept_events_gone`                                                 |
-| failed `<sqlstate>`      | The apply failed as a whole                                       | Actions log, then a bug report                                                                                   |
-| warning                  | Records not written, or fetch errors                              | Integrations page → issues (`invalid_record`, `id_conflict`, `write_failed`, held duplicates)                    |
-| `RUN_IN_PROGRESS`        | Another run of the same kind is open                              | Wait an hour: an abandoned run is closed then                                                                    |
+| Run                                             | Meaning                                                                                                             | Do                                                                                                               |
+| ----------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| refused `empty_snapshot`                        | Webling answered no members                                                                                         | Check Webling and the API key, run again                                                                         |
+| refused `members_gone`                          | Many members gone at once                                                                                           | Check Webling; if intended, **Actions → Webling Sync → Run workflow** with `accept_gone` = the number in the log |
+| refused `status_drop`                           | Many members would lose their membership                                                                            | A new or renamed status group: map it on the Integrations page, run again; if intended, `accept_status_drop`     |
+| refused `status_gain`                           | Many members would start counting (and be approved automatically)                                                   | Check the groups; if intended, `accept_status_gain`                                                              |
+| refused `events_gone`                           | Many events gone at once                                                                                            | Check the calendar in Webling; if intended, `accept_events_gone`                                                 |
+| failed `<sqlstate>`                             | The apply failed as a whole                                                                                         | Actions log, then a bug report                                                                                   |
+| warning                                         | Records not written, or fetch errors                                                                                | Integrations page → issues (`invalid_record`, `id_conflict`, `write_failed`, held duplicates)                    |
+| `RUN_IN_PROGRESS`                               | Another run of the same kind is open                                                                                | Wait an hour: an abandoned run is closed then                                                                    |
+| `the integration layer is not on this database` | `integration_begin` is missing (404 `PGRST202` or `42883`): a wrong `SUPABASE_URL`, or a database without the layer | Fix the environment's `SUPABASE_URL`; there is no fallback                                                       |
+| `NOT_ALLOWED`                                   | The key is not the project's secret key                                                                             | Fix the environment's `SUPABASE_SERVICE_ROLE_KEY` (`webling-sync/README.md`)                                     |
 
 ## Phase 3: Webling on the layer
 
-`webling-sync/src/sync.py` runs each step (members, then events) in one of
-three modes, `INTEGRATION_MODE`: the workflow input `mode`, else the GitHub
-environment's variable, else `legacy`. Scheduled runs have no input, so a
-merge to `main` changes nothing on prod until the variable is set.
-
-- `legacy`: `webling.py` and `events.py` as before (their log now shows
-  event and calendar ids instead of titles; a golden test pins their HTTP
-  calls).
-- `shadow`: legacy, then the same Webling read as a dry run of the layer.
-  Only the run row and the group and calendar catalog (new rows, Webling
-  ids bound to the seeded rows) are written through the layer; the job's
-  status is legacy's.
-- `layer`: `integration_begin` → `integration_stage` (500 records per
-  call, only the keys in `capabilities`) → `integration_apply` →
-  `integration_finish`, which is always called once the run is open (a
-  crash ends it as `failed`, error `adapter_crash`). Only a missing
-  `integration_begin` (404 `PGRST202` or `42883`) falls back to legacy;
-  anything later fails the run. Exit 0 only when the run ends `ok`.
+`webling-sync/src/sync.py` runs each step (members, then events) through
+the layer: `integration_begin` → `integration_stage` (500 records per call,
+only the keys in `capabilities`) → `integration_apply` →
+`integration_finish`, which is always called once the run is open (a crash
+ends it as `failed`, error `adapter_crash`). A database without
+`integration_begin` (404 `PGRST202` or `42883`) is an error like any other,
+with no fallback. Exit 0 only when the run ends `ok`.
 
 The core in `src/integration/` knows no provider; `src/webling_adapter/`
-makes the legacy scripts' Webling calls and sends what they write (names
-trimmed, values as Webling has them, the portal link as description and
-url; from phase 4 the link as url only, with `ends_on` and `all_day`). A member Webling cannot fully answer is sent as a problem
+reads Webling and sends what it has (names trimmed, values as Webling has
+them, the portal link as the link's url, from phase 4 with `ends_on` and
+`all_day`; a database of capabilities version 1 gets the link as
+description too). A member Webling cannot fully answer is sent as a problem
 (`missing_field`, `fetch_failed`): seen, so never gone, and not written.
 The events scope is the calendars Webling answered completely, so an
 unanswered calendar cannot lose events; Webling's unset date is
@@ -504,13 +480,32 @@ was read. The workflow inputs `accept_gone`, `accept_status_drop`,
 `accept_status_gain` and `accept_events_gone` become the apply's
 overrides.
 
-Switch (operations, after Promotion 1): dev in `layer` (a dry run, then a
-real run), prod in `shadow` for 2 to 3 nights against the numbers in
-`webling-sync/README.md` ("Switching to the layer"), then prod in `layer`.
-Rollback: `INTEGRATION_MODE=legacy`, safe only while no merge has moved a
+**The switch.** Until 3c, `INTEGRATION_MODE` chose the old scripts
+(`webling.py`, `events.py`, writing directly through PostgREST), a shadow
+mode (the old scripts, then a dry run of the layer) or the layer. Dev ran a
+dry run and switched to the layer on 2026-10-28. Prod ran one shadow night
+(2026-10-28/29: the old scripts wrote, and the layer's dry run had the same
+numbers) and switched on 2026-10-29; its first layer run was started by
+hand (GitHub run 40834994585, 07:22 UTC): 73 events adopted, the 12
+holiday events the old sync had written replaced by 13 holidays, members
+unchanged. The calendars Webling no longer has (#184) followed the same
+day.
+
+**3c** removed the old scripts, the modes, `INTEGRATION_MODE` (with the
+workflow input `mode`) and the fallback for a database without the layer,
+the same day rather than after two weeks in layer mode, and
+`20261102120000_remove_legacy_sync_support.sql` drops `events_keep_span`
+(see "End dates and holidays"). There is no rollback by setting: going back
+to the old sync means reverting 3c, safe only while no merge has moved a
 Webling link and no group status was changed with
-`integration_set_mapping`. PR 3c removes the legacy path after two weeks
-in layer mode.
+`integration_set_mapping` (the old sync's guard predicted with the seeded
+rule), and without `events_keep_span` its event upsert fails once a start
+moves past a last day. The database keeps what still serves:
+`member_status_from_labels()` (the status of members without a live link),
+`integration_connections.legacy_note_prefix` (prod still has registrations
+the old sync wrote whose notes only start with `Imported from Webling`),
+`events_all_day`, and the adoption of unlinked rows with a Webling id and
+the replacement of holiday events, which find nothing left to do.
 
 ## The app reads the configuration (phase 3b)
 
@@ -521,8 +516,8 @@ a mapping change on the Integrations page it loads them again. From them:
 
 - **Chips** (`visibleLabels()`): a label is hidden when its catalog group
   is (`hidden`; the label is the group's `label`, else its name); a label
-  the catalog does not know yet (the legacy sync writes labels without
-  registering groups) when it matches the connection's
+  the catalog does not know (such as a stale label of a member gone from
+  the provider) when it matches the connection's
   `settings.hidden_group_pattern`; the app's own `new` and `probetraining`
   always.
 - **Trainers** in the training plan (`hasTrainerLabel()`): members of
@@ -531,10 +526,10 @@ a mapping change on the Integrations page it loads them again. From them:
   rule (contains "erwachsenentrainer", case ignored).
 - **Provider names** (`providerName()`): `display_name` of the connection.
 - **Daten-Assistent** (club dates): an existing event is the provider's
-  when it has a live `event_links` row; without any link row (events the
-  legacy sync wrote before the layer's first run) the Webling portal link
-  in the description still tells; an event whose links are all gone is the
-  app's.
+  when it has a live `event_links` row; without any link row (events of
+  earlier years the old sync wrote, which the layer never linked) the
+  Webling portal link in the description still tells; an event whose links
+  are all gone is the app's.
 
 Without the configuration (member accounts, which may not read it; a
 database without the layer, as when Netlify deploys the app before a
@@ -560,24 +555,22 @@ be `YYYY-MM-DD` (a CHECK, `NOT VALID`: an old row written otherwise stays
 readable, but cannot be updated until its date is fixed), and an index
 serves the overlap.
 
-**All day.** The legacy sync writes Webling's all-day entries as 00:00 to
-00:00. The migration turns such rows into `all_day` without times, and the
-trigger `events_all_day` keeps doing so for every writer (the legacy sync
-goes on writing 00:00 until the switch); real times written to an all-day
-event make it timed again, all day set by the app or the layer drops the
-times.
+**All day.** The old sync wrote Webling's all-day entries as 00:00 to
+00:00. The migration turned such rows into `all_day` without times, and the
+trigger `events_all_day` keeps doing so for every writer; real times
+written to an all-day event make it timed again, all day set by the app or
+the layer drops the times.
 
-**The last day and the legacy sync.** The legacy sync (until the switch,
-and again after a rollback to it) upserts a Webling event's start but
-knows no last day. When it moves the start of an event whose last day the
-app (_Bis_) or an earlier layer run set, the trigger `events_keep_span`
-moves the last day by as many days: the event keeps its length, and the
-upsert does not fail on `events_date_to_check` once the start passes the
-old last day. Only for the sync's direct writes (`service_role`): staff
-send both days (the form checks them; on a linked event the days Webling
-owns are locked and not sent), and the layer writes the last day Webling
-sends (its event writers run only inside `integration_apply`, SECURITY
-DEFINER: `current_user` is the owner, also when the sync calls it).
+**The last day.** Staff send both days (the form checks them; on a linked
+event the days Webling owns are locked and not sent), and the layer writes
+the last day Webling sends (its event writers run only inside
+`integration_apply`, SECURITY DEFINER: `current_user` is the owner, also
+when the sync calls it). The old sync upserted a start but knew no last
+day; for its direct writes (`service_role`) the trigger `events_keep_span`
+moved the last day along. Phase 3c drops it
+(`20261102120000_remove_legacy_sync_support.sql`): a direct write of a
+start after the last day is refused (`events_date_to_check`) as for
+everyone else.
 
 **Deploy order.** On a database that already has phase 2
 (`events.date_to`, `training_plan_breaks.connection`), an app deployed
@@ -596,9 +589,9 @@ minute is enough.
 `date_to`. Webling owns `event.all_day` and no longer the description: the
 portal link is the link's url (`event_links.url`, the event page links to
 it). Descriptions that are only that url are cleared, by the migration for
-the linked events and by the layer for events it links later (the switch
-may come after this migration). `integration_field_policy_ok()` knows
-`event.all_day`. On the edit page of a linked Webling event the
+the linked events and by the layer for events it links later.
+`integration_field_policy_ok()` knows `event.all_day`. On the edit page of
+a linked Webling event the
 description is open from then on, while _Datum_, _Bis_, _Ganztägig_ and
 the times stay locked (`lockedEventFields()` in `src/lib/eventLinks.ts`:
 all day and the times go together, as either changes the other). The
@@ -612,7 +605,7 @@ database's capabilities have version 2 (`webling_adapter/dates.span()`),
 and the description only to version 1, so the adapter on `main` works
 with a database before and after the promotion. All day is Webling's flag
 `isAllDay` when an event has it, else an entry from 00:00 to 00:00 (or
-without an end), as the legacy sync wrote them. An end at 00:00 belongs
+without an end), as the old sync wrote them. An end at 00:00 belongs
 to the day before: Webling ends an all-day entry at midnight after its
 last day (Karfreitag 03.04. ends on 04.04. 00:00, seen on the first layer
 run on Dev), and a timed event that ends at midnight (19:00 to 00:00 the
@@ -628,28 +621,14 @@ alone when an admin mapped it otherwise) and handles the calendar's events
 the layer had linked: unused ones of this year are deleted, the others
 stay as the app's (gone link); in the migration, so the next run does not
 count them under the events gone guard. Holidays reach
-`training_plan_breaks` only through the layer:
-
-- **Before the switch** (prod until phase 3 sets `INTEGRATION_MODE=layer`,
-  nothing linked): the legacy sync goes on writing the holidays as events
-  in the General section, as before; the TK enters holidays by hand (or
-  reads them in with the plan). The migration changes nothing there.
-- **The first layer run** brings them as holidays (a TK entry with the same
-  title and dates is taken over) and replaces the events the legacy sync
-  wrote for them, recognised by the Webling id and the portal link as
-  description: deleted when unused, else kept as the app's with a gone
-  link (`event_gone_kept`). The run counts `breaks_inserted`,
-  `holiday_events_deleted` and `holiday_events_kept`; none of it is under
-  the events gone guard. In shadow mode the dry run shows these numbers,
-  and `adopted` is the other calendars' events only.
-- **A rollback to legacy** writes the holidays as events again; the next
-  layer run replaces them again.
-
-Known gaps: a Webling event changed from timed to all day while the legacy
-sync still runs is stored without times but not as all day (the trigger
-cannot tell the legacy upsert's 00:00 from a cleared time); the first layer
-run of version 2 sets it. The legacy sync skips events that began before
-January 1, so a camp over New Year arrives only through the layer.
+`training_plan_breaks` only through the layer: a run brings them as
+holidays (a TK entry with the same title and dates is taken over). The
+first layer run also replaced the events the old sync had written for them
+(the General section), recognised by the Webling id and the portal link as
+description: deleted when unused, else kept as the app's with a gone link
+(`event_gone_kept`); it counted `breaks_inserted`,
+`holiday_events_deleted` and `holiday_events_kept`, none of it under the
+events gone guard (on prod 13 holidays for 12 such events, 2026-10-29).
 
 A provider's holiday is read-only in the app but for "Dojo zu"
 (_Trainings & Ferien_ shows where it comes from and offers no delete), and
@@ -663,10 +642,10 @@ participant of an event under way stays open until the list is read again
 or the event's last day (`ends_on`) is over.
 
 `supabase/checks/event_dates.sql` (CI job `db-validate`) checks what the
-migration left, the legacy sync's writes, the date checks, the overlap
-filters, capabilities and policy, the layer's end dates and all day, the
-holidays before and after the switch and after a rollback, and the issues
-of holidays and multi-day events.
+migrations left (`events_keep_span` gone), all day for every writer, the
+date checks, the overlap filters, capabilities and policy, the layer's end
+dates and all day, the holidays replacing the holiday events the old sync
+wrote, and the issues of holidays and multi-day events.
 
 ## Integrations page (phase 5)
 
@@ -680,8 +659,8 @@ Einstellungen; `src/routes/dashboard/integrations/`, helpers in
   Run workflow mit accept_gone = 60", computed from the run's `guard`) or
   failed (its error code), no successful run for 36 hours, open errors.
   The same conditions put a warning dot on the avatar and the menu entry
-  (`dashboard/+layout.ts`); a kind the layer never ran raises nothing, so
-  there is no dot before phase 3's switch.
+  (`dashboard/+layout.ts`); a kind never run (a new connection, or one
+  without events) raises nothing.
 - **Numbers**: members and events linked, members gone, holidays, open
   issues (errors and warnings), catalog rows to review; the latest run and
   success per kind with "vor …" and a stale chip.
@@ -710,8 +689,6 @@ Einstellungen; `src/routes/dashboard/integrations/`, helpers in
   new preview. A preview fits only the inputs and the catalog rows it was
   made on: when the rows reload in place (another admin saved), inputs
   left as loaded take the new values and Save waits for a new preview.
-  Save also waits while an input is invalid. While the connection has no
-  members run of the layer (before phase 3's switch) the editor warns not
-  to change anything.
+  Save also waits while an input is invalid.
 
 A database without the layer shows "noch nicht eingerichtet" instead.

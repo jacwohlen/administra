@@ -1,6 +1,6 @@
 """The four calls of the integration layer (docs/INTEGRATIONS.md, phase 2).
 
-    begin(connection, kind, scope, ...) -> Run, or LAYER_MISSING
+    begin(connection, kind, scope, ...) -> Run
     Run.stage(records)    chunks of 500, keys filtered to the capabilities
     Run.apply(accept)     identity, mapping, guards, writes (one transaction)
     Run.finish(report)    closes the run, deletes the staged records
@@ -17,17 +17,6 @@ from integration.client import ClientError
 CHUNK = 500
 
 CAPABILITY_KEYS = {'members': 'member_keys', 'events': 'event_keys'}
-
-
-class LayerMissing:
-    """integration_begin is not on this database (Promotion 1 not done):
-    the only answer a caller may fall back to the legacy sync on."""
-
-    def __repr__(self):
-        return 'LAYER_MISSING'
-
-
-LAYER_MISSING = LayerMissing()
 
 
 class LayerError(Exception):
@@ -56,9 +45,10 @@ class Layer:
         self.client = client
 
     def begin(self, connection, kind, scope, dry_run=False, trigger='manual', runner=None):
-        """Opens a run. Returns a Run, or LAYER_MISSING when the database
-        has no integration_begin (404 PGRST202 or 42883). Any other answer
-        raises LayerError (NOT_ALLOWED, RUN_IN_PROGRESS, ...)."""
+        """Opens a run and returns it. Anything else raises LayerError:
+        NOT_ALLOWED, RUN_IN_PROGRESS, ..., and a database without
+        integration_begin (404 PGRST202 or 42883), which has no layer to
+        sync through (no fallback since phase 3c)."""
         options = {'scope': scope, 'dry_run': bool(dry_run), 'trigger': trigger}
         if runner:
             options['runner'] = runner
@@ -68,7 +58,9 @@ class Layer:
         except ClientError as err:
             raise LayerError('begin', str(err), 'network') from None
         if reply.kind == 'missing':
-            return LAYER_MISSING
+            # Status, code and the function's name only: log-safe
+            raise LayerError('begin', f"the integration layer is not on this database ({reply.error})",
+                             reply.code)
         if reply.kind != 'ok':
             raise LayerError('begin', reply.error, reply.code)
         if not isinstance(reply.body, dict) or not isinstance(reply.body.get('run'), int):

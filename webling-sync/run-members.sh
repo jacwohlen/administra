@@ -20,5 +20,5 @@ if [ -z "${ANONYMIZE:-}" ]; then
     if [ "$ENV" = "prod" ]; then export ANONYMIZE=false; else export ANONYMIZE=true; fi
 fi
 
-# Run the Python script
-exec "$(dirname "$0")/.env/bin/python" "$(dirname "$0")/src/webling.py"
+# Run the sync through the integration layer (--dry-run passes through)
+exec "$(dirname "$0")/.env/bin/python" "$(dirname "$0")/src/sync.py" members "$@"

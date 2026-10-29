@@ -211,8 +211,8 @@ export function isStale(lastSuccess: string | null | undefined, now: Date | numb
 /**
  * What an admin should look at for a connection: the latest members or
  * events run refused or failed, no success for 36 hours, open errors. A
- * kind the layer never ran (before phase 3's switch, or a connection
- * without events) and a disabled connection raise nothing.
+ * kind never run (a new connection, or one without events) and a disabled
+ * connection raise nothing.
  */
 export function connectionAlerts(
   c: ConnectionStatus,
@@ -241,16 +241,6 @@ export function needsAttention(
   now: Date | number = Date.now()
 ): boolean {
   return connections.some((c) => connectionAlerts(c, now).length > 0);
-}
-
-/**
- * Before phase 3's switch the legacy sync still writes members and predicts
- * statuses with the old rule (member_status_from_labels()): a mapping
- * changed now would make it refuse or mispredict. The switch shows as the
- * connection's first real (not dry) members run of the layer.
- */
-export function beforeLayerSwitch(c: ConnectionStatus): boolean {
-  return !c.last_run.members;
 }
 
 // ----- Runs -----

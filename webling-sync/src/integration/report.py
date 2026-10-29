@@ -60,8 +60,8 @@ def by_status(values):
 
 
 def refusal_line(kind, run_id, guard, hint, dry=False):
-    """The error line of a refused run with its override. A dry run (also
-    the shadow mode's) only says what a real run would meet."""
+    """The error line of a refused run with its override. A dry run only
+    says what a real run would meet."""
     reason = code(guard.get('refused'))
     plan = guard.get(kind) if isinstance(guard.get(kind), dict) else {}
     status = guard.get('status') if isinstance(guard.get('status'), dict) else {}

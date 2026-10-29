@@ -1,4 +1,4 @@
-"""sync.py: mode, options, the legacy commands, and the real process."""
+"""sync.py: options, the environment, INTEGRATION_MODE, and the real process."""
 import os
 import subprocess
 import sys
@@ -11,16 +11,6 @@ from fake_world import ENV, SRC, World, set_env
 from integration.anonymize import anonymize
 
 
-class Legacy:
-    def __init__(self, status=0):
-        self.status = status
-        self.commands = []
-
-    def __call__(self, command):
-        self.commands.append(command[1:])
-        return self.status
-
-
 @pytest.fixture
 def world(monkeypatch):
     set_env(monkeypatch, INTEGRATION_MODE=None, INTEGRATION_DRY_RUN=None, INTEGRATION_TRIGGER=None,
@@ -28,77 +18,68 @@ def world(monkeypatch):
     return World().install(monkeypatch)
 
 
-@pytest.mark.parametrize('value', [None, '', '  '])
-def test_unset_or_empty_mode_is_legacy(world, monkeypatch, value):
+NOTICE = 'is no longer used: the sync always runs through the integration layer (phase 3c)'
+
+
+@pytest.mark.parametrize('value, line', [
+    (None, None),
+    ('', None),
+    ('  ', None),
+    ('layer', None),
+    (' Layer ', None),
+    ('legacy', f'INTEGRATION_MODE=legacy {NOTICE}'),
+    ('shadow', f'INTEGRATION_MODE=shadow {NOTICE}'),
+    ('layr', f'INTEGRATION_MODE=layr {NOTICE}'),
+    # Not a mode word: the line goes without the value
+    ('legacy; echo zora@example.com', f'INTEGRATION_MODE {NOTICE}'),
+    ('x' * 21, f'INTEGRATION_MODE {NOTICE}'),
+])
+def test_integration_mode_is_no_longer_read(world, monkeypatch, capsys, value, line):
+    # A leftover variable on a GitHub environment never stops the run
+    fake = FakeLayer(world)
     if value is not None:
         monkeypatch.setenv('INTEGRATION_MODE', value)
-    legacy = Legacy(5)
-    assert sync.main(['members'], legacy=legacy) == 5
-    assert legacy.commands == [[str(SRC / 'webling.py')]]
-    assert world.calls == []
+    assert sync.main(['members']) == 0
+    assert len(fake.begun) == 1 and len(fake.finished) == 1
+    out = capsys.readouterr().out
+    notices = [text for text in out.splitlines() if 'INTEGRATION_MODE' in text]
+    assert notices == ([line] if line else [])
 
 
-@pytest.mark.parametrize('argv, command', [
-    (['members'], ['webling.py']),
-    (['events'], ['events.py']),
-    (['events', '--calendar', '22333', 'judo'], ['events.py', '--calendar', '22333', 'judo']),
-    (['list'], ['events.py', 'list']),
-])
-def test_legacy_commands(world, argv, command):
-    legacy = Legacy()
-    sync.main(argv, legacy=legacy)
-    assert legacy.commands == [[str(SRC / command[0]), *command[1:]]]
-
-
-def test_legacy_runs_with_the_same_interpreter():
-    assert sync.legacy_command('members', [])[0] == sys.executable
-
-
-def test_mode_from_the_environment_and_the_flag(world, monkeypatch):
-    FakeLayer(world)
-    monkeypatch.setenv('INTEGRATION_MODE', 'layer')
-    legacy = Legacy()
-    assert sync.main(['members'], legacy=legacy) == 0
-    assert legacy.commands == []
-    # --mode wins over the variable
-    assert sync.main(['members', '--mode', 'legacy'], legacy=legacy) == 0
-    assert legacy.commands == [[str(SRC / 'webling.py')]]
-
-
-def test_unknown_mode_stops(world, monkeypatch, capsys):
-    monkeypatch.setenv('INTEGRATION_MODE', 'layr')
-    legacy = Legacy()
-    assert sync.main(['members'], legacy=legacy) == 2
-    assert legacy.commands == []
+def test_mode_option_is_gone(world, capsys):
+    with pytest.raises(SystemExit) as stop:
+        sync.main(['members', '--mode', 'layer'])
+    assert stop.value.code == 2
+    assert 'unrecognized arguments: --mode' in capsys.readouterr().err
 
 
 def test_run_options_from_the_environment(world, monkeypatch):
     fake = FakeLayer(world)
-    set_env(monkeypatch, INTEGRATION_MODE='layer', INTEGRATION_DRY_RUN='true',
+    set_env(monkeypatch, INTEGRATION_DRY_RUN='true',
             INTEGRATION_TRIGGER='schedule', INTEGRATION_RUNNER='github:4242',
             WEBLING_ACCEPT_GONE='60', WEBLING_ACCEPT_STATUS_DROP=' ', WEBLING_ACCEPT_STATUS_GAIN='7',
             WEBLING_ACCEPT_EVENTS_GONE='9')
-    sync.main(['members'], legacy=Legacy())
+    sync.main(['members'])
     assert fake.begun[0]['p_options'] == {'scope': {'complete': True}, 'dry_run': True,
                                           'trigger': 'schedule', 'runner': 'github:4242'}
     assert fake.applied[0]['p_options'] == {'accept_gone': 60, 'accept_status_gain': 7}
     world.calendars = {501: {'title': 'Judo Agenda', 'events': []}}
-    sync.main(['events'], legacy=Legacy())
+    sync.main(['events'])
     assert fake.applied[1]['p_options'] == {'accept_events_gone': 9}
 
 
 def test_trigger_defaults_to_manual(world, monkeypatch):
     fake = FakeLayer(world)
-    set_env(monkeypatch, INTEGRATION_MODE='layer', INTEGRATION_TRIGGER='app')
-    sync.main(['members'], legacy=Legacy())
+    set_env(monkeypatch, INTEGRATION_TRIGGER='app')
+    sync.main(['members'])
     assert fake.begun[0]['p_options']['trigger'] == 'manual'
     assert 'runner' not in fake.begun[0]['p_options']
 
 
 def test_anonymize_is_required_for_members(world, monkeypatch, capsys):
     FakeLayer(world)
-    set_env(monkeypatch, INTEGRATION_MODE='layer', ANONYMIZE=None)
-    assert sync.main(['members'], legacy=Legacy()) == 1
+    set_env(monkeypatch, ANONYMIZE=None)
+    assert sync.main(['members']) == 1
     assert 'Please export ANONYMIZE' in capsys.readouterr().out
 
 
@@ -108,60 +89,51 @@ def test_dev_gets_fake_members(world, monkeypatch):
     world.members = [{'id': 1001, 'parents': [10], 'properties': {
         'Vorname': 'Zora', 'Name': 'Geheimname', 'Geburtstag': '1990-05-06', 'Mobile': '079',
         'E-Mail': 'zora@example.com'}}]
-    set_env(monkeypatch, INTEGRATION_MODE='layer', ANONYMIZE='true')
-    sync.main(['members'], legacy=Legacy())
+    set_env(monkeypatch, ANONYMIZE='true')
+    sync.main(['members'])
     data = fake.staged[0]['data']
     assert data['email'] == 'member-1001@example.invalid' and 'Zora' not in str(data)
 
 
+@pytest.mark.parametrize('member_id, birthday, fake', [
+    ('4711', '2010-04-01', ('Clara', 'Ersatz 4711', '2010-05-03')),
+    ('1001', '1.2.1990', ('Felix', 'Skizze 1001', '1990-09-15')),
+    ('1001', None, ('Felix', 'Skizze 1001', None)),
+    ('99999', 'unbekannt', ('Ben', 'Beispiel 99999', None)),
+])
+def test_fake_members_stay_the_same(member_id, birthday, fake):
+    # The values dev's fake members already have: a change would rename them all
+    data = {'firstname': 'Zora', 'lastname': 'Geheimname', 'birthday': birthday, 'mobile': '079',
+            'email': 'zora@example.com', 'groups': [{'id': '10', 'name': 'Aktiv'}]}
+    assert anonymize(member_id, data) == {
+        'firstname': fake[0], 'lastname': fake[1], 'birthday': fake[2], 'mobile': None,
+        'email': f'member-{member_id}@example.invalid', 'groups': [{'id': '10', 'name': 'Aktiv'}]}
+
+
 def test_missing_settings_stop_the_layer(world, monkeypatch, capsys):
-    set_env(monkeypatch, INTEGRATION_MODE='layer', WEBLING_EMAIL=None)
-    assert sync.main(['events'], legacy=Legacy()) == 1
+    set_env(monkeypatch, WEBLING_EMAIL=None)
+    assert sync.main(['events']) == 1
     assert 'Please export WEBLING_EMAIL' in capsys.readouterr().out
 
 
-def test_list_in_layer_mode(world, monkeypatch, capsys):
+def test_list_shows_calendar_ids(world, capsys):
     world.calendars = {501: {'title': 'Judo Agenda', 'events': []}}
-    monkeypatch.setenv('INTEGRATION_MODE', 'layer')
-    assert sync.main(['list'], legacy=Legacy()) == 0
+    assert sync.main(['list']) == 0
     assert '  - 501: Judo Agenda' in capsys.readouterr().out
 
 
 def test_calendar_is_for_events_only(world):
-    assert sync.main(['members', '--calendar', '1'], legacy=Legacy()) == 2
+    assert sync.main(['members', '--calendar', '1']) == 2
 
 
-def run_process(args, env):
-    return subprocess.run([sys.executable, *args], env=env, capture_output=True, text=True,
-                          cwd=SRC.parent, timeout=60)
-
-
-@pytest.mark.parametrize('script, kind, missing', [
-    ('webling.py', 'members', 'WEBLING_DOMAIN'),
-    ('webling.py', 'members', 'ANONYMIZE'),
-    ('events.py', 'events', 'WEBLING_PASSWORD'),
-])
-def test_legacy_mode_keeps_the_exit_status_and_errors(script, kind, missing):
-    # A real process each: sync.py in legacy mode runs the script itself,
-    # so a missing setting stops it exactly as before (no network: the
-    # scripts stop before any call)
-    env = {k: v for k, v in {**os.environ, **ENV}.items() if k != missing}
-    env.pop('INTEGRATION_MODE', None)
-    direct = run_process([f'src/{script}'], env)
-    wrapped = run_process(['src/sync.py', kind], env)
-    assert direct.returncode == wrapped.returncode == 1
-    assert direct.stderr == wrapped.stderr
-    assert f'Please export {missing}' in wrapped.stderr
-    assert wrapped.stdout == 'Mode: legacy\n' + direct.stdout
-
-
-def test_anonymize_is_the_legacy_one(monkeypatch):
-    set_env(monkeypatch)
-    sys.modules.pop('webling', None)
-    import webling
-    for member_id in [1000, 1001, 4711, 99999, 9999999]:
-        for birthday in ['2010-04-01', None, '', 'unbekannt', '1.2.1990']:
-            data = {'id': member_id, 'firstname': 'Zora', 'lastname': 'Geheimname',
-                    'birthday': birthday, 'mobile': '079', 'labels': ['Aktiv'], 'email': 'z@x.ch'}
-            legacy = webling.anonymize(member_id, dict(data))
-            assert anonymize(str(member_id), data) == legacy
+def test_real_process(world):
+    # python src/sync.py as the workflow runs it, with a stale INTEGRATION_MODE
+    # (no network: the run stops at the missing setting, before any call)
+    env = {k: v for k, v in {**os.environ, **ENV, 'INTEGRATION_MODE': 'legacy'}.items()
+           if k != 'WEBLING_DOMAIN'}
+    done = subprocess.run([sys.executable, 'src/sync.py', 'members'], env=env, capture_output=True,
+                          text=True, cwd=SRC.parent, timeout=60)
+    assert done.returncode == 1
+    assert done.stdout.splitlines() == [f'INTEGRATION_MODE=legacy {NOTICE}', 'Layer members',
+                                        'Error: Please export WEBLING_DOMAIN']
+    assert done.stderr == ''

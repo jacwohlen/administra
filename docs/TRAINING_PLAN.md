@@ -135,7 +135,4 @@ the Webling sync on the integration layer brings them as holidays
 (`connection`, `external_id`): a period of up to three days closes the dojo,
 a longer one is school holidays, and a TK entry with the same name and
 dates is taken over. Their title and dates are Webling's (read-only, no
-delete); "Dojo zu" stays the TK's and later runs never change it. Until
-the sync is switched to the layer (phase 3), Webling's holidays stay
-events, as before, and holidays are entered here (or read in with the
-plan).
+delete); "Dojo zu" stays the TK's and later runs never change it.
