@@ -413,6 +413,22 @@ gone. A future event gone from the provider that nobody used in the app
 (attendance, app registrations, exams, medals) is deleted; any other is kept
 as the app's and reported.
 
+**A calendar the provider no longer has.** A complete run settles only the
+calendars it read, and a calendar deleted at the provider is never read
+again. An adapter that knows every calendar the provider has sends them as
+`scope.provider_calendars` (capabilities version 3,
+`20261101120000_provider_calendars_gone.sql`; an older database ignores the
+key, an older adapter leaves things as before). A complete run then counts
+the catalog's calendars missing from that list as read, without records
+(`scope.calendars_gone`): their events and holidays within the window go
+under the same guard, their open issues resolve, and
+`integration_calendars.gone_at` marks them ("Nicht mehr in Webling" on the
+Integrations page, nothing left to review) until the provider lists them
+again; the mark is written by every run, a dry or refused one too, like new
+catalog rows. Webling lists the calendars its API user can see: one it
+loses access to looks deleted, which the events gone guard catches beyond
+a few events.
+
 **Run log and issues.** Admins read `integration_runs` (kind, scope,
 trigger, runner, dry run, status, counts, guard numbers, accepted
 overrides, the adapter's counters, an error code) and `integration_issues`.
@@ -596,14 +612,11 @@ database's capabilities have version 2 (`webling_adapter/dates.span()`),
 and the description only to version 1, so the adapter on `main` works
 with a database before and after the promotion. All day is Webling's flag
 `isAllDay` when an event has it, else an entry from 00:00 to 00:00 (or
-without an end), as the legacy sync wrote them. A timed event that ends
-at midnight (19:00 to 00:00 the next day) ends on the day before.
-**Not verified against Webling:** whether the end of an all-day entry is
-its last day (assumed, `ALL_DAY_END_INCLUSIVE = True`) or the day after.
-Check one holiday in the
-Webling portal against the training plan after the first layer run; if
-every holiday is a day too long, set the constant to `False` (tested both
-ways). From version 2 on the window and the registrations go by the last
+without an end), as the legacy sync wrote them. An end at 00:00 belongs
+to the day before: Webling ends an all-day entry at midnight after its
+last day (Karfreitag 03.04. ends on 04.04. 00:00, seen on the first layer
+run on Dev), and a timed event that ends at midnight (19:00 to 00:00 the
+next day) ends on the day before too. From version 2 on the window and the registrations go by the last
 day: a camp that began before January 1 is still sent, one under way still
 gets its participants.
 
@@ -687,7 +700,8 @@ Einstellungen; `src/routes/dashboard/integrations/`, helpers in
   and a dismissed one can be reopened.
 - **Mapping**: status, rank, hidden and role per group; target, section
   and "Dojo zu" days per calendar; new rows marked "Neu" and confirmed with
-  "Geprüft". Preview is `integration_set_mapping`'s dry run (how many
+  "Geprüft", calendars the provider no longer lists marked "Nicht mehr in
+  Webling" (and listed last). Preview is `integration_set_mapping`'s dry run (how many
   members get another status, how many lose or gain a membership, whether
   that is over the guard; when more than half of one status is what trips
   it, the preview names the status instead of the limit for all); Save,

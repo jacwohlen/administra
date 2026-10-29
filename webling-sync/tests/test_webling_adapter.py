@@ -148,10 +148,11 @@ def span_of(begin, end, **extra):
     ('2026-11-06 19:00:00', '2026-11-07 00:00:00', {}, (None, False)),
     ('2026-11-06 19:00:00', '2026-11-08 00:00:00', {}, ('2026-11-07', False)),
     ('2026-11-06 19:00:00', '2026-11-08', {}, ('2026-11-07', False)),
-    # All day as the legacy sync wrote it: 00:00 to 00:00, the end inclusive (assumed)
-    ('2026-10-03 00:00:00', '2026-10-18 00:00:00', {}, ('2026-10-18', True)),
+    # All day as Webling keeps it: 00:00 to 00:00 of the day after the last day
+    ('2026-04-03 00:00:00', '2026-04-04 00:00:00', {}, (None, True)),
+    ('2026-09-26 00:00:00', '2026-10-12 00:00:00', {}, ('2026-10-11', True)),
     ('2026-12-25 00:00:00', '2026-12-25 00:00:00', {}, (None, True)),
-    ('2026-12-25', '2026-12-26', {}, ('2026-12-26', True)),
+    ('2026-12-25', '2026-12-26', {}, (None, True)),
     # Without an end, or an end that cannot be read or lies before the start: one day
     ('2026-12-25 00:00:00', None, {}, (None, True)),
     ('2026-11-05 18:00:00', 'morgen', {}, (None, False)),
@@ -159,21 +160,12 @@ def span_of(begin, end, **extra):
     # Webling's own flag wins over the times (timed: until midnight, as above)
     ('2026-10-03 00:00:00', '2026-10-18 00:00:00', {'isAllDay': False}, ('2026-10-17', False)),
     ('2026-10-03 08:00:00', '2026-10-04 12:00:00', {'isAllDay': True}, ('2026-10-04', True)),
-    ('2026-11-06 19:00:00', '2026-11-07 00:00:00', {'isAllDay': True}, ('2026-11-07', True)),
+    ('2026-04-03 00:00:00', '2026-04-04 00:00:00', {'isAllDay': True}, (None, True)),
+    ('2026-11-06 19:00:00', '2026-11-07 00:00:00', {'isAllDay': True}, (None, True)),
     ('2026-10-03 08:00:00', '2026-10-04 12:00:00', {'isAllDay': 'ja'}, ('2026-10-04', False)),
 ])
 def test_span(begin, end, extra, expected):
     assert span_of(begin, end, **extra) == expected
-
-
-def test_span_if_webling_ends_all_day_entries_the_day_after(monkeypatch):
-    # The switch for an exclusive end (see ALL_DAY_END_INCLUSIVE)
-    monkeypatch.setattr(dates, 'ALL_DAY_END_INCLUSIVE', False)
-    assert span_of('2026-10-03 00:00:00', '2026-10-19 00:00:00') == ('2026-10-18', True)
-    assert span_of('2026-12-25 00:00:00', '2026-12-26 00:00:00') == (None, True)
-    # Timed events are not concerned
-    assert span_of('2026-11-13 18:00:00', '2026-11-15 14:00:00') == ('2026-11-15', False)
-    assert span_of('2026-11-06 19:00:00', '2026-11-08 00:00:00') == ('2026-11-07', False)
 
 
 def test_event_record_for_version_2():
@@ -182,7 +174,7 @@ def test_event_record_for_version_2():
                            CAL, 'club', version=2)['data']
     assert holiday == {
         'calendar': {'id': '501', 'name': 'Judo Agenda'}, 'title': 'Kyu Prüfung',
-        'starts_on': '2026-10-03', 'ends_on': '2026-10-18', 'all_day': True,
+        'starts_on': '2026-10-03', 'ends_on': '2026-10-17', 'all_day': True,
         'time_from': None, 'time_to': None, 'location': 'Dojo', 'max_participants': 12, 'url': link}
     timed = event_record(7001, props(), CAL, 'club', version=2)['data']
     assert (timed['ends_on'], timed['all_day'], timed['time_from'], timed['time_to']) == (
@@ -206,7 +198,7 @@ def test_version_2_counts_a_multi_day_event_until_its_end(world):
     assert sorted(old) == ['12'] and 'participants' not in old['12']
     adapter = WeblingAdapter('club', 'key', 'sync@example.com', 'pw')
     records = {r['external_id']: r['data'] for r in adapter.records(adapter.plan('events'), run_info(version=2))}
-    assert records['11']['ends_on'] == '2026-01-02'
+    assert records['11']['ends_on'] == '2026-01-01'
     assert records['12']['participants'] == [{'member': '1001', 'state': 'confirmed'}]
 
 
@@ -240,14 +232,17 @@ def test_event_plan_scope_is_the_calendars_read(world):
     adapter = events_fixture(world)
     world.failing = {'calendar/502'}
     plan = adapter.plan('events')
-    assert plan.scope == {'complete': True, 'calendars': ['501']}
+    # 502 could not be read: not in the scope, but Webling still has it
+    assert plan.scope == {'complete': True, 'calendars': ['501'], 'provider_calendars': ['501', '502']}
     assert adapter.errors == 1
 
 
 def test_event_plan_with_a_selection(world):
     adapter = events_fixture(world)
     adapter.selectors = ['aikido']
-    assert adapter.plan('events').scope == {'complete': True, 'calendars': ['502']}
+    # Every calendar Webling has, whatever the selection
+    assert adapter.plan('events').scope == {'complete': True, 'calendars': ['502'],
+                                            'provider_calendars': ['501', '502']}
     adapter.selectors = ['501', 'aikido']
     assert adapter.plan('events').scope['calendars'] == ['501', '502']
     adapter.selectors = ['999']

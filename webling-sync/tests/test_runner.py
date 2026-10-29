@@ -95,6 +95,17 @@ def test_layer_ok_exits_0(world, capsys):
     assert 'Final: ok' in out
 
 
+def test_calendars_the_provider_no_longer_has_are_logged_by_id(world, capsys):
+    # The database answers with the catalog's calendars missing from provider_calendars
+    FakeLayer(world)
+    adapter = FakeAdapter()
+    adapter.plan = lambda kind: Plan({'complete': True, 'calendars': ['501'], 'calendars_gone': ['502', '503']})
+    status, _ = go(world, adapter=adapter, kind='events')
+    assert status == 0
+    assert 'Calendars the provider no longer has (settled as read, without events): 502, 503' \
+        in capsys.readouterr().out
+
+
 def test_layer_missing_falls_back_to_legacy(world, capsys):
     # No integration_* function on this database (Promotion 1 not done)
     status, legacy = go(world, legacy=Legacy(0))

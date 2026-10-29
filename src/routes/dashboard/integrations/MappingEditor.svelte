@@ -112,7 +112,10 @@
   );
   let sortedCalendars = $derived(
     [...calendars].sort(
-      (a, b) => Number(a.reviewed) - Number(b.reviewed) || a.name.localeCompare(b.name, 'de')
+      (a, b) =>
+        Number(a.gone_at != null) - Number(b.gone_at != null) ||
+        Number(a.reviewed) - Number(b.reviewed) ||
+        a.name.localeCompare(b.name, 'de')
     )
   );
 
@@ -378,7 +381,13 @@
                 <tr class="border-t border-surface-200-800">
                   <td class="py-1 pr-2 min-w-40">
                     <span class="font-medium">{row.name}</span>
-                    {#if !row.reviewed}
+                    {#if row.gone_at}
+                      <span class="chip preset-tonal-surface text-xs">
+                        {$_('page.integrations.mapping.gone', {
+                          values: { provider: connection.display_name }
+                        })}
+                      </span>
+                    {:else if !row.reviewed}
                       <span class="chip preset-tonal-warning text-xs">
                         {$_('page.integrations.mapping.new')}
                       </span>

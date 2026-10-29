@@ -362,7 +362,7 @@ BEGIN
   r := public.integration_begin('webling', 'events', '{"scope": {"complete": false}, "dry_run": true}');
   PERFORM public.integration_finish((r->>'run')::bigint, '{}');
   RESET ROLE;
-  PERFORM pg_temp.eq('P1 capabilities version 2', r->'capabilities'->>'version', '2');
+  PERFORM pg_temp.ok('P1 capabilities version 2 or later', (r->'capabilities'->>'version')::integer >= 2);
   PERFORM pg_temp.ok('P1 events take ends_on and all_day',
     r->'capabilities'->'event_keys' @> '["ends_on", "all_day"]'::jsonb);
   PERFORM pg_temp.eq('P2 Webling owns dates and all day, no longer the description',

@@ -186,7 +186,7 @@ def link(event_id):
 def events_world(confirmed):
     world = World()
     world.calendars = {501: {'title': 'Judo Agenda', 'events': [e[0] for e in EVENTS if e[1] == 501]},
-                       502: {'title': 'Aikido', 'events': [e[0] for e in EVENTS if e[1] == 502] + [61099]}}
+                       502: {'title': 'Aikido Agenda', 'events': [e[0] for e in EVENTS if e[1] == 502] + [61099]}}
     world.events = {e[0]: {'title': f' {e[2]} ', 'begin': e[3], 'end': e[4], 'place': e[5],
                            'maxParticipants': e[6]} for e in EVENTS}
     world.events[61099] = {'title': 'Serie', 'begin': '1970-01-01 00:00:00', 'end': None}
@@ -252,6 +252,25 @@ def test_events_second_run_is_unchanged_and_follows_webling(db, monkeypatch, cap
         ','.join(str(m) for m in sorted([members[0], members[2]]))
 
 
+def has_calendars_gone(db):
+    """The database settles calendars the provider no longer has (20261101120000, capabilities 3)."""
+    return value(db, "SELECT count(*) FROM information_schema.columns WHERE table_schema = 'public' "
+                     "AND table_name = 'integration_calendars' AND column_name = 'gone_at'") == '1'
+
+
+def holidays_world(members):
+    """events_world with a holiday calendar (503) and a camp in 501."""
+    world = events_world([(members[0], 'confirmed'), (members[1], 'declined')])
+    world.calendars[503] = {'title': 'Ferien und Feiertage', 'events': [61201]}
+    world.events[61201] = {'title': 'Weihnachten', 'begin': '2026-12-24 00:00:00', 'end': '2026-12-27 00:00:00',
+                           'place': None, 'maxParticipants': None}
+    world.calendars[501]['events'].append(61202)
+    world.events[61202] = {'title': 'Lager', 'begin': '2026-11-13 18:00:00', 'end': '2026-11-15 14:00:00',
+                           'place': None, 'maxParticipants': None}
+    world.participants.update({61201: [], 61202: []})
+    return world
+
+
 def test_holidays_and_end_dates_from_version_2(db, monkeypatch, capsys):
     if not has_end_dates(db):
         pytest.skip('the database has no end dates yet (20261030120000)')
@@ -259,15 +278,7 @@ def test_holidays_and_end_dates_from_version_2(db, monkeypatch, capsys):
     # A holiday the legacy sync wrote as an event before the switch
     db.query(f"""INSERT INTO public.events (id, title, description, date, "timeFrom", "timeTo", section)
                  VALUES (61201, 'Weihnachten', '{link(61201)}', '2026-12-24', '00:00', '00:00', 'General')""")
-    world = events_world([(members[0], 'confirmed'), (members[1], 'declined')])
-    world.calendars[503] = {'title': 'Ferien und Feiertage', 'events': [61201]}
-    world.events[61201] = {'title': 'Weihnachten', 'begin': '2026-12-24 00:00:00', 'end': '2026-12-26 00:00:00',
-                           'place': None, 'maxParticipants': None}
-    world.calendars[501]['events'].append(61202)
-    world.events[61202] = {'title': 'Lager', 'begin': '2026-11-13 18:00:00', 'end': '2026-11-15 14:00:00',
-                           'place': None, 'maxParticipants': None}
-    world.participants.update({61201: [], 61202: []})
-    status, run = sync_run(db, monkeypatch, world, 'events')
+    status, run = sync_run(db, monkeypatch, holidays_world(members), 'events')
     assert status == 0, capsys.readouterr().out
     result = run['result']
     assert (result['inserted'], result['unchanged'], result['breaks_inserted'],
@@ -280,6 +291,35 @@ def test_holidays_and_end_dates_from_version_2(db, monkeypatch, capsys):
     # The camp ends on its last day, with its times
     assert value(db, """SELECT concat_ws('|', date, date_to, all_day::text, "timeFrom", "timeTo", description)
                           FROM public.events WHERE id = 61202""") == '2026-11-13|2026-11-15|false|18:00|14:00'
+
+
+def test_a_calendar_webling_no_longer_has(db, monkeypatch, capsys):
+    if not has_calendars_gone(db):
+        pytest.skip('the database does not settle gone calendars yet (20261101120000)')
+    members = STATE['participants']
+    # Aikido Agenda (502) is deleted in Webling, with its two events and the
+    # one without a date (an open issue); the other calendars stay as they are
+    world = holidays_world(members)
+    del world.calendars[502]
+    status, run = sync_run(db, monkeypatch, world, 'events')
+    out = capsys.readouterr().out
+    assert status == 0, out
+    assert run['scope']['calendars'] == ['501', '502', '503'] and run['scope']['calendars_gone'] == ['502']
+    assert 'Calendars the provider no longer has (settled as read, without events): 502' in out
+    result = run['result']
+    assert (result['gone'], result['deleted'], result['unchanged'], result['breaks_deleted']) == (2, 2, 4, 0)
+    assert value(db, "SELECT count(*) FROM public.events WHERE id IN (61004, 61005)") == '0'
+    assert value(db, "SELECT (resolved_at IS NOT NULL)::text FROM public.integration_issues "
+                     "WHERE code = 'invalid_event' AND external_id = '61099'") == 'true'
+    assert value(db, "SELECT (gone_at IS NOT NULL)::text FROM public.integration_calendars "
+                     "WHERE connection = 'webling' AND external_id = '502'") == 'true'
+
+    # The next run: nothing left to settle, the calendar stays marked
+    status, run = sync_run(db, monkeypatch, world, 'events')
+    assert status == 0, capsys.readouterr().out
+    assert (run['result']['gone'], run['result']['unchanged']) == (0, 4)
+    assert value(db, "SELECT count(*) FROM public.integration_calendars "
+                     "WHERE connection = 'webling' AND gone_at IS NOT NULL") == '1'
 
 
 def test_a_database_without_the_layer_falls_back(monkeypatch, capsys):

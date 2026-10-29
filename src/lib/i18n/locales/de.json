@@ -358,6 +358,7 @@
         "roleTrainer": "Trainer:in",
         "reviewed": "Geprüft",
         "new": "Neu",
+        "gone": "Nicht mehr in {provider}",
         "calendars": "Kalender",
         "calendarsHelp": "Events landen in der Sparte, Ferien in der Trainingsplanung. Ferien bis zur angegebenen Anzahl Tage schliessen das Dojo, leer heisst immer. Gilt ab dem nächsten Event-Lauf.",
         "noCalendars": "Noch keine Kalender.",

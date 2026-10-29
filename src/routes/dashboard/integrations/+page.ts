@@ -3,8 +3,10 @@ import { supabaseClient } from '$lib/supabase';
 import { fetchAllRows } from '$lib/assistant/attendance';
 import { isAdmin } from '$lib/roles';
 import { MERGE_COLUMNS, type MergeMember } from '$lib/memberMerge';
+import { isMissingSchemaError } from '$lib/eventLinks';
 import {
   CALENDAR_COLUMNS,
+  CALENDAR_COLUMNS_WITHOUT_GONE,
   GROUP_COLUMNS,
   ISSUE_COLUMNS,
   RUN_COLUMNS,
@@ -36,6 +38,38 @@ async function byIds<T>(table: string, columns: string, ids: number[]): Promise<
     rows.push(...((data ?? []) as T[]));
   }
   return rows;
+}
+
+function readCalendars(columns: string): Promise<CalendarRow[]> {
+  return fetchAllRows<CalendarRow>((from, to) =>
+    supabaseClient
+      .from('integration_calendars')
+      .select(columns)
+      .order('connection')
+      .order('id')
+      .range(from, to)
+      .returns<CalendarRow[]>()
+  );
+}
+
+/**
+ * The calendar catalog. A database without integration_calendars.gone_at
+ * (the app may deploy before a promotion applies 20261101120000) refuses
+ * the column: read without it, no calendar counts as gone.
+ */
+async function loadCalendars(): Promise<CalendarRow[]> {
+  try {
+    return await readCalendars(CALENDAR_COLUMNS);
+  } catch (e) {
+    if (
+      !isMissingSchemaError(e) ||
+      !String((e as { message?: unknown }).message).includes('gone_at')
+    ) {
+      throw e;
+    }
+    const rows = await readCalendars(CALENDAR_COLUMNS_WITHOUT_GONE);
+    return rows.map((row) => ({ ...row, gone_at: null }));
+  }
 }
 
 const empty = {
@@ -91,14 +125,7 @@ export const load: PageLoad = async ({ parent, depends }) => {
           .order('id')
           .range(from, to)
       ),
-      fetchAllRows<CalendarRow>((from, to) =>
-        supabaseClient
-          .from('integration_calendars')
-          .select(CALENDAR_COLUMNS)
-          .order('connection')
-          .order('id')
-          .range(from, to)
-      )
+      loadCalendars()
     ]);
     if (runs.error) throw runs.error;
 
