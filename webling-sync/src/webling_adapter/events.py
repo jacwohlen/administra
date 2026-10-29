@@ -105,12 +105,14 @@ def problem_record(event_id, calendar, problem):
 
 
 def calendars(api, selectors, counters):
-    """W3 and W4: the calendars this run reads, and the fetch errors.
+    """W3 and W4: the calendars this run reads, the fetch errors, and the
+    ids of every calendar Webling has (W3).
 
     selectors: ids or parts of names (case-insensitive), as the legacy
     --calendar; none means every calendar. A calendar whose W4 fails is
     not read, so it is left out of the scope (its events cannot go)."""
     ids = api.calendars()
+    listed = [str(calendar_id) for calendar_id in ids]
     found, errors = [], 0
     for calendar_id in ids:
         try:
@@ -123,7 +125,7 @@ def calendars(api, selectors, counters):
     counters['calendars'] = len(ids)
     counters['calendars_read'] = len(found)
     if not selectors:
-        return found, errors
+        return found, errors, listed
     chosen = []
     for selector in selectors:
         for calendar in found:
@@ -131,7 +133,7 @@ def calendars(api, selectors, counters):
                 continue
             if str(calendar.id) == selector.strip() or selector.lower() in calendar.title.lower():
                 chosen.append(calendar)
-    return chosen, errors
+    return chosen, errors, listed
 
 
 def last_day(properties, begin, version):

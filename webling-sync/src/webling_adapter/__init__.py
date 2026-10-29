@@ -32,11 +32,12 @@ class WeblingAdapter:
         """What the run covers. Members: every member (complete). Events:
         the calendars read completely (W3, W4) before the run opens, so a
         calendar Webling did not answer is never in the scope and none of
-        its events can go."""
+        its events can go; and every calendar Webling has (W3), so the
+        layer settles the calendars it no longer has (capabilities 3)."""
         if kind == 'members':
             return Plan(kind, {'complete': True}, [])
         try:
-            chosen, errors = events.calendars(self.api, self.selectors, self.counters)
+            chosen, errors, listed = events.calendars(self.api, self.selectors, self.counters)
         except WeblingError as err:
             raise FetchFailed(str(err)) from None
         self.errors += errors
@@ -44,7 +45,8 @@ class WeblingAdapter:
             raise FetchFailed('Webling has no calendars')
         if self.selectors and not chosen:
             raise UsageError('no calendar matched --calendar (sync.py list shows the ids)')
-        return Plan(kind, {'complete': True, 'calendars': [str(c.id) for c in chosen]}, chosen)
+        return Plan(kind, {'complete': True, 'calendars': [str(c.id) for c in chosen],
+                           'provider_calendars': listed}, chosen)
 
     def records(self, plan, run):
         try:
@@ -61,7 +63,7 @@ class WeblingAdapter:
     def list_calendars(self):
         """Calendar ids and titles, to find an id for --calendar (by hand;
         titles are not for the sync's log)."""
-        chosen, errors = events.calendars(self.api, [], {})
+        chosen, errors, _ = events.calendars(self.api, [], {})
         for calendar in chosen:
             print(f"  - {calendar.id}: {calendar.title}")
         return 1 if errors else 0

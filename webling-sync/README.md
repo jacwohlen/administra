@@ -142,6 +142,12 @@ Webling (the same calls as the legacy scripts) and builds the records.
   timed event until midnight at 00:00) and `all_day` (Webling's
   `isAllDay`, else 00:00 to 00:00), no description (the portal link is the
   link's url), and the window and participants go by the last day.
+  Every calendar Webling lists goes along as `provider_calendars`: a
+  database whose capabilities have version 3 settles the calendars Webling
+  no longer has (deleted, or no longer visible to the API user) as read
+  without events, so their events go under the events gone guard and their
+  issues resolve; the log names their ids ("Calendars the provider no
+  longer has").
 - Records are staged 500 per call, each with only the keys the database
   lists in `capabilities` (a newer adapter never sends what an older
   database does not know). `integration_finish` is always called once the

@@ -232,14 +232,17 @@ def test_event_plan_scope_is_the_calendars_read(world):
     adapter = events_fixture(world)
     world.failing = {'calendar/502'}
     plan = adapter.plan('events')
-    assert plan.scope == {'complete': True, 'calendars': ['501']}
+    # 502 could not be read: not in the scope, but Webling still has it
+    assert plan.scope == {'complete': True, 'calendars': ['501'], 'provider_calendars': ['501', '502']}
     assert adapter.errors == 1
 
 
 def test_event_plan_with_a_selection(world):
     adapter = events_fixture(world)
     adapter.selectors = ['aikido']
-    assert adapter.plan('events').scope == {'complete': True, 'calendars': ['502']}
+    # Every calendar Webling has, whatever the selection
+    assert adapter.plan('events').scope == {'complete': True, 'calendars': ['502'],
+                                            'provider_calendars': ['501', '502']}
     adapter.selectors = ['501', 'aikido']
     assert adapter.plan('events').scope['calendars'] == ['501', '502']
     adapter.selectors = ['999']
