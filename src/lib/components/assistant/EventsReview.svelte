@@ -184,8 +184,9 @@
 
   /**
    * Which provider keeps each event up to date (event_links). None on a
-   * database without the integration layer or when they cannot be read:
-   * the Webling portal link in the description tells then.
+   * database without the integration layer, when they cannot be read, or
+   * for an event of an earlier year the sync wrote before the layer and
+   * never linked: the Webling portal link in the description tells then.
    */
   async function loadLinks(days: DateSpan): Promise<EventLinkRow[]> {
     try {

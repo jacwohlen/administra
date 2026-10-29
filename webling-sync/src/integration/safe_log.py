@@ -1,13 +1,19 @@
-"""Log helpers of the layer path (the rules are in src/safe_log.py).
+"""Helpers that keep personal data and secrets out of the sync's logs.
 
-The logs are public (GitHub Actions of a public repository): counts, ids
-and codes only, never a response body, a name, a title or a URL with a key.
-postgrest_error() is re-exported from the legacy helper, so both paths
-shorten PostgREST errors the same way until the legacy scripts go (PR 3c).
+The logs are public: the repository is public, and so are its GitHub
+Actions logs. Counts, ids and codes only, never a name, a title, or:
+
+- a response body. Webling answers with member data, and PostgREST puts
+  the whole row into constraint errors ("Failing row contains (...)"), so
+  failed layer calls are shortened by postgrest_error().
+- a Webling URL: the API key is a query parameter. Exceptions from
+  requests (HTTPError, ConnectionError, ...) contain the full URL, so
+  Webling calls raise WeblingError without it (webling_adapter/api.py).
+- the message of an unexpected exception (it may quote a value):
+  crash_line() prints its type and where it was raised.
 """
+import re
 import traceback
-
-from safe_log import postgrest_error
 
 __all__ = ['postgrest_error', 'crash_line']
 
@@ -20,3 +26,29 @@ def crash_line(err):
         return type(err).__name__
     last = frames[-1]
     return f"{type(err).__name__} at {last.filename.rsplit('/', 1)[-1]}:{last.lineno}"
+
+
+# A PostgreSQL message may quote a rejected value, e.g.
+# 'invalid input syntax for type date: "1.2.1990"'
+QUOTED_VALUE = re.compile(r'(invalid input (?:syntax|value) for [^:]*): .*', re.IGNORECASE)
+FAILING_ROW = re.compile(r'\s*Failing row contains .*', re.IGNORECASE | re.DOTALL)
+
+
+def postgrest_error(response):
+    """Status, error code and message of a failed PostgREST call.
+
+    PostgREST answers {"code", "message", "details", "hint"}. "details" holds
+    the row or key values ("Failing row contains (...)", "Key (email)=(...)
+    already exists"), so only code and message are kept.
+    """
+    try:
+        body = response.json()
+    except ValueError:
+        body = None
+    if not isinstance(body, dict):
+        return f"HTTP {response.status_code}"
+    code = body.get('code') or '-'
+    message = str(body.get('message') or '')
+    message = FAILING_ROW.sub('', message)
+    message = QUOTED_VALUE.sub(r'\1: [value]', message)
+    return f"HTTP {response.status_code} {code}: {message}".rstrip(': ')

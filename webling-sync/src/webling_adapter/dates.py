@@ -9,7 +9,8 @@ FIRST_REAL_YEAR = 1971
 
 # Webling's all-day flag of a calendar event, when it sends one (a JSON
 # boolean); without it an entry from 00:00 to 00:00 (or without an end) is
-# all day, which is how the legacy sync wrote Webling's all-day entries.
+# all day, which is how the sync wrote Webling's all-day entries before the
+# layer.
 ALL_DAY_PROPERTY = 'isAllDay'
 
 

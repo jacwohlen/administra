@@ -1,16 +1,16 @@
 """Webling calendar events as layer records (integration_stage, kind 'events').
 
-The values are the ones the legacy sync writes (events.py): title trimmed
-('Untitled Event' when empty), date and start time from begin, end time
-from end, place trimmed, the limit, and the Webling portal link as the
-link's url. The calendar goes up with its id and title; the layer's
-catalog gives the section (or makes the calendar's entries holidays).
+The values: title trimmed ('Untitled Event' when empty), date and start
+time from begin, end time from end, place trimmed, the limit, and the
+Webling portal link as the link's url. The calendar goes up with its id
+and title; the layer's catalog gives the section (or makes the
+calendar's entries holidays).
 
 A database whose capabilities have version 2 (phase 4) also gets the last
 day (ends_on, see dates.span) and all_day (an all-day event goes up without
 times), and no description: the portal link is the link's url, the
-description the app's. Version 1 gets the link as description, as the
-legacy sync writes it, and neither of the two.
+description the app's. Version 1 gets the link as description, and
+neither of the two.
 
 Registrations: an event not over by today carries its participants as
 [{member, state}] (member = the Webling member id, state as Webling has
@@ -21,8 +21,8 @@ list could not be read; [] means nobody, and removes the provider's rows.
 from collections import namedtuple
 
 from integration.clock import club_today
-from safe_log import WeblingError
 from webling_adapter import dates
+from webling_adapter.api import WeblingError
 
 # Webling property of a participant's state when the connection's settings
 # do not name one (participant_state_property, instance-specific)
@@ -108,9 +108,9 @@ def calendars(api, selectors, counters):
     """W3 and W4: the calendars this run reads, the fetch errors, and the
     ids of every calendar Webling has (W3).
 
-    selectors: ids or parts of names (case-insensitive), as the legacy
-    --calendar; none means every calendar. A calendar whose W4 fails is
-    not read, so it is left out of the scope (its events cannot go)."""
+    selectors: ids or parts of names (case-insensitive), from --calendar;
+    none means every calendar. A calendar whose W4 fails is not read, so
+    it is left out of the scope (its events cannot go)."""
     ids = api.calendars()
     listed = [str(calendar_id) for calendar_id in ids]
     found, errors = [], 0
@@ -139,7 +139,7 @@ def calendars(api, selectors, counters):
 def last_day(properties, begin, version):
     """The day an event ends, for the window and the registrations: its
     last day from version 2 on (a multi-day event under way still counts),
-    else its first, as the legacy sync."""
+    else its first."""
     if version >= 2:
         return dates.span(properties, begin, dates.split(properties.get('end'))).ends_on or begin.date
     return begin.date
@@ -148,8 +148,8 @@ def last_day(properties, begin, version):
 def event_records(api, chosen, run, domain, counters):
     """W6 (or one list call per calendar), W5, W7 and W8: the records of
     the chosen calendars. Events over before the run's window (scope.from,
-    January 1 by default, as the legacy sync skips earlier years) are not
-    sent. Returns (records, fetch errors)."""
+    January 1 of this year by default) are not sent. Returns (records,
+    fetch errors)."""
     # The database's day (Zurich); the runner's clock only if it said none
     today = run.today or club_today().isoformat()
     window = (run.scope or {}).get('from') or f"{today[:4]}-01-01"

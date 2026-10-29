@@ -2,15 +2,14 @@
 
 Fetches members and calendar events from Webling and translates them into
 layer records (members.py, events.py); everything else (identity, labels,
-statuses, sections, guards, writes) is the layer's. The calls are the
-legacy scripts' (api.py).
+statuses, sections, guards, writes) is the layer's. The calls are in
+api.py.
 """
 from collections import namedtuple
 
 from integration.runner import FetchFailed, UsageError
-from safe_log import WeblingError
 from webling_adapter import events, members
-from webling_adapter.api import WeblingApi
+from webling_adapter.api import WeblingApi, WeblingError
 
 Plan = namedtuple('Plan', 'kind scope calendars')
 

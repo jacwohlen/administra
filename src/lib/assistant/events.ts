@@ -19,7 +19,7 @@ export const SIMILAR_TITLE = 0.6;
 /** An insert that hits a taken id is tried again this often (see insertEvents) */
 export const ID_RETRIES = 10;
 
-/** Part of the description the Webling sync writes into the events it creates */
+/** Part of the description the Webling sync wrote into its events before the integration layer */
 const WEBLING_MARK = 'webling.ch/portal#/calendar/event/';
 
 // ----- Titles and dates -----
@@ -133,8 +133,9 @@ export function isTime(value: string): boolean {
 }
 
 /**
- * Whether the description is the Webling portal link the legacy sync
- * writes: tells Webling events apart where event_links cannot (see eventProvider).
+ * Whether the description is the Webling portal link the sync wrote before
+ * the integration layer: tells Webling events apart where event_links cannot
+ * (see eventProvider).
  */
 export function isWeblingEvent(description: string | null | undefined): boolean {
   return !!description && description.includes(WEBLING_MARK);
@@ -143,9 +144,9 @@ export function isWeblingEvent(description: string | null | undefined): boolean 
 /**
  * The connection that keeps an event up to date, null for the app's own:
  * its live event_links row. Without any link row (event_links not loaded,
- * a database without the integration layer, or an event the legacy sync
- * wrote before the layer's first run linked it) the Webling portal link in
- * the description tells. An event whose links are all gone is the app's.
+ * a database without the integration layer, or an event of an earlier year
+ * the sync wrote before the layer and never linked) the Webling portal link
+ * in the description tells. An event whose links are all gone is the app's.
  */
 export function eventProvider(event: Pick<KnownEvent, 'description' | 'provider'>): string | null {
   if (event.provider !== undefined) return event.provider;

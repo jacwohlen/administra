@@ -14,15 +14,15 @@ from integration.safe_log import postgrest_error
 
 # A function or table this database does not have (yet): PostgREST's schema
 # cache misses (PGRST202 function, PGRST205 table) and Postgres' own codes.
-# Only integration_begin acts on it (the layer is not here: fall back);
-# anywhere later in a run it is an error like any other.
+# integration_begin reports it as a missing layer; anywhere later in a run
+# it is an error like any other.
 MISSING_CODES = ('PGRST202', 'PGRST205', '42883', '42P01')
 
 
 def auth_headers(key):
     """New secret keys (sb_secret_...) are not JWTs: Supabase rejects them
     in the Authorization header, so they only go in apikey. Legacy
-    service_role JWTs are sent in both (as the legacy scripts do)."""
+    service_role JWTs are sent in both."""
     headers = {'apikey': key}
     if not key.startswith('sb_'):
         headers['Authorization'] = f"Bearer {key}"
@@ -78,7 +78,7 @@ class Client:
 
     def rpc(self, name, args):
         """POST rpc/<name> with named arguments. Returns a Reply; a network
-        error raises ClientError (type only, see safe_log.py)."""
+        error raises ClientError (type only, see integration/safe_log.py)."""
         try:
             response = self.transport(f"{self.url}/rest/v1/rpc/{name}", self.headers, args)
         except requests.RequestException as err:
