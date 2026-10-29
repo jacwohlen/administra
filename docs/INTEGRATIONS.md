@@ -596,14 +596,11 @@ database's capabilities have version 2 (`webling_adapter/dates.span()`),
 and the description only to version 1, so the adapter on `main` works
 with a database before and after the promotion. All day is Webling's flag
 `isAllDay` when an event has it, else an entry from 00:00 to 00:00 (or
-without an end), as the legacy sync wrote them. A timed event that ends
-at midnight (19:00 to 00:00 the next day) ends on the day before.
-**Not verified against Webling:** whether the end of an all-day entry is
-its last day (assumed, `ALL_DAY_END_INCLUSIVE = True`) or the day after.
-Check one holiday in the
-Webling portal against the training plan after the first layer run; if
-every holiday is a day too long, set the constant to `False` (tested both
-ways). From version 2 on the window and the registrations go by the last
+without an end), as the legacy sync wrote them. An end at 00:00 belongs
+to the day before: Webling ends an all-day entry at midnight after its
+last day (Karfreitag 03.04. ends on 04.04. 00:00, seen on the first layer
+run on Dev), and a timed event that ends at midnight (19:00 to 00:00 the
+next day) ends on the day before too. From version 2 on the window and the registrations go by the last
 day: a camp that began before January 1 is still sent, one under way still
 gets its participants.
 

@@ -137,12 +137,11 @@ Webling (the same calls as the legacy scripts) and builds the records.
   as `fetch_failed`, Webling's unset date (1970) as `no_date`. Participants
   go up for events from today on, and only when Webling's list was read.
   A database whose `capabilities` have version 2 (integrations phase 4)
-  gets the last day (`ends_on`; a timed event until midnight ends the day
-  before) and `all_day` (Webling's `isAllDay`, else 00:00 to 00:00), no
-  description (the portal link is the link's url),
-  and the window and participants go by the last day. That the end of an
-  all-day entry is its last day (inclusive) is an assumption, see
-  `ALL_DAY_END_INCLUSIVE` in `src/webling_adapter/dates.py`.
+  gets the last day (`ends_on`: an end at 00:00 belongs to the day before,
+  as Webling ends an all-day entry at midnight after its last day and a
+  timed event until midnight at 00:00) and `all_day` (Webling's
+  `isAllDay`, else 00:00 to 00:00), no description (the portal link is the
+  link's url), and the window and participants go by the last day.
 - Records are staged 500 per call, each with only the keys the database
   lists in `capabilities` (a newer adapter never sends what an older
   database does not know). `integration_finish` is always called once the

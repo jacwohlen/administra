@@ -12,13 +12,6 @@ FIRST_REAL_YEAR = 1971
 # all day, which is how the legacy sync wrote Webling's all-day entries.
 ALL_DAY_PROPERTY = 'isAllDay'
 
-# ASSUMPTION, not verified against Webling (docs/INTEGRATIONS.md, phase 4):
-# the end of an all-day entry is its last day, inclusive. Herbstferien from
-# Saturday 03.10. to Sunday 18.10. end on '2026-10-18 00:00:00'. Were
-# Webling's end exclusive (the day after, as in iCalendar), every holiday
-# would come one day too long: check one holiday in the Webling portal
-# against the first run's training plan, and set this to False if so.
-ALL_DAY_END_INCLUSIVE = True
 
 When = namedtuple('When', 'date time problem')
 Span = namedtuple('Span', 'ends_on all_day')
@@ -43,9 +36,11 @@ def span(properties, begin, end):
     """(ends_on, all_day) of an event whose begin could be read (split):
     ends_on is the last day when it is after the first, else None (one
     day, also for an end that is unset, unreadable or before the begin).
-    A timed event that ends at midnight (19:00 to 00:00 the next day) ends
-    on the day before. Sent only to a database whose capabilities have
-    version 2."""
+    An end at midnight belongs to the day before: Webling ends an all-day
+    entry at 00:00 of the day after its last day (Karfreitag 03.04. ends on
+    '2026-04-04 00:00:00', seen on the first layer run against Webling),
+    and a timed event until midnight (19:00 to 00:00) at 00:00 too. Sent
+    only to a database whose capabilities have version 2."""
     flag = properties.get(ALL_DAY_PROPERTY)
     if isinstance(flag, bool):
         all_day = flag
@@ -54,6 +49,6 @@ def span(properties, begin, end):
     if end.problem:
         return Span(None, all_day)
     last = end.date
-    if (all_day and not ALL_DAY_END_INCLUSIVE) or (not all_day and end.time == '00:00'):
+    if end.time == '00:00':
         last = (date.fromisoformat(end.date) - timedelta(days=1)).isoformat()
     return Span(last if last > begin.date else None, all_day)

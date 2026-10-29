@@ -217,7 +217,7 @@ LANGUAGE sql AS $$
   SELECT coalesce(jsonb_agg(jsonb_build_object(
     'external_id', e.id::text,
     'data', jsonb_build_object(
-      'calendar', jsonb_build_object('id', e.cal, 'name', CASE WHEN e.cal = 'c1' THEN 'Judo Agenda' ELSE 'Aikido' END),
+      'calendar', jsonb_build_object('id', e.cal, 'name', CASE WHEN e.cal = 'c1' THEN 'Judo Agenda' ELSE 'Aikido Agenda' END),
       'title', e.title, 'starts_on', pg_temp.fx_date(e.day),
       'time_from', e.time_from, 'time_to', CASE WHEN e.time_from = '00:00' THEN '00:00' ELSE '20:00' END,
       'location', e.location, 'max_participants', NULL,
@@ -344,6 +344,9 @@ BEGIN
     (SELECT count(*) FROM public.integration_connections) = 1
     AND (SELECT count(*) FROM public.integration_member_groups) = 16
     AND (SELECT count(*) FROM public.integration_calendars) = 6);
+  PERFORM pg_temp.eq('P2 the seeded calendars carry Webling''s titles',
+    (SELECT string_agg(name, ', ' ORDER BY name) FROM public.integration_calendars),
+    'Aikido Agenda, Club Agenda, Ferien und Feiertage, Judo Agenda, Judo Erwachsene Trainings, Judo Herren SMM');
   PERFORM pg_temp.eq('P2 staff cannot write the configuration',
     pg_temp.err($q$UPDATE public.integration_connections SET gone_min = 1000$q$),
     '42501 permission denied for table integration_connections');
@@ -1415,7 +1418,7 @@ BEGIN
       WHERE code = 'write_failed' AND external_id = '61035'), '61035 t');
   PERFORM pg_temp.as_sync();
   r := pg_temp.run('webling', 'events', '{"complete": false}', jsonb_build_array(jsonb_build_object(
-         'external_id', '61035', 'data', jsonb_build_object('calendar', jsonb_build_object('id', 'c2', 'name', 'Aikido'),
+         'external_id', '61035', 'data', jsonb_build_object('calendar', jsonb_build_object('id', 'c2', 'name', 'Aikido Agenda'),
          'title', 'Kurs 35', 'problem', 'fetch_failed'))));
   RESET ROLE;
   PERFORM pg_temp.eq('V12 a partial run that could not fetch it leaves it open',
