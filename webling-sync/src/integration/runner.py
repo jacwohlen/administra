@@ -144,6 +144,11 @@ def run_layer(options, adapter, layer):
         return LAYER_MISSING
     run_ = opened
     print(f"Layer {kind} run {run_.id} opened{' (dry run)' if options.dry_run else ''}")
+    gone = run_.scope.get('calendars_gone') if isinstance(run_.scope, dict) else None
+    if isinstance(gone, list) and gone:
+        # Ids only, as everywhere in the log
+        print(f"Calendars the provider no longer has (settled as read, without events): "
+              f"{', '.join(str(g) for g in gone)}")
 
     applied, finished = None, None
     outcome_error = error

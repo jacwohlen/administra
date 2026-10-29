@@ -490,12 +490,14 @@ export interface CalendarRow {
   closed_max_days: number | null;
   reviewed: boolean;
   last_seen_at: string | null;
+  /** The provider no longer lists it (a complete run's calendar list) */
+  gone_at: string | null;
 }
 
 export const GROUP_COLUMNS =
   'id, connection, external_id, name, label, status, rank, hidden, role, reviewed, last_seen_at';
 export const CALENDAR_COLUMNS =
-  'id, connection, external_id, name, target, section, closed_max_days, reviewed, last_seen_at';
+  'id, connection, external_id, name, target, section, closed_max_days, reviewed, last_seen_at, gone_at';
 
 /** What the editor's inputs hold for a group ('' for none; text inputs as typed) */
 export interface GroupDraft {

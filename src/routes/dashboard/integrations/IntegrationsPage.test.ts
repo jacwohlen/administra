@@ -213,7 +213,8 @@ const CALENDARS = [
     section: 'Judo',
     closed_max_days: null,
     reviewed: true,
-    last_seen_at: null
+    last_seen_at: null,
+    gone_at: null
   }
 ];
 
@@ -321,6 +322,28 @@ describe('integrations page', () => {
     );
     await fireEvent.click(screen.getByRole('button', { name: /Wieder öffnen/ }));
     expect(rpc).toHaveBeenCalledWith('integration_dismiss_issue', { p_issue: 7, p_dismiss: false });
+  });
+
+  it('marks a calendar the provider no longer has instead of asking to review it', () => {
+    const gone = {
+      ...CALENDARS[0],
+      id: 2,
+      external_id: 'c2',
+      name: 'Judo Erwachsene Trainings',
+      reviewed: false,
+      gone_at: hourAgo
+    };
+    renderPage({ ...data(), calendars: [gone, ...CALENDARS] });
+    const row = screen
+      .getByText('Judo Erwachsene Trainings', { selector: 'span.font-medium' })
+      .closest('tr')!;
+    expect(within(row).getByText('Nicht mehr in Webling')).toBeInTheDocument();
+    expect(within(row).queryByText('Neu')).not.toBeInTheDocument();
+    // listed after the calendars the provider still has
+    const names = screen
+      .getAllByText(/Agenda|Trainings/, { selector: 'span.font-medium' })
+      .map((n) => n.textContent);
+    expect(names).toEqual(['Judo Agenda', 'Judo Erwachsene Trainings']);
   });
 
   it('warns about mapping changes before the switch to the layer', () => {
