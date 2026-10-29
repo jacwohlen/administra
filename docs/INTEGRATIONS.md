@@ -444,18 +444,18 @@ events, holidays and the run log.
 
 ### When the sync is red
 
-| Run                                             | Meaning                                                                                                             | Do                                                                                                               |
-| ----------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
-| refused `empty_snapshot`                        | Webling answered no members                                                                                         | Check Webling and the API key, run again                                                                         |
-| refused `members_gone`                          | Many members gone at once                                                                                           | Check Webling; if intended, **Actions → Webling Sync → Run workflow** with `accept_gone` = the number in the log |
-| refused `status_drop`                           | Many members would lose their membership                                                                            | A new or renamed status group: map it on the Integrations page, run again; if intended, `accept_status_drop`     |
-| refused `status_gain`                           | Many members would start counting (and be approved automatically)                                                   | Check the groups; if intended, `accept_status_gain`                                                              |
-| refused `events_gone`                           | Many events gone at once                                                                                            | Check the calendar in Webling; if intended, `accept_events_gone`                                                 |
-| failed `<sqlstate>`                             | The apply failed as a whole                                                                                         | Actions log, then a bug report                                                                                   |
-| warning                                         | Records not written, or fetch errors                                                                                | Integrations page → issues (`invalid_record`, `id_conflict`, `write_failed`, held duplicates)                    |
-| `RUN_IN_PROGRESS`                               | Another run of the same kind is open                                                                                | Wait an hour: an abandoned run is closed then                                                                    |
-| `the integration layer is not on this database` | `integration_begin` is missing (404 `PGRST202` or `42883`): a wrong `SUPABASE_URL`, or a database without the layer | Fix the environment's `SUPABASE_URL`; there is no fallback                                                       |
-| `NOT_ALLOWED`                                   | The key is not the project's secret key                                                                             | Fix the environment's `SUPABASE_SERVICE_ROLE_KEY` (`webling-sync/README.md`)                                     |
+| Run                                                                             | Meaning                                                                                                             | Do                                                                                                               |
+| ------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| refused `empty_snapshot`                                                        | Webling answered no members                                                                                         | Check Webling and the API key, run again                                                                         |
+| refused `members_gone`                                                          | Many members gone at once                                                                                           | Check Webling; if intended, **Actions → Webling Sync → Run workflow** with `accept_gone` = the number in the log |
+| refused `status_drop`                                                           | Many members would lose their membership                                                                            | A new or renamed status group: map it on the Integrations page, run again; if intended, `accept_status_drop`     |
+| refused `status_gain`                                                           | Many members would start counting (and be approved automatically)                                                   | Check the groups; if intended, `accept_status_gain`                                                              |
+| refused `events_gone`                                                           | Many events gone at once                                                                                            | Check the calendar in Webling; if intended, `accept_events_gone`                                                 |
+| failed `<sqlstate>`                                                             | The apply failed as a whole                                                                                         | Actions log, then a bug report                                                                                   |
+| warning                                                                         | Records not written, or fetch errors                                                                                | Integrations page → issues (`invalid_record`, `id_conflict`, `write_failed`, held duplicates)                    |
+| `RUN_IN_PROGRESS`                                                               | Another run of the same kind is open                                                                                | Wait an hour: an abandoned run is closed then                                                                    |
+| `the integration layer is not on this database`                                 | `integration_begin` is missing (404 `PGRST202` or `42883`): a wrong `SUPABASE_URL`, or a database without the layer | Fix the environment's `SUPABASE_URL`; there is no fallback                                                       |
+| `HTTP 401` / `permission denied for function integration_begin` / `NOT_ALLOWED` | The key is not the project's secret key                                                                             | Fix the environment's `SUPABASE_SERVICE_ROLE_KEY` (`webling-sync/README.md`)                                     |
 
 ## Phase 3: Webling on the layer
 
@@ -500,7 +500,10 @@ to the old sync means reverting 3c, safe only while no merge has moved a
 Webling link and no group status was changed with
 `integration_set_mapping` (the old sync's guard predicted with the seeded
 rule), and without `events_keep_span` its event upsert fails once a start
-moves past a last day. The database keeps what still serves:
+moves past a last day. The GitHub environments keep
+`INTEGRATION_MODE=layer`: nothing reads it now, but workflows from before
+3c (older branches, re-runs of old runs) would run the old scripts without
+it. The database keeps what still serves:
 `member_status_from_labels()` (the status of members without a live link),
 `integration_connections.legacy_note_prefix` (prod still has registrations
 the old sync wrote whose notes only start with `Imported from Webling`),

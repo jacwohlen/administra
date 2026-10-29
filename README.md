@@ -307,7 +307,7 @@ The `webling-sync/` directory contains the Webling sync: it reads members and ev
 
 1. Create a virtual environment and install dependencies
 2. Configure the Webling and Supabase credentials in environment variables (and `ANONYMIZE` for members)
-3. From `webling-sync/`, run `python src/sync.py members` or `python src/sync.py events` (`--dry-run` writes nothing), or `python src/sync.py list` for the calendar ids
+3. From `webling-sync/`, run `python src/sync.py members` or `python src/sync.py events` (`--dry-run` changes no members or events; it still logs its run, see `webling-sync/README.md`), or `python src/sync.py list` for the calendar ids
 
 See `webling-sync/README.md` for detailed instructions.
 

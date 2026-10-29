@@ -302,10 +302,12 @@ cannot read the prod secrets, and an older branch, whose workflow still has
 the removed modes, cannot start a run of the old scripts against prod.
 
 The variable `INTEGRATION_MODE` (the switch to the layer) is no longer
-read: a value other than `layer` only prints a line, and the run goes
-through the layer. Delete it from the `prod` and `dev` environments once
-phase 3c is on `main` and promoted to `prod`; until then a manual run from
-the `prod` branch would read it, and without it run the old scripts.
+read: the workflow does not pass it, and `sync.py` only prints a line for a
+value other than `layer`. Leave it at `layer` on `prod` and `dev`. Workflows
+from before phase 3c still read it, on older branches and when an old run
+is re-run (a re-run uses that run's commit, for 30 days), and without it
+they would run the old scripts. Never re-run a Webling Sync run from before
+phase 3c; start a new run instead.
 
 ## Local Setup
 
@@ -457,7 +459,10 @@ environment file is not being sourced correctly. Make sure:
 `20261029120000_integration_layer.sql`. Fix the URL or apply the
 migrations; the sync has no other way to write.
 
-### `NOT_ALLOWED` from `integration_begin`
+### `permission denied for function integration_begin` (or `NOT_ALLOWED`)
 
-`SUPABASE_SERVICE_ROLE_KEY` is not the project's secret key (e.g. the anon
-or publishable key): only the service role may run the Webling sync.
+`SUPABASE_SERVICE_ROLE_KEY` is not the project's secret key: the anon or
+publishable key gets `HTTP 401 42501: permission denied for function
+integration_begin`, a mistyped key or another project's a plain `HTTP 401`,
+a user's token `NOT_ALLOWED`. Only the service role may run the Webling
+sync.
