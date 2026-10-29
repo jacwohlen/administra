@@ -6,16 +6,16 @@ should mean writing an adapter, not changing the schema or the app.
 
 The work runs in phases; each one ships on its own.
 
-| Phase                        | What                                                                                                                                                                                              | State                 |
-| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------- |
-| 0 Stop the damage            | The sync keeps registrations entered in the app; app ids fenced away from Webling ids; CI for the sync                                                                                            | done (#165)           |
-| 1a Status and links          | `membership_status`, `member_links`, Webling fields read-only in the app, access report                                                                                                           | done (#166)           |
-| 1b Enforce sign-in by status | Member accounts, directory and auto-approval require an active or passive membership                                                                                                              | done (#171)           |
-| 1c Safe merge                | Merge a duplicate (e.g. trial row and later Webling row) moving every reference in one transaction                                                                                                | done (#175)           |
-| 2 Integration layer          | Provider-neutral ingest in SQL (stage, apply, finish), mapping as configuration, run log; calendars the provider no longer has                                                                    | done (#176, #184)     |
-| 3 Webling on the new layer   | Webling adapter on a shared Python core (3a); the app reads the configuration (3b); dev on the layer since 2026-10-28, prod since 2026-10-29; the legacy scripts, modes and fallback removed (3c) | done (#177, #178, 3c) |
-| 4 End dates and holidays     | Multi-day and all-day events, Webling "Ferien" into `training_plan_breaks`                                                                                                                        | done (#179, #181)     |
-| 5 Integrations page          | Status of connections, runs and issues; group and calendar mapping editor                                                                                                                         | done (#178)           |
+| Phase                        | What                                                                                                                                                                                              | State                   |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------- |
+| 0 Stop the damage            | The sync keeps registrations entered in the app; app ids fenced away from Webling ids; CI for the sync                                                                                            | done (#165)             |
+| 1a Status and links          | `membership_status`, `member_links`, Webling fields read-only in the app, access report                                                                                                           | done (#166)             |
+| 1b Enforce sign-in by status | Member accounts, directory and auto-approval require an active or passive membership                                                                                                              | done (#171)             |
+| 1c Safe merge                | Merge a duplicate (e.g. trial row and later Webling row) moving every reference in one transaction                                                                                                | done (#175)             |
+| 2 Integration layer          | Provider-neutral ingest in SQL (stage, apply, finish), mapping as configuration, run log; calendars the provider no longer has                                                                    | done (#176, #184)       |
+| 3 Webling on the new layer   | Webling adapter on a shared Python core (3a); the app reads the configuration (3b); dev on the layer since 2026-10-28, prod since 2026-10-29; the legacy scripts, modes and fallback removed (3c) | done (#177, #178, #186) |
+| 4 End dates and holidays     | Multi-day and all-day events, Webling "Ferien" into `training_plan_breaks`                                                                                                                        | done (#179, #181)       |
+| 5 Integrations page          | Status of connections, runs and issues; group and calendar mapping editor                                                                                                                         | done (#178)             |
 
 ## Decisions (October 2026)
 
