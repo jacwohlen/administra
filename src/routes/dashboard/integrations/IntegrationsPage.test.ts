@@ -146,6 +146,7 @@ const member = (id: number, firstname: string, lastname: string): MergeMember =>
     lastname,
     birthday: '2001-02-03',
     email: null,
+    license_number: null,
     labels: [],
     membership_status: 'active',
     archivedAt: null,

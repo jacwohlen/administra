@@ -541,6 +541,45 @@ END $$;
 ROLLBACK TO SAVEPOINT s;
 
 -----------------
+-- The Lizenznummer: like the birthday, the dropped row's fills an empty one
+-- on an app row (trimmed); a kept row with its own keeps it; a Webling row
+-- never takes one (Webling owns it there)
+-----------------
+
+SAVEPOINT s;
+DO $$
+DECLARE
+  v_result jsonb;
+BEGIN
+  INSERT INTO public.members (id, firstname, lastname, labels, license_number) VALUES
+    (905, 'Lia', 'Lizenz', '["Aktiv"]', NULL),
+    (906, 'Lia', 'Lizenz', '["Aktiv"]', ' 4711 '),
+    (907, 'Leo', 'Lizenz', '["Aktiv"]', '1000'),
+    (908, 'Leo', 'Lizenz', '["Aktiv"]', '2000'),
+    (5905, 'Lou', 'Lizenz', '["Aktiv"]', NULL),
+    (909, 'Lou', 'Lizenz', '["Aktiv"]', '3000');
+  INSERT INTO public.member_links (connection, external_id, member_id, last_seen_at)
+  VALUES ('webling', '5905', 5905, now());
+
+  PERFORM pg_temp.as_admin();
+  v_result := public.merge_members_preview(905, 906);
+  PERFORM pg_temp.eq('preview: licence number filled', v_result->'fields'->>'license_number', 'from_drop');
+  v_result := public.merge_members(905, 906);
+  PERFORM pg_temp.eq('licence number filled', v_result->'fields'->>'license_number', 'from_drop');
+  v_result := public.merge_members(907, 908);
+  PERFORM pg_temp.eq('kept licence number differs', v_result->'fields'->>'license_number', 'kept_differs');
+  v_result := public.merge_members(5905, 909);
+  PERFORM pg_temp.eq('Webling row takes none', v_result->'fields'->>'license_number', 'not_copied_provider');
+  RESET ROLE;
+  PERFORM pg_temp.eq('licence numbers after',
+    (SELECT string_agg(id || '=' || coalesce(license_number, '-'), ',' ORDER BY id)
+       FROM public.members WHERE id IN (905, 907, 5905)), '905=4711,907=1000,5905=-');
+  PERFORM pg_temp.eq('the dropped number is in the log',
+    (SELECT dropped->'member'->>'license_number' FROM public.member_merges WHERE kept_id = 907), '2000');
+END $$;
+ROLLBACK TO SAVEPOINT s;
+
+-----------------
 -- Two app rows: no e-mail from a trial registration; the account that
 -- signed up with it is listed, but it never got in, so it loses nothing
 -----------------

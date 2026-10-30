@@ -638,7 +638,8 @@
         "field": {
           "birthday": "Birthday",
           "mobile": "Mobile",
-          "email": "E-mail"
+          "email": "E-mail",
+          "license_number": "Licence number"
         },
         "fieldDecision": {
           "from_drop": "{field}: taken over ({value})",

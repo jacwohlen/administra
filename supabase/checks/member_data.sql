@@ -357,6 +357,17 @@ SELECT pg_temp.eq('API functions bypassing RLS that anon may call',
      AND has_function_privilege('anon', p.oid, 'EXECUTE')),
   'cancel_trial,complete_trial_email,get_trial_status,is_admin,is_approved_user,is_writer,register_trial');
 
+-- A trigger function is never an RPC (Postgres refuses to call it outside a
+-- trigger), but EXECUTE for the API roles shows up as advisor noise
+-- (protect_last_admin lost its revoke in 20260915130000)
+SELECT pg_temp.eq('trigger functions bypassing RLS that the API roles may call',
+  (SELECT string_agg(p.proname, ',' ORDER BY p.proname) FROM pg_proc p
+   WHERE p.pronamespace = 'public'::regnamespace AND p.prosecdef
+     AND p.prorettype = 'trigger'::regtype
+     AND (has_function_privilege('anon', p.oid, 'EXECUTE')
+          OR has_function_privilege('authenticated', p.oid, 'EXECUTE'))),
+  NULL);
+
 -----------------
 -- Guards for later changes
 -----------------
