@@ -2,7 +2,8 @@
  * adsumus.ch — marketing site styles.
  * Colours, type and shape come from tokens.css, a copy of
  * static/brand/tokens.css (kept identical by marketing/marketing.test.js).
- * No web fonts, no JavaScript: the brand's system font stack.
+ * No web fonts: the brand's system font stack. The only script is
+ * assets/theme.js, the light/dark switch.
  */
 
 :root {
@@ -23,8 +24,10 @@
   color-scheme: light dark;
 }
 
+/* Dark: the device's setting unless the visitor picked light, or the
+   visitor's pick (classes set by assets/theme.js) */
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not(.light) {
     --surface: var(--color-surface-900);
     --tint: #261316;
     --ink: var(--color-surface-50);
@@ -35,6 +38,23 @@
     --focus: var(--color-primary-300);
     --bg: var(--color-surface-950);
   }
+}
+
+:root.dark {
+  --surface: var(--color-surface-900);
+  --tint: #261316;
+  --ink: var(--color-surface-50);
+  --ink-muted: var(--color-surface-300);
+  --line: var(--color-surface-800);
+  --accent: var(--color-primary-500);
+  --accent-strong: var(--color-primary-300);
+  --focus: var(--color-primary-300);
+  --bg: var(--color-surface-950);
+  color-scheme: dark;
+}
+
+:root.light {
+  color-scheme: light;
 }
 
 *,
@@ -255,6 +275,7 @@ p {
   min-height: 2.5rem;
   padding: 0.4rem 1rem;
   font-size: 0.95rem;
+  white-space: nowrap;
 }
 
 /* Hero -------------------------------------------------------------------- */
@@ -496,9 +517,13 @@ p {
 }
 
 @media (prefers-color-scheme: dark) {
-  .icon {
+  :root:not(.light) .icon {
     background: #3a1d22;
   }
+}
+
+:root.dark .icon {
+  background: #3a1d22;
 }
 
 .card h3 {
@@ -815,4 +840,81 @@ fieldset {
   color: var(--color-surface-950);
   padding: 0 0.25rem;
   border-radius: 0.2rem;
+}
+
+/* Language switch in the header: DE ⇄ EN (the full name is its label) */
+.lang-switch {
+  color: var(--ink-muted);
+  font-weight: 600;
+  font-size: 0.9rem;
+  letter-spacing: 0.04em;
+}
+
+.lang-switch:hover {
+  color: var(--ink);
+}
+
+/* Light/dark switch in the header; only with JavaScript (theme.js adds .js),
+   the moon in light mode, the sun in dark mode */
+.theme-toggle {
+  display: none;
+}
+
+.js .theme-toggle {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  width: 2.25rem;
+  height: 2.25rem;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--ink-muted);
+  cursor: pointer;
+}
+
+.theme-toggle:hover {
+  color: var(--ink);
+  background: color-mix(in srgb, var(--ink) 8%, transparent);
+}
+
+.theme-toggle:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.theme-toggle .icon-sun,
+:root.dark .theme-toggle .icon-moon {
+  display: none;
+}
+
+:root.dark .theme-toggle .icon-sun {
+  display: block;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .theme-toggle .icon-moon {
+    display: none;
+  }
+
+  :root:not(.light) .theme-toggle .icon-sun {
+    display: block;
+  }
+}
+
+/* Very narrow phones: the logo alone, tighter header */
+@media (max-width: 24rem) {
+  .site-header .wrap {
+    gap: 0.6rem;
+  }
+
+  .brand-name {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
 }
