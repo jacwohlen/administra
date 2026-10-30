@@ -304,13 +304,13 @@ promoting `main` into `prod` deploys them to production
 
 ### Webling Sync
 
-The `webling-sync/` directory contains a Python script for synchronizing member data from the Webling API.
+The `webling-sync/` directory contains the Webling sync: it reads members and events (with participant registrations) from the Webling API and writes them through the database's integration layer (`docs/INTEGRATIONS.md`). GitHub Actions runs it daily against prod (`.github/workflows/webling-sync.yml`).
 
-**Setup:**
+**Local runs:**
 
 1. Create a virtual environment and install dependencies
-2. Configure Webling API credentials in environment variables
-3. Run `python webling.py` to sync member data
+2. Configure the Webling and Supabase credentials in environment variables (and `ANONYMIZE` for members)
+3. From `webling-sync/`, run `python src/sync.py members` or `python src/sync.py events` (`--dry-run` changes no members or events; it still logs its run, see `webling-sync/README.md`), or `python src/sync.py list` for the calendar ids
 
 See `webling-sync/README.md` for detailed instructions.
 

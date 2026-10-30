@@ -1,9 +1,8 @@
 """Fake personal data for every target except prod (ANONYMIZE=true).
 
-The same values as anonymize() in src/webling.py, which the legacy member
-sync keeps (it cannot import this package without changing): a test pins
-the two together. Applied to member records before they are staged, so
-no real name ever reaches a dev database through the layer either.
+Applied to member records before they are staged, so no real name ever
+reaches a dev database. The values must not change: dev's fake members
+would all change with them (tests/test_sync_cli.py pins a few).
 """
 import hashlib
 import re

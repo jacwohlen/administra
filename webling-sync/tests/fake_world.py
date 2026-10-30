@@ -1,17 +1,14 @@
 """A fake Webling and Supabase behind `requests`, for the tests (no network).
 
-World answers every call the legacy scripts and the layer path make:
-module functions requests.get/post/delete/patch and requests.Session(). It
-records each call (method, URL, parameters, body, headers) so tests can pin
-them (the legacy golden test) or check what reached the log (privacy).
+World answers every call the sync makes (module functions
+requests.get/post and requests.Session()): Webling's API, and the layer's
+RPCs on Supabase (any other Supabase call fails the test). It records each
+call (method, URL, parameters, body, headers) so tests can check the calls
+and what reached the log (privacy).
 """
 import json
-import re
-import runpy
-import sys
-from datetime import date
 from pathlib import Path
-from urllib.parse import parse_qsl, urlsplit
+from urllib.parse import urlsplit
 
 import requests
 
@@ -29,10 +26,8 @@ ENV = {
 
 WEBLING = 'https://club.webling.ch'
 SUPABASE = 'https://db.example/rest/v1/'
-TODAY = date(2026, 10, 28)
 
 NO_JSON = object()
-NOW = re.compile(r'\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?\+00:00')
 
 
 class Response:
@@ -49,9 +44,10 @@ class Response:
 
 class World:
     """Webling data (members, groups, calendars, events, participants) and
-    Supabase answers (rows per table, RPC handlers). Paths in `failing`
-    answer 500, a path in `network_errors` raises ConnectionError with the
-    full URL (as requests does)."""
+    Supabase answers (RPC handlers; a function without one answers 404
+    PGRST202, as on a database without it). Paths in `failing` answer 500,
+    a path in `network_errors` raises ConnectionError with the full URL (as
+    requests does)."""
 
     def __init__(self):
         self.calls = []
@@ -64,10 +60,7 @@ class World:
         self.login_status = 204
         self.failing = set()
         self.network_errors = set()
-        self.tables = {}
-        self.table_reads = {}
         self.rpc = {}
-        self.post_status = {}
 
     # requests ------------------------------------------------------------
 
@@ -83,8 +76,6 @@ class World:
 
         monkeypatch.setattr(requests, 'get', lambda url, **kw: world.handle('GET', url, **kw))
         monkeypatch.setattr(requests, 'post', lambda url, **kw: world.handle('POST', url, **kw))
-        monkeypatch.setattr(requests, 'delete', lambda url, **kw: world.handle('DELETE', url, **kw))
-        monkeypatch.setattr(requests, 'patch', lambda url, **kw: world.handle('PATCH', url, **kw))
         monkeypatch.setattr(requests, 'Session', Session)
         return self
 
@@ -146,26 +137,14 @@ class World:
     # Supabase ------------------------------------------------------------
 
     def supabase(self, method, rest, body):
-        table, _, query = rest.partition('?')
+        table = rest.partition('?')[0]
         if table.startswith('rpc/'):
             handler = self.rpc.get(table[4:])
             if handler is None:
                 return Response(404, {'code': 'PGRST202', 'message': f'Could not find the function {table[4:]}'})
             return handler(body)
-        if method == 'GET':
-            rows = self.tables.get(table, [])
-            reads = self.table_reads.setdefault(table, 0)
-            self.table_reads[table] = reads + 1
-            if callable(rows):
-                rows = rows(reads)
-            if isinstance(rows, Response):
-                return rows
-            q = dict(parse_qsl(query))
-            offset, limit = int(q.get('offset', 0)), int(q.get('limit', 10 ** 9))
-            return Response(200, rows[offset:offset + limit])
-        if method == 'POST':
-            return Response(self.post_status.get(table, 201), NO_JSON)
-        return Response(204, NO_JSON)
+        # The layer path only calls RPCs: a table read or write is a bug
+        raise AssertionError(f'unexpected Supabase call {method} {rest}')
 
 
 def _loads(data):
@@ -177,57 +156,18 @@ def _loads(data):
     return data
 
 
-def _now(value):
-    if isinstance(value, str):
-        return NOW.sub('<now>', value)
-    if isinstance(value, list):
-        return [_now(v) for v in value]
-    if isinstance(value, dict):
-        return {k: _now(v) for k, v in value.items()}
-    return value
-
-
 def record(method, url, params, data, json_body, headers, session):
-    """One call as the golden file pins it: the API key and timestamps
-    replaced, form data and JSON bodies parsed."""
+    """One call: the API key replaced, form data and JSON bodies parsed."""
     params = {k: ('<key>' if k == 'apikey' else v) for k, v in (params or {}).items()}
     body = json_body if json_body is not None else _loads(data)
-    return _now({
+    return {
         'method': method,
         'url': url,
         'params': params,
         'body': body,
         'headers': dict(sorted((headers or {}).items())),
         'session': session,
-    })
-
-
-def exit_code(err):
-    """The exit status the interpreter gives a SystemExit."""
-    if err.code is None:
-        return 0
-    if isinstance(err.code, int):
-        return err.code
-    print(err.code, file=sys.stderr)
-    return 1
-
-
-def run_script(name, args=(), today=TODAY):
-    """Runs src/<name> as `python src/<name> args` would (in this process,
-    so the fakes apply). Returns the exit status."""
-    import sync_rules
-    original = sync_rules.club_today
-    sync_rules.club_today = lambda: today
-    argv = sys.argv
-    sys.argv = [str(SRC / name), *args]
-    try:
-        runpy.run_path(str(SRC / name), run_name='__main__')
-        return 0
-    except SystemExit as err:
-        return exit_code(err)
-    finally:
-        sys.argv = argv
-        sync_rules.club_today = original
+    }
 
 
 def set_env(monkeypatch, **extra):
@@ -252,9 +192,3 @@ def webling_member(member_id, first, last, groups, birthday='2001-02-03', mobile
 def participant(pid, member, state='confirmed'):
     return {'id': pid, 'properties': {'594': state, 'Bemerkung': 'secret note'},
             'links': {'member': member}}
-
-
-def status_rows(rows):
-    """members rows as the legacy guard reads them."""
-    return [{'id': i, 'membership_status': s, 'archivedAt': None, 'labels': labels}
-            for i, s, labels in rows]

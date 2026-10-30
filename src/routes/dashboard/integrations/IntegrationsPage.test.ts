@@ -346,11 +346,12 @@ describe('integrations page', () => {
     expect(names).toEqual(['Judo Agenda', 'Judo Erwachsene Trainings']);
   });
 
-  it('warns about mapping changes before the switch to the layer', () => {
-    renderPage(data({ ...STATUS, last_run: { members: null, events: null } }));
-    expect(
-      screen.getByText(/läuft noch nicht über die neue Integrationsschicht/)
-    ).toBeInTheDocument();
+  it('shows no warning for a connection that never ran', () => {
+    renderPage(
+      data({ ...STATUS, last_run: { config: null, members: null, events: null }, last_success: {} })
+    );
+    expect(screen.getByRole('heading', { name: 'Webling' })).toBeInTheDocument();
+    expect(screen.queryAllByRole('alert')).toEqual([]);
   });
 
   it('previews a mapping change, then saves it with the accepted number after confirming', async () => {
@@ -376,7 +377,6 @@ describe('integrations page', () => {
       error: null
     });
     renderPage();
-    expect(screen.queryByText(/läuft noch nicht über/)).not.toBeInTheDocument();
     const save = screen.getByRole('button', { name: 'Speichern' });
     expect(save).toBeDisabled();
 

@@ -8,7 +8,6 @@
 -- The sync acts as service_role, staff and admins through pg_temp.act_as().
 --
 --   E  the seeded catalog is the old status rule
---   L  the legacy sync's direct writes keep working
 --   P  who may call and read what
 --   M  Webling members through the layer: no-op first run, changes, guards,
 --      problem records, one failing record, runs, issues, no names in the log
@@ -120,9 +119,8 @@ END $$;
 CREATE FUNCTION pg_temp.gid(p_title text) RETURNS text
 LANGUAGE sql AS $$ SELECT 'g' || abs(hashtext(p_title)) $$;
 
--- The live Webling members as the adapter stages them: the fields the
--- legacy sync writes, groups with ids, the legacy trial group under its
--- Webling title
+-- The live Webling members as the adapter stages them: Webling's fields,
+-- groups with ids, the old trial group under its Webling title
 CREATE FUNCTION pg_temp.webling_snapshot() RETURNS jsonb
 LANGUAGE sql AS $$
   SELECT coalesce(jsonb_agg(jsonb_build_object(
@@ -177,8 +175,8 @@ LANGUAGE sql AS $$
     FROM public.integration_runs r;
 $$;
 
--- Fixture: Webling events as the legacy sync writes them (portal link in
--- the description, registrations marked by the notes prefix)
+-- Fixture: Webling events as the sync wrote them before the layer (portal
+-- link in the description, registrations marked by the notes prefix)
 CREATE TEMP TABLE fx_events (id integer, cal text, title text, day integer, time_from text, location text);
 CREATE TEMP TABLE fx_part (event_id integer, external_id text);
 -- the snapshots are built while acting as the sync
@@ -262,59 +260,6 @@ BEGIN
       WHERE public.member_status_for(m.id, m.labels) IS DISTINCT FROM public.member_status_from_labels(
               m.labels, coalesce(public.provider_link_state(m.id),
                                  CASE WHEN m.id >= 1000 AND m.id < 10000000 THEN 'active' END))), '0');
-END $$;
-ROLLBACK TO SAVEPOINT s;
-
------------------
--- L The legacy sync (direct PostgREST writes as service_role) keeps working
------------------
-SAVEPOINT s;
-DO $$
-DECLARE
-  v_xmin jsonb;
-BEGIN
-  v_xmin := (SELECT jsonb_object_agg(m.id, m.xmin::text) FROM public.members m
-               JOIN public.member_links l ON l.member_id = m.id AND l.connection = 'webling');
-  PERFORM pg_temp.as_sync();
-  -- write_links: every live link upserted with gone_at = null
-  INSERT INTO public.member_links (connection, external_id, member_id, last_seen_at, gone_at)
-  SELECT connection, external_id, member_id, now(), NULL FROM public.member_links
-   WHERE connection = 'webling' AND gone_at IS NULL
-  ON CONFLICT (connection, external_id) DO UPDATE SET last_seen_at = EXCLUDED.last_seen_at, gone_at = EXCLUDED.gone_at;
-  RESET ROLE;
-  PERFORM pg_temp.eq('L1 the nightly link upsert rewrites no member row',
-    (SELECT count(*)::text FROM public.members m
-      WHERE v_xmin ? m.id::text AND m.xmin::text <> v_xmin->>(m.id::text)), '0');
-
-  PERFORM pg_temp.as_sync();
-  INSERT INTO public.members (id, firstname, lastname, labels) VALUES (55501, 'New', 'Webling', '["Erwachsenentrainer"]');
-  INSERT INTO public.members (id, firstname, lastname, labels) VALUES (55502, 'Neu', 'Aktiv', '["Aktiv"]');
-  RESET ROLE;
-  PERFORM pg_temp.eq('L2 new Webling row before its link: non_member', pg_temp.st(55501), 'non_member');
-  PERFORM pg_temp.eq('L2 new Webling row in Aktiv: active', pg_temp.st(55502), 'active');
-  PERFORM pg_temp.as_sync();
-  INSERT INTO public.member_links (connection, external_id, member_id, last_seen_at, gone_at)
-  VALUES ('webling', '55501', 55501, now(), NULL), ('webling', '55502', 55502, now(), NULL)
-  ON CONFLICT (connection, external_id) DO UPDATE SET last_seen_at = EXCLUDED.last_seen_at, gone_at = EXCLUDED.gone_at;
-  INSERT INTO public.member_links (connection, external_id, member_id, gone_at)
-  VALUES ('webling', '55502', 55502, now())
-  ON CONFLICT (connection, external_id) DO UPDATE SET gone_at = EXCLUDED.gone_at;
-  INSERT INTO public.events (id, title, date, section, description)
-  VALUES (51001, 'Kurs', '2099-01-10', 'Judo', 'https://x.webling.ch/portal#/calendar/event/51001')
-  ON CONFLICT (id) DO UPDATE SET title = EXCLUDED.title;
-  INSERT INTO public.event_participants ("eventId", "memberId", "attendanceStatus", notes)
-  VALUES (51001, 55501, 'registered', 'Imported from Webling - Confirmed: confirmed') ON CONFLICT DO NOTHING;
-  DELETE FROM public.event_participants WHERE "eventId" = 51001 AND "memberId" IN (55501)
-     AND "attendanceStatus" = 'registered' AND notes LIKE 'Imported from Webling%';
-  RESET ROLE;
-  PERFORM pg_temp.eq('L3 linked, no status group: non_member', pg_temp.st(55501), 'non_member');
-  PERFORM pg_temp.eq('L3 marked gone: left', pg_temp.st(55502), 'left');
-  PERFORM pg_temp.ok('L4 event upsert and registrations as before',
-    EXISTS (SELECT 1 FROM public.events WHERE id = 51001)
-    AND NOT EXISTS (SELECT 1 FROM public.event_participants WHERE "eventId" = 51001));
-  PERFORM pg_temp.ok('L5 the migration marked the legacy registrations as Webling''s',
-    NOT EXISTS (SELECT 1 FROM public.event_participants
-                 WHERE notes LIKE 'Imported from Webling%' AND source_connection IS NULL AND "eventId" <> 51001));
 END $$;
 ROLLBACK TO SAVEPOINT s;
 
@@ -1315,7 +1260,7 @@ BEGIN
 END $$;
 ROLLBACK TO SAVEPOINT s;
 
--- Provenance follows the notes, as for the legacy sync: a merge that keeps
+-- Provenance follows the notes, as before the layer: a merge that keeps
 -- the Webling registration with the app's notes, and staff changing the
 -- notes, make the registration the app's; the layer removes only its own
 SAVEPOINT s;

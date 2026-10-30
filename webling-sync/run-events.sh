@@ -20,5 +20,5 @@ if [ -z "${ANONYMIZE:-}" ]; then
     if [ "$ENV" = "prod" ]; then export ANONYMIZE=false; else export ANONYMIZE=true; fi
 fi
 
-# Run the Python script
-exec "$(dirname "$0")/.env/bin/python" "$(dirname "$0")/src/events.py"
+# Run the sync through the integration layer (--calendar and --dry-run pass through)
+exec "$(dirname "$0")/.env/bin/python" "$(dirname "$0")/src/sync.py" events "$@"

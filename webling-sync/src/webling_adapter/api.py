@@ -1,4 +1,4 @@
-"""The Webling calls the adapter makes (the same ones as the legacy scripts).
+"""The Webling calls the adapter makes.
 
     W1  GET  /api/1/member?format=full             all members
     W2  GET  /api/1/membergroup/<id>?format=full   a group's title
@@ -10,12 +10,15 @@
     W8  GET  /api/client/object/<ids>              participants in bulk
 
 W1-W4 and W6 carry the API key as a query parameter, so no URL may reach
-the log (see safe_log.py): every failure becomes a WeblingError with
-method, path and status only.
+the log (see integration/safe_log.py): every failure becomes a
+WeblingError with method, path and status only.
 """
 import requests
 
-from safe_log import WeblingError
+
+class WeblingError(Exception):
+    """A failed Webling call; the message holds method, path and status only."""
+
 
 TIMEOUT = (10, 120)
 
@@ -95,10 +98,9 @@ class WeblingApi:
         One list call first (GET calendarevent filtered by the calendar),
         taken only when it answers exactly the calendar's event ids, each
         with a title and a begin; anything else (an error, another set of
-        ids, missing properties) falls back to one W6 call per event, as
-        the legacy sync does. Whether Webling answers the list call is not
-        verified yet: the shadow nights show it ('list call' in the log,
-        and 0 events updated against what the legacy sync wrote)."""
+        ids, missing properties) falls back to one W6 call per event. The
+        log says which way each calendar was read ('list call' or 'single
+        calls'); WEBLING_EVENTS_LIST_CALL=false skips the list call."""
         wanted = set(event_ids)
         if wanted and self.list_call:
             listed = self._list_events(calendar_id, wanted)

@@ -3,7 +3,6 @@ import {
   STALE_HOURS,
   acceptedOverrides,
   adapterErrors,
-  beforeLayerSwitch,
   calendarDraft,
   changesKey,
   connectionAlerts,
@@ -200,14 +199,6 @@ describe('isStale', () => {
   });
 });
 
-describe('beforeLayerSwitch', () => {
-  it('holds until the first real members run of the layer', () => {
-    expect(beforeLayerSwitch(connection({ last_run: {} }))).toBe(true);
-    expect(beforeLayerSwitch(connection({ last_run: { events: run() } }))).toBe(true);
-    expect(beforeLayerSwitch(connection())).toBe(false);
-  });
-});
-
 describe('refusalOverride', () => {
   it('gives the exact override of each guard', () => {
     // As integration_apply() stored it for a run with 60 members gone
@@ -277,7 +268,8 @@ describe('runs', () => {
       ['groups', 1]
     ]);
     expect(runCounts({ kind: 'events', result: {} })).toEqual([]);
-    // The first layer run after phase 4: holidays replace the legacy sync's events
+    // The first layer run after phase 4 (run history keeps it): holidays replaced the
+    // events the sync wrote before the layer
     expect(
       runCounts({
         kind: 'events',

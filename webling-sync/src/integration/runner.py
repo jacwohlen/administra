@@ -1,11 +1,6 @@
-"""One sync of one kind (members or events) in one of three modes.
-
-    legacy  today's scripts, unchanged (the default, also when unset)
-    shadow  legacy, then the same fetch as a dry run of the layer: the
-            numbers show what the layer would do, nothing is written
-            through it (its run row and new catalog rows aside)
-    layer   the layer; only when integration_begin is not on this database
-            (Promotion 1 not done) the legacy scripts run instead
+"""One sync of one kind (members or events) through the integration
+layer: begin, stage, apply, finish. A dry run does the same and writes
+nothing through it (its run row and new catalog rows aside).
 
 An adapter does the provider's side:
     adapter.connection           the connection id ('webling')
@@ -20,16 +15,14 @@ from dataclasses import dataclass, field
 
 from integration import report
 from integration.anonymize import anonymize
-from integration.layer import LAYER_MISSING, LayerError
+from integration.layer import LayerError
 from integration.safe_log import crash_line
-
-MODES = ('legacy', 'shadow', 'layer')
 
 
 class FetchFailed(Exception):
     """The provider could not be read as a whole (e.g. the member list): no
     record is staged and the run fails. The message is log-safe (method,
-    path and status, see safe_log.py)."""
+    path and status, see integration/safe_log.py)."""
 
 
 class UsageError(Exception):
@@ -43,7 +36,6 @@ class ConfigError(Exception):
 @dataclass
 class Options:
     kind: str
-    mode: str = 'legacy'
     dry_run: bool = False
     trigger: str = 'manual'
     runner: str | None = None
@@ -59,71 +51,26 @@ class Outcome:
     finished: dict | None = None
 
 
-def run(options, legacy, adapter, layer):
+def run(options, adapter, layer):
     """Runs the sync; returns the exit status.
 
-    legacy:  () -> exit status of the legacy script
-    adapter: () -> the provider adapter (built only when the layer runs)
+    adapter: () -> the provider adapter
     layer:   () -> integration.layer.Layer
     """
-    mode = options.mode
-    if mode not in MODES:
-        print(f"Error: unknown mode {mode!r} (legacy, shadow or layer)")
-        return 2
-    print(f"Mode: {mode}{', dry run' if options.dry_run else ''}")
-    if mode == 'legacy':
-        if options.dry_run:
-            print("Error: the legacy sync has no dry run; use mode shadow or layer")
-            return 2
-        return legacy()
-
-    if mode == 'shadow' and not options.dry_run:
-        status = legacy()
-        shadow(options, adapter, layer)
-        return status
-
-    # layer, or a dry run (which never falls back: legacy would write)
+    print(f"Layer {options.kind}{', dry run' if options.dry_run else ''}")
     try:
         outcome = run_layer(options, adapter(), layer())
     except (LayerError, UsageError, ConfigError) as err:
         print(f"Error: {err}")
         return 2 if isinstance(err, UsageError) else 1
-    if outcome is LAYER_MISSING:
-        if options.dry_run:
-            print("Error: the integration layer is not on this database, so there is nothing to "
-                  "dry-run against")
-            return 1
-        print("::warning::The integration layer is not on this database yet (integration_begin "
-              "missing); running the legacy sync instead")
-        return legacy()
     return report.exit_code(outcome.final)
 
 
-def shadow(options, adapter, layer):
-    """The layer's dry run after the legacy sync. It never changes the
-    exit status: the legacy sync is the one that wrote."""
-    print(f"Shadow: the same {options.kind} as a dry run of the layer")
-    dry = Options(**{**options.__dict__, 'dry_run': True})
-    try:
-        outcome = run_layer(dry, adapter(), layer())
-    except Exception as err:
-        known = (LayerError, UsageError, ConfigError)
-        message = str(err) if isinstance(err, known) else crash_line(err)
-        print(f"::warning::Shadow run of the layer failed: {message}")
-        return None
-    if outcome is LAYER_MISSING:
-        print("::warning::Shadow run skipped: the integration layer is not on this database yet")
-    elif outcome.final != 'ok':
-        print(f"::warning::Shadow: the layer would have ended {outcome.final} "
-              f"(run {outcome.run}); the legacy sync above is what counts tonight")
-    return outcome
-
-
 def run_layer(options, adapter, layer):
-    """begin, stage, apply, finish. Returns an Outcome, or LAYER_MISSING
-    when integration_begin is not on the database (nothing happened then).
-    finish is always called once the run is open, also when the adapter
-    crashes (error 'adapter_crash') or the layer fails mid-run."""
+    """begin, stage, apply, finish. Returns an Outcome; a begin that fails
+    (also on a database without the layer) raises LayerError, and nothing
+    happened then. finish is always called once the run is open, also when
+    the adapter crashes (error 'adapter_crash') or the layer fails mid-run."""
     kind = options.kind
     plan, error = None, None
     try:
@@ -138,11 +85,8 @@ def run_layer(options, adapter, layer):
         error = 'adapter_crash'
     scope = plan.scope if plan is not None else adapter.empty_scope(kind)
 
-    opened = layer.begin(adapter.connection, kind, scope, dry_run=options.dry_run,
-                         trigger=options.trigger, runner=options.runner)
-    if opened is LAYER_MISSING:
-        return LAYER_MISSING
-    run_ = opened
+    run_ = layer.begin(adapter.connection, kind, scope, dry_run=options.dry_run,
+                       trigger=options.trigger, runner=options.runner)
     print(f"Layer {kind} run {run_.id} opened{' (dry run)' if options.dry_run else ''}")
     gone = run_.scope.get('calendars_gone') if isinstance(run_.scope, dict) else None
     if isinstance(gone, list) and gone:

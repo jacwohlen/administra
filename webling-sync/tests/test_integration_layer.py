@@ -7,7 +7,7 @@ import requests
 from fake_layer import CAPABILITIES, FakeLayer
 from fake_world import Response, World
 from integration.client import Client, ClientError, auth_headers, classify
-from integration.layer import LAYER_MISSING, Layer, LayerError
+from integration.layer import Layer, LayerError
 
 
 @pytest.mark.parametrize('status, body, kind', [
@@ -102,11 +102,15 @@ def test_begin_without_runner_leaves_it_out(world):
 
 @pytest.mark.parametrize('code', ['PGRST202', '42883'])
 def test_begin_on_a_database_without_the_layer(world, code):
-    # The function is missing: the only answer a fallback may act on
+    # The function is missing: an error that says so (no fallback since phase 3c)
     world.rpc.clear()
     if code == '42883':
         world.rpc['integration_begin'] = lambda body: Response(404, {'code': '42883', 'message': 'x'})
-    assert layer_with(world).begin('webling', 'members', {'complete': True}) is LAYER_MISSING
+    with pytest.raises(LayerError) as raised:
+        layer_with(world).begin('webling', 'members', {'complete': True})
+    assert raised.value.code == code
+    assert str(raised.value).startswith(
+        f'integration_begin: the integration layer is not on this database (HTTP 404 {code}: ')
 
 
 @pytest.mark.parametrize('answer, code', [
@@ -166,7 +170,8 @@ def test_stage_without_capabilities_is_an_error(world):
 
 
 def test_a_missing_function_mid_run_is_an_error(world):
-    # Only begin may answer "missing" without failing the run
+    # Only begin calls a missing function a missing layer; later it is an
+    # error like any other
     FakeLayer(world, fail={'stage': Response(404, {'code': 'PGRST202', 'message': 'gone'})})
     run = layer_with(world).begin('webling', 'members', {'complete': True})
     with pytest.raises(LayerError) as raised:

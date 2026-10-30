@@ -13,6 +13,3 @@ node_modules
 pnpm-lock.yaml
 package-lock.json
 yarn.lock
-
-# Recorded by webling-sync/tests/test_legacy_golden.py (UPDATE_GOLDEN=1)
-webling-sync/tests/golden/
