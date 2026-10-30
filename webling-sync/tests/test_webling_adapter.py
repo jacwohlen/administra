@@ -85,9 +85,9 @@ def world(monkeypatch):
     return World().install(monkeypatch)
 
 
-def run_info(today='2026-10-28', scope=None, settings=None, version=1):
+def run_info(today='2026-10-28', scope=None, settings=None):
     return SimpleNamespace(today=today, scope=scope or {'from': '2026-01-01'},
-                           settings=settings or {'participant_state_property': '594'}, version=version)
+                           settings=settings or {'participant_state_property': '594'})
 
 
 def test_member_records_fetch_each_group_once(world, monkeypatch):
@@ -124,22 +124,23 @@ def test_event_record():
     assert event_record(7001, props(), CAL, 'club', [{'member': '1001', 'state': 'confirmed'}]) == {
         'external_id': '7001', 'data': {
             'calendar': {'id': '501', 'name': 'Judo Agenda'}, 'title': 'Kyu Prüfung',
-            'starts_on': '2026-11-05', 'time_from': '18:00', 'time_to': '20:00', 'location': 'Dojo',
-            'max_participants': 12, 'description': link, 'url': link,
+            'starts_on': '2026-11-05', 'ends_on': None, 'all_day': False, 'time_from': '18:00',
+            'time_to': '20:00', 'location': 'Dojo', 'max_participants': 12, 'url': link,
             'participants': [{'member': '1001', 'state': 'confirmed'}]}}
 
 
 def test_event_record_defaults():
-    data = event_record(7, {'title': '  ', 'begin': '2026-11-05 00:00:00', 'end': None,
+    data = event_record(7, {'title': '  ', 'begin': '2026-11-05 18:00:00', 'end': None,
                             'place': '  '}, CAL, 'club')['data']
     assert data['title'] == 'Untitled Event'
-    assert (data['time_from'], data['time_to']) == ('00:00', None)
+    assert (data['ends_on'], data['all_day'], data['time_from'], data['time_to']) == (
+        None, False, '18:00', None)
     assert data['location'] is None and data['max_participants'] is None
     # Not read (or a past event): the key is left out, registrations stay
     assert 'participants' not in data
 
 
-# end dates and all day (phase 4: capabilities version 2) ------------------
+# end dates and all day (phase 4) ---------------------------------------
 
 def span_of(begin, end, **extra):
     return tuple(dates.span(extra, dates.split(begin), dates.split(end)))
@@ -175,36 +176,29 @@ def test_span(begin, end, extra, expected):
     assert span_of(begin, end, **extra) == expected
 
 
-def test_event_record_for_version_2():
+def test_event_record_with_end_dates():
     link = 'https://club.webling.ch/portal#/calendar/event/7001'
     holiday = event_record(7001, props(begin='2026-10-03 00:00:00', end='2026-10-18 00:00:00'),
-                           CAL, 'club', version=2)['data']
+                           CAL, 'club')['data']
     assert holiday == {
         'calendar': {'id': '501', 'name': 'Judo Agenda'}, 'title': 'Kyu Prüfung',
         'starts_on': '2026-10-03', 'ends_on': '2026-10-17', 'all_day': True,
         'time_from': None, 'time_to': None, 'location': 'Dojo', 'max_participants': 12, 'url': link}
-    timed = event_record(7001, props(), CAL, 'club', version=2)['data']
+    timed = event_record(7001, props(), CAL, 'club')['data']
     assert (timed['ends_on'], timed['all_day'], timed['time_from'], timed['time_to']) == (
         None, False, '18:00', '20:00')
-    assert 'description' not in timed
-    # Version 1: without the two keys, the link as description
-    old = event_record(7001, props(begin='2026-10-03 00:00:00', end='2026-10-18 00:00:00'), CAL, 'club')
-    assert 'ends_on' not in old['data'] and 'all_day' not in old['data']
-    assert (old['data']['time_from'], old['data']['description']) == ('00:00', link)
+    # The portal link is the link's url; the description is the app's
+    assert 'description' not in timed and timed['url'] == link
 
 
-def test_version_2_counts_a_multi_day_event_until_its_end(world):
+def test_a_multi_day_event_counts_until_its_end(world):
     world.calendars = {1: {'title': 'Club', 'events': [11, 12]}}
     # Begun before the window, ends inside it; under way today
     world.events = {11: props(begin='2025-12-30 00:00:00', end='2026-01-02 00:00:00'),
                     12: props(begin='2026-10-26 09:00:00', end='2026-10-30 17:00:00')}
     world.participants = {12: [participant(1, [1001])]}
     adapter = WeblingAdapter('club', 'key', 'sync@example.com', 'pw')
-    plan = adapter.plan('events')
-    old = {r['external_id']: r['data'] for r in adapter.records(plan, run_info())}
-    assert sorted(old) == ['12'] and 'participants' not in old['12']
-    adapter = WeblingAdapter('club', 'key', 'sync@example.com', 'pw')
-    records = {r['external_id']: r['data'] for r in adapter.records(adapter.plan('events'), run_info(version=2))}
+    records = {r['external_id']: r['data'] for r in adapter.records(adapter.plan('events'), run_info())}
     assert records['11']['ends_on'] == '2026-01-01'
     assert records['12']['participants'] == [{'member': '1001', 'state': 'confirmed'}]
 

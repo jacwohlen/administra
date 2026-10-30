@@ -321,10 +321,7 @@ export interface Event {
   date: string;
   /** Last day of a multi-day event (inclusive), null for one day */
   date_to?: string | null;
-  /**
-   * The whole day (or days): no times. Missing on a database before
-   * 20261030120000 (Netlify can deploy the app first): read as false.
-   */
+  /** The whole day (or days): no times */
   all_day?: boolean;
   timeFrom?: string;
   timeTo?: string;

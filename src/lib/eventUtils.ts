@@ -1,5 +1,4 @@
 import dayjs from 'dayjs';
-import { isMissingSchemaError } from './eventLinks';
 
 // ----- Days of an event -----
 
@@ -202,31 +201,4 @@ export function eventDateInput(
     timeFrom: allDay ? '' : (event.timeFrom ?? ''),
     timeTo: allDay ? '' : (event.timeTo ?? '')
   };
-}
-
-type SaveResult = { error: { code?: string; message?: string } | null };
-
-/**
- * Inserts or updates an event row. A database without events.all_day
- * (Netlify may deploy the app before the promotion that adds the column)
- * refuses the column (PGRST204): the row is saved again without it, an
- * all-day event then simply has no times. A database without date_to
- * (phase 2) still refuses the save (docs/INTEGRATIONS.md, deploy order).
- */
-export async function saveEventRow<V extends { all_day?: boolean }, R extends SaveResult>(
-  values: V,
-  save: (values: V | Omit<V, 'all_day'>) => PromiseLike<R>
-): Promise<R> {
-  const result = await save(values);
-  if (
-    result.error &&
-    'all_day' in values &&
-    isMissingSchemaError(result.error) &&
-    (result.error.message ?? '').includes('all_day')
-  ) {
-    const rest: Partial<V> = { ...values };
-    delete rest.all_day;
-    return save(rest as Omit<V, 'all_day'>);
-  }
-  return result;
 }

@@ -1,16 +1,19 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import {
   STALE_HOURS,
   acceptedOverrides,
   adapterErrors,
   calendarDraft,
+  canDismissAll,
   changesKey,
   connectionAlerts,
+  dismissIssues,
   dropLine,
+  eventUrlTemplate,
   groupDraft,
   groupIssues,
-  isLayerMissing,
   isStale,
+  issueEventUrl,
   issueReferences,
   issueShown,
   mappingAccept,
@@ -117,16 +120,6 @@ describe('parseConnectionStatuses', () => {
       last_success: { members: null, events: null },
       issues: { error: 0, warning: 0, info: 0 }
     });
-  });
-});
-
-describe('isLayerMissing', () => {
-  it('knows a missing function or table', () => {
-    for (const code of ['PGRST202', '42883', 'PGRST205', '42P01']) {
-      expect(isLayerMissing({ code })).toBe(true);
-    }
-    expect(isLayerMissing({ code: '42501' })).toBe(false);
-    expect(isLayerMissing(null)).toBe(false);
   });
 });
 
@@ -448,6 +441,109 @@ describe('groupIssues', () => {
         issue({ id: 3, kind: 'events', member_id: null, other_member_id: null, event_id: 61001 })
       ])
     ).toEqual({ members: [3240, 10000001], events: [61001] });
+  });
+});
+
+describe('dismiss all', () => {
+  const open = (n: number) =>
+    Array.from({ length: n }, (_, i) => issue({ id: i + 1, code: 'unknown_participant' }));
+
+  it('is offered for two open issues or more, never for possible duplicates', () => {
+    expect(canDismissAll({ code: 'unknown_participant', open: open(2) })).toBe(true);
+    expect(canDismissAll({ code: 'unknown_participant', open: open(1) })).toBe(false);
+    expect(canDismissAll({ code: 'possible_duplicate', open: open(5) })).toBe(false);
+  });
+
+  it('dismisses one after the other', async () => {
+    const order: string[] = [];
+    const dismiss = vi.fn(async (id: number) => {
+      order.push(`start ${id}`);
+      await Promise.resolve();
+      order.push(`end ${id}`);
+      return { error: null };
+    });
+    expect(await dismissIssues([4, 7, 9], dismiss)).toEqual({ dismissed: 3, error: null });
+    expect(order).toEqual(['start 4', 'end 4', 'start 7', 'end 7', 'start 9', 'end 9']);
+  });
+
+  it('stops at the first error and says how many went through', async () => {
+    const failure = { code: '42501', message: 'NOT_ALLOWED' };
+    const dismiss = vi.fn(async (id: number) => ({ error: id === 7 ? failure : null }));
+    expect(await dismissIssues([4, 7, 9], dismiss)).toEqual({ dismissed: 1, error: failure });
+    expect(dismiss.mock.calls.map(([id]) => id)).toEqual([4, 7]);
+    const thrown = new Error('offline');
+    expect(
+      await dismissIssues([4, 7], async () => {
+        throw thrown;
+      })
+    ).toEqual({ dismissed: 0, error: thrown });
+  });
+});
+
+describe('links to the provider', () => {
+  const template = 'https://club.webling.ch/portal#/calendar/event/{id}';
+  const settings = { hidden_group_pattern: '^\\d\\d_', record_urls: { event: template } };
+  const event = issue({
+    id: 5,
+    kind: 'events',
+    code: 'write_failed',
+    severity: 'error',
+    external_id: '61001',
+    member_id: null,
+    other_member_id: null,
+    event_id: 61001
+  });
+
+  it("reads the connection's event template", () => {
+    expect(eventUrlTemplate(settings)).toBe(template);
+    expect(eventUrlTemplate({})).toBeNull();
+    expect(eventUrlTemplate(null)).toBeNull();
+    expect(eventUrlTemplate({ record_urls: 'x' })).toBeNull();
+    expect(eventUrlTemplate({ record_urls: { member: template } })).toBeNull();
+  });
+
+  it('takes only https with {id} once, after the host', () => {
+    for (const unsafe of [
+      'http://club.webling.ch/portal#/calendar/event/{id}',
+      'javascript:alert({id})',
+      ' https://club.webling.ch/{id}',
+      'https://club.webling.ch/portal',
+      'https://club.webling.ch/{id}/{id}',
+      'https://{id}/event',
+      'https://{id}.webling.ch/',
+      'https://club.webling.ch{id}',
+      42
+    ]) {
+      expect(eventUrlTemplate({ record_urls: { event: unsafe } })).toBeNull();
+      expect(issueEventUrl(event, unsafe as string)).toBeNull();
+    }
+    expect(eventUrlTemplate({ record_urls: { event: 'https://x.example/?event={id}' } })).toBe(
+      'https://x.example/?event={id}'
+    );
+  });
+
+  it("links an issue about an event to the provider's page", () => {
+    expect(issueEventUrl(event, template)).toBe(
+      'https://club.webling.ch/portal#/calendar/event/61001'
+    );
+    // a holiday is an event at the provider too
+    expect(issueEventUrl({ ...event, code: 'invalid_value', external_id: '94002' }, template)).toBe(
+      'https://club.webling.ch/portal#/calendar/event/94002'
+    );
+    expect(issueEventUrl({ ...event, external_id: 'ab:c.d-e_f' }, template)).toBe(
+      'https://club.webling.ch/portal#/calendar/event/ab%3Ac.d-e_f'
+    );
+  });
+
+  it('links nothing else', () => {
+    // a member issue, and a participant: its number is the member's, not the event's
+    expect(issueEventUrl(issue({ external_id: '3240' }), template)).toBeNull();
+    expect(issueEventUrl({ ...event, code: 'unknown_participant' }, template)).toBeNull();
+    for (const id of ['', '61001/../x', '61 001', '<b>', '$&', 'x'.repeat(201)]) {
+      expect(issueEventUrl({ ...event, external_id: id }, template)).toBeNull();
+    }
+    expect(issueEventUrl(event, null)).toBeNull();
+    expect(issueEventUrl(event, undefined)).toBeNull();
   });
 });
 

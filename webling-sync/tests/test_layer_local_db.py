@@ -1,11 +1,15 @@
 """The layer path against a real database with the integration layer.
 
 Skipped unless LAYER_TEST_PSQL names a psql command for a FRESH local
-database with every migration (including 20261029120000_integration_layer)
-and the seed; the tests change it and expect to run once, in file order:
+database with every migration and the seed; the tests change it and
+expect to run once, in file order:
 
     LAYER_TEST_PSQL='psql postgresql://postgres:postgres@127.0.0.1:54322/postgres' \\
         pytest tests/test_layer_local_db.py
+
+CI runs them in the db-validate job with LAYER_TEST_REQUIRED=1: there a
+missing LAYER_TEST_PSQL is an error instead of a skip (a database it
+cannot reach already is one), so the job cannot pass without them.
 
 sync.py runs with a fake Webling built from the database's own Webling
 members (as the sync before the layer wrote them), and the client calls
@@ -15,6 +19,7 @@ without the layer: there the sync must fail.
 """
 import json
 import os
+from datetime import date, timedelta
 
 import pytest
 
@@ -23,6 +28,10 @@ from fake_world import World, participant, set_env
 from integration.client import Client
 from integration.layer import Layer, LayerError
 from psql_transport import PsqlTransport
+from webling_adapter import WeblingAdapter
+
+if os.environ.get('LAYER_TEST_REQUIRED') == '1' and not os.environ.get('LAYER_TEST_PSQL'):
+    pytest.fail('LAYER_TEST_REQUIRED=1, but LAYER_TEST_PSQL is not set', pytrace=False)
 
 pytestmark = pytest.mark.skipif(not os.environ.get('LAYER_TEST_PSQL'),
                                 reason='LAYER_TEST_PSQL is not set (no local database)')
@@ -42,7 +51,16 @@ def db():
     transport = PsqlTransport(os.environ['LAYER_TEST_PSQL'])
     runs = transport.query('SELECT count(*) FROM public.integration_runs')
     assert runs == ['0'], 'needs a fresh database (build it again)'
+    # The day integration_begin goes by (Zurich): the events lie around it,
+    # so the tests pass on any day of any year (CI runs them on every push)
+    STATE['today'] = date.fromisoformat(transport.query(
+        "SELECT to_char((now() AT TIME ZONE 'Europe/Zurich')::date, 'YYYY-MM-DD')")[0])
     return transport
+
+
+def day(offset):
+    """The date `offset` days from the database's today, as Webling writes it."""
+    return (STATE['today'] + timedelta(days=offset)).isoformat()
 
 
 def value(db, sql):
@@ -81,12 +99,6 @@ def rows_version(db, table):
     return value(db, f"SELECT md5(string_agg(id::text || ':' || xmin::text, ',' ORDER BY id)) FROM public.{table}")
 
 
-def has_end_dates(db):
-    """The database has phase 4 (20261030120000: all_day, capabilities version 2)."""
-    return value(db, "SELECT count(*) FROM information_schema.columns WHERE table_schema = 'public' "
-                     "AND table_name = 'events' AND column_name = 'all_day'") == '1'
-
-
 def events_but_description(db):
     """The events' values, but the description (and updatedAt)."""
     return value(db, """SELECT md5(string_agg(concat_ws('|', id, title, date, date_to, "timeFrom", "timeTo",
@@ -100,6 +112,16 @@ def sync_run(db, monkeypatch, world, kind, dry_run=False, **env):
             INTEGRATION_DRY_RUN='true' if dry_run else None, **env)
     world.install(monkeypatch)
     monkeypatch.setattr(sync, 'make_layer', lambda: Layer(Client('https://local.invalid', 'sb_secret_local', db)))
+    # The window starts 90 days back instead of January 1 (the default), so
+    # the event that is over (61003) is inside it in January too
+    plan = WeblingAdapter.plan
+
+    def plan_with_window(self, kind_):
+        planned = plan(self, kind_)
+        if kind_ == 'events':
+            planned.scope['from'] = day(-90)
+        return planned
+    monkeypatch.setattr(WeblingAdapter, 'plan', plan_with_window)
     status = sync.main([kind])
     run = json.loads(value(db, "SELECT row_to_json(r)::text FROM public.integration_runs r ORDER BY id DESC LIMIT 1"))
     return status, run
@@ -169,14 +191,17 @@ def test_members_mass_gone_is_refused_then_accepted(db, monkeypatch, capsys):
     STATE['members'] = kept
 
 
-EVENTS = [
-    # id, calendar, title, begin, end, place, limit
-    (61001, 501, 'Kyu Prüfung', '2026-11-20 18:00:00', '2026-11-20 20:00:00', 'Dojo', 12),
-    (61002, 501, 'Randori', '2026-12-04 19:00:00', '2026-12-04 21:00:00', None, None),
-    (61003, 501, 'Sommerfest', '2026-03-01 10:00:00', '2026-03-01 16:00:00', 'Halle', None),
-    (61004, 502, 'Lehrgang', '2026-11-28 09:00:00', '2026-11-28 16:00:00', 'Dojo', 20),
-    (61005, 502, 'Seminar', '2026-12-12 09:00:00', '2026-12-12 12:00:00', None, None),
-]
+def events():
+    """id, calendar, title, begin, end, place, limit; 61003 is over."""
+    return [
+        (61001, 501, 'Kyu Prüfung', f'{day(21)} 18:00:00', f'{day(21)} 20:00:00', 'Dojo', 12),
+        (61002, 501, 'Randori', f'{day(35)} 19:00:00', f'{day(35)} 21:00:00', None, None),
+        (61003, 501, 'Sommerfest', f'{day(-60)} 10:00:00', f'{day(-60)} 16:00:00', 'Halle', None),
+        (61004, 502, 'Lehrgang', f'{day(29)} 09:00:00', f'{day(29)} 16:00:00', 'Dojo', 20),
+        (61005, 502, 'Seminar', f'{day(43)} 09:00:00', f'{day(43)} 12:00:00', None, None),
+    ]
+
+
 SECTION = {501: 'Judo', 502: 'Aikido'}
 
 
@@ -186,10 +211,11 @@ def link(event_id):
 
 def events_world(confirmed):
     world = World()
-    world.calendars = {501: {'title': 'Judo Agenda', 'events': [e[0] for e in EVENTS if e[1] == 501]},
-                       502: {'title': 'Aikido Agenda', 'events': [e[0] for e in EVENTS if e[1] == 502] + [61099]}}
+    listed = events()
+    world.calendars = {501: {'title': 'Judo Agenda', 'events': [e[0] for e in listed if e[1] == 501]},
+                       502: {'title': 'Aikido Agenda', 'events': [e[0] for e in listed if e[1] == 502] + [61099]}}
     world.events = {e[0]: {'title': f' {e[2]} ', 'begin': e[3], 'end': e[4], 'place': e[5],
-                           'maxParticipants': e[6]} for e in EVENTS}
+                           'maxParticipants': e[6]} for e in listed}
     world.events[61099] = {'title': 'Serie', 'begin': '1970-01-01 00:00:00', 'end': None}
     world.participants = {61001: [participant(9100 + i, [m], state) for i, (m, state) in enumerate(confirmed)],
                           61002: [], 61004: [], 61005: []}
@@ -202,14 +228,13 @@ def test_events_first_run_adopts_the_events_written_before(db, monkeypatch, caps
     # What the sync wrote before the layer: the events, and two registrations of 61001
     values = ', '.join(
         f"({e[0]}, '{e[2]}', '{link(e[0])}', '{e[3][:10]}', '{e[3][11:16]}', '{e[4][11:16]}', "
-        f"{repr(e[5]) if e[5] else 'NULL'}, '{SECTION[e[1]]}', {e[6] or 'NULL'})" for e in EVENTS)
+        f"{repr(e[5]) if e[5] else 'NULL'}, '{SECTION[e[1]]}', {e[6] or 'NULL'})" for e in events())
     db.query(f"""INSERT INTO public.events (id, title, description, date, "timeFrom", "timeTo", location,
                                            section, "maxParticipants") VALUES {values}""")
     db.query(f"""INSERT INTO public.event_participants ("eventId", "memberId", "attendanceStatus", notes)
                  VALUES (61001, {members[0]}, 'registered', '{WEBLING_NOTE}'),
                         (61001, {members[1]}, 'registered', '{WEBLING_NOTE}'),
                         (61001, {members[2]}, 'registered', NULL)""")
-    before = rows_version(db, 'events')
     before_values = events_but_description(db)
     world = events_world([(members[0], 'confirmed'), (members[1], 'confirmed')])
     status, run = sync_run(db, monkeypatch, world, 'events', dry_run=True)
@@ -227,13 +252,10 @@ def test_events_first_run_adopts_the_events_written_before(db, monkeypatch, caps
             result['registrations_removed']) == (2, 0, 0)
     assert result['invalid'] == 1  # the epoch event: info, the run stays ok
     assert run['scope']['calendars'] == ['501', '502'] and run['scope']['complete']
-    if has_end_dates(db):
-        # Phase 4: the portal link leaves the description (the link's url has it), nothing else changes
-        assert events_but_description(db) == before_values
-        assert value(db, "SELECT count(*) FROM public.events WHERE id BETWEEN 61001 AND 61005 "
-                         "AND description IS NOT NULL") == '0'
-    else:
-        assert rows_version(db, 'events') == before
+    # The portal link leaves the description (the link's url has it), nothing else changes
+    assert events_but_description(db) == before_values
+    assert value(db, "SELECT count(*) FROM public.events WHERE id BETWEEN 61001 AND 61005 "
+                     "AND description IS NOT NULL") == '0'
     assert value(db, "SELECT count(*) FROM public.event_links WHERE gone_at IS NULL") == '5'
     assert value(db, "SELECT count(*) FROM public.integration_issues WHERE code = 'invalid_event' "
                      "AND detail = 'no_date'") == '1'
@@ -253,32 +275,25 @@ def test_events_second_run_is_unchanged_and_follows_webling(db, monkeypatch, cap
         ','.join(str(m) for m in sorted([members[0], members[2]]))
 
 
-def has_calendars_gone(db):
-    """The database settles calendars the provider no longer has (20261101120000, capabilities 3)."""
-    return value(db, "SELECT count(*) FROM information_schema.columns WHERE table_schema = 'public' "
-                     "AND table_name = 'integration_calendars' AND column_name = 'gone_at'") == '1'
-
-
 def holidays_world(members):
     """events_world with a holiday calendar (503) and a camp in 501."""
     world = events_world([(members[0], 'confirmed'), (members[1], 'declined')])
     world.calendars[503] = {'title': 'Ferien und Feiertage', 'events': [61201]}
-    world.events[61201] = {'title': 'Weihnachten', 'begin': '2026-12-24 00:00:00', 'end': '2026-12-27 00:00:00',
+    # Three days, all day: Webling ends it at midnight after the last day
+    world.events[61201] = {'title': 'Weihnachten', 'begin': f'{day(55)} 00:00:00', 'end': f'{day(58)} 00:00:00',
                            'place': None, 'maxParticipants': None}
     world.calendars[501]['events'].append(61202)
-    world.events[61202] = {'title': 'Lager', 'begin': '2026-11-13 18:00:00', 'end': '2026-11-15 14:00:00',
+    world.events[61202] = {'title': 'Lager', 'begin': f'{day(14)} 18:00:00', 'end': f'{day(16)} 14:00:00',
                            'place': None, 'maxParticipants': None}
     world.participants.update({61201: [], 61202: []})
     return world
 
 
-def test_holidays_and_end_dates_from_version_2(db, monkeypatch, capsys):
-    if not has_end_dates(db):
-        pytest.skip('the database has no end dates yet (20261030120000)')
+def test_holidays_and_end_dates(db, monkeypatch, capsys):
     members = STATE['participants']
     # A holiday the sync wrote as an event before the layer
     db.query(f"""INSERT INTO public.events (id, title, description, date, "timeFrom", "timeTo", section)
-                 VALUES (61201, 'Weihnachten', '{link(61201)}', '2026-12-24', '00:00', '00:00', 'General')""")
+                 VALUES (61201, 'Weihnachten', '{link(61201)}', '{day(55)}', '00:00', '00:00', 'General')""")
     status, run = sync_run(db, monkeypatch, holidays_world(members), 'events')
     assert status == 0, capsys.readouterr().out
     result = run['result']
@@ -287,16 +302,14 @@ def test_holidays_and_end_dates_from_version_2(db, monkeypatch, capsys):
     # The holiday is the training plan's now (3 days: the dojo is closed), its event is gone
     assert value(db, "SELECT concat_ws('|', title, date_from, date_to, cancels_training::text) "
                      "FROM public.training_plan_breaks WHERE external_id = '61201'") == \
-        'Weihnachten|2026-12-24|2026-12-26|true'
+        f'Weihnachten|{day(55)}|{day(57)}|true'
     assert value(db, "SELECT count(*) FROM public.events WHERE id = 61201") == '0'
     # The camp ends on its last day, with its times
     assert value(db, """SELECT concat_ws('|', date, date_to, all_day::text, "timeFrom", "timeTo", description)
-                          FROM public.events WHERE id = 61202""") == '2026-11-13|2026-11-15|false|18:00|14:00'
+                          FROM public.events WHERE id = 61202""") == f'{day(14)}|{day(16)}|false|18:00|14:00'
 
 
 def test_a_calendar_webling_no_longer_has(db, monkeypatch, capsys):
-    if not has_calendars_gone(db):
-        pytest.skip('the database does not settle gone calendars yet (20261101120000)')
     members = STATE['participants']
     # Aikido Agenda (502) is deleted in Webling, with its two events and the
     # one without a date (an open issue); the other calendars stay as they are

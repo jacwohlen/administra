@@ -4,6 +4,8 @@ import { addMessages, init } from 'svelte-i18n';
 import de from '$lib/i18n/locales/de.json';
 import { parseConnectionStatuses } from '$lib/integrations';
 import type { MergeMember } from '$lib/memberMerge';
+import { invalidate } from '$app/navigation';
+import { toaster } from '$lib/toast';
 import Page from './+page.svelte';
 
 // The real German texts, so a broken message (ICU syntax, missing key) shows here
@@ -21,7 +23,12 @@ vi.mock('$lib/clubConfig', () => ({
 vi.mock('$lib/toast', () => ({ toaster: { error: vi.fn(), success: vi.fn() } }));
 
 afterEach(() => cleanup());
-beforeEach(() => rpc.mockReset());
+beforeEach(() => {
+  rpc.mockReset();
+  vi.mocked(invalidate).mockClear();
+  vi.mocked(toaster.success).mockClear();
+  vi.mocked(toaster.error).mockClear();
+});
 
 const hourAgo = new Date(Date.now() - 3_600_000).toISOString();
 
@@ -220,14 +227,14 @@ const CALENDARS = [
 
 function data(status: object = STATUS) {
   return {
-    available: true,
     connections: parseConnectionStatuses([status]),
     runs: RUNS,
     issues: ISSUES,
     members: [member(3240, 'Mira', 'Dupont'), member(10000001, 'Mira', 'Dupont-Muster')],
     events: [{ id: 61001, title: 'Kurs 1', date: '2026-11-02' }],
     groups: GROUPS,
-    calendars: CALENDARS
+    calendars: CALENDARS,
+    eventUrls: {} as Record<string, string>
   };
 }
 
@@ -236,11 +243,6 @@ function renderPage(d: object = data()) {
 }
 
 describe('integrations page', () => {
-  it('says so on a database without the layer', () => {
-    renderPage({ ...data(), available: false, connections: [] });
-    expect(screen.getByText(/noch nicht eingerichtet/)).toBeInTheDocument();
-  });
-
   it('shows the numbers and a refusal with its exact override', () => {
     renderPage();
     expect(screen.getByRole('heading', { name: 'Webling' })).toBeInTheDocument();
@@ -322,6 +324,112 @@ describe('integrations page', () => {
     );
     await fireEvent.click(screen.getByRole('button', { name: /Wieder öffnen/ }));
     expect(rpc).toHaveBeenCalledWith('integration_dismiss_issue', { p_issue: 7, p_dismiss: false });
+  });
+
+  // An event Webling refused, and three participants Webling has but no linked member
+  const eventIssue = (values: object) => ({
+    ...ISSUES[1],
+    code: 'write_failed',
+    severity: 'error',
+    external_id: '4711',
+    event_id: null,
+    detail: '23514',
+    dismissed_at: null,
+    ...values
+  });
+  const participants = ['5001', '5002', '5003'].map((externalId, i) =>
+    eventIssue({
+      id: 30 + i,
+      code: 'unknown_participant',
+      severity: 'warning',
+      external_id: externalId,
+      event_id: 61001,
+      detail: null
+    })
+  );
+  const template = 'https://club.webling.ch/portal#/calendar/event/{id}';
+
+  it('opens an issue about an event in the provider', () => {
+    renderPage({
+      ...data(),
+      issues: [...ISSUES, eventIssue({ id: 20 }), ...participants],
+      eventUrls: { webling: template }
+    });
+    const links = screen.getAllByRole('link', { name: 'In Webling öffnen' });
+    expect(links.map((a) => a.getAttribute('href'))).toEqual([
+      'https://club.webling.ch/portal#/calendar/event/4711',
+      // the dismissed event, gone from Webling but kept
+      'https://club.webling.ch/portal#/calendar/event/61001'
+    ]);
+    for (const a of links) {
+      expect(a).toHaveAttribute('target', '_blank');
+      expect(a).toHaveAttribute('rel', 'noopener noreferrer');
+    }
+  });
+
+  it('links nothing without a safe template', () => {
+    for (const eventUrls of [{}, { webling: 'javascript:alert({id})' }, { csv: template }]) {
+      renderPage({ ...data(), issues: [...ISSUES, eventIssue({ id: 20 })], eventUrls });
+      expect(screen.getByText('Webling-Nr. 4711')).toBeInTheDocument();
+      expect(screen.queryByRole('link', { name: 'In Webling öffnen' })).not.toBeInTheDocument();
+      cleanup();
+    }
+  });
+
+  it('dismisses all open issues of a group one after the other, after confirming', async () => {
+    rpc.mockResolvedValue({ data: true, error: null });
+    renderPage({ ...data(), issues: [...ISSUES, ...participants] });
+    // one button: the duplicates are checked one by one, the other groups have one issue
+    await fireEvent.click(screen.getByRole('button', { name: 'Alle ausblenden' }));
+    const dialog = screen.getByText('Alle ausblenden?').closest('.modal-dialog') as HTMLElement;
+    expect(dialog.textContent).toContain(
+      'Alle 3 offenen Probleme «Unbekannte Teilnehmende» ausblenden?'
+    );
+    expect(rpc).not.toHaveBeenCalled();
+    await fireEvent.click(within(dialog).getByRole('button', { name: 'Alle ausblenden' }));
+    await waitFor(() => expect(toaster.success).toHaveBeenCalledWith({ title: '3 ausgeblendet' }));
+    // in the order shown (newest first)
+    expect(rpc.mock.calls).toEqual(
+      [32, 31, 30].map((id) => ['integration_dismiss_issue', { p_issue: id, p_dismiss: true }])
+    );
+    expect(invalidate).toHaveBeenCalledWith('integrations:page');
+  });
+
+  it('stops dismissing all at the first error and says how many went through', async () => {
+    rpc
+      .mockResolvedValueOnce({ data: true, error: null })
+      .mockResolvedValueOnce({ data: null, error: { code: '42501', message: 'NOT_ALLOWED' } });
+    const log = vi.spyOn(console, 'error').mockImplementation(() => {});
+    renderPage({ ...data(), issues: [...ISSUES, ...participants] });
+    await fireEvent.click(screen.getByRole('button', { name: 'Alle ausblenden' }));
+    const dialog = screen.getByText('Alle ausblenden?').closest('.modal-dialog') as HTMLElement;
+    await fireEvent.click(within(dialog).getByRole('button', { name: 'Alle ausblenden' }));
+    await waitFor(() =>
+      expect(toaster.error).toHaveBeenCalledWith({
+        title: '1 von 3 ausgeblendet, dann hat es nicht geklappt. Versuch es noch einmal.'
+      })
+    );
+    expect(rpc).toHaveBeenCalledTimes(2);
+    expect(toaster.success).not.toHaveBeenCalled();
+    // the one dismissed shows as such
+    expect(invalidate).toHaveBeenCalledWith('integrations:page');
+    log.mockRestore();
+  });
+
+  it('offers no dismiss all for possible duplicates', () => {
+    const duplicates = [3, 4].map((id) => ({
+      ...ISSUES[0],
+      id,
+      external_id: String(3238 + id),
+      member_id: 3238 + id
+    }));
+    renderPage({
+      ...data(),
+      issues: [...ISSUES, ...duplicates],
+      members: [...data().members, member(3241, 'Lea', 'Muster'), member(3242, 'Lea', 'Muster')]
+    });
+    expect(screen.getAllByRole('button', { name: /Kein Duplikat/ })).toHaveLength(3);
+    expect(screen.queryByRole('button', { name: 'Alle ausblenden' })).not.toBeInTheDocument();
   });
 
   it('marks a calendar the provider no longer has instead of asking to review it', () => {

@@ -14,8 +14,7 @@ import {
   eventDays,
   eventEnd,
   eventPhase,
-  formatEventDates,
-  saveEventRow
+  formatEventDates
 } from './eventUtils';
 
 describe('isEventPast', () => {
@@ -252,21 +251,6 @@ describe('the event form', () => {
     expect(eventDateValues(linked)).toMatchObject({ date_to: null });
   });
 
-  it('saves only what the edit page sends: all day locked, no retry', async () => {
-    const calls: object[] = [];
-    // the edit page's unlocked fields (a Partial of the form's columns)
-    const unlocked: { description: string; registrationDeadline: null; all_day?: boolean } = {
-      description: 'Mit Übernachtung',
-      registrationDeadline: null
-    };
-    const result = await saveEventRow(unlocked, async (values) => {
-      calls.push(values);
-      return { error: { code: 'PGRST204', message: "Could not find the 'x' column" } };
-    });
-    expect(result.error?.code).toBe('PGRST204');
-    expect(calls).toEqual([{ description: 'Mit Übernachtung', registrationDeadline: null }]);
-  });
-
   it('fills in a stored event', () => {
     expect(
       eventDateInput({
@@ -276,7 +260,7 @@ describe('the event form', () => {
         timeFrom: '00:00'
       })
     ).toEqual({ date: '2026-11-13', dateTo: '2026-11-16', allDay: true, timeFrom: '', timeTo: '' });
-    // A database without all_day yet: a timed event
+    // Without all_day: a timed event
     expect(eventDateInput({ date: '2026-11-13', timeFrom: '18:00', timeTo: '20:00' })).toEqual({
       date: '2026-11-13',
       dateTo: '',
@@ -284,31 +268,5 @@ describe('the event form', () => {
       timeFrom: '18:00',
       timeTo: '20:00'
     });
-  });
-
-  it('saves without all_day where the database does not have it yet', async () => {
-    const missing = {
-      error: {
-        code: 'PGRST204',
-        message: "Could not find the 'all_day' column of 'events' in the schema cache"
-      }
-    };
-    const calls: object[] = [];
-    const result = await saveEventRow({ title: 'Lager', all_day: true }, async (values) => {
-      calls.push(values);
-      return calls.length === 1 ? missing : { error: null };
-    });
-    expect(result.error).toBeNull();
-    expect(calls).toEqual([{ title: 'Lager', all_day: true }, { title: 'Lager' }]);
-  });
-
-  it('does not retry other errors', async () => {
-    const calls: object[] = [];
-    const result = await saveEventRow({ title: 'Lager', all_day: false }, async (values) => {
-      calls.push(values);
-      return { error: { code: '23514', message: 'events_date_to_check' } };
-    });
-    expect(result.error?.code).toBe('23514');
-    expect(calls).toHaveLength(1);
   });
 });
