@@ -1,7 +1,7 @@
 """integration.runner: a database without the layer, finish in finally, exit codes."""
 import pytest
 
-from fake_layer import FakeLayer
+from fake_layer import CAPABILITIES, FakeLayer
 from fake_world import Response, World
 from integration.client import Client
 from integration.layer import Layer
@@ -83,6 +83,19 @@ def test_calendars_the_provider_no_longer_has_are_logged_by_id(world, capsys):
     assert status == 0
     assert 'Calendars the provider no longer has (settled as read, without events): 502, 503' \
         in capsys.readouterr().out
+
+
+def test_keys_the_database_does_not_know_are_left_out_and_named(world, capsys):
+    # A database whose capabilities lack ends_on and all_day (before phase
+    # 4): the events go up without them, no special case in the adapter
+    keys = [k for k in CAPABILITIES['event_keys'] if k not in ('ends_on', 'all_day')]
+    fake = FakeLayer(world, capabilities={**CAPABILITIES, 'event_keys': keys})
+    adapter = FakeAdapter(records=[{'external_id': '7001', 'data': {
+        'title': 'T', 'starts_on': '2026-11-05', 'ends_on': None, 'all_day': False}}])
+    adapter.plan = lambda kind: Plan({'complete': True, 'calendars': ['501']})
+    assert go(world, adapter=adapter, kind='events') == 0
+    assert fake.staged == [{'external_id': '7001', 'data': {'title': 'T', 'starts_on': '2026-11-05'}}]
+    assert 'Not sent (unknown to this database): all_day, ends_on' in capsys.readouterr().out
 
 
 @pytest.mark.parametrize('answer', [

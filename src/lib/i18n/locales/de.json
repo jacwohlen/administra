@@ -191,7 +191,6 @@
     "integrations": {
       "title": "Integrationen",
       "intro": "Woher Mitglieder, Events und Ferien kommen: was die letzten Läufe gebracht haben, was offen ist und wie Gruppen und Kalender zugeordnet sind.",
-      "notAvailable": "Die Integrationsschicht ist auf dieser Datenbank noch nicht eingerichtet. Sie kommt mit der nächsten Freigabe.",
       "empty": "Keine Verbindung eingerichtet.",
       "runsIn": {
         "sync": "Läuft in GitHub Actions",
@@ -297,6 +296,10 @@
         "notDuplicate": "Kein Duplikat",
         "dismiss": "Ausblenden",
         "reopen": "Wieder öffnen",
+        "dismissAll": "Alle ausblenden",
+        "dismissAllTitle": "Alle ausblenden?",
+        "dismissAllConfirm": "Alle {count} offenen Probleme «{code}» ausblenden? Sie bleiben ausgeblendet, auch wenn die nächsten Läufe sie wieder sehen; einzeln wieder öffnen geht jederzeit.",
+        "openInProvider": "In {provider} öffnen",
         "severity": {
           "error": "Fehler",
           "warning": "Warnung",
@@ -335,6 +338,8 @@
         },
         "toast": {
           "dismissed": "Ausgeblendet",
+          "dismissedAll": "{count} ausgeblendet",
+          "dismissAllError": "{dismissed, plural, =0 {Das hat nicht geklappt.} other {# von {count} ausgeblendet, dann hat es nicht geklappt.}} Versuch es noch einmal.",
           "reopened": "Wieder geöffnet",
           "error": "Das hat nicht geklappt. Versuch es noch einmal."
         }

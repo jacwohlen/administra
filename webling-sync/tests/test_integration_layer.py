@@ -89,7 +89,7 @@ def test_begin_sends_scope_and_options(world):
     fake = FakeLayer(world)
     run = layer_with(world).begin('webling', 'members', {'complete': True}, dry_run=True,
                                   trigger='schedule', runner='github:123')
-    assert run.id == 41 and run.today == '2026-10-28' and run.version == 1
+    assert run.id == 41 and run.today == '2026-10-28'
     assert fake.begun == [{'p_connection': 'webling', 'p_kind': 'members', 'p_options': {
         'scope': {'complete': True}, 'dry_run': True, 'trigger': 'schedule', 'runner': 'github:123'}}]
 
@@ -159,7 +159,7 @@ def test_events_use_the_event_keys(world):
     fake = FakeLayer(world)
     run = layer_with(world).begin('webling', 'events', {'complete': True, 'calendars': []})
     run.stage([{'external_id': '7', 'data': {'title': 'T', 'firstname': 'no', 'all_day': True}}])
-    assert fake.staged[0]['data'] == {'title': 'T'}
+    assert fake.staged[0]['data'] == {'title': 'T', 'all_day': True}
 
 
 def test_stage_without_capabilities_is_an_error(world):

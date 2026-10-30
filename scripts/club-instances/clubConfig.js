@@ -239,7 +239,7 @@ export function siteEnv(club, op, project) {
 
 /**
  * SQL that makes the club's admins the only bootstrap admins
- * (supabase/migrations/20261102140000_bootstrap_admins_table.sql).
+ * (supabase/migrations/20261103140000_bootstrap_admins_table.sql).
  * Run right after the migrations, before anyone can sign in.
  *
  * @param {Club} club

@@ -5,7 +5,7 @@
   import Fa from 'svelte-fa';
   import { faSave, faArrowLeft } from '@fortawesome/free-solid-svg-icons';
   import { clubConfig } from '$lib/clubConfig';
-  import { eventDateValues, saveEventRow, type EventDateInput } from '$lib/eventUtils';
+  import { eventDateValues, type EventDateInput } from '$lib/eventUtils';
   import EventDateFields from '../EventDateFields.svelte';
 
   let title = '';
@@ -41,8 +41,9 @@
     error = '';
 
     try {
-      const { error: insertError, data } = await saveEventRow(
-        {
+      const { error: insertError, data } = await supabaseClient
+        .from('events')
+        .insert({
           title,
           description: description || null,
           ...when,
@@ -50,9 +51,9 @@
           section,
           maxParticipants: maxParticipants || null,
           registrationDeadline: registrationDeadline || null
-        },
-        (values) => supabaseClient.from('events').insert(values).select().single()
-      );
+        })
+        .select()
+        .single();
 
       if (insertError) {
         console.error('Error creating event:', insertError);

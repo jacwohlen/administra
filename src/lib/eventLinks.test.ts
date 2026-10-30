@@ -3,33 +3,11 @@ import {
   PROVIDER_EVENT_FIELDS,
   canDeleteEvent,
   eventLinkFromResult,
-  isMissingSchemaError,
   lockedEventFields
 } from './eventLinks';
 
 afterEach(() => {
   vi.restoreAllMocks();
-});
-
-describe('isMissingSchemaError', () => {
-  it('knows a missing table or column (database without the integration layer)', () => {
-    expect(
-      isMissingSchemaError({
-        code: 'PGRST205',
-        message: "Could not find the table 'public.event_links'"
-      })
-    ).toBe(true);
-    expect(isMissingSchemaError({ code: 'PGRST204' })).toBe(true);
-    expect(isMissingSchemaError({ code: '42P01' })).toBe(true);
-    expect(isMissingSchemaError({ code: '42703' })).toBe(true);
-  });
-
-  it('is false for other errors and non-errors', () => {
-    expect(isMissingSchemaError({ code: '42501' })).toBe(false);
-    expect(isMissingSchemaError({ message: 'Failed to fetch' })).toBe(false);
-    expect(isMissingSchemaError(null)).toBe(false);
-    expect(isMissingSchemaError(undefined)).toBe(false);
-  });
 });
 
 describe('eventLinkFromResult', () => {
@@ -60,18 +38,13 @@ describe('eventLinkFromResult', () => {
     expect(eventLinkFromResult({ data: [{ connection: '' }], error: null })).toBeNull();
   });
 
-  it('is null, quietly, on a database without event_links', () => {
+  it('is null on an error, which is logged', () => {
     const log = vi.spyOn(console, 'error').mockImplementation(() => {});
+    expect(eventLinkFromResult({ data: null, error: { message: 'Failed to fetch' } })).toBeNull();
     expect(
       eventLinkFromResult({ data: null, error: { code: 'PGRST205', message: 'not found' } })
     ).toBeNull();
-    expect(log).not.toHaveBeenCalled();
-  });
-
-  it('is null on any other error, which is logged', () => {
-    const log = vi.spyOn(console, 'error').mockImplementation(() => {});
-    expect(eventLinkFromResult({ data: null, error: { message: 'Failed to fetch' } })).toBeNull();
-    expect(log).toHaveBeenCalledOnce();
+    expect(log).toHaveBeenCalledTimes(2);
   });
 
   it('only keeps https links', () => {

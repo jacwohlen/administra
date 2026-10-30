@@ -132,22 +132,22 @@ Webling and builds the records.
   January 1 of this year are not sent; an event that cannot be read is sent
   as `fetch_failed`, Webling's unset date (1970) as `no_date`. Participants
   go up for events from today on, and only when Webling's list was read.
-  A database whose `capabilities` have version 2 (integrations phase 4)
-  gets the last day (`ends_on`: an end at 00:00 belongs to the day before,
-  as Webling ends an all-day entry at midnight after its last day and a
-  timed event until midnight at 00:00) and `all_day` (Webling's
-  `isAllDay`, else 00:00 to 00:00), no description (the portal link is the
-  link's url), and the window and participants go by the last day.
-  Every calendar Webling lists goes along as `provider_calendars`: a
-  database whose capabilities have version 3 settles the calendars Webling
-  no longer has (deleted, or no longer visible to the API user) as read
-  without events, so their events go under the events gone guard and their
-  issues resolve; the log names their ids ("Calendars the provider no
-  longer has").
+  Each event goes up with its last day (`ends_on`: an end at 00:00 belongs
+  to the day before, as Webling ends an all-day entry at midnight after
+  its last day and a timed event until midnight at 00:00) and `all_day`
+  (Webling's `isAllDay`, else 00:00 to 00:00; then without times), and
+  without a description (the portal link is the link's url, the
+  description the app's); the window and participants go by the last day.
+  Every calendar Webling lists goes along as `provider_calendars`: the
+  layer settles the calendars Webling no longer has (deleted, or no longer
+  visible to the API user) as read without events, so their events go
+  under the events gone guard and their issues resolve; the log names
+  their ids ("Calendars the provider no longer has").
 - Records are staged 500 per call, each with only the keys the database
   lists in `capabilities` (a newer adapter never sends what an older
-  database does not know). `integration_finish` is always called once the
-  run is open, also when the adapter crashes (error `adapter_crash`).
+  database does not know; the log names the keys left out, "Not sent").
+  `integration_finish` is always called once the run is open, also when
+  the adapter crashes (error `adapter_crash`).
 
 The log of a run shows counts, ids and codes only, e.g.:
 
@@ -176,7 +176,8 @@ deleted grades, medals and badges) is gone.
 ### Tests
 
 CI runs `ruff check` and `pytest` on every pull request (job
-`sync-scripts`):
+`sync-scripts`; the local-database tests below run in job `db-validate`,
+against the database `supabase db start` built there):
 
 ```bash
 pip install -r requirements-dev.txt
@@ -198,7 +199,11 @@ The tests run against a fake Webling and Supabase (`tests/fake_world.py`,
   e.g.
   `LAYER_TEST_PSQL='psql postgresql://postgres:postgres@127.0.0.1:54322/postgres' pytest tests/test_layer_local_db.py`
   after `supabase db reset`; `LAYER_TEST_PSQL_NO_LAYER` (optional) names a
-  database without the layer, where the sync must fail.
+  database without the layer, where the sync must fail. CI runs them after
+  the SQL checks (each rolled back, so the database is still fresh) with
+  `LAYER_TEST_REQUIRED=1`, which makes a missing `LAYER_TEST_PSQL` an
+  error instead of a skip (a database it cannot reach already is one); the
+  test without the layer is skipped there.
 
 ## Scheduled Sync (GitHub Actions)
 

@@ -175,16 +175,16 @@ describe('event layout load', () => {
     expect(result.eventLink).toBeNull();
   });
 
-  it('a database without event_links (before the promotion) means not linked', async () => {
-    mockQueries(ok(mockEvent), {
-      data: null,
-      error: { code: 'PGRST205', message: "Could not find the table 'public.event_links'" }
-    });
+  it('a link that cannot be read means not linked, and is logged', async () => {
+    const log = vi.spyOn(console, 'error').mockImplementation(() => {});
+    mockQueries(ok(mockEvent), { data: null, error: { message: 'Failed to fetch' } });
 
     const result = await layoutLoad({ params } as never);
 
     expect(result.event).toEqual(mockEvent);
     expect(result.eventLink).toBeNull();
+    expect(log).toHaveBeenCalledOnce();
+    log.mockRestore();
   });
 
   it('throws 404 when the event cannot be loaded', async () => {

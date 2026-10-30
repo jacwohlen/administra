@@ -1,16 +1,12 @@
 """Webling calendar events as layer records (integration_stage, kind 'events').
 
 The values: title trimmed ('Untitled Event' when empty), date and start
-time from begin, end time from end, place trimmed, the limit, and the
-Webling portal link as the link's url. The calendar goes up with its id
-and title; the layer's catalog gives the section (or makes the
-calendar's entries holidays).
-
-A database whose capabilities have version 2 (phase 4) also gets the last
-day (ends_on, see dates.span) and all_day (an all-day event goes up without
-times), and no description: the portal link is the link's url, the
-description the app's. Version 1 gets the link as description, and
-neither of the two.
+time from begin, the last day (ends_on, see dates.span), end time from
+end, all_day (an all-day event goes up without times), place trimmed, the
+limit, and the Webling portal link as the link's url (no description: the
+description is the app's). The calendar goes up with its id and title;
+the layer's catalog gives the section (or makes the calendar's entries
+holidays).
 
 Registrations: an event not over by today carries its participants as
 [{member, state}] (member = the Webling member id, state as Webling has
@@ -64,37 +60,31 @@ def participant_list(objects, state_property):
     return out
 
 
-def event_record(event_id, properties, calendar, domain, participants=None, version=1):
-    """One W6 event as a record for a database of capabilities `version`.
-    A begin Webling left unset ('no_date') or that cannot be read
-    ('invalid_date') makes a problem record: seen (so the event is never
-    taken as gone), not written."""
+def event_record(event_id, properties, calendar, domain, participants=None):
+    """One W6 event as a record. A begin Webling left unset ('no_date') or
+    that cannot be read ('invalid_date') makes a problem record: seen (so
+    the event is never taken as gone), not written."""
     begin = dates.split(properties.get('begin'))
     if begin.problem:
         return {'external_id': str(event_id),
                 'data': {'calendar': calendar_ref(calendar), 'problem': begin.problem}}
     end = dates.split(properties.get('end'))
-    link = portal_link(domain, event_id)
+    ends_on, all_day = dates.span(properties, begin, end)
     title = properties.get('title')
     place = properties.get('place')
     data = {
         'calendar': calendar_ref(calendar),
         'title': (title.strip() if isinstance(title, str) else '') or 'Untitled Event',
         'starts_on': begin.date,
-        'time_from': begin.time,
-        'time_to': end.time,
+        'ends_on': ends_on,
+        'all_day': all_day,
+        # An all-day event goes up without times
+        'time_from': None if all_day else begin.time,
+        'time_to': None if all_day else end.time,
         'location': (place.strip() if isinstance(place, str) else None) or None,
         'max_participants': limit(properties.get('maxParticipants')),
-        'description': link,
-        'url': link,
+        'url': portal_link(domain, event_id),
     }
-    if version >= 2:
-        ends_on, all_day = dates.span(properties, begin, end)
-        data['ends_on'] = ends_on
-        data['all_day'] = all_day
-        if all_day:
-            data['time_from'] = data['time_to'] = None
-        del data['description']
     if participants is not None:
         data['participants'] = participants
     return {'external_id': str(event_id), 'data': data}
@@ -136,13 +126,10 @@ def calendars(api, selectors, counters):
     return chosen, errors, listed
 
 
-def last_day(properties, begin, version):
+def last_day(properties, begin):
     """The day an event ends, for the window and the registrations: its
-    last day from version 2 on (a multi-day event under way still counts),
-    else its first."""
-    if version >= 2:
-        return dates.span(properties, begin, dates.split(properties.get('end'))).ends_on or begin.date
-    return begin.date
+    last day (a multi-day event under way still counts)."""
+    return dates.span(properties, begin, dates.split(properties.get('end'))).ends_on or begin.date
 
 
 def event_records(api, chosen, run, domain, counters):
@@ -177,7 +164,7 @@ def event_records(api, chosen, run, domain, counters):
                 counters[begin.problem] += 1
                 records.append(problem_record(event_id, calendar, begin.problem))
                 continue
-            last = last_day(props, begin, run.version)
+            last = last_day(props, begin)
             if last < window:
                 counters['before_window'] += 1
                 continue
@@ -196,7 +183,7 @@ def event_records(api, chosen, run, domain, counters):
                     else:
                         counters['participant_lists'] += 1
                         participants = participant_list(objects, state_property)
-            records.append(event_record(event_id, props, calendar, domain, participants, run.version))
+            records.append(event_record(event_id, props, calendar, domain, participants))
     print(f"Webling: {counters['events']} events, {counters['before_window']} before this year "
           f"(not sent), {counters['no_date']} without date, {counters['fetch_failed']} could not be read, "
           f"{counters['participant_lists']} participant lists read")

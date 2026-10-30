@@ -361,8 +361,8 @@ when the policy cannot be read; all day and the times together, as each
 changes the other) and leaves the rest, such as the registration deadline
 and, from phase 4, Webling's description, to the app. Deleting an event
 deletes its registrations and attendance with it (foreign keys), so a
-refused delete loses nothing. An app without the migration (Netlify
-deploys before a promotion) treats every event as not linked.
+refused delete loses nothing. A link that cannot be read is logged and the
+event treated as not linked.
 
 **Identity.** Through the link first (a gone link is revived); then an
 admin's `link_to` from an import review; for Webling, a row with the
@@ -470,8 +470,7 @@ with no fallback. Exit 0 only when the run ends `ok`.
 The core in `src/integration/` knows no provider; `src/webling_adapter/`
 reads Webling and sends what it has (names trimmed, values as Webling has
 them, the portal link as the link's url, from phase 4 with `ends_on` and
-`all_day`; a database of capabilities version 1 gets the link as
-description too). A member Webling cannot fully answer is sent as a problem
+`all_day`). A member Webling cannot fully answer is sent as a problem
 (`missing_field`, `fetch_failed`): seen, so never gone, and not written.
 The events scope is the calendars Webling answered completely, so an
 unanswered calendar cannot lose events; Webling's unset date is
@@ -510,6 +509,18 @@ the old sync wrote whose notes only start with `Imported from Webling`),
 `events_all_day`, and the adoption of unlinked rows with a Webling id and
 the replacement of holiday events, which find nothing left to do.
 
+**After 3c** every database (prod, Dev, preview branches) has the layer
+and phases 3 and 4, so the hardening PR
+(`20261103120000_integrations_hardening.sql`) removed what served one
+without them: in the app the Integrations page's "noch nicht
+eingerichtet", reading the calendars without `gone_at`, saving an event
+again without `all_day` (`saveEventRow()`) and the quiet handling of a
+missing table (`isMissingSchemaError()`: such an error is logged like any
+other now); in the Webling adapter capabilities version 1 (the portal link
+as description, no last day). CI runs the sync's layer tests against the
+`db-validate` job's database. `member_status_from_labels()` is no API
+function any more: only the database calls it, as the owner.
+
 ## The app reads the configuration (phase 3b)
 
 The dashboard layout loads `integration_connections` and
@@ -535,8 +546,7 @@ a mapping change on the Integrations page it loads them again. From them:
   are all gone is the app's.
 
 Without the configuration (member accounts, which may not read it; a
-database without the layer, as when Netlify deploys the app before a
-promotion; a failed load, tried again at the next navigation) the built-in
+failed load, logged and tried again at the next navigation) the built-in
 rules apply, which are what the seeded catalog says.
 
 ## End dates and holidays (phase 4)
@@ -575,17 +585,15 @@ moved the last day along. Phase 3c drops it
 start after the last day is refused (`events_date_to_check`) as for
 everyone else.
 
-**Deploy order.** On a database that already has phase 2
-(`events.date_to`, `training_plan_breaks.connection`), an app deployed
-before this migration (Netlify can be first) saves without `all_day`
-(`saveEventRow()` retries without the column) and reads every event as
-timed. Prod is not such a database: the promotion that carries phase 4
-carries phase 2 (`20261029120000`) as well, and until Supabase has applied
-both migrations (about a minute after the merge) the training plan and its
-settings page fail to load, the dashboard's events of the day and the exam
-days' event choice are empty, and saving an event (form or Daten-Assistent)
-fails. Note it in that promotion's release notes; reloading after the
-minute is enough.
+**Deploy order** (history). Netlify can deploy the app before Supabase
+applies a promotion's migrations. Until the hardening after 3c, an app
+ahead of this migration saved without `all_day` (`saveEventRow()` retried
+without the column); every database has it now, and the event form saves
+directly. The promotion that carried phase 4 carried phase 2
+(`20261029120000`) as well: until Supabase had applied both (about a minute
+after the merge) the training plan, the dashboard's events of the day, the
+exam days' event choice and saving an event failed, and reloading after the
+minute was enough.
 
 **The layer, capabilities version 2.** `integration_begin` answers
 `version: 2` and takes `all_day` in event records; `ends_on` becomes
@@ -603,18 +611,18 @@ migration replaces `integration_write_event(s)`, `integration_normalize_event`,
 versions (review fixes included) plus `all_day`; a failed insert still
 leaves its issue without an event id.
 
-**Webling adapter.** `ends_on` and `all_day` are sent only when the
-database's capabilities have version 2 (`webling_adapter/dates.span()`),
-and the description only to version 1, so the adapter on `main` works
-with a database before and after the promotion. All day is Webling's flag
+**Webling adapter.** It sends `ends_on` and `all_day`
+(`webling_adapter/dates.span()`) and no description; until the hardening
+after 3c it still sent a database of capabilities version 1 the portal link
+as description and neither of the two. All day is Webling's flag
 `isAllDay` when an event has it, else an entry from 00:00 to 00:00 (or
 without an end), as the old sync wrote them. An end at 00:00 belongs
 to the day before: Webling ends an all-day entry at midnight after its
 last day (Karfreitag 03.04. ends on 04.04. 00:00, seen on the first layer
 run on Dev), and a timed event that ends at midnight (19:00 to 00:00 the
-next day) ends on the day before too. From version 2 on the window and the registrations go by the last
-day: a camp that began before January 1 is still sent, one under way still
-gets its participants.
+next day) ends on the day before too. The window and the registrations go
+by the last day: a camp that began before January 1 is still sent, one
+under way still gets its participants.
 
 **Holidays.** Webling's calendar "Ferien und Feiertage" holds holidays now
 (`integration_calendars.target = 'break'`, `closed_max_days = 3`: a period
@@ -679,7 +687,13 @@ Einstellungen; `src/routes/dashboard/integrations/`, helpers in
   issue without a record number. A possible duplicate links both member
   pages and opens the merge dialog (phase 1c); "Kein Duplikat" dismisses
   it (`integration_dismiss_issue`), any other issue can be dismissed too,
-  and a dismissed one can be reopened.
+  and a dismissed one can be reopened. A group of two open issues or more
+  has "Alle ausblenden", except possible duplicates (each pair is checked
+  on its own): after a confirmation with the count it dismisses them one
+  after the other, stops at the first error and says how many went
+  through. An issue about a provider's event or holiday (kind `events`;
+  not an unknown participant, whose number is the member's) has "In
+  Webling öffnen" when the connection has a link template (below).
 - **Mapping**: status, rank, hidden and role per group; target, section
   and "Dojo zu" days per calendar; new rows marked "Neu" and confirmed with
   "Geprüft", calendars the provider no longer lists marked "Nicht mehr in
@@ -694,4 +708,17 @@ Einstellungen; `src/routes/dashboard/integrations/`, helpers in
   left as loaded take the new values and Save waits for a new preview.
   Save also waits while an input is invalid.
 
-A database without the layer shows "noch nicht eingerichtet" instead.
+**Links to the provider** (`settings.record_urls`,
+`20261103120000_integrations_hardening.sql`). A connection's
+`settings.record_urls.event` is the address of one of its events, with
+`{id}` for the external id; the page reads `integration_connections` (id,
+settings) for it. It is used only when it starts with `https://` and has
+`{id}` exactly once, after the host, and only for a record number of
+letters, digits and `_.:-` (URL-encoded into the link, which opens in a
+new tab); otherwise the issue shows the number without a link, as it does
+when the connections cannot be read (logged). The migration derives the
+template from each connection's live `event_links` when all their urls
+are one prefix followed by their own id (Webling:
+`https://<club>.webling.ch/portal#/calendar/event/{id}`) and keeps one
+already set; a connection without such links gets none until one is set
+in SQL.

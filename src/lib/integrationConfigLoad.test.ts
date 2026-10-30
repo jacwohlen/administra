@@ -48,19 +48,7 @@ describe('loadIntegrationConfig', () => {
     expect(mockSupabase.from).toHaveBeenCalledTimes(4);
   });
 
-  it('keeps the built-in rules on a database without the layer, without asking again', async () => {
-    const log = vi.spyOn(console, 'error').mockImplementation(() => {});
-    answer({
-      integration_connections: { data: null, error: { code: 'PGRST205', message: 'missing' } }
-    });
-    await loadIntegrationConfig();
-    await loadIntegrationConfig();
-    expect(integrationConfig.loaded).toBe(false);
-    expect(mockSupabase.from).toHaveBeenCalledTimes(2);
-    expect(log).not.toHaveBeenCalled();
-  });
-
-  it('keeps the built-in rules after another error and tries again next time', async () => {
+  it('keeps the built-in rules after an error and tries again next time', async () => {
     const log = vi.spyOn(console, 'error').mockImplementation(() => {});
     answer({ integration_member_groups: { data: null, error: { message: 'Failed to fetch' } } });
     await loadIntegrationConfig();

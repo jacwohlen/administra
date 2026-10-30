@@ -7,10 +7,9 @@
  * (`./integrationConfigLoad`) and fills this object in place, so helpers
  * like visibleLabels() read it without being handed it.
  *
- * `loaded` stays false for member accounts (no read access), on a database
- * without the layer (Netlify may deploy the app before a promotion applies
- * the migration) and after a failed load: the helpers then keep the
- * built-in rules, which are what the seeded catalog says.
+ * `loaded` stays false for member accounts (no read access) and after a
+ * failed load: the helpers then keep the built-in rules, which are what the
+ * seeded catalog says.
  *
  * Pure (no Supabase import), so memberStatus.ts and its tests can use it.
  */
