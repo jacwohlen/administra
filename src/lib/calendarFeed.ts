@@ -168,9 +168,9 @@ const oneLine = (text: string) => text.replace(/\s+/g, ' ').trim();
 
 function hostOf(origin: string): string {
   try {
-    return new URL(origin).host || 'adsumus';
+    return new URL(origin).host || 'alleda';
   } catch {
-    return 'adsumus';
+    return 'alleda';
   }
 }
 
@@ -293,7 +293,7 @@ export function buildCalendarFeed(data: CalendarFeedData, options: CalendarFeedO
   return icsFile([
     'BEGIN:VCALENDAR',
     'VERSION:2.0',
-    `PRODID:-//Adsumus//Trainingsplan//${locale.toUpperCase()}`,
+    `PRODID:-//Alleda//Trainingsplan//${locale.toUpperCase()}`,
     'CALSCALE:GREGORIAN',
     'METHOD:PUBLISH',
     `NAME:${name}`,

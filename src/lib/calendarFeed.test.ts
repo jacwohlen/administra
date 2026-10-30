@@ -138,7 +138,7 @@ describe('the calendar', () => {
     expect(calendarProps(ics)).toEqual([
       'BEGIN:VCALENDAR',
       'VERSION:2.0',
-      'PRODID:-//Adsumus//Trainingsplan//DE',
+      'PRODID:-//Alleda//Trainingsplan//DE',
       'CALSCALE:GREGORIAN',
       'METHOD:PUBLISH',
       'NAME:Alle Trainings (JAC Wohlen)',
@@ -156,7 +156,7 @@ describe('the calendar', () => {
     expect(calendarProps(feed({ clubName: null }))).toContain('X-WR-CALNAME:Alle Trainings');
     expect(calendarProps(feed({ clubName: '  ' }))).toContain('NAME:Alle Trainings');
     const en = calendarProps(feed({ locale: 'en', clubName: 'Judo Club, Bern' }));
-    expect(en).toContain('PRODID:-//Adsumus//Trainingsplan//EN');
+    expect(en).toContain('PRODID:-//Alleda//Trainingsplan//EN');
     expect(en).toContain('NAME:All trainings (Judo Club\\, Bern)');
     expect(calendarProps(feed({ locale: 'en', kind: 'mine', clubName: undefined }))).toContain(
       'X-WR-CALNAME:My trainings'
