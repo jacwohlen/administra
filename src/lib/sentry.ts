@@ -39,6 +39,41 @@ export function sentryOptions(dsn: string | undefined, deployContext: string | u
   };
 }
 
+/**
+ * Browser errors that only mean the connection dropped (phone lost signal, tab
+ * closed mid-request) or that a page was preloaded right after a deploy. They
+ * say nothing about our code, so the browser doesn't report them. SvelteKit
+ * already reloads the page when a navigation hits a file from an old deploy.
+ */
+export const browserNetworkNoise: RegExp[] = [
+  /^Failed to fetch$/,
+  /^Failed to fetch \(.*\)$/,
+  /^Load failed( \(.*\))?$/,
+  /^NetworkError when attempting to fetch resource\.?$/,
+  /^Failed to fetch dynamically imported module/,
+  /^Importing a module script failed\.?$/,
+  /^error loading dynamically imported module/
+];
+
+/** True when a browser error message is only network noise (see above). */
+export function isBrowserNetworkNoise(message: string): boolean {
+  return browserNetworkNoise.some((pattern) => pattern.test(message));
+}
+
+interface ReportedError {
+  message?: string;
+  exception?: { values?: { value?: string }[] };
+}
+
+/** Browser `beforeSend`: drops network noise, scrubs everything else. */
+export function browserBeforeSend<T extends ReportedError>(event: T): T | null {
+  const values = event.exception?.values ?? [];
+  if (values.length > 0 && values.every((v) => isBrowserNetworkNoise(v.value ?? ''))) {
+    return null;
+  }
+  return scrubEvent(event);
+}
+
 /** Sentry environment name for a Netlify deploy context. */
 export function sentryEnvironment(context: string | undefined): string {
   if (context === 'production') return 'production'; // prod → admin.jacwohlen.ch
