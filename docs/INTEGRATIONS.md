@@ -747,7 +747,7 @@ configuration (`integrationConfig.enabled`, `isModuleEnabled()`).
 no runner does), off after the migration. The Integrations page shows it
 as a switch with a description, not runs, issues or mapping (`hasSync()` in
 `src/lib/integrations.ts`); while on, the dashboard offers _J+S-Export_
-(`data.jsEnabled`), see `docs/JS_EXPORT.md`.
+to trainers and admins (`data.jsEnabled`), see `docs/JS_EXPORT.md`.
 
 **Licence number.** `members.license_number` (Lizenznummer, the J+S person
 number) is a member field like the name: the layer takes `license_number`

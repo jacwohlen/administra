@@ -61,7 +61,8 @@ export const load: LayoutLoad = async ({ parent, depends }) => {
     canGrade: canGrade(userProfile),
     // Trainingsplanung: the TK plans trainers and topics
     canPlanTrainings: canPlanTrainings(userProfile),
-    // Optional modules, switched on the Integrations page
-    jsEnabled: isModuleEnabled('js')
+    // Optional modules, switched on the Integrations page; J+S is for
+    // trainers and admins only (RLS: is_writer())
+    jsEnabled: isWriter(userProfile) && isModuleEnabled('js')
   };
 };
