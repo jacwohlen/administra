@@ -258,9 +258,9 @@ list; `supabase/checks/merge_members.sql` fails when a foreign key to
 | `user_profiles.member_id`           | Moved when only the dropped member is linked                                                                                                                          |
 | `member_links.member_id`            | A gone link goes with the dropped row; the kept member's link stays                                                                                                   |
 
-The kept row keeps its name, labels and status. Birthday, mobile and e-mail
-are only filled where it has none, and not at all on a Webling row (change
-them in Webling); an e-mail from the trial form is never copied (anybody can
+The kept row keeps its name, labels and status. Birthday, mobile, e-mail and
+the Lizenznummer (`20261105130000_merge_license_number.sql`) are only filled
+where it has none, and not at all on a Webling row (change them in Webling); an e-mail from the trial form is never copied (anybody can
 type any address there, and the e-mail decides who may sign in). Notes of
 both are joined; the dropped photo is taken when the kept row has none (the
 browser copies the file, Storage is out of SQL's reach); the kept row leaves
@@ -766,8 +766,9 @@ linked and cleared when Webling has none. The Webling adapter sends it only
 when its members have the property _Lizenznummer_ (a Webling without the
 field changes nothing); an older adapter or database leaves it out (keys
 filtered by the capabilities). Anonymized runs send none. Members from the
-app get it in the member form. Not yet in `merge_members()`: a merge keeps
-the kept row's number (the Webling row's, which Webling owns anyway).
+app get it in the member form. A merge treats it like the birthday: the
+dropped row's number fills an empty one on a kept app row, never on a Webling
+row (`fields.license_number`, `20261105130000_merge_license_number.sql`).
 
 `supabase/checks/integration_layer.sql` (section L) checks the policy, the
 capabilities, writing, keeping and clearing the number, the guard for

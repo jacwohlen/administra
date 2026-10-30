@@ -382,6 +382,7 @@
         birthday: data.birthday,
         mobile: data.mobile,
         email: data.email,
+        license_number: data.license_number ?? null,
         labels: data.labels,
         membership_status: data.membership_status,
         archivedAt: data.archivedAt,

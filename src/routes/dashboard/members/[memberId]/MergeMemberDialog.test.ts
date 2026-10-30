@@ -6,7 +6,12 @@ import type { MemberMergeResult } from '$lib/models';
 import MergeMemberDialog from './MergeMemberDialog.svelte';
 
 vi.mock('svelte-i18n', () => ({
-  _: readable((key: string) => key),
+  // The key, and for a contact field line also the values it names
+  _: readable((key: string, opts?: { values?: Record<string, unknown> }) =>
+    key.startsWith('page.members.merge.fieldDecision.') && opts?.values
+      ? `${key} ${opts.values.field}=${opts.values.value}`
+      : key
+  ),
   locale: readable('de'),
   init: vi.fn(),
   register: vi.fn(),
@@ -61,14 +66,17 @@ const webling: MergeMember = {
   firstname: 'Kim',
   lastname: 'Keller',
   membership_status: 'active',
-  labels: ['Aktiv']
+  labels: ['Aktiv'],
+  license_number: null
 };
 const trial: MergeMember = {
   id: 10000901,
   firstname: 'Kim',
   lastname: 'Keller',
   membership_status: 'trial',
-  labels: ['probetraining']
+  labels: ['probetraining'],
+  // The dropped row's number: the dialog names it, also when it is not taken
+  license_number: '4711'
 };
 
 function preview(): MemberMergeResult {
@@ -154,6 +162,30 @@ describe('MergeMemberDialog', () => {
     expect(getByText('page.members.merge.account.losesAccess')).toBeTruthy();
     expect(getByText('page.members.merge.warning.ACCOUNT_LOSES_ACCESS')).toBeTruthy();
     expect(getByText('page.members.merge.statusSame')).toBeTruthy();
+  });
+
+  it('lists the licence number like the other contact fields, and not when the database has none', async () => {
+    mock.rpc.mockResolvedValue({
+      data: { ...preview(), fields: { ...preview().fields, license_number: 'kept_differs' } },
+      error: null
+    });
+    const first = open();
+    await waitFor(() =>
+      expect(
+        first.getByText(
+          'page.members.merge.fieldDecision.kept_differs page.members.merge.field.license_number=4711'
+        )
+      ).toBeTruthy()
+    );
+    first.unmount();
+    // A database before the licence number answers without the field
+    mock.rpc.mockResolvedValue({ data: preview(), error: null });
+    const second = open();
+    await waitFor(() =>
+      expect(second.getByText('page.members.merge.refs.attendance')).toBeTruthy()
+    );
+    expect(second.queryByText(/fieldDecision\.kept_differs/)).toBeNull();
+    expect(second.getAllByText(/page\.members\.merge\.fieldDecision\./)).toHaveLength(1);
   });
 
   it('copies the photo the database names, merges, then removes the old file', async () => {

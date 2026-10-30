@@ -168,6 +168,8 @@ export interface MemberMergeResult {
     birthday: MergeFieldDecision;
     mobile: MergeFieldDecision;
     email: MergeFieldDecision;
+    /** Lizenznummer; missing from a database before 20261105130000 */
+    license_number?: MergeFieldDecision;
     notes: 'same' | 'joined';
     photo: 'none' | 'kept' | 'from_drop' | 'kept_both';
     /** imgUploaded of the dropped member's photo: its file is avatars/<drop>_<ms>.webp */

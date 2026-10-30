@@ -176,8 +176,8 @@
   let fieldLines = $derived.by(() => {
     if (!preview || !pair) return [];
     const drop = pair.drop;
-    return (['birthday', 'mobile', 'email'] as const)
-      .filter((f) => preview!.fields[f] !== 'same')
+    return (['birthday', 'mobile', 'email', 'license_number'] as const)
+      .filter((f) => (preview!.fields[f] ?? 'same') !== 'same')
       .map((f) =>
         $_(`page.members.merge.fieldDecision.${preview!.fields[f]}`, {
           values: {

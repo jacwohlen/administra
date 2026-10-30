@@ -297,10 +297,10 @@ can be revoked on its own. The legacy JWT `service_role` key stops working at th
 end of 2026, when Supabase retires the legacy keys. Anything with this key
 bypasses RLS, so keep it in the environment secret only.
 
-`HEALTHCHECK_URL` reports every run to healthchecks.io, which e-mails when a
-run fails or when no run arrives (e.g. GitHub disabled the schedule after 60
-days without commits). Set it in `prod` only, so manual `dev` runs don't count;
-see `docs/UPTIME_MONITORING.md`.
+`HEALTHCHECK_URL` reports every run that writes to healthchecks.io, which
+e-mails when a run fails or when no run arrives (e.g. GitHub disabled the
+schedule after 60 days without commits). Set it in `prod` only, so manual `dev`
+runs don't count; dry runs never report. See `docs/UPTIME_MONITORING.md`.
 
 Both environments accept only the `main` branch (_Deployment branches
 and tags_): a workflow edit on another branch cannot read their secrets,

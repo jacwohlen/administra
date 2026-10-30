@@ -56,6 +56,12 @@ Attendance tracking app for martial arts clubs (formerly Administra and Adsumus:
 Create new migrations with: `supabase migration new <name>`
 Apply migrations locally: `supabase db reset`
 
+A new migration's version must sort after every migration in
+`supabase/migrations` (Branching applies new files in version order and
+does not run one older than the newest applied). Some versions from
+late October 2026 run ahead of the calendar: until it catches up, rename
+the file `supabase migration new` creates to a version after the newest.
+
 Migrations deploy through Supabase Branching (see
 `docs/SUPABASE_BRANCHING.md`): each PR gets an ephemeral Supabase preview
 branch (migrations + seed applied, Netlify Deploy Preview points at it);
