@@ -6,7 +6,8 @@
  *   ?email= on the login page, tokens, ...),
  * - capability tokens in URL paths: whoever knows
  *   /probetraining/status/<token> can see and cancel that trial
- *   registration, so the token becomes "[token]",
+ *   registration, whoever knows /api/calendar/<token>/<feed>.ics can read
+ *   the training plan, so the token becomes "[token]",
  * - e-mail addresses anywhere.
  *
  * It walks every string in the event, so URLs in error messages, breadcrumbs,
@@ -17,9 +18,10 @@
 const SECRET_PARAM =
   /(^|[?&#])((?:token|token_hash|code|access_token|refresh_token|provider_token|provider_refresh_token|email|password|apikey)=)[^&#\s"']+/gi;
 
-// Routes whose last path segment is a secret token. The separator may be
-// URL-encoded ("%2F"), e.g. inside a ?next= parameter.
-const TOKEN_PATH = /(\/|%2F)(probetraining(?:\/|%2F)status(?:\/|%2F))[^/?#\s"'&%]+/gi;
+// Routes with a secret token as the path segment after these prefixes. The
+// separator may be URL-encoded ("%2F"), e.g. inside a ?next= parameter.
+const TOKEN_PATH =
+  /(\/|%2F)((?:probetraining(?:\/|%2F)status|api(?:\/|%2F)calendar)(?:\/|%2F))[^/?#\s"'&%]+/gi;
 
 const EMAIL = /[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/g;
 
