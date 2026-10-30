@@ -18,10 +18,10 @@ the Prod project (all branches clone from Prod).
 The `dev` environment is a **persistent branch** of the Prod project,
 declared as `[remotes.dev]` in `config.toml`. Linked to git branch `main`
 in the dashboard, it re-runs the deployment workflow (migrations, config,
-functions) on every push to `main`. It replaces the former standalone
+functions) on every push to `main`. It replaced the former standalone
 "Administra (Dev)" project (`hkxeuofxdxkviqrfnfns`), which had no GitHub
-connection and therefore never received migrations automatically; delete
-that project once the cutover is verified.
+connection and therefore never received migrations automatically; that
+project has been deleted.
 
 ## Workflow
 

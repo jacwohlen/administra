@@ -638,7 +638,8 @@
         "field": {
           "birthday": "Geburtstag",
           "mobile": "Mobiltelefon",
-          "email": "E-Mail"
+          "email": "E-Mail",
+          "license_number": "Lizenznummer"
         },
         "fieldDecision": {
           "from_drop": "{field}: wird übernommen ({value})",
