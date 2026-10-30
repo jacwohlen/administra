@@ -8,7 +8,7 @@ An adapter does the provider's side:
                                  object with .scope (integration_begin's)
     adapter.empty_scope(kind)    the scope of a run whose plan failed
     adapter.records(plan, run)   the records to stage; run.today,
-                                 run.scope, run.settings, run.version help
+                                 run.scope and run.settings help
     adapter.errors, .counters    fetch errors and counters for finish
 """
 from dataclasses import dataclass, field

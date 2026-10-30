@@ -30,9 +30,7 @@
 
 <p class="text-sm text-surface-600-400 mb-4">{$_('page.integrations.intro')}</p>
 
-{#if !data.available}
-  <p class="empty-state">{$_('page.integrations.notAvailable')}</p>
-{:else if data.connections.length === 0}
+{#if data.connections.length === 0}
   <p class="empty-state">{$_('page.integrations.empty')}</p>
 {:else}
   <div class="flex flex-col gap-6">
@@ -70,6 +68,7 @@
               {members}
               {events}
               provider={connection.display_name}
+              eventUrl={data.eventUrls[connection.id] ?? null}
               onchanged={reload}
             />
           </div>

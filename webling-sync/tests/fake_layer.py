@@ -1,16 +1,18 @@
 """A fake integration layer: integration_begin/stage/apply/finish as RPC
 handlers of fake_world.World, with the answers of the real functions'
-contract (C3 in the phase 2 plan, supabase/migrations/20261029120000_*)."""
+contract (C3 in the phase 2 plan, supabase/migrations/20261029120000_*;
+the capabilities as integration_begin answers since 20261101120000)."""
 import copy
 
 from fake_world import Response
 
 CAPABILITIES = {
-    'version': 1,
+    'version': 3,
     'member_keys': ['firstname', 'lastname', 'birthday', 'mobile', 'email', 'groups', 'link_to',
                     'problem'],
-    'event_keys': ['calendar', 'title', 'starts_on', 'ends_on', 'time_from', 'time_to', 'location',
-                   'max_participants', 'description', 'url', 'cancelled', 'participants', 'problem'],
+    'event_keys': ['calendar', 'title', 'starts_on', 'ends_on', 'all_day', 'time_from', 'time_to',
+                   'location', 'max_participants', 'description', 'url', 'cancelled', 'participants',
+                   'problem'],
     'calendar_targets': ['event', 'break', 'ignore'],
     'max_records_per_call': 1000,
 }

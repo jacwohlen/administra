@@ -1,5 +1,4 @@
 import { supabaseClient } from './supabase';
-import { isMissingSchemaError } from './eventLinks';
 import { applyIntegrationConfig, parseIntegrationConfig } from './integrationConfig';
 
 /**
@@ -8,10 +7,9 @@ import { applyIntegrationConfig, parseIntegrationConfig } from './integrationCon
  * and loaders that need it before the layout is done (the training plan's
  * trainers) await it too; both share one request.
  *
- * A database without the integration layer counts as loaded: the built-in
- * rules apply, they are what the seeded catalog says. Any other failure is
- * not cached, so the next navigation tries again; until then the built-in
- * rules apply. Never throws: the configuration can never take a page down.
+ * A failure is logged and not cached, so the next navigation tries again;
+ * until then the built-in rules apply, they are what the seeded catalog
+ * says. Never throws: the configuration can never take a page down.
  */
 
 let loaded = false;
@@ -33,12 +31,7 @@ async function fetchIntegrationConfig(): Promise<void> {
     ]);
     const failure = connections.error ?? groups.error;
     if (failure) {
-      if (isMissingSchemaError(failure)) {
-        applyIntegrationConfig(null);
-        loaded = true;
-      } else {
-        console.error('Error loading the integration configuration:', failure);
-      }
+      console.error('Error loading the integration configuration:', failure);
       return;
     }
     const rows = Array.isArray(connections.data) ? connections.data : [];

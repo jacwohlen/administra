@@ -3,18 +3,15 @@ import { supabaseClient } from '$lib/supabase';
 import { fetchAllRows } from '$lib/assistant/attendance';
 import { isAdmin } from '$lib/roles';
 import { MERGE_COLUMNS, type MergeMember } from '$lib/memberMerge';
-import { isMissingSchemaError } from '$lib/eventLinks';
 import {
   CALENDAR_COLUMNS,
-  CALENDAR_COLUMNS_WITHOUT_GONE,
   GROUP_COLUMNS,
   ISSUE_COLUMNS,
   RUN_COLUMNS,
-  isLayerMissing,
+  eventUrlTemplate,
   issueReferences,
   parseConnectionStatuses,
   type CalendarRow,
-  type ConnectionStatus,
   type IntegrationIssue,
   type IntegrationRun,
   type IssueEvent,
@@ -40,48 +37,27 @@ async function byIds<T>(table: string, columns: string, ids: number[]): Promise<
   return rows;
 }
 
-function readCalendars(columns: string): Promise<CalendarRow[]> {
-  return fetchAllRows<CalendarRow>((from, to) =>
-    supabaseClient
-      .from('integration_calendars')
-      .select(columns)
-      .order('connection')
-      .order('id')
-      .range(from, to)
-      .returns<CalendarRow[]>()
+/**
+ * Per connection, its link to events in the provider (eventUrlTemplate():
+ * "In Webling öffnen" on issues about events). Not worth failing the page
+ * for: without it the issues show no link.
+ */
+async function loadEventUrls(): Promise<Record<string, string>> {
+  const { data, error: e } = await supabaseClient
+    .from('integration_connections')
+    .select('id, settings')
+    .returns<{ id: string; settings: unknown }[]>();
+  if (e) {
+    console.error('Error loading the integration connections:', e);
+    return {};
+  }
+  return Object.fromEntries(
+    (data ?? []).flatMap((c) => {
+      const template = eventUrlTemplate(c.settings);
+      return template ? [[c.id, template]] : [];
+    })
   );
 }
-
-/**
- * The calendar catalog. A database without integration_calendars.gone_at
- * (the app may deploy before a promotion applies 20261101120000) refuses
- * the column: read without it, no calendar counts as gone.
- */
-async function loadCalendars(): Promise<CalendarRow[]> {
-  try {
-    return await readCalendars(CALENDAR_COLUMNS);
-  } catch (e) {
-    if (
-      !isMissingSchemaError(e) ||
-      !String((e as { message?: unknown }).message).includes('gone_at')
-    ) {
-      throw e;
-    }
-    const rows = await readCalendars(CALENDAR_COLUMNS_WITHOUT_GONE);
-    return rows.map((row) => ({ ...row, gone_at: null }));
-  }
-}
-
-const empty = {
-  available: true,
-  connections: [] as ConnectionStatus[],
-  runs: [] as IntegrationRun[],
-  issues: [] as IntegrationIssue[],
-  members: [] as MergeMember[],
-  events: [] as IssueEvent[],
-  groups: [] as MemberGroupRow[],
-  calendars: [] as CalendarRow[]
-};
 
 /** Connections, runs, issues and the mapping of the integration layer: admins */
 export const load: PageLoad = async ({ parent, depends }) => {
@@ -93,13 +69,11 @@ export const load: PageLoad = async ({ parent, depends }) => {
 
   const status = await supabaseClient.rpc('integration_status');
   if (status.error) {
-    // The app may deploy before a promotion applies the layer's migration
-    if (isLayerMissing(status.error)) return { ...empty, available: false };
     error(500, status.error.message);
   }
 
   try {
-    const [runs, issues, groups, calendars] = await Promise.all([
+    const [runs, issues, groups, calendars, eventUrls] = await Promise.all([
       supabaseClient
         .from('integration_runs')
         .select(RUN_COLUMNS)
@@ -125,7 +99,15 @@ export const load: PageLoad = async ({ parent, depends }) => {
           .order('id')
           .range(from, to)
       ),
-      loadCalendars()
+      fetchAllRows<CalendarRow>((from, to) =>
+        supabaseClient
+          .from('integration_calendars')
+          .select(CALENDAR_COLUMNS)
+          .order('connection')
+          .order('id')
+          .range(from, to)
+      ),
+      loadEventUrls()
     ]);
     if (runs.error) throw runs.error;
 
@@ -137,14 +119,14 @@ export const load: PageLoad = async ({ parent, depends }) => {
     ]);
 
     return {
-      available: true,
       connections: parseConnectionStatuses(status.data),
       runs: (runs.data ?? []) as IntegrationRun[],
       issues,
       members: members.map((m) => ({ ...m, id: Number(m.id) })),
       events: events.map((e) => ({ ...e, id: Number(e.id) })),
       groups,
-      calendars
+      calendars,
+      eventUrls
     };
   } catch (e) {
     error(500, (e as { message?: string } | null)?.message ?? 'Integrations not loaded');

@@ -38,7 +38,6 @@
     type KnownEvent
   } from '$lib/assistant/events';
   import { clubToday, isIsoDate, MAX_LENGTH } from '$lib/assistant/proposals';
-  import { isMissingSchemaError } from '$lib/eventLinks';
   import { providerName } from '$lib/memberStatus';
   import type { EventsProposal } from '$lib/assistant/types';
 
@@ -183,10 +182,10 @@
   }
 
   /**
-   * Which provider keeps each event up to date (event_links). None on a
-   * database without the integration layer, when they cannot be read, or
-   * for an event of an earlier year the sync wrote before the layer and
-   * never linked: the Webling portal link in the description tells then.
+   * Which provider keeps each event up to date (event_links). None when
+   * they cannot be read (logged), or for an event of an earlier year the
+   * sync wrote before the layer and never linked: the Webling portal link
+   * in the description tells then.
    */
   async function loadLinks(days: DateSpan): Promise<EventLinkRow[]> {
     try {
@@ -201,7 +200,7 @@
           .range(from, to)
       );
     } catch (err) {
-      if (!isMissingSchemaError(err)) console.error('Error loading the event links:', err);
+      console.error('Error loading the event links:', err);
       return [];
     }
   }

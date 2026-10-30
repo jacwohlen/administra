@@ -40,8 +40,7 @@ def span(properties, begin, end):
     An end at midnight belongs to the day before: Webling ends an all-day
     entry at 00:00 of the day after its last day (Karfreitag 03.04. ends on
     '2026-04-04 00:00:00', seen on the first layer run against Webling),
-    and a timed event until midnight (19:00 to 00:00) at 00:00 too. Sent
-    only to a database whose capabilities have version 2."""
+    and a timed event until midnight (19:00 to 00:00) at 00:00 too."""
     flag = properties.get(ALL_DAY_PROPERTY)
     if isinstance(flag, bool):
         all_day = flag

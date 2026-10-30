@@ -94,10 +94,10 @@ describe('dashboard layout: integrations', () => {
     expect(mockSupabase.rpc).toHaveBeenCalledWith('integration_status');
   });
 
-  it('shows no dot before the layer ever ran, nor on a database without it', async () => {
+  it('shows no dot before the layer ever ran, nor when the status cannot be read', async () => {
     answer(status(null));
     expect((await layout(admin)).integrationAlert).toBe(false);
-    answer({ data: null, error: { code: 'PGRST202', message: 'missing' } });
+    answer({ data: null, error: { code: '42501', message: 'NOT_ALLOWED' } });
     expect((await layout(admin)).integrationAlert).toBe(false);
   });
 });

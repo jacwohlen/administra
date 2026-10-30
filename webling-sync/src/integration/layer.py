@@ -81,11 +81,6 @@ class Run:
         self.capabilities = begun.get('capabilities') or {}
         self.dry_run = None
 
-    @property
-    def version(self):
-        version = self.capabilities.get('version')
-        return version if isinstance(version, int) else 0
-
     def allowed_keys(self):
         keys = self.capabilities.get(CAPABILITY_KEYS.get(self.kind, ''))
         return {k for k in keys if isinstance(k, str)} if isinstance(keys, list) else set()

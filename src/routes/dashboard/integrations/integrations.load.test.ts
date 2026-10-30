@@ -117,16 +117,18 @@ describe('integrations page load', () => {
     expect(mockSupabase.from).not.toHaveBeenCalled();
   });
 
-  it('says the layer is missing on a database without it', async () => {
-    answer({}, { data: null, error: { code: 'PGRST202', message: 'Could not find the function' } });
-    const result = await load(event(admin));
-    expect(result).toMatchObject({ available: false, connections: [], runs: [] });
+  it('fails on an error of integration_status(), before any other query', async () => {
+    for (const failure of [
+      { code: '42501', message: 'NOT_ALLOWED' },
+      { code: 'PGRST202', message: 'Could not find the function' }
+    ]) {
+      answer({}, { data: null, error: failure });
+      await expect(load(event(admin))).rejects.toMatchObject({
+        status: 500,
+        message: failure.message
+      });
+    }
     expect(mockSupabase.from).not.toHaveBeenCalled();
-  });
-
-  it('fails on any other error of integration_status()', async () => {
-    answer({}, { data: null, error: { code: '42501', message: 'NOT_ALLOWED' } });
-    await expect(load(event(admin))).rejects.toMatchObject({ status: 500 });
   });
 
   it('loads status, runs, issues with the names they need, and the mapping', async () => {
@@ -155,7 +157,6 @@ describe('integrations page load', () => {
 
     expect(mockSupabase.rpc).toHaveBeenCalledWith('integration_status');
     expect(result).toMatchObject({
-      available: true,
       runs,
       issues: ISSUES,
       groups,
@@ -176,39 +177,12 @@ describe('integrations page load', () => {
   it('asks for no names when there are no issues', async () => {
     answer({});
     const result = await load(event(admin));
-    expect(result).toMatchObject({ available: true, issues: [], members: [], events: [] });
+    expect(result).toMatchObject({ issues: [], members: [], events: [], eventUrls: {} });
     expect(mockSupabase.from).not.toHaveBeenCalledWith('members');
     expect(mockSupabase.from).not.toHaveBeenCalledWith('events');
   });
 
-  it('reads the calendars without gone_at on a database before 20261101120000', async () => {
-    const calendars = [{ id: 1, connection: 'webling', name: 'Judo Agenda' }];
-    answer({});
-    let first = true;
-    mockSupabase.from.mockImplementation((table: string) => {
-      if (table !== 'integration_calendars') return chain(table, { data: [], error: null });
-      const missing = first;
-      first = false;
-      return chain(
-        table,
-        missing
-          ? {
-              data: null,
-              error: {
-                code: '42703',
-                message: 'column integration_calendars.gone_at does not exist'
-              }
-            }
-          : { data: calendars, error: null }
-      );
-    });
-    const result = await load(event(admin));
-    expect(result).toMatchObject({ calendars: [{ ...calendars[0], gone_at: null }] });
-    const selects = calls.filter(([t, m]) => t === 'integration_calendars' && m === 'select');
-    expect(selects.map(([, , args]) => String(args[0]).includes('gone_at'))).toEqual([true, false]);
-  });
-
-  it('fails when the calendars cannot be read for another reason', async () => {
+  it('fails when the calendars cannot be read', async () => {
     answer({ integration_calendars: { data: null, error: { code: '42501', message: 'denied' } } });
     await expect(load(event(admin))).rejects.toMatchObject({ status: 500, message: 'denied' });
   });
@@ -216,5 +190,39 @@ describe('integrations page load', () => {
   it('fails when the run log cannot be read', async () => {
     answer({ integration_runs: { data: null, error: { message: 'runs failed' } } });
     await expect(load(event(admin))).rejects.toMatchObject({ status: 500, message: 'runs failed' });
+  });
+
+  it("reads each connection's link to its events, safe templates only", async () => {
+    answer({
+      integration_connections: {
+        data: [
+          {
+            id: 'webling',
+            settings: {
+              hidden_group_pattern: '^\\d\\d_',
+              record_urls: { event: 'https://club.webling.ch/portal#/calendar/event/{id}' }
+            }
+          },
+          { id: 'csv', settings: {} },
+          { id: 'other', settings: { record_urls: { event: 'javascript:alert({id})' } } }
+        ],
+        error: null
+      }
+    });
+    const result = await load(event(admin));
+    expect(result).toMatchObject({
+      eventUrls: { webling: 'https://club.webling.ch/portal#/calendar/event/{id}' }
+    });
+    expect(Object.keys((result as { eventUrls: object }).eventUrls)).toEqual(['webling']);
+    expect(calls).toContainEqual(['integration_connections', 'select', ['id, settings']]);
+  });
+
+  it('opens without links when the connections cannot be read', async () => {
+    const log = vi.spyOn(console, 'error').mockImplementation(() => {});
+    answer({ integration_connections: { data: null, error: { message: 'denied' } } });
+    const result = await load(event(admin));
+    expect(result).toMatchObject({ connections: [{ id: 'webling' }], eventUrls: {} });
+    expect(log).toHaveBeenCalledOnce();
+    log.mockRestore();
   });
 });

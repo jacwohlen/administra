@@ -144,9 +144,9 @@ export function isWeblingEvent(description: string | null | undefined): boolean 
 /**
  * The connection that keeps an event up to date, null for the app's own:
  * its live event_links row. Without any link row (event_links not loaded,
- * a database without the integration layer, or an event of an earlier year
- * the sync wrote before the layer and never linked) the Webling portal link
- * in the description tells. An event whose links are all gone is the app's.
+ * or an event of an earlier year the sync wrote before the layer and never
+ * linked) the Webling portal link in the description tells. An event whose
+ * links are all gone is the app's.
  */
 export function eventProvider(event: Pick<KnownEvent, 'description' | 'provider'>): string | null {
   if (event.provider !== undefined) return event.provider;
