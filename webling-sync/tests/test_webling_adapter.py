@@ -1,11 +1,13 @@
 """webling_adapter: record builders, dates, the calls and the run plan."""
+from datetime import date
 from types import SimpleNamespace
 
 import pytest
 
 from fake_world import World, participant, webling_member
+from integration.clock import club_today
 from integration.runner import FetchFailed, UsageError
-from legacy_scenarios import events_world, members_world
+from scenarios import events_world, members_world
 from webling_adapter import WeblingAdapter, dates
 from webling_adapter.api import WeblingApi
 from webling_adapter.events import Calendar, event_record, participant_list
@@ -32,12 +34,17 @@ def test_dates(value, expected):
     assert tuple(dates.split(value)) == expected
 
 
+def test_club_today_is_a_date():
+    # The fallback when integration_begin gave no 'today'
+    assert isinstance(club_today(), date)
+
+
 # members ----------------------------------------------------------------
 
 TITLES = {10: 'Aktiv', 13: '04_Probetraining', 99: None}
 
 
-def test_member_record_as_the_legacy_sync_writes_it():
+def test_member_record():
     raw = webling_member(4711, ' Anna ', 'Muster ', [10, 13], birthday='2010-04-01',
                          mobile='0790000000', email=' anna@example.com ')
     assert member_record(raw, TITLES) == {'external_id': '4711', 'data': {
@@ -112,7 +119,7 @@ def props(begin='2026-11-05 18:00:00', end='2026-11-05 20:00:00', **extra):
             'maxParticipants': '12', **extra}
 
 
-def test_event_record_as_the_legacy_sync_writes_it():
+def test_event_record():
     link = 'https://club.webling.ch/portal#/calendar/event/7001'
     assert event_record(7001, props(), CAL, 'club', [{'member': '1001', 'state': 'confirmed'}]) == {
         'external_id': '7001', 'data': {
@@ -180,7 +187,7 @@ def test_event_record_for_version_2():
     assert (timed['ends_on'], timed['all_day'], timed['time_from'], timed['time_to']) == (
         None, False, '18:00', '20:00')
     assert 'description' not in timed
-    # Version 1: as the legacy sync, without the two keys
+    # Version 1: without the two keys, the link as description
     old = event_record(7001, props(begin='2026-10-03 00:00:00', end='2026-10-18 00:00:00'), CAL, 'club')
     assert 'ends_on' not in old['data'] and 'all_day' not in old['data']
     assert (old['data']['time_from'], old['data']['description']) == ('00:00', link)

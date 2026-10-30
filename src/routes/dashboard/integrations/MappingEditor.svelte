@@ -2,14 +2,13 @@
   import { untrack } from 'svelte';
   import { _ } from 'svelte-i18n';
   import Fa from 'svelte-fa';
-  import { faEye, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
+  import { faEye } from '@fortawesome/free-solid-svg-icons';
   import { supabaseClient } from '$lib/supabase';
   import { toaster } from '$lib/toast';
   import { clubConfig } from '$lib/clubConfig';
   import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
   import { invalidateIntegrationConfig } from '$lib/integrationConfigLoad';
   import {
-    beforeLayerSwitch,
     calendarDraft,
     changesKey,
     dropLine,
@@ -128,8 +127,6 @@
   let previewFits = $derived(preview !== null && preview.key === key);
   let confirming = $state(false);
 
-  let beforeSwitch = $derived(beforeLayerSwitch(connection));
-
   /** The club's sections, plus a calendar's own if it is none of them */
   function sectionsFor(row: CalendarRow): string[] {
     const own = row.section && !clubConfig.sections.includes(row.section) ? [row.section] : [];
@@ -245,17 +242,6 @@
   <p class="text-sm text-surface-600-400">
     {$_('page.integrations.mapping.intro', { values: { provider: connection.display_name } })}
   </p>
-
-  {#if beforeSwitch}
-    <div class="flex items-start gap-2 p-3 rounded-lg preset-tonal-warning text-sm" role="alert">
-      <Fa icon={faTriangleExclamation} class="mt-0.5 flex-none" />
-      <span>
-        {$_('page.integrations.mapping.beforeSwitch', {
-          values: { provider: connection.display_name }
-        })}
-      </span>
-    </div>
-  {/if}
 
   <section class="flex flex-col gap-2">
     <h4 class="mb-0">{$_('page.integrations.mapping.groups')}</h4>

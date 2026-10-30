@@ -1,12 +1,11 @@
 """Webling members as layer records (integration_stage, kind 'members').
 
-The fields and values are the ones the legacy sync writes (member_row()
-in sync_rules.py): names trimmed, birthday and mobile as Webling has them,
-the e-mail only when Webling has one (the layer only fills it). Groups go
+The fields: names trimmed, birthday and mobile as Webling has them, the
+e-mail only when Webling has one (the layer only fills it). Groups go
 up with their Webling id and raw title; the layer's catalog maps them to
 labels and statuses (04_Probetraining becomes the label Probetraining).
 """
-from safe_log import WeblingError
+from webling_adapter.api import WeblingError
 
 # Layer key -> Webling property. A missing property (renamed in Webling)
 # must not blank everyone's name: the member is sent as a problem instead

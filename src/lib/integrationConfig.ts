@@ -22,8 +22,8 @@ export interface IntegrationConfig {
   displayNames: Map<string, string>;
   /**
    * The connections' hidden_group_pattern: hides labels of provider groups
-   * the catalog does not have yet (the legacy sync writes labels without
-   * registering them)
+   * the catalog does not have (such as stale labels of members gone from
+   * the provider)
    */
   hiddenPatterns: RegExp[];
   /** Label as written to members (label, else the group's name) → hidden, for every catalog group */

@@ -7,11 +7,11 @@ and the seed; the tests change it and expect to run once, in file order:
     LAYER_TEST_PSQL='psql postgresql://postgres:postgres@127.0.0.1:54322/postgres' \\
         pytest tests/test_layer_local_db.py
 
-sync.py runs in layer mode with a fake Webling built from the database's
-own Webling members (what the legacy sync wrote), and the client calls the
-SQL functions through psql as service_role (tests/psql_transport.py)
+sync.py runs with a fake Webling built from the database's own Webling
+members (as the sync before the layer wrote them), and the client calls
+the SQL functions through psql as service_role (tests/psql_transport.py)
 instead of PostgREST. LAYER_TEST_PSQL_NO_LAYER (optional) names a database
-without the layer, for the fallback.
+without the layer: there the sync must fail.
 """
 import json
 import os
@@ -21,17 +21,20 @@ import pytest
 import sync
 from fake_world import World, participant, set_env
 from integration.client import Client
-from integration.layer import LAYER_MISSING, Layer
+from integration.layer import Layer, LayerError
 from psql_transport import PsqlTransport
-from sync_rules import WEBLING_NOTE
 
 pytestmark = pytest.mark.skipif(not os.environ.get('LAYER_TEST_PSQL'),
                                 reason='LAYER_TEST_PSQL is not set (no local database)')
 
-# The legacy sync renamed this Webling group (transform_label)
+# The label Probetraining is the Webling group 04_Probetraining (the catalog maps it)
 WEBLING_TITLE = {'Probetraining': '04_Probetraining'}
 
 STATE = {}
+
+# The note on the registrations the sync inserted before the layer (the
+# connection's participant_note; legacy_note_prefix still marks them)
+WEBLING_NOTE = 'Imported from Webling - Confirmed: confirmed'
 
 
 @pytest.fixture(scope='module')
@@ -93,13 +96,11 @@ def events_but_description(db):
 
 
 def sync_run(db, monkeypatch, world, kind, dry_run=False, **env):
-    set_env(monkeypatch, INTEGRATION_MODE='layer', INTEGRATION_RUNNER='local:test',
+    set_env(monkeypatch, INTEGRATION_RUNNER='local:test',
             INTEGRATION_DRY_RUN='true' if dry_run else None, **env)
     world.install(monkeypatch)
     monkeypatch.setattr(sync, 'make_layer', lambda: Layer(Client('https://local.invalid', 'sb_secret_local', db)))
-    legacy = []
-    status = sync.main([kind], legacy=lambda command: legacy.append(command) or 0)
-    assert legacy == [], 'the layer is here: no fallback'
+    status = sync.main([kind])
     run = json.loads(value(db, "SELECT row_to_json(r)::text FROM public.integration_runs r ORDER BY id DESC LIMIT 1"))
     return status, run
 
@@ -195,10 +196,10 @@ def events_world(confirmed):
     return world
 
 
-def test_events_first_run_adopts_the_legacy_events(db, monkeypatch, capsys):
+def test_events_first_run_adopts_the_events_written_before(db, monkeypatch, capsys):
     members = [m['id'] for m in STATE['members'][:3]]
     STATE['participants'] = members
-    # What the legacy sync wrote: the events, and two registrations of 61001
+    # What the sync wrote before the layer: the events, and two registrations of 61001
     values = ', '.join(
         f"({e[0]}, '{e[2]}', '{link(e[0])}', '{e[3][:10]}', '{e[3][11:16]}', '{e[4][11:16]}', "
         f"{repr(e[5]) if e[5] else 'NULL'}, '{SECTION[e[1]]}', {e[6] or 'NULL'})" for e in EVENTS)
@@ -275,7 +276,7 @@ def test_holidays_and_end_dates_from_version_2(db, monkeypatch, capsys):
     if not has_end_dates(db):
         pytest.skip('the database has no end dates yet (20261030120000)')
     members = STATE['participants']
-    # A holiday the legacy sync wrote as an event before the switch
+    # A holiday the sync wrote as an event before the layer
     db.query(f"""INSERT INTO public.events (id, title, description, date, "timeFrom", "timeTo", section)
                  VALUES (61201, 'Weihnachten', '{link(61201)}', '2026-12-24', '00:00', '00:00', 'General')""")
     status, run = sync_run(db, monkeypatch, holidays_world(members), 'events')
@@ -322,17 +323,19 @@ def test_a_calendar_webling_no_longer_has(db, monkeypatch, capsys):
                      "WHERE connection = 'webling' AND gone_at IS NOT NULL") == '1'
 
 
-def test_a_database_without_the_layer_falls_back(monkeypatch, capsys):
+def test_a_database_without_the_layer_is_an_error(monkeypatch, capsys):
     command = os.environ.get('LAYER_TEST_PSQL_NO_LAYER')
     if not command:
         pytest.skip('LAYER_TEST_PSQL_NO_LAYER is not set')
     transport = PsqlTransport(command)
     layer = Layer(Client('https://local.invalid', 'sb_secret_local', transport))
-    assert layer.begin('webling', 'members', {'complete': True}) is LAYER_MISSING
-    set_env(monkeypatch, INTEGRATION_MODE='layer')
+    with pytest.raises(LayerError) as raised:
+        layer.begin('webling', 'members', {'complete': True})
+    assert raised.value.code == '42883'
+    set_env(monkeypatch)
     World().install(monkeypatch)
     monkeypatch.setattr(sync, 'make_layer', lambda: layer)
-    legacy = []
-    assert sync.main(['members'], legacy=lambda command: legacy.append(command) or 0) == 0
-    assert len(legacy) == 1
-    assert '::warning::The integration layer is not on this database yet' in capsys.readouterr().out
+    assert sync.main(['members']) == 1
+    assert 'Error: integration_begin: the integration layer is not on this database' in capsys.readouterr().out
+    # The sync stops there: no other call
+    assert transport.calls == ['integration_begin', 'integration_begin']

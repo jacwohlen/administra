@@ -1,7 +1,13 @@
 """The club's day: Europe/Zurich, not the runner's time zone (GitHub
-runners use UTC). Re-exported from the legacy rules so both paths agree
-on "today" until the legacy scripts go (PR 3c); the layer itself answers
-today in Zurich from integration_begin, which the adapters prefer."""
-from sync_rules import CLUB_TIMEZONE, club_today
+runners use UTC). The layer itself answers today in Zurich from
+integration_begin, which the adapters prefer; this clock is their
+fallback when it gave none."""
+from datetime import datetime
+from zoneinfo import ZoneInfo
 
-__all__ = ['CLUB_TIMEZONE', 'club_today']
+CLUB_TIMEZONE = ZoneInfo('Europe/Zurich')
+
+
+def club_today():
+    """Today in the club's time zone, not the runner's."""
+    return datetime.now(CLUB_TIMEZONE).date()
