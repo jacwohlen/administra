@@ -11,21 +11,9 @@
 [build.environment]
   NODE_VERSION = "22"
 
-# One address: www and the former domain adsumus.ch end up on alleda.ch
+# One address: www ends up on alleda.ch
 [[redirects]]
   from = "https://www.alleda.ch/*"
-  to = "https://alleda.ch/:splat"
-  status = 301
-  force = true
-
-[[redirects]]
-  from = "https://adsumus.ch/*"
-  to = "https://alleda.ch/:splat"
-  status = 301
-  force = true
-
-[[redirects]]
-  from = "https://www.adsumus.ch/*"
   to = "https://alleda.ch/:splat"
   status = 301
   force = true
