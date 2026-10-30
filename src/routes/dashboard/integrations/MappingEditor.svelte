@@ -30,7 +30,7 @@
   import type { MembershipStatus } from '$lib/models';
 
   /**
-   * What the provider's groups and calendars mean in Administra
+   * What the provider's groups and calendars mean in Adsumus
    * (integration_member_groups, integration_calendars). Changes go through
    * integration_set_mapping(): Preview is its dry run and shows how many
    * members would get another status; Save sends exactly the numbers the

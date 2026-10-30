@@ -1,6 +1,6 @@
 # Daten-Assistent (AI import)
 
-Getting a club into Administra means typing in years of paper: kyu
+Getting a club into Adsumus means typing in years of paper: kyu
 gradings from Judo passes, attendance lists, the training plan, lesson
 plans, club dates. The _Daten-Assistent_ reads a photo, a PDF or pasted
 text with Claude (Anthropic) and turns it into a proposal; the user checks,
@@ -44,7 +44,7 @@ the target page opens the assistant right away (`?assistant=<kind>`).
    browser (see _Name matching_), unclear matches are left for the user to
    confirm or pick. Missing values
    can be filled in and wrong ones corrected right there; contradictions
-   with what Administra already has (another date for a grading, a
+   with what Adsumus already has (another date for a grading, a
    different trainer on a planned date, an event that already exists) are
    shown side by side and never overwritten without an explicit tick.
 4. **Übernehmen**: only now is anything written, by the browser, through
@@ -216,7 +216,7 @@ values:
 The uploads (and with them names, birthdays and photos, often of children)
 are sent to Anthropic's API in the US to be read. Under Anthropic's
 commercial terms, API data is not used to train models and is deleted after
-a limited retention period. Nothing from Administra's database is sent
+a limited retention period. Nothing from Adsumus's database is sent
 except the reference data the model needs: the grade ladder, training
 titles with weekday and time, and the club's sections. Dictation is
 recognised by the browser's speech service (Google, Microsoft or Apple, see

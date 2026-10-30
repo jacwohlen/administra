@@ -1,0 +1,170 @@
+/*
+ * Adsumus design tokens — standalone CSS custom properties.
+ *
+ * Extracted from the Skeleton "nosh" theme (data-theme="nosh" in src/app.html)
+ * plus the overrides in src/app.css. Hex values are sRGB conversions of the
+ * theme's oklch colors; the app itself still loads the theme from Skeleton.
+ * Use this file to give non-app surfaces (e-mails, slides, print, landing
+ * pages) the Adsumus look without pulling in Tailwind/Skeleton.
+ */
+
+:root {
+  /* Typography */
+  --font-family: Avenir, Montserrat, Corbel, 'URW Gothic', source-sans-pro, sans-serif;
+  --font-size-base: 18px;
+  --line-height-base: 28px;
+  --text-scaling: 1.067;
+  --heading-font-weight: bolder;
+
+  /* Shape & spacing */
+  --spacing: 0.25rem;
+  --radius-base: 0.375rem;
+  --radius-container: 0.75rem;
+  --radius-pill: 9999px;
+  --border-width: 1px;
+  --touch-target: 44px;
+
+  /* Motion */
+  --duration-fast: 150ms;
+  --ease-toast-in: cubic-bezier(0.21, 1.02, 0.73, 1);
+  --ease-toast-out: cubic-bezier(0.06, 0.71, 0.55, 1);
+
+  /* primary */
+  --color-primary-50: #ffcec5; /* oklch(89.39% 0.06 29.22) */
+  --color-primary-100: #f9a5a6; /* oklch(80.54% 0.1 18.64) */
+  --color-primary-200: #f07e88; /* oklch(72.3% 0.14 15.89) */
+  --color-primary-300: #e85667; /* oklch(64.97% 0.18 16.82) */
+  --color-primary-400: #e02f47; /* oklch(59.5% 0.21 19.82) */
+  --color-primary-500: #dc0024; /* oklch(56.22% 0.23 24.62) */
+  --color-primary-600: #c90c24; /* oklch(52.95% 0.21 24.73) */
+  --color-primary-700: #ba041f; /* oklch(49.83% 0.2 24.69) */
+  --color-primary-800: #aa0019; /* oklch(46.47% 0.19 24.87) */
+  --color-primary-900: #980a19; /* oklch(43.27% 0.17 24.89) */
+  --color-primary-950: #890212; /* oklch(39.81% 0.16 25.23) */
+
+  /* secondary */
+  --color-secondary-50: #ffedec; /* oklch(96.07% 0.02 22.18) */
+  --color-secondary-100: #fbe8e8; /* oklch(94.62% 0.02 17.61) */
+  --color-secondary-200: #f6e4e3; /* oklch(93.33% 0.02 20.8) */
+  --color-secondary-300: #f8dddd; /* oklch(91.97% 0.03 17.76) */
+  --color-secondary-400: #f4d9d8; /* oklch(90.68% 0.03 20.12) */
+  --color-secondary-500: #f5d2d2; /* oklch(89.23% 0.04 17.93) */
+  --color-secondary-600: #dab7ba; /* oklch(81.07% 0.04 12.23) */
+  --color-secondary-700: #c39aa1; /* oklch(72.59% 0.05 7.68) */
+  --color-secondary-800: #a78089; /* oklch(64.01% 0.05 3.25) */
+  --color-secondary-900: #906370; /* oklch(55.05% 0.06 0.41) */
+  --color-secondary-950: #734a58; /* oklch(45.92% 0.06 357.34) */
+
+  /* tertiary */
+  --color-tertiary-50: #dcebe3; /* oklch(92.69% 0.02 161.63) */
+  --color-tertiary-100: #b8cfc2; /* oklch(83.32% 0.03 161.75) */
+  --color-tertiary-200: #9ab0a4; /* oklch(73.68% 0.03 161.75) */
+  --color-tertiary-300: #7c9287; /* oklch(63.99% 0.03 162.62) */
+  --color-tertiary-400: #597567; /* oklch(53.67% 0.04 162.17) */
+  --color-tertiary-500: #3c5748; /* oklch(42.89% 0.04 161.33) */
+  --color-tertiary-600: #344f40; /* oklch(39.99% 0.04 160.45) */
+  --color-tertiary-700: #31443a; /* oklch(36.7% 0.03 161.51) */
+  --color-tertiary-800: #2e3b34; /* oklch(33.73% 0.02 163.26) */
+  --color-tertiary-900: #2a302d; /* oklch(30.32% 0.01 166.7) */
+  --color-tertiary-950: #232926; /* oklch(27.21% 0.01 164.39) */
+
+  /* success */
+  --color-success-50: #dcf9f9; /* oklch(96.13% 0.03 196.6) */
+  --color-success-100: #bde4e5; /* oklch(89.1% 0.04 198.59) */
+  --color-success-200: #a7ccce; /* oklch(81.96% 0.04 199.99) */
+  --color-success-300: #89b8b9; /* oklch(74.96% 0.05 197.76) */
+  --color-success-400: #69a3a5; /* oklch(67.6% 0.06 198.89) */
+  --color-success-500: #538c8f; /* oklch(60.11% 0.06 199.83) */
+  --color-success-600: #3f777b; /* oklch(53.33% 0.06 200.22) */
+  --color-success-700: #336163; /* oklch(46.02% 0.05 200.8) */
+  --color-success-800: #1e4c4f; /* oklch(38.7% 0.05 201.34) */
+  --color-success-900: #133638; /* oklch(30.76% 0.04 202.46) */
+  --color-success-950: #002124; /* oklch(22.58% 0.04 203.51) */
+
+  /* warning */
+  --color-warning-50: #ffffd8; /* oklch(99.04% 0.05 107.24) */
+  --color-warning-100: #fbfac3; /* oklch(97.19% 0.07 106.86) */
+  --color-warning-200: #f7f5a5; /* oklch(95.4% 0.1 106.86) */
+  --color-warning-300: #f4f18f; /* oklch(93.93% 0.12 107.02) */
+  --color-warning-400: #f0ec76; /* oklch(92.26% 0.14 107.14) */
+  --color-warning-500: #ece759; /* oklch(90.63% 0.16 107.22) */
+  --color-warning-600: #d5cc47; /* oklch(82.89% 0.15 105.38) */
+  --color-warning-700: #beb135; /* oklch(74.97% 0.14 103.12) */
+  --color-warning-800: #a89620; /* oklch(66.96% 0.13 99.75) */
+  --color-warning-900: #927b02; /* oklch(58.65% 0.12 95.8) */
+  --color-warning-950: #796007; /* oklch(50.09% 0.1 90.18) */
+
+  /* error */
+  --color-error-50: #ffdbdb; /* oklch(92.15% 0.04 17.94) */
+  --color-error-100: #ffcbcb; /* oklch(88.97% 0.06 18.33) */
+  --color-error-200: #ffbcbc; /* oklch(85.87% 0.08 18.78) */
+  --color-error-300: #ffacac; /* oklch(82.66% 0.1 19.35) */
+  --color-error-400: #ff9d9d; /* oklch(79.78% 0.12 19.97) */
+  --color-error-500: #ff8d8e; /* oklch(77.03% 0.14 20.69) */
+  --color-error-600: #e57c79; /* oklch(70.26% 0.13 22.66) */
+  --color-error-700: #cd6762; /* oklch(63.19% 0.13 24.3) */
+  --color-error-800: #b1564d; /* oklch(56.25% 0.12 27.32) */
+  --color-error-900: #984136; /* oklch(48.87% 0.12 29.36) */
+  --color-error-950: #7c3022; /* oklch(41.49% 0.11 32.09) */
+
+  /* surface */
+  --color-surface-50: #f7f7f7; /* oklch(97.61% 0 0) */
+  --color-surface-100: #dedede; /* oklch(90.06% 0 0) */
+  --color-surface-200: #c5c5c5; /* oklch(82.34% 0 0) */
+  --color-surface-300: #acacac; /* oklch(74.44% 0 0) */
+  --color-surface-400: #939393; /* oklch(66.33% 0 0) */
+  --color-surface-500: #7a7a7a; /* oklch(57.95% 0 0) */
+  --color-surface-600: #626262; /* oklch(49.62% 0 0) */
+  --color-surface-700: #4a4a4a; /* oklch(40.91% 0 0) */
+  --color-surface-800: #333333; /* oklch(32.11% 0 0) */
+  --color-surface-900: #1b1b1b; /* oklch(22.21% 0 0) */
+  --color-surface-950: #030303; /* oklch(9.69% 0 0) */
+
+  /* Chart series (light surface) — src/lib/statsUtils.ts */
+  --chart-1: #2a78d6;
+  --chart-2: #eb6834;
+  --chart-3: #1baf7a;
+  --chart-4: #eda100;
+  --chart-5: #e87ba4;
+  --chart-6: #008300;
+  --chart-7: #4a3aa7;
+  --chart-8: #e34948;
+
+  /* Belt colors (Judo kyu/dan) — supabase/migrations/20260908000000_grades_and_medals.sql */
+  --belt-6-kyu: #f5f5f5;
+  --belt-5-kyu: #f4d03f;
+  --belt-4-kyu: #f0932b;
+  --belt-3-kyu: #27ae60;
+  --belt-2-kyu: #2e86de;
+  --belt-1-kyu: #7b4a2d;
+  --belt-dan: #111111;
+
+  /* Semantic aliases (light) */
+  --brand: var(--color-primary-500);
+  --bg: var(--color-surface-50);
+  --bg-raised: var(--color-surface-100);
+  --fg: var(--color-surface-950);
+  --fg-muted: var(--color-surface-600);
+  --border: var(--color-surface-200);
+  --link: var(--color-primary-600);
+}
+
+/* Dark mode: the app toggles a .dark class on <html> (saved in localStorage,
+   defaulting to prefers-color-scheme). Surfaces flip along the scale. */
+.dark {
+  --chart-1: #3987e5;
+  --chart-2: #d95926;
+  --chart-3: #199e70;
+  --chart-4: #c98500;
+  --chart-5: #d55181;
+  --chart-6: #008300;
+  --chart-7: #9085e9;
+  --chart-8: #e66767;
+
+  --bg: var(--color-surface-950);
+  --bg-raised: var(--color-surface-900);
+  --fg: var(--color-surface-50);
+  --fg-muted: var(--color-surface-400);
+  --border: var(--color-surface-800);
+  --link: var(--color-primary-500);
+}

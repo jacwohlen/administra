@@ -1,7 +1,7 @@
 {
   "page": {
     "routes": {
-      "welcomeMessage": "Welcome to Administra",
+      "welcomeMessage": "Welcome to Adsumus",
       "hi": "Hi",
       "devLoginTitle": "Test login (preview only)",
       "email": "Email",
@@ -36,8 +36,8 @@
       "inactiveTitle": "No active membership",
       "inactiveMessage": "This email address is on file with the club, but not for an active or passive membership. The member register says:",
       "endedMessage": "Your access is paused: none of your member records is active or passive any more, for example after leaving the club. The member register says:",
-      "inactiveHelp": "Administra is open to active and passive members. If that's wrong – or you've (re)joined since – get in touch with the club. The member register is kept there and reaches Administra overnight; you'll get in automatically afterwards. Then tap Refresh.",
-      "trialMessage": "You're signed up for a trial training. Administra is open to members: once you've joined the club, you'll get in automatically with this email address.",
+      "inactiveHelp": "Adsumus is open to active and passive members. If that's wrong – or you've (re)joined since – get in touch with the club. The member register is kept there and reaches Adsumus overnight; you'll get in automatically afterwards. Then tap Refresh.",
+      "trialMessage": "You're signed up for a trial training. Adsumus is open to members: once you've joined the club, you'll get in automatically with this email address.",
       "contact": "Contact:"
     },
     "users": {
@@ -347,7 +347,7 @@
       "mapping": {
         "title": "Mapping",
         "toReview": "{count} new",
-        "intro": "What the groups and calendars of {provider} mean in Administra. New ones show as “New” until you review them.",
+        "intro": "What the groups and calendars of {provider} mean in Adsumus. New ones show as “New” until you review them.",
         "groups": "Groups",
         "groupsHelp": "With several status groups, the one with the lowest rank counts. Hidden groups show no chip.",
         "noGroups": "No groups yet.",
@@ -637,14 +637,14 @@
         "othersChanged": "{count, plural, one {# season badge} other {# season badges}} of other members change.",
         "accountsTitle": "User accounts",
         "account": {
-          "losesAccess": "{email} loses access to Administra. Link the account to the record that stays under Users, or enter the e-mail there (in Webling for Webling members).",
-          "gainsAccess": "{email} gets access to Administra.",
+          "losesAccess": "{email} loses access to Adsumus. Link the account to the record that stays under Users, or enter the e-mail there (in Webling for Webling members).",
+          "gainsAccess": "{email} gets access to Adsumus.",
           "losesRecord": "{email} no longer sees the record (My profile, member area). Link the account under Users if it belongs to it. A member account only sees it while it counts as an active or passive member.",
           "gainsRecord": "{email} sees the record afterwards (My profile, member area)."
         },
         "warning": {
           "TRIAL_LINK_ENDS": "The status link of the trial registration stops working.",
-          "ACCOUNT_LOSES_ACCESS": "{count, plural, one {# member account loses} other {# member accounts lose}} access to Administra."
+          "ACCOUNT_LOSES_ACCESS": "{count, plural, one {# member account loses} other {# member accounts lose}} access to Adsumus."
         },
         "confirmTitle": "Confirm merge",
         "confirmMessage": "{drop} (#{dropId}) will be deleted and everything moves to {keep} (#{keepId}). This cannot be undone.",
@@ -842,7 +842,7 @@
         "required": "Please fill in first name, last name, date of birth, and email.",
         "invalid": "Please check your details, especially the e-mail address and date of birth."
       },
-      "metaDescription": "Sign up for a free, no-obligation trial training session – Judo and Aikido in Wohlen.",
+      "metaDescription": "{club} – {sections}: sign up for a free, no-obligation trial training session.",
       "backToWebsite": "To the club website",
       "contactHint": "Questions? Write to us:",
       "submitError": "Your registration could not be sent right now. Please try again later.",
@@ -1015,7 +1015,25 @@
       "errorSend": "We couldn't send the code. Please check the email address.",
       "errorCode": "That code is wrong or has expired. Please try again.",
       "errorRateLimit": "Too many attempts. Please wait a moment and try again.",
-      "errorOAuth": "Could not log in: {reason}"
+      "errorOAuth": "Could not log in: {reason}",
+      "demo": {
+        "title": "Try Adsumus",
+        "intro": "Pick a role and you're signed in right away. Budo-Club Musterwil is made up; all data is reset every week.",
+        "admin": {
+          "title": "Board",
+          "description": "See and manage everything: members, statistics, users and settings."
+        },
+        "trainer": {
+          "title": "Trainer",
+          "description": "Take attendance, assign trial trainings and score belt gradings."
+        },
+        "member": {
+          "title": "Member or parent",
+          "description": "Follow your own children's progress and sign them up for a belt grading."
+        },
+        "errorUnknownRole": "That role doesn't exist in the demo. Pick one of the roles above.",
+        "errorSignIn": "Signing in didn't work just now. Please try again in a few minutes."
+      }
     },
     "club": {
       "myProfile": "My profile",
@@ -1689,7 +1707,7 @@
     "pasteTextPlaceholder": "Or paste text, also from Excel, e.g. {example}",
     "hint": "Hint for reading it (optional)",
     "hintPlaceholder": "e.g. “The second column is the leader”",
-    "privacy": "Photos and text go to Claude (Anthropic), without any member data from Administra. Nothing is saved until you have checked it.",
+    "privacy": "Photos and text go to Claude (Anthropic), without any member data from Adsumus. Nothing is saved until you have checked it.",
     "analyze": "Read",
     "working": "Claude is reading the material …",
     "workingSeconds": "{seconds} s – this usually takes 10 to 40 seconds.",
@@ -1777,7 +1795,7 @@
       "step2": "Claude reads the material and makes a proposal.",
       "step3": "You check the proposal, fill in what is missing and correct differences; uncertain values are marked.",
       "step4": "Only when you press “Apply” is anything saved, with your normal permissions.",
-      "safety": "The AI cannot change anything itself: it only returns a proposal in a fixed format, sees no member data from Administra and never picks members. Names are matched here in the browser.",
+      "safety": "The AI cannot change anything itself: it only returns a proposal in a fixed format, sees no member data from Adsumus and never picks members. Names are matched here in the browser.",
       "notConfigured": "The assistant is not set up on this installation yet. An admin has to add an Anthropic API key (see docs/AI_ASSISTANT.md).",
       "member": "Member",
       "memberPlaceholder": "Search name …",
@@ -2064,5 +2082,9 @@
         "failed": "Speech recognition failed. Type the text or try again."
       }
     }
+  },
+  "demo": {
+    "banner": "Demo – all data is made up and reset every week.",
+    "learnMore": "More about Adsumus"
   }
 }

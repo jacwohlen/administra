@@ -233,6 +233,17 @@ jobs:
           LAYER_TEST_REQUIRED: '1'
         run: pytest tests/test_layer_local_db.py
 
+      # The public demo (docs/DEMO.md) gets supabase/demo/seed.sql on top of
+      # the migrations alone, every week; prove it still loads and passes its
+      # checks with this branch's migrations
+      - name: Load and check the demo club
+        run: |
+          supabase db reset --no-seed
+          psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres" \
+            -1 -v ON_ERROR_STOP=1 -q -f supabase/demo/seed.sql
+          psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres" \
+            -v ON_ERROR_STOP=1 -q -f supabase/checks/demo_seed.sql
+
   build:
     runs-on: ubuntu-latest
     needs: [lint-and-check, unit-tests]

@@ -1,0 +1,181 @@
+name: Demo reset
+
+# Resets the public demo at demo.adsumus.ch to a fresh, made-up club:
+# drops everything in the demo database, applies prod's migrations, loads
+# supabase/demo/seed.sql (dates relative to the day of the reset) and empties
+# the storage buckets. See docs/DEMO.md.
+#
+# Runs weekly, and whenever prod gets new migrations or a new demo seed, so
+# the demo site (which builds prod) never runs against an older schema.
+
+on:
+  schedule:
+    # Mondays 03:23 UTC, off the full hour because GitHub delays scheduled
+    # runs that start at :00. Scheduled runs use the workflow file on the
+    # default branch, but the job below always checks out prod.
+    - cron: '23 3 * * 1'
+  push:
+    branches: [prod]
+    paths:
+      - 'supabase/migrations/**'
+      - 'supabase/demo/**'
+      - '.github/workflows/demo-reset.yml'
+  workflow_dispatch:
+    inputs:
+      initialize:
+        description: 'First run on a new demo project (skips the demo marker check)'
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  reset:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    # DEMO_DB_URL, DEMO_SUPABASE_URL and DEMO_SUPABASE_SECRET_KEY live in the
+    # GitHub environment "demo"
+    environment: demo
+    concurrency:
+      group: demo-reset
+      cancel-in-progress: false
+
+    # The database URL and secret key are passed only to the steps that use
+    # them, not to the third-party actions
+    env:
+      # healthchecks.io ping URL (optional, see docs/UPTIME_MONITORING.md)
+      HEALTHCHECK_URL: ${{ secrets.DEMO_HEALTHCHECK_URL }}
+
+    steps:
+      # Until the demo is set up (docs/DEMO.md), scheduled runs end here
+      # with a notice instead of failing every week
+      - name: Check configuration
+        id: config
+        env:
+          # Session pooler connection string (IPv4; GitHub runners have no IPv6)
+          DEMO_DB_URL: ${{ secrets.DEMO_DB_URL }}
+          DEMO_SUPABASE_URL: ${{ vars.DEMO_SUPABASE_URL }}
+          DEMO_SUPABASE_SECRET_KEY: ${{ secrets.DEMO_SUPABASE_SECRET_KEY }}
+        run: |
+          missing=""
+          [ -n "$DEMO_DB_URL" ] || missing="$missing DEMO_DB_URL"
+          [ -n "$DEMO_SUPABASE_URL" ] || missing="$missing DEMO_SUPABASE_URL"
+          [ -n "$DEMO_SUPABASE_SECRET_KEY" ] || missing="$missing DEMO_SUPABASE_SECRET_KEY"
+          if [ -n "$missing" ]; then
+            echo "::notice::Demo not set up, nothing to do. Missing in the GitHub environment 'demo':$missing (see docs/DEMO.md)"
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "configured=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: actions/checkout@v7
+        if: steps.config.outputs.configured == 'true'
+        with:
+          # The demo site builds prod, so the demo database gets prod's schema
+          ref: prod
+          persist-credentials: false
+
+      - uses: supabase/setup-cli@v3
+        if: steps.config.outputs.configured == 'true'
+        with:
+          version: latest
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      # The next steps delete everything in the database DEMO_DB_URL points
+      # at and empty the buckets of the project DEMO_SUPABASE_URL points at.
+      # Refuse unless both are the same project, it is not a JAC Wohlen
+      # project, and the database is marked as the demo (COMMENT ON DATABASE
+      # by the seed, which survives the reset). The very first run on a new
+      # project has no marker yet: start it by hand with "initialize", which
+      # only accepts a database without users and members.
+      - name: Make sure this is the demo database
+        if: steps.config.outputs.configured == 'true'
+        env:
+          DEMO_DB_URL: ${{ secrets.DEMO_DB_URL }}
+          DEMO_SUPABASE_URL: ${{ vars.DEMO_SUPABASE_URL }}
+          INITIALIZE: ${{ inputs.initialize || false }}
+        run: |
+          # prod must already contain the demo seed: never wipe without it
+          if [ ! -f supabase/demo/seed.sql ]; then
+            echo "::error::prod has no supabase/demo/seed.sql yet: promote main to prod first"
+            exit 1
+          fi
+          ref=$(printf '%s' "$DEMO_SUPABASE_URL" | sed -nE 's#^https://([a-z0-9]{20})\.supabase\.co/?$#\1#p')
+          if [ -z "$ref" ]; then
+            echo "::error::DEMO_SUPABASE_URL must look like https://<project-ref>.supabase.co"
+            exit 1
+          fi
+          case "$ref" in
+            hyppoiywqpfkvvcrmsdl | kbnnwrazgeuqlizjqqgb)
+              echo "::error::DEMO_SUPABASE_URL points at a JAC Wohlen project ($ref)"
+              exit 1 ;;
+          esac
+          # Pooler user postgres.<ref>, or the direct host db.<ref>.supabase.co
+          case "$DEMO_DB_URL" in
+            *"postgres.$ref:"* | *"@db.$ref.supabase.co"*) ;;
+            *)
+              echo "::error::DEMO_DB_URL is not a connection string of project $ref (DEMO_SUPABASE_URL)"
+              exit 1 ;;
+          esac
+          marker=$(psql "$DEMO_DB_URL" -tAc \
+            "select coalesce(shobj_description(oid, 'pg_database'), '') from pg_database where datname = current_database()")
+          if [ "$marker" = "administra-demo" ]; then
+            exit 0
+          fi
+          if [ "$INITIALIZE" != "true" ]; then
+            echo "::error::The database is not marked as the Adsumus demo (comment: '$marker'). Run the workflow by hand with 'initialize' for a new demo project."
+            exit 1
+          fi
+          in_use=$(psql "$DEMO_DB_URL" -tAc \
+            "select (select count(*) from auth.users) > 0 or (to_regclass('public.members') is not null and exists (select 1 from public.members))")
+          if [ "$in_use" != "f" ]; then
+            echo "::error::'initialize' only runs on a new project, but this database already has users or members."
+            exit 1
+          fi
+
+      # Drops all user-created objects (public schema, auth users, migration
+      # history) and applies supabase/migrations/. --no-seed: the demo gets
+      # its own seed below, never supabase/seed.sql.
+      - name: Reset the demo database
+        if: steps.config.outputs.configured == 'true'
+        env:
+          DEMO_DB_URL: ${{ secrets.DEMO_DB_URL }}
+        run: supabase db reset --db-url "$DEMO_DB_URL" --no-seed --yes
+
+      # One transaction (-1): all or nothing, and the seed's SET LOCAL works
+      - name: Load the demo club
+        if: steps.config.outputs.configured == 'true'
+        env:
+          DEMO_DB_URL: ${{ secrets.DEMO_DB_URL }}
+        run: psql "$DEMO_DB_URL" -1 -v ON_ERROR_STOP=1 -q -f supabase/demo/seed.sql
+
+      - name: Check the demo club
+        if: steps.config.outputs.configured == 'true'
+        env:
+          DEMO_DB_URL: ${{ secrets.DEMO_DB_URL }}
+        run: psql "$DEMO_DB_URL" -v ON_ERROR_STOP=1 -q -f supabase/checks/demo_seed.sql
+
+      # The reset keeps storage objects, and SQL may not delete them
+      # (storage.protect_delete), so uploads from the past week (avatars,
+      # lesson plan files) are removed through the Storage API.
+      - name: Empty the storage buckets
+        if: steps.config.outputs.configured == 'true'
+        env:
+          DEMO_SUPABASE_URL: ${{ vars.DEMO_SUPABASE_URL }}
+          DEMO_SUPABASE_SECRET_KEY: ${{ secrets.DEMO_SUPABASE_SECRET_KEY }}
+        run: |
+          for bucket in avatars lesson-plans; do
+            curl -fsS -m 30 -X POST "$DEMO_SUPABASE_URL/storage/v1/bucket/$bucket/empty" \
+              -H "apikey: $DEMO_SUPABASE_SECRET_KEY" -o /dev/null
+          done
+
+      - name: Report result to healthchecks.io
+        if: ${{ always() && env.HEALTHCHECK_URL != '' && steps.config.outputs.configured == 'true' }}
+        run: |
+          if [ "$JOB_STATUS" = "success" ]; then suffix=""; else suffix="/fail"; fi
+          url=$(printf '%s' "$HEALTHCHECK_URL" | tr -d '[:space:]')
+          curl -fsS -m 10 --retry 3 -o /dev/null "$url$suffix" ||
+            echo "::warning::healthchecks.io result ping failed, check the DEMO_HEALTHCHECK_URL secret"
+        env:
+          JOB_STATUS: ${{ job.status }}

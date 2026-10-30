@@ -1,6 +1,6 @@
-# Administra brand
+# Adsumus brand
 
-The design of Administra, extracted from the app so it can be reused outside it
+The design of Adsumus, extracted from the app so it can be reused outside it
 (e-mails, slides, print, a landing page, a sister app). The visual style
 sheet [`index.html`](index.html) is served by the app at
 [admin.jacwohlen.ch/brand/](https://admin.jacwohlen.ch/brand/) (Dev:
@@ -8,7 +8,7 @@ sheet [`index.html`](index.html) is served by the app at
 
 | File                                                   | What                                                       |
 | ------------------------------------------------------ | ---------------------------------------------------------- |
-| [`logo/administra-logo.svg`](logo/administra-logo.svg) | The Administra mark (vector)                               |
+| [`logo/administra-logo.svg`](logo/administra-logo.svg) | The Adsumus mark (vector)                                  |
 | [`logo/administra-logo.png`](logo/administra-logo.png) | The mark, 256 × 256 PNG                                    |
 | [`logo/judo-icon.svg`](logo/judo-icon.svg)             | Judogi with black belt — marks trainers/coaches in lists   |
 | [`tokens.css`](tokens.css)                             | All tokens as CSS custom properties, light + `.dark`       |
@@ -25,7 +25,7 @@ If the theme or those overrides change, regenerate these files.
 A red, upward-pointing chevron/triangle: an "A" made of a solid red triangle
 with a white inner stroke, reading both as the letter A and as a mountain.
 
-- Colour: **Administra Red `#dc0024`** — exactly the theme's `primary-500`.
+- Colour: **Adsumus Red `#dc0024`** — exactly the theme's `primary-500`.
 - Use it on white or light surfaces; on dark surfaces it keeps its red (no
   white variant exists yet).
 - Keep clear space of at least ¼ of the mark's width around it. Don't recolour,
@@ -33,10 +33,11 @@ with a white inner stroke, reading both as the letter A and as a mountain.
 - In the app the mark spins once (`rotate(-360deg)`, 2 s) on the pending and
   error pages (`src/routes/LogoImage.svelte`).
 - Public pages show the _club's_ logo (`PUBLIC_CLUB_LOGO`) and fall back to the
-  Administra mark (`src/lib/components/ClubLogo.svelte`). Administra is the
+  Adsumus mark (`src/lib/components/ClubLogo.svelte`). Adsumus is the
   tool; the club is the face.
 
-There is no separate wordmark file; the name is written **Administra**
+There is no separate wordmark file (the logo files keep the old name
+`administra-logo.*`); the name is written **Adsumus**
 (capital A) in the body font.
 
 ## Colour

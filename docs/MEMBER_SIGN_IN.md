@@ -35,7 +35,7 @@ profile via the avatar menu → _Mein Profil_.
    the `grant_member_access_on_member_*` triggers let the person in; they
    just tap _Aktualisieren_. For a member that is in Webling the email is
    entered in Webling and arrives with the next sync; for a member created
-   in Administra (or gone from Webling) a trainer adds it here.
+   in Adsumus (or gone from Webling) a trainer adds it here.
 
 Trial candidates (label `probetraining` / `Probetraining`) never grant
 access: the public trial form lets anyone create such a record with any
@@ -119,8 +119,12 @@ projects set this once in the Supabase dashboard:
    members, so sign-in codes would not arrive without it.
 2. **Email templates** (Authentication → Email Templates): paste
    `supabase/templates/sign_in_code.html` into both _Magic Link_ and
-   _Confirm signup_ (subject: `Dein Anmeldecode für Administra`). The
-   default templates only contain a link, not the code.
+   _Confirm signup_ (subject: `Dein Anmeldecode für Adsumus`). The
+   default templates only contain a link, not the code. Whenever the
+   template or the subject changes (as with the rename from Administra to
+   Adsumus), paste both again into Prod right after promoting to `prod`;
+   Dev, a persistent branch, gets them from `config.toml` with the next
+   push to `main` — check that it did.
 3. **Email OTP length** stays at 6 digits (the app expects 6).
 4. **Confirm email** (Authentication → Sign In / Providers → Email) must be
    **on**. Automatic approval trusts `auth.users.email_confirmed_at`: with
