@@ -105,13 +105,18 @@ export function supabaseApi(token) {
     /**
      * The key the browser uses (the publishable key, else the legacy anon
      * JWT) and the server-side key (a secret key, else the legacy
-     * service_role). Supabase retires the legacy keys at the end of 2026.
+     * service_role). Supabase retires the legacy keys at the end of 2026;
+     * once they are switched off they are no fallback.
      */
     async apiKeys(ref) {
-      /** @type {{ name: string, type: string | null, api_key: string | null, disabled?: boolean }[]} */
-      const keys = (await request('GET', `/v1/projects/${ref}/api-keys?reveal=true`)).filter(
-        (k) => !k.disabled
-      );
+      /** @type {{ name: string, type: string | null, api_key: string | null }[]} */
+      const all = await request('GET', `/v1/projects/${ref}/api-keys?reveal=true`);
+      // The list shows legacy keys also when they are off. null: the endpoint
+      // is gone or not allowed, so the legacy keys count as on
+      const legacy = await request('GET', `/v1/projects/${ref}/api-keys/legacy`, undefined, {
+        allow: [403, 404]
+      });
+      const keys = legacy?.enabled === false ? all.filter((k) => k.type !== 'legacy') : all;
       const find = (type, legacyName) =>
         keys.find((k) => k.type === type)?.api_key ??
         keys.find((k) => k.type === 'legacy' && k.name === legacyName)?.api_key ??

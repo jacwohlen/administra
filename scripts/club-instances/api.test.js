@@ -3,43 +3,65 @@ import { keyHeaders, supabaseApi } from './api.js';
 
 afterEach(() => vi.unstubAllGlobals());
 
-/** fetch answering every call with `body`, recording the calls */
-function answer(body) {
+/**
+ * fetch answering by path: `keys` for the key list, `legacy` for
+ * /api-keys/legacy (a status number answers with that status)
+ */
+function answer({ keys = [], legacy = { enabled: true }, other = {} } = {}) {
   const calls = [];
   vi.stubGlobal(
     'fetch',
     vi.fn(async (url, init) => {
       calls.push({ url, init });
-      return new Response(JSON.stringify(body), { status: 200 });
+      const body = url.endsWith('/api-keys/legacy')
+        ? legacy
+        : url.includes('/api-keys?reveal=true')
+          ? keys
+          : other;
+      return typeof body === 'number'
+        ? new Response('{}', { status: body })
+        : new Response(JSON.stringify(body), { status: 200 });
     })
   );
   return calls;
 }
 
+const LEGACY = [
+  { name: 'anon', type: 'legacy', api_key: 'eyJ.anon' },
+  { name: 'service_role', type: 'legacy', api_key: 'eyJ.service' }
+];
+
 describe('apiKeys', () => {
   it('takes the new keys before the legacy ones (retired at the end of 2026)', async () => {
-    answer([
-      { name: 'anon', type: 'legacy', api_key: 'eyJ.anon' },
-      { name: 'service_role', type: 'legacy', api_key: 'eyJ.service' },
-      { name: 'default', type: 'publishable', api_key: 'sb_publishable_x' },
-      { name: 'default', type: 'secret', api_key: 'sb_secret_x' }
-    ]);
+    answer({
+      keys: [
+        ...LEGACY,
+        { name: 'default', type: 'publishable', api_key: 'sb_publishable_x' },
+        { name: 'default', type: 'secret', api_key: 'sb_secret_x' }
+      ]
+    });
     expect(await supabaseApi('token').apiKeys('ref')).toEqual({
       anonKey: 'sb_publishable_x',
       serviceKey: 'sb_secret_x'
     });
   });
 
-  it('falls back to the legacy keys, and skips disabled ones', async () => {
-    answer([
-      { name: 'anon', type: 'legacy', api_key: 'eyJ.anon' },
-      { name: 'service_role', type: 'legacy', api_key: 'eyJ.service' },
-      { name: 'old', type: 'secret', api_key: 'sb_secret_old', disabled: true }
-    ]);
-    expect(await supabaseApi('token').apiKeys('ref')).toEqual({
-      anonKey: 'eyJ.anon',
-      serviceKey: 'eyJ.service'
+  it('falls back to the legacy keys while they are on', async () => {
+    for (const legacy of [{ enabled: true }, 404, 403]) {
+      answer({ keys: LEGACY, legacy });
+      expect(await supabaseApi('token').apiKeys('ref')).toEqual({
+        anonKey: 'eyJ.anon',
+        serviceKey: 'eyJ.service'
+      });
+    }
+  });
+
+  it('never falls back to legacy keys that are switched off', async () => {
+    answer({
+      keys: [...LEGACY, { name: 'default', type: 'publishable', api_key: 'sb_publishable_x' }],
+      legacy: { enabled: false }
     });
+    await expect(supabaseApi('token').apiKeys('ref')).rejects.toThrow('ref: API keys not found');
   });
 });
 
@@ -53,7 +75,7 @@ describe('keyHeaders', () => {
   });
 
   it('is what ensureBucket sends', async () => {
-    const calls = answer({ name: 'photos' });
+    const calls = answer({ other: { name: 'photos' } });
     await supabaseApi('token').ensureBucket('ref', 'sb_secret_x', { id: 'photos' });
     expect(calls[0].url).toBe('https://ref.supabase.co/storage/v1/bucket');
     expect(calls[0].init.headers).toEqual({
