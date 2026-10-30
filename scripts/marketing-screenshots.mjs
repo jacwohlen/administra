@@ -12,10 +12,13 @@
 //      PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH to an installed Chromium)
 //   4. ImageMagick (`magick` or `convert`) with WebP support
 //
-//   node scripts/marketing-screenshots.mjs [--base-url http://localhost:5173]
+//   node scripts/marketing-screenshots.mjs [--lang de|en] [--base-url http://localhost:5173]
+//
+// --lang en takes the English app into marketing/public/img/en and
+// assets/og-image-en.png, for marketing/public/en/.
 
 import { execFileSync } from 'node:child_process';
-import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -25,6 +28,7 @@ import { chromium } from '@playwright/test';
 const { values: flags } = parseArgs({
   options: {
     'base-url': { type: 'string', default: 'http://localhost:5173' },
+    lang: { type: 'string', default: 'de' },
     'db-url': {
       type: 'string',
       default: 'postgresql://postgres:postgres@127.0.0.1:54322/postgres'
@@ -33,7 +37,20 @@ const { values: flags } = parseArgs({
 });
 const baseUrl = /** @type {string} */ (flags['base-url']);
 const repo = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
-const imgDir = path.join(repo, 'marketing/public/img');
+const LANGS = {
+  de: { locale: 'de-CH', env: 'de_CH.UTF-8', language: 'de_CH:de', dir: '', page: 'index.html' },
+  en: {
+    locale: 'en-GB',
+    env: 'en_GB.UTF-8',
+    language: 'en_GB:en',
+    dir: 'en',
+    page: 'en/index.html'
+  }
+};
+const lang = LANGS[/** @type {string} */ (flags.lang)];
+if (!lang) throw new Error(`--lang must be one of: ${Object.keys(LANGS).join(', ')}`);
+const imgDir = path.join(repo, 'marketing/public/img', lang.dir);
+mkdirSync(imgDir, { recursive: true });
 const work = mkdtempSync(path.join(tmpdir(), 'administra-shots-'));
 
 // ImageMagick 7 ships `magick`; version 6 only `convert`
@@ -116,7 +133,17 @@ const shots = [
     prepare: (page) =>
       page.locator('input[name="trial-filter"][value="all"]').check({ force: true })
   },
-  { file: 'trial-form-phone', role: null, device: PHONE, url: '/probetraining' },
+  {
+    file: 'trial-form-phone',
+    role: null,
+    device: PHONE,
+    url: '/probetraining',
+    // The public form starts in the club's language; it has its own switch
+    prepare: (page) =>
+      lang.dir === 'en'
+        ? page.locator('[aria-label="Sprache / Language"] button', { hasText: 'EN' }).click()
+        : undefined
+  },
   {
     file: 'exam-sheet-phone',
     role: 'trainer',
@@ -135,10 +162,10 @@ const HIDE_DEMO_BANNER = '[data-demo-banner] { display: none !important; }';
 // Same escape hatch as playwright.config.ts when the installed browser
 // does not match the Playwright version
 const browser = await chromium.launch({
-  // German browser UI, e.g. the placeholder of date inputs (TT.MM.JJJJ):
-  // Chrome on Linux takes it from LANG
-  args: ['--lang=de-CH'],
-  env: { ...process.env, LANG: 'de_CH.UTF-8', LANGUAGE: 'de_CH:de' },
+  // Browser UI in the page's language, e.g. the placeholder of date inputs
+  // (TT.MM.JJJJ): Chrome on Linux takes it from LANG
+  args: [`--lang=${lang.locale}`],
+  env: { ...process.env, LANG: lang.env, LANGUAGE: lang.language },
   ...(process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH
     ? { executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH }
     : {})
@@ -153,7 +180,7 @@ try {
       return /** @type {import('playwright').BrowserContext} */ (contexts.get(key));
     const context = await browser.newContext({
       ...device,
-      locale: 'de-CH',
+      locale: lang.locale,
       timezoneId: 'Europe/Zurich',
       colorScheme: 'light',
       baseURL: baseUrl
@@ -194,7 +221,17 @@ try {
     console.log(`✓ ${shot.file}.webp  ${shot.url}`);
   }
 
-  // Social preview (og:image), 1200 × 630
+  // Social preview (og:image), 1200 × 630: the page's own headline (one line
+  // per sentence) and the part of its <title> after "Adsumus – "
+  const page = readFileSync(path.join(repo, 'marketing/public', lang.page), 'utf8');
+  const text = (re) =>
+    (re.exec(page)?.[1] ?? '')
+      .replace(/<[^>]+>/g, '')
+      .replace(/\s+/g, ' ')
+      .trim();
+  const headline = text(/<h1[^>]*>([\s\S]*?)<\/h1>/).replace(/([.!?]) /g, '$1<br>');
+  const subline = text(/<title>([\s\S]*?)<\/title>/).replace(/^Adsumus – /, '');
+  if (!headline || !subline) throw new Error(`No headline or title in ${lang.page}`);
   const og = await browser.newPage({ viewport: { width: 1200, height: 630 } });
   const tokens = readFileSync(path.join(repo, 'static/brand/tokens.css'), 'utf8');
   const logo = readFileSync(path.join(repo, 'static/brand/logo/administra-logo.svg')).toString(
@@ -216,13 +253,14 @@ try {
   </style></head><body>
     <div class="text">
       <div class="brand"><img src="data:image/svg+xml;base64,${logo}" alt="">Adsumus</div>
-      <h1>Weniger Listen.<br>Mehr Training.</h1>
-      <p>Präsenz, Probetrainings und Gurtprüfungen für Judo- und Aikidovereine.</p>
+      <h1>${headline}</h1>
+      <p>${subline}.</p>
     </div>
     <div class="phone"><img src="data:image/png;base64,${phone}" alt=""></div>
   </body></html>`);
-  await og.screenshot({ path: path.join(repo, 'marketing/public/assets/og-image.png') });
-  console.log('✓ assets/og-image.png');
+  const ogFile = lang.dir ? `og-image-${lang.dir}.png` : 'og-image.png';
+  await og.screenshot({ path: path.join(repo, 'marketing/public/assets', ogFile) });
+  console.log(`✓ assets/${ogFile}`);
 } finally {
   await browser.close();
   rmSync(work, { recursive: true, force: true });

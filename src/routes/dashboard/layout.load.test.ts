@@ -113,3 +113,50 @@ describe('dashboard layout: integrations', () => {
     expect((await layout(admin)).integrationAlert).toBe(false);
   });
 });
+
+describe('dashboard layout: J+S module', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    invalidateIntegrationConfig();
+  });
+
+  function withJs(enabled: boolean) {
+    mockSupabase.rpc.mockReturnValue(chain(status(ok)));
+    mockSupabase.from.mockImplementation((table: string) =>
+      chain(
+        table === 'user_profiles'
+          ? { data: null, error: null, count: 0 }
+          : table === 'integration_connections'
+            ? {
+                data: [
+                  { id: 'webling', display_name: 'Webling', enabled: true, settings: {} },
+                  { id: 'js', display_name: 'J+S (NDS)', enabled, settings: {} }
+                ],
+                error: null
+              }
+            : { data: [], error: null }
+      )
+    );
+  }
+
+  async function jsEnabled(userProfile: object) {
+    return ((await layout(userProfile)) as unknown as { jsEnabled: boolean }).jsEnabled;
+  }
+
+  it('offers the switched-on module to trainers and admins', async () => {
+    withJs(true);
+    expect(await jsEnabled(trainer)).toBe(true);
+    invalidateIntegrationConfig();
+    expect(await jsEnabled(admin)).toBe(true);
+  });
+
+  it('never to viewers', async () => {
+    withJs(true);
+    expect(await jsEnabled({ role: 'viewer', status: 'approved' })).toBe(false);
+  });
+
+  it('to nobody while it is switched off', async () => {
+    withJs(false);
+    expect(await jsEnabled(trainer)).toBe(false);
+  });
+});

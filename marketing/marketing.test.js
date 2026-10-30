@@ -50,19 +50,24 @@ describe('brand files', () => {
   });
 });
 
-describe.each(pages)('$name', ({ html, doc }) => {
+describe.each(pages)('$name', ({ name, html, doc }) => {
   it('has the basics: language, title, viewport, one h1', () => {
-    expect(doc.documentElement.lang).toBe('de-CH');
+    expect(doc.documentElement.lang).toBe(name.startsWith('en/') ? 'en' : 'de-CH');
     expect(doc.title.length).toBeGreaterThan(10);
     expect(doc.querySelector('meta[name="viewport"]')).not.toBeNull();
     expect(doc.querySelectorAll('h1')).toHaveLength(1);
   });
 
-  it('loads no scripts and nothing from other origins', () => {
-    expect(doc.querySelectorAll('script')).toHaveLength(0);
+  it('loads only the light/dark switch script and nothing from other origins', () => {
+    const scripts = [...doc.querySelectorAll('script')];
+    expect(scripts.map((s) => s.getAttribute('src'))).toEqual(['/assets/theme.js']);
+    expect(scripts[0].textContent.trim()).toBe('');
+    // In <head>, so a saved choice applies before the first paint
+    expect(scripts[0].parentElement.tagName).toBe('HEAD');
     for (const el of doc.querySelectorAll('link[href], img[src]')) {
       const url = el.getAttribute('href') ?? el.getAttribute('src');
-      if (el.getAttribute('rel') === 'canonical') continue;
+      // Search engines want absolute URLs for these two
+      if (['canonical', 'alternate'].includes(el.getAttribute('rel') ?? '')) continue;
       expect(url, url).toMatch(/^\//);
     }
   });
@@ -108,9 +113,24 @@ describe.each(pages)('$name', ({ html, doc }) => {
   });
 });
 
-describe('contact form', () => {
-  const doc = pages.find((p) => p.name === 'index.html').doc;
+// One Netlify form (detected at deploy time) on both home pages: same name and
+// fields, so submissions from either language land in the same list
+const fieldNames = (form) =>
+  [...new Set([...form.querySelectorAll('[name]')].map((el) => el.getAttribute('name')))].sort();
+
+describe.each([
+  { page: 'index.html', lang: 'de', thanks: '/danke/' },
+  { page: 'en/index.html', lang: 'en', thanks: '/en/thanks/' }
+])('contact form on $page', ({ page, lang, thanks }) => {
+  const doc = pages.find((p) => p.name === page).doc;
   const form = doc.querySelector('form[name="kontakt"]');
+
+  it('has the same fields in both languages and says which one it came from', () => {
+    const german = pages.find((p) => p.name === 'index.html').doc;
+    expect(fieldNames(form)).toEqual(fieldNames(german.querySelector('form[name="kontakt"]')));
+    expect(form.querySelector('input[name="sprache"]').getAttribute('value')).toBe(lang);
+    expect(form.getAttribute('action')).toBe(thanks);
+  });
 
   it('is a Netlify form with a honeypot that posts to the thank-you page', () => {
     expect(form.getAttribute('data-netlify')).toBe('true');
@@ -131,6 +151,66 @@ describe('contact form', () => {
   });
 });
 
+describe('languages', () => {
+  const german = pages.find((p) => p.name === 'index.html').doc;
+  const english = pages.find((p) => p.name === 'en/index.html').doc;
+  const alternates = (doc) =>
+    Object.fromEntries(
+      [...doc.querySelectorAll('link[rel="alternate"][hreflang]')].map((l) => [
+        l.getAttribute('hreflang'),
+        l.getAttribute('href')
+      ])
+    );
+
+  it('both home pages name each other as alternates', () => {
+    const expected = {
+      de: 'https://adsumus.ch/',
+      en: 'https://adsumus.ch/en/',
+      'x-default': 'https://adsumus.ch/'
+    };
+    expect(alternates(german)).toEqual(expected);
+    expect(alternates(english)).toEqual(expected);
+  });
+
+  it('every page switches to the other language', () => {
+    for (const { name, doc } of pages) {
+      if (name === '404.html') continue; // one page in both languages
+      const other = name.startsWith('en/') ? 'de' : 'en';
+      const link = doc.querySelector('.lang-switch');
+      expect(link, name).not.toBeNull();
+      expect(link.getAttribute('hreflang'), name).toBe(other);
+      expect(link.getAttribute('lang'), name).toBe(other);
+    }
+  });
+
+  it('the English home page shows the same screenshots, taken in English', () => {
+    const shots = (doc) =>
+      [...doc.querySelectorAll('img[src^="/img/"]')].map((i) => i.getAttribute('src'));
+    expect(shots(english)).toEqual(shots(german).map((src) => src.replace('/img/', '/img/en/')));
+  });
+});
+
+describe('light/dark switch', () => {
+  it('is on every page, labelled in the page language', () => {
+    for (const { name, doc } of pages) {
+      const button = doc.querySelector('button.theme-toggle');
+      expect(button, name).not.toBeNull();
+      expect(button.getAttribute('type'), name).toBe('button');
+      expect(button.getAttribute('aria-pressed'), name).toBe('false');
+      expect(button.getAttribute('aria-label'), name).toBe(
+        name.startsWith('en/') ? 'Dark mode' : 'Dunkler Modus'
+      );
+    }
+  });
+
+  it('is hidden without JavaScript and dark mode works both ways', () => {
+    const css = readFileSync(path.join(publicDir, 'assets/site.css'), 'utf8');
+    expect(css).toMatch(/\.theme-toggle \{\s*display: none;/);
+    expect(css).toContain(':root:not(.light)');
+    expect(css).toContain(':root.dark');
+  });
+});
+
 describe('placeholders', () => {
   it('exist only on the legal pages', () => {
     const files = new Set(findPlaceholders(publicDir).map((p) => p.file));
@@ -143,11 +223,12 @@ describe('placeholders', () => {
 describe('netlify.toml', () => {
   const toml = readFileSync(path.join(here, 'netlify.toml'), 'utf8');
 
-  it('sends a strict CSP without scripts or inline styles', () => {
+  it('sends a strict CSP: own scripts only, no inline scripts or styles', () => {
     const csp = /Content-Security-Policy = "([^"]+)"/.exec(toml)[1];
     expect(csp).toContain("default-src 'none'");
-    expect(csp).not.toContain('script-src');
+    expect(csp).toContain("script-src 'self'");
     expect(csp).not.toContain('unsafe-inline');
+    expect(csp).not.toContain('unsafe-eval');
     expect(csp).toContain("form-action 'self'");
   });
 
