@@ -4,11 +4,11 @@ import { DEMO_ACCOUNTS, DEMO_ROLES, demoAccountFor } from './demoAccounts';
 describe('demoAccountFor', () => {
   it('maps each demo role to its seeded account', () => {
     expect(demoAccountFor('admin')).toEqual({
-      email: 'vorstand@demo.administra.jacwohlen.ch',
+      email: 'vorstand@demo.adsumus.ch',
       password: 'administra-demo'
     });
-    expect(demoAccountFor('trainer')?.email).toBe('trainer@demo.administra.jacwohlen.ch');
-    expect(demoAccountFor('member')?.email).toBe('mitglied@demo.administra.jacwohlen.ch');
+    expect(demoAccountFor('trainer')?.email).toBe('trainer@demo.adsumus.ch');
+    expect(demoAccountFor('member')?.email).toBe('mitglied@demo.adsumus.ch');
   });
 
   it('has an account for every role and nothing else', () => {

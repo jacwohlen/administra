@@ -42,7 +42,7 @@ export const actions: Actions = {
     redirect(303, '/');
   },
 
-  // One-click sign-in of the public demo (PUBLIC_MODE=DEMO, demo.administra.jacwohlen.ch,
+  // One-click sign-in of the public demo (PUBLIC_MODE=DEMO, demo.adsumus.ch,
   // its own Supabase project). The form only sends a role; the e-mail and
   // password are looked up here (see $lib/server/demoAccounts), so this
   // action never signs in with anything the browser chose. Every other

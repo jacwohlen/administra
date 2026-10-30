@@ -215,7 +215,7 @@ try {
     .phone img { display: block; width: 100%; border-radius: 26px; }
   </style></head><body>
     <div class="text">
-      <div class="brand"><img src="data:image/svg+xml;base64,${logo}" alt="">Administra</div>
+      <div class="brand"><img src="data:image/svg+xml;base64,${logo}" alt="">Adsumus</div>
       <h1>Weniger Listen.<br>Mehr Training.</h1>
       <p>Präsenz, Probetrainings und Gurtprüfungen für Judo- und Aikidovereine.</p>
     </div>

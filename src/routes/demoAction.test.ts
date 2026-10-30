@@ -52,9 +52,9 @@ describe('demo action in DEMO mode', () => {
   });
 
   it.each([
-    ['admin', 'vorstand@demo.administra.jacwohlen.ch'],
-    ['trainer', 'trainer@demo.administra.jacwohlen.ch'],
-    ['member', 'mitglied@demo.administra.jacwohlen.ch']
+    ['admin', 'vorstand@demo.adsumus.ch'],
+    ['trainer', 'trainer@demo.adsumus.ch'],
+    ['member', 'mitglied@demo.adsumus.ch']
   ])('signs %s in with the mapped account and redirects to /', async (role, email) => {
     const signIn = vi.fn().mockResolvedValue({ data: {}, error: null });
     const result = await run(actions, demoEvent({ role }, signIn));
@@ -90,7 +90,7 @@ describe('demo action in DEMO mode', () => {
       demoEvent({ role: 'member', email: 'x@example.com', password: 'p' }, signIn)
     );
     expect(signIn).toHaveBeenCalledWith({
-      email: 'mitglied@demo.administra.jacwohlen.ch',
+      email: 'mitglied@demo.adsumus.ch',
       password: 'administra-demo'
     });
   });
@@ -147,10 +147,7 @@ describe('login action', () => {
     let result: unknown;
     try {
       result = await actions.login(
-        demoEvent(
-          { email: 'vorstand@demo.administra.jacwohlen.ch', password: 'administra-demo' },
-          signIn
-        )
+        demoEvent({ email: 'vorstand@demo.adsumus.ch', password: 'administra-demo' }, signIn)
       );
     } catch (thrown) {
       result = thrown;

@@ -1,6 +1,6 @@
 name: Demo reset
 
-# Resets the public demo at demo.administra.jacwohlen.ch to a fresh, made-up club:
+# Resets the public demo at demo.adsumus.ch to a fresh, made-up club:
 # drops everything in the demo database, applies prod's migrations, loads
 # supabase/demo/seed.sql (dates relative to the day of the reset) and empties
 # the storage buckets. See docs/DEMO.md.

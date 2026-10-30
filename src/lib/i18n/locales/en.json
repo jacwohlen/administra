@@ -1012,7 +1012,7 @@
       "errorRateLimit": "Too many attempts. Please wait a moment and try again.",
       "errorOAuth": "Could not log in: {reason}",
       "demo": {
-        "title": "Try Administra",
+        "title": "Try Adsumus",
         "intro": "Pick a role and you're signed in right away. Budo-Club Musterwil is made up; all data is reset every week.",
         "admin": {
           "title": "Board",
@@ -2080,6 +2080,6 @@
   },
   "demo": {
     "banner": "Demo – all data is made up and reset every week.",
-    "learnMore": "More about Administra"
+    "learnMore": "More about Adsumus"
   }
 }

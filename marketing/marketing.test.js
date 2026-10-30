@@ -77,7 +77,7 @@ describe.each(pages)('$name', ({ html, doc }) => {
       const file = targetFile(url);
       if (!file) {
         expect(url, url).toMatch(
-          /^(https:\/\/(demo\.)?administra\.jacwohlen\.ch(\/|$)|mailto:administra@jacwohlen\.ch$)/
+          /^(https:\/\/(demo\.)?adsumus\.ch(\/|$)|mailto:kontakt@adsumus\.ch$)/
         );
         continue;
       }

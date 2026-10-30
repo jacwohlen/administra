@@ -1012,7 +1012,7 @@
       "errorRateLimit": "Zu viele Versuche. Bitte warte einen Moment und versuch es dann nochmals.",
       "errorOAuth": "Die Anmeldung hat nicht geklappt: {reason}",
       "demo": {
-        "title": "Administra ausprobieren",
+        "title": "Adsumus ausprobieren",
         "intro": "Wähle eine Rolle – du bist sofort angemeldet. Der Budo-Club Musterwil ist erfunden; alle Daten werden jede Woche zurückgesetzt.",
         "admin": {
           "title": "Vorstand",
@@ -2080,6 +2080,6 @@
   },
   "demo": {
     "banner": "Demo – alle Daten sind erfunden und werden jede Woche zurückgesetzt.",
-    "learnMore": "Mehr über Administra"
+    "learnMore": "Mehr über Adsumus"
   }
 }
