@@ -1,7 +1,7 @@
 {
   "page": {
     "routes": {
-      "welcomeMessage": "Welcome to Adsumus",
+      "welcomeMessage": "Welcome to Alleda",
       "hi": "Hi",
       "devLoginTitle": "Test login (preview only)",
       "email": "Email",
@@ -37,8 +37,8 @@
       "inactiveTitle": "No active membership",
       "inactiveMessage": "This email address is on file with the club, but not for an active or passive membership. The member register says:",
       "endedMessage": "Your access is paused: none of your member records is active or passive any more, for example after leaving the club. The member register says:",
-      "inactiveHelp": "Adsumus is open to active and passive members. If that's wrong – or you've (re)joined since – get in touch with the club. The member register is kept there and reaches Adsumus overnight; you'll get in automatically afterwards. Then tap Refresh.",
-      "trialMessage": "You're signed up for a trial training. Adsumus is open to members: once you've joined the club, you'll get in automatically with this email address.",
+      "inactiveHelp": "Alleda is open to active and passive members. If that's wrong – or you've (re)joined since – get in touch with the club. The member register is kept there and reaches Alleda overnight; you'll get in automatically afterwards. Then tap Refresh.",
+      "trialMessage": "You're signed up for a trial training. Alleda is open to members: once you've joined the club, you'll get in automatically with this email address.",
       "contact": "Contact:"
     },
     "users": {
@@ -350,7 +350,7 @@
       "mapping": {
         "title": "Mapping",
         "toReview": "{count} new",
-        "intro": "What the groups and calendars of {provider} mean in Adsumus. New ones show as “New” until you review them.",
+        "intro": "What the groups and calendars of {provider} mean in Alleda. New ones show as “New” until you review them.",
         "groups": "Groups",
         "groupsHelp": "With several status groups, the one with the lowest rank counts. Hidden groups show no chip.",
         "noGroups": "No groups yet.",
@@ -416,7 +416,7 @@
         }
       },
       "module": {
-        "js": "Exports the attendance of J+S courses as CSV files for the NDS import. Persons are matched by the members’ licence number (from Webling or entered in Adsumus).",
+        "js": "Exports the attendance of J+S courses as CSV files for the NDS import. Persons are matched by the members’ licence number (from Webling or entered in Alleda).",
         "openJs": "Open the J+S export"
       }
     },
@@ -657,14 +657,14 @@
         "othersChanged": "{count, plural, one {# season badge} other {# season badges}} of other members change.",
         "accountsTitle": "User accounts",
         "account": {
-          "losesAccess": "{email} loses access to Adsumus. Link the account to the record that stays under Users, or enter the e-mail there (in Webling for Webling members).",
-          "gainsAccess": "{email} gets access to Adsumus.",
+          "losesAccess": "{email} loses access to Alleda. Link the account to the record that stays under Users, or enter the e-mail there (in Webling for Webling members).",
+          "gainsAccess": "{email} gets access to Alleda.",
           "losesRecord": "{email} no longer sees the record (My profile, member area). Link the account under Users if it belongs to it. A member account only sees it while it counts as an active or passive member.",
           "gainsRecord": "{email} sees the record afterwards (My profile, member area)."
         },
         "warning": {
           "TRIAL_LINK_ENDS": "The status link of the trial registration stops working.",
-          "ACCOUNT_LOSES_ACCESS": "{count, plural, one {# member account loses} other {# member accounts lose}} access to Adsumus."
+          "ACCOUNT_LOSES_ACCESS": "{count, plural, one {# member account loses} other {# member accounts lose}} access to Alleda."
         },
         "confirmTitle": "Confirm merge",
         "confirmMessage": "{drop} (#{dropId}) will be deleted and everything moves to {keep} (#{keepId}). This cannot be undone.",
@@ -1039,7 +1039,7 @@
       "errorRateLimit": "Too many attempts. Please wait a moment and try again.",
       "errorOAuth": "Could not log in: {reason}",
       "demo": {
-        "title": "Try Adsumus",
+        "title": "Try Alleda",
         "intro": "Pick a role and you're signed in right away. Budo-Club Musterwil is made up; all data is reset every week.",
         "admin": {
           "title": "Board",
@@ -1189,7 +1189,7 @@
       "delete_success": "J+S course deleted",
       "replace_hint": "Note: the import in the NDS replaces all activities or attendance already recorded for the course, so the files always contain the whole course. Keep the order: persons, activities, attendance.",
       "step_persons": "Persons",
-      "step_persons_hint": "{participants} participants and {leaders} leaders, with licence number, name and birthday. Only needed for persons not yet in the NDS course. Persons new to the NDS need their AHV number: enter them in the NDS directly, then their licence number in Adsumus (or Webling).",
+      "step_persons_hint": "{participants} participants and {leaders} leaders, with licence number, name and birthday. Only needed for persons not yet in the NDS course. Persons new to the NDS need their AHV number: enter them in the NDS directly, then their licence number in Alleda (or Webling).",
       "download_participants": "Participants (CSV)",
       "download_leaders": "Leaders (CSV)",
       "step_activities": "Activities",
@@ -1812,7 +1812,7 @@
     "pasteTextPlaceholder": "Or paste text, also from Excel, e.g. {example}",
     "hint": "Hint for reading it (optional)",
     "hintPlaceholder": "e.g. “The second column is the leader”",
-    "privacy": "Photos and text go to Claude (Anthropic), without any member data from Adsumus. Nothing is saved until you have checked it.",
+    "privacy": "Photos and text go to Claude (Anthropic), without any member data from Alleda. Nothing is saved until you have checked it.",
     "analyze": "Read",
     "working": "Claude is reading the material …",
     "workingSeconds": "{seconds} s – this usually takes 10 to 40 seconds.",
@@ -1900,7 +1900,7 @@
       "step2": "Claude reads the material and makes a proposal.",
       "step3": "You check the proposal, fill in what is missing and correct differences; uncertain values are marked.",
       "step4": "Only when you press “Apply” is anything saved, with your normal permissions.",
-      "safety": "The AI cannot change anything itself: it only returns a proposal in a fixed format, sees no member data from Adsumus and never picks members. Names are matched here in the browser.",
+      "safety": "The AI cannot change anything itself: it only returns a proposal in a fixed format, sees no member data from Alleda and never picks members. Names are matched here in the browser.",
       "notConfigured": "The assistant is not set up on this installation yet. An admin has to add an Anthropic API key (see docs/AI_ASSISTANT.md).",
       "member": "Member",
       "memberPlaceholder": "Search name …",
@@ -2190,6 +2190,6 @@
   },
   "demo": {
     "banner": "Demo – all data is made up and reset every week.",
-    "learnMore": "More about Adsumus"
+    "learnMore": "More about Alleda"
   }
 }

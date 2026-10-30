@@ -1,4 +1,4 @@
-# adsumus.ch — the marketing site (a separate Netlify site with base
+# alleda.ch — the marketing site (a separate Netlify site with base
 # directory "marketing"; the app has its own netlify.toml at the repo root).
 # Static files only: no framework, no JavaScript. See marketing/README.md.
 
@@ -11,22 +11,22 @@
 [build.environment]
   NODE_VERSION = "22"
 
-# One address: www and the second domain alleda.ch end up on adsumus.ch
-[[redirects]]
-  from = "https://www.adsumus.ch/*"
-  to = "https://adsumus.ch/:splat"
-  status = 301
-  force = true
-
-[[redirects]]
-  from = "https://alleda.ch/*"
-  to = "https://adsumus.ch/:splat"
-  status = 301
-  force = true
-
+# One address: www and the former domain adsumus.ch end up on alleda.ch
 [[redirects]]
   from = "https://www.alleda.ch/*"
-  to = "https://adsumus.ch/:splat"
+  to = "https://alleda.ch/:splat"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "https://adsumus.ch/*"
+  to = "https://alleda.ch/:splat"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "https://www.adsumus.ch/*"
+  to = "https://alleda.ch/:splat"
   status = 301
   force = true
 

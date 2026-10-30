@@ -222,7 +222,7 @@ try {
   }
 
   // Social preview (og:image), 1200 × 630: the page's own headline (one line
-  // per sentence) and the part of its <title> after "Adsumus – "
+  // per sentence) and the part of its <title> after "Alleda – "
   const page = readFileSync(path.join(repo, 'marketing/public', lang.page), 'utf8');
   const text = (re) =>
     (re.exec(page)?.[1] ?? '')
@@ -230,7 +230,7 @@ try {
       .replace(/\s+/g, ' ')
       .trim();
   const headline = text(/<h1[^>]*>([\s\S]*?)<\/h1>/).replace(/([.!?]) /g, '$1<br>');
-  const subline = text(/<title>([\s\S]*?)<\/title>/).replace(/^Adsumus – /, '');
+  const subline = text(/<title>([\s\S]*?)<\/title>/).replace(/^Alleda – /, '');
   if (!headline || !subline) throw new Error(`No headline or title in ${lang.page}`);
   const og = await browser.newPage({ viewport: { width: 1200, height: 630 } });
   const tokens = readFileSync(path.join(repo, 'static/brand/tokens.css'), 'utf8');
@@ -252,7 +252,7 @@ try {
     .phone img { display: block; width: 100%; border-radius: 26px; }
   </style></head><body>
     <div class="text">
-      <div class="brand"><img src="data:image/svg+xml;base64,${logo}" alt="">Adsumus</div>
+      <div class="brand"><img src="data:image/svg+xml;base64,${logo}" alt="">Alleda</div>
       <h1>${headline}</h1>
       <p>${subline}.</p>
     </div>
