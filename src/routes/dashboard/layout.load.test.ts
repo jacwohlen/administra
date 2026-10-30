@@ -33,7 +33,11 @@ async function layout(userProfile: object) {
 
 const hourAgo = new Date(Date.now() - 3_600_000).toISOString();
 
-function status(members: object | null, issues = { error: 0, warning: 0, info: 0 }) {
+function status(
+  members: object | null,
+  issues = { error: 0, warning: 0, info: 0 },
+  to_review = { groups: 0, calendars: 0 }
+) {
   return {
     data: [
       {
@@ -42,7 +46,8 @@ function status(members: object | null, issues = { error: 0, warning: 0, info: 0
         enabled: true,
         last_run: { members, events: null },
         last_success: { members: hourAgo, events: null },
-        issues
+        issues,
+        to_review
       }
     ],
     error: null
@@ -92,6 +97,13 @@ describe('dashboard layout: integrations', () => {
     answer(status(ok, { error: 1, warning: 0, info: 0 }));
     expect((await layout(admin)).integrationAlert).toBe(true);
     expect(mockSupabase.rpc).toHaveBeenCalledWith('integration_status');
+  });
+
+  it('shows admins a dot while a new group or calendar waits for review', async () => {
+    answer(status(ok, undefined, { groups: 1, calendars: 0 }));
+    expect((await layout(admin)).integrationAlert).toBe(true);
+    answer(status(ok, undefined, { groups: 0, calendars: 2 }));
+    expect((await layout(admin)).integrationAlert).toBe(true);
   });
 
   it('shows no dot before the layer ever ran, nor when the status cannot be read', async () => {

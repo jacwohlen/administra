@@ -89,8 +89,13 @@ function run(values: Partial<LastRun> = {}): LastRun {
   };
 }
 
+// Nothing to review unless a test says so (STATUS has 5 new groups)
 function connection(values: Partial<ConnectionStatus> = {}): ConnectionStatus {
-  return { ...parseConnectionStatuses([STATUS])[0], ...values };
+  return {
+    ...parseConnectionStatuses([STATUS])[0],
+    to_review: { groups: 0, calendars: 0 },
+    ...values
+  };
 }
 
 describe('parseConnectionStatuses', () => {
@@ -159,10 +164,24 @@ describe('connectionAlerts', () => {
     expect(connectionAlerts(c, NOW)).toEqual([{ code: 'errors', count: 2 }]);
   });
 
+  it('asks to review new groups and calendars', () => {
+    // A new group usually has no status: members in no other status group
+    // count as non-members until it gets one, also when the run ended ok
+    const c = connection({ to_review: { groups: 2, calendars: 1 } });
+    expect(connectionAlerts(c, NOW)).toEqual([{ code: 'review', groups: 2, calendars: 1 }]);
+    expect(connectionAlerts(connection({ to_review: { groups: 0, calendars: 3 } }), NOW)).toEqual([
+      { code: 'review', groups: 0, calendars: 3 }
+    ]);
+  });
+
   it('says nothing while the layer never ran a kind, or the connection is off', () => {
     const never = connection({ last_run: {}, last_success: {} });
     expect(connectionAlerts(never, NOW)).toEqual([]);
-    const off = connection({ enabled: false, issues: { error: 3, warning: 0, info: 0 } });
+    const off = connection({
+      enabled: false,
+      issues: { error: 3, warning: 0, info: 0 },
+      to_review: { groups: 2, calendars: 1 }
+    });
     expect(connectionAlerts(off, NOW)).toEqual([]);
   });
 });
@@ -175,10 +194,15 @@ describe('needsAttention (the avatar dot)', () => {
       last_run: { members: run({ status: 'refused', refused: 'status_drop' }) }
     });
     expect(needsAttention([connection(), refused], NOW)).toBe(true);
+    const toReview = connection({ to_review: { groups: 1, calendars: 0 } });
+    expect(needsAttention([connection(), toReview], NOW)).toBe(true);
   });
 
   it('is not set before the layer ever ran', () => {
-    const before = parseConnectionStatuses([{ ...STATUS, last_run: {}, last_success: {} }]);
+    // The seeded catalog rows are reviewed; new ones only come with a run
+    const before = parseConnectionStatuses([
+      { ...STATUS, last_run: {}, last_success: {}, to_review: { groups: 0, calendars: 0 } }
+    ]);
     expect(needsAttention(before, NOW)).toBe(false);
   });
 });
