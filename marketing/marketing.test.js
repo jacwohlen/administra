@@ -58,8 +58,12 @@ describe.each(pages)('$name', ({ name, html, doc }) => {
     expect(doc.querySelectorAll('h1')).toHaveLength(1);
   });
 
-  it('loads no scripts and nothing from other origins', () => {
-    expect(doc.querySelectorAll('script')).toHaveLength(0);
+  it('loads only the light/dark switch script and nothing from other origins', () => {
+    const scripts = [...doc.querySelectorAll('script')];
+    expect(scripts.map((s) => s.getAttribute('src'))).toEqual(['/assets/theme.js']);
+    expect(scripts[0].textContent.trim()).toBe('');
+    // In <head>, so a saved choice applies before the first paint
+    expect(scripts[0].parentElement.tagName).toBe('HEAD');
     for (const el of doc.querySelectorAll('link[href], img[src]')) {
       const url = el.getAttribute('href') ?? el.getAttribute('src');
       // Search engines want absolute URLs for these two
@@ -186,6 +190,27 @@ describe('languages', () => {
   });
 });
 
+describe('light/dark switch', () => {
+  it('is on every page, labelled in the page language', () => {
+    for (const { name, doc } of pages) {
+      const button = doc.querySelector('button.theme-toggle');
+      expect(button, name).not.toBeNull();
+      expect(button.getAttribute('type'), name).toBe('button');
+      expect(button.getAttribute('aria-pressed'), name).toBe('false');
+      expect(button.getAttribute('aria-label'), name).toBe(
+        name.startsWith('en/') ? 'Dark mode' : 'Dunkler Modus'
+      );
+    }
+  });
+
+  it('is hidden without JavaScript and dark mode works both ways', () => {
+    const css = readFileSync(path.join(publicDir, 'assets/site.css'), 'utf8');
+    expect(css).toMatch(/\.theme-toggle \{\s*display: none;/);
+    expect(css).toContain(':root:not(.light)');
+    expect(css).toContain(':root.dark');
+  });
+});
+
 describe('placeholders', () => {
   it('exist only on the legal pages', () => {
     const files = new Set(findPlaceholders(publicDir).map((p) => p.file));
@@ -198,11 +223,12 @@ describe('placeholders', () => {
 describe('netlify.toml', () => {
   const toml = readFileSync(path.join(here, 'netlify.toml'), 'utf8');
 
-  it('sends a strict CSP without scripts or inline styles', () => {
+  it('sends a strict CSP: own scripts only, no inline scripts or styles', () => {
     const csp = /Content-Security-Policy = "([^"]+)"/.exec(toml)[1];
     expect(csp).toContain("default-src 'none'");
-    expect(csp).not.toContain('script-src');
+    expect(csp).toContain("script-src 'self'");
     expect(csp).not.toContain('unsafe-inline');
+    expect(csp).not.toContain('unsafe-eval');
     expect(csp).toContain("form-action 'self'");
   });
 

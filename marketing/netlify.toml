@@ -33,9 +33,10 @@
 [[headers]]
   for = "/*"
   [headers.values]
-    # Everything is same-origin; no scripts at all. form-action covers the
-    # Netlify Forms POST to /danke/ and /en/thanks/.
-    Content-Security-Policy = "default-src 'none'; style-src 'self'; img-src 'self' data:; form-action 'self'; base-uri 'none'; frame-ancestors 'none'"
+    # Everything is same-origin; the only script is /assets/theme.js (the
+    # light/dark switch), never inline. form-action covers the Netlify Forms
+    # POST to /danke/ and /en/thanks/.
+    Content-Security-Policy = "default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; form-action 'self'; base-uri 'none'; frame-ancestors 'none'"
     X-Content-Type-Options = "nosniff"
     X-Frame-Options = "DENY"
     Referrer-Policy = "strict-origin-when-cross-origin"

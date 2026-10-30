@@ -3,7 +3,8 @@
 The public website for Adsumus (Latin for "we are here", formerly
 Administra; the repository keeps the old name): what it does, the demo link, and a contact form for
 interested clubs. Plain static HTML and CSS in
-[`public/`](public/), no build step, no JavaScript, no cookies, no tracking,
+[`public/`](public/), no build step, no cookies, no tracking, one small script of
+our own (the light/dark switch, `public/assets/theme.js`),
 no third-party fonts or scripts.
 
 | Page                   | File                                                             |
@@ -105,8 +106,12 @@ publish anything from `marketing/`.
 - Colours and type come from [`public/assets/tokens.css`](public/assets/tokens.css),
   an exact copy of `static/brand/tokens.css`; copy it again when the brand
   changes (a test fails until you do).
-- No inline `style` attributes and no `<script>`: the Content Security
-  Policy in `netlify.toml` blocks both.
+- No inline `style` attributes and no inline or third-party scripts: the
+  Content Security Policy in `netlify.toml` allows only files from the site
+  itself. `assets/theme.js` is the one script: it keeps a visitor's
+  light/dark choice in `localStorage` (mentioned in the
+  Datenschutzerklärung); without JavaScript the site follows the device's
+  setting and the switch stays hidden.
 - `npx vitest run marketing` checks links, anchors, images, the form,
   placeholders and the brand copies. To look at the site locally:
   `python3 -m http.server 8080 -d marketing/public`, then open
