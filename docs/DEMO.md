@@ -149,8 +149,9 @@ has the schema of the code the demo site runs), and by hand.
      `https://demo.adsumus.ch`, no further redirect URLs needed.
    - Connect → **Session pooler** connection string (IPv4 — GitHub's
      runners have no IPv6), with the database password filled in.
-   - Project Settings → API Keys: the publishable (anon) key for Netlify,
-     a secret key (or the legacy `service_role` key) for the workflow.
+   - Project Settings → API Keys: the publishable key (`sb_publishable_...`)
+     for Netlify, a secret key (`sb_secret_...`) for the workflow (the
+     legacy `anon` / `service_role` keys stop working at the end of 2026).
 2. **GitHub** → Settings → Environments → new environment **`demo`**
    (allow the branches `main` and `prod`):
    - secret `DEMO_DB_URL`: the session pooler connection string
@@ -172,7 +173,7 @@ has the schema of the code the demo site runs), and by hand.
    | ------------------------------ | ------------------------------------- |
    | `PUBLIC_MODE`                  | `DEMO`                                |
    | `PUBLIC_SUPABASE_DATABASE_URL` | `https://<project-ref>.supabase.co`   |
-   | `PUBLIC_SUPABASE_ANON_KEY`     | the publishable (anon) key            |
+   | `PUBLIC_SUPABASE_ANON_KEY`     | the publishable key                   |
    | `PUBLIC_SUPABASE_SITE_URL`     | `https://demo.adsumus.ch`             |
    | `PUBLIC_SENTRY_DSN`            | optional, a Sentry project of its own |
 

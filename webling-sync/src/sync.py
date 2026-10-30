@@ -74,7 +74,7 @@ def make_layer():
     from integration.client import Client
     from integration.layer import Layer
     url = required('SUPABASE_URL')
-    key = required('SUPABASE_SERVICE_ROLE_KEY', ' (the service_role key; RLS blocks the anon key)')
+    key = required('SUPABASE_SERVICE_ROLE_KEY', ' (a secret key, sb_secret_...; RLS blocks a publishable key)')
     return Layer(Client(url, key))
 
 

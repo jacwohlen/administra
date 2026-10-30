@@ -46,6 +46,16 @@ function client(base, token) {
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
+/**
+ * Headers for a call to a project's own API with one of its keys. The new
+ * keys (sb_secret_..., sb_publishable_...) are no JWTs: Supabase rejects
+ * them in the Authorization header, so only the legacy keys go there too.
+ * @param {string} key
+ */
+export function keyHeaders(key) {
+  return key.startsWith('sb_') ? { apikey: key } : { apikey: key, Authorization: `Bearer ${key}` };
+}
+
 /** @param {string} token Supabase personal access token */
 export function supabaseApi(token) {
   const request = client(SUPABASE_API, token);
@@ -93,18 +103,26 @@ export function supabaseApi(token) {
     },
 
     /**
-     * The key the browser uses (legacy anon JWT, else the publishable key)
-     * and the server-side key (legacy service_role, else a secret key).
+     * The key the browser uses (the publishable key, else the legacy anon
+     * JWT) and the server-side key (a secret key, else the legacy
+     * service_role). Supabase retires the legacy keys at the end of 2026;
+     * once they are switched off they are no fallback.
      */
     async apiKeys(ref) {
       /** @type {{ name: string, type: string | null, api_key: string | null }[]} */
-      const keys = await request('GET', `/v1/projects/${ref}/api-keys?reveal=true`);
-      const find = (legacyName, type) =>
-        keys.find((k) => k.type === 'legacy' && k.name === legacyName)?.api_key ??
+      const all = await request('GET', `/v1/projects/${ref}/api-keys?reveal=true`);
+      // The list shows legacy keys also when they are off. null: the endpoint
+      // is gone or not allowed, so the legacy keys count as on
+      const legacy = await request('GET', `/v1/projects/${ref}/api-keys/legacy`, undefined, {
+        allow: [403, 404]
+      });
+      const keys = legacy?.enabled === false ? all.filter((k) => k.type !== 'legacy') : all;
+      const find = (type, legacyName) =>
         keys.find((k) => k.type === type)?.api_key ??
+        keys.find((k) => k.type === 'legacy' && k.name === legacyName)?.api_key ??
         null;
-      const anonKey = find('anon', 'publishable');
-      const serviceKey = find('service_role', 'secret');
+      const anonKey = find('publishable', 'anon');
+      const serviceKey = find('secret', 'service_role');
       if (!anonKey || !serviceKey) throw new Error(`${ref}: API keys not found`);
       return { anonKey, serviceKey };
     },
@@ -155,11 +173,7 @@ export function supabaseApi(token) {
     async ensureBucket(ref, serviceKey, bucket) {
       const response = await fetch(`https://${ref}.supabase.co/storage/v1/bucket`, {
         method: 'POST',
-        headers: {
-          Authorization: `Bearer ${serviceKey}`,
-          apikey: serviceKey,
-          'Content-Type': 'application/json'
-        },
+        headers: { ...keyHeaders(serviceKey), 'Content-Type': 'application/json' },
         body: JSON.stringify(bucket)
       });
       const text = await response.text();
