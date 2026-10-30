@@ -36,7 +36,7 @@ Attendance tracking app for martial arts clubs (formerly Administra: the reposit
 - `supabase/migrations/` - Versioned SQL migrations
 - `supabase/seed.sql` - Database seed data (local, CI, preview branches)
 - `supabase/demo/seed.sql` - The made-up demo club for demo.adsumus.ch, all dates relative to the reset day; checked by `supabase/checks/demo_seed.sql`
-- `marketing/` - The marketing site adsumus.ch (static HTML/CSS) (alleda.ch redirects there)
+- `marketing/` - The marketing site adsumus.ch (static HTML/CSS; alleda.ch redirects there)
 - `static/brand/` - Brand guide extracted from the app (logo, `tokens.css`/`tokens.json`, style sheet at `/brand/`); not imported by the app, update it when the theme or `src/app.css` changes
 
 ## Conventions
