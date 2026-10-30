@@ -113,27 +113,33 @@
         onfocus={(e) => e.currentTarget.select()}
       />
       <div class="flex flex-wrap gap-2">
-        <button type="button" class="btn btn-sm preset-tonal-surface" onclick={() => copy(url)}>
+        <button
+          type="button"
+          class="btn btn-sm preset-tonal-surface flex-1"
+          onclick={() => copy(url)}
+        >
           <Fa icon={faCopy} size="xs" />
-          <span>{$_('page.trainingPlan.calendar.copy')}</span>
+          <span>{$_('page.trainingPlan.calendar.copy')}</span><span class="sr-only">: {title}</span>
         </button>
         <a
-          class="btn btn-sm preset-tonal-surface"
+          class="btn btn-sm preset-tonal-surface flex-1"
           href={webcalUrl(url)}
           title={$_('page.trainingPlan.calendar.appHint')}
         >
           <Fa icon={faCalendarPlus} size="xs" />
-          <span>{$_('page.trainingPlan.calendar.app')}</span>
+          <span>{$_('page.trainingPlan.calendar.app')}</span><span class="sr-only">: {title}</span>
         </a>
         <a
-          class="btn btn-sm preset-tonal-surface"
+          class="btn btn-sm preset-tonal-surface flex-1"
           href={googleCalendarUrl(url)}
           target="_blank"
           rel="noopener noreferrer"
           title={$_('page.trainingPlan.calendar.googleHint')}
         >
           <Fa icon={faArrowUpRightFromSquare} size="xs" />
-          <span>{$_('page.trainingPlan.calendar.google')}</span>
+          <span>{$_('page.trainingPlan.calendar.google')}</span><span class="sr-only"
+            >: {title}</span
+          >
         </a>
       </div>
     {/if}

@@ -190,7 +190,13 @@ function eventLines(row: PlanRow, ctx: EventContext): string[] {
   const title = oneLine(training.title ?? '');
   const topic = row.session?.topic?.trim() ?? '';
   const notes = row.session?.notes?.trim() ?? '';
-  const trainer = row.trainerId == null ? t.openTrainer : (ctx.trainers.get(row.trainerId) ?? '');
+  // A dropped date needs nobody to lead it
+  const trainer =
+    row.trainerId == null
+      ? row.cancelled
+        ? ''
+        : t.openTrainer
+      : (ctx.trainers.get(row.trainerId) ?? '');
   const link = `${ctx.origin}/dashboard/trainings/${training.id}/${row.date}`;
 
   let summary: string;
@@ -223,10 +229,9 @@ function eventLines(row: PlanRow, ctx: EventContext): string[] {
     `UID:${kind}-${training.id}-${dateValue(row.date)}@${ctx.host}`,
     `DTSTAMP:${ctx.stamp}`
   ];
-  const modified = row.session ? new Date(row.session.updated_at) : null;
-  if (modified && !Number.isNaN(modified.getTime())) {
-    lines.push(`LAST-MODIFIED:${utcDateTime(modified)}`);
-  }
+  // No LAST-MODIFIED: an event also changes with breaks, the training and
+  // names, which have no timestamp, and clients that trust it (ICSx5) would
+  // keep a date as held after the dojo closes
   const start = parseTime(training.dateFrom);
   if (start == null) {
     // No start time: all day

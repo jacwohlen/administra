@@ -58,12 +58,14 @@ describe('CalendarFeedDialog', () => {
     expect(rpc).toHaveBeenCalledWith('calendar_feed_token');
     expect(rpc).toHaveBeenCalledWith('my_member_ids');
 
-    const apps = screen.getAllByRole('link', { name: 'Kalender-App' });
+    const apps = screen.getAllByRole('link', { name: /^Kalender-App/ });
     expect(apps.map((a) => a.getAttribute('href'))).toEqual([
       webcal(feedUrl(TOKEN, 'meine')),
       webcal(feedUrl(TOKEN, 'alle'))
     ]);
-    const google = screen.getAllByRole('link', { name: 'Google Kalender' });
+    // Each control says its feed to screen readers
+    expect(apps[1]).toHaveAccessibleName('Kalender-App: Alle Trainings');
+    const google = screen.getAllByRole('link', { name: /^Google Kalender/ });
     expect(google.map((a) => a.getAttribute('href'))).toEqual([
       'https://calendar.google.com/calendar/render?cid=' +
         encodeURIComponent(webcal(feedUrl(TOKEN, 'meine'))),
@@ -83,7 +85,7 @@ describe('CalendarFeedDialog', () => {
     answer([12]);
     renderDialog();
     await screen.findByRole('textbox', { name: 'Link «Alle Trainings»' });
-    await fireEvent.click(screen.getAllByRole('button', { name: 'Kopieren' })[1]);
+    await fireEvent.click(screen.getByRole('button', { name: 'Kopieren: Alle Trainings' }));
     await waitFor(() => expect(toaster.success).toHaveBeenCalledWith({ title: 'Link kopiert' }));
     expect(writeText).toHaveBeenCalledWith(feedUrl(TOKEN, 'alle'));
   });
@@ -96,7 +98,7 @@ describe('CalendarFeedDialog', () => {
     expect(
       screen.queryByRole('textbox', { name: 'Link «Meine Trainings»' })
     ).not.toBeInTheDocument();
-    expect(screen.getAllByRole('link', { name: 'Kalender-App' })).toHaveLength(1);
+    expect(screen.getAllByRole('link', { name: /^Kalender-App/ })).toHaveLength(1);
   });
 
   it('renews the link only after confirming', async () => {

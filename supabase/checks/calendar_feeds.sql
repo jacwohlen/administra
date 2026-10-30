@@ -240,8 +240,10 @@ ROLLBACK TO SAVEPOINT s;
 -----------------
 
 SELECT pg_temp.ok('P1 the API roles have no privilege on calendar_feeds', NOT (
-     has_table_privilege('anon', 'public.calendar_feeds', 'SELECT,INSERT,UPDATE,DELETE')
-  OR has_table_privilege('authenticated', 'public.calendar_feeds', 'SELECT,INSERT,UPDATE,DELETE')));
+     has_table_privilege('anon', 'public.calendar_feeds',
+                         'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,REFERENCES,TRIGGER')
+  OR has_table_privilege('authenticated', 'public.calendar_feeds',
+                         'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,REFERENCES,TRIGGER')));
 SELECT pg_temp.ok('P1 RLS on, no policies',
   (SELECT relrowsecurity FROM pg_class WHERE oid = 'public.calendar_feeds'::regclass)
   AND NOT EXISTS (SELECT 1 FROM pg_policies WHERE schemaname = 'public' AND tablename = 'calendar_feeds'));

@@ -239,6 +239,18 @@ describe('summaries', () => {
     );
   });
 
+  it('cancelled without a trainer: no open trainer in the description', () => {
+    // The kids' training has no main trainer, and nobody is planned for the date
+    const ics = feed(
+      {},
+      data({ sessions: [session({ training_id: kids.id, date: '2026-11-03', cancelled: true })] })
+    );
+    const e = event(ics, 'all-42-20261103');
+    expect(e.SUMMARY).toBe('Fällt aus: Judo Kinder');
+    expect(e.DESCRIPTION).not.toContain('Trainer offen');
+    expect(e.DESCRIPTION).not.toContain('Leitung');
+  });
+
   it('held despite a break closing the dojo', () => {
     const e = event(feed(), 'all-42-20261229');
     expect(e.SUMMARY).toBe('Judo Kinder: Weihnachtstraining – Anna Muster');
@@ -339,20 +351,11 @@ describe('event details', () => {
     }
   });
 
-  it('stamps the events with now and the session change in UTC', () => {
+  it('stamps the events with now and leaves LAST-MODIFIED out', () => {
+    // A break or the training can change an event without touching its session
     const ics = feed();
-    expect(event(ics, 'all-26-20261104')).toMatchObject({
-      DTSTAMP: '20261030T100000Z',
-      'LAST-MODIFIED': '20261028T081500Z'
-    });
-    expect(event(ics, 'all-26-20261209')).not.toHaveProperty('LAST-MODIFIED');
-    const micro = feed(
-      {},
-      data({ sessions: [session({ updated_at: '2026-10-28T09:15:00.123456+01:00' })] })
-    );
-    expect(event(micro, 'all-26-20261104')['LAST-MODIFIED']).toBe('20261028T081500Z');
-    const broken = feed({}, data({ sessions: [session({ updated_at: 'gestern' })] }));
-    expect(event(broken, 'all-26-20261104')).not.toHaveProperty('LAST-MODIFIED');
+    expect(event(ics, 'all-26-20261104')).toMatchObject({ DTSTAMP: '20261030T100000Z' });
+    expect(ics).not.toMatch(/^LAST-MODIFIED/m);
   });
 
   it('marks time as busy only for own trainings that are held', () => {
