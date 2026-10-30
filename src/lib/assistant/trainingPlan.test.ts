@@ -218,7 +218,7 @@ describe('the leaders', () => {
     expect(leaders.get('gast trainerin')).toMatchObject({ memberId: null, kind: 'none' });
   });
 
-  it('keeps a name without a member in the notes, like the sheet import', () => {
+  it('keeps a name without a member in the notes', () => {
     expect(withLeaderNote('', 'Gast Trainerin', true)).toBe('Gast Trainerin');
     expect(withLeaderNote('SMM Training 1', 'Gast Trainerin', true)).toBe(
       'Gast Trainerin, SMM Training 1'
@@ -322,7 +322,7 @@ describe('comparing with the plan', () => {
     expect(rows[9].existing?.id).toBe(103);
   });
 
-  it('writes new sessions with exactly the columns of the sheet import', () => {
+  it('writes new sessions with exactly the columns of training_plan_sessions', () => {
     const rows = review(confirmTraining(review(initial()), initial(), 3));
     expect(rows[0].write).toEqual({
       training_id: 27,
@@ -756,6 +756,37 @@ describe('holidays', () => {
     expect(rows[3].errors).toEqual([{ code: 'noTitle' }, { code: 'badDates' }]);
     inputs[3] = { ...inputs[3], use: false };
     expect(reviewHolidays(HOLIDAYS, inputs, BREAKS)[3].blocking).toBe(false);
+  });
+
+  it('never adds a holiday Webling maintains, but a closure within it', () => {
+    const recorded: PlannedBreak[] = [
+      {
+        title: 'Herbstferien',
+        date_from: '2026-10-03',
+        date_to: '2026-10-18',
+        cancels_training: false,
+        connection: 'webling'
+      }
+    ];
+    const proposed: HolidayEntry[] = [
+      // Same dates, another title
+      { title: 'Herbstferien Schule', dateFrom: '2026-10-03', dateTo: '2026-10-18', closed: false },
+      // Same title, dates read a bit off
+      { title: 'herbstferien', dateFrom: '2026-10-05', dateTo: '2026-10-16', closed: false },
+      // The dojo closed for a weekend within them: the TK's own
+      { title: 'Dojo zu', dateFrom: '2026-10-10', dateTo: '2026-10-11', closed: true }
+    ];
+    const ticked = initialHolidayInputs(proposed, recorded).map((i) => ({ ...i, use: true }));
+    const rows = reviewHolidays(proposed, ticked, recorded);
+    expect(rows.map((r) => r.status)).toEqual(['provider', 'provider', 'new']);
+    expect(rows[0]).toMatchObject({ provider: recorded[0], overlaps: [], write: null });
+    expect(rows[1].blocking).toBe(false);
+    expect(rows[2]).toMatchObject({ overlaps: recorded, closesOpen: recorded });
+    expect(buildBreakWrites(rows).map((w) => w.title)).toEqual(['Dojo zu']);
+    // The TK's own holiday with the same title and dates is simply recorded
+    const own = [{ ...recorded[0], connection: null }];
+    expect(reviewHolidays(proposed, ticked, own)[0].status).toBe('new');
+    expect(reviewHolidays(proposed.slice(1), ticked.slice(1), own)[0].status).toBe('new');
   });
 
   it('leaves out incomplete periods at once, keeping the others', () => {

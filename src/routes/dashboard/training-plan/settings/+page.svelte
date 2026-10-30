@@ -19,8 +19,8 @@
   import { invalidate } from '$app/navigation';
   import { supabaseClient } from '$lib/supabase';
   import { toaster } from '$lib/toast';
+  import { providerName } from '$lib/memberStatus';
   import type { TrainingPlanBreak } from '$lib/models';
-  import ImportSheet from './ImportSheet.svelte';
   import type { PageData } from './$types';
 
   let { data }: { data: PageData } = $props();
@@ -29,6 +29,9 @@
   let confirmRemove = $state<TrainingPlanBreak | null>(null);
   let form = $state({ title: '', date_from: '', date_to: '', cancels_training: false });
   let showAssistant = $state(false);
+  // The plan is imported only by the Daten-Assistent: no section without its key
+  let assistantConfigured = $state(false);
+  loadAssistantStatus().then((s) => (assistantConfigured = s.configured));
   /** The holidays as the assistant read them again after a partial save, while it is open */
   let assistantBreaks = $state.raw<TrainingPlanBreak[] | null>(null);
   /** The assistant saved something (or tried: a failed write may still commit): reload on close */
@@ -221,6 +224,13 @@
           <div class="list-item-content">
             <div class="font-semibold truncate">{b.title}</div>
             <div class="text-sm text-surface-600-400 tabular-nums">{range(b)}</div>
+            {#if b.connection}
+              <div class="text-xs text-surface-600-400">
+                {$_('page.trainingPlan.settings.fromProvider', {
+                  values: { provider: providerName(b.connection) }
+                })}
+              </div>
+            {/if}
           </div>
           <label class="flex items-center gap-1.5 min-h-11 text-sm flex-none cursor-pointer">
             <input
@@ -232,39 +242,40 @@
             />
             <span>{$_('page.trainingPlan.settings.closedShort')}</span>
           </label>
-          <button
-            class="btn-icon size-11 p-0 flex-none text-error-600-400 hover:preset-tonal-error"
-            onclick={() => (confirmRemove = b)}
-            disabled={busy}
-            title={$_('button.delete')}
-            aria-label="{$_('button.delete')}: {b.title}"
-          >
-            <Fa icon={faTrash} />
-          </button>
+          {#if b.connection}
+            <!-- Maintained in the provider: it goes when the provider drops it -->
+            <span class="size-11 flex-none"></span>
+          {:else}
+            <button
+              class="btn-icon size-11 p-0 flex-none text-error-600-400 hover:preset-tonal-error"
+              onclick={() => (confirmRemove = b)}
+              disabled={busy}
+              title={$_('button.delete')}
+              aria-label="{$_('button.delete')}: {b.title}"
+            >
+              <Fa icon={faTrash} />
+            </button>
+          {/if}
         </li>
       {/each}
     </ul>
   {/if}
 </section>
 
-<section class="mt-8">
-  <div class="flex flex-wrap items-center justify-between gap-2">
+{#if assistantConfigured && data.canPlanTrainings}
+  <section class="mt-8 space-y-3">
     <h3>{$_('page.trainingPlan.import.title')}</h3>
-    {#if data.canPlanTrainings && data.plannedTrainings.length > 0}
+    {#if data.plannedTrainings.length === 0}
+      <div class="empty-state"><p>{$_('page.trainingPlan.import.noTrainings')}</p></div>
+    {:else}
+      <p class="text-sm text-surface-600-400">{$_('page.trainingPlan.import.hint')}</p>
       <AssistantButton
-        iconOnly
         label={$_('assistant.kinds.training_plan.title')}
         onclick={() => (showAssistant = true)}
       />
     {/if}
-  </div>
-  <ImportSheet
-    trainings={data.plannedTrainings}
-    members={data.members}
-    breaks={data.breaks}
-    onimported={refresh}
-  />
-</section>
+  </section>
+{/if}
 
 {#if showAssistant && data.canPlanTrainings}
   <AssistantDialog kind="training_plan" onclose={closeAssistant}>

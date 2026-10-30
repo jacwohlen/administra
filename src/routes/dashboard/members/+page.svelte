@@ -2,7 +2,7 @@
   import { modalDialog } from '$lib/modalDialog';
   import type { PageData } from './$types';
   import Fa from 'svelte-fa';
-  import { faChevronRight, faPlus } from '@fortawesome/free-solid-svg-icons';
+  import { faChevronRight, faCodeMerge, faPlus } from '@fortawesome/free-solid-svg-icons';
   import { _ } from 'svelte-i18n';
   import { supabaseClient } from '$lib/supabase';
   import { toaster } from '$lib/toast';
@@ -94,12 +94,20 @@
 
 <div class="page-header">
   <h1>{$_('page.members.title')}</h1>
-  {#if data.canWrite}
-    <button class="btn preset-filled-primary-500" onclick={showMemberForm}>
-      <Fa icon={faPlus} />
-      <span>{$_('page.members.addMember')}</span>
-    </button>
-  {/if}
+  <div class="flex gap-2">
+    {#if data.isAdmin}
+      <a href="/dashboard/members/duplicates" class="btn preset-tonal-surface">
+        <Fa icon={faCodeMerge} />
+        <span>{$_('page.members.duplicates.link')}</span>
+      </a>
+    {/if}
+    {#if data.canWrite}
+      <button class="btn preset-filled-primary-500" onclick={showMemberForm}>
+        <Fa icon={faPlus} />
+        <span>{$_('page.members.addMember')}</span>
+      </button>
+    {/if}
+  </div>
 </div>
 
 {#if showMemberFormDialog}

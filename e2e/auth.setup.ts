@@ -1,13 +1,12 @@
-import { test as setup, expect } from '@playwright/test';
+import { test as setup, expect, type BrowserContext } from '@playwright/test';
 import { createClient } from '@supabase/supabase-js';
 
 const STORAGE_STATE_PATH = 'e2e/.auth/user.json';
 
-setup('authenticate', async ({ page, context }) => {
+/** Sign in with a password and put the session where @supabase/ssr reads it */
+async function signIn(context: BrowserContext, email: string, password: string) {
   const supabaseUrl = process.env.PUBLIC_SUPABASE_DATABASE_URL!;
   const supabaseKey = process.env.PUBLIC_SUPABASE_ANON_KEY!;
-  const email = process.env.E2E_USER_EMAIL!;
-  const password = process.env.E2E_USER_PASSWORD!;
 
   if (!supabaseUrl || !supabaseKey || !email || !password) {
     throw new Error(
@@ -20,7 +19,7 @@ setup('authenticate', async ({ page, context }) => {
   const { data, error } = await supabase.auth.signInWithPassword({ email, password });
 
   if (error || !data.session) {
-    throw new Error(`E2E auth failed: ${error?.message ?? 'no session returned'}`);
+    throw new Error(`E2E auth failed for ${email}: ${error?.message ?? 'no session returned'}`);
   }
 
   const session = data.session;
@@ -86,6 +85,10 @@ setup('authenticate', async ({ page, context }) => {
       sameSite: 'Lax' as const
     }))
   );
+}
+
+setup('authenticate', async ({ page, context }) => {
+  await signIn(context, process.env.E2E_USER_EMAIL!, process.env.E2E_USER_PASSWORD!);
 
   // Navigate to dashboard
   await page.goto('/dashboard');
@@ -98,3 +101,17 @@ setup('authenticate', async ({ page, context }) => {
 
   await page.context().storageState({ path: STORAGE_STATE_PATH });
 });
+
+// The seeded member accounts (supabase/seed.sql, docs/MEMBER_SIGN_IN.md): a
+// parent of two active members, and a member who left (phase 1b: no access)
+for (const account of [
+  { email: 'member@example.com', path: 'e2e/.auth/member.json', home: '/club' },
+  { email: 'former@example.com', path: 'e2e/.auth/former.json', home: '/pending' }
+]) {
+  setup(`authenticate ${account.email}`, async ({ page, context }) => {
+    await signIn(context, account.email, 'testpass');
+    await page.goto('/');
+    await page.waitForURL(`**${account.home}`);
+    await context.storageState({ path: account.path });
+  });
+}

@@ -4,8 +4,7 @@
 target-version = "py312"
 
 [tool.ruff.lint]
-# Errors only (undefined names, unused imports, bare except, ...): the scripts
-# keep their own formatting
+# Errors only (undefined names, unused imports, bare except, ...)
 select = ["E4", "E7", "E9", "F"]
 
 [tool.pytest.ini_options]

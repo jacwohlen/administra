@@ -56,7 +56,7 @@ Create a `.env` file in the root directory:
 ```bash
 PUBLIC_SUPABASE_DATABASE_URL="your-supabase-project-url"
 PUBLIC_SUPABASE_ANON_KEY="your-supabase-anon-key"
-PUBLIC_MODE="DEV"  # Use "PROD" for production
+PUBLIC_MODE="DEV"  # Use "PROD" for production, "DEMO" only for the public demo
 ```
 
 These are required. Club-specific settings (name, website, logo, sections,
@@ -128,18 +128,19 @@ supabase start && supabase db reset
 E2E_USER_EMAIL=test@example.com E2E_USER_PASSWORD=testpass npm run test:e2e
 ```
 
-Authenticated tests cover dashboard navigation, members list/search/profile, trainings list/attendance, and stats page.
+Authenticated tests cover dashboard navigation, members list/search/profile, trainings list/attendance, and stats page; `memberAccess.spec` signs in as the seeded `member@example.com` and `former@example.com`.
 
 ### CI Pipeline
 
-GitHub Actions runs automatically on pushes to `main` and pull requests. The pipeline has 4 parallel jobs:
+GitHub Actions runs automatically on pushes to `main` and pull requests. The pipeline has these jobs:
 
-| Job                | What it runs                                               |
-| ------------------ | ---------------------------------------------------------- |
-| **lint-and-check** | Prettier, ESLint, svelte-check                             |
-| **unit-tests**     | All Vitest unit and component tests                        |
-| **e2e-tests**      | Playwright browser tests (uploads HTML report as artifact) |
-| **build**          | Production build (waits for lint + unit tests to pass)     |
+| Job                | What it runs                                                                                                          |
+| ------------------ | --------------------------------------------------------------------------------------------------------------------- |
+| **lint-and-check** | Prettier, ESLint, svelte-check                                                                                        |
+| **unit-tests**     | All Vitest unit and component tests                                                                                   |
+| **e2e-tests**      | Playwright browser tests (uploads HTML report as artifact)                                                            |
+| **db-validate**    | Migrations + seed on a fresh database, `supabase db lint`, member access checks (`supabase/checks/member_access.sql`) |
+| **build**          | Production build (waits for lint + unit tests to pass)                                                                |
 
 ### Project Structure
 
@@ -244,8 +245,8 @@ supabase db push
 
 - Views for statistics aggregation (`view_logs_summary`)
 - Functions for generating checklists and leaderboards
-- `user_profiles` with status (`pending` / `approved` / `disabled`) and role (`viewer` / `trainer` / `admin`); a trigger on `auth.users` creates and syncs the profile, admins approve new accounts under `/dashboard/users`
-- RLS helper functions `is_approved_user()`, `is_writer()`, `is_admin()` used by every table and storage policy
+- `user_profiles` with status (`pending` / `approved` / `disabled`) and role (`member` / `viewer` / `trainer` / `admin`); a trigger on `auth.users` creates and syncs the profile, admins approve new accounts under `/dashboard/users`; member accounts only get in while a member record is active or passive (`docs/MEMBER_SIGN_IN.md`)
+- RLS helper functions `is_approved_user()` (staff, or a member account whose membership counts), `my_member_ids()`, `is_writer()`, `is_admin()` used by every table and storage policy
 
 All SQL schemas, functions, and policies are version-controlled in the `supabase/migrations/` directory. The initial schema is in `20250814155759_remote_schema.sql`.
 
@@ -268,6 +269,9 @@ npm run build
      email/password test login, which works only where `seed.sql` created
      the test users (local and preview branches, see
      [docs/SUPABASE_BRANCHING.md](docs/SUPABASE_BRANCHING.md#seed-data-and-test-logins)).
+     `DEMO` is only for the public demo at demo.adsumus.ch, a made-up club
+     on its own Supabase project with one-click role logins and a demo banner
+     (see [docs/DEMO.md](docs/DEMO.md)).
 
    Optionally, to override a club setting for a specific deploy context
    (production vs. deploy previews), add any of the `PUBLIC_CLUB_*` /
@@ -300,13 +304,13 @@ promoting `main` into `prod` deploys them to production
 
 ### Webling Sync
 
-The `webling-sync/` directory contains a Python script for synchronizing member data from the Webling API.
+The `webling-sync/` directory contains the Webling sync: it reads members and events (with participant registrations) from the Webling API and writes them through the database's integration layer (`docs/INTEGRATIONS.md`). GitHub Actions runs it daily against prod (`.github/workflows/webling-sync.yml`).
 
-**Setup:**
+**Local runs:**
 
 1. Create a virtual environment and install dependencies
-2. Configure Webling API credentials in environment variables
-3. Run `python webling.py` to sync member data
+2. Configure the Webling and Supabase credentials in environment variables (and `ANONYMIZE` for members)
+3. From `webling-sync/`, run `python src/sync.py members` or `python src/sync.py events` (`--dry-run` changes no members or events; it still logs its run, see `webling-sync/README.md`), or `python src/sync.py list` for the calendar ids
 
 See `webling-sync/README.md` for detailed instructions.
 

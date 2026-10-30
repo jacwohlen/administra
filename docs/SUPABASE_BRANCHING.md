@@ -86,6 +86,10 @@ in `src/routes/+page.server.ts`) only exist in builds with
 the action with 404. Supabase itself still accepts password logins for any
 account that has a password, so the real protection is that no persistent
 environment has an account with a known password.
+The public demo (`PUBLIC_MODE=DEMO`, demo.adsumus.ch) is the one deliberate
+exception: its accounts have a published password, which is why it runs on
+its own Supabase project, never the club's Dev or Prod (see
+[DEMO.md](DEMO.md)).
 
 ## Current state (verified via the Management API, 2026-09-05)
 

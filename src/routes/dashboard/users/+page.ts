@@ -17,10 +17,10 @@ export const load: PageLoad = async ({ parent }) => {
       .order('created_at', { ascending: false }),
     supabaseClient
       .from('members')
-      .select('id, firstname, lastname')
+      .select('id, firstname, lastname, membership_status')
       .is('archivedAt', null)
       .order('lastname'),
-    // Member accounts that lose access once sign-in requires an active or passive membership
+    // Member accounts none of whose member records counts (no access, or none once approved)
     supabaseClient.rpc('member_access_report')
   ]);
 
@@ -36,7 +36,10 @@ export const load: PageLoad = async ({ parent }) => {
 
   return {
     profiles: (profilesRes.data ?? []) as UserProfile[],
-    members: (membersRes.data ?? []) as Pick<Member, 'id' | 'firstname' | 'lastname'>[],
+    members: (membersRes.data ?? []) as Pick<
+      Member,
+      'id' | 'firstname' | 'lastname' | 'membership_status'
+    >[],
     accessReport: (reportRes.data ?? []) as MemberAccessReportRow[]
   };
 };

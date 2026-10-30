@@ -4,12 +4,20 @@
   import { supabaseClient } from '$lib/supabase';
   import { _ } from 'svelte-i18n';
   import Fa from 'svelte-fa';
-  import { faArrowLeft, faEnvelope, faSpinner } from '@fortawesome/free-solid-svg-icons';
+  import {
+    faArrowLeft,
+    faChalkboardUser,
+    faChevronRight,
+    faChildren,
+    faEnvelope,
+    faSpinner,
+    faUserTie
+  } from '@fortawesome/free-solid-svg-icons';
   import { AuthApiError, type SignInWithOAuthCredentials } from '@supabase/supabase-js';
   import { page } from '$app/state';
   import { PUBLIC_MODE } from '$env/static/public';
   import { onDestroy, tick } from 'svelte';
-  import type { PageData } from './$types';
+  import type { ActionData, PageData } from './$types';
 
   async function login() {
     const config: SignInWithOAuthCredentials = {
@@ -26,7 +34,11 @@
   // parameters. We surface it here and sign the user out so they can start
   // over with a different Google account. Access itself is governed by the
   // admin approval flow (see user_profiles), not by the login step.
-  let { data, error = null }: { data: PageData; error: string | null } = $props();
+  let {
+    data,
+    form = null,
+    error = null
+  }: { data: PageData; form?: ActionData; error: string | null } = $props();
   let signInError = page.url.searchParams.get('error');
   if (signInError) {
     error = page.url.searchParams.get('error_description') ?? signInError;
@@ -129,6 +141,20 @@
   let devPassword = $state('');
   let devLoginError = $state('');
 
+  // Public demo (PUBLIC_MODE=DEMO): one button per role posts natively to
+  // the `demo` action, which signs in with that role's account on the server
+  // (src/lib/server/demoAccounts.ts). No use:enhance: the full page load
+  // after the redirect lets the browser client pick up the new session.
+  const demoRoles = [
+    { role: 'admin', icon: faUserTie },
+    { role: 'trainer', icon: faChalkboardUser },
+    { role: 'member', icon: faChildren }
+  ] as const;
+  let demoErrorEl: HTMLElement | undefined = $state();
+  $effect(() => {
+    if (form?.demoError) demoErrorEl?.focus();
+  });
+
   async function devLogin(e: Event) {
     e.preventDefault();
     devLoginError = '';
@@ -144,174 +170,240 @@
   }
 </script>
 
-<div class="flex flex-col items-center gap-6 mt-10 px-4 pb-10">
-  <LogoImage />
-  <h1 class="my-2 text-center">{$_('page.routes.welcomeMessage')}</h1>
-  {#if data.session}
-    <p>
-      {$_('page.routes.hi')} <strong>{data.session.user.email}</strong>
-    </p>
-    <a class="btn preset-filled-primary-500 mt-2" href="/" color="primary"
-      >{$_('button.openDashboard')}</a
-    >
-  {:else}
-    {#if error}
-      <p class="text-sm text-error-600-400 max-w-sm text-center" role="alert">
-        {$_('page.login.errorOAuth', { values: { reason: error } })}
+<!--
+  The root layout clips its children in DEV and DEMO mode (h-dvh +
+  overflow-hidden under the environment banner), so this page scrolls itself.
+-->
+<div class="h-full overflow-y-auto">
+  <div class="flex flex-col items-center gap-6 mt-10 px-4 pb-10">
+    <LogoImage />
+    <h1 class="my-2 text-center">{$_('page.routes.welcomeMessage')}</h1>
+    {#if data.session}
+      <p>
+        {$_('page.routes.hi')} <strong>{data.session.user.email}</strong>
       </p>
-    {/if}
+      <a class="btn preset-filled-primary-500 mt-2" href="/" color="primary"
+        >{$_('button.openDashboard')}</a
+      >
+    {:else}
+      {#if error}
+        <p class="text-sm text-error-600-400 max-w-sm text-center" role="alert">
+          {$_('page.login.errorOAuth', { values: { reason: error } })}
+        </p>
+      {/if}
 
-    <div class="card w-full max-w-sm p-5 space-y-4 bg-surface-50-950 border border-surface-200-800">
-      {#if step === 'email'}
-        <form class="space-y-3" onsubmit={sendCode}>
+      {#if PUBLIC_MODE === 'DEMO'}
+        <section
+          class="card w-full max-w-md p-5 space-y-4 bg-surface-50-950 border border-surface-200-800"
+          aria-labelledby="demo-title"
+        >
           <div class="space-y-1">
-            <h2 class="font-semibold">{$_('page.login.title')}</h2>
-            <p class="text-sm text-surface-600-400">{$_('page.login.subtitle')}</p>
+            <h2 id="demo-title" class="font-semibold">{$_('page.login.demo.title')}</h2>
+            <p class="text-sm text-surface-600-400">{$_('page.login.demo.intro')}</p>
           </div>
-          <label class="block">
-            <span class="sr-only">{$_('page.routes.email')}</span>
+          {#if form?.demoError}
+            <!--
+              Above the buttons: the native POST reloads the page at the top,
+              and on phones anything below the three cards is off-screen. A
+              role="alert" in the server-rendered HTML is not announced, so it
+              also takes focus once the page has loaded.
+            -->
+            <p
+              bind:this={demoErrorEl}
+              tabindex="-1"
+              class="text-sm text-error-600-400 focus:outline-none"
+              role="alert"
+            >
+              {$_(
+                form.demoError === 'unknownRole'
+                  ? 'page.login.demo.errorUnknownRole'
+                  : form.demoError === 'tooManyAttempts'
+                    ? 'page.login.errorRateLimit'
+                    : 'page.login.demo.errorSignIn'
+              )}
+            </p>
+          {/if}
+          <form method="POST" action="?/demo" class="space-y-3">
+            {#each demoRoles as { role, icon } (role)}
+              <button
+                type="submit"
+                name="role"
+                value={role}
+                class="w-full min-h-14 flex items-center gap-3 sm:gap-4 rounded-container border border-surface-200-800 border-l-4 border-l-primary-500 p-3 sm:p-4 text-left preset-tonal-surface hover:bg-surface-100-900 hover:border-primary-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-500 transition-colors"
+              >
+                <span
+                  class="flex size-8 sm:size-10 shrink-0 items-center justify-center rounded-full preset-tonal-primary"
+                  aria-hidden="true"
+                >
+                  <Fa {icon} />
+                </span>
+                <span class="flex-1 min-w-0">
+                  <span class="block font-semibold">{$_(`page.login.demo.${role}.title`)}</span>
+                  <span class="block text-sm text-surface-700-300">
+                    {$_(`page.login.demo.${role}.description`)}
+                  </span>
+                </span>
+                <Fa icon={faChevronRight} class="hidden sm:block shrink-0 text-surface-600-400" />
+              </button>
+            {/each}
+          </form>
+        </section>
+      {:else}
+        <div
+          class="card w-full max-w-sm p-5 space-y-4 bg-surface-50-950 border border-surface-200-800"
+        >
+          {#if step === 'email'}
+            <form class="space-y-3" onsubmit={sendCode}>
+              <div class="space-y-1">
+                <h2 class="font-semibold">{$_('page.login.title')}</h2>
+                <p class="text-sm text-surface-600-400">{$_('page.login.subtitle')}</p>
+              </div>
+              <label class="block">
+                <span class="sr-only">{$_('page.routes.email')}</span>
+                <input
+                  class="input"
+                  type="email"
+                  name="email"
+                  autocomplete="email"
+                  inputmode="email"
+                  placeholder={$_('page.login.emailPlaceholder')}
+                  bind:value={email}
+                  required
+                />
+              </label>
+              <button class="btn preset-filled-primary-500 w-full" type="submit" disabled={busy}>
+                {#if busy}
+                  <Fa icon={faSpinner} spin />
+                {:else}
+                  <Fa icon={faEnvelope} />
+                {/if}
+                <span>{$_('page.login.sendCode')}</span>
+              </button>
+            </form>
+
+            <div class="flex items-center gap-3 text-xs text-surface-600-400">
+              <span class="h-px flex-1 bg-surface-300-700"></span>
+              <span>{$_('page.login.or')}</span>
+              <span class="h-px flex-1 bg-surface-300-700"></span>
+            </div>
+
+            <button class="btn preset-tonal-surface w-full" type="button" onclick={login}>
+              <svg class="size-4" viewBox="0 0 24 24" aria-hidden="true">
+                <path
+                  fill="#4285F4"
+                  d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.76h3.56c2.08-1.92 3.28-4.74 3.28-8.09Z"
+                />
+                <path
+                  fill="#34A853"
+                  d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.56-2.76c-.98.66-2.24 1.06-3.72 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84A11 11 0 0 0 12 23Z"
+                />
+                <path
+                  fill="#FBBC05"
+                  d="M5.84 14.11A6.6 6.6 0 0 1 5.5 12c0-.73.13-1.44.34-2.11V7.05H2.18A11 11 0 0 0 1 12c0 1.78.43 3.46 1.18 4.95l3.66-2.84Z"
+                />
+                <path
+                  fill="#EA4335"
+                  d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15A10.96 10.96 0 0 0 12 1 11 11 0 0 0 2.18 7.05l3.66 2.84C6.71 7.3 9.14 5.38 12 5.38Z"
+                />
+              </svg>
+              <span>{$_('page.login.google')}</span>
+            </button>
+          {:else}
+            <form class="space-y-3" onsubmit={verifyCode}>
+              <button
+                type="button"
+                class="btn btn-sm preset-tonal-surface -ml-1"
+                onclick={changeEmail}
+                disabled={busy}
+              >
+                <Fa icon={faArrowLeft} />
+                <span>{$_('page.login.changeEmail')}</span>
+              </button>
+              <div class="space-y-1">
+                <h2 class="font-semibold">{$_('page.login.checkInbox')}</h2>
+                <p class="text-sm text-surface-600-400">
+                  {$_('page.login.codeSent', { values: { length: OTP_LENGTH } })}
+                  <strong class="break-all">{email}</strong>
+                </p>
+              </div>
+              <label class="block">
+                <span class="sr-only">{$_('page.login.codeLabel')}</span>
+                <input
+                  bind:this={codeInput}
+                  class="input text-center text-2xl font-mono tracking-[0.5em] py-3"
+                  type="text"
+                  name="code"
+                  autocomplete="one-time-code"
+                  inputmode="numeric"
+                  pattern="[0-9]*"
+                  maxlength={OTP_LENGTH}
+                  placeholder={'•'.repeat(OTP_LENGTH)}
+                  aria-label={$_('page.login.codeLabel')}
+                  bind:value={code}
+                  oninput={onCodeInput}
+                  disabled={busy}
+                  required
+                />
+              </label>
+              <button
+                class="btn preset-filled-primary-500 w-full"
+                type="submit"
+                disabled={busy || code.length !== OTP_LENGTH}
+              >
+                {#if busy}
+                  <Fa icon={faSpinner} spin />
+                {/if}
+                <span>{$_('page.login.verify')}</span>
+              </button>
+              <div class="flex flex-col items-center gap-1 text-sm text-surface-600-400">
+                <span>{$_('page.login.noEmail')}</span>
+                <button
+                  type="button"
+                  class="anchor disabled:opacity-50 disabled:no-underline"
+                  onclick={() => sendCode()}
+                  disabled={busy || resendIn > 0}
+                >
+                  {resendIn > 0
+                    ? $_('page.login.resendIn', { values: { seconds: resendIn } })
+                    : $_('page.login.resend')}
+                </button>
+              </div>
+            </form>
+          {/if}
+
+          {#if otpError}
+            <p class="text-sm text-error-600-400 text-center" role="alert">{otpError}</p>
+          {/if}
+        </div>
+
+        {#if PUBLIC_MODE === 'DEV'}
+          <form class="card p-4 w-72 space-y-3" onsubmit={devLogin}>
+            <p class="text-sm text-center">{$_('page.routes.devLoginTitle')}</p>
             <input
               class="input"
               type="email"
-              name="email"
-              autocomplete="email"
-              inputmode="email"
-              placeholder={$_('page.login.emailPlaceholder')}
-              bind:value={email}
+              autocomplete="username"
+              placeholder={$_('page.routes.email')}
+              bind:value={devEmail}
               required
             />
-          </label>
-          <button class="btn preset-filled-primary-500 w-full" type="submit" disabled={busy}>
-            {#if busy}
-              <Fa icon={faSpinner} spin />
-            {:else}
-              <Fa icon={faEnvelope} />
-            {/if}
-            <span>{$_('page.login.sendCode')}</span>
-          </button>
-        </form>
-
-        <div class="flex items-center gap-3 text-xs text-surface-600-400">
-          <span class="h-px flex-1 bg-surface-300-700"></span>
-          <span>{$_('page.login.or')}</span>
-          <span class="h-px flex-1 bg-surface-300-700"></span>
-        </div>
-
-        <button class="btn preset-tonal-surface w-full" type="button" onclick={login}>
-          <svg class="size-4" viewBox="0 0 24 24" aria-hidden="true">
-            <path
-              fill="#4285F4"
-              d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.76h3.56c2.08-1.92 3.28-4.74 3.28-8.09Z"
-            />
-            <path
-              fill="#34A853"
-              d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.56-2.76c-.98.66-2.24 1.06-3.72 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84A11 11 0 0 0 12 23Z"
-            />
-            <path
-              fill="#FBBC05"
-              d="M5.84 14.11A6.6 6.6 0 0 1 5.5 12c0-.73.13-1.44.34-2.11V7.05H2.18A11 11 0 0 0 1 12c0 1.78.43 3.46 1.18 4.95l3.66-2.84Z"
-            />
-            <path
-              fill="#EA4335"
-              d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15A10.96 10.96 0 0 0 12 1 11 11 0 0 0 2.18 7.05l3.66 2.84C6.71 7.3 9.14 5.38 12 5.38Z"
-            />
-          </svg>
-          <span>{$_('page.login.google')}</span>
-        </button>
-      {:else}
-        <form class="space-y-3" onsubmit={verifyCode}>
-          <button
-            type="button"
-            class="btn btn-sm preset-tonal-surface -ml-1"
-            onclick={changeEmail}
-            disabled={busy}
-          >
-            <Fa icon={faArrowLeft} />
-            <span>{$_('page.login.changeEmail')}</span>
-          </button>
-          <div class="space-y-1">
-            <h2 class="font-semibold">{$_('page.login.checkInbox')}</h2>
-            <p class="text-sm text-surface-600-400">
-              {$_('page.login.codeSent', { values: { length: OTP_LENGTH } })}
-              <strong class="break-all">{email}</strong>
-            </p>
-          </div>
-          <label class="block">
-            <span class="sr-only">{$_('page.login.codeLabel')}</span>
             <input
-              bind:this={codeInput}
-              class="input text-center text-2xl font-mono tracking-[0.5em] py-3"
-              type="text"
-              name="code"
-              autocomplete="one-time-code"
-              inputmode="numeric"
-              pattern="[0-9]*"
-              maxlength={OTP_LENGTH}
-              placeholder={'•'.repeat(OTP_LENGTH)}
-              aria-label={$_('page.login.codeLabel')}
-              bind:value={code}
-              oninput={onCodeInput}
-              disabled={busy}
+              class="input"
+              type="password"
+              autocomplete="current-password"
+              placeholder={$_('page.routes.password')}
+              bind:value={devPassword}
               required
             />
-          </label>
-          <button
-            class="btn preset-filled-primary-500 w-full"
-            type="submit"
-            disabled={busy || code.length !== OTP_LENGTH}
-          >
-            {#if busy}
-              <Fa icon={faSpinner} spin />
+            {#if devLoginError}
+              <p class="text-sm text-error-500">{devLoginError}</p>
             {/if}
-            <span>{$_('page.login.verify')}</span>
-          </button>
-          <div class="flex flex-col items-center gap-1 text-sm text-surface-600-400">
-            <span>{$_('page.login.noEmail')}</span>
-            <button
-              type="button"
-              class="anchor disabled:opacity-50 disabled:no-underline"
-              onclick={() => sendCode()}
-              disabled={busy || resendIn > 0}
-            >
-              {resendIn > 0
-                ? $_('page.login.resendIn', { values: { seconds: resendIn } })
-                : $_('page.login.resend')}
+            <button class="btn preset-tonal-surface w-full" type="submit">
+              {$_('page.routes.devLoginButton')}
             </button>
-          </div>
-        </form>
-      {/if}
-
-      {#if otpError}
-        <p class="text-sm text-error-600-400 text-center" role="alert">{otpError}</p>
-      {/if}
-    </div>
-
-    {#if PUBLIC_MODE === 'DEV'}
-      <form class="card p-4 w-72 space-y-3" onsubmit={devLogin}>
-        <p class="text-sm text-center">{$_('page.routes.devLoginTitle')}</p>
-        <input
-          class="input"
-          type="email"
-          autocomplete="username"
-          placeholder={$_('page.routes.email')}
-          bind:value={devEmail}
-          required
-        />
-        <input
-          class="input"
-          type="password"
-          autocomplete="current-password"
-          placeholder={$_('page.routes.password')}
-          bind:value={devPassword}
-          required
-        />
-        {#if devLoginError}
-          <p class="text-sm text-error-500">{devLoginError}</p>
+          </form>
         {/if}
-        <button class="btn preset-tonal-surface w-full" type="submit">
-          {$_('page.routes.devLoginButton')}
-        </button>
-      </form>
+      {/if}
     {/if}
-  {/if}
+  </div>
 </div>

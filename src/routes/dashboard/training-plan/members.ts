@@ -1,7 +1,8 @@
 import { supabaseClient } from '$lib/supabase';
 import dayjs from 'dayjs';
 import type { PlanTraining } from '$lib/trainingPlanUtils';
-import { canBeTrainer } from '$lib/memberStatus';
+import { canBeTrainer, hasTrainerLabel } from '$lib/memberStatus';
+import { loadIntegrationConfig } from '$lib/integrationConfigLoad';
 import type { MembershipStatus } from '$lib/models';
 
 export interface PlanMember {
@@ -9,8 +10,9 @@ export interface PlanMember {
   firstname: string;
   lastname: string;
   /**
-   * Adult trainer in Webling, led one of the planned trainings in the last
-   * year, or is planned to: offered first
+   * In a trainer group (role 'trainer' in the integration catalog, Webling's
+   * Erwachsenentrainer), led one of the planned trainings in the last year,
+   * or is planned to: offered first
    */
   trainer: boolean;
 }
@@ -50,7 +52,10 @@ export async function loadPlanMembers(
           .eq('trainerRole', 'main_trainer')
           .gte('date', dayjs().subtract(1, 'year').format('YYYY-MM-DD'))
           .returns<{ memberId: number | null }[]>()
-      : Promise.resolve({ data: [], error: null })
+      : Promise.resolve({ data: [], error: null }),
+    // The trainer groups: this load does not wait for the dashboard layout,
+    // which loads them too (one request for both)
+    loadIntegrationConfig()
   ]);
   if (members.error) throw members.error;
   if (logs.error) throw logs.error;
@@ -58,11 +63,9 @@ export async function loadPlanMembers(
   const trainerIds = new Set<number>(plannedIds);
   for (const t of trainings) if (t.mainTrainerId) trainerIds.add(t.mainTrainerId);
   for (const l of logs.data ?? []) if (l.memberId) trainerIds.add(l.memberId);
-  // Webling labels the trainers too ("Erwachsenentrainer")
+  // The provider's trainer groups mark trainers too
   for (const m of members.data ?? []) {
-    if ((m.labels ?? []).some((l) => l.toLowerCase().includes('erwachsenentrainer'))) {
-      trainerIds.add(m.id);
-    }
+    if (hasTrainerLabel(m.labels)) trainerIds.add(m.id);
   }
 
   // Who is already planned or the default trainer stays selectable; everybody
