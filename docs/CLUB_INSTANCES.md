@@ -57,7 +57,7 @@ Club file fields:
 | ----------------------------- | -------- | ----------------------------------------------------------------------------- |
 | `slug`                        | yes      | Same as the file name; names the project and site (`administra-<slug>`)       |
 | `name`                        | yes      | Club name: public pages, mail sender                                          |
-| `domain`                      | yes      | Where the club reaches Administra, e.g. `judo-muster.administra.ch`           |
+| `domain`                      | yes      | Where the club reaches Administra, e.g. `judo-muster.example.ch`              |
 | `adminEmails`                 | yes      | Become admin on first confirmed sign-in                                       |
 | `sections`                    | yes      | `PUBLIC_CLUB_SECTIONS`                                                        |
 | `defaultLocale`               | no       | `de` (default) or `en`                                                        |
@@ -97,7 +97,7 @@ could sign in with an e-mail code.
 1. A Supabase organization for the club projects (Pro plan: projects on the
    free plan are paused after a week without traffic).
 2. A Netlify team, with the Netlify GitHub App installed on this repo.
-3. A domain, e.g. `administra.ch`, for the club subdomains.
+3. A domain of your own for the club subdomains (`<slug>.<domain>`).
 4. The Google OAuth client (Google Cloud Console). Each club adds one
    redirect URI (see below); the consent screen shows "Administra".
 5. A transactional mail account with a verified sender domain.

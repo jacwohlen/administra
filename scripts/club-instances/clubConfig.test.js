@@ -14,7 +14,7 @@ import {
 const validClub = {
   slug: 'judo-muster',
   name: 'Judo Club Muster',
-  domain: 'judo-muster.administra.ch',
+  domain: 'judo-muster.example.ch',
   adminEmails: ['Praesident@Example.ch'],
   sections: ['Judo', ' Ju-Jitsu ']
 };
@@ -31,7 +31,7 @@ const operatorEnv = {
   SMTP_PORT: '587',
   SMTP_USER: 'user',
   SMTP_PASSWORD: 'pw',
-  SMTP_SENDER_EMAIL: 'noreply@administra.ch'
+  SMTP_SENDER_EMAIL: 'noreply@example.ch'
 };
 
 describe('parseClubFile', () => {
@@ -82,8 +82,8 @@ describe('authConfig', () => {
       parseOperatorEnv(operatorEnv),
       '<p/>'
     );
-    expect(config.site_url).toBe('https://judo-muster.administra.ch');
-    expect(config.uri_allow_list).toBe('https://judo-muster.administra.ch');
+    expect(config.site_url).toBe('https://judo-muster.example.ch');
+    expect(config.uri_allow_list).toBe('https://judo-muster.example.ch');
     expect(config.mailer_templates_magic_link_content).toBe('<p/>');
     expect(config.smtp_sender_name).toBe('Judo Club Muster (Administra)');
   });
@@ -111,7 +111,7 @@ describe('siteEnv', () => {
 
   it('marks only the SMTP password as secret', () => {
     expect(env.filter((v) => v.secret).map((v) => v.key)).toEqual(['PRIVATE_SMTP_PASSWORD']);
-    expect(byKey.PRIVATE_SMTP_FROM.value).toBe('"Judo Club Muster" <noreply@administra.ch>');
+    expect(byKey.PRIVATE_SMTP_FROM.value).toBe('"Judo Club Muster" <noreply@example.ch>');
   });
 });
 

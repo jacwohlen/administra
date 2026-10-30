@@ -1,4 +1,4 @@
-# administra.ch — the marketing site (a separate Netlify site with base
+# administra.jacwohlen.ch — the marketing site (a separate Netlify site with base
 # directory "marketing"; the app has its own netlify.toml at the repo root).
 # Static files only: no framework, no JavaScript. See marketing/README.md.
 
@@ -10,12 +10,6 @@
 
 [build.environment]
   NODE_VERSION = "22"
-
-[[redirects]]
-  from = "https://www.administra.ch/*"
-  to = "https://administra.ch/:splat"
-  status = 301
-  force = true
 
 [[headers]]
   for = "/*"

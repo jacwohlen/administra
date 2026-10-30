@@ -1,15 +1,15 @@
-# Public demo (app.administra.ch)
+# Public demo (demo.administra.jacwohlen.ch)
 
 A public, always-current Administra for people considering it for their
 club: the made-up **Budo-Club Musterwil**, entered with one click as
 Vorstand, Trainer/in or Mitglied, and reset to the same fresh state every
 week. The marketing site ([`marketing/`](../marketing/README.md),
-administra.ch) links to it.
+administra.jacwohlen.ch) links to it.
 
 | Piece                                                                     | What                                                                                        |
 | ------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
 | Supabase project `administra-demo`                                        | Its own project — never a JAC Wohlen project, never a club instance                         |
-| Netlify site for `app.administra.ch`                                      | The normal app built from `prod` with `PUBLIC_MODE=DEMO`                                    |
+| Netlify site for `demo.administra.jacwohlen.ch`                           | The normal app built from `prod` with `PUBLIC_MODE=DEMO`                                    |
 | [`supabase/demo/seed.sql`](../supabase/demo/seed.sql)                     | The demo club: members, trainings, two seasons of attendance, exams, plan, trial candidates |
 | [`supabase/checks/demo_seed.sql`](../supabase/checks/demo_seed.sql)       | Assertions run after every reset and in CI                                                  |
 | [`.github/workflows/demo-reset.yml`](../.github/workflows/demo-reset.yml) | Weekly reset: wipe, migrate, seed, check, empty storage                                     |
@@ -24,7 +24,7 @@ administra.ch) links to it.
   The action accepts nothing but a known role, allows each client 10
   sign-ins per 5 minutes, and answers 404 in every other mode.
 - A strip on every page says that the data is made up and reset weekly,
-  with a link to administra.ch.
+  with a link to administra.jacwohlen.ch.
 
 Everything else is the production app. With `PUBLIC_MODE=PROD` or `DEV`
 none of this is reachable.
@@ -34,13 +34,13 @@ none of this is reachable.
 All with the password `administra-demo` — public on purpose, they exist
 only in the demo project.
 
-| Button                 | Account                       | Role                                                                  | Lands on     |
-| ---------------------- | ----------------------------- | --------------------------------------------------------------------- | ------------ |
-| Vorstand               | `vorstand@demo.administra.ch` | admin (Sandra Keller)                                                 | `/dashboard` |
-| Trainerin oder Trainer | `trainer@demo.administra.ch`  | trainer + examiner (Marco Rossi)                                      | `/dashboard` |
-| Mitglied oder Eltern   | `mitglied@demo.administra.ch` | member account of two children (Familie Brunner), approved via e-mail | `/club`      |
+| Button                 | Account                                 | Role                                                                  | Lands on     |
+| ---------------------- | --------------------------------------- | --------------------------------------------------------------------- | ------------ |
+| Vorstand               | `vorstand@demo.administra.jacwohlen.ch` | admin (Sandra Keller)                                                 | `/dashboard` |
+| Trainerin oder Trainer | `trainer@demo.administra.jacwohlen.ch`  | trainer + examiner (Marco Rossi)                                      | `/dashboard` |
+| Mitglied oder Eltern   | `mitglied@demo.administra.jacwohlen.ch` | member account of two children (Familie Brunner), approved via e-mail | `/club`      |
 
-The seed also adds one pending account (`neu@demo.administra.ch`, no known
+The seed also adds one pending account (`neu@demo.administra.jacwohlen.ch`, no known
 password), so the Vorstand sees an approval request under Benutzer.
 
 ## Keeping one visitor from breaking it for the next
@@ -125,8 +125,8 @@ has the schema of the code the demo site runs), and by hand.
 ## Setting it up (once)
 
 1. **Supabase**: create a project `administra-demo` in your organization
-   (Pro plan, so it is never paused; region e.g. Zürich `eu-central-2`).
-   Then in its dashboard:
+   (Pro plan, so it is never paused; region Zürich `eu-central-2`, as the
+   Datenschutzerklärung says). Then in its dashboard:
    - Authentication → Sign In / Providers: **disable "Allow new users to
      sign up"**; keep the Email provider enabled (password sign-in) with
      "Secure email change" on; leave Google and anonymous sign-ins off.
@@ -141,7 +141,7 @@ has the schema of the code the demo site runs), and by hand.
      ([`demoRateLimit.ts`](../src/lib/server/demoRateLimit.ts)), but only per
      warm function instance.
    - Authentication → URL Configuration: Site URL
-     `https://app.administra.ch`, no further redirect URLs needed.
+     `https://demo.administra.jacwohlen.ch`, no further redirect URLs needed.
    - Connect → **Session pooler** connection string (IPv4 — GitHub's
      runners have no IPv6), with the database password filled in.
    - Project Settings → API Keys: the publishable (anon) key for Netlify,
@@ -163,19 +163,19 @@ has the schema of the code the demo site runs), and by hand.
    production branch **`prod`**, deploy previews off. Environment
    variables:
 
-   | Variable                       | Value                                 |
-   | ------------------------------ | ------------------------------------- |
-   | `PUBLIC_MODE`                  | `DEMO`                                |
-   | `PUBLIC_SUPABASE_DATABASE_URL` | `https://<project-ref>.supabase.co`   |
-   | `PUBLIC_SUPABASE_ANON_KEY`     | the publishable (anon) key            |
-   | `PUBLIC_SUPABASE_SITE_URL`     | `https://app.administra.ch`           |
-   | `PUBLIC_SENTRY_DSN`            | optional, a Sentry project of its own |
+   | Variable                       | Value                                  |
+   | ------------------------------ | -------------------------------------- |
+   | `PUBLIC_MODE`                  | `DEMO`                                 |
+   | `PUBLIC_SUPABASE_DATABASE_URL` | `https://<project-ref>.supabase.co`    |
+   | `PUBLIC_SUPABASE_ANON_KEY`     | the publishable (anon) key             |
+   | `PUBLIC_SUPABASE_SITE_URL`     | `https://demo.administra.jacwohlen.ch` |
+   | `PUBLIC_SENTRY_DSN`            | optional, a Sentry project of its own  |
 
    Nothing else: no `PRIVATE_SMTP_*`, no `PRIVATE_ANTHROPIC_API_KEY`. Club
    name, logo and sections come from the seed's `app_settings`.
 
-5. **DNS**: `app.administra.ch` → CNAME to the Netlify site.
-6. **Mailbox**: the demo shows `demo@administra.ch` as the club's contact
+5. **DNS**: `demo.administra.jacwohlen.ch` → CNAME to the Netlify site.
+6. **Mailbox**: the demo shows `administra@jacwohlen.ch` as the club's contact
    (public Probetraining page, trial mails); make it an alias of your
    inbox, or change `club.contactEmail` in the seed.
 

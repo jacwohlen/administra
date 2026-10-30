@@ -269,7 +269,7 @@ npm run build
      email/password test login, which works only where `seed.sql` created
      the test users (local and preview branches, see
      [docs/SUPABASE_BRANCHING.md](docs/SUPABASE_BRANCHING.md#seed-data-and-test-logins)).
-     `DEMO` is only for the public demo at app.administra.ch, a made-up club
+     `DEMO` is only for the public demo at demo.administra.jacwohlen.ch, a made-up club
      on its own Supabase project with one-click role logins and a demo banner
      (see [docs/DEMO.md](docs/DEMO.md)).
 

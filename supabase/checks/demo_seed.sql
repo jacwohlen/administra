@@ -123,18 +123,19 @@ SELECT pg_temp.eq('default language', (SELECT value #>> '{}' FROM public.app_set
 -- ---------------------------------------------------------------------------
 
 SELECT pg_temp.eq('vorstand: approved admin, own member record',
-  pg_temp.profile('vorstand@demo.administra.ch'), 'approved/admin/-/101');
+  pg_temp.profile('vorstand@demo.administra.jacwohlen.ch'), 'approved/admin/-/101');
 SELECT pg_temp.eq('trainer: approved trainer and examiner, own member record',
-  pg_temp.profile('trainer@demo.administra.ch'), 'approved/trainer/examiner/102');
+  pg_temp.profile('trainer@demo.administra.jacwohlen.ch'), 'approved/trainer/examiner/102');
 SELECT pg_temp.eq('mitglied: approved member account (automatically)',
-  pg_temp.profile('mitglied@demo.administra.ch'), 'approved/member/-/-');
+  pg_temp.profile('mitglied@demo.administra.jacwohlen.ch'), 'approved/member/-/-');
 SELECT pg_temp.eq('neu: waiting for approval',
-  pg_temp.profile('neu@demo.administra.ch'), 'pending/member/-/-');
+  pg_temp.profile('neu@demo.administra.jacwohlen.ch'), 'pending/member/-/-');
 SELECT pg_temp.ok('demo logins can sign in with a password (confirmed, bcrypt)',
   (SELECT count(*) FROM auth.users u
    JOIN auth.identities i ON i.user_id = u.id AND i.provider = 'email'
-   WHERE u.email IN ('vorstand@demo.administra.ch', 'trainer@demo.administra.ch',
-                     'mitglied@demo.administra.ch')
+   WHERE u.email IN ('vorstand@demo.administra.jacwohlen.ch',
+                     'trainer@demo.administra.jacwohlen.ch',
+                     'mitglied@demo.administra.jacwohlen.ch')
      AND u.email_confirmed_at IS NOT NULL
      AND u.encrypted_password = extensions.crypt('administra-demo', u.encrypted_password)) = 3);
 
@@ -370,7 +371,7 @@ BEGIN
      WHERE id = 'd3e40000-0000-4000-8000-000000000001'), v_before);
   PERFORM pg_temp.eq('guard: demo admin keeps its e-mail',
     (SELECT email FROM auth.users WHERE id = 'd3e40000-0000-4000-8000-000000000001'),
-    'vorstand@demo.administra.ch');
+    'vorstand@demo.administra.jacwohlen.ch');
   PERFORM pg_temp.ok('guard: sign-in still updates last_sign_in_at',
     (SELECT last_sign_in_at FROM auth.users
      WHERE id = 'd3e40000-0000-4000-8000-000000000001')
@@ -426,9 +427,9 @@ SELECT pg_temp.raises('guard: deleting the pending example request',
     WHERE user_id = 'd3e40000-0000-4000-8000-000000000004'$$);
 SELECT pg_temp.raises('guard: adding a stranger to the Brunner family',
   $$INSERT INTO public.members (id, firstname, lastname, email)
-    VALUES (990, 'Fremd', 'Person', ' Mitglied@Demo.Administra.ch')$$);
+    VALUES (990, 'Fremd', 'Person', ' Mitglied@Demo.Administra.Jacwohlen.ch')$$);
 SELECT pg_temp.raises('guard: moving a demo login e-mail to another member',
-  $$UPDATE public.members SET email = 'trainer@demo.administra.ch' WHERE id = 201$$);
+  $$UPDATE public.members SET email = 'trainer@demo.administra.jacwohlen.ch' WHERE id = 201$$);
 SELECT pg_temp.raises('guard: starting the sheet of a Brunner child on the upcoming exam',
   $$UPDATE public.exam_candidates SET started_at = now()
     WHERE exam_id = 2 AND member_id = 150$$);
@@ -485,7 +486,7 @@ BEGIN
   PERFORM pg_temp.eq('guard: demo profile keeps name, e-mail and avatar',
     (SELECT full_name || ' ' || email || ' ' || coalesce(avatar_url, '-')
      FROM public.user_profiles WHERE user_id = 'd3e40000-0000-4000-8000-000000000001'),
-    'Sandra Keller vorstand@demo.administra.ch -');
+    'Sandra Keller vorstand@demo.administra.jacwohlen.ch -');
   PERFORM pg_temp.ok('guard: a demo profile update still goes through (updated_at)',
     (SELECT updated_at FROM public.user_profiles
      WHERE user_id = 'd3e40000-0000-4000-8000-000000000001') > now() - interval '2 minutes');

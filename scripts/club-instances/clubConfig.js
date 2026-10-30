@@ -30,7 +30,7 @@ export function parseClubFile(raw, fileSlug) {
 
   const domain = typeof club.domain === 'string' ? club.domain.trim().toLowerCase() : '';
   if (!/^[a-z0-9.-]+\.[a-z]{2,}$/.test(domain))
-    errors.push('domain: a host name like club.administra.ch');
+    errors.push('domain: a host name like club.example.ch');
 
   const admins = Array.isArray(club.adminEmails)
     ? club.adminEmails.map((e) => (typeof e === 'string' ? e.trim().toLowerCase() : ''))

@@ -1,5 +1,5 @@
 /**
- * Sign-in accounts of the public demo (PUBLIC_MODE=DEMO, app.administra.ch).
+ * Sign-in accounts of the public demo (PUBLIC_MODE=DEMO, demo.administra.jacwohlen.ch).
  *
  * These credentials are public by design: the demo login page offers one
  * button per role and the `demo` action of src/routes/+page.server.ts signs
@@ -25,11 +25,14 @@ const DEMO_PASSWORD = 'administra-demo';
 
 export const DEMO_ACCOUNTS: Readonly<Record<DemoRole, Readonly<DemoAccount>>> = Object.freeze({
   // Vorstand: approved admin
-  admin: Object.freeze({ email: 'vorstand@demo.administra.ch', password: DEMO_PASSWORD }),
+  admin: Object.freeze({ email: 'vorstand@demo.administra.jacwohlen.ch', password: DEMO_PASSWORD }),
   // Trainer/in: approved trainer, exam_role examiner
-  trainer: Object.freeze({ email: 'trainer@demo.administra.ch', password: DEMO_PASSWORD }),
+  trainer: Object.freeze({
+    email: 'trainer@demo.administra.jacwohlen.ch',
+    password: DEMO_PASSWORD
+  }),
   // Mitglied/Eltern: member account of two children
-  member: Object.freeze({ email: 'mitglied@demo.administra.ch', password: DEMO_PASSWORD })
+  member: Object.freeze({ email: 'mitglied@demo.administra.jacwohlen.ch', password: DEMO_PASSWORD })
 });
 
 /**

@@ -76,7 +76,9 @@ describe.each(pages)('$name', ({ html, doc }) => {
       }
       const file = targetFile(url);
       if (!file) {
-        expect(url, url).toMatch(/^https:\/\/(app\.)?administra\.ch(\/|$)/);
+        expect(url, url).toMatch(
+          /^(https:\/\/(demo\.)?administra\.jacwohlen\.ch(\/|$)|mailto:administra@jacwohlen\.ch$)/
+        );
         continue;
       }
       // Screenshots are generated separately (scripts/marketing-screenshots.mjs)

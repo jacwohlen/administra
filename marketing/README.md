@@ -1,4 +1,4 @@
-# administra.ch — marketing site
+# administra.jacwohlen.ch — marketing site
 
 The public website for Administra: what it does, the demo link, and a
 contact form for interested clubs. Plain static HTML and CSS in
@@ -13,18 +13,20 @@ no third-party fonts or scripts.
 | Datenschutzerklärung   | [`public/datenschutz/index.html`](public/datenschutz/index.html) |
 | Not found              | [`public/404.html`](public/404.html)                             |
 
-The demo it links to (app.administra.ch) is described in
+The demo it links to (demo.administra.jacwohlen.ch) is described in
 [`docs/DEMO.md`](../docs/DEMO.md).
 
 ## Before going live
 
-1. **Fill in the placeholders** `[[…]]` in the Impressum and the
-   Datenschutzerklärung (operator name and address, contact e-mail,
-   date, demo database region, legal basis for the transfer to the US).
-   `node marketing/check-placeholders.mjs` lists them. Production deploys
-   **fail** while any are left (the Netlify build command runs this check);
-   Deploy Previews only warn. Have the legal texts reviewed — they are a
-   sensible starting point, not legal advice.
+1. **Legal pages.** For now the site runs under the club's identity: JAC
+   Wohlen is the operator in the Impressum and the Datenschutzerklärung,
+   with the contact address `administra@jacwohlen.ch` (an alias in the
+   club's Google Workspace; it must exist before going live) and the demo
+   database in Zürich. A `[[…]]` placeholder added later fails production
+   deploys (the Netlify build command runs
+   `node marketing/check-placeholders.mjs`); Deploy Previews only warn.
+   Have the legal texts reviewed — they are a sensible starting point, not
+   legal advice.
 2. **Decide what the page promises.** Statements that are commitments, not
    just descriptions of the software, and need your OK:
    - _Preise_: "Pilotphase … Konditionen besprechen wir persönlich" (no
@@ -51,7 +53,7 @@ The app keeps its own release flow; the two are separate Netlify sites and
 never wait for each other. Every pull request gets a Deploy Preview of the
 site (placeholders allowed there).
 
-Keep in mind that the demo (app.administra.ch) builds `prod`: describe a
+Keep in mind that the demo (demo.administra.jacwohlen.ch) builds `prod`: describe a
 new app feature on the site only once it is promoted, or the screenshots
 and the demo disagree.
 
@@ -66,9 +68,10 @@ form detection on. What is left:
 2. **Base directory: `marketing`**. Build command and publish directory
    come from [`marketing/netlify.toml`](netlify.toml) (`node
 check-placeholders.mjs`, `public`). **Production branch: `main`**.
-3. Domains: `administra.ch` as primary domain, `www.administra.ch` as alias
-   (redirected to the apex by `netlify.toml`). Netlify issues the
-   certificates once DNS points at it.
+3. Domain: `administra.jacwohlen.ch` as primary domain. The zone
+   jacwohlen.ch is at Cloudflare: a CNAME `administra` →
+   `administra-marketing.netlify.app` with the proxy off ("DNS only"), so
+   Netlify can issue the certificate.
 4. **Forms**: add an e-mail notification for the form `kontakt` to your
    address (Forms → Notifications). Netlify detects the form at deploy time
    from `data-netlify="true"`; spam is filtered by the honeypot field
