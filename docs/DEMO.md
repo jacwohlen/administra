@@ -8,7 +8,7 @@ alleda.ch) links to it.
 | Piece                                                                     | What                                                                                        |
 | ------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
 | Supabase project `administra-demo`                                        | Its own project — never a JAC Wohlen project, never a club instance                         |
-| Netlify site `adsumus-demo` for `demo.alleda.ch`                          | The normal app built from `prod` with `PUBLIC_MODE=DEMO`                                    |
+| Netlify site `alleda-demo` for `demo.alleda.ch`                           | The normal app built from `prod` with `PUBLIC_MODE=DEMO`                                    |
 | [`supabase/demo/seed.sql`](../supabase/demo/seed.sql)                     | The demo club: members, trainings, two seasons of attendance, exams, plan, trial candidates |
 | [`supabase/checks/demo_seed.sql`](../supabase/checks/demo_seed.sql)       | Assertions run after every reset and in CI                                                  |
 | [`.github/workflows/demo-reset.yml`](../.github/workflows/demo-reset.yml) | Weekly reset: wipe, migrate, seed, check, empty storage                                     |
@@ -167,8 +167,7 @@ has the schema of the code the demo site runs), and by hand.
    only leaves a notice.
 4. **Netlify**: a new site from this repository, base directory empty,
    production branch **`prod`**, deploy previews off (the live one is
-   called `adsumus-demo`, a name from before Alleda that stays as an
-   identifier). Environment variables:
+   called `alleda-demo`). Environment variables:
 
    | Variable                       | Value                                 |
    | ------------------------------ | ------------------------------------- |
@@ -181,10 +180,11 @@ has the schema of the code the demo site runs), and by hand.
    Nothing else: no `PRIVATE_SMTP_*`, no `PRIVATE_ANTHROPIC_API_KEY`. Club
    name, logo and sections come from the seed's `app_settings`.
 
-5. **DNS**: `demo.alleda.ch` → CNAME to the Netlify site, as its primary
-   domain. `demo.adsumus.ch`, the former address, can stay as a domain
-   alias so old links keep working (Netlify serves the demo there too; it
-   does not redirect an alias to the primary domain).
+5. **DNS**: `demo.alleda.ch` → CNAME to `alleda-demo.netlify.app`, as the
+   site's primary domain. `demo.adsumus.ch`, the former address, can stay
+   as a domain alias so old links keep working (its CNAME to the same
+   target; Netlify serves the demo there too and does not redirect an
+   alias to the primary domain).
 6. **Mailbox**: the demo shows `demo@alleda.ch` as the club's contact
    (public Probetraining page, trial mails); make it an alias of your
    inbox, or change `club.contactEmail` in the seed.
