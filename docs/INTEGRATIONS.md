@@ -190,7 +190,10 @@ Known gaps:
 - A status group changed in Webling on purpose: a renamed group keeps its
   status (bound by id); a new group arrives without a status, so its
   members fall to `non_member` until it is mapped on the Integrations page
-  (`integration_set_mapping`), and `status_drop` refuses a large drop.
+  (`integration_set_mapping`), and `status_drop` refuses a large drop. A
+  smaller one goes through; the warning dot on the avatar stays until the
+  new group is reviewed (see "Integrations page"). Marking it reviewed
+  without a status clears the dot and leaves those members non-members.
 - Changes under the guard's limits go through (the run only logs their
   number), also a large change spread over several nights. Mass changes
   the other way (many members starting to count): `status_gain`.
@@ -672,10 +675,15 @@ Einstellungen; `src/routes/dashboard/integrations/`, helpers in
 - **What needs you**: the latest members or events run refused (with the
   guard's numbers and the exact override, e.g. "Actions → Webling Sync →
   Run workflow mit accept_gone = 60", computed from the run's `guard`) or
-  failed (its error code), no successful run for 36 hours, open errors.
-  The same conditions put a warning dot on the avatar and the menu entry
-  (`dashboard/+layout.ts`); a kind never run (a new connection, or one
-  without events) raises nothing.
+  failed (its error code), no successful run for 36 hours, open errors,
+  new groups or calendars not reviewed yet (a new group usually has no
+  status, only the first run's copies of a seeded group carry one, and
+  members in no other status group count as non-members until it gets
+  one; a new calendar's events are in a guessed section). The same
+  conditions put a warning dot on the avatar and the menu entry
+  (`dashboard/+layout.ts`) until the run is fixed, the errors are
+  dismissed or the new rows are marked reviewed; a kind never run (a new
+  connection, or one without events) raises nothing.
 - **Numbers**: members and events linked, members gone, holidays, open
   issues (errors and warnings), catalog rows to review; the latest run and
   success per kind with "vor …" and a stale chip.
@@ -726,3 +734,41 @@ are one prefix followed by their own id (Webling:
 `https://<club>.webling.ch/portal#/calendar/event/{id}`) and keeps one
 already set; a connection without such links gets none until one is set
 in SQL.
+
+## Modules on and off, the licence number
+
+`20261104120000_license_number_and_js_module.sql`.
+
+**On and off.** Every connection can be switched on and off by an admin on
+the Integrations page (`integration_set_enabled(connection, enabled)`;
+switching off asks first). Off, `integration_begin` answers
+`CONNECTION_DISABLED` (SQLSTATE `PT423`, no longer `UNKNOWN_CONNECTION`),
+and the sync ends with exit 0 and "switched off on the Integrations page"
+without opening a run, so a switched-off Webling neither syncs nor turns the
+workflow red. Links, runs, issues and data stay; members and events of a
+switched-off provider stay read-only while their links exist (the guards
+look at the link, not at the switch). The app reads `enabled` with the
+configuration (`integrationConfig.enabled`, `isModuleEnabled()`).
+
+**Modules without a sync.** The J+S export is the connection `js`
+(provider `js`, `runs_in = 'sync'`, so no admin can open a run for it, and
+no runner does), off after the migration. The Integrations page shows it
+as a switch with a description, not runs, issues or mapping (`hasSync()` in
+`src/lib/integrations.ts`); while on, the dashboard offers _J+S-Export_
+to trainers and admins (`data.jsEnabled`), see `docs/JS_EXPORT.md`.
+
+**Licence number.** `members.license_number` (Lizenznummer, the J+S person
+number) is a member field like the name: the layer takes `license_number`
+in member records (capabilities `member_keys`, trimmed, blank is none),
+`integration_field_policy_ok()` knows `member.license_number`, and Webling
+owns it (`field_policy`), so it is read-only in the app while a member is
+linked and cleared when Webling has none. The Webling adapter sends it only
+when its members have the property _Lizenznummer_ (a Webling without the
+field changes nothing); an older adapter or database leaves it out (keys
+filtered by the capabilities). Anonymized runs send none. Members from the
+app get it in the member form. Not yet in `merge_members()`: a merge keeps
+the kept row's number (the Webling row's, which Webling owns anyway).
+
+`supabase/checks/integration_layer.sql` (section L) checks the policy, the
+capabilities, writing, keeping and clearing the number, the guard for
+staff, who may switch, and `CONNECTION_DISABLED`.

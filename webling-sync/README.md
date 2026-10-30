@@ -25,6 +25,7 @@ Fetches all members from Webling and sends them to the layer.
 - Groups (as labels)
 - Cell Phone
 - E-Mail (only when Webling has one, so an address entered in the app is kept)
+- Lizenznummer (licence number, the J+S person number; only when the field exists in Webling, see `docs/JS_EXPORT.md`)
 
 A member that cannot be read (e.g. a Webling field was renamed, or one of
 its groups could not be read) is staged as problem `missing_field` or
@@ -290,11 +291,11 @@ Create a GitHub environment per target under **Settings → Environments**
 
 `SUPABASE_SERVICE_ROLE_KEY` takes a secret key (`sb_secret_...`): Supabase
 Dashboard → project → **Settings → API Keys** → _Publishable and secret API
-keys_ → **Add new secret key** (e.g. named `webling-sync`), then copy it once.
-Use one key per project and do not reuse the app's keys, so the sync key can be
-revoked on its own. The legacy JWT `service_role` key still works but Supabase
-retires it at the end of 2026. Anything with this key bypasses RLS, so keep it in
-the environment secret only.
+keys_ → **Add new secret key** (named `webling_sync`, as on Prod and Dev), then
+copy it. Use one key per project and do not reuse the app's keys, so the sync key
+can be revoked on its own. The legacy JWT `service_role` key stops working at the
+end of 2026, when Supabase retires the legacy keys. Anything with this key
+bypasses RLS, so keep it in the environment secret only.
 
 `HEALTHCHECK_URL` reports every run to healthchecks.io, which e-mails when a
 run fails or when no run arrives (e.g. GitHub disabled the schedule after 60
@@ -340,7 +341,7 @@ export WEBLING_DOMAIN=<your webling domain>  # e.g. jacwohlen
 
 # Supabase production configuration
 export SUPABASE_URL=<your production supabase url>
-export SUPABASE_SERVICE_ROLE_KEY=<your production supabase service_role key>
+export SUPABASE_SERVICE_ROLE_KEY=<the production project's secret key (sb_secret_...)>
 
 # Required for `sync.py events` (participants)
 export WEBLING_EMAIL=<your webling email>
@@ -355,7 +356,7 @@ export WEBLING_DOMAIN=<your webling domain>  # e.g. jacwohlen
 
 # Supabase staging configuration
 export SUPABASE_URL=<your staging supabase url>
-export SUPABASE_SERVICE_ROLE_KEY=<your staging supabase service_role key>
+export SUPABASE_SERVICE_ROLE_KEY=<the staging project's secret key (sb_secret_...)>
 
 # Required for `sync.py events` (participants)
 export WEBLING_EMAIL=<your webling email>

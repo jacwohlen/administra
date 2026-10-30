@@ -1,6 +1,7 @@
 export const ssr = false;
 import { redirect } from '@sveltejs/kit';
 import { supabaseClient } from '$lib/supabase';
+import { isModuleEnabled } from '$lib/integrationConfig';
 import { loadIntegrationConfig } from '$lib/integrationConfigLoad';
 import { needsAttention, parseConnectionStatuses } from '$lib/integrations';
 import {
@@ -49,7 +50,8 @@ export const load: LayoutLoad = async ({ parent, depends }) => {
     session,
     userProfile,
     pendingUsers,
-    // Admins: a sync run refused or failed, no success for 36 hours, or open errors
+    // Admins: a sync run refused or failed, no success for 36 hours, open errors,
+    // or new groups or calendars to review
     integrationAlert,
     // Viewers browse read-only; pages hide their add/edit/delete controls
     canWrite: isWriter(userProfile),
@@ -59,6 +61,9 @@ export const load: LayoutLoad = async ({ parent, depends }) => {
     canManageExams: canManageExams(userProfile),
     canGrade: canGrade(userProfile),
     // Trainingsplanung: the TK plans trainers and topics
-    canPlanTrainings: canPlanTrainings(userProfile)
+    canPlanTrainings: canPlanTrainings(userProfile),
+    // Optional modules, switched on the Integrations page; J+S is for
+    // trainers and admins only (RLS: is_writer())
+    jsEnabled: isWriter(userProfile) && isModuleEnabled('js')
   };
 };

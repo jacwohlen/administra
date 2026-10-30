@@ -36,7 +36,7 @@ that project once the cutover is verified.
      check.
    - **Netlify** builds a Deploy Preview. In the deploy-preview context,
      `scripts/netlify-preview-supabase-env.sh` resolves the PR's preview
-     branch via the Supabase CLI and exports its
+     branch via the Supabase CLI and exports its URL and publishable key as
      `PUBLIC_SUPABASE_DATABASE_URL` / `PUBLIC_SUPABASE_ANON_KEY`, so the
      Deploy Preview talks to the preview database. PRs without a preview
      branch fall back to the env vars configured in Netlify.
@@ -160,7 +160,8 @@ through a build wrapper (`[context.deploy-preview]` in `netlify.toml`):
 
 - `scripts/netlify-preview-supabase-env.sh` asks the Supabase CLI for the
   preview branch matching the PR's git branch (`$HEAD`), retrying while
-  the branch is still provisioning, and exports its URL and anon key as
+  the branch is still provisioning, and exports its URL and publishable
+  key (the legacy anon key only for a branch without one) as
   `PUBLIC_SUPABASE_DATABASE_URL` / `PUBLIC_SUPABASE_ANON_KEY` before
   `npm run build`.
 - If no branch exists (frontend-only PR, or missing credentials), the
@@ -186,9 +187,11 @@ One-time Netlify setup (Site configuration → Environment variables — done
 Branch deploys (`main` → main.admin.jacwohlen.ch) use the persistent
 `dev` branch: in the **branch-deploy** context set
 `PUBLIC_SUPABASE_DATABASE_URL=https://kbnnwrazgeuqlizjqqgb.supabase.co`
-and the dev branch's anon key. Use the same values as the
+and the dev branch's publishable key. Use the same values as the
 **deploy-preview** fallback so no preview ever talks to production.
-Production keeps the Prod project values.
+Production keeps the Prod project's publishable key. The legacy JWT keys
+(`anon`, `service_role`) stop working at the end of 2026; nothing here
+needs them since 2026-10-30.
 
 ## GitHub branch protection
 

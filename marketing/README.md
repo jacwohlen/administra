@@ -3,16 +3,19 @@
 The public website for Adsumus (Latin for "we are here", formerly
 Administra; the repository keeps the old name): what it does, the demo link, and a contact form for
 interested clubs. Plain static HTML and CSS in
-[`public/`](public/), no build step, no JavaScript, no cookies, no tracking,
-no third-party fonts or scripts.
+[`public/`](public/), no build step, no cookies, no tracking, no third-party
+fonts or scripts; two small scripts of our own (the light/dark switch and
+the presence grid behind the hero, `public/assets/`).
 
 | Page                   | File                                                             |
 | ---------------------- | ---------------------------------------------------------------- |
 | Home with contact form | [`public/index.html`](public/index.html)                         |
 | Thanks after the form  | [`public/danke/index.html`](public/danke/index.html)             |
+| English home           | [`public/en/index.html`](public/en/index.html)                   |
+| English thanks         | [`public/en/thanks/index.html`](public/en/thanks/index.html)     |
 | Impressum              | [`public/impressum/index.html`](public/impressum/index.html)     |
 | Datenschutzerklärung   | [`public/datenschutz/index.html`](public/datenschutz/index.html) |
-| Not found              | [`public/404.html`](public/404.html)                             |
+| Not found (both)       | [`public/404.html`](public/404.html)                             |
 
 The demo it links to (demo.adsumus.ch) is described in
 [`docs/DEMO.md`](../docs/DEMO.md).
@@ -43,9 +46,11 @@ The demo it links to (demo.adsumus.ch) is described in
    - _Datenschutz_: "eigene Datenbank in Europa – auf Wunsch in Zürich"
      matches `region` in the club files (`eu-central-1` Frankfurt by
      default, `eu-central-2` Zürich).
-3. **Screenshots**: `public/img/*.webp` come from the demo seed; regenerate
-   them with [`scripts/marketing-screenshots.mjs`](../scripts/marketing-screenshots.mjs)
-   whenever the app's look changes.
+3. **Screenshots**: `public/img/*.webp` (German) and `public/img/en/*.webp`
+   (English) come from the demo seed; regenerate them with
+   [`scripts/marketing-screenshots.mjs`](../scripts/marketing-screenshots.mjs)
+   (`--lang en` for the English ones and `assets/og-image-en.png`) whenever
+   the app's look changes.
 
 ## Releasing
 
@@ -90,13 +95,27 @@ publish anything from `marketing/`.
 - German, Swiss spelling (ss, never ß), informal "ihr/du" like the app,
   sentence case, the ellipsis character … — see
   [`static/brand/README.md`](../static/brand/README.md#voice).
+- English under `public/en/`: British English, product terms as in the
+  app's English UI (`src/lib/i18n/locales/en.json`). Every change to the
+  German home page goes into the English one in the same pull request (same
+  sections, images and form fields; the tests compare them). Impressum and
+  Datenschutzerklärung exist only in German; the English pages link to
+  them as such.
 - Every feature claim must be true for the current app. If a feature is
   JAC-only or not built for other clubs yet, say so or leave it out.
 - Colours and type come from [`public/assets/tokens.css`](public/assets/tokens.css),
   an exact copy of `static/brand/tokens.css`; copy it again when the brand
   changes (a test fails until you do).
-- No inline `style` attributes and no `<script>`: the Content Security
-  Policy in `netlify.toml` blocks both.
+- No inline `style` attributes and no inline or third-party scripts: the
+  Content Security Policy in `netlify.toml` allows only files from the site
+  itself. There are two scripts. `assets/theme.js` keeps a visitor's
+  light/dark choice in `localStorage` (mentioned in the
+  Datenschutzerklärung); without JavaScript the site follows the device's
+  setting and the switch stays hidden. `assets/presence.js` draws the app's
+  attendance squares behind the hero on a canvas (faint behind the text in
+  `[data-presence-text]`, a cone of light following the mouse, an opening
+  wave, check-ins on touch screens; nothing moves with reduced motion); it
+  stores nothing, and without JavaScript the hero stays plain.
 - `npx vitest run marketing` checks links, anchors, images, the form,
   placeholders and the brand copies. To look at the site locally:
   `python3 -m http.server 8080 -d marketing/public`, then open

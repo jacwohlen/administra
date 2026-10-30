@@ -99,3 +99,9 @@ def test_real_process(world):
     assert done.returncode == 1
     assert done.stdout.splitlines() == ['Layer members', 'Error: Please export WEBLING_DOMAIN']
     assert done.stderr == ''
+
+
+def test_fake_members_have_no_license_number():
+    data = anonymize('4711', {'lastname': 'Geheimname', 'license_number': '266750'})
+    assert data['license_number'] is None
+    assert 'license_number' not in anonymize('4711', {'lastname': 'Geheimname'})

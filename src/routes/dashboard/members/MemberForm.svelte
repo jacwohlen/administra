@@ -10,6 +10,7 @@
     birthday = '',
     mobile = '',
     email = '',
+    licenseNumber = '',
     notes = '',
     labels = ['new'] as string[],
     isSubmitting = false,
@@ -24,6 +25,7 @@
     birthday?: string;
     mobile?: string;
     email?: string;
+    licenseNumber?: string | null;
     notes?: string;
     labels?: string[];
     isSubmitting?: boolean;
@@ -39,6 +41,7 @@
       birthday: string;
       mobile: string;
       email: string;
+      license_number: string;
       notes: string;
       labels: string[];
     }) => void;
@@ -53,6 +56,7 @@
     birthday,
     mobile,
     email,
+    license_number: licenseNumber ?? '',
     notes,
     labels: labels || ['new']
   });
@@ -141,6 +145,18 @@
       bind:value={formData.email}
       type="email"
       placeholder="name@example.com"
+      disabled={!!managedBy}
+    />
+  </label>
+  <label class="label">
+    <span>{$_('page.members.licenseNumber')}</span>
+    <input
+      class="input"
+      bind:value={formData.license_number}
+      type="text"
+      inputmode="numeric"
+      maxlength="40"
+      placeholder={$_('page.members.licenseNumberPlaceholder')}
       disabled={!!managedBy}
     />
   </label>

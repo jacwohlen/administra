@@ -15,6 +15,7 @@
 --   G  admins change the mapping under the same guards
 --   V  events, registrations, holidays
 --   R  links to the provider's records (settings.record_urls)
+--   L  the licence number (member.license_number) and connections on and off
 
 \set ON_ERROR_STOP 1
 \o /dev/null
@@ -287,7 +288,7 @@ BEGIN
   PERFORM pg_temp.eq('P2 a trainer cannot change the mapping',
     pg_temp.err($q$SELECT public.integration_set_mapping('webling', '{}')$q$), '42501 NOT_ALLOWED');
   PERFORM pg_temp.ok('P2 staff read connections, groups and calendars',
-    (SELECT count(*) FROM public.integration_connections) = 1
+    (SELECT count(*) FROM public.integration_connections) = 2
     AND (SELECT count(*) FROM public.integration_member_groups) = 16
     AND (SELECT count(*) FROM public.integration_calendars) = 6);
   PERFORM pg_temp.eq('P2 the seeded calendars carry Webling''s titles',
@@ -307,7 +308,7 @@ BEGIN
     pg_temp.err($q$UPDATE public.integration_member_groups SET status = 'active'$q$),
     '42501 permission denied for table integration_member_groups');
   PERFORM pg_temp.ok('P3 an admin reads the status summary',
-    jsonb_array_length(public.integration_status()) = 1);
+    jsonb_array_length(public.integration_status()) = 2);
   RESET ROLE;
 
   -- PostgREST logs in as 'authenticator' and always switches to an API role;
@@ -1840,6 +1841,87 @@ BEGIN
   PERFORM pg_temp.eq('R6 nor when the part before it holds {id}', public.integration_fill_record_urls()::text, '0');
   PERFORM pg_temp.ok('R4-R6 no template set',
     NOT EXISTS (SELECT 1 FROM public.integration_connections WHERE settings ? 'record_urls'));
+END $$;
+ROLLBACK TO SAVEPOINT s;
+
+-- The licence number: Webling owns it like the name; connections on and off
+SAVEPOINT s;
+DO $$
+DECLARE
+  v_admin uuid := pg_temp.sign_up('00000000-0000-0000-0000-0000000000c1', 'lic-admin@example.com', 'admin');
+  v_trainer uuid := pg_temp.sign_up('00000000-0000-0000-0000-0000000000c2', 'lic-trainer@example.com', 'trainer');
+  v_viewer uuid := pg_temp.sign_up('00000000-0000-0000-0000-0000000000c3', 'lic-viewer@example.com', 'viewer');
+  v_snap jsonb;
+  v_id text;
+  v_app integer;
+  r jsonb;
+BEGIN
+  PERFORM pg_temp.eq('L1 Webling owns the licence number',
+    (SELECT field_policy->>'member.license_number' FROM public.integration_connections WHERE id = 'webling'), 'owned');
+  PERFORM pg_temp.ok('L1 the policy check knows member.license_number',
+    public.integration_field_policy_ok('{"member.license_number": "fill"}'));
+  -- (off after the migration; the seed switches it on)
+  PERFORM pg_temp.eq('L1 the J+S module is a connection without a sync run from the app',
+    (SELECT concat_ws('/', provider, runs_in) FROM public.integration_connections WHERE id = 'js'),
+    'js/sync');
+
+  v_snap := pg_temp.webling_snapshot();
+  v_id := v_snap->0->>'external_id';
+  PERFORM pg_temp.as_sync();
+  r := public.integration_begin('webling', 'members', '{"scope": {"complete": true}, "dry_run": true}');
+  PERFORM pg_temp.ok('L2 capabilities list license_number',
+    r->'capabilities'->'member_keys' ? 'license_number');
+  PERFORM public.integration_finish((r->>'run')::bigint, '{}');
+
+  r := pg_temp.run('webling', 'members', '{"complete": true}',
+                   pg_temp.with_record(v_snap, v_id, '{"license_number": " 266750 "}'));
+  PERFORM pg_temp.eq('L2 a run writes the number, trimmed', r->>'final', 'ok');
+  PERFORM pg_temp.eq('L2 stored', (SELECT license_number FROM public.members WHERE id = v_id::integer), '266750');
+
+  r := pg_temp.run('webling', 'members', '{"complete": true}', v_snap);
+  PERFORM pg_temp.eq('L3 a record without the key leaves it',
+    (SELECT license_number FROM public.members WHERE id = v_id::integer), '266750');
+  r := pg_temp.run('webling', 'members', '{"complete": true}',
+                   pg_temp.with_record(v_snap, v_id, '{"license_number": ""}'));
+  PERFORM pg_temp.eq('L3 blank clears it (owned)',
+    (SELECT coalesce(license_number, 'none') FROM public.members WHERE id = v_id::integer), 'none');
+  RESET ROLE;
+
+  -- Staff: read-only on a Webling member, editable on an app member
+  v_app := (SELECT m.id FROM public.members m
+             WHERE NOT EXISTS (SELECT 1 FROM public.member_links l WHERE l.member_id = m.id) LIMIT 1);
+  PERFORM pg_temp.act_as(v_trainer);
+  PERFORM pg_temp.eq('L4 a trainer cannot change the number of a Webling member',
+    pg_temp.err(format('UPDATE public.members SET license_number = %L WHERE id = %s', '1', v_id)),
+    'P0001 MANAGED_BY_PROVIDER');
+  PERFORM pg_temp.eq('L4 a trainer enters it for a member from the app',
+    pg_temp.err(format('UPDATE public.members SET license_number = %L WHERE id = %s', '123456', v_app)), '');
+  PERFORM pg_temp.ok('L7 a trainer reads the J+S courses',
+    (SELECT count(*) FROM public.js_courses) > 0);
+  PERFORM pg_temp.eq('L5 a trainer cannot switch a connection',
+    pg_temp.err($q$SELECT public.integration_set_enabled('js', true)$q$), '42501 NOT_ALLOWED');
+  RESET ROLE;
+
+  PERFORM pg_temp.act_as(v_viewer);
+  PERFORM pg_temp.eq('L7 a viewer reads no J+S course and no course training',
+    (SELECT count(*) FROM public.js_courses)::text || '/' || (SELECT count(*) FROM public.js_course_trainings)::text,
+    '0/0');
+  PERFORM pg_temp.eq('L7 a viewer still reads the licence number',
+    (SELECT license_number FROM public.members WHERE id = v_app), '123456');
+  RESET ROLE;
+
+  PERFORM pg_temp.act_as(v_admin);
+  PERFORM pg_temp.eq('L5 an admin switches the J+S module on',
+    public.integration_set_enabled('js', true)::text, 'true');
+  PERFORM pg_temp.eq('L5 and Webling off', public.integration_set_enabled('webling', false)::text, 'false');
+  PERFORM pg_temp.eq('L5 an unknown connection',
+    pg_temp.err($q$SELECT public.integration_set_enabled('nope', true)$q$), 'P0001 UNKNOWN_CONNECTION');
+  RESET ROLE;
+  PERFORM pg_temp.as_sync();
+  PERFORM pg_temp.eq('L6 the sync is told that Webling is off',
+    pg_temp.err($q$SELECT public.integration_begin('webling', 'members', '{"scope": {"complete": true}}')$q$),
+    'PT423 CONNECTION_DISABLED');
+  RESET ROLE;
 END $$;
 ROLLBACK TO SAVEPOINT s;
 

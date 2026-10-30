@@ -33,7 +33,11 @@ async function layout(userProfile: object) {
 
 const hourAgo = new Date(Date.now() - 3_600_000).toISOString();
 
-function status(members: object | null, issues = { error: 0, warning: 0, info: 0 }) {
+function status(
+  members: object | null,
+  issues = { error: 0, warning: 0, info: 0 },
+  to_review = { groups: 0, calendars: 0 }
+) {
   return {
     data: [
       {
@@ -42,7 +46,8 @@ function status(members: object | null, issues = { error: 0, warning: 0, info: 0
         enabled: true,
         last_run: { members, events: null },
         last_success: { members: hourAgo, events: null },
-        issues
+        issues,
+        to_review
       }
     ],
     error: null
@@ -94,10 +99,64 @@ describe('dashboard layout: integrations', () => {
     expect(mockSupabase.rpc).toHaveBeenCalledWith('integration_status');
   });
 
+  it('shows admins a dot while a new group or calendar waits for review', async () => {
+    answer(status(ok, undefined, { groups: 1, calendars: 0 }));
+    expect((await layout(admin)).integrationAlert).toBe(true);
+    answer(status(ok, undefined, { groups: 0, calendars: 2 }));
+    expect((await layout(admin)).integrationAlert).toBe(true);
+  });
+
   it('shows no dot before the layer ever ran, nor when the status cannot be read', async () => {
     answer(status(null));
     expect((await layout(admin)).integrationAlert).toBe(false);
     answer({ data: null, error: { code: '42501', message: 'NOT_ALLOWED' } });
     expect((await layout(admin)).integrationAlert).toBe(false);
+  });
+});
+
+describe('dashboard layout: J+S module', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    invalidateIntegrationConfig();
+  });
+
+  function withJs(enabled: boolean) {
+    mockSupabase.rpc.mockReturnValue(chain(status(ok)));
+    mockSupabase.from.mockImplementation((table: string) =>
+      chain(
+        table === 'user_profiles'
+          ? { data: null, error: null, count: 0 }
+          : table === 'integration_connections'
+            ? {
+                data: [
+                  { id: 'webling', display_name: 'Webling', enabled: true, settings: {} },
+                  { id: 'js', display_name: 'J+S (NDS)', enabled, settings: {} }
+                ],
+                error: null
+              }
+            : { data: [], error: null }
+      )
+    );
+  }
+
+  async function jsEnabled(userProfile: object) {
+    return ((await layout(userProfile)) as unknown as { jsEnabled: boolean }).jsEnabled;
+  }
+
+  it('offers the switched-on module to trainers and admins', async () => {
+    withJs(true);
+    expect(await jsEnabled(trainer)).toBe(true);
+    invalidateIntegrationConfig();
+    expect(await jsEnabled(admin)).toBe(true);
+  });
+
+  it('never to viewers', async () => {
+    withJs(true);
+    expect(await jsEnabled({ role: 'viewer', status: 'approved' })).toBe(false);
+  });
+
+  it('to nobody while it is switched off', async () => {
+    withJs(false);
+    expect(await jsEnabled(trainer)).toBe(false);
   });
 });
