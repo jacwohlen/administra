@@ -649,7 +649,7 @@ DECLARE
 BEGIN
   UPDATE public.members SET email = 'dup.check@example.com' WHERE id = v_member;
   v_snap := pg_temp.with_record(v_snap, v_member::text, '{"email": "dup.check@example.com"}');
-  -- a trial candidate created in Adsumus with the same address
+  -- a trial candidate created in Alleda with the same address
   INSERT INTO public.members (firstname, lastname, labels, email) VALUES ('Probe', 'Kandidat', '["probetraining"]', ' Dup.Check@example.com');
   PERFORM pg_temp.as_sync();
   r := pg_temp.run('webling', 'members', '{"complete": true}', v_snap);
@@ -950,7 +950,7 @@ BEGIN
   PERFORM pg_temp.eq('C1 status from the CSV catalog',
     (SELECT string_agg(m.membership_status, ',' ORDER BY l.external_id) FROM public.member_links l
        JOIN public.members m ON m.id = l.member_id WHERE l.connection = 'csv'), 'active,non_member');
-  PERFORM pg_temp.eq('C1 a new member never counts as created in Adsumus: its account waits',
+  PERFORM pg_temp.eq('C1 a new member never counts as created in Alleda: its account waits',
     (SELECT status::text FROM public.user_profiles WHERE user_id = v_waiting), 'pending');
   PERFORM pg_temp.eq('C1 the held record names the member it resembles',
     (SELECT concat_ws(' ', external_id, other_member_id = v_app, detail) FROM public.integration_issues

@@ -1,7 +1,7 @@
 {
   "page": {
     "routes": {
-      "welcomeMessage": "Willkommen bei Adsumus",
+      "welcomeMessage": "Willkommen bei Alleda",
       "hi": "Hallo",
       "devLoginTitle": "Test-Login (nur Preview)",
       "email": "E-Mail",
@@ -37,8 +37,8 @@
       "inactiveTitle": "Keine aktive Mitgliedschaft",
       "inactiveMessage": "Diese E-Mail-Adresse ist beim Verein hinterlegt, aber bei keiner aktiven oder passiven Mitgliedschaft. Laut Mitgliederliste:",
       "endedMessage": "Dein Zugang ruht: Keiner deiner Mitgliedereinträge ist mehr aktiv oder passiv, zum Beispiel nach einem Austritt. Laut Mitgliederliste:",
-      "inactiveHelp": "Adsumus steht aktiven und passiven Mitgliedern offen. Stimmt das nicht – oder bist du inzwischen (wieder) Mitglied –, melde dich beim Verein. Die Mitgliederliste wird dort nachgeführt und kommt über Nacht in Adsumus an; danach bist du automatisch drin. Tippe dann auf «Aktualisieren».",
-      "trialMessage": "Du bist für ein Probetraining angemeldet. Adsumus steht Mitgliedern offen: Sobald du Mitglied bist, bist du mit dieser E-Mail-Adresse automatisch drin.",
+      "inactiveHelp": "Alleda steht aktiven und passiven Mitgliedern offen. Stimmt das nicht – oder bist du inzwischen (wieder) Mitglied –, melde dich beim Verein. Die Mitgliederliste wird dort nachgeführt und kommt über Nacht in Alleda an; danach bist du automatisch drin. Tippe dann auf «Aktualisieren».",
+      "trialMessage": "Du bist für ein Probetraining angemeldet. Alleda steht Mitgliedern offen: Sobald du Mitglied bist, bist du mit dieser E-Mail-Adresse automatisch drin.",
       "contact": "Kontakt:"
     },
     "users": {
@@ -350,7 +350,7 @@
       "mapping": {
         "title": "Zuordnung",
         "toReview": "{count} neu",
-        "intro": "Was die Gruppen und Kalender von {provider} in Adsumus bedeuten. Neue erscheinen hier als «Neu», bis du sie prüfst.",
+        "intro": "Was die Gruppen und Kalender von {provider} in Alleda bedeuten. Neue erscheinen hier als «Neu», bis du sie prüfst.",
         "groups": "Gruppen",
         "groupsHelp": "Hat ein Mitglied mehrere Statusgruppen, gilt die mit dem kleinsten Rang. Ausgeblendete Gruppen erscheinen nicht als Chip.",
         "noGroups": "Noch keine Gruppen.",
@@ -416,7 +416,7 @@
         }
       },
       "module": {
-        "js": "Exportiert die Anwesenheiten von J+S-Kursen als CSV-Dateien für den Import in die NDS. Personen werden über die Lizenznummer der Mitglieder zugeordnet (aus Webling oder in Adsumus erfasst).",
+        "js": "Exportiert die Anwesenheiten von J+S-Kursen als CSV-Dateien für den Import in die NDS. Personen werden über die Lizenznummer der Mitglieder zugeordnet (aus Webling oder in Alleda erfasst).",
         "openJs": "Zum J+S-Export"
       }
     },
@@ -657,14 +657,14 @@
         "othersChanged": "{count, plural, one {# Saison-Abzeichen} other {# Saison-Abzeichen}} anderer Mitglieder ändern sich.",
         "accountsTitle": "Benutzerkonten",
         "account": {
-          "losesAccess": "{email} verliert den Zugang zu Adsumus. Verknüpfe das Konto unter Benutzer mit dem bleibenden Eintrag oder trag die E-Mail dort ein (bei Webling-Mitgliedern in Webling).",
-          "gainsAccess": "{email} bekommt Zugang zu Adsumus.",
+          "losesAccess": "{email} verliert den Zugang zu Alleda. Verknüpfe das Konto unter Benutzer mit dem bleibenden Eintrag oder trag die E-Mail dort ein (bei Webling-Mitgliedern in Webling).",
+          "gainsAccess": "{email} bekommt Zugang zu Alleda.",
           "losesRecord": "{email} sieht den Eintrag danach nicht mehr (Mein Profil, Mitgliederbereich). Verknüpfe das Konto unter Benutzer, wenn es dazugehört. Ein Mitgliederkonto sieht ihn nur, solange er als aktives oder passives Mitglied zählt.",
           "gainsRecord": "{email} sieht den Eintrag danach (Mein Profil, Mitgliederbereich)."
         },
         "warning": {
           "TRIAL_LINK_ENDS": "Der Status-Link der Probetraining-Anmeldung funktioniert danach nicht mehr.",
-          "ACCOUNT_LOSES_ACCESS": "{count, plural, one {# Mitgliederkonto verliert} other {# Mitgliederkonten verlieren}} den Zugang zu Adsumus."
+          "ACCOUNT_LOSES_ACCESS": "{count, plural, one {# Mitgliederkonto verliert} other {# Mitgliederkonten verlieren}} den Zugang zu Alleda."
         },
         "confirmTitle": "Zusammenführen bestätigen",
         "confirmMessage": "{drop} (#{dropId}) wird gelöscht, alles geht auf {keep} (#{keepId}) über. Das lässt sich nicht rückgängig machen.",
@@ -1039,7 +1039,7 @@
       "errorRateLimit": "Zu viele Versuche. Bitte warte einen Moment und versuch es dann nochmals.",
       "errorOAuth": "Die Anmeldung hat nicht geklappt: {reason}",
       "demo": {
-        "title": "Adsumus ausprobieren",
+        "title": "Alleda ausprobieren",
         "intro": "Wähle eine Rolle – du bist sofort angemeldet. Der Budo-Club Musterwil ist erfunden; alle Daten werden jede Woche zurückgesetzt.",
         "admin": {
           "title": "Vorstand",
@@ -1189,7 +1189,7 @@
       "delete_success": "J+S-Kurs gelöscht",
       "replace_hint": "Achtung: Der Import in der NDS ersetzt alle bereits erfassten Aktivitäten bzw. Anwesenheiten des Kurses. Die Dateien enthalten deshalb immer den ganzen Kurs. Reihenfolge einhalten: Personen, Aktivitäten, Anwesenheiten.",
       "step_persons": "Personen",
-      "step_persons_hint": "{participants} Teilnehmende und {leaders} Leitende, mit Lizenznummer, Name und Geburtsdatum. Nur nötig für Personen, die noch nicht im NDS-Kurs sind. Wer neu in der NDS ist, braucht die AHV-Nummer: diese Personen direkt in der NDS erfassen und ihre Lizenznummer danach in Adsumus (bzw. Webling) eintragen.",
+      "step_persons_hint": "{participants} Teilnehmende und {leaders} Leitende, mit Lizenznummer, Name und Geburtsdatum. Nur nötig für Personen, die noch nicht im NDS-Kurs sind. Wer neu in der NDS ist, braucht die AHV-Nummer: diese Personen direkt in der NDS erfassen und ihre Lizenznummer danach in Alleda (bzw. Webling) eintragen.",
       "download_participants": "Teilnehmende (CSV)",
       "download_leaders": "Leitende (CSV)",
       "step_activities": "Aktivitäten",
@@ -1812,7 +1812,7 @@
     "pasteTextPlaceholder": "Oder Text einfügen, auch aus Excel, z. B. {example}",
     "hint": "Hinweis für die Auswertung (optional)",
     "hintPlaceholder": "z. B. «Die zweite Spalte ist der Leiter»",
-    "privacy": "Fotos und Text gehen an Claude (Anthropic), ohne Mitgliederdaten aus Adsumus. Gespeichert wird erst nach deiner Prüfung.",
+    "privacy": "Fotos und Text gehen an Claude (Anthropic), ohne Mitgliederdaten aus Alleda. Gespeichert wird erst nach deiner Prüfung.",
     "analyze": "Auswerten",
     "working": "Claude liest die Unterlagen …",
     "workingSeconds": "{seconds} s – das dauert meist 10 bis 40 Sekunden.",
@@ -1900,7 +1900,7 @@
       "step2": "Claude liest die Unterlagen und macht einen Vorschlag.",
       "step3": "Du prüfst den Vorschlag, ergänzt Fehlendes und korrigierst Abweichungen; Unsicheres ist markiert.",
       "step4": "Erst wenn du «Übernehmen» drückst, wird gespeichert, mit deinen normalen Berechtigungen.",
-      "safety": "Die KI kann nichts selbst ändern: Sie liefert nur einen Vorschlag in einem festen Format, sieht keine Mitgliederdaten aus Adsumus und wählt keine Mitglieder aus. Namen werden hier im Browser zugeordnet.",
+      "safety": "Die KI kann nichts selbst ändern: Sie liefert nur einen Vorschlag in einem festen Format, sieht keine Mitgliederdaten aus Alleda und wählt keine Mitglieder aus. Namen werden hier im Browser zugeordnet.",
       "notConfigured": "Der Assistent ist auf dieser Installation noch nicht eingerichtet. Ein Admin muss dafür einen API-Schlüssel von Anthropic hinterlegen (siehe docs/AI_ASSISTANT.md).",
       "member": "Mitglied",
       "memberPlaceholder": "Name suchen …",
@@ -2190,6 +2190,6 @@
   },
   "demo": {
     "banner": "Demo – alle Daten sind erfunden und werden jede Woche zurückgesetzt.",
-    "learnMore": "Mehr über Adsumus"
+    "learnMore": "Mehr über Alleda"
   }
 }

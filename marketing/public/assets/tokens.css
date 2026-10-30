@@ -1,11 +1,11 @@
 /*
- * Adsumus design tokens — standalone CSS custom properties.
+ * Alleda design tokens — standalone CSS custom properties.
  *
  * Extracted from the Skeleton "nosh" theme (data-theme="nosh" in src/app.html)
  * plus the overrides in src/app.css. Hex values are sRGB conversions of the
  * theme's oklch colors; the app itself still loads the theme from Skeleton.
  * Use this file to give non-app surfaces (e-mails, slides, print, landing
- * pages) the Adsumus look without pulling in Tailwind/Skeleton.
+ * pages) the Alleda look without pulling in Tailwind/Skeleton.
  */
 
 :root {

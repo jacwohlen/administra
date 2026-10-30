@@ -108,7 +108,7 @@ export const ISSUE_COLUMNS =
   'id, connection, kind, code, severity, external_id, member_id, other_member_id, event_id, detail, first_seen_at, last_seen_at, dismissed_at';
 
 /**
- * Whether a connection feeds Adsumus through the layer (members, events,
+ * Whether a connection feeds Alleda through the layer (members, events,
  * runs, issues, mapping). A module without a sync (the J+S export, provider
  * 'js') only gets its switch on the Integrations page.
  */

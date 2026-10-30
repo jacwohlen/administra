@@ -1,6 +1,6 @@
-# Club Instances: One Adsumus per Club
+# Club Instances: One Alleda per Club
 
-How Adsumus runs for clubs other than JAC Wohlen: each club gets its
+How Alleda runs for clubs other than JAC Wohlen: each club gets its
 **own Supabase project and its own Netlify site**, built from this same
 repository. The app itself stays single-tenant; everything per-club lives
 in configuration, and two scripts in `scripts/club-instances/` do the
@@ -57,7 +57,7 @@ Club file fields:
 | ----------------------------- | -------- | ----------------------------------------------------------------------------- |
 | `slug`                        | yes      | Same as the file name; names the project and site (`administra-<slug>`)       |
 | `name`                        | yes      | Club name: public pages, mail sender                                          |
-| `domain`                      | yes      | Where the club reaches Adsumus, e.g. `judo-muster.example.ch`                 |
+| `domain`                      | yes      | Where the club reaches Alleda, e.g. `judo-muster.example.ch`                  |
 | `adminEmails`                 | yes      | Become admin on first confirmed sign-in                                       |
 | `sections`                    | yes      | `PUBLIC_CLUB_SECTIONS`                                                        |
 | `defaultLocale`               | no       | `de` (default) or `en`                                                        |
@@ -83,7 +83,7 @@ that runs the scripts:
 | `NETLIFY_GITHUB_INSTALLATION_ID`                                            | Netlify's GitHub App installation that can read this repo                                             |
 | `GOOGLE_CLIENT_ID` / `_SECRET`                                              | One Google OAuth client shared by all clubs                                                           |
 | `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`, `SMTP_SENDER_EMAIL` | One transactional mail account (e.g. Resend, Postmark) for sign-in codes and trial mails of all clubs |
-| `SMTP_SENDER_NAME`                                                          | Optional, default `Adsumus`                                                                           |
+| `SMTP_SENDER_NAME`                                                          | Optional, default `Alleda`                                                                            |
 | `PUBLIC_SENTRY_DSN`                                                         | Optional, error reporting for all club sites                                                          |
 | `ADMINISTRA_REPO`                                                           | Optional, default `jacwohlen/administra`                                                              |
 | `CLUB_RELEASE_BRANCH`                                                       | Optional, default `clubs`                                                                             |
@@ -99,7 +99,7 @@ could sign in with an e-mail code.
 2. A Netlify team, with the Netlify GitHub App installed on this repo.
 3. A domain of your own for the club subdomains (`<slug>.<domain>`).
 4. The Google OAuth client (Google Cloud Console). Each club adds one
-   redirect URI (see below); the consent screen shows "Adsumus".
+   redirect URI (see below); the consent screen shows "Alleda".
 5. A transactional mail account with a verified sender domain.
 6. Create the release branch once: `node scripts/club-instances/rollout.js`
    with an empty registry pushes `origin/prod` to `clubs`.
