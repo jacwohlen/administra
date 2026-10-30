@@ -1,6 +1,7 @@
 export const ssr = false;
 import { redirect } from '@sveltejs/kit';
 import { supabaseClient } from '$lib/supabase';
+import { isModuleEnabled } from '$lib/integrationConfig';
 import { loadIntegrationConfig } from '$lib/integrationConfigLoad';
 import { needsAttention, parseConnectionStatuses } from '$lib/integrations';
 import {
@@ -59,6 +60,8 @@ export const load: LayoutLoad = async ({ parent, depends }) => {
     canManageExams: canManageExams(userProfile),
     canGrade: canGrade(userProfile),
     // Trainingsplanung: the TK plans trainers and topics
-    canPlanTrainings: canPlanTrainings(userProfile)
+    canPlanTrainings: canPlanTrainings(userProfile),
+    // Optional modules, switched on the Integrations page
+    jsEnabled: isModuleEnabled('js')
   };
 };

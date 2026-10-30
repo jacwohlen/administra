@@ -26,7 +26,7 @@ export function loadIntegrationConfig(): Promise<void> {
 async function fetchIntegrationConfig(): Promise<void> {
   try {
     const [connections, groups] = await Promise.all([
-      supabaseClient.from('integration_connections').select('id, display_name, settings'),
+      supabaseClient.from('integration_connections').select('id, display_name, enabled, settings'),
       supabaseClient.from('integration_member_groups').select('name, label, hidden, role')
     ]);
     const failure = connections.error ?? groups.error;

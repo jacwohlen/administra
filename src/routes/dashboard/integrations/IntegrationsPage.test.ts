@@ -4,7 +4,7 @@ import { addMessages, init } from 'svelte-i18n';
 import de from '$lib/i18n/locales/de.json';
 import { parseConnectionStatuses } from '$lib/integrations';
 import type { MergeMember } from '$lib/memberMerge';
-import { invalidate } from '$app/navigation';
+import { invalidate, invalidateAll } from '$app/navigation';
 import { toaster } from '$lib/toast';
 import Page from './+page.svelte';
 
@@ -16,7 +16,11 @@ beforeAll(() => {
 
 const { rpc } = vi.hoisted(() => ({ rpc: vi.fn() }));
 vi.mock('$lib/supabase', () => ({ supabaseClient: { rpc } }));
-vi.mock('$app/navigation', () => ({ invalidate: vi.fn(async () => {}) }));
+vi.mock('$app/navigation', () => ({
+  invalidate: vi.fn(async () => {}),
+  invalidateAll: vi.fn(async () => {})
+}));
+vi.mock('$lib/integrationConfigLoad', () => ({ invalidateIntegrationConfig: vi.fn() }));
 vi.mock('$lib/clubConfig', () => ({
   clubConfig: { sections: ['Judo', 'Aikido', 'Club', 'General'] }
 }));
@@ -629,5 +633,69 @@ describe('integrations page', () => {
     await fireEvent.click(within(neu).getByLabelText('Ausblenden'));
     expect(screen.getByRole('button', { name: 'Speichern' })).toBeDisabled();
     expect(screen.getByText(/zeig die Vorschau noch einmal/)).toBeInTheDocument();
+  });
+});
+
+describe('modules on and off', () => {
+  const JS = {
+    ...STATUS,
+    id: 'js',
+    provider: 'js',
+    display_name: 'J+S (NDS)',
+    enabled: false,
+    members: { gone: 0, linked: 0, last_seen_at: null },
+    events: { gone: 0, linked: 0, last_seen_at: null },
+    to_review: { groups: 0, calendars: 0 },
+    last_run: {},
+    last_success: {},
+    issues: { info: 0, error: 0, warning: 0 }
+  };
+
+  function both(js: object = JS) {
+    return { ...data(), connections: parseConnectionStatuses([STATUS, js]) };
+  }
+
+  it('shows the J+S module as a switch, without runs, issues or mapping', () => {
+    renderPage(both());
+    const card = screen.getByRole('heading', { name: 'J+S (NDS)' }).closest('section')!;
+    expect(within(card).getByText('Ausgeschaltet')).toBeInTheDocument();
+    expect(within(card).getByRole('button', { name: 'Einschalten' })).toBeInTheDocument();
+    expect(within(card).queryByText('Zuordnung', { exact: false })).toBeNull();
+    expect(within(card).queryByRole('link', { name: /J\+S-Export/ })).toBeNull();
+  });
+
+  it('switches a module on and reloads the configuration', async () => {
+    rpc.mockResolvedValue({ data: true, error: null });
+    renderPage(both());
+    const card = screen.getByRole('heading', { name: 'J+S (NDS)' }).closest('section')!;
+    await fireEvent.click(within(card).getByRole('button', { name: 'Einschalten' }));
+    expect(rpc).toHaveBeenCalledWith('integration_set_enabled', {
+      p_connection: 'js',
+      p_enabled: true
+    });
+    await waitFor(() => expect(invalidateAll).toHaveBeenCalled());
+  });
+
+  it('asks before switching Webling off', async () => {
+    rpc.mockResolvedValue({ data: false, error: null });
+    renderPage(both({ ...JS, enabled: true }));
+    const card = screen.getByRole('heading', { name: 'Webling' }).closest('section')!;
+    await fireEvent.click(within(card).getByRole('button', { name: 'Ausschalten' }));
+    expect(rpc).not.toHaveBeenCalled();
+    const dialog = screen.getByRole('dialog');
+    expect(within(dialog).getByText(/nächtliche Abgleich mit Webling/)).toBeInTheDocument();
+    await fireEvent.click(within(dialog).getByRole('button', { name: 'Ausschalten' }));
+    expect(rpc).toHaveBeenCalledWith('integration_set_enabled', {
+      p_connection: 'webling',
+      p_enabled: false
+    });
+  });
+
+  it('links an enabled J+S module to its page', () => {
+    renderPage(both({ ...JS, enabled: true }));
+    expect(screen.getByRole('link', { name: /Zum J\+S-Export/ })).toHaveAttribute(
+      'href',
+      '/dashboard/js'
+    );
   });
 });

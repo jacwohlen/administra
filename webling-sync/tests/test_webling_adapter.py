@@ -54,6 +54,18 @@ def test_member_record():
         'groups': [{'id': '10', 'name': 'Aktiv'}, {'id': '13', 'name': '04_Probetraining'}]}}
 
 
+@pytest.mark.parametrize('value, sent', [(266750, '266750'), (' 123 ', '123'), ('', None), (None, None)])
+def test_member_license_number(value, sent):
+    # Lizenznummer is the J+S person number; Webling may hold it as a number
+    raw = webling_member(1, 'A', 'B', [], **{'Lizenznummer': value})
+    assert member_record(raw, TITLES)['data']['license_number'] == sent
+
+
+def test_member_without_the_license_field_sends_no_key():
+    # The layer then leaves the field alone
+    assert 'license_number' not in member_record(webling_member(1, 'A', 'B', []), TITLES)['data']
+
+
 @pytest.mark.parametrize('email', [None, '', '   '])
 def test_member_without_email_sends_null(email):
     # The layer only fills the e-mail: null keeps one entered in the app

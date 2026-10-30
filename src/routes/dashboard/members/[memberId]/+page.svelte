@@ -166,6 +166,7 @@
       birthday?: string;
       mobile?: string;
       email?: string;
+      license_number?: string;
       notes?: string;
       labels?: string[];
     } | null
@@ -185,6 +186,7 @@
             birthday: result.birthday,
             mobile: result.mobile,
             email: result.email || null,
+            license_number: result.license_number?.trim() || null,
             notes: result.notes || null,
             labels: result.labels
           };
@@ -360,6 +362,7 @@
           birthday={data.birthday}
           mobile={data.mobile}
           email={data.email}
+          licenseNumber={data.license_number}
           notes={data.notes}
           labels={data.labels}
           managedBy={provider}

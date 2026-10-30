@@ -26,5 +26,7 @@ def anonymize(external_id, data):
     year = re.search(r"\d{4}", data.get('birthday') or "")
     data['birthday'] = f"{year.group()}-{(h >> 16) % 12 + 1:02d}-{(h >> 24) % 28 + 1:02d}" if year else None
     data['mobile'] = None
+    if 'license_number' in data:
+        data['license_number'] = None
     data['email'] = f"member-{external_id}@example.invalid"
     return data

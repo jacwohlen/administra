@@ -20,6 +20,11 @@ export interface IntegrationConfig {
   /** integration_connections.display_name per connection id ('webling' → 'Webling') */
   displayNames: Map<string, string>;
   /**
+   * Connections an admin switched on (Integrations page). Modules such as
+   * the J+S export ('js') show only while theirs is on
+   */
+  enabled: Set<string>;
+  /**
    * The connections' hidden_group_pattern: hides labels of provider groups
    * the catalog does not have (such as stale labels of members gone from
    * the provider)
@@ -35,6 +40,7 @@ export function emptyIntegrationConfig(): IntegrationConfig {
   return {
     loaded: false,
     displayNames: new Map(),
+    enabled: new Set(),
     hiddenPatterns: [],
     groupHidden: new Map(),
     trainerLabels: new Set()
@@ -75,9 +81,15 @@ export function parseIntegrationConfig(
   const config = emptyIntegrationConfig();
   config.loaded = true;
   for (const raw of connections) {
-    const c = (raw ?? {}) as { id?: unknown; display_name?: unknown; settings?: unknown };
+    const c = (raw ?? {}) as {
+      id?: unknown;
+      display_name?: unknown;
+      enabled?: unknown;
+      settings?: unknown;
+    };
     const id = text(c.id);
     if (!id) continue;
+    if (c.enabled === true) config.enabled.add(id);
     const name = text(c.display_name);
     if (name) config.displayNames.set(id, name.trim());
     const settings = (c.settings ?? {}) as { hidden_group_pattern?: unknown };
@@ -92,6 +104,14 @@ export function parseIntegrationConfig(
     if (g.role === 'trainer') config.trainerLabels.add(label.toLowerCase());
   }
   return config;
+}
+
+/** Whether a module's connection is switched on; off while the configuration is not loaded */
+export function isModuleEnabled(
+  connection: string,
+  config: IntegrationConfig = integrationConfig
+): boolean {
+  return config.loaded && config.enabled.has(connection);
 }
 
 /** Make `next` the session's configuration; null goes back to the built-in rules */
