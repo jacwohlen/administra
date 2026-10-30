@@ -1509,6 +1509,38 @@
         "date": "Date",
         "hint": "Type right in, every cell saves on its own. Enter or the arrow keys move to the next row; a column copied from Excel or Google Sheets fills the rows below when pasted.",
         "pasted": "{count, plural, one {# row} other {# rows}} pasted"
+      },
+      "calendar": {
+        "button": "Subscribe to calendar",
+        "title": "Subscribe to calendar",
+        "intro": "The training plan in your calendar app (Google, Apple, Outlook): every date with topic and trainer, from 8 weeks back to 12 months ahead; cancelled dates with “Cancelled” in the title.",
+        "loading": "Loading links…",
+        "loadError": "Could not load the calendar links.",
+        "mine": {
+          "title": "My trainings",
+          "description": "The trainings you lead, cancelled ones included.",
+          "notLinked": "Your account is not linked to a member, so there are no trainings of your own. An administrator can link it under “Users”."
+        },
+        "all": {
+          "title": "All trainings",
+          "description": "Every date of every training in the plan, with topic and trainer."
+        },
+        "link": "Link “{feed}”",
+        "copy": "Copy",
+        "copied": "Link copied",
+        "copyError": "Could not copy the link",
+        "app": "Calendar app",
+        "appHint": "Opens the calendar in this device's calendar app (Apple Calendar, Outlook)",
+        "google": "Google Calendar",
+        "googleHint": "Adds the calendar to Google Calendar (in the browser)",
+        "secret": "The link is secret: anyone who has it sees the training plan. Don't pass it on; if it got into the wrong hands, renew it.",
+        "refresh": "Calendar apps fetch changes on their own schedule, usually within hours, Google up to a day later.",
+        "language": "Titles and texts in the calendar are in English, the app's current language. For German, switch the language and copy the link again.",
+        "renew": "Renew link",
+        "renewTitle": "Renew the link?",
+        "renewMessage": "You get new links and the old ones stop working: subscribed calendars no longer update until you subscribe again with the new link.",
+        "renewed": "New links created",
+        "renewError": "Could not renew the link"
       }
     }
   },

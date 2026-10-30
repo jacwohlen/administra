@@ -1509,6 +1509,38 @@
         "date": "Datum",
         "hint": "Direkt eintippen, jede Zelle speichert sofort. Enter oder Pfeiltasten springen zur nächsten Zeile; eine aus Excel oder Google Sheets kopierte Spalte füllt beim Einfügen die Zeilen nach unten.",
         "pasted": "{count, plural, one {# Zeile} other {# Zeilen}} eingefügt"
+      },
+      "calendar": {
+        "button": "Kalender abonnieren",
+        "title": "Kalender abonnieren",
+        "intro": "Der Trainingsplan in deiner Kalender-App (Google, Apple, Outlook): jeder Termin mit Thema und Trainer, von 8 Wochen zurück bis 12 Monate voraus; ausfallende Termine mit «Fällt aus» im Titel.",
+        "loading": "Links werden geladen…",
+        "loadError": "Die Kalender-Links konnten nicht geladen werden.",
+        "mine": {
+          "title": "Meine Trainings",
+          "description": "Die Trainings, die du leitest, auch die ausfallenden.",
+          "notLinked": "Dein Konto ist mit keinem Mitglied verknüpft, darum gibt es keine eigenen Trainings. Ein Administrator kann es unter «Benutzer» verknüpfen."
+        },
+        "all": {
+          "title": "Alle Trainings",
+          "description": "Jeder Termin jedes Trainings im Plan, mit Thema und Trainer."
+        },
+        "link": "Link «{feed}»",
+        "copy": "Kopieren",
+        "copied": "Link kopiert",
+        "copyError": "Link konnte nicht kopiert werden",
+        "app": "Kalender-App",
+        "appHint": "Öffnet den Kalender in der Kalender-App dieses Geräts (Apple Kalender, Outlook)",
+        "google": "Google Kalender",
+        "googleHint": "Fügt den Kalender in Google Kalender hinzu (im Browser)",
+        "secret": "Der Link ist geheim: Wer ihn hat, sieht den Trainingsplan. Gib ihn nicht weiter; ist er in falsche Hände geraten, erneuere ihn.",
+        "refresh": "Kalender-Apps holen Änderungen in ihrem eigenen Takt, meist innert Stunden, Google bis zu einem Tag später.",
+        "language": "Titel und Texte im Kalender sind auf Deutsch, der aktuellen Sprache der App. Für Englisch die Sprache wechseln und den Link neu kopieren.",
+        "renew": "Link erneuern",
+        "renewTitle": "Link erneuern?",
+        "renewMessage": "Du bekommst neue Links, die alten funktionieren nicht mehr: Abonnierte Kalender werden nicht mehr aktualisiert, bis du sie mit dem neuen Link wieder abonnierst.",
+        "renewed": "Neue Links erstellt",
+        "renewError": "Link konnte nicht erneuert werden"
       }
     }
   },

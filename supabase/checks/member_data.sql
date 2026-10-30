@@ -347,15 +347,16 @@ SELECT pg_temp.ok('badge lists not callable by anon', NOT (
   OR has_function_privilege('anon', 'public.get_members_medal_counts()', 'EXECUTE')
   OR has_function_privilege('anon', 'public.get_members_current_grades()', 'EXECUTE')));
 
--- Anonymous callers reach only the public trial form and the helpers the
--- policies TO public need; a function dropped and recreated gets EXECUTE
--- for anon again (get_members_top_badges did in 20260930150000)
+-- Anonymous callers reach only the public trial form, the calendar feeds
+-- (by their secret token) and the helpers the policies TO public need; a
+-- function dropped and recreated gets EXECUTE for anon again
+-- (get_members_top_badges did in 20260930150000)
 SELECT pg_temp.eq('API functions bypassing RLS that anon may call',
   (SELECT string_agg(p.proname, ',' ORDER BY p.proname) FROM pg_proc p
    WHERE p.pronamespace = 'public'::regnamespace AND p.prosecdef
      AND p.prorettype <> 'trigger'::regtype
      AND has_function_privilege('anon', p.oid, 'EXECUTE')),
-  'cancel_trial,complete_trial_email,get_trial_status,is_admin,is_approved_user,is_writer,register_trial');
+  'calendar_feed,cancel_trial,complete_trial_email,get_trial_status,is_admin,is_approved_user,is_writer,register_trial');
 
 -----------------
 -- Guards for later changes
@@ -385,6 +386,7 @@ INSERT INTO api_guard VALUES
   ('get_badge_leaderboard',      'is_staff\('),
   ('get_members_medal_counts',   'is_staff\('),
   ('get_recent_achievements',    'is_staff\('),
+  ('calendar_feed_token',        'is_staff\('),
   ('member_access_report',       'is_admin\('),
   ('merge_members',              'is_admin\('),
   ('merge_members_preview',      'is_admin\('),
@@ -417,7 +419,10 @@ INSERT INTO api_guard VALUES
   ('get_trial_status',           'p_token'),
   ('cancel_trial',               'p_token'),
   ('complete_trial_email',       'p_token'),
-  ('register_trial',             'TRIAL_MAX_PER_EMAIL');
+  ('register_trial',             'TRIAL_MAX_PER_EMAIL'),
+  -- calendar feeds: the secret token of an approved staff account
+  -- (supabase/checks/calendar_feeds.sql)
+  ('calendar_feed',              'p_token');
 
 SELECT pg_temp.eq('API functions bypassing RLS without their guard',
   (SELECT string_agg(coalesce(p.proname, g.proname)
