@@ -458,9 +458,31 @@ describe('integrations page', () => {
     expect(names).toEqual(['Judo Agenda', 'Judo Erwachsene Trainings']);
   });
 
+  it('asks to review new groups and calendars, and why', () => {
+    renderPage(data({ ...STATUS, to_review: { groups: 2, calendars: 1 } }));
+    const alert = screen.getAllByRole('alert').find((a) => a.textContent?.includes('geprüft'));
+    // Only a membership ends the lockout; "Geprüft" alone just clears the dot
+    expect(alert?.textContent).toContain(
+      '2 neue Gruppen aus Webling sind noch nicht geprüft. Solange eine Gruppe keine ' +
+        'Mitgliedschaft hat, zählen Mitglieder ohne andere Statusgruppe als Nicht-Mitglieder'
+    );
+    expect(alert?.textContent).toContain('«Geprüft» allein ändert daran nichts.');
+    expect(alert?.textContent).toContain(
+      '1 neuer Kalender aus Webling ist noch nicht geprüft, seine Events stehen in einer ' +
+        'vermuteten Sparte.'
+    );
+    expect(alert?.className).toContain('preset-tonal-warning');
+  });
+
   it('shows no warning for a connection that never ran', () => {
+    // The seeded catalog rows are reviewed; new ones only come with a run
     renderPage(
-      data({ ...STATUS, last_run: { config: null, members: null, events: null }, last_success: {} })
+      data({
+        ...STATUS,
+        last_run: { config: null, members: null, events: null },
+        last_success: {},
+        to_review: { groups: 0, calendars: 0 }
+      })
     );
     expect(screen.getByRole('heading', { name: 'Webling' })).toBeInTheDocument();
     expect(screen.queryAllByRole('alert')).toEqual([]);
