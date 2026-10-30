@@ -65,7 +65,7 @@ export async function loadCourseData(
   for (let i = 0; i < memberIds.length; i += ID_CHUNK) {
     const { data, error } = await supabase
       .from('members')
-      .select('id, firstname, lastname, jsPersonNumber')
+      .select('id, firstname, lastname, birthday, license_number')
       .in('id', memberIds.slice(i, i + ID_CHUNK))
       .returns<CourseMember[]>();
     if (error) throw error;

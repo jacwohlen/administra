@@ -193,6 +193,8 @@ export interface Member {
   birthday?: string;
   mobile?: string;
   email?: string;
+  /** Lizenznummer, the J+S person number; the provider's while linked (docs/JS_EXPORT.md) */
+  license_number?: string | null;
   notes?: string;
   trialSection?: string;
   trialRegisteredAt?: string;

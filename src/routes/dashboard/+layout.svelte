@@ -293,14 +293,16 @@
               <span>{$_('page.dashboard.assistant')}</span>
             </a>
           {/if}
-          <a
-            href="/dashboard/js"
-            class="btn preset-tonal-surface w-full mb-2"
-            onclick={() => (popoverOpen = false)}
-          >
-            <Fa icon={faFileExport} />
-            <span>{$_('page.dashboard.js')}</span>
-          </a>
+          {#if data.jsEnabled}
+            <a
+              href="/dashboard/js"
+              class="btn preset-tonal-surface w-full mb-2"
+              onclick={() => (popoverOpen = false)}
+            >
+              <Fa icon={faFileExport} />
+              <span>{$_('page.dashboard.js')}</span>
+            </a>
+          {/if}
           <a
             href="/club"
             class="btn preset-tonal-surface w-full mb-2"

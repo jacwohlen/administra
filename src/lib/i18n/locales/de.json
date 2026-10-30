@@ -400,6 +400,22 @@
           "notAllowed": "Dazu fehlt dir die Berechtigung.",
           "failed": "Das hat nicht geklappt. Versuch es noch einmal."
         }
+      },
+      "switch": {
+        "turnOn": "Einschalten",
+        "turnOff": "Ausschalten",
+        "on": "{provider} ist eingeschaltet",
+        "off": "{provider} ist ausgeschaltet",
+        "error": "Umschalten fehlgeschlagen",
+        "confirmTitle": "{provider} ausschalten?",
+        "confirm": {
+          "sync": "Der nächtliche Abgleich mit {provider} läuft dann nicht mehr. Verknüpfungen und Daten bleiben erhalten; Felder aus {provider} bleiben gesperrt, bis die Verknüpfung weg ist. Einschalten geht jederzeit wieder.",
+          "module": "Das Modul verschwindet aus dem Menü. Seine Daten bleiben erhalten und sind nach dem Einschalten wieder da."
+        }
+      },
+      "module": {
+        "js": "Exportiert die Anwesenheiten von J+S-Kursen als CSV-Dateien für den Import in die NDS. Personen werden über die Lizenznummer der Mitglieder zugeordnet (aus Webling oder in Adsumus erfasst).",
+        "openJs": "Zum J+S-Export"
       }
     },
     "trainings": {
@@ -676,7 +692,9 @@
         },
         "merge": "Zusammenführen",
         "mergeInProvider": "In {provider} zusammenführen"
-      }
+      },
+      "licenseNumber": "Lizenznummer",
+      "licenseNumberPlaceholder": "J+S-Personennummer"
     },
     "stats": {
       "all": "Alle",
@@ -1168,20 +1186,17 @@
       "delete_success": "J+S-Kurs gelöscht",
       "replace_hint": "Achtung: Der Import in der NDS ersetzt alle bereits erfassten Aktivitäten bzw. Anwesenheiten des Kurses. Die Dateien enthalten deshalb immer den ganzen Kurs. Reihenfolge einhalten: Personen, Aktivitäten, Anwesenheiten.",
       "step_persons": "Personen",
-      "step_persons_hint": "{participants} Teilnehmende und {leaders} Leitende. Nur nötig für Personen, die noch nicht im NDS-Kurs sind. Die Daten (AHV-Nr., Adresse …) kommen direkt aus Webling.",
+      "step_persons_hint": "{participants} Teilnehmende und {leaders} Leitende, mit Lizenznummer, Name und Geburtsdatum. Nur nötig für Personen, die noch nicht im NDS-Kurs sind. Wer neu in der NDS ist, braucht die AHV-Nummer: diese Personen direkt in der NDS erfassen und ihre Lizenznummer danach in Adsumus (bzw. Webling) eintragen.",
       "download_participants": "Teilnehmende (CSV)",
       "download_leaders": "Leitende (CSV)",
-      "persons_admin_only": "Den Personen-Export (mit AHV-Nummern) können nur Admins herunterladen.",
-      "persons_error": "Personen-Export fehlgeschlagen",
-      "persons_incomplete": "Unvollständig in Webling (bitte dort ergänzen):",
       "step_activities": "Aktivitäten",
       "step_activities_hint": "{count, plural, one {# Training} other {# Trainings}} mit Datum, Zeit, Dauer und Ort.",
       "download_activities": "Aktivitäten (CSV)",
       "step_attendance": "Anwesenheitskontrolle",
-      "step_attendance_hint": "{count} Anwesenheiten von Personen mit J+S-Personennummer (Webling: Lizenznummer).",
+      "step_attendance_hint": "{count} Anwesenheiten von Personen mit Lizenznummer.",
       "download_attendance": "Anwesenheiten (CSV)",
       "warnings": "Hinweise",
-      "warning_without_number": "Ohne J+S-Personennummer, fehlen in der Anwesenheitskontrolle (in Webling als Lizenznummer erfassen; wird nachts synchronisiert):",
+      "warning_without_number": "Ohne Lizenznummer, fehlen in der Anwesenheitskontrolle (beim Mitglied erfassen; kommt das Mitglied aus Webling, dort):",
       "warning_both_roles": "Als Leiter/in und als Teilnehmer/in eingetragen:",
       "warning_without_time": "«{title}» hat keine gültige Start- oder Endzeit und wird nicht exportiert.",
       "warning_too_short": "«{title}» dauert nur {minutes} Minuten und wird nicht exportiert.",

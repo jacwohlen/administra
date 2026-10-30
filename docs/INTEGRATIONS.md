@@ -726,3 +726,41 @@ are one prefix followed by their own id (Webling:
 `https://<club>.webling.ch/portal#/calendar/event/{id}`) and keeps one
 already set; a connection without such links gets none until one is set
 in SQL.
+
+## Modules on and off, the licence number
+
+`20261104120000_license_number_and_js_module.sql`.
+
+**On and off.** Every connection can be switched on and off by an admin on
+the Integrations page (`integration_set_enabled(connection, enabled)`;
+switching off asks first). Off, `integration_begin` answers
+`CONNECTION_DISABLED` (SQLSTATE `PT423`, no longer `UNKNOWN_CONNECTION`),
+and the sync ends with exit 0 and "switched off on the Integrations page"
+without opening a run, so a switched-off Webling neither syncs nor turns the
+workflow red. Links, runs, issues and data stay; members and events of a
+switched-off provider stay read-only while their links exist (the guards
+look at the link, not at the switch). The app reads `enabled` with the
+configuration (`integrationConfig.enabled`, `isModuleEnabled()`).
+
+**Modules without a sync.** The J+S export is the connection `js`
+(provider `js`, `runs_in = 'sync'`, so no admin can open a run for it, and
+no runner does), off after the migration. The Integrations page shows it
+as a switch with a description, not runs, issues or mapping (`hasSync()` in
+`src/lib/integrations.ts`); while on, the dashboard offers _J+S-Export_
+(`data.jsEnabled`), see `docs/JS_EXPORT.md`.
+
+**Licence number.** `members.license_number` (Lizenznummer, the J+S person
+number) is a member field like the name: the layer takes `license_number`
+in member records (capabilities `member_keys`, trimmed, blank is none),
+`integration_field_policy_ok()` knows `member.license_number`, and Webling
+owns it (`field_policy`), so it is read-only in the app while a member is
+linked and cleared when Webling has none. The Webling adapter sends it only
+when its members have the property _Lizenznummer_ (a Webling without the
+field changes nothing); an older adapter or database leaves it out (keys
+filtered by the capabilities). Anonymized runs send none. Members from the
+app get it in the member form. Not yet in `merge_members()`: a merge keeps
+the kept row's number (the Webling row's, which Webling owns anyway).
+
+`supabase/checks/integration_layer.sql` (section L) checks the policy, the
+capabilities, writing, keeping and clearing the number, the guard for
+staff, who may switch, and `CONNECTION_DISABLED`.

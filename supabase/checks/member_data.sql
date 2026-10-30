@@ -399,6 +399,7 @@ INSERT INTO api_guard VALUES
   ('integration_finish',         'integration_authorize\('),
   ('integration_set_mapping',    'is_admin\('),
   ('integration_dismiss_issue',  'is_admin\('),
+  ('integration_set_enabled',    'is_admin\('),
   ('integration_status',         'is_admin\('),
   -- the caller's own account, or no member data
   ('ai_import_finish',           'auth\.uid\('),

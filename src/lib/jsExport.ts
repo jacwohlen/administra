@@ -78,7 +78,10 @@ export interface CourseMember {
   id: number;
   firstname: string;
   lastname: string;
-  jsPersonNumber?: string | null;
+  /** Lizenznummer, the J+S person number (PERSONENNUMMER) */
+  license_number?: string | null;
+  /** 'YYYY-MM-DD' */
+  birthday?: string | null;
 }
 
 export type JsFunction = 'Leiter/in' | 'Teilnehmer/in';
@@ -213,7 +216,7 @@ export function buildCourseExport(
     }
 
     const role = jsFunction(log.trainerRole);
-    if (!member.jsPersonNumber) {
+    if (!member.license_number) {
       withoutNumber.add(member.id);
       continue;
     }
@@ -277,7 +280,7 @@ export function attendanceRows(
   location: string
 ): string[][] {
   return attendance.map(({ member, activity, role }) => [
-    member.jsPersonNumber ?? '',
+    member.license_number ?? '',
     role,
     formatDate(activity.date),
     'Training',
@@ -285,6 +288,31 @@ export function attendanceRows(
     String(activity.duration),
     location
   ]);
+}
+
+/**
+ * Rows of the person import from what Adsumus has: licence number, name and
+ * birthday. The NDS finds persons already linked to the club by these
+ * (number, or name and birthday); a person new to the club needs an AHV
+ * number, which Adsumus does not keep: enter them in the NDS directly.
+ */
+export function personRows(members: CourseMember[]): string[][] {
+  return members.map((m) =>
+    PERSON_HEADER.map((column) => {
+      switch (column) {
+        case 'PERSONENNUMMER':
+          return (m.license_number ?? '').replace(/\D/g, '');
+        case 'NAME':
+          return m.lastname;
+        case 'VORNAME':
+          return m.firstname;
+        case 'GEBURTSDATUM':
+          return /^\d{4}-\d{2}-\d{2}/.test(m.birthday ?? '') ? formatDate(m.birthday!) : '';
+        default:
+          return '';
+      }
+    })
+  );
 }
 
 function csvField(value: string): string {

@@ -9,6 +9,8 @@ import {
   formatDate,
   parseDurations,
   parseTime,
+  personRows,
+  PERSON_HEADER,
   toCsv,
   type CourseLog,
   type CourseMember,
@@ -24,9 +26,9 @@ const trainings: CourseTraining[] = [
 ];
 
 const members: CourseMember[] = [
-  { id: 10, firstname: 'Anna', lastname: 'Muster', jsPersonNumber: '266750' },
-  { id: 11, firstname: 'Ben', lastname: 'Beispiel', jsPersonNumber: '123456789' },
-  { id: 12, firstname: 'Clara', lastname: 'Ohne', jsPersonNumber: null }
+  { id: 10, firstname: 'Anna', lastname: 'Muster', license_number: '266750' },
+  { id: 11, firstname: 'Ben', lastname: 'Beispiel', license_number: '123456789' },
+  { id: 12, firstname: 'Clara', lastname: 'Ohne', license_number: null }
 ];
 
 const log = (
@@ -131,5 +133,38 @@ describe('fileSlug', () => {
       'judo-jugend-zurich-2026'
     );
     expect(fileSlug({ course_number: 'J+S 1234', title: 'x' })).toBe('j-s-1234');
+  });
+});
+
+describe('personRows', () => {
+  it('fills what Adsumus has and leaves the rest to the NDS', () => {
+    const rows = personRows([
+      {
+        id: 1,
+        firstname: 'Arti',
+        lastname: 'Muster',
+        birthday: '2014-05-10',
+        license_number: '266 750'
+      },
+      { id: 2, firstname: 'Bea', lastname: 'Neu', birthday: null, license_number: null }
+    ]);
+    expect(rows[0]).toEqual([
+      '266750',
+      'Muster',
+      'Arti',
+      '10.05.2014',
+      '',
+      '',
+      '',
+      '',
+      '',
+      '',
+      '',
+      '',
+      '',
+      ''
+    ]);
+    expect(rows[1].slice(0, 4)).toEqual(['', 'Neu', 'Bea', '']);
+    expect(rows[0]).toHaveLength(PERSON_HEADER.length);
   });
 });

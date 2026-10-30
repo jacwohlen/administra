@@ -20,6 +20,7 @@
     PERSON_HEADER,
     activityRows,
     attendanceRows,
+    personRows,
     fileSlug,
     formatDate,
     toCsv,
@@ -28,15 +29,10 @@
 
   let { data }: { data: PageData } = $props();
 
-  let isAdmin = $derived(data.userProfile?.role === 'admin');
   let course = $derived(data.course);
   let result = $derived(data.result);
   let warnings = $derived(result.warnings);
   let hasWarnings = $derived(Object.values(warnings).some((list) => list.length > 0));
-
-  type Role = 'participants' | 'leaders';
-  let personLoading = $state<Role | null>(null);
-  let personProblems = $state<{ id: number; name: string; missing: string[] }[]>([]);
 
   function download(name: string, csv: string) {
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
@@ -48,29 +44,8 @@
     URL.revokeObjectURL(url);
   }
 
-  async function downloadPersons(role: Role) {
-    personLoading = role;
-    personProblems = [];
-    try {
-      const response = await fetch(`/api/js/persons?courseId=${course.id}&role=${role}`);
-      if (!response.ok) {
-        const body = await response.json().catch(() => null);
-        throw new Error(body?.message ?? `HTTP ${response.status}`);
-      }
-      const { rows, problems } = (await response.json()) as {
-        rows: string[][];
-        problems: typeof personProblems;
-      };
-      download(role === 'leaders' ? 'personen_leitende' : 'personen', toCsv(PERSON_HEADER, rows));
-      personProblems = problems;
-    } catch (e) {
-      toaster.error({
-        title: $_('page.js.persons_error'),
-        description: e instanceof Error ? e.message : String(e)
-      });
-    } finally {
-      personLoading = null;
-    }
+  function downloadPersons(name: string, members: CourseMember[]) {
+    download(name, toCsv(PERSON_HEADER, personRows(members)));
   }
 
   let showDeleteConfirm = $state(false);
@@ -167,38 +142,24 @@
         values: { participants: result.participants.length, leaders: result.leaders.length }
       })}
     </p>
-    {#if isAdmin}
-      <div class="flex flex-wrap gap-2">
-        <button
-          class="btn preset-tonal-primary"
-          onclick={() => downloadPersons('participants')}
-          disabled={personLoading !== null || result.participants.length === 0}
-        >
-          <Fa icon={faDownload} />
-          <span>{$_('page.js.download_participants')}</span>
-        </button>
-        <button
-          class="btn preset-tonal-primary"
-          onclick={() => downloadPersons('leaders')}
-          disabled={personLoading !== null || result.leaders.length === 0}
-        >
-          <Fa icon={faDownload} />
-          <span>{$_('page.js.download_leaders')}</span>
-        </button>
-      </div>
-      {#if personProblems.length}
-        <div class="mt-3 text-sm">
-          <p class="font-bold">{$_('page.js.persons_incomplete')}</p>
-          <ul class="list-disc pl-5">
-            {#each personProblems as problem (problem.id)}
-              <li>{problem.name}: {problem.missing.join(', ')}</li>
-            {/each}
-          </ul>
-        </div>
-      {/if}
-    {:else}
-      <p class="text-sm italic">{$_('page.js.persons_admin_only')}</p>
-    {/if}
+    <div class="flex flex-wrap gap-2">
+      <button
+        class="btn preset-tonal-primary"
+        onclick={() => downloadPersons('personen', result.participants)}
+        disabled={result.participants.length === 0}
+      >
+        <Fa icon={faDownload} />
+        <span>{$_('page.js.download_participants')}</span>
+      </button>
+      <button
+        class="btn preset-tonal-primary"
+        onclick={() => downloadPersons('personen_leitende', result.leaders)}
+        disabled={result.leaders.length === 0}
+      >
+        <Fa icon={faDownload} />
+        <span>{$_('page.js.download_leaders')}</span>
+      </button>
+    </div>
   </li>
 
   <li class="card p-4">
