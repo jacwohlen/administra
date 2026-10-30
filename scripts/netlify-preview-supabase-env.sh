@@ -5,9 +5,10 @@
 # The Netlify Supabase extension only syncs credentials of one fixed
 # project per deploy context — it knows nothing about per-PR preview
 # branches — so this script resolves the branch matching the PR's git
-# branch via the Supabase CLI and exports its URL and anon key as
-# PUBLIC_SUPABASE_DATABASE_URL / PUBLIC_SUPABASE_ANON_KEY before the
-# build. If no branch exists (frontend-only PR, branching disabled, or
+# branch via the Supabase CLI and exports its URL and publishable key
+# (the legacy anon key only when the branch has none, as Supabase retires
+# legacy keys at the end of 2026) as PUBLIC_SUPABASE_DATABASE_URL /
+# PUBLIC_SUPABASE_ANON_KEY before the build. If no branch exists (frontend-only PR, branching disabled, or
 # missing credentials), the build falls back to the env vars already
 # configured in Netlify. See docs/SUPABASE_BRANCHING.md.
 #
@@ -53,9 +54,9 @@ resolve_branch_env() {
   for attempt in $(seq 1 8); do
     if out=$(npx supabase --experimental branches get "$git_branch" -o env 2>"$errfile"); then
       url=$(env_value "$(grep -m1 '^SUPABASE_URL=' <<<"$out" || true)")
-      anon=$(env_value "$(grep -m1 '^SUPABASE_ANON_KEY=' <<<"$out" || true)")
+      anon=$(env_value "$(grep -m1 '^SUPABASE_PUBLISHABLE_KEY=' <<<"$out" || true)")
       if [ -z "$anon" ] || [ "$anon" = "******" ]; then
-        anon=$(env_value "$(grep -m1 '^SUPABASE_PUBLISHABLE_KEY=' <<<"$out" || true)")
+        anon=$(env_value "$(grep -m1 '^SUPABASE_ANON_KEY=' <<<"$out" || true)")
       fi
       if [ -n "$url" ] && [ -n "$anon" ] && [ "$anon" != "******" ]; then
         export PUBLIC_SUPABASE_DATABASE_URL="$url"
