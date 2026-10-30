@@ -19,6 +19,7 @@ without the layer: there the sync must fail.
 """
 import json
 import os
+from datetime import date, timedelta
 
 import pytest
 
@@ -27,6 +28,7 @@ from fake_world import World, participant, set_env
 from integration.client import Client
 from integration.layer import Layer, LayerError
 from psql_transport import PsqlTransport
+from webling_adapter import WeblingAdapter
 
 if os.environ.get('LAYER_TEST_REQUIRED') == '1' and not os.environ.get('LAYER_TEST_PSQL'):
     pytest.fail('LAYER_TEST_REQUIRED=1, but LAYER_TEST_PSQL is not set', pytrace=False)
@@ -49,7 +51,16 @@ def db():
     transport = PsqlTransport(os.environ['LAYER_TEST_PSQL'])
     runs = transport.query('SELECT count(*) FROM public.integration_runs')
     assert runs == ['0'], 'needs a fresh database (build it again)'
+    # The day integration_begin goes by (Zurich): the events lie around it,
+    # so the tests pass on any day of any year (CI runs them on every push)
+    STATE['today'] = date.fromisoformat(transport.query(
+        "SELECT to_char((now() AT TIME ZONE 'Europe/Zurich')::date, 'YYYY-MM-DD')")[0])
     return transport
+
+
+def day(offset):
+    """The date `offset` days from the database's today, as Webling writes it."""
+    return (STATE['today'] + timedelta(days=offset)).isoformat()
 
 
 def value(db, sql):
@@ -101,6 +112,16 @@ def sync_run(db, monkeypatch, world, kind, dry_run=False, **env):
             INTEGRATION_DRY_RUN='true' if dry_run else None, **env)
     world.install(monkeypatch)
     monkeypatch.setattr(sync, 'make_layer', lambda: Layer(Client('https://local.invalid', 'sb_secret_local', db)))
+    # The window starts 90 days back instead of January 1 (the default), so
+    # the event that is over (61003) is inside it in January too
+    plan = WeblingAdapter.plan
+
+    def plan_with_window(self, kind_):
+        planned = plan(self, kind_)
+        if kind_ == 'events':
+            planned.scope['from'] = day(-90)
+        return planned
+    monkeypatch.setattr(WeblingAdapter, 'plan', plan_with_window)
     status = sync.main([kind])
     run = json.loads(value(db, "SELECT row_to_json(r)::text FROM public.integration_runs r ORDER BY id DESC LIMIT 1"))
     return status, run
@@ -170,14 +191,17 @@ def test_members_mass_gone_is_refused_then_accepted(db, monkeypatch, capsys):
     STATE['members'] = kept
 
 
-EVENTS = [
-    # id, calendar, title, begin, end, place, limit
-    (61001, 501, 'Kyu Prüfung', '2026-11-20 18:00:00', '2026-11-20 20:00:00', 'Dojo', 12),
-    (61002, 501, 'Randori', '2026-12-04 19:00:00', '2026-12-04 21:00:00', None, None),
-    (61003, 501, 'Sommerfest', '2026-03-01 10:00:00', '2026-03-01 16:00:00', 'Halle', None),
-    (61004, 502, 'Lehrgang', '2026-11-28 09:00:00', '2026-11-28 16:00:00', 'Dojo', 20),
-    (61005, 502, 'Seminar', '2026-12-12 09:00:00', '2026-12-12 12:00:00', None, None),
-]
+def events():
+    """id, calendar, title, begin, end, place, limit; 61003 is over."""
+    return [
+        (61001, 501, 'Kyu Prüfung', f'{day(21)} 18:00:00', f'{day(21)} 20:00:00', 'Dojo', 12),
+        (61002, 501, 'Randori', f'{day(35)} 19:00:00', f'{day(35)} 21:00:00', None, None),
+        (61003, 501, 'Sommerfest', f'{day(-60)} 10:00:00', f'{day(-60)} 16:00:00', 'Halle', None),
+        (61004, 502, 'Lehrgang', f'{day(29)} 09:00:00', f'{day(29)} 16:00:00', 'Dojo', 20),
+        (61005, 502, 'Seminar', f'{day(43)} 09:00:00', f'{day(43)} 12:00:00', None, None),
+    ]
+
+
 SECTION = {501: 'Judo', 502: 'Aikido'}
 
 
@@ -187,10 +211,11 @@ def link(event_id):
 
 def events_world(confirmed):
     world = World()
-    world.calendars = {501: {'title': 'Judo Agenda', 'events': [e[0] for e in EVENTS if e[1] == 501]},
-                       502: {'title': 'Aikido Agenda', 'events': [e[0] for e in EVENTS if e[1] == 502] + [61099]}}
+    listed = events()
+    world.calendars = {501: {'title': 'Judo Agenda', 'events': [e[0] for e in listed if e[1] == 501]},
+                       502: {'title': 'Aikido Agenda', 'events': [e[0] for e in listed if e[1] == 502] + [61099]}}
     world.events = {e[0]: {'title': f' {e[2]} ', 'begin': e[3], 'end': e[4], 'place': e[5],
-                           'maxParticipants': e[6]} for e in EVENTS}
+                           'maxParticipants': e[6]} for e in listed}
     world.events[61099] = {'title': 'Serie', 'begin': '1970-01-01 00:00:00', 'end': None}
     world.participants = {61001: [participant(9100 + i, [m], state) for i, (m, state) in enumerate(confirmed)],
                           61002: [], 61004: [], 61005: []}
@@ -203,7 +228,7 @@ def test_events_first_run_adopts_the_events_written_before(db, monkeypatch, caps
     # What the sync wrote before the layer: the events, and two registrations of 61001
     values = ', '.join(
         f"({e[0]}, '{e[2]}', '{link(e[0])}', '{e[3][:10]}', '{e[3][11:16]}', '{e[4][11:16]}', "
-        f"{repr(e[5]) if e[5] else 'NULL'}, '{SECTION[e[1]]}', {e[6] or 'NULL'})" for e in EVENTS)
+        f"{repr(e[5]) if e[5] else 'NULL'}, '{SECTION[e[1]]}', {e[6] or 'NULL'})" for e in events())
     db.query(f"""INSERT INTO public.events (id, title, description, date, "timeFrom", "timeTo", location,
                                            section, "maxParticipants") VALUES {values}""")
     db.query(f"""INSERT INTO public.event_participants ("eventId", "memberId", "attendanceStatus", notes)
@@ -254,10 +279,11 @@ def holidays_world(members):
     """events_world with a holiday calendar (503) and a camp in 501."""
     world = events_world([(members[0], 'confirmed'), (members[1], 'declined')])
     world.calendars[503] = {'title': 'Ferien und Feiertage', 'events': [61201]}
-    world.events[61201] = {'title': 'Weihnachten', 'begin': '2026-12-24 00:00:00', 'end': '2026-12-27 00:00:00',
+    # Three days, all day: Webling ends it at midnight after the last day
+    world.events[61201] = {'title': 'Weihnachten', 'begin': f'{day(55)} 00:00:00', 'end': f'{day(58)} 00:00:00',
                            'place': None, 'maxParticipants': None}
     world.calendars[501]['events'].append(61202)
-    world.events[61202] = {'title': 'Lager', 'begin': '2026-11-13 18:00:00', 'end': '2026-11-15 14:00:00',
+    world.events[61202] = {'title': 'Lager', 'begin': f'{day(14)} 18:00:00', 'end': f'{day(16)} 14:00:00',
                            'place': None, 'maxParticipants': None}
     world.participants.update({61201: [], 61202: []})
     return world
@@ -267,7 +293,7 @@ def test_holidays_and_end_dates(db, monkeypatch, capsys):
     members = STATE['participants']
     # A holiday the sync wrote as an event before the layer
     db.query(f"""INSERT INTO public.events (id, title, description, date, "timeFrom", "timeTo", section)
-                 VALUES (61201, 'Weihnachten', '{link(61201)}', '2026-12-24', '00:00', '00:00', 'General')""")
+                 VALUES (61201, 'Weihnachten', '{link(61201)}', '{day(55)}', '00:00', '00:00', 'General')""")
     status, run = sync_run(db, monkeypatch, holidays_world(members), 'events')
     assert status == 0, capsys.readouterr().out
     result = run['result']
@@ -276,11 +302,11 @@ def test_holidays_and_end_dates(db, monkeypatch, capsys):
     # The holiday is the training plan's now (3 days: the dojo is closed), its event is gone
     assert value(db, "SELECT concat_ws('|', title, date_from, date_to, cancels_training::text) "
                      "FROM public.training_plan_breaks WHERE external_id = '61201'") == \
-        'Weihnachten|2026-12-24|2026-12-26|true'
+        f'Weihnachten|{day(55)}|{day(57)}|true'
     assert value(db, "SELECT count(*) FROM public.events WHERE id = 61201") == '0'
     # The camp ends on its last day, with its times
     assert value(db, """SELECT concat_ws('|', date, date_to, all_day::text, "timeFrom", "timeTo", description)
-                          FROM public.events WHERE id = 61202""") == '2026-11-13|2026-11-15|false|18:00|14:00'
+                          FROM public.events WHERE id = 61202""") == f'{day(14)}|{day(16)}|false|18:00|14:00'
 
 
 def test_a_calendar_webling_no_longer_has(db, monkeypatch, capsys):
