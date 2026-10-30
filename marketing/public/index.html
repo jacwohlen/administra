@@ -32,6 +32,7 @@
     <link rel="stylesheet" href="/assets/tokens.css" />
     <link rel="stylesheet" href="/assets/site.css" />
     <script src="/assets/theme.js"></script>
+    <script src="/assets/presence.js" defer></script>
   </head>
   <body>
     <a class="skip-link" href="#inhalt">Zum Inhalt springen</a>
@@ -90,14 +91,17 @@
           </svg>
         </button>
         <a class="lang-switch" href="/en/" hreflang="en" lang="en" aria-label="English">EN</a>
-        <a class="btn btn-primary btn-small" href="https://demo.adsumus.ch">Demo öffnen</a>
+        <a class="btn btn-primary btn-small" href="https://demo.adsumus.ch"
+          ><span class="btn-long">Demo öffnen</span><span class="btn-short">Demo</span></a
+        >
       </div>
     </header>
 
     <main id="inhalt">
       <section class="hero">
+        <canvas class="presence" data-presence aria-hidden="true"></canvas>
         <div class="wrap">
-          <div>
+          <div data-presence-text>
             <span class="eyebrow">Für Judo- und Aikidovereine</span>
             <h1>Weniger Listen. Mehr Training.</h1>
             <p class="lead">

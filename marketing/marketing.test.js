@@ -58,12 +58,19 @@ describe.each(pages)('$name', ({ name, html, doc }) => {
     expect(doc.querySelectorAll('h1')).toHaveLength(1);
   });
 
-  it('loads only the light/dark switch script and nothing from other origins', () => {
+  it('loads only its own scripts and nothing from other origins', () => {
     const scripts = [...doc.querySelectorAll('script')];
-    expect(scripts.map((s) => s.getAttribute('src'))).toEqual(['/assets/theme.js']);
-    expect(scripts[0].textContent.trim()).toBe('');
-    // In <head>, so a saved choice applies before the first paint
+    for (const script of scripts) expect(script.textContent.trim(), name).toBe('');
+    // The light/dark switch in <head>, so a saved choice applies before the
+    // first paint; the presence grid (home pages only) after parsing
+    const sources = scripts.map((s) => s.getAttribute('src'));
+    const home = ['index.html', 'en/index.html'].includes(name);
+    expect(sources).toEqual(
+      home ? ['/assets/theme.js', '/assets/presence.js'] : ['/assets/theme.js']
+    );
     expect(scripts[0].parentElement.tagName).toBe('HEAD');
+    expect(scripts[0].hasAttribute('defer')).toBe(false);
+    if (home) expect(scripts[1].hasAttribute('defer')).toBe(true);
     for (const el of doc.querySelectorAll('link[href], img[src]')) {
       const url = el.getAttribute('href') ?? el.getAttribute('src');
       // Search engines want absolute URLs for these two
@@ -208,6 +215,20 @@ describe('light/dark switch', () => {
     expect(css).toMatch(/\.theme-toggle \{\s*display: none;/);
     expect(css).toContain(':root:not(.light)');
     expect(css).toContain(':root.dark');
+  });
+});
+
+describe.each(['index.html', 'en/index.html'])('presence grid on %s', (page) => {
+  const doc = pages.find((p) => p.name === page).doc;
+  const hero = doc.querySelector('.hero');
+
+  it('is a decorative canvas behind the hero, with the text it keeps clear of', () => {
+    const canvas = hero.querySelector(':scope > canvas[data-presence]');
+    expect(canvas).not.toBeNull();
+    expect(canvas.getAttribute('aria-hidden')).toBe('true');
+    const text = hero.querySelector('[data-presence-text]');
+    expect(text).not.toBeNull();
+    expect(text.querySelector('h1')).not.toBeNull();
   });
 });
 

@@ -3,9 +3,9 @@
 The public website for Adsumus (Latin for "we are here", formerly
 Administra; the repository keeps the old name): what it does, the demo link, and a contact form for
 interested clubs. Plain static HTML and CSS in
-[`public/`](public/), no build step, no cookies, no tracking, one small script of
-our own (the light/dark switch, `public/assets/theme.js`),
-no third-party fonts or scripts.
+[`public/`](public/), no build step, no cookies, no tracking, no third-party
+fonts or scripts; two small scripts of our own (the light/dark switch and
+the presence grid behind the hero, `public/assets/`).
 
 | Page                   | File                                                             |
 | ---------------------- | ---------------------------------------------------------------- |
@@ -108,10 +108,14 @@ publish anything from `marketing/`.
   changes (a test fails until you do).
 - No inline `style` attributes and no inline or third-party scripts: the
   Content Security Policy in `netlify.toml` allows only files from the site
-  itself. `assets/theme.js` is the one script: it keeps a visitor's
+  itself. There are two scripts. `assets/theme.js` keeps a visitor's
   light/dark choice in `localStorage` (mentioned in the
   Datenschutzerklärung); without JavaScript the site follows the device's
-  setting and the switch stays hidden.
+  setting and the switch stays hidden. `assets/presence.js` draws the app's
+  attendance squares behind the hero on a canvas (faint behind the text in
+  `[data-presence-text]`, a cone of light following the mouse, an opening
+  wave, check-ins on touch screens; nothing moves with reduced motion); it
+  stores nothing, and without JavaScript the hero stays plain.
 - `npx vitest run marketing` checks links, anchors, images, the form,
   placeholders and the brand copies. To look at the site locally:
   `python3 -m http.server 8080 -d marketing/public`, then open
