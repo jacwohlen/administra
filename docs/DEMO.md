@@ -1,7 +1,6 @@
 # Public demo (demo.adsumus.ch)
 
-A public, always-current Adsumus (the app, still Administra in the code) for
-people considering it for their club: the made-up **Budo-Club Musterwil**,
+A public, always-current Adsumus for people considering it for their club: the made-up **Budo-Club Musterwil**,
 entered with one click as Vorstand, Trainer/in or Mitglied, and reset to the
 same fresh state every week. The marketing site ([`marketing/`](../marketing/README.md),
 adsumus.ch) links to it.
@@ -126,7 +125,10 @@ has the schema of the code the demo site runs), and by hand.
 
 1. **Supabase**: create a project `administra-demo` in your organization
    (Pro plan, so it is never paused; region Zürich `eu-central-2`, as the
-   Datenschutzerklärung says). Then in its dashboard:
+   Datenschutzerklärung says). `administra-demo` is the product's former
+   name and stays on purpose: it is also the database marker in
+   `demo-reset.yml` and the demo password in `demoAccounts.ts` and the
+   seed; change the marker and the password only together with the seed. Then in its dashboard:
    - Authentication → Sign In / Providers: **disable "Allow new users to
      sign up"**; keep the Email provider enabled (password sign-in) with
      "Secure email change" on; leave Google and anonymous sign-ins off.

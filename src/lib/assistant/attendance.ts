@@ -200,7 +200,7 @@ export function createDraft(proposal: AttendanceProposal, options: DraftOptions)
   const dates = grid ? proposal.dates : [single];
 
   const matches = proposal.entries.map((e) => bestMatch(e.name, members, { preferred: roster }));
-  // For names to create: in the order the list writes the names it shares with Administra
+  // For names to create: in the order the list writes the names it shares with Adsumus
   const lastNameFirst = writesLastNameFirst(
     proposal.entries.flatMap((e, i) => {
       const member = matches[i].member;

@@ -124,7 +124,7 @@ jobs:
             exit 0
           fi
           if [ "$INITIALIZE" != "true" ]; then
-            echo "::error::The database is not marked as the Administra demo (comment: '$marker'). Run the workflow by hand with 'initialize' for a new demo project."
+            echo "::error::The database is not marked as the Adsumus demo (comment: '$marker'). Run the workflow by hand with 'initialize' for a new demo project."
             exit 1
           fi
           in_use=$(psql "$DEMO_DB_URL" -tAc \
