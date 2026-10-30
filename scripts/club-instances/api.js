@@ -192,7 +192,7 @@ export function netlifyApi(token) {
     },
 
     /**
-     * A site that builds the release branch of the Administra repo. Netlify
+     * A site that builds the release branch of this repository. Netlify
      * rebuilds it on every push to that branch — which only rollout.js does.
      *
      * @param {{ accountSlug: string, name: string, domain: string, repo: string, branch: string, installationId: number }} p

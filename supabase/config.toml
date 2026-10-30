@@ -202,11 +202,11 @@ otp_expiry = 3600
 # Hosted projects (Dev/Prod) need the same template set under
 # Authentication -> Email Templates, see docs/MEMBER_SIGN_IN.md.
 [auth.email.template.magic_link]
-subject = "Dein Anmeldecode für Administra"
+subject = "Dein Anmeldecode für Adsumus"
 content_path = "./supabase/templates/sign_in_code.html"
 
 [auth.email.template.confirmation]
-subject = "Dein Anmeldecode für Administra"
+subject = "Dein Anmeldecode für Adsumus"
 content_path = "./supabase/templates/sign_in_code.html"
 
 [auth.sms]

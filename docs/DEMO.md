@@ -1,7 +1,6 @@
 # Public demo (demo.adsumus.ch)
 
-A public, always-current Adsumus (the app, still Administra in the code) for
-people considering it for their club: the made-up **Budo-Club Musterwil**,
+A public, always-current Adsumus for people considering it for their club: the made-up **Budo-Club Musterwil**,
 entered with one click as Vorstand, Trainer/in or Mitglied, and reset to the
 same fresh state every week. The marketing site ([`marketing/`](../marketing/README.md),
 adsumus.ch) links to it.

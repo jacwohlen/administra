@@ -1,6 +1,6 @@
 # Integrations (Webling and other providers)
 
-Goal: Administra owns its data model, and Webling is one integration among
+Goal: Adsumus owns its data model, and Webling is one integration among
 others. Adding another provider (easyVerein, a CSV import, a calendar feed)
 should mean writing an adapter, not changing the schema or the app.
 
@@ -27,7 +27,7 @@ The work runs in phases; each one ships on its own.
   accounts (viewer, trainer, admin) keep their access: it comes from their
   role, not from a member record.
 - For members that come from Webling, name, birthday, mobile, e-mail and
-  groups are **read-only in Administra** and changed in Webling. Notes and
+  groups are **read-only in Adsumus** and changed in Webling. Notes and
   the photo stay editable.
 - Members that **Webling no longer has** (deleted or merged there) count as
   having **left**.
@@ -54,7 +54,7 @@ layer" below), whose seeded rows are exactly this table.
 | `probetraining` (app trial candidate)       | `trial`      | no                     |
 | `Probetraining` (Webling legacy, see below) | `non_member` | no                     |
 | none of these, member comes from Webling    | `non_member` | no                     |
-| none of these, member created in Administra | `active`     | yes                    |
+| none of these, member created in Adsumus    | `active`     | yes                    |
 
 Checked in this order, so `03_Austritt` wins over `Aktiv`. The labels are
 Webling group titles, except that Webling's legacy trial group
@@ -123,13 +123,13 @@ from Webling is the app's again: editable, and deletable (the link goes
 with it).
 
 E-mail: the sync sends a member's address only when Webling has one, so an
-address entered in Administra before the fields became read-only stays, and
+address entered in Adsumus before the fields became read-only stays, and
 cannot be removed there either. Once those addresses are in Webling (see
 below), the sync can own the field completely.
 
 ## Sign-in by membership status (phase 1b)
 
-An account with the role `member` may use Administra only while at least one
+An account with the role `member` may use Adsumus only while at least one
 of its member records counts: `membership_status` `active` or `passive`, not
 archived, no trial label (`member_grants_access()`). Its records are the
 member an admin linked under _Benutzer_ and every member carrying the
@@ -185,7 +185,7 @@ The rule is checked on every request, never stored
 
 Known gaps:
 
-- An e-mail removed in Webling stays in Administra (the sync only sends
+- An e-mail removed in Webling stays in Adsumus (the sync only sends
   addresses Webling has), so the old address keeps matching.
 - A status group changed in Webling on purpose: a renamed group keeps its
   status (bound by id); a new group arrives without a status, so its

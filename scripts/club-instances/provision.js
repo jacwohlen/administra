@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Set up (or complete) one club's own Administra instance:
+// Set up (or complete) one club's own Adsumus instance:
 // a Supabase project and a Netlify site, wired to each other.
 //
 //   node scripts/club-instances/provision.js <slug> [--dry-run]
@@ -166,7 +166,7 @@ if (!dryRun && state.siteId) {
 console.log(`
 Done${dryRun ? ' (dry run — nothing was changed)' : ''}. Remaining manual steps:
 
-  1. Google Cloud Console → APIs & Services → Credentials → the Administra
+  1. Google Cloud Console → APIs & Services → Credentials → the Adsumus
      OAuth client → Authorized redirect URIs: add
        ${authCallbackUrl(ref)}
   2. DNS: CNAME ${club.domain} → ${siteName(club)}.netlify.app
