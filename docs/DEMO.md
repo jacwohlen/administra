@@ -181,10 +181,7 @@ has the schema of the code the demo site runs), and by hand.
    name, logo and sections come from the seed's `app_settings`.
 
 5. **DNS**: `demo.alleda.ch` → CNAME to `alleda-demo.netlify.app`, as the
-   site's primary domain. `demo.adsumus.ch`, the former address, can stay
-   as a domain alias so old links keep working (its CNAME to the same
-   target; Netlify serves the demo there too and does not redirect an
-   alias to the primary domain).
+   site's primary domain.
 6. **Mailbox**: the demo shows `demo@alleda.ch` as the club's contact
    (public Probetraining page, trial mails); make it an alias of your
    inbox, or change `club.contactEmail` in the seed.

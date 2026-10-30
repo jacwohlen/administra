@@ -75,10 +75,9 @@ form detection on. What is left:
 2. **Base directory: `marketing`**. Build command and publish directory
    come from [`marketing/netlify.toml`](netlify.toml) (`node
 check-placeholders.mjs`, `public`). **Production branch: `main`**.
-3. Domains: `alleda.ch` as primary domain; `www.alleda.ch`,
-   `adsumus.ch` and `www.adsumus.ch` (the former name) as aliases, which
-   `netlify.toml` redirects to `https://alleda.ch`. In the DNS of both
-   domains: the apex to Netlify (A record `75.2.60.5`, or a flattened CNAME
+3. Domains: `alleda.ch` as primary domain and `www.alleda.ch` as an
+   alias, which `netlify.toml` redirects to `https://alleda.ch`. In the
+   DNS: the apex to Netlify (A record `75.2.60.5`, or a flattened CNAME
    to `alleda-marketing.netlify.app`) and `www` as a CNAME to
    `alleda-marketing.netlify.app`, with any proxy off ("DNS only"), so
    Netlify can issue the certificates.
