@@ -9,6 +9,9 @@
       content="Adsumus ist die Web-App für Judo- und Aikidovereine in der Schweiz: Präsenz am Handy erfassen, Probetrainings und Gurtprüfungen organisieren, Trainings planen – und Mitglieder sehen ihre Fortschritte selbst."
     />
     <link rel="canonical" href="https://adsumus.ch/" />
+    <link rel="alternate" hreflang="de" href="https://adsumus.ch/" />
+    <link rel="alternate" hreflang="en" href="https://adsumus.ch/en/" />
+    <link rel="alternate" hreflang="x-default" href="https://adsumus.ch/" />
     <link rel="icon" href="/assets/administra-logo.svg" type="image/svg+xml" />
     <link rel="icon" href="/favicon.ico" sizes="any" />
     <link rel="apple-touch-icon" href="/assets/administra-logo.png" />
@@ -44,6 +47,7 @@
           <a href="#start">So startet ihr</a>
           <a href="#fragen">Fragen</a>
         </nav>
+        <a class="lang-switch" href="/en/" hreflang="en" lang="en">English</a>
         <a class="btn btn-primary btn-small" href="https://demo.adsumus.ch">Demo öffnen</a>
       </div>
     </header>
@@ -582,6 +586,7 @@
             netlify-honeypot="website"
           >
             <input type="hidden" name="form-name" value="kontakt" />
+            <input type="hidden" name="sprache" value="de" />
             <p class="honeypot" aria-hidden="true">
               <label
                 >Bitte leer lassen: <input name="website" tabindex="-1" autocomplete="off"
