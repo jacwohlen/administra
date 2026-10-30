@@ -48,6 +48,32 @@ describe('scrubText', () => {
     expect(scrubText('/dashboard/members/42')).toBe('/dashboard/members/42');
   });
 
+  it('removes the calendar feed token from paths', () => {
+    const token = 'ab'.repeat(32);
+    expect(scrubText(`https://admin.example/api/calendar/${token}/alle.ics`)).toBe(
+      'https://admin.example/api/calendar/[token]/alle.ics'
+    );
+    expect(scrubText(`/api/calendar/${token}/mine.ics?x=1#top`)).toBe(
+      '/api/calendar/[token]/mine.ics?x=1#top'
+    );
+    expect(scrubText(`webcal://admin.example/api/calendar/${token}/all.ics`)).toBe(
+      'webcal://admin.example/api/calendar/[token]/all.ics'
+    );
+    expect(scrubText(`Fetching /api/calendar/${token}/meine.ics failed`)).toBe(
+      'Fetching /api/calendar/[token]/meine.ics failed'
+    );
+    // URL-encoded, e.g. inside Google's ?cid= subscribe link
+    expect(
+      scrubText(`/render?cid=webcal%3A%2F%2Fadmin.example%2Fapi%2Fcalendar%2F${token}%2Falle.ics`)
+    ).toBe('/render?cid=webcal%3A%2F%2Fadmin.example%2Fapi%2Fcalendar%2F[token]%2Falle.ics');
+    // The route ID stays readable, other routes are untouched
+    expect(scrubText('GET /api/calendar/[token]/[feed].ics')).toBe(
+      'GET /api/calendar/[token]/[feed].ics'
+    );
+    expect(scrubText('/api/health')).toBe('/api/health');
+    expect(scrubText('/dashboard/training-plan')).toBe('/dashboard/training-plan');
+  });
+
   it('removes e-mail addresses', () => {
     expect(scrubText('No member with anna.muster@example.ch')).toBe('No member with [email]');
   });
@@ -102,5 +128,23 @@ describe('scrubEvent with a trial status URL', () => {
       from: '/probetraining',
       to: '/probetraining/status/[token]'
     });
+  });
+});
+
+describe('scrubEvent with a calendar feed URL', () => {
+  it('scrubs request, transaction, breadcrumbs, spans and exception messages', () => {
+    const token = '0123456789abcdef'.repeat(4);
+    const url = `https://admin.example/api/calendar/${token}/alle.ics`;
+    const event = {
+      request: { url, headers: { Referer: url } },
+      transaction: 'GET /api/calendar/[token]/[feed].ics',
+      breadcrumbs: [{ category: 'fetch', data: { url } }],
+      spans: [{ description: `GET ${url}`, data: { 'url.full': url } }],
+      exception: { values: [{ value: `Failed to load ${url}` }] }
+    };
+    const json = JSON.stringify(scrubEvent(event));
+    expect(json).not.toContain(token);
+    expect(event.request.url).toBe('https://admin.example/api/calendar/[token]/alle.ics');
+    expect(event.transaction).toBe('GET /api/calendar/[token]/[feed].ics');
   });
 });

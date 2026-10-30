@@ -212,6 +212,14 @@ jobs:
           psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres"
           -v ON_ERROR_STOP=1 -q -f supabase/checks/event_dates.sql
 
+      # The training plan's calendar feeds: tokens only for staff, renewal,
+      # nobody reads them through the API, the feed's data by token and
+      # nothing for an account no longer staff
+      - name: Check calendar feeds
+        run: >-
+          psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres"
+          -v ON_ERROR_STOP=1 -q -f supabase/checks/calendar_feeds.sql
+
       - uses: actions/setup-python@v7
         with:
           python-version: '3.12'

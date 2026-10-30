@@ -78,7 +78,10 @@ whatever someone enters or changes (text, renamed events, uploaded photos)
 is visible to the next visitors until the reset. A "log out everywhere"
 or a password change through the auth API (the change itself is reverted)
 also ends the other visitors' sessions of that role: one click to log in
-again. If that becomes a problem, reset daily
+again. The calendar links of the training plan (`docs/TRAINING_PLAN.md`)
+are shared per role as well: anyone can renew them, which ends the other
+visitors' subscriptions, and the reset deletes them all (`calendar_feeds`).
+If that becomes a problem, reset daily
 instead of weekly: one line in the workflow's `cron` (`'23 3 * * *'`) and
 the wording "jede Woche" / "every week" in `demo.banner` and
 `page.login.demo.intro` (both locales in `src/lib/i18n/locales/`), in the
