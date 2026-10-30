@@ -1,6 +1,6 @@
 name: Demo reset
 
-# Resets the public demo at demo.adsumus.ch to a fresh, made-up club:
+# Resets the public demo at demo.alleda.ch to a fresh, made-up club:
 # drops everything in the demo database, applies prod's migrations, loads
 # supabase/demo/seed.sql (dates relative to the day of the reset) and empties
 # the storage buckets. See docs/DEMO.md.
@@ -124,7 +124,7 @@ jobs:
             exit 0
           fi
           if [ "$INITIALIZE" != "true" ]; then
-            echo "::error::The database is not marked as the Adsumus demo (comment: '$marker'). Run the workflow by hand with 'initialize' for a new demo project."
+            echo "::error::The database is not marked as the Alleda demo (comment: '$marker'). Run the workflow by hand with 'initialize' for a new demo project."
             exit 1
           fi
           # Two queries: a new project has no public.members yet, and naming

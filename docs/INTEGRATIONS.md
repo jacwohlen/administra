@@ -1,6 +1,6 @@
 # Integrations (Webling and other providers)
 
-Goal: Adsumus owns its data model, and Webling is one integration among
+Goal: Alleda owns its data model, and Webling is one integration among
 others. Adding another provider (easyVerein, a CSV import, a calendar feed)
 should mean writing an adapter, not changing the schema or the app.
 
@@ -27,7 +27,7 @@ The work runs in phases; each one ships on its own.
   accounts (viewer, trainer, admin) keep their access: it comes from their
   role, not from a member record.
 - For members that come from Webling, name, birthday, mobile, e-mail and
-  groups are **read-only in Adsumus** and changed in Webling. Notes and
+  groups are **read-only in Alleda** and changed in Webling. Notes and
   the photo stay editable.
 - Members that **Webling no longer has** (deleted or merged there) count as
   having **left**.
@@ -54,7 +54,7 @@ layer" below), whose seeded rows are exactly this table.
 | `probetraining` (app trial candidate)       | `trial`      | no                     |
 | `Probetraining` (Webling legacy, see below) | `non_member` | no                     |
 | none of these, member comes from Webling    | `non_member` | no                     |
-| none of these, member created in Adsumus    | `active`     | yes                    |
+| none of these, member created in Alleda     | `active`     | yes                    |
 
 Checked in this order, so `03_Austritt` wins over `Aktiv`. The labels are
 Webling group titles, except that Webling's legacy trial group
@@ -123,13 +123,13 @@ from Webling is the app's again: editable, and deletable (the link goes
 with it).
 
 E-mail: the sync sends a member's address only when Webling has one, so an
-address entered in Adsumus before the fields became read-only stays, and
+address entered in Alleda before the fields became read-only stays, and
 cannot be removed there either. Once those addresses are in Webling (see
 below), the sync can own the field completely.
 
 ## Sign-in by membership status (phase 1b)
 
-An account with the role `member` may use Adsumus only while at least one
+An account with the role `member` may use Alleda only while at least one
 of its member records counts: `membership_status` `active` or `passive`, not
 archived, no trial label (`member_grants_access()`). Its records are the
 member an admin linked under _Benutzer_ and every member carrying the
@@ -185,7 +185,7 @@ The rule is checked on every request, never stored
 
 Known gaps:
 
-- An e-mail removed in Webling stays in Adsumus (the sync only sends
+- An e-mail removed in Webling stays in Alleda (the sync only sends
   addresses Webling has), so the old address keeps matching.
 - A status group changed in Webling on purpose: a renamed group keeps its
   status (bound by id); a new group arrives without a status, so its
@@ -258,9 +258,9 @@ list; `supabase/checks/merge_members.sql` fails when a foreign key to
 | `user_profiles.member_id`           | Moved when only the dropped member is linked                                                                                                                          |
 | `member_links.member_id`            | A gone link goes with the dropped row; the kept member's link stays                                                                                                   |
 
-The kept row keeps its name, labels and status. Birthday, mobile and e-mail
-are only filled where it has none, and not at all on a Webling row (change
-them in Webling); an e-mail from the trial form is never copied (anybody can
+The kept row keeps its name, labels and status. Birthday, mobile, e-mail and
+the Lizenznummer (`20261105130000_merge_license_number.sql`) are only filled
+where it has none, and not at all on a Webling row (change them in Webling); an e-mail from the trial form is never copied (anybody can
 type any address there, and the e-mail decides who may sign in). Notes of
 both are joined; the dropped photo is taken when the kept row has none (the
 browser copies the file, Storage is out of SQL's reach); the kept row leaves
@@ -766,8 +766,9 @@ linked and cleared when Webling has none. The Webling adapter sends it only
 when its members have the property _Lizenznummer_ (a Webling without the
 field changes nothing); an older adapter or database leaves it out (keys
 filtered by the capabilities). Anonymized runs send none. Members from the
-app get it in the member form. Not yet in `merge_members()`: a merge keeps
-the kept row's number (the Webling row's, which Webling owns anyway).
+app get it in the member form. A merge treats it like the birthday: the
+dropped row's number fills an empty one on a kept app row, never on a Webling
+row (`fields.license_number`, `20261105130000_merge_license_number.sql`).
 
 `supabase/checks/integration_layer.sql` (section L) checks the policy, the
 capabilities, writing, keeping and clearing the number, the guard for

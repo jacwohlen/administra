@@ -5,7 +5,7 @@
 // first paint; without JavaScript the switch stays hidden.
 (() => {
   const root = document.documentElement;
-  const key = 'adsumus-theme';
+  const key = 'alleda-theme';
   const system = window.matchMedia('(prefers-color-scheme: dark)');
 
   try {

@@ -157,7 +157,7 @@ VALUES (990001, 'Judo', 'Phase 1b check', to_char(current_date + 30, 'YYYY-MM-DD
 
 
 -- Members the scenarios use: app ids below 1'000 count as created in
--- Adsumus, ids from 5'001 lie in the Webling range
+-- Alleda, ids from 5'001 lie in the Webling range
 INSERT INTO public.members (id, firstname, lastname, labels, email) VALUES
   (901, 'Anna', 'Aktiv', '[]', '  Anna.Aktiv@Test.CH '),
   (902, 'Paul', 'Passiv', '["Ehrenmitglieder"]', 'paul@test.ch');
@@ -828,7 +828,8 @@ SELECT pg_temp.eq('new accounts default to member',
 -- helpers that apply the membership rule (is_approved_user, my_member_ids)
 -- or require a staff role. A policy reading user_profiles itself, or a new
 -- API function doing so, would skip the rule; extend this list only for a
--- function that applies it.
+-- function that applies it. calendar_feed applies the staff rule of
+-- is_staff() to the account its token belongs to (calendar_feeds.sql).
 SELECT pg_temp.ok('no policy reads user_profiles itself',
   NOT EXISTS (SELECT 1 FROM pg_policies
               WHERE coalesce(qual, '') || coalesce(with_check, '') ~ 'user_profiles'));
@@ -839,7 +840,7 @@ SELECT pg_temp.eq('API functions reading user_profiles',
      AND p.prosrc ~ 'user_profiles'
      AND (has_function_privilege('authenticated', p.oid, 'EXECUTE')
           OR has_function_privilege('anon', p.oid, 'EXECUTE'))),
-  'is_admin,is_approved_user,is_exam_manager,is_examiner,is_staff,is_writer,member_access_report,my_access,my_member_ids');
+  'calendar_feed,is_admin,is_approved_user,is_exam_manager,is_examiner,is_staff,is_writer,member_access_report,my_access,my_member_ids');
 
 ROLLBACK;
 

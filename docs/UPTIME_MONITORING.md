@@ -51,8 +51,9 @@ ping arrives in time**. The second case matters: GitHub disables scheduled
 workflows after 60 days without commits, and nobody would notice otherwise.
 
 The workflow pings `<url>/start` before and `<url>` (success) or
-`<url>/fail` after the run. The pings carry no data, and a failed ping never
-fails the sync.
+`<url>/fail` after the run; a dry run (`dry_run`) pings nothing, since it
+does not sync. The pings carry no data, and a failed ping never fails the
+sync.
 
 Setup (once):
 

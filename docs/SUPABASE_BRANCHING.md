@@ -1,6 +1,6 @@
 # Supabase Branching: Preview Databases per PR, Auto-Deploy on Merge
 
-This document describes how Adsumus's database changes flow from a pull
+This document describes how Alleda's database changes flow from a pull
 request to production, the environment layout, and what remains to verify.
 
 ## Environments
@@ -18,10 +18,10 @@ the Prod project (all branches clone from Prod).
 The `dev` environment is a **persistent branch** of the Prod project,
 declared as `[remotes.dev]` in `config.toml`. Linked to git branch `main`
 in the dashboard, it re-runs the deployment workflow (migrations, config,
-functions) on every push to `main`. It replaces the former standalone
+functions) on every push to `main`. It replaced the former standalone
 "Administra (Dev)" project (`hkxeuofxdxkviqrfnfns`), which had no GitHub
-connection and therefore never received migrations automatically; delete
-that project once the cutover is verified.
+connection and therefore never received migrations automatically; that
+project has been deleted.
 
 ## Workflow
 
@@ -86,7 +86,7 @@ in `src/routes/+page.server.ts`) only exist in builds with
 the action with 404. Supabase itself still accepts password logins for any
 account that has a password, so the real protection is that no persistent
 environment has an account with a known password.
-The public demo (`PUBLIC_MODE=DEMO`, demo.adsumus.ch) is the one deliberate
+The public demo (`PUBLIC_MODE=DEMO`, demo.alleda.ch) is the one deliberate
 exception: its accounts have a published password, which is why it runs on
 its own Supabase project, never the club's Dev or Prod (see
 [DEMO.md](DEMO.md)).

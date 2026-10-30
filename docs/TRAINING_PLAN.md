@@ -21,9 +21,10 @@ shows one calendar year (arrows switch the year), grouped by month:
 
 Filters show single trainings or only dates whose trainer is still open;
 _Einsätze pro Trainer_ counts the sessions each trainer leads, to keep the
-rotation fair. _Drucken_ prints the shown list. A row links to the training's
-check-in for that date, which in turn shows the plan (topic, trainer, or that
-the training is cancelled).
+rotation fair. _Drucken_ prints the shown list, _Kalender abonnieren_ puts
+the plan into a calendar app (see _Kalender abonnieren (ICS)_). A row links
+to the training's check-in for that date, which in turn shows the plan
+(topic, trainer, or that the training is cancelled).
 
 ## Planning
 
@@ -95,6 +96,78 @@ Unlike the former sheet import, what is already planned is not replaced
 without asking: a session that contradicts the plan is only written when
 ticked. Without `PRIVATE_ANTHROPIC_API_KEY` there is no import; the plan is
 then entered in the table.
+
+## Kalender abonnieren (ICS)
+
+Every staff account (viewer, trainer, admin: `is_staff()`) can subscribe to
+the plan in its calendar app. _Kalender abonnieren_ on the plan page shows
+two feeds, each as a link to copy (Google "From URL", Outlook "Subscribe
+from web"), to open in the device's calendar app (`webcal://`, Apple
+Calendar, Outlook) or in Google Calendar:
+
+- **Meine Trainings** – the dates the account's member leads: the planned
+  trainer, else the training's main trainer (`trainerId` of `buildPlan()`).
+  Cancelled dates the member would have led stay in. The member is found
+  as for _Mein Profil_ (the linked member, or one with the account's
+  e-mail: `my_member_ids()`); an account without one gets no link but a
+  hint, and an admin links it in _Benutzer_.
+- **Alle Trainings** – every date of every planned training.
+
+Both hold what the plan page shows, computed the same way (`buildPlan()` in
+`src/lib/trainingPlanUtils.ts`) from 8 weeks back to 12 months ahead
+(Europe/Zurich): one event per date, no repeat rule, so trainer, topic and
+cancellation can differ per date. Events of the club (Anlässe) are not in
+the feeds.
+
+- Title: in _Alle Trainings_ `Judo Randori: Uchi-mata – Anna Muster`
+  (without a topic `Judo Randori – Anna Muster`, without a trainer _Trainer
+  offen_), in _Meine Trainings_ `Judo Randori: Uchi-mata`.
+- Cancelled dates stay visible, with `Fällt aus: ` in front and the reason
+  in brackets: the note when the date itself is cancelled, else the holiday
+  closing the dojo (`Fällt aus: Judo Randori (Weihnachten)`). They are not
+  marked cancelled for the calendar app (`STATUS:CANCELLED`): Google hides
+  such events. Instead they count as free time.
+- Description: topic, trainer (_Leitung_), note, the holidays the date
+  falls in when they do not drop it (`Ferien: Herbstferien`) and the link to
+  the training's check-in for that date (also the event's URL).
+- Time: the training's start and end (90 minutes without an end time),
+  all day without a start time. _Meine Trainings_ shows held dates as busy,
+  _Alle Trainings_ everything as free, so it does not block the calendar.
+- Language: the app's language when the link was taken (feed `meine` /
+  `alle` German, `mine` / `all` English); switching the language and
+  copying again gives the other one. The calendar is named after the feed
+  and the club name from the settings (_Alle Trainings (…)_).
+
+Changes in the plan reach the calendar when the app fetches the feed
+again. The feed asks for every 6 hours (`REFRESH-INTERVAL`,
+`X-PUBLISHED-TTL`), but each app has its own schedule: Apple Calendar on
+the Mac lets the user pick the interval, Outlook.com fetches about every 3
+hours (at times more than a day later), Google every 8 to 24 hours or less
+often, and neither can be pushed.
+
+The link is secret: whoever has it sees the plan with the trainers' names,
+without signing in. _Link erneuern_ (after a confirmation) gives the
+account a new token, the old links stop working (404), and calendars
+subscribed with them no longer update until they are subscribed again. A
+disabled account, or one that is no longer staff, gets 404 too.
+
+- `calendar_feeds` – one token per account (64 hex characters, user id as
+  key); RLS without policies and no grants, so no API role reads it
+- `calendar_feed_token(p_renew)` – the caller's token, created on first use
+  and replaced with `p_renew`; staff only
+- `calendar_feed(p_token)` – what a feed needs while the token's account is
+  approved staff (else NULL): its member ids (the same rule as
+  `my_member_ids()`), the planned trainings, their sessions and the
+  holidays from 70 days back to 400 days ahead, and the trainers' names.
+  Granted to `anon`, since calendar apps send no session; the token is the
+  only key
+- `/api/calendar/<token>/<feed>.ics`
+  (`src/routes/api/calendar/[token]/[feed].ics/+server.ts`) builds the file
+  with `src/lib/calendarFeed.ts` and `src/lib/ics.ts`: 404 for a malformed
+  or unknown token and an unknown feed name, 503 when the database does not
+  answer (never an empty calendar, which would wipe the trainings of every
+  subscriber until the next fetch). Sentry reports get the token removed
+  from the path (`docs/ERROR_MONITORING.md`)
 
 ## Roles
 

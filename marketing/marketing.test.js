@@ -89,7 +89,7 @@ describe.each(pages)('$name', ({ name, html, doc }) => {
       const file = targetFile(url);
       if (!file) {
         expect(url, url).toMatch(
-          /^(https:\/\/(demo\.)?adsumus\.ch(\/|$)|mailto:kontakt@adsumus\.ch$)/
+          /^(https:\/\/(demo\.)?alleda\.ch(\/|$)|mailto:kontakt@alleda\.ch$)/
         );
         continue;
       }
@@ -171,9 +171,9 @@ describe('languages', () => {
 
   it('both home pages name each other as alternates', () => {
     const expected = {
-      de: 'https://adsumus.ch/',
-      en: 'https://adsumus.ch/en/',
-      'x-default': 'https://adsumus.ch/'
+      de: 'https://alleda.ch/',
+      en: 'https://alleda.ch/en/',
+      'x-default': 'https://alleda.ch/'
     };
     expect(alternates(german)).toEqual(expected);
     expect(alternates(english)).toEqual(expected);

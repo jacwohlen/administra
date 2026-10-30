@@ -7,6 +7,7 @@
     faBan,
     faBookOpen,
     faCalendarDays,
+    faCalendarPlus,
     faCheck,
     faGear,
     faPen,
@@ -34,6 +35,7 @@
   import SessionDialog from './SessionDialog.svelte';
   import PlanGrid from './PlanGrid.svelte';
   import RotationDialog from './RotationDialog.svelte';
+  import CalendarFeedDialog from './CalendarFeedDialog.svelte';
   import type { PageData } from './$types';
 
   let { data }: { data: PageData } = $props();
@@ -46,6 +48,7 @@
   let selected = $state<string[]>([]);
   let dialogRows = $state<PlanRow[] | null>(null);
   let rotationOpen = $state(false);
+  let calendarOpen = $state(false);
 
   // The chosen view and training stay for the next visit (this browser only)
   function stored(key: string): string | null {
@@ -240,6 +243,15 @@
   >
     <Fa icon={faPrint} />
     <span class="hidden sm:inline">{$_('page.trainingPlan.print')}</span>
+  </button>
+  <button
+    class="btn preset-tonal-surface"
+    onclick={() => (calendarOpen = true)}
+    title={$_('page.trainingPlan.calendar.button')}
+    aria-label={$_('page.trainingPlan.calendar.button')}
+  >
+    <Fa icon={faCalendarPlus} />
+    <span class="hidden sm:inline">{$_('page.trainingPlan.calendar.button')}</span>
   </button>
 </div>
 
@@ -585,4 +597,8 @@
     onclose={() => (rotationOpen = false)}
     onsaved={saved}
   />
+{/if}
+
+{#if calendarOpen}
+  <CalendarFeedDialog onclose={() => (calendarOpen = false)} />
 {/if}

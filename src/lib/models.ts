@@ -65,7 +65,7 @@ export type MembershipStatus = 'trial' | 'active' | 'passive' | 'non_member' | '
 export type MemberAccessStatus = MembershipStatus | 'archived';
 
 /**
- * my_access(): whether the signed-in account may use Adsumus now
+ * my_access(): whether the signed-in account may use Alleda now
  * (is_approved_user(), the check RLS uses) and the reason per member record
  */
 export interface MyAccess {
@@ -168,6 +168,8 @@ export interface MemberMergeResult {
     birthday: MergeFieldDecision;
     mobile: MergeFieldDecision;
     email: MergeFieldDecision;
+    /** Lizenznummer; missing from a database before 20261105130000 */
+    license_number?: MergeFieldDecision;
     notes: 'same' | 'joined';
     photo: 'none' | 'kept' | 'from_drop' | 'kept_both';
     /** imgUploaded of the dropped member's photo: its file is avatars/<drop>_<ms>.webp */

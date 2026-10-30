@@ -1,6 +1,6 @@
-# Adsumus - Attendance Tracking System
+# Alleda - Attendance Tracking System
 
-A modern attendance tracking system designed specifically for martial arts clubs and training organizations (formerly Administra; the repository `jacwohlen/administra` and its identifiers keep that name). Built with SvelteKit and Supabase, Adsumus makes it easy to manage training sessions, track attendance, and generate insightful statistics.
+A modern attendance tracking system designed specifically for martial arts clubs and training organizations (formerly Administra and Adsumus; the repository `jacwohlen/administra` and its identifiers keep the old names). Built with SvelteKit and Supabase, Alleda makes it easy to manage training sessions, track attendance, and generate insightful statistics.
 
 ## Features
 
@@ -55,7 +55,7 @@ Create a `.env` file in the root directory:
 
 ```bash
 PUBLIC_SUPABASE_DATABASE_URL="your-supabase-project-url"
-PUBLIC_SUPABASE_ANON_KEY="your-supabase-anon-key"
+PUBLIC_SUPABASE_ANON_KEY="your-supabase-publishable-key"  # sb_publishable_..., the name is historic
 PUBLIC_MODE="DEV"  # Use "PROD" for production, "DEMO" only for the public demo
 ```
 
@@ -192,7 +192,7 @@ For local development, use the Supabase CLI to run a full Supabase stack locally
 supabase start
 ```
 
-This starts PostgreSQL on port 54322, the API on port 54321, and Studio on port 54323. Use the `anon key` and `API URL` printed in the output for your `.env` file.
+This starts PostgreSQL on port 54322, the API on port 54321, and Studio on port 54323. Use the `API URL` and the publishable key printed in the output for your `.env` file (`PUBLIC_SUPABASE_ANON_KEY`; older CLI versions print only the legacy `anon key`, which works locally too).
 
 2. **Apply migrations and seed data:**
 
@@ -264,12 +264,12 @@ npm run build
 
 3. Set environment variables in Netlify dashboard:
    - `PUBLIC_SUPABASE_DATABASE_URL`
-   - `PUBLIC_SUPABASE_ANON_KEY`
+   - `PUBLIC_SUPABASE_ANON_KEY` (the project's publishable key, `sb_publishable_...`; the legacy JWT anon key stops working at the end of 2026)
    - `PUBLIC_MODE` (set to "PROD"). Only `DEV` builds offer the
      email/password test login, which works only where `seed.sql` created
      the test users (local and preview branches, see
      [docs/SUPABASE_BRANCHING.md](docs/SUPABASE_BRANCHING.md#seed-data-and-test-logins)).
-     `DEMO` is only for the public demo at demo.adsumus.ch, a made-up club
+     `DEMO` is only for the public demo at demo.alleda.ch, a made-up club
      on its own Supabase project with one-click role logins and a demo banner
      (see [docs/DEMO.md](docs/DEMO.md)).
 

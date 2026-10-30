@@ -1,4 +1,4 @@
--- Demo club for the public demo at demo.adsumus.ch: "Budo-Club Musterwil".
+-- Demo club for the public demo at demo.alleda.ch: "Budo-Club Musterwil".
 --
 -- A made-up club with a Judo and an Aikido section: ~125 members (trial
 -- candidates, passive members and people who left included), 9 trainings,
@@ -203,9 +203,9 @@ $$;
 
 INSERT INTO public.app_settings (key, value) VALUES
   ('club.name', '"Budo-Club Musterwil"'),
-  ('club.url', '"https://adsumus.ch"'),
+  ('club.url', '"https://alleda.ch"'),
   ('club.logo', '"/brand/logo/administra-logo.svg"'),
-  ('club.contactEmail', '"demo@adsumus.ch"'),
+  ('club.contactEmail', '"demo@alleda.ch"'),
   ('club.sections', '["Judo", "Aikido"]'),
   ('locale.default', '"de"');
 
@@ -400,7 +400,7 @@ SELECT
   CASE WHEN pg_temp.h(r.id || ':tel?') >= 15 THEN pg_temp.mobile(r.id || ':tel') END,
   CASE
     -- the demo member account "Familie Brunner" (both children)
-    WHEN r.id IN (120, 150) THEN 'mitglied@demo.adsumus.ch'
+    WHEN r.id IN (120, 150) THEN 'mitglied@demo.alleda.ch'
     WHEN pg_temp.h(r.id || ':mail?') < 12 THEN NULL
     WHEN r.age >= 18 THEN pg_temp.slug(r.firstname) || '.' || pg_temp.slug(r.lastname)
                           || '@example.com'
@@ -836,19 +836,19 @@ $$;
 DO $$
 BEGIN
   PERFORM pg_temp.demo_user('d3e40000-0000-4000-8000-000000000001',
-                            'vorstand@demo.adsumus.ch',
+                            'vorstand@demo.alleda.ch',
                             'Sandra Keller', 'administra-demo', now() - interval '420 days',
                             now() - interval '3 days');
   PERFORM pg_temp.demo_user('d3e40000-0000-4000-8000-000000000002',
-                            'trainer@demo.adsumus.ch',
+                            'trainer@demo.alleda.ch',
                             'Marco Rossi', 'administra-demo', now() - interval '400 days',
                             now() - interval '6 days');
   PERFORM pg_temp.demo_user('d3e40000-0000-4000-8000-000000000003',
-                            'mitglied@demo.adsumus.ch',
+                            'mitglied@demo.alleda.ch',
                             'Familie Brunner', 'administra-demo', now() - interval '210 days',
                             now() - interval '9 days');
   PERFORM pg_temp.demo_user('d3e40000-0000-4000-8000-000000000004',
-                            'neu@demo.adsumus.ch',
+                            'neu@demo.alleda.ch',
                             'Luca Bernasconi', gen_random_uuid()::text, now() - interval '1 day',
                             now() - interval '1 day');
 END $$;
@@ -1206,8 +1206,8 @@ SELECT m.id, k.kind, m.email,
                 WHERE p."memberId" = m.id), '')
           END
        || E'\n\nDen Stand deiner Anmeldung siehst du jederzeit hier:\n'
-       || 'https://demo.adsumus.ch/probetraining/status/' || m."trialToken"
-       || E'\n\nBei Fragen erreichst du uns unter demo@adsumus.ch.\n\n'
+       || 'https://demo.alleda.ch/probetraining/status/' || m."trialToken"
+       || E'\n\nBei Fragen erreichst du uns unter demo@alleda.ch.\n\n'
        || E'Sportliche Grüsse\nBudo-Club Musterwil',
        CASE WHEN k.kind = 'welcome' AND m.id = 381 THEN 'skipped' ELSE 'sent' END,
        k.at,
@@ -1474,12 +1474,12 @@ LANGUAGE plpgsql
 SET search_path = pg_catalog
 AS $$
 BEGIN
-  IF lower(btrim(NEW.email)) IN ('vorstand@demo.adsumus.ch',
-                                 'trainer@demo.adsumus.ch',
-                                 'mitglied@demo.adsumus.ch',
-                                 'neu@demo.adsumus.ch')
+  IF lower(btrim(NEW.email)) IN ('vorstand@demo.alleda.ch',
+                                 'trainer@demo.alleda.ch',
+                                 'mitglied@demo.alleda.ch',
+                                 'neu@demo.alleda.ch')
      AND NOT (NEW.id IN (120, 150)
-              AND lower(btrim(NEW.email)) = 'mitglied@demo.adsumus.ch')
+              AND lower(btrim(NEW.email)) = 'mitglied@demo.alleda.ch')
   THEN
     RAISE EXCEPTION USING ERRCODE = '42501', MESSAGE =
       'In der Demo kann die E-Mail-Adresse eines Demo-Kontos keinem weiteren Mitglied '

@@ -4,7 +4,7 @@
   /**
    * The club's logo for public-facing pages, taken from `clubConfig.logo`
    * (PUBLIC_CLUB_LOGO — an absolute URL or a path under static/). If it ever
-   * fails to load, this falls back to the Adsumus mark so the page never
+   * fails to load, this falls back to the Alleda mark so the page never
    * shows a broken image.
    */
   const fallback = '/administra-logo.svg';

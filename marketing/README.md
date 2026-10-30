@@ -1,9 +1,9 @@
-# adsumus.ch — marketing site
+# alleda.ch — marketing site
 
-The public website for Adsumus (Latin for "we are here", formerly
-Administra; the repository keeps the old name): what it does, the demo link, and a contact form for
-interested clubs. Plain static HTML and CSS in
-[`public/`](public/), no build step, no cookies, no tracking, no third-party
+The public website for Alleda (Swiss German "alle da", everyone's here;
+formerly Administra and Adsumus; the repository is still called
+administra): what it does, the demo link, and a contact form for interested
+clubs. Plain static HTML and CSS in [`public/`](public/), no build step, no cookies, no tracking, no third-party
 fonts or scripts; two small scripts of our own (the light/dark switch and
 the presence grid behind the hero, `public/assets/`).
 
@@ -17,14 +17,14 @@ the presence grid behind the hero, `public/assets/`).
 | Datenschutzerklärung   | [`public/datenschutz/index.html`](public/datenschutz/index.html) |
 | Not found (both)       | [`public/404.html`](public/404.html)                             |
 
-The demo it links to (demo.adsumus.ch) is described in
+The demo it links to (demo.alleda.ch) is described in
 [`docs/DEMO.md`](../docs/DEMO.md).
 
 ## Before going live
 
 1. **Legal pages.** For now the site runs under the club's identity: JAC
    Wohlen is the operator in the Impressum and the Datenschutzerklärung,
-   with the contact address `kontakt@adsumus.ch` (forwarded to the
+   with the contact address `kontakt@alleda.ch` (forwarded to the
    club's Google Workspace; it must work before going live) and the demo
    database in Zürich. If the forwarding runs through another provider
    (e.g. Cloudflare Email Routing), name it in the Datenschutzerklärung. A `[[…]]` placeholder added later fails production
@@ -60,9 +60,32 @@ The app keeps its own release flow; the two are separate Netlify sites and
 never wait for each other. Every pull request gets a Deploy Preview of the
 site (placeholders allowed there).
 
-Keep in mind that the demo (demo.adsumus.ch) builds `prod`: describe a
+Keep in mind that the demo (demo.alleda.ch) builds `prod`: describe a
 new app feature on the site only once it is promoted, or the screenshots
 and the demo disagree.
+
+### Switching from adsumus.ch (once)
+
+The pull request that renames the site to Alleda goes live when it is
+merged: the demo buttons then link to `demo.alleda.ch`, the legal pages
+name `kontakt@alleda.ch`, and adsumus.ch redirects to alleda.ch. So before
+merging it:
+
+1. Netlify site `adsumus-demo`: add `demo.alleda.ch` (CNAME, certificate
+   issued) and keep `demo.adsumus.ch` as an alias (see
+   [`docs/DEMO.md`](../docs/DEMO.md), step 5).
+2. Make `kontakt@alleda.ch` and `demo@alleda.ch` deliver (alias domain in
+   the club's Google Workspace, or a forwarder named in the
+   Datenschutzerklärung).
+3. Site `administra-marketing`: `alleda.ch` as primary domain, the other
+   three as aliases (step 3 below).
+
+The app's part (the demo strip's link, the demo accounts' e-mails) follows
+with the next `main` → `prod` promotion; the demo reset it starts
+re-creates the accounts, so the demo's role buttons may fail for a few
+minutes until both the build and the reset are done. Then set the demo
+project's Site URL and `PUBLIC_SUPABASE_SITE_URL` to
+`https://demo.alleda.ch` (docs/DEMO.md, steps 1 and 4).
 
 ## Netlify setup (once)
 
@@ -75,11 +98,11 @@ form detection on. What is left:
 2. **Base directory: `marketing`**. Build command and publish directory
    come from [`marketing/netlify.toml`](netlify.toml) (`node
 check-placeholders.mjs`, `public`). **Production branch: `main`**.
-3. Domains: `adsumus.ch` as primary domain; `www.adsumus.ch`,
-   `alleda.ch` and `www.alleda.ch` as aliases, which `netlify.toml`
-   redirects to `https://adsumus.ch`. In the DNS of both domains: the apex
-   to Netlify (A record `75.2.60.5`, or a flattened CNAME to
-   `administra-marketing.netlify.app`) and `www` as a CNAME to
+3. Domains: `alleda.ch` as primary domain; `www.alleda.ch`,
+   `adsumus.ch` and `www.adsumus.ch` (the former name) as aliases, which
+   `netlify.toml` redirects to `https://alleda.ch`. In the DNS of both
+   domains: the apex to Netlify (A record `75.2.60.5`, or a flattened CNAME
+   to `administra-marketing.netlify.app`) and `www` as a CNAME to
    `administra-marketing.netlify.app`, with any proxy off ("DNS only"), so
    Netlify can issue the certificates.
 4. **Forms**: add an e-mail notification for the form `kontakt` to your

@@ -1,6 +1,6 @@
 # J+S export (attendance → NDS)
 
-Adsumus exports the attendance of J+S courses as CSV files for the import
+Alleda exports the attendance of J+S courses as CSV files for the import
 into the Nationale Datenbank Sport (NDS). It is an **optional module**: the
 connection `js` on the Integrations page (`/dashboard/integrations`), off
 after the migration; an admin switches it on there. While it is on,
@@ -14,9 +14,9 @@ member's **Lizenznummer** (`members.license_number`), which is the J+S
 person number. That is an ordinary member field:
 
 - with the Webling integration, Webling owns it like the name (field
-  _Lizenznummer_, synced nightly, read-only in Adsumus while the member is
+  _Lizenznummer_, synced nightly, read-only in Alleda while the member is
   linked);
-- without it (or for members created in Adsumus) staff enter it in the
+- without it (or for members created in Alleda) staff enter it in the
   member form.
 
 ## Why CSV, not an API
@@ -25,7 +25,7 @@ The NDS offers CSV uploads for youth courses (Jugendausbildung): persons,
 activities and attendance (Anwesenheitskontrolle, AWK). Its REST API
 (`api.baspo.admin.ch/nds/api`) only serves cadre courses (Kaderbildung),
 read-only, to partner organisations with a contract. So courses cannot be
-read from the NDS either; they are entered in Adsumus by hand, once per
+read from the NDS either; they are entered in Alleda by hand, once per
 course year.
 
 Sources (BASPO, jugendundsport.ch/de/datenimport):
@@ -49,7 +49,7 @@ Only trainers and admins see the courses, maintain them and download the
 files (RLS `is_writer()` for reading and writing,
 `20261105120000_js_module_trainers_only.sql`); viewers see neither the menu
 entry nor the pages. The licence number itself is part of the member record
-and visible to all staff, like the birthday. Adsumus keeps no AHV numbers, addresses,
+and visible to all staff, like the birthday. Alleda keeps no AHV numbers, addresses,
 nationality or mother tongue.
 
 ## The files
@@ -65,7 +65,7 @@ in BASPO's templates (`src/lib/jsExport.ts`).
    club's NDS organisation** needs an AHV number (or PEID), which the NDS
    checks against the AHV register: enter such persons in the NDS directly,
    then their new person number as Lizenznummer (in Webling for members
-   from Webling, else in Adsumus).
+   from Webling, else in Alleda).
 2. **Activities** (`aktivitaeten_*.csv`): one `Training` per training and
    date with at least one attendance, with start time, duration and the
    course location.

@@ -137,7 +137,7 @@ describe('fileSlug', () => {
 });
 
 describe('personRows', () => {
-  it('fills what Adsumus has and leaves the rest to the NDS', () => {
+  it('fills what Alleda has and leaves the rest to the NDS', () => {
     const rows = personRows([
       {
         id: 1,
