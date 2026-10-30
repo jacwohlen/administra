@@ -56,7 +56,7 @@ Create a `.env` file in the root directory:
 ```bash
 PUBLIC_SUPABASE_DATABASE_URL="your-supabase-project-url"
 PUBLIC_SUPABASE_ANON_KEY="your-supabase-anon-key"
-PUBLIC_MODE="DEV"  # Use "PROD" for production
+PUBLIC_MODE="DEV"  # Use "PROD" for production, "DEMO" only for the public demo
 ```
 
 These are required. Club-specific settings (name, website, logo, sections,
@@ -269,6 +269,9 @@ npm run build
      email/password test login, which works only where `seed.sql` created
      the test users (local and preview branches, see
      [docs/SUPABASE_BRANCHING.md](docs/SUPABASE_BRANCHING.md#seed-data-and-test-logins)).
+     `DEMO` is only for the public demo at demo.adsumus.ch, a made-up club
+     on its own Supabase project with one-click role logins and a demo banner
+     (see [docs/DEMO.md](docs/DEMO.md)).
 
    Optionally, to override a club setting for a specific deploy context
    (production vs. deploy previews), add any of the `PUBLIC_CLUB_*` /
