@@ -255,6 +255,7 @@ p {
   min-height: 2.5rem;
   padding: 0.4rem 1rem;
   font-size: 0.95rem;
+  white-space: nowrap;
 }
 
 /* Hero -------------------------------------------------------------------- */
@@ -817,11 +818,12 @@ fieldset {
   border-radius: 0.2rem;
 }
 
-/* Language switch in the header: Deutsch ⇄ English */
+/* Language switch in the header: DE ⇄ EN (the full name is its label) */
 .lang-switch {
   color: var(--ink-muted);
-  font-weight: 500;
-  font-size: 0.95rem;
+  font-weight: 600;
+  font-size: 0.9rem;
+  letter-spacing: 0.04em;
 }
 
 .lang-switch:hover {

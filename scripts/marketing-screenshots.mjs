@@ -133,7 +133,17 @@ const shots = [
     prepare: (page) =>
       page.locator('input[name="trial-filter"][value="all"]').check({ force: true })
   },
-  { file: 'trial-form-phone', role: null, device: PHONE, url: '/probetraining' },
+  {
+    file: 'trial-form-phone',
+    role: null,
+    device: PHONE,
+    url: '/probetraining',
+    // The public form starts in the club's language; it has its own switch
+    prepare: (page) =>
+      lang.dir === 'en'
+        ? page.locator('[aria-label="Sprache / Language"] button', { hasText: 'EN' }).click()
+        : undefined
+  },
   {
     file: 'exam-sheet-phone',
     role: 'trainer',
