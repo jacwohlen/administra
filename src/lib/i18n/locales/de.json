@@ -19,6 +19,7 @@
       "noTrainingsToday": "Heute findet kein Training statt!",
       "settings": "Einstellungen",
       "myProfile": "Mein Profil",
+      "js": "J+S-Export",
       "exams": "Q-Prüfungen",
       "assistant": "Daten-Assistent",
       "integrations": "Integrationen",
@@ -401,6 +402,22 @@
           "notAllowed": "Dazu fehlt dir die Berechtigung.",
           "failed": "Das hat nicht geklappt. Versuch es noch einmal."
         }
+      },
+      "switch": {
+        "turnOn": "Einschalten",
+        "turnOff": "Ausschalten",
+        "on": "{provider} ist eingeschaltet",
+        "off": "{provider} ist ausgeschaltet",
+        "error": "Umschalten fehlgeschlagen",
+        "confirmTitle": "{provider} ausschalten?",
+        "confirm": {
+          "sync": "Der nächtliche Abgleich mit {provider} läuft dann nicht mehr. Verknüpfungen und Daten bleiben erhalten; Felder aus {provider} bleiben gesperrt, bis die Verknüpfung weg ist. Einschalten geht jederzeit wieder.",
+          "module": "Das Modul verschwindet aus dem Menü. Seine Daten bleiben erhalten und sind nach dem Einschalten wieder da."
+        }
+      },
+      "module": {
+        "js": "Exportiert die Anwesenheiten von J+S-Kursen als CSV-Dateien für den Import in die NDS. Personen werden über die Lizenznummer der Mitglieder zugeordnet (aus Webling oder in Adsumus erfasst).",
+        "openJs": "Zum J+S-Export"
       }
     },
     "trainings": {
@@ -677,7 +694,9 @@
         },
         "merge": "Zusammenführen",
         "mergeInProvider": "In {provider} zusammenführen"
-      }
+      },
+      "licenseNumber": "Lizenznummer",
+      "licenseNumberPlaceholder": "J+S-Personennummer"
     },
     "stats": {
       "all": "Alle",
@@ -1137,6 +1156,57 @@
       "notFound": "Diese Seite gibt es nicht.",
       "errorId": "Wenn du uns schreibst, nenn bitte diese Fehler-ID:",
       "home": "Zur Startseite"
+    },
+    "js": {
+      "title": "J+S-Export",
+      "intro": "Anwesenheiten von J+S-Kursen als CSV-Dateien für den Import in die NDS. Die Kurse werden hier von Hand erfasst; die NDS hat für die Jugendausbildung keine Schnittstelle.",
+      "create_course": "Neuer J+S-Kurs",
+      "edit_course": "J+S-Kurs bearbeiten",
+      "no_courses": "Noch keine J+S-Kurse erfasst.",
+      "training_count": "{count, plural, one {# Training} other {# Trainings}}",
+      "period": "Kursdauer",
+      "form": {
+        "title": "Bezeichnung",
+        "title_placeholder": "z.B. Judo Jugendsport 2026",
+        "course_number": "Kursnummer (NDS)",
+        "date_from": "Kursbeginn",
+        "date_to": "Kursende",
+        "location": "Ort",
+        "location_placeholder": "z.B. Turnhalle Halde, Wohlen",
+        "durations": "Erlaubte Trainingsdauer (Minuten)",
+        "durations_hint": "Gemäss Nutzergruppe und Hauptsportart. NG 1, Judo/Aikido: 60, 75, 90. Längere Trainings werden auf den nächstkleineren Wert gekürzt.",
+        "trainings": "Trainings des Kurses",
+        "trainings_hint": "Alle Anwesenheiten dieser Trainings innerhalb der Kursdauer werden exportiert."
+      },
+      "validation": {
+        "required_fields": "Bitte Bezeichnung, Kursbeginn, Kursende und Ort ausfüllen.",
+        "date_range": "Der Kursbeginn muss vor dem Kursende liegen.",
+        "durations": "Bitte mindestens eine Trainingsdauer in Minuten angeben."
+      },
+      "delete_title": "J+S-Kurs löschen",
+      "delete_message": "Den J+S-Kurs «{title}» löschen? Trainings und Anwesenheiten bleiben erhalten.",
+      "delete_success": "J+S-Kurs gelöscht",
+      "replace_hint": "Achtung: Der Import in der NDS ersetzt alle bereits erfassten Aktivitäten bzw. Anwesenheiten des Kurses. Die Dateien enthalten deshalb immer den ganzen Kurs. Reihenfolge einhalten: Personen, Aktivitäten, Anwesenheiten.",
+      "step_persons": "Personen",
+      "step_persons_hint": "{participants} Teilnehmende und {leaders} Leitende, mit Lizenznummer, Name und Geburtsdatum. Nur nötig für Personen, die noch nicht im NDS-Kurs sind. Wer neu in der NDS ist, braucht die AHV-Nummer: diese Personen direkt in der NDS erfassen und ihre Lizenznummer danach in Adsumus (bzw. Webling) eintragen.",
+      "download_participants": "Teilnehmende (CSV)",
+      "download_leaders": "Leitende (CSV)",
+      "step_activities": "Aktivitäten",
+      "step_activities_hint": "{count, plural, one {# Training} other {# Trainings}} mit Datum, Zeit, Dauer und Ort.",
+      "download_activities": "Aktivitäten (CSV)",
+      "step_attendance": "Anwesenheitskontrolle",
+      "step_attendance_hint": "{count} Anwesenheiten von Personen mit Lizenznummer.",
+      "download_attendance": "Anwesenheiten (CSV)",
+      "warnings": "Hinweise",
+      "warning_without_number": "Ohne Lizenznummer, fehlen in der Anwesenheitskontrolle (beim Mitglied erfassen; kommt das Mitglied aus Webling, dort):",
+      "warning_both_roles": "Als Leiter/in und als Teilnehmer/in eingetragen:",
+      "warning_without_time": "«{title}» hat keine gültige Start- oder Endzeit und wird nicht exportiert.",
+      "warning_too_short": "«{title}» dauert nur {minutes} Minuten und wird nicht exportiert.",
+      "warning_shortened": "«{title}» dauert {minutes} Minuten und wird mit {exported} Minuten exportiert.",
+      "saveError": "Fehler beim Speichern des J+S-Kurses",
+      "deleteError": "Fehler beim Löschen des J+S-Kurses",
+      "backToList": "Zurück zu den J+S-Kursen",
+      "backToCourse": "Zurück zum J+S-Kurs"
     },
     "exams": {
       "title": "Q-Prüfungen",

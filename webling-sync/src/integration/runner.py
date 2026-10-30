@@ -19,6 +19,10 @@ from integration.layer import LayerError
 from integration.safe_log import crash_line
 
 
+# integration_begin's SQLSTATE for a connection an admin switched off
+DISABLED = 'PT423'
+
+
 class FetchFailed(Exception):
     """The provider could not be read as a whole (e.g. the member list): no
     record is staged and the run fails. The message is log-safe (method,
@@ -60,7 +64,14 @@ def run(options, adapter, layer):
     print(f"Layer {options.kind}{', dry run' if options.dry_run else ''}")
     try:
         outcome = run_layer(options, adapter(), layer())
-    except (LayerError, UsageError, ConfigError) as err:
+    except LayerError as err:
+        if err.step == 'begin' and err.code == DISABLED:
+            # Switched off on the Integrations page: nothing to do, not an error
+            print("The connection is switched off on the Integrations page; nothing synced")
+            return 0
+        print(f"Error: {err}")
+        return 1
+    except (UsageError, ConfigError) as err:
         print(f"Error: {err}")
         return 2 if isinstance(err, UsageError) else 1
     return report.exit_code(outcome.final)

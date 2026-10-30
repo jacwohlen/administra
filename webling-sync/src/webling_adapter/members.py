@@ -1,7 +1,8 @@
 """Webling members as layer records (integration_stage, kind 'members').
 
 The fields: names trimmed, birthday and mobile as Webling has them, the
-e-mail only when Webling has one (the layer only fills it). Groups go
+e-mail only when Webling has one (the layer only fills it), the licence
+number (Lizenznummer, the J+S person number) when Webling has the field. Groups go
 up with their Webling id and raw title; the layer's catalog maps them to
 labels and statuses (04_Probetraining becomes the label Probetraining).
 """
@@ -12,6 +13,9 @@ from webling_adapter.api import WeblingError
 # (seen, so not gone, but not written).
 FIELDS = {'firstname': 'Vorname', 'lastname': 'Name', 'birthday': 'Geburtstag', 'mobile': 'Mobile'}
 EMAIL = 'E-Mail'
+# Optional: a Webling without the property sends no licence number (the
+# layer then leaves the field alone)
+LICENSE_NUMBER = 'Lizenznummer'
 
 
 def member_record(raw, titles):
@@ -25,14 +29,19 @@ def member_record(raw, titles):
     if any(titles.get(group) is None for group in parents):
         return {'external_id': external_id, 'data': {'problem': 'fetch_failed'}}
     email = (properties.get(EMAIL) or '').strip()
-    return {'external_id': external_id, 'data': {
+    data = {
         'firstname': (properties['Vorname'] or '').strip(),
         'lastname': (properties['Name'] or '').strip(),
         'birthday': properties['Geburtstag'],
         'mobile': properties['Mobile'],
         'email': email or None,
         'groups': [{'id': str(group), 'name': titles[group]} for group in parents],
-    }}
+    }
+    if LICENSE_NUMBER in properties:
+        # Webling may hold it as a number; blank is none (trimmed in the layer)
+        value = properties[LICENSE_NUMBER]
+        data['license_number'] = None if value is None else str(value).strip() or None
+    return {'external_id': external_id, 'data': data}
 
 
 def member_records(api, counters):

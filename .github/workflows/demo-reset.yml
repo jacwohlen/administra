@@ -127,9 +127,14 @@ jobs:
             echo "::error::The database is not marked as the Adsumus demo (comment: '$marker'). Run the workflow by hand with 'initialize' for a new demo project."
             exit 1
           fi
-          in_use=$(psql "$DEMO_DB_URL" -tAc \
-            "select (select count(*) from auth.users) > 0 or (to_regclass('public.members') is not null and exists (select 1 from public.members))")
-          if [ "$in_use" != "f" ]; then
+          # Two queries: a new project has no public.members yet, and naming
+          # a missing table fails the whole statement
+          users=$(psql "$DEMO_DB_URL" -tAc "select count(*) from auth.users")
+          members=0
+          if [ "$(psql "$DEMO_DB_URL" -tAc "select to_regclass('public.members') is not null")" = "t" ]; then
+            members=$(psql "$DEMO_DB_URL" -tAc "select count(*) from public.members")
+          fi
+          if [ "$users" != "0" ] || [ "$members" != "0" ]; then
             echo "::error::'initialize' only runs on a new project, but this database already has users or members."
             exit 1
           fi

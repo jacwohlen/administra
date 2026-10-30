@@ -3,6 +3,7 @@ import {
   applyIntegrationConfig,
   emptyIntegrationConfig,
   integrationConfig,
+  isModuleEnabled,
   parseIntegrationConfig
 } from './integrationConfig';
 import { hasTrainerLabel, providerName, visibleLabels } from './memberStatus';
@@ -73,6 +74,22 @@ describe('parseIntegrationConfig', () => {
     expect([...config.groupHidden]).toEqual([['Real', true]]);
     expect(config.displayNames.size).toBe(0);
     expect(config.hiddenPatterns).toEqual([]);
+  });
+});
+
+describe('isModuleEnabled', () => {
+  it('is on only for a connection an admin switched on', () => {
+    const config = seeded(SEEDED_GROUPS, [
+      { ...WEBLING, enabled: true },
+      { id: 'js', display_name: 'J+S (NDS)', enabled: false, settings: {} }
+    ]);
+    expect(isModuleEnabled('webling', config)).toBe(true);
+    expect(isModuleEnabled('js', config)).toBe(false);
+    expect(isModuleEnabled('csv', config)).toBe(false);
+  });
+
+  it('is off while the configuration is not loaded', () => {
+    expect(isModuleEnabled('js', emptyIntegrationConfig())).toBe(false);
   });
 });
 

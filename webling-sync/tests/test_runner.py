@@ -111,6 +111,14 @@ def test_other_begin_errors_fail(world, capsys, answer):
     assert 'Error: integration_begin' in capsys.readouterr().out
 
 
+def test_a_disabled_connection_is_skipped(world, capsys):
+    # Switched off on the Integrations page: nothing synced, not an error
+    fake = FakeLayer(world, fail={'begin': Response(423, {'code': 'PT423', 'message': 'CONNECTION_DISABLED'})})
+    assert go(world) == 0
+    assert fake.finished == []
+    assert 'switched off on the Integrations page' in capsys.readouterr().out
+
+
 @pytest.mark.parametrize('step', ['stage', 'apply'])
 def test_a_404_mid_run_fails_the_run(world, capsys, step):
     fake = FakeLayer(world, fail={step: Response(404, {'code': 'PGRST202', 'message': 'gone'})})

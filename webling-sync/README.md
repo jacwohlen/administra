@@ -25,6 +25,7 @@ Fetches all members from Webling and sends them to the layer.
 - Groups (as labels)
 - Cell Phone
 - E-Mail (only when Webling has one, so an address entered in the app is kept)
+- Lizenznummer (licence number, the J+S person number; only when the field exists in Webling, see `docs/JS_EXPORT.md`)
 
 A member that cannot be read (e.g. a Webling field was renamed, or one of
 its groups could not be read) is staged as problem `missing_field` or
