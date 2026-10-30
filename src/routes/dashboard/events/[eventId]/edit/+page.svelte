@@ -6,12 +6,7 @@
   import Fa from 'svelte-fa';
   import { faSave, faArrowLeft, faArrowsRotate } from '@fortawesome/free-solid-svg-icons';
   import { clubConfig } from '$lib/clubConfig';
-  import {
-    eventDateInput,
-    eventDateValues,
-    saveEventRow,
-    type EventDateInput
-  } from '$lib/eventUtils';
+  import { eventDateInput, eventDateValues, type EventDateInput } from '$lib/eventUtils';
   import EventDateFields from '../../EventDateFields.svelte';
   import { isManagedByProviderError, providerName } from '$lib/memberStatus';
 
@@ -62,12 +57,10 @@
     };
 
     try {
-      const { error: updateError } = await saveEventRow(
-        Object.fromEntries(
-          Object.entries(fields).filter(([field]) => !locked.has(field))
-        ) as Partial<typeof fields>,
-        (values) => supabaseClient.from('events').update(values).eq('id', data.event.id)
-      );
+      const { error: updateError } = await supabaseClient
+        .from('events')
+        .update(Object.fromEntries(Object.entries(fields).filter(([field]) => !locked.has(field))))
+        .eq('id', data.event.id);
 
       if (updateError) {
         console.error('Error updating event:', updateError);

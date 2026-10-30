@@ -1,11 +1,15 @@
 """The layer path against a real database with the integration layer.
 
 Skipped unless LAYER_TEST_PSQL names a psql command for a FRESH local
-database with every migration (including 20261029120000_integration_layer)
-and the seed; the tests change it and expect to run once, in file order:
+database with every migration and the seed; the tests change it and
+expect to run once, in file order:
 
     LAYER_TEST_PSQL='psql postgresql://postgres:postgres@127.0.0.1:54322/postgres' \\
         pytest tests/test_layer_local_db.py
+
+CI runs them in the db-validate job with LAYER_TEST_REQUIRED=1: there a
+missing LAYER_TEST_PSQL is an error instead of a skip (a database it
+cannot reach already is one), so the job cannot pass without them.
 
 sync.py runs with a fake Webling built from the database's own Webling
 members (as the sync before the layer wrote them), and the client calls
@@ -23,6 +27,9 @@ from fake_world import World, participant, set_env
 from integration.client import Client
 from integration.layer import Layer, LayerError
 from psql_transport import PsqlTransport
+
+if os.environ.get('LAYER_TEST_REQUIRED') == '1' and not os.environ.get('LAYER_TEST_PSQL'):
+    pytest.fail('LAYER_TEST_REQUIRED=1, but LAYER_TEST_PSQL is not set', pytrace=False)
 
 pytestmark = pytest.mark.skipif(not os.environ.get('LAYER_TEST_PSQL'),
                                 reason='LAYER_TEST_PSQL is not set (no local database)')
@@ -79,12 +86,6 @@ def webling_from(members):
 def rows_version(db, table):
     """Changes whenever a row of the table is written (xmin) or removed."""
     return value(db, f"SELECT md5(string_agg(id::text || ':' || xmin::text, ',' ORDER BY id)) FROM public.{table}")
-
-
-def has_end_dates(db):
-    """The database has phase 4 (20261030120000: all_day, capabilities version 2)."""
-    return value(db, "SELECT count(*) FROM information_schema.columns WHERE table_schema = 'public' "
-                     "AND table_name = 'events' AND column_name = 'all_day'") == '1'
 
 
 def events_but_description(db):
@@ -209,7 +210,6 @@ def test_events_first_run_adopts_the_events_written_before(db, monkeypatch, caps
                  VALUES (61001, {members[0]}, 'registered', '{WEBLING_NOTE}'),
                         (61001, {members[1]}, 'registered', '{WEBLING_NOTE}'),
                         (61001, {members[2]}, 'registered', NULL)""")
-    before = rows_version(db, 'events')
     before_values = events_but_description(db)
     world = events_world([(members[0], 'confirmed'), (members[1], 'confirmed')])
     status, run = sync_run(db, monkeypatch, world, 'events', dry_run=True)
@@ -227,13 +227,10 @@ def test_events_first_run_adopts_the_events_written_before(db, monkeypatch, caps
             result['registrations_removed']) == (2, 0, 0)
     assert result['invalid'] == 1  # the epoch event: info, the run stays ok
     assert run['scope']['calendars'] == ['501', '502'] and run['scope']['complete']
-    if has_end_dates(db):
-        # Phase 4: the portal link leaves the description (the link's url has it), nothing else changes
-        assert events_but_description(db) == before_values
-        assert value(db, "SELECT count(*) FROM public.events WHERE id BETWEEN 61001 AND 61005 "
-                         "AND description IS NOT NULL") == '0'
-    else:
-        assert rows_version(db, 'events') == before
+    # The portal link leaves the description (the link's url has it), nothing else changes
+    assert events_but_description(db) == before_values
+    assert value(db, "SELECT count(*) FROM public.events WHERE id BETWEEN 61001 AND 61005 "
+                     "AND description IS NOT NULL") == '0'
     assert value(db, "SELECT count(*) FROM public.event_links WHERE gone_at IS NULL") == '5'
     assert value(db, "SELECT count(*) FROM public.integration_issues WHERE code = 'invalid_event' "
                      "AND detail = 'no_date'") == '1'
@@ -253,12 +250,6 @@ def test_events_second_run_is_unchanged_and_follows_webling(db, monkeypatch, cap
         ','.join(str(m) for m in sorted([members[0], members[2]]))
 
 
-def has_calendars_gone(db):
-    """The database settles calendars the provider no longer has (20261101120000, capabilities 3)."""
-    return value(db, "SELECT count(*) FROM information_schema.columns WHERE table_schema = 'public' "
-                     "AND table_name = 'integration_calendars' AND column_name = 'gone_at'") == '1'
-
-
 def holidays_world(members):
     """events_world with a holiday calendar (503) and a camp in 501."""
     world = events_world([(members[0], 'confirmed'), (members[1], 'declined')])
@@ -272,9 +263,7 @@ def holidays_world(members):
     return world
 
 
-def test_holidays_and_end_dates_from_version_2(db, monkeypatch, capsys):
-    if not has_end_dates(db):
-        pytest.skip('the database has no end dates yet (20261030120000)')
+def test_holidays_and_end_dates(db, monkeypatch, capsys):
     members = STATE['participants']
     # A holiday the sync wrote as an event before the layer
     db.query(f"""INSERT INTO public.events (id, title, description, date, "timeFrom", "timeTo", section)
@@ -295,8 +284,6 @@ def test_holidays_and_end_dates_from_version_2(db, monkeypatch, capsys):
 
 
 def test_a_calendar_webling_no_longer_has(db, monkeypatch, capsys):
-    if not has_calendars_gone(db):
-        pytest.skip('the database does not settle gone calendars yet (20261101120000)')
     members = STATE['participants']
     # Aikido Agenda (502) is deleted in Webling, with its two events and the
     # one without a date (an open issue); the other calendars stay as they are

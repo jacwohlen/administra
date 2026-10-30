@@ -8,12 +8,13 @@
 -- The sync acts as service_role, staff and admins through pg_temp.act_as().
 --
 --   E  the seeded catalog is the old status rule
---   P  who may call and read what
+--   P  who may call and read what (the status rule is internal)
 --   M  Webling members through the layer: no-op first run, changes, guards,
 --      problem records, one failing record, runs, issues, no names in the log
 --   C  a CSV connection run by an admin in the app
 --   G  admins change the mapping under the same guards
 --   V  events, registrations, holidays
+--   R  links to the provider's records (settings.record_urls)
 
 \set ON_ERROR_STOP 1
 \o /dev/null
@@ -339,6 +340,46 @@ BEGIN
     (SELECT status || ' ' || error FROM public.integration_runs WHERE id = v_run), 'failed abandoned');
   PERFORM pg_temp.ok('P6 its staged records are deleted',
     NOT EXISTS (SELECT 1 FROM public.integration_records WHERE run_id = v_run));
+END $$;
+ROLLBACK TO SAVEPOINT s;
+
+-- The status rule is internal (20261103120000): no API role calls
+-- member_status_from_labels(), yet a member staff create or edit and a
+-- trial registration get their status, since the triggers run as the
+-- owner (the layer's writes: M)
+SAVEPOINT s;
+DO $$
+DECLARE
+  v_trainer uuid := pg_temp.sign_up('a0000000-0000-0000-0000-00000000000c', 'p-trainer2@example.com', 'trainer');
+  v_id integer;
+BEGIN
+  PERFORM pg_temp.ok('P7 no API role may execute member_status_from_labels',
+    NOT (has_function_privilege('anon', 'public.member_status_from_labels(jsonb, text)', 'EXECUTE')
+      OR has_function_privilege('authenticated', 'public.member_status_from_labels(jsonb, text)', 'EXECUTE')
+      OR has_function_privilege('service_role', 'public.member_status_from_labels(jsonb, text)', 'EXECUTE')));
+  PERFORM pg_temp.as_sync();
+  PERFORM pg_temp.eq('P7 the sync cannot call it',
+    pg_temp.err($q$SELECT public.member_status_from_labels('["Aktiv"]', 'active')$q$),
+    '42501 permission denied for function member_status_from_labels');
+  RESET ROLE;
+  PERFORM pg_temp.act_as(v_trainer);
+  PERFORM pg_temp.eq('P7 nor staff',
+    pg_temp.err($q$SELECT public.member_status_from_labels('["Aktiv"]', 'active')$q$),
+    '42501 permission denied for function member_status_from_labels');
+  INSERT INTO public.members (firstname, lastname, labels) VALUES ('Status', 'Regel', '["probetraining"]')
+  RETURNING id INTO v_id;
+  RESET ROLE;
+  PERFORM pg_temp.eq('P7 a member staff create gets its status', pg_temp.st(v_id), 'trial');
+  PERFORM pg_temp.act_as(v_trainer);
+  UPDATE public.members SET labels = '["Vorstand"]' WHERE id = v_id;
+  RESET ROLE;
+  PERFORM pg_temp.eq('P7 a staff edit of the labels derives it again', pg_temp.st(v_id), 'active');
+  PERFORM set_config('request.jwt.claims', '{"role": "anon"}', true);
+  SET LOCAL ROLE anon;
+  PERFORM public.register_trial('Probe', 'Statusregel', '2010-01-01', 'p7.trial@example.com');
+  RESET ROLE;
+  PERFORM pg_temp.eq('P7 a trial registration gets its status',
+    (SELECT string_agg(membership_status, ',') FROM public.members WHERE email = 'p7.trial@example.com'), 'trial');
 END $$;
 ROLLBACK TO SAVEPOINT s;
 
@@ -1724,6 +1765,81 @@ BEGIN
     pg_temp.err($q$SELECT pg_temp.run('webling', 'members', '{}', '[{"external_id": "Hans Muster", "data": {"lastname": "M"}}]')$q$),
     '22023 records');
   RESET ROLE;
+END $$;
+ROLLBACK TO SAVEPOINT s;
+
+-----------------
+-- R Links to the provider's records (settings.record_urls, 20261103120000)
+-----------------
+SAVEPOINT s;
+DO $$
+DECLARE
+  v_settings jsonb := (SELECT settings FROM public.integration_connections WHERE id = 'webling');
+BEGIN
+  PERFORM pg_temp.eq('R1 without event links the migration set no template',
+    (SELECT count(*)::text FROM public.integration_connections WHERE settings ? 'record_urls'), '0');
+  PERFORM pg_temp.eq('R1 nor does a later fill', public.integration_fill_record_urls()::text, '0');
+  PERFORM pg_temp.ok('R1 the fill is no API function',
+    NOT (has_function_privilege('anon', 'public.integration_fill_record_urls()', 'EXECUTE')
+      OR has_function_privilege('authenticated', 'public.integration_fill_record_urls()', 'EXECUTE')
+      OR has_function_privilege('service_role', 'public.integration_fill_record_urls()', 'EXECUTE')));
+
+  -- Webling's events linked by the layer (portal links as urls); a gone
+  -- link elsewhere and a live one without url do not count
+  PERFORM pg_temp.fx_setup();
+  PERFORM pg_temp.as_sync();
+  PERFORM pg_temp.run('webling', 'events', pg_temp.ev_scope(), pg_temp.ev_snapshot());
+  RESET ROLE;
+  UPDATE public.event_links SET gone_at = now(), url = 'https://old.example.org/event/' || external_id
+   WHERE connection = 'webling' AND external_id = '61001';
+  UPDATE public.event_links SET url = NULL WHERE connection = 'webling' AND external_id = '61002';
+  PERFORM pg_temp.eq('R2 filled from the live links', public.integration_fill_record_urls()::text, '1');
+  PERFORM pg_temp.eq('R2 Webling''s portal link with {id}',
+    (SELECT settings->>'record_urls' FROM public.integration_connections WHERE id = 'webling'),
+    '{"event": "https://club.webling.ch/portal#/calendar/event/{id}"}');
+  PERFORM pg_temp.ok('R2 the other settings stay',
+    (SELECT settings - 'record_urls' FROM public.integration_connections WHERE id = 'webling') = v_settings);
+  PERFORM pg_temp.eq('R2 a second fill changes nothing', public.integration_fill_record_urls()::text, '0');
+
+  -- A template already set is kept, other keys of record_urls too
+  UPDATE public.integration_connections
+     SET settings = v_settings || '{"record_urls": {"event": "https://example.org/e/{id}"}}' WHERE id = 'webling';
+  PERFORM pg_temp.eq('R3 a template already set is kept', public.integration_fill_record_urls()::text, '0');
+  PERFORM pg_temp.eq('R3 unchanged',
+    (SELECT settings->'record_urls'->>'event' FROM public.integration_connections WHERE id = 'webling'),
+    'https://example.org/e/{id}');
+  UPDATE public.integration_connections
+     SET settings = v_settings || '{"record_urls": {"member": "https://example.org/m/{id}"}}' WHERE id = 'webling';
+  PERFORM pg_temp.eq('R3 another record kind keeps its template', public.integration_fill_record_urls()::text, '1');
+  PERFORM pg_temp.eq('R3 both templates',
+    (SELECT settings->>'record_urls' FROM public.integration_connections WHERE id = 'webling'),
+    '{"event": "https://club.webling.ch/portal#/calendar/event/{id}", "member": "https://example.org/m/{id}"}');
+END $$;
+ROLLBACK TO SAVEPOINT s;
+
+-- Links that do not share one template leave the connection without one
+SAVEPOINT s;
+DO $$
+BEGIN
+  PERFORM pg_temp.fx_setup();
+  PERFORM pg_temp.as_sync();
+  PERFORM pg_temp.run('webling', 'events', pg_temp.ev_scope(), pg_temp.ev_snapshot());
+  RESET ROLE;
+
+  UPDATE public.event_links SET url = 'https://other.webling.ch/portal#/calendar/event/' || external_id
+   WHERE connection = 'webling' AND external_id = '61003';
+  PERFORM pg_temp.eq('R4 not when the part before the id differs', public.integration_fill_record_urls()::text, '0');
+
+  UPDATE public.event_links SET url = 'https://club.webling.ch/portal#/calendar/event/61004'
+   WHERE connection = 'webling' AND external_id = '61003';
+  PERFORM pg_temp.eq('R5 not when a url does not end with its id', public.integration_fill_record_urls()::text, '0');
+
+  UPDATE public.event_links SET url = 'https://' || external_id WHERE connection = 'webling';
+  PERFORM pg_temp.eq('R6 not when the id would be the host', public.integration_fill_record_urls()::text, '0');
+  UPDATE public.event_links SET url = 'https://example.org/{id}/' || external_id WHERE connection = 'webling';
+  PERFORM pg_temp.eq('R6 nor when the part before it holds {id}', public.integration_fill_record_urls()::text, '0');
+  PERFORM pg_temp.ok('R4-R6 no template set',
+    NOT EXISTS (SELECT 1 FROM public.integration_connections WHERE settings ? 'record_urls'));
 END $$;
 ROLLBACK TO SAVEPOINT s;
 

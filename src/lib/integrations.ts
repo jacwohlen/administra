@@ -1,5 +1,4 @@
 import type { MembershipStatus } from './models';
-import { isMissingSchemaError } from './eventLinks';
 
 /**
  * The Integrations page (/dashboard/integrations, admins) and the warning
@@ -107,16 +106,6 @@ export interface IssueEvent {
 
 export const ISSUE_COLUMNS =
   'id, connection, kind, code, severity, external_id, member_id, other_member_id, event_id, detail, first_seen_at, last_seen_at, dismissed_at';
-
-/**
- * integration_status() or a run table query on a database without the
- * integration layer (Netlify may deploy the app before a promotion applies
- * the migration): a missing function or table
- */
-export function isLayerMissing(error: unknown): boolean {
-  const code = (error as { code?: unknown } | null)?.code;
-  return isMissingSchemaError(error) || code === 'PGRST202' || code === '42883';
-}
 
 // ----- integration_status() -----
 
@@ -449,6 +438,88 @@ export function issueReferences(issues: readonly IntegrationIssue[]): {
   return { members: [...members], events: [...events] };
 }
 
+/**
+ * Whether a group offers "Alle ausblenden": two open issues or more, and
+ * not for possible duplicates (each pair is checked on its own: merge or
+ * "Kein Duplikat")
+ */
+export function canDismissAll(group: Pick<IssueGroup, 'code' | 'open'>): boolean {
+  return group.code !== 'possible_duplicate' && group.open.length >= 2;
+}
+
+/**
+ * Dismisses issues one after the other (`dismiss` calls
+ * integration_dismiss_issue), stopping at the first error: how many were
+ * dismissed, and that error (null when all were)
+ */
+export async function dismissIssues(
+  ids: readonly number[],
+  dismiss: (id: number) => PromiseLike<{ error: unknown }>
+): Promise<{ dismissed: number; error: unknown }> {
+  let dismissed = 0;
+  for (const id of ids) {
+    let error: unknown;
+    try {
+      ({ error } = await dismiss(id));
+    } catch (e) {
+      error = e ?? new Error('dismiss failed');
+    }
+    if (error) return { dismissed, error };
+    dismissed += 1;
+  }
+  return { dismissed, error: null };
+}
+
+// ----- Links to the provider -----
+
+/** A record number the page puts into a link (Webling's are numbers) */
+const LINKABLE_ID = /^[A-Za-z0-9_.:-]{1,200}$/;
+
+/**
+ * Whether a link template is safe to fill: https, {id} exactly once, and
+ * the host complete before it, so the id can only fill in the path, query
+ * or fragment (as 20261103120000 fills record_urls)
+ */
+function isRecordUrlTemplate(template: unknown): template is string {
+  if (typeof template !== 'string' || !template.startsWith('https://')) return false;
+  const parts = template.split('{id}');
+  return parts.length === 2 && /^https:\/\/[^/?#]+[/?#]/.test(parts[0]);
+}
+
+/**
+ * A connection's link to its events in the provider: its
+ * settings.record_urls.event, a template with {id} for the provider's
+ * record number (docs/INTEGRATIONS.md, "Integrations page"); null when the
+ * connection has none or not a safe one
+ */
+export function eventUrlTemplate(settings: unknown): string | null {
+  const template = obj(obj(settings).record_urls).event;
+  return isRecordUrlTemplate(template) ? template : null;
+}
+
+/**
+ * "In Webling öffnen" for an issue about a provider's event (or holiday,
+ * which are events there too): the template filled with its record number.
+ * Null for member issues, an unknown participant (its number is the
+ * member's, not the event's), a number that is no plain id, and without a
+ * safe template.
+ */
+export function issueEventUrl(
+  issue: Pick<IntegrationIssue, 'kind' | 'code' | 'external_id'>,
+  template: string | null | undefined
+): string | null {
+  if (
+    issue.kind !== 'events' ||
+    issue.code === 'unknown_participant' ||
+    !LINKABLE_ID.test(issue.external_id) ||
+    !isRecordUrlTemplate(template)
+  ) {
+    return null;
+  }
+  const [before, after] = template.split('{id}');
+  return before + encodeURIComponent(issue.external_id) + after;
+}
+
 // ----- Mapping editor -----
 
 export type GroupRole = 'trainer';
@@ -488,9 +559,6 @@ export const GROUP_COLUMNS =
   'id, connection, external_id, name, label, status, rank, hidden, role, reviewed, last_seen_at';
 export const CALENDAR_COLUMNS =
   'id, connection, external_id, name, target, section, closed_max_days, reviewed, last_seen_at, gone_at';
-/** Before 20261101120000 (Netlify may deploy the app before a promotion applies it) */
-export const CALENDAR_COLUMNS_WITHOUT_GONE =
-  'id, connection, external_id, name, target, section, closed_max_days, reviewed, last_seen_at';
 
 /** What the editor's inputs hold for a group ('' for none; text inputs as typed) */
 export interface GroupDraft {

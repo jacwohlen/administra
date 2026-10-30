@@ -36,8 +36,8 @@ export const load: LayoutLoad = async ({ parent, depends }) => {
         .from('user_profiles')
         .select('user_id', { count: 'exact', head: true })
         .eq('status', 'pending'),
-      // The avatar's warning dot. Any error, a database without the layer
-      // included, means no dot: the Integrations page tells the rest
+      // The avatar's warning dot. Any error means no dot: the
+      // Integrations page tells the rest
       supabaseClient.rpc('integration_status')
     ]);
     pendingUsers = pending.count ?? 0;

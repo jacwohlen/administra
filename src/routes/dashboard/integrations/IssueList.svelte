@@ -1,13 +1,22 @@
 <script lang="ts">
   import { _ } from 'svelte-i18n';
   import Fa from 'svelte-fa';
-  import { faCodeMerge, faEyeSlash, faRotateLeft } from '@fortawesome/free-solid-svg-icons';
+  import {
+    faArrowUpRightFromSquare,
+    faCodeMerge,
+    faEyeSlash,
+    faRotateLeft
+  } from '@fortawesome/free-solid-svg-icons';
   import dayjs from 'dayjs';
   import { supabaseClient } from '$lib/supabase';
   import { toaster } from '$lib/toast';
   import type { MergeMember } from '$lib/memberMerge';
+  import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
   import {
+    canDismissAll,
+    dismissIssues,
     groupIssues,
+    issueEventUrl,
     type IntegrationIssue,
     type IssueEvent,
     type IssueSeverity
@@ -18,13 +27,18 @@
    * Open and dismissed issues of a connection, grouped by code. Possible
    * duplicates link both members and open the merge dialog (phase 1c); an
    * admin can dismiss any issue ("Kein Duplikat" for a duplicate), and it
-   * stays dismissed while runs keep seeing it, until reopened.
+   * stays dismissed while runs keep seeing it, until reopened. A group of
+   * two open issues or more can be dismissed at once, except possible
+   * duplicates (each pair is checked on its own). An issue about a
+   * provider's event links to it there when the connection has a link
+   * template (settings.record_urls.event).
    */
   let {
     issues,
     members,
     events,
     provider,
+    eventUrl = null,
     onchanged
   }: {
     issues: IntegrationIssue[];
@@ -32,12 +46,17 @@
     events: Map<number, IssueEvent>;
     /** The connection's display name */
     provider: string;
+    /** The connection's link template for its events (eventUrlTemplate()) */
+    eventUrl?: string | null;
     /** An issue was dismissed or reopened, or a duplicate merged */
     onchanged: () => void;
   } = $props();
 
   let busyId = $state<number | null>(null);
   let merging = $state<{ first: MergeMember; second: MergeMember } | null>(null);
+  /** "Alle ausblenden" asked for: the group's open issues as they were then */
+  let confirmingAll = $state<{ code: string; ids: number[] } | null>(null);
+  let dismissingAll = $state(false);
 
   let groups = $derived(
     groupIssues(issues, { member: (id) => members.has(id), event: (id) => events.has(id) })
@@ -99,7 +118,50 @@
       busyId = null;
     }
   }
+
+  /**
+   * The open issues of a group, one after the other: stops at the first
+   * error and says how many went through; the page reloads when any did
+   */
+  async function dismissAll() {
+    if (!confirmingAll) return;
+    const { ids } = confirmingAll;
+    confirmingAll = null;
+    dismissingAll = true;
+    try {
+      const { dismissed, error } = await dismissIssues(ids, (id) =>
+        supabaseClient.rpc('integration_dismiss_issue', { p_issue: id, p_dismiss: true })
+      );
+      if (error) {
+        console.error('Error dismissing integration issues:', error);
+        toaster.error({
+          title: $_('page.integrations.issues.toast.dismissAllError', {
+            values: { dismissed, count: ids.length }
+          })
+        });
+      } else {
+        toaster.success({
+          title: $_('page.integrations.issues.toast.dismissedAll', {
+            values: { count: dismissed }
+          })
+        });
+      }
+      if (dismissed > 0) onchanged();
+    } finally {
+      dismissingAll = false;
+    }
+  }
 </script>
+
+{#snippet providerLink(issue: IntegrationIssue)}
+  {@const url = issueEventUrl(issue, eventUrl)}
+  {#if url}
+    <a class="btn btn-sm preset-tonal-surface" href={url} target="_blank" rel="noopener noreferrer">
+      <span>{$_('page.integrations.issues.openInProvider', { values: { provider } })}</span>
+      <Fa icon={faArrowUpRightFromSquare} size="xs" />
+    </a>
+  {/if}
+{/snippet}
 
 {#snippet memberLink(id: number)}
   <a href="/dashboard/members/{id}" class="anchor font-medium">{memberName(id)}</a>
@@ -174,17 +236,32 @@
           {#if codeHelp(group.kind, group.code)}
             <p class="text-sm text-surface-600-400">{codeHelp(group.kind, group.code)}</p>
           {/if}
+          {#if canDismissAll(group)}
+            <div class="flex justify-end">
+              <button
+                type="button"
+                class="btn btn-sm preset-tonal-surface"
+                disabled={dismissingAll}
+                onclick={() =>
+                  (confirmingAll = { code: group.code, ids: group.open.map((i) => i.id) })}
+              >
+                <Fa icon={faEyeSlash} />
+                <span>{$_('page.integrations.issues.dismissAll')}</span>
+              </button>
+            </div>
+          {/if}
           <ul class="flex flex-col gap-1">
             {#each group.open as issue (issue.id)}
               <li class="flex flex-wrap items-center gap-2 text-sm">
                 <span class="flex flex-wrap items-center gap-1 flex-1 min-w-0">
                   {@render subject(issue)}
                 </span>
+                {@render providerLink(issue)}
                 {#if issue.code === 'possible_duplicate' && loaded(issue.member_id) && loaded(issue.other_member_id)}
                   <button
                     type="button"
                     class="btn btn-sm preset-tonal-primary"
-                    disabled={busyId === issue.id}
+                    disabled={dismissingAll || busyId === issue.id}
                     onclick={() =>
                       (merging = {
                         first: members.get(issue.member_id!)!,
@@ -198,7 +275,7 @@
                 <button
                   type="button"
                   class="btn btn-sm preset-tonal-surface"
-                  disabled={busyId === issue.id}
+                  disabled={dismissingAll || busyId === issue.id}
                   onclick={() => setDismissed(issue, true)}
                 >
                   <Fa icon={faEyeSlash} />
@@ -221,10 +298,11 @@
                   <span class="flex flex-wrap items-center gap-1 flex-1 min-w-0">
                     {@render subject(issue)}
                   </span>
+                  {@render providerLink(issue)}
                   <button
                     type="button"
                     class="btn btn-sm preset-tonal-surface"
-                    disabled={busyId === issue.id}
+                    disabled={dismissingAll || busyId === issue.id}
                     onclick={() => setDismissed(issue, false)}
                   >
                     <Fa icon={faRotateLeft} />
@@ -238,6 +316,18 @@
       </details>
     {/each}
   </div>
+{/if}
+
+{#if confirmingAll}
+  <ConfirmDialog
+    title={$_('page.integrations.issues.dismissAllTitle')}
+    message={$_('page.integrations.issues.dismissAllConfirm', {
+      values: { count: confirmingAll.ids.length, code: codeLabel(confirmingAll.code) }
+    })}
+    confirmLabel={$_('page.integrations.issues.dismissAll')}
+    oncancel={() => (confirmingAll = null)}
+    onconfirm={dismissAll}
+  />
 {/if}
 
 {#if merging}
