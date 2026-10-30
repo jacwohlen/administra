@@ -1,6 +1,6 @@
 # Integrations (Webling and other providers)
 
-Goal: Administra owns its data model, and Webling is one integration among
+Goal: Adsumus owns its data model, and Webling is one integration among
 others. Adding another provider (easyVerein, a CSV import, a calendar feed)
 should mean writing an adapter, not changing the schema or the app.
 
@@ -27,7 +27,7 @@ The work runs in phases; each one ships on its own.
   accounts (viewer, trainer, admin) keep their access: it comes from their
   role, not from a member record.
 - For members that come from Webling, name, birthday, mobile, e-mail and
-  groups are **read-only in Administra** and changed in Webling. Notes and
+  groups are **read-only in Adsumus** and changed in Webling. Notes and
   the photo stay editable.
 - Members that **Webling no longer has** (deleted or merged there) count as
   having **left**.
@@ -54,7 +54,7 @@ layer" below), whose seeded rows are exactly this table.
 | `probetraining` (app trial candidate)       | `trial`      | no                     |
 | `Probetraining` (Webling legacy, see below) | `non_member` | no                     |
 | none of these, member comes from Webling    | `non_member` | no                     |
-| none of these, member created in Administra | `active`     | yes                    |
+| none of these, member created in Adsumus    | `active`     | yes                    |
 
 Checked in this order, so `03_Austritt` wins over `Aktiv`. The labels are
 Webling group titles, except that Webling's legacy trial group
@@ -123,13 +123,13 @@ from Webling is the app's again: editable, and deletable (the link goes
 with it).
 
 E-mail: the sync sends a member's address only when Webling has one, so an
-address entered in Administra before the fields became read-only stays, and
+address entered in Adsumus before the fields became read-only stays, and
 cannot be removed there either. Once those addresses are in Webling (see
 below), the sync can own the field completely.
 
 ## Sign-in by membership status (phase 1b)
 
-An account with the role `member` may use Administra only while at least one
+An account with the role `member` may use Adsumus only while at least one
 of its member records counts: `membership_status` `active` or `passive`, not
 archived, no trial label (`member_grants_access()`). Its records are the
 member an admin linked under _Benutzer_ and every member carrying the
@@ -185,7 +185,7 @@ The rule is checked on every request, never stored
 
 Known gaps:
 
-- An e-mail removed in Webling stays in Administra (the sync only sends
+- An e-mail removed in Webling stays in Adsumus (the sync only sends
   addresses Webling has), so the old address keeps matching.
 - A status group changed in Webling on purpose: a renamed group keeps its
   status (bound by id); a new group arrives without a status, so its
@@ -499,10 +499,14 @@ to the old sync means reverting 3c, safe only while no merge has moved a
 Webling link and no group status was changed with
 `integration_set_mapping` (the old sync's guard predicted with the seeded
 rule), and without `events_keep_span` its event upsert fails once a start
-moves past a last day. The GitHub environments keep
-`INTEGRATION_MODE=layer`: nothing reads it now, but workflows from before
-3c (older branches, re-runs of old runs) would run the old scripts without
-it. The database keeps what still serves:
+moves past a last day. The GitHub variable `INTEGRATION_MODE` went
+on 2026-10-30, once the `prod` and `dev` environments only accepted
+`main`, so older branches cannot start the old workflow; it only still
+steered re-runs of the few runs between 3a and 3c, and runs from before
+3a would run the old scripts with or without it. A re-run uses the run's
+own commit and is possible for 30 days, so a Webling Sync run from before
+3c (started before 2026-10-29 23:31 UTC) must not be re-run until
+2026-11-28; start a new run instead. The database keeps what still serves:
 `member_status_from_labels()` (the status of members without a live link),
 `integration_connections.legacy_note_prefix` (prod still has registrations
 the old sync wrote whose notes only start with `Imported from Webling`),

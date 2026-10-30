@@ -1,8 +1,7 @@
 # adsumus.ch — marketing site
 
-The public website for Adsumus, the product's new name (Latin for "we are
-here"; the app and this repository are still called Administra until they
-are renamed): what it does, the demo link, and a contact form for
+The public website for Adsumus (Latin for "we are here", formerly
+Administra; the repository keeps the old name): what it does, the demo link, and a contact form for
 interested clubs. Plain static HTML and CSS in
 [`public/`](public/), no build step, no JavaScript, no cookies, no tracking,
 no third-party fonts or scripts.

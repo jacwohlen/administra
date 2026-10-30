@@ -1,6 +1,6 @@
-# Administra - Attendance Tracking System
+# Adsumus - Attendance Tracking System
 
-A modern attendance tracking system designed specifically for martial arts clubs and training organizations. Built with SvelteKit and Supabase, Administra makes it easy to manage training sessions, track attendance, and generate insightful statistics.
+A modern attendance tracking system designed specifically for martial arts clubs and training organizations (formerly Administra; the repository `jacwohlen/administra` and its identifiers keep that name). Built with SvelteKit and Supabase, Adsumus makes it easy to manage training sessions, track attendance, and generate insightful statistics.
 
 ## Features
 

@@ -1,6 +1,6 @@
 # Supabase Branching: Preview Databases per PR, Auto-Deploy on Merge
 
-This document describes how Administra's database changes flow from a pull
+This document describes how Adsumus's database changes flow from a pull
 request to production, the environment layout, and what remains to verify.
 
 ## Environments

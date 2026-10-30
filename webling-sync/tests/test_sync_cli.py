@@ -1,4 +1,4 @@
-"""sync.py: options, the environment, INTEGRATION_MODE, and the real process."""
+"""sync.py: options, the environment, and the real process."""
 import os
 import subprocess
 import sys
@@ -13,44 +13,8 @@ from integration.anonymize import anonymize
 
 @pytest.fixture
 def world(monkeypatch):
-    set_env(monkeypatch, INTEGRATION_MODE=None, INTEGRATION_DRY_RUN=None, INTEGRATION_TRIGGER=None,
-            INTEGRATION_RUNNER=None)
+    set_env(monkeypatch, INTEGRATION_DRY_RUN=None, INTEGRATION_TRIGGER=None, INTEGRATION_RUNNER=None)
     return World().install(monkeypatch)
-
-
-NOTICE = 'is no longer used: the sync always runs through the integration layer (phase 3c)'
-
-
-@pytest.mark.parametrize('value, line', [
-    (None, None),
-    ('', None),
-    ('  ', None),
-    ('layer', None),
-    (' Layer ', None),
-    ('legacy', f'INTEGRATION_MODE=legacy {NOTICE}'),
-    ('shadow', f'INTEGRATION_MODE=shadow {NOTICE}'),
-    ('layr', f'INTEGRATION_MODE=layr {NOTICE}'),
-    # Not a mode word: the line goes without the value
-    ('legacy; echo zora@example.com', f'INTEGRATION_MODE {NOTICE}'),
-    ('x' * 21, f'INTEGRATION_MODE {NOTICE}'),
-])
-def test_integration_mode_is_no_longer_read(world, monkeypatch, capsys, value, line):
-    # A leftover variable on a GitHub environment never stops the run
-    fake = FakeLayer(world)
-    if value is not None:
-        monkeypatch.setenv('INTEGRATION_MODE', value)
-    assert sync.main(['members']) == 0
-    assert len(fake.begun) == 1 and len(fake.finished) == 1
-    out = capsys.readouterr().out
-    notices = [text for text in out.splitlines() if 'INTEGRATION_MODE' in text]
-    assert notices == ([line] if line else [])
-
-
-def test_mode_option_is_gone(world, capsys):
-    with pytest.raises(SystemExit) as stop:
-        sync.main(['members', '--mode', 'layer'])
-    assert stop.value.code == 2
-    assert 'unrecognized arguments: --mode' in capsys.readouterr().err
 
 
 def test_run_options_from_the_environment(world, monkeypatch):
@@ -127,13 +91,11 @@ def test_calendar_is_for_events_only(world):
 
 
 def test_real_process(world):
-    # python src/sync.py as the workflow runs it, with a stale INTEGRATION_MODE
-    # (no network: the run stops at the missing setting, before any call)
-    env = {k: v for k, v in {**os.environ, **ENV, 'INTEGRATION_MODE': 'legacy'}.items()
-           if k != 'WEBLING_DOMAIN'}
+    # python src/sync.py as the workflow runs it (no network: the run stops
+    # at the missing setting, before any call)
+    env = {k: v for k, v in {**os.environ, **ENV}.items() if k != 'WEBLING_DOMAIN'}
     done = subprocess.run([sys.executable, 'src/sync.py', 'members'], env=env, capture_output=True,
                           text=True, cwd=SRC.parent, timeout=60)
     assert done.returncode == 1
-    assert done.stdout.splitlines() == [f'INTEGRATION_MODE=legacy {NOTICE}', 'Layer members',
-                                        'Error: Please export WEBLING_DOMAIN']
+    assert done.stdout.splitlines() == ['Layer members', 'Error: Please export WEBLING_DOMAIN']
     assert done.stderr == ''

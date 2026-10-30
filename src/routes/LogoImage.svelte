@@ -1,4 +1,4 @@
-<img class="rotating" src="/administra-logo.svg" alt="Administra" />
+<img class="rotating" src="/administra-logo.svg" alt="Adsumus" />
 
 <style>
   .rotating {

@@ -124,7 +124,7 @@ export function parseOperatorEnv(env) {
       user: /** @type {string} */ (env.SMTP_USER),
       password: /** @type {string} */ (env.SMTP_PASSWORD),
       senderEmail: /** @type {string} */ (env.SMTP_SENDER_EMAIL),
-      senderName: env.SMTP_SENDER_NAME || 'Administra'
+      senderName: env.SMTP_SENDER_NAME || 'Adsumus'
     },
     sentryDsn: env.PUBLIC_SENTRY_DSN || ''
   };
@@ -171,7 +171,7 @@ export function authCallbackUrl(projectRef) {
  */
 export function authConfig(club, op, signInCodeTemplate) {
   const siteUrl = `https://${club.domain}`;
-  const subject = 'Dein Anmeldecode für Administra';
+  const subject = 'Dein Anmeldecode für Adsumus';
   return {
     site_url: siteUrl,
     uri_allow_list: siteUrl,
@@ -195,7 +195,7 @@ export function authConfig(club, op, signInCodeTemplate) {
     smtp_user: op.smtp.user,
     smtp_pass: op.smtp.password,
     smtp_admin_email: op.smtp.senderEmail,
-    smtp_sender_name: `${club.name} (Administra)`,
+    smtp_sender_name: `${club.name} (Adsumus)`,
     smtp_max_frequency: 60,
     rate_limit_email_sent: 30
   };
