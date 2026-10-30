@@ -11,7 +11,8 @@ import type { MemberMergeResult, MergeAccount, MergeConflict, MergeCount } from 
 /** A member as the merge dialog and the duplicates list need it (MERGE_COLUMNS) */
 export interface MergeMember extends DuplicateCandidate {
   mobile?: string | null;
-  license_number?: string | null;
+  /** Required, so every caller hands the dialog the dropped row's number */
+  license_number: string | null;
 }
 
 /** members columns the merge dialog and the duplicates list load (no photo data) */
