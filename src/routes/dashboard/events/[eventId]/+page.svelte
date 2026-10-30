@@ -16,7 +16,9 @@
     faArrowLeft,
     faEdit,
     faTrash,
-    faChalkboardTeacher
+    faChalkboardTeacher,
+    faArrowsRotate,
+    faArrowUpRightFromSquare
   } from '@fortawesome/free-solid-svg-icons';
   import dayjs from 'dayjs';
   import { invalidateAll, goto } from '$app/navigation';
@@ -27,10 +29,13 @@
     isRegistrationOpen as _isRegistrationOpen,
     canAddParticipants,
     attendanceTimestamp,
-    calculateAttendanceRate
+    calculateAttendanceRate,
+    formatEventDates
   } from '$lib/eventUtils';
   import type { Medal } from '$lib/models';
   import { MEDALS, medalEmoji } from '$lib/gradeUtils';
+  import { canDeleteEvent } from '$lib/eventLinks';
+  import { isManagedByProviderError, providerName } from '$lib/memberStatus';
 
   let { data }: { data: PageData } = $props();
 
@@ -40,6 +45,11 @@
   let showDeleteConfirm = $state(false);
   let confirmRemoveId = $state<string | null>(null);
 
+  // An event its provider still has is maintained there: no delete, and the
+  // edit page locks what the provider owns (the registration deadline stays ours)
+  let provider = $derived(data.eventLink ? providerName(data.eventLink.connection) : null);
+  let canDelete = $derived(canDeleteEvent(data.canWrite, data.eventLink));
+
   function formatEventDate(date: string) {
     return dayjs(date).format('DD.MM.YYYY');
   }
@@ -48,8 +58,13 @@
     return time || '';
   }
 
+  // From the first day on (every day of a multi-day event)
   function canTrackAttendance() {
     return _canTrackAttendance(data.event.date);
+  }
+
+  function attendedAt() {
+    return attendanceTimestamp(data.event.date, data.event.timeFrom, data.event.date_to);
   }
 
   function isRegistrationOpen() {
@@ -139,7 +154,7 @@
           eventId: data.event.id,
           memberId: memberId,
           isCoach: isCoach,
-          attendedAt: attendanceTimestamp(data.event.date, data.event.timeFrom)
+          attendedAt: attendedAt()
         });
 
         if (error) {
@@ -217,12 +232,9 @@
 
     isDeleting = true;
     try {
-      // Delete related records first (participants and logs)
-      await supabaseClient.from('event_participants').delete().eq('eventId', data.event.id);
-
-      await supabaseClient.from('event_logs').delete().eq('eventId', data.event.id);
-
-      // Delete the event
+      // Registrations and attendance go with it (ON DELETE CASCADE). Deleting
+      // them first would lose them when the database refuses the event
+      // itself (an event its provider maintains).
       const { error } = await supabaseClient.from('events').delete().eq('id', data.event.id);
 
       if (error) {
@@ -236,7 +248,11 @@
       await goto('/dashboard/events');
     } catch (error) {
       console.error('Error deleting event:', error);
-      toaster.error({ title: $_('page.events.deleteError') });
+      toaster.error({
+        title: isManagedByProviderError(error)
+          ? $_('page.events.managedBy', { values: { provider: provider ?? 'Webling' } })
+          : $_('page.events.deleteError')
+      });
     } finally {
       isDeleting = false;
     }
@@ -275,33 +291,62 @@
         >
           <Fa icon={faEdit} />
         </a>
-        <MoreMenu>
-          {#snippet items(close)}
-            <button
-              class="btn w-full justify-start text-error-600-400"
-              onclick={() => {
-                close();
-                confirmDelete();
-              }}
-              disabled={isDeleting}
-            >
-              <Fa icon={faTrash} />
-              <span>{$_('button.delete')}</span>
-            </button>
-          {/snippet}
-        </MoreMenu>
+        {#if canDelete}
+          <MoreMenu>
+            {#snippet items(close)}
+              <button
+                class="btn w-full justify-start text-error-600-400"
+                onclick={() => {
+                  close();
+                  confirmDelete();
+                }}
+                disabled={isDeleting}
+              >
+                <Fa icon={faTrash} />
+                <span>{$_('button.delete')}</span>
+              </button>
+            {/snippet}
+          </MoreMenu>
+        {/if}
       </div>
     {/if}
   </div>
+
+  {#if provider}
+    <div
+      class="mb-4 flex flex-wrap items-center gap-x-3 gap-y-2 rounded-md border border-surface-300-700 bg-surface-100-900 px-3 py-2 text-sm"
+    >
+      <span class="flex flex-1 items-center gap-2 min-w-0">
+        <Fa icon={faArrowsRotate} class="text-surface-500 flex-shrink-0" />
+        <span>{$_('page.events.managedBy', { values: { provider } })}</span>
+      </span>
+      {#if data.eventLink?.url}
+        <a
+          class="btn btn-sm preset-tonal-surface"
+          href={data.eventLink.url}
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <span>{$_('page.events.openInProvider', { values: { provider } })}</span>
+          <Fa icon={faArrowUpRightFromSquare} size="xs" />
+        </a>
+      {/if}
+    </div>
+  {/if}
 
   <!-- Metadata -->
   <div class="mb-6">
     <div class="flex flex-wrap gap-3 text-sm text-surface-600-400">
       <span class="meta-item">
         <Fa icon={faCalendarDays} size="sm" />
-        {formatEventDate(data.event.date)}
+        {formatEventDates(data.event)}
       </span>
-      {#if data.event.timeFrom}
+      {#if data.event.all_day}
+        <span class="meta-item">
+          <Fa icon={faClock} size="sm" />
+          {$_('page.events.allDay')}
+        </span>
+      {:else if data.event.timeFrom}
         <span class="meta-item">
           <Fa icon={faClock} size="sm" />
           {formatTime(data.event.timeFrom)}{#if data.event.timeTo}
@@ -402,9 +447,7 @@
             <AddEventParticipant
               eventId={data.event.id}
               existingParticipants={existingParticipantIds}
-              attendedAt={addAsAttended
-                ? () => attendanceTimestamp(data.event.date, data.event.timeFrom)
-                : undefined}
+              attendedAt={addAsAttended ? attendedAt : undefined}
               onadded={onParticipantAdded}
             />
           </div>

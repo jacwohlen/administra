@@ -14274,6 +14274,54 @@ INSERT INTO auth.identities (
 UPDATE public.members SET email = 'member@example.com' WHERE id IN (103, 107);
 
 --
+-- E2E former member (phase 1b): the only member record with its email
+-- (Joseph Fernandez, 32382) has left the club (03_Austritt). An admin
+-- approved the account by hand as a member, which grants nothing without an
+-- active or passive membership: it lands on the pending page ("Kein Zugang").
+--
+INSERT INTO auth.users (
+  instance_id, id, aud, role, email, encrypted_password,
+  email_confirmed_at, created_at, updated_at,
+  confirmation_token, recovery_token,
+  email_change, email_change_token_new, email_change_token_current,
+  phone, phone_change, phone_change_token,
+  reauthentication_token,
+  raw_app_meta_data, raw_user_meta_data,
+  is_sso_user, is_anonymous
+) VALUES (
+  '00000000-0000-0000-0000-000000000000',
+  'd4e5f6a7-b8c9-0123-def0-234567890123',
+  'authenticated', 'authenticated',
+  'former@example.com',
+  crypt('testpass', gen_salt('bf')),
+  now(), now(), now(),
+  '', '',
+  '', '', '',
+  NULL, '', '',
+  '',
+  '{"provider":"email","providers":["email"]}',
+  '{}',
+  false, false
+);
+
+INSERT INTO auth.identities (
+  id, user_id, provider_id, identity_data, provider, last_sign_in_at, created_at, updated_at
+) VALUES (
+  'd4e5f6a7-b8c9-0123-def0-234567890123',
+  'd4e5f6a7-b8c9-0123-def0-234567890123',
+  'former@example.com',
+  jsonb_build_object('sub', 'd4e5f6a7-b8c9-0123-def0-234567890123', 'email', 'former@example.com'),
+  'email',
+  now(), now(), now()
+);
+
+UPDATE public.members SET email = 'former@example.com' WHERE id = 32382;
+
+UPDATE public.user_profiles
+SET status = 'approved', approved_at = now()
+WHERE user_id = 'd4e5f6a7-b8c9-0123-def0-234567890123';
+
+--
 -- Trial candidates from the public registration form, one per intake status
 -- (the status trigger starts every candidate as 'new')
 --

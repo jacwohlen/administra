@@ -124,6 +124,14 @@ describe('buildBadgeTrails', () => {
     expect(trails[0].steps[0].current).toBe(0);
   });
 
+  it('leaves the next tier without a count when the progress is not known', () => {
+    const trails = buildBadgeTrails(definitions, [badge('attendance_10', 'attendance', 10)], null);
+    const attendance = trails.find((t) => t.category === 'attendance')!;
+    expect(attendance.steps.map((s) => s.state)).toEqual(['done', 'next', 'lock']);
+    expect(attendance.steps[1].current).toBeNull();
+    expect(attendance.steps[1].pct).toBe(0);
+  });
+
   it('ignores season badges when deciding which lifetime tiers are earned', () => {
     const trails = buildBadgeTrails(definitions, [badge('top_3', 'season', 55, 2026, 'Judo')], []);
     expect(trails.every((t) => t.steps[0].state === 'next')).toBe(true);

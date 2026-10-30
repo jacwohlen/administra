@@ -4,9 +4,9 @@
   import { invalidateAll } from '$app/navigation';
   import { supabaseClient } from '$lib/supabase';
   import { onMount } from 'svelte';
-  import dayjs from 'dayjs';
-  import 'dayjs/locale/de';
-  import { locale } from 'svelte-i18n';
+  import { _, locale } from 'svelte-i18n';
+  import { DEMO_INFO_URL } from '$lib/demo';
+  import { applyDayjsLocale } from '$lib/dayjsLocale';
   import type { Snippet } from 'svelte';
   import type { LayoutData } from './$types';
 
@@ -15,9 +15,8 @@
   let { data, children }: { data: LayoutData; children: Snippet } = $props();
 
   $effect(() => {
-    if ($locale) {
-      dayjs.locale($locale.startsWith('de') ? 'de' : 'en');
-    }
+    // Follows language switches; +layout.ts sets it before the first render
+    if ($locale) applyDayjsLocale($locale);
   });
 
   // Error reports carry the account ID only (no name or e-mail), so a report
@@ -47,9 +46,30 @@
 </script>
 
 {#if mode === 'DEV'}
-  <div class="h-screen w-screen flex flex-col">
+  <div class="h-dvh w-full flex flex-col">
     <div class="bg-surface-600-400 text-white text-center text-xs py-0.5">{__GIT_BRANCH__}</div>
     <div class="flex-1 overflow-hidden">
+      {@render children()}
+    </div>
+  </div>
+{:else if mode === 'DEMO'}
+  <!--
+    Same wrapper as the DEV banner (pages bring their own scroll container),
+    released for printing like the dashboard layout so printouts are not cut.
+    h-dvh, not h-screen: 100vh is taller than the visible area on phones
+    while the browser bar shows, which would hide the bottom of each page.
+  -->
+  <div class="h-dvh w-full flex flex-col print:h-auto print:block">
+    <p
+      data-demo-banner
+      class="bg-warning-500 text-surface-950 text-center text-xs leading-snug px-3 py-1 print:hidden"
+    >
+      {$_('demo.banner')}
+      <a class="font-semibold underline whitespace-nowrap" href={DEMO_INFO_URL} rel="noopener">
+        {$_('demo.learnMore')}
+      </a>
+    </p>
+    <div class="flex-1 overflow-hidden print:overflow-visible">
       {@render children()}
     </div>
   </div>

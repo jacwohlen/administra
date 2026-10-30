@@ -12,6 +12,7 @@ import type {
 import { supabaseClient } from '$lib/supabase';
 import { getBadgeDefinitions, getGradeDefinitions } from '$lib/referenceData';
 import { blobToDataUrl } from '$lib/imageUtils';
+import { avatarPath } from '$lib/memberMerge';
 import dayjs from 'dayjs';
 
 export const load = (async ({ params, depends }) => {
@@ -28,20 +29,21 @@ export const load = (async ({ params, depends }) => {
   }
   const member = memberData;
 
-  // Resolve the avatar in parallel with the data queries below.
+  // Resolve the avatar in parallel with the data queries below. Without the
+  // full-size file (not uploaded, or a merge could not copy it) the
+  // thumbnail in members.img stays, as in the club area.
   async function resolveAvatar() {
     if (!member.img || !member.imgUploaded) return;
     member.imgUploaded = dayjs(member.imgUploaded); // cast to dayjs for easier handling
 
     const { data: avatarData, error: avatarError } = await supabaseClient.storage
       .from('avatars')
-      .download(member.id + '_' + member.imgUploaded.valueOf() + '.webp');
+      .download(avatarPath(member.id, member.imgUploaded));
 
     if (avatarData) {
       member.img = await blobToDataUrl(avatarData);
-    }
-    if (avatarError) {
-      throw err(404, avatarError);
+    } else if (avatarError) {
+      console.error('Error loading the profile picture:', avatarError);
     }
   }
 

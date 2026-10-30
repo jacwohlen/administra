@@ -23,6 +23,15 @@
   let error = $state('');
 
   const sections = clubConfig.sections;
+  // "Judo und Aikido" / "Judo and Aikido" for the search and share snippet
+  let metaDescription = $derived(
+    $_('page.trialRegistration.metaDescription', {
+      values: {
+        club: clubConfig.name,
+        sections: new Intl.ListFormat($locale ?? 'de', { type: 'conjunction' }).format(sections)
+      }
+    })
+  );
 
   async function submit() {
     error = '';
@@ -78,15 +87,15 @@
 
 <svelte:head>
   <title>{clubConfig.name} – {$_('page.trialRegistration.title')}</title>
-  <meta name="description" content={$_('page.trialRegistration.metaDescription')} />
+  <meta name="description" content={metaDescription} />
   <meta property="og:site_name" content={clubConfig.name} />
   <meta property="og:title" content="{clubConfig.name} – {$_('page.trialRegistration.title')}" />
-  <meta property="og:description" content={$_('page.trialRegistration.metaDescription')} />
+  <meta property="og:description" content={metaDescription} />
   <meta property="og:type" content="website" />
 </svelte:head>
 
 <!--
-  The root layout clips its children in DEV mode (h-screen + overflow-hidden),
+  The root layout clips its children in DEV and DEMO mode (h-dvh + overflow-hidden),
   expecting each page to bring its own scroll container the way the dashboard
   layout does. This page is rendered directly into it, so it scrolls itself.
 -->

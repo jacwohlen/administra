@@ -4,7 +4,7 @@ The TK (technical committee) plans the adult trainings for the year: which
 trainer leads which training, which topic is on, and which dates are dropped
 for holidays or club events. Until now this lived in a Google Sheet (one row
 per day: KW, Tag, Datum, Trainingstyp, Von, Bis, Leiter, Thema, Info /
-Bemerkung), which can be imported (see _Import_).
+Bemerkung), which the Daten-Assistent can read in (see _Import_).
 
 Under _Trainings → Trainingsplanung_ (`/dashboard/training-plan`) the plan
 shows one calendar year (arrows switch the year), grouped by month:
@@ -14,7 +14,10 @@ shows one calendar year (arrows switch the year), grouped by month:
   someone else is planned
 - holidays: grey band for school holidays (the adults train on), orange band
   when the dojo is closed and the trainings it drops
-- Webling events (Anlässe) on the same day, and event days without training
+- Webling events (Anlässe) on the same day, and event days without training;
+  a multi-day event (camp, course weekend) is a band from its first day and
+  shows on every training it covers, also one that began in December of the
+  year before
 
 Filters show single trainings or only dates whose trainer is still open;
 _Einsätze pro Trainer_ counts the sessions each trainer leads, to keep the
@@ -31,7 +34,8 @@ Only the TK edits (see _Roles_):
    day (public holiday, bridge day) with the same from and to date. As in the
    club's agenda, school holidays only drop the kids' trainings; tick _Dojo
    geschlossen_ for Christmas and public holidays, which drops every planned
-   training in the period.
+   training in the period. Holidays from Webling (see _Data_) are listed with
+   their source: only _Dojo zu_ can be changed, they cannot be deleted.
 2. **Rotation → Trainer** – fills a training's trainers in turn over a
    period. The order is a list of positions, each a trainer, _Trainer offen_
    or _Kein Training_:
@@ -61,29 +65,36 @@ Only the TK edits (see _Roles_):
 
 ## Import
 
-_Trainings & Ferien → Aus dem Google Sheet übernehmen_ takes the sheet as it
-is: select the rows including the header in Google Sheets, copy and paste
-(or download the sheet as CSV). Columns are found by the header (_Datum_,
-_Trainingstyp_, _Leiter_, _Thema_, _Info / Bemerkung_); dates as 05.01.2026,
-5.1.26 or 2026-01-05. Each row goes to the planned training of its weekday
-(by the type's name when a weekday has several; Thursday rows without a
-planned training are skipped):
+_Trainings & Ferien → Bestehenden Plan einlesen → Trainingsplan einlesen_
+opens the Daten-Assistent (`docs/AI_ASSISTANT.md`, kind `training_plan`):
+a photo, a PDF or a table of the plan, also rows copied straight from the
+Google Sheet. Read it **one month at a time** (copy that month's rows with
+the header row): a whole year is too long for one reading, which has to
+finish within the function's time limit. Claude reads it into a proposal,
+the review shows every session and holiday against what is planned, and
+only what the TK confirms is saved:
 
+- each row goes to the planned training of its weekday (by the type's name
+  when a weekday has several); rows on weekdays without a planned training
+  are left out, and the warnings say how many
 - _Leiter_ are matched to members by name ("Beni Muster" also finds Benjamin
-  Muster); the preview lists every name with its match to correct. Names
-  without a member (guest trainer, "Gesamt Trainersitzung") stay in the note
+  Muster, to confirm); names without a member (guest trainer, "Gesamt
+  Trainersitzung") stay in the note
 - _Thema_ becomes the topic; another training type than the training's own
-  ("freies Training", "Heimkampf", "Training Kerenzerberg") becomes the topic
-  too
-- "kein Training" or an empty type drops the training; the info says why
-  (Karfreitag, Brückentag nach Auffahrt, GV JACW)
-- the info, without the holidays, becomes the note (e.g. "SMM Training 3")
-- holidays in the info (… ferien, Weihnachten) are offered as holidays;
-  _Dojo zu_ is suggested when none of the planned trainings took place
-  during them
+  ("freies Training", "Heimkampf") becomes the topic too, with the _Thema_
+  after a colon
+- "kein Training" or an empty _Trainingstyp_ cancels the training; the info
+  says why (Karfreitag, Brückentag nach Auffahrt, GV JACW). "kein Training"
+  as _Leiter_ only means no leader
+- holidays in the info (… ferien, Weihnachten) are offered as holidays, with
+  or without _Dojo zu_; a holiday Webling already brings (same dates, or the
+  same name over overlapping dates) is shown as _Synchronisiert_ and never
+  added again
 
-What is already planned on the imported dates is replaced. The logic lives in
-`src/lib/trainingPlanImport.ts`.
+Unlike the former sheet import, what is already planned is not replaced
+without asking: a session that contradicts the plan is only written when
+ticked. Without `PRIVATE_ANTHROPIC_API_KEY` there is no import; the plan is
+then entered in the table.
 
 ## Roles
 
@@ -118,6 +129,10 @@ moves its dates. Trainers offered first are members labelled
 _Erwachsenentrainer_ in Webling, main trainers of the planned trainings in
 the last year and everyone already planned.
 
-Webling holds the holidays too (agenda "Ferien"), but the event sync only
-keeps an event's first day, so they are entered here (or imported with the
-sheet).
+Webling holds the holidays too (calendar "Ferien und Feiertage"). Since
+integrations phase 4 (`docs/INTEGRATIONS.md`, "End dates and holidays")
+the Webling sync on the integration layer brings them as holidays
+(`connection`, `external_id`): a period of up to three days closes the dojo,
+a longer one is school holidays, and a TK entry with the same name and
+dates is taken over. Their title and dates are Webling's (read-only, no
+delete); "Dojo zu" stays the TK's and later runs never change it.
