@@ -1,6 +1,6 @@
-# Webling Sync Tools for Adsumus
+# Webling Sync Tools for Alleda
 
-This folder contains the sync of data from the Webling API into Adsumus's Supabase database.
+This folder contains the sync of data from the Webling API into Alleda's Supabase database.
 
 `src/sync.py` is the entry point (GitHub Actions and local runs). The
 Webling adapter (`src/webling_adapter/`) reads Webling and feeds the
@@ -33,7 +33,7 @@ its groups could not be read) is staged as problem `missing_field` or
 are still synced, and the run ends as a `warning` (red).
 
 `integration_apply` links every member to Webling in `member_links`.
-Adsumus then shows its name, birthday, contact and groups as maintained
+Alleda then shows its name, birthday, contact and groups as maintained
 in Webling and does not let staff change them. Members Webling no longer
 returns are marked as gone and count as having left (more than a tenth at
 once is refused and fails the run; after checking Webling, a manual run
@@ -74,9 +74,9 @@ last day), members confirmed in Webling get a registration, and
 registrations the sync added earlier are removed once the member is no
 longer confirmed in Webling (not listed, or listed with another state such
 as declined), as long as they are still `registered` and have no
-attendance. Everything entered in Adsumus is kept: registrations and
+attendance. Everything entered in Alleda is kept: registrations and
 walk-ins added in the app, attendance and its status, and the registration
-date of existing rows. Removing a registration in Adsumus that is still
+date of existing rows. Removing a registration in Alleda that is still
 confirmed in Webling does not stick: the next run adds it again, so cancel
 it in Webling. The sync's own rows carry `event_participants.source_connection`
 `webling` and stay its rows while their notes start with
@@ -166,7 +166,7 @@ accept_gone=60`. What each refusal means and what to do:
 ### Duplicates
 
 Duplicate members (a trial registration and the later Webling member, two
-app rows for one person) are merged in Adsumus by an admin: _Mitglieder →
+app rows for one person) are merged in Alleda by an admin: _Mitglieder →
 Duplikate_, or _Duplikat zusammenführen_ on a member page. The merge moves
 every reference in one transaction and keeps the Webling row, so this sync
 finds the member through its link (`docs/INTEGRATIONS.md`,

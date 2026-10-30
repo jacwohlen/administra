@@ -85,7 +85,7 @@ describe('authConfig', () => {
     expect(config.site_url).toBe('https://judo-muster.example.ch');
     expect(config.uri_allow_list).toBe('https://judo-muster.example.ch');
     expect(config.mailer_templates_magic_link_content).toBe('<p/>');
-    expect(config.smtp_sender_name).toBe('Judo Club Muster (Adsumus)');
+    expect(config.smtp_sender_name).toBe('Judo Club Muster (Alleda)');
   });
 });
 

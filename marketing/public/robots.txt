@@ -3,4 +3,4 @@ Allow: /
 Disallow: /danke/
 Disallow: /en/thanks/
 
-Sitemap: https://adsumus.ch/sitemap.xml
+Sitemap: https://alleda.ch/sitemap.xml

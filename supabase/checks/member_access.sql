@@ -157,7 +157,7 @@ VALUES (990001, 'Judo', 'Phase 1b check', to_char(current_date + 30, 'YYYY-MM-DD
 
 
 -- Members the scenarios use: app ids below 1'000 count as created in
--- Adsumus, ids from 5'001 lie in the Webling range
+-- Alleda, ids from 5'001 lie in the Webling range
 INSERT INTO public.members (id, firstname, lastname, labels, email) VALUES
   (901, 'Anna', 'Aktiv', '[]', '  Anna.Aktiv@Test.CH '),
   (902, 'Paul', 'Passiv', '["Ehrenmitglieder"]', 'paul@test.ch');

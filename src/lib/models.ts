@@ -65,7 +65,7 @@ export type MembershipStatus = 'trial' | 'active' | 'passive' | 'non_member' | '
 export type MemberAccessStatus = MembershipStatus | 'archived';
 
 /**
- * my_access(): whether the signed-in account may use Adsumus now
+ * my_access(): whether the signed-in account may use Alleda now
  * (is_approved_user(), the check RLS uses) and the reason per member record
  */
 export interface MyAccess {

@@ -16,7 +16,7 @@ export const load: LayoutServerLoad = async ({ locals: { safeGetSession, supabas
     userProfile = data ?? null;
   }
 
-  // A member account may use Adsumus only while a member record counts,
+  // A member account may use Alleda only while a member record counts,
   // which the nightly Webling sync can change at any time: ask whenever this
   // load runs (page load, invalidateAll, the hourly token refresh). Staff get
   // in by their role and skip the call. On an error access stays null and
