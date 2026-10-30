@@ -1850,6 +1850,7 @@ DO $$
 DECLARE
   v_admin uuid := pg_temp.sign_up('00000000-0000-0000-0000-0000000000c1', 'lic-admin@example.com', 'admin');
   v_trainer uuid := pg_temp.sign_up('00000000-0000-0000-0000-0000000000c2', 'lic-trainer@example.com', 'trainer');
+  v_viewer uuid := pg_temp.sign_up('00000000-0000-0000-0000-0000000000c3', 'lic-viewer@example.com', 'viewer');
   v_snap jsonb;
   v_id text;
   v_app integer;
@@ -1895,8 +1896,18 @@ BEGIN
     'P0001 MANAGED_BY_PROVIDER');
   PERFORM pg_temp.eq('L4 a trainer enters it for a member from the app',
     pg_temp.err(format('UPDATE public.members SET license_number = %L WHERE id = %s', '123456', v_app)), '');
+  PERFORM pg_temp.ok('L7 a trainer reads the J+S courses',
+    (SELECT count(*) FROM public.js_courses) > 0);
   PERFORM pg_temp.eq('L5 a trainer cannot switch a connection',
     pg_temp.err($q$SELECT public.integration_set_enabled('js', true)$q$), '42501 NOT_ALLOWED');
+  RESET ROLE;
+
+  PERFORM pg_temp.act_as(v_viewer);
+  PERFORM pg_temp.eq('L7 a viewer reads no J+S course and no course training',
+    (SELECT count(*) FROM public.js_courses)::text || '/' || (SELECT count(*) FROM public.js_course_trainings)::text,
+    '0/0');
+  PERFORM pg_temp.eq('L7 a viewer still reads the licence number',
+    (SELECT license_number FROM public.members WHERE id = v_app), '123456');
   RESET ROLE;
 
   PERFORM pg_temp.act_as(v_admin);
