@@ -11,11 +11,12 @@ import type { MemberMergeResult, MergeAccount, MergeConflict, MergeCount } from 
 /** A member as the merge dialog and the duplicates list need it (MERGE_COLUMNS) */
 export interface MergeMember extends DuplicateCandidate {
   mobile?: string | null;
+  license_number?: string | null;
 }
 
 /** members columns the merge dialog and the duplicates list load (no photo data) */
 export const MERGE_COLUMNS =
-  'id, firstname, lastname, birthday, mobile, email, labels, membership_status, archivedAt, trialRegisteredAt';
+  'id, firstname, lastname, birthday, mobile, email, license_number, labels, membership_status, archivedAt, trialRegisteredAt';
 
 /** Avatar file of a member: named after its id and upload time (ms) */
 export function avatarPath(memberId: number | string, imgUploaded: string | Dayjs): string {
