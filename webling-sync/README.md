@@ -301,18 +301,16 @@ run fails or when no run arrives (e.g. GitHub disabled the schedule after 60
 days without commits). Set it in `prod` only, so manual `dev` runs don't count;
 see `docs/UPTIME_MONITORING.md`.
 
-Restricting the `prod` environment to the `main` branch (_Deployment
-branches and tags_) is recommended: then a workflow edit on another branch
-cannot read the prod secrets, and an older branch, whose workflow still has
-the removed modes, cannot start a run of the old scripts against prod.
+Both environments accept only the `main` branch (_Deployment branches
+and tags_): a workflow edit on another branch cannot read their secrets,
+and an older branch, whose workflow still has the removed modes, cannot
+start a run of the old scripts.
 
-The variable `INTEGRATION_MODE` (the switch to the layer) is no longer
-read: the workflow does not pass it, and `sync.py` only prints a line for a
-value other than `layer`. Leave it at `layer` on `prod` and `dev`. Workflows
-from before phase 3c still read it, on older branches and when an old run
-is re-run (a re-run uses that run's commit, for 30 days), and without it
-they would run the old scripts. Never re-run a Webling Sync run from before
-phase 3c; start a new run instead.
+The variable `INTEGRATION_MODE` (the switch to the layer until phase 3c)
+is gone. A re-run uses the run's own commit and is possible for 30 days,
+so a Webling Sync run from before phase 3c (started before 2026-10-29
+23:31 UTC) would run the old scripts: do not re-run one until
+2026-11-28; start a new run instead.
 
 ## Local Setup
 

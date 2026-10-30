@@ -15,12 +15,10 @@ INTEGRATION_TRIGGER (schedule|manual), INTEGRATION_RUNNER (github:<run
 id>), WEBLING_ACCEPT_GONE / _STATUS_DROP / _STATUS_GAIN / _EVENTS_GONE
 (the exact numbers of a refusal), ANONYMIZE (members: true everywhere but
 prod), WEBLING_EVENTS_LIST_CALL=false (one call per event only).
-INTEGRATION_MODE no longer chooses anything (phase 3c, see mode_notice).
 See webling-sync/README.md.
 """
 import argparse
 import os
-import re
 import sys
 
 # Overrides per kind (environment variable -> apply option)
@@ -30,9 +28,6 @@ ACCEPT = {
                 'WEBLING_ACCEPT_STATUS_GAIN': 'accept_status_gain'},
     'events': {'WEBLING_ACCEPT_EVENTS_GONE': 'accept_events_gone'},
 }
-
-# A leftover INTEGRATION_MODE is printed only when it looks like a mode word
-MODE_WORD = re.compile(r'[A-Za-z_-]{1,20}')
 
 
 def parse_args(argv):
@@ -47,19 +42,6 @@ def parse_args(argv):
 
 def env(name):
     return (os.environ.get(name) or '').strip()
-
-
-def mode_notice():
-    """INTEGRATION_MODE chose legacy, shadow or layer until phase 3c. The
-    sync now always runs through the layer, so a leftover value other than
-    layer only gets one line, and the run goes on: a stale variable on a
-    GitHub environment must not stop the nightly sync."""
-    value = env('INTEGRATION_MODE')
-    if value.lower() in ('', 'layer'):
-        return
-    shown = f"={value}" if MODE_WORD.fullmatch(value) else ''
-    print(f"INTEGRATION_MODE{shown} is no longer used: the sync always runs through the "
-          "integration layer (phase 3c)")
 
 
 def accept_options(kind):
@@ -114,7 +96,6 @@ def main(argv=None):
     if args.calendar and args.kind != 'events':
         print('Error: --calendar is for events only')
         return 2
-    mode_notice()
     from integration import runner
     if args.kind == 'list':
         return list_calendars(args.calendar)

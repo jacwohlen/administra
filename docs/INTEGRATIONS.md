@@ -499,10 +499,14 @@ to the old sync means reverting 3c, safe only while no merge has moved a
 Webling link and no group status was changed with
 `integration_set_mapping` (the old sync's guard predicted with the seeded
 rule), and without `events_keep_span` its event upsert fails once a start
-moves past a last day. The GitHub environments keep
-`INTEGRATION_MODE=layer`: nothing reads it now, but workflows from before
-3c (older branches, re-runs of old runs) would run the old scripts without
-it. The database keeps what still serves:
+moves past a last day. The GitHub variable `INTEGRATION_MODE` went
+on 2026-10-30, once the `prod` and `dev` environments only accepted
+`main`, so older branches cannot start the old workflow; it only still
+steered re-runs of the few runs between 3a and 3c, and runs from before
+3a would run the old scripts with or without it. A re-run uses the run's
+own commit and is possible for 30 days, so a Webling Sync run from before
+3c (started before 2026-10-29 23:31 UTC) must not be re-run until
+2026-11-28; start a new run instead. The database keeps what still serves:
 `member_status_from_labels()` (the status of members without a live link),
 `integration_connections.legacy_note_prefix` (prod still has registrations
 the old sync wrote whose notes only start with `Imported from Webling`),
