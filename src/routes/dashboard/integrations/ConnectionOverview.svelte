@@ -28,8 +28,8 @@
 
   /**
    * The head of a connection's card: what needs an admin (a refused run
-   * with the exact override, a failed or stale one, open errors), the
-   * numbers, and the latest run per kind.
+   * with the exact override, a failed or stale one, open errors, new groups
+   * or calendars to review), the numbers, and the latest run per kind.
    */
   let {
     connection,
@@ -134,6 +134,19 @@
           : $_('page.integrations.alert.staleNever', { values: { kind: kindLabel(alert.kind) } });
       case 'errors':
         return $_('page.integrations.alert.errors', { values: { count: alert.count } });
+      case 'review':
+        return [
+          alert.groups > 0 &&
+            $_('page.integrations.alert.reviewGroups', {
+              values: { count: alert.groups, provider }
+            }),
+          alert.calendars > 0 &&
+            $_('page.integrations.alert.reviewCalendars', {
+              values: { count: alert.calendars, provider }
+            })
+        ]
+          .filter(Boolean)
+          .join(' ');
     }
   }
 </script>
@@ -150,7 +163,8 @@
 
 {#each alerts as alert, i (i)}
   <div
-    class="flex items-start gap-2 p-3 rounded-lg text-sm {alert.code === 'stale'
+    class="flex items-start gap-2 p-3 rounded-lg text-sm {alert.code === 'stale' ||
+    alert.code === 'review'
       ? 'preset-tonal-warning'
       : 'preset-tonal-error'}"
     role="alert"

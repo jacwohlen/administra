@@ -3,10 +3,11 @@
 Adsumus exports the attendance of J+S courses as CSV files for the import
 into the Nationale Datenbank Sport (NDS). It is an **optional module**: the
 connection `js` on the Integrations page (`/dashboard/integrations`), off
-after the migration; an admin switches it on there. While it is on, staff
-find it at `/dashboard/js` (avatar menu → _J+S-Export_); while it is off the
-menu entry is gone and its pages redirect to the dashboard. Courses stay in
-the database either way.
+after the migration; an admin switches it on there. While it is on,
+**trainers and admins** find it at `/dashboard/js` (avatar menu →
+_J+S-Export_); viewers never see it. While it is off the menu entry is gone
+and its pages redirect to the dashboard. Courses stay in the database either
+way.
 
 The module needs nothing from Webling: it identifies persons by the
 member's **Lizenznummer** (`members.license_number`), which is the J+S
@@ -44,8 +45,11 @@ Sources (BASPO, jugendundsport.ch/de/datenimport):
 | Trainings of a course | `js_course_trainings`                                                      |
 | Module on or off      | `integration_connections` row `js` (`integration_set_enabled`, admins)     |
 
-Staff (viewer and up) see courses and download the files; trainers and
-admins maintain the courses. Adsumus keeps no AHV numbers, addresses,
+Only trainers and admins see the courses, maintain them and download the
+files (RLS `is_writer()` for reading and writing,
+`20261105120000_js_module_trainers_only.sql`); viewers see neither the menu
+entry nor the pages. The licence number itself is part of the member record
+and visible to all staff, like the birthday. Adsumus keeps no AHV numbers, addresses,
 nationality or mother tongue.
 
 ## The files

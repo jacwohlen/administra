@@ -233,7 +233,9 @@
         "failed": "The latest run ({kind}) failed ({error}). Check the Actions log.",
         "stale": "{kind}: last successful {ago}, more than {hours} hours ago.",
         "staleNever": "{kind}: no successful run yet.",
-        "errors": "{count, plural, one {# error is open} other {# errors are open}}, see issues."
+        "errors": "{count, plural, one {# error is open} other {# errors are open}}, see issues.",
+        "reviewGroups": "{count, plural, one {# new group from {provider} has} other {# new groups from {provider} have}} not been reviewed. While a group has no membership, members in no other status group count as non-members and cannot use the member area. If it is a status group, give it a membership under Mapping; ticking Reviewed alone does not change that.",
+        "reviewCalendars": "{count, plural, one {# new calendar from {provider} has not been reviewed; its events are} other {# new calendars from {provider} have not been reviewed; their events are}} in a guessed section. See Mapping."
       },
       "refused": {
         "empty_snapshot": "{provider} returned nobody. Check {provider} and the API key, then run again.",

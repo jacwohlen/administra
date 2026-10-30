@@ -233,7 +233,9 @@
         "failed": "Der letzte Lauf ({kind}) ist fehlgeschlagen ({error}). Sieh im Actions-Log nach.",
         "stale": "{kind}: zuletzt {ago} erfolgreich, das ist über {hours} Stunden her.",
         "staleNever": "{kind}: noch kein erfolgreicher Lauf.",
-        "errors": "{count, plural, one {# Fehler ist offen} other {# Fehler sind offen}}, siehe Probleme."
+        "errors": "{count, plural, one {# Fehler ist offen} other {# Fehler sind offen}}, siehe Probleme.",
+        "reviewGroups": "{count, plural, one {# neue Gruppe aus {provider} ist} other {# neue Gruppen aus {provider} sind}} noch nicht geprüft. Solange eine Gruppe keine Mitgliedschaft hat, zählen Mitglieder ohne andere Statusgruppe als Nicht-Mitglieder und kommen nicht in den Mitgliederbereich. Ist es eine Statusgruppe, gib ihr unter Zuordnung eine Mitgliedschaft; «Geprüft» allein ändert daran nichts.",
+        "reviewCalendars": "{count, plural, one {# neuer Kalender aus {provider} ist noch nicht geprüft, seine Events stehen} other {# neue Kalender aus {provider} sind noch nicht geprüft, ihre Events stehen}} in einer vermuteten Sparte. Siehe Zuordnung."
       },
       "refused": {
         "empty_snapshot": "{provider} hat niemanden geliefert. Prüfe {provider} und den API-Schlüssel und starte den Lauf neu.",

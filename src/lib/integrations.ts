@@ -195,7 +195,9 @@ export type IntegrationAlert =
   /** No success for STALE_HOURS (null: none at all) */
   | { code: 'stale'; kind: SyncKind; lastSuccess: string | null }
   /** Open issues with severity error */
-  | { code: 'errors'; count: number };
+  | { code: 'errors'; count: number }
+  /** New groups or calendars not reviewed yet (to_review) */
+  | { code: 'review'; groups: number; calendars: number };
 
 const SYNC_KINDS: readonly SyncKind[] = ['members', 'events'];
 
@@ -208,9 +210,12 @@ export function isStale(lastSuccess: string | null | undefined, now: Date | numb
 
 /**
  * What an admin should look at for a connection: the latest members or
- * events run refused or failed, no success for 36 hours, open errors. A
- * kind never run (a new connection, or one without events) and a disabled
- * connection raise nothing.
+ * events run refused or failed, no success for 36 hours, open errors, new
+ * groups or calendars not reviewed yet (a new group usually has no status,
+ * and members in no other status group count as non-members until it gets
+ * one; marking it reviewed alone clears the alert). A kind never run (a new
+ * connection, or one without events) and a disabled connection raise
+ * nothing.
  */
 export function connectionAlerts(
   c: ConnectionStatus,
@@ -230,6 +235,8 @@ export function connectionAlerts(
     if (isStale(success, now)) alerts.push({ code: 'stale', kind, lastSuccess: success });
   }
   if (c.issues.error > 0) alerts.push({ code: 'errors', count: c.issues.error });
+  const { groups, calendars } = c.to_review;
+  if (groups + calendars > 0) alerts.push({ code: 'review', groups, calendars });
   return alerts;
 }
 

@@ -50,7 +50,8 @@ export const load: LayoutLoad = async ({ parent, depends }) => {
     session,
     userProfile,
     pendingUsers,
-    // Admins: a sync run refused or failed, no success for 36 hours, or open errors
+    // Admins: a sync run refused or failed, no success for 36 hours, open errors,
+    // or new groups or calendars to review
     integrationAlert,
     // Viewers browse read-only; pages hide their add/edit/delete controls
     canWrite: isWriter(userProfile),
@@ -61,7 +62,8 @@ export const load: LayoutLoad = async ({ parent, depends }) => {
     canGrade: canGrade(userProfile),
     // Trainingsplanung: the TK plans trainers and topics
     canPlanTrainings: canPlanTrainings(userProfile),
-    // Optional modules, switched on the Integrations page
-    jsEnabled: isModuleEnabled('js')
+    // Optional modules, switched on the Integrations page; J+S is for
+    // trainers and admins only (RLS: is_writer())
+    jsEnabled: isWriter(userProfile) && isModuleEnabled('js')
   };
 };
