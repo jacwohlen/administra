@@ -107,8 +107,9 @@ jobs:
       # A failed ping never fails the sync, but shows as a warning on the run.
       # Whitespace is stripped: a line break pasted into the secret made curl
       # reject the URL ("Malformed input") on every run until October 2026.
+      # Dry runs write nothing: they would report a sync that did not happen
       - name: Report start to healthchecks.io
-        if: ${{ env.HEALTHCHECK_URL != '' }}
+        if: ${{ env.HEALTHCHECK_URL != '' && env.INTEGRATION_DRY_RUN != 'true' }}
         working-directory: .
         run: |
           url=$(printf '%s' "$HEALTHCHECK_URL" | tr -d '[:space:]')
@@ -138,7 +139,7 @@ jobs:
         run: python src/sync.py events
 
       - name: Report result to healthchecks.io
-        if: ${{ always() && env.HEALTHCHECK_URL != '' }}
+        if: ${{ always() && env.HEALTHCHECK_URL != '' && env.INTEGRATION_DRY_RUN != 'true' }}
         working-directory: .
         run: |
           if [ "$JOB_STATUS" = "success" ]; then suffix=""; else suffix="/fail"; fi
