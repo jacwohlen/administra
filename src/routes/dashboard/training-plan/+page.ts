@@ -3,6 +3,7 @@ import { error as err } from '@sveltejs/kit';
 import dayjs from 'dayjs';
 import type { TrainingPlanBreak, TrainingPlanSession } from '$lib/models';
 import type { PlanEvent, PlanTraining } from '$lib/trainingPlanUtils';
+import { endsOnOrAfter } from '$lib/eventUtils';
 import { loadPlanMembers } from './members';
 import type { PageLoad } from './$types';
 
@@ -32,11 +33,12 @@ export const load: PageLoad = async ({ url, depends }) => {
       .gte('date_to', from)
       .order('date_from')
       .returns<TrainingPlanBreak[]>(),
+    // Everything overlapping the year, also what starts in December before
     supabaseClient
       .from('events')
-      .select('id, title, date, section')
-      .gte('date', from)
+      .select('id, title, date, date_to, section')
       .lte('date', to)
+      .or(endsOnOrAfter(from))
       .order('date')
       .returns<PlanEvent[]>()
   ]);

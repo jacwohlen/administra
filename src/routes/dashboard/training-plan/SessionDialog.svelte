@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { modalDialog } from '$lib/modalDialog';
   import { supabaseClient } from '$lib/supabase';
   import { toaster } from '$lib/toast';
   import { _ } from 'svelte-i18n';
@@ -111,6 +112,7 @@
 >
   <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
   <div
+    use:modalDialog
     class="card modal-dialog modal-dialog-lg max-h-[90vh] overflow-y-auto"
     onclick={(e) => e.stopPropagation()}
   >

@@ -1,4 +1,11 @@
 <script lang="ts">
+  import { onMount } from 'svelte';
+  import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
+  import AssistantButton from '$lib/components/assistant/AssistantButton.svelte';
+  import AssistantDialog from '$lib/components/assistant/AssistantDialog.svelte';
+  import TrainingPlanReview from './TrainingPlanReview.svelte';
+  import { takeAssistantRequest } from '$lib/assistant/autoOpen';
+  import { loadAssistantStatus } from '$lib/assistant/client';
   import Fa from 'svelte-fa';
   import {
     faArrowLeft,
@@ -12,18 +19,46 @@
   import { invalidate } from '$app/navigation';
   import { supabaseClient } from '$lib/supabase';
   import { toaster } from '$lib/toast';
+  import { providerName } from '$lib/memberStatus';
   import type { TrainingPlanBreak } from '$lib/models';
-  import ImportSheet from './ImportSheet.svelte';
   import type { PageData } from './$types';
 
   let { data }: { data: PageData } = $props();
 
   let busy = $state(false);
+  let confirmRemove = $state<TrainingPlanBreak | null>(null);
   let form = $state({ title: '', date_from: '', date_to: '', cancels_training: false });
+  let showAssistant = $state(false);
+  // The plan is imported only by the Daten-Assistent: no section without its key
+  let assistantConfigured = $state(false);
+  loadAssistantStatus().then((s) => (assistantConfigured = s.configured));
+  /** The holidays as the assistant read them again after a partial save, while it is open */
+  let assistantBreaks = $state.raw<TrainingPlanBreak[] | null>(null);
+  /** The assistant saved something (or tried: a failed write may still commit): reload on close */
+  let assistantSaved = false;
 
   async function refresh() {
     await invalidate('training-plan:settings');
   }
+
+  function closeAssistant() {
+    showAssistant = false;
+    assistantBreaks = null;
+    if (assistantSaved) {
+      assistantSaved = false;
+      refresh();
+    }
+  }
+
+  // Opened from the Daten-Assistent overview with ?assistant=training_plan
+  onMount(() => {
+    if (!takeAssistantRequest('training_plan') || !data.canPlanTrainings) return;
+    if (data.plannedTrainings.length === 0) {
+      toaster.warning({ title: $_('page.trainingPlan.import.noTrainings') });
+      return;
+    }
+    loadAssistantStatus().then((s) => (showAssistant = s.configured));
+  });
 
   async function toggleTraining(id: number, planned: boolean) {
     busy = true;
@@ -77,10 +112,7 @@
   }
 
   async function removeBreak(b: TrainingPlanBreak) {
-    if (
-      !confirm($_('page.trainingPlan.settings.breakDeleteConfirm', { values: { title: b.title } }))
-    )
-      return;
+    confirmRemove = null;
     busy = true;
     const { error } = await supabaseClient.from('training_plan_breaks').delete().eq('id', b.id);
     busy = false;
@@ -192,6 +224,13 @@
           <div class="list-item-content">
             <div class="font-semibold truncate">{b.title}</div>
             <div class="text-sm text-surface-600-400 tabular-nums">{range(b)}</div>
+            {#if b.connection}
+              <div class="text-xs text-surface-600-400">
+                {$_('page.trainingPlan.settings.fromProvider', {
+                  values: { provider: providerName(b.connection) }
+                })}
+              </div>
+            {/if}
           </div>
           <label class="flex items-center gap-1.5 min-h-11 text-sm flex-none cursor-pointer">
             <input
@@ -203,27 +242,72 @@
             />
             <span>{$_('page.trainingPlan.settings.closedShort')}</span>
           </label>
-          <button
-            class="btn-icon size-11 p-0 flex-none text-error-600-400 hover:preset-tonal-error"
-            onclick={() => removeBreak(b)}
-            disabled={busy}
-            title={$_('button.delete')}
-            aria-label="{$_('button.delete')}: {b.title}"
-          >
-            <Fa icon={faTrash} />
-          </button>
+          {#if b.connection}
+            <!-- Maintained in the provider: it goes when the provider drops it -->
+            <span class="size-11 flex-none"></span>
+          {:else}
+            <button
+              class="btn-icon size-11 p-0 flex-none text-error-600-400 hover:preset-tonal-error"
+              onclick={() => (confirmRemove = b)}
+              disabled={busy}
+              title={$_('button.delete')}
+              aria-label="{$_('button.delete')}: {b.title}"
+            >
+              <Fa icon={faTrash} />
+            </button>
+          {/if}
         </li>
       {/each}
     </ul>
   {/if}
 </section>
 
-<section class="mt-8">
-  <h3>{$_('page.trainingPlan.import.title')}</h3>
-  <ImportSheet
-    trainings={data.plannedTrainings}
-    members={data.members}
-    breaks={data.breaks}
-    onimported={refresh}
+{#if assistantConfigured && data.canPlanTrainings}
+  <section class="mt-8 space-y-3">
+    <h3>{$_('page.trainingPlan.import.title')}</h3>
+    {#if data.plannedTrainings.length === 0}
+      <div class="empty-state"><p>{$_('page.trainingPlan.import.noTrainings')}</p></div>
+    {:else}
+      <p class="text-sm text-surface-600-400">{$_('page.trainingPlan.import.hint')}</p>
+      <AssistantButton
+        label={$_('assistant.kinds.training_plan.title')}
+        onclick={() => (showAssistant = true)}
+      />
+    {/if}
+  </section>
+{/if}
+
+{#if showAssistant && data.canPlanTrainings}
+  <AssistantDialog kind="training_plan" onclose={closeAssistant}>
+    {#snippet review(proposal, back)}
+      <TrainingPlanReview
+        {proposal}
+        trainings={data.plannedTrainings}
+        members={data.members}
+        breaks={assistantBreaks ?? data.breaks}
+        onback={back}
+        oncancel={closeAssistant}
+        onapplied={() => {
+          assistantSaved = true;
+          closeAssistant();
+        }}
+        onpartial={(breaks) => {
+          // The review stays open; a new reading compares against these
+          assistantBreaks = breaks;
+          assistantSaved = true;
+        }}
+      />
+    {/snippet}
+  </AssistantDialog>
+{/if}
+
+{#if confirmRemove}
+  {@const b = confirmRemove}
+  <ConfirmDialog
+    title={$_('dialog.confirm.title')}
+    message={$_('page.trainingPlan.settings.breakDeleteConfirm', { values: { title: b.title } })}
+    confirmLabel={$_('button.delete')}
+    oncancel={() => (confirmRemove = null)}
+    onconfirm={() => removeBreak(b)}
   />
-</section>
+{/if}

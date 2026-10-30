@@ -12,6 +12,7 @@ import type {
 import { supabaseClient } from '$lib/supabase';
 import { getBadgeDefinitions, getGradeDefinitions } from '$lib/referenceData';
 import { blobToDataUrl } from '$lib/imageUtils';
+import { avatarPath } from '$lib/memberMerge';
 import dayjs from 'dayjs';
 
 export const load = (async ({ params, depends }) => {
@@ -28,20 +29,21 @@ export const load = (async ({ params, depends }) => {
   }
   const member = memberData;
 
-  // Resolve the avatar in parallel with the data queries below.
+  // Resolve the avatar in parallel with the data queries below. Without the
+  // full-size file (not uploaded, or a merge could not copy it) the
+  // thumbnail in members.img stays, as in the club area.
   async function resolveAvatar() {
     if (!member.img || !member.imgUploaded) return;
     member.imgUploaded = dayjs(member.imgUploaded); // cast to dayjs for easier handling
 
     const { data: avatarData, error: avatarError } = await supabaseClient.storage
       .from('avatars')
-      .download(member.id + '_' + member.imgUploaded.valueOf() + '.webp');
+      .download(avatarPath(member.id, member.imgUploaded));
 
     if (avatarData) {
       member.img = await blobToDataUrl(avatarData);
-    }
-    if (avatarError) {
-      throw err(404, avatarError);
+    } else if (avatarError) {
+      console.error('Error loading the profile picture:', avatarError);
     }
   }
 
@@ -56,7 +58,8 @@ export const load = (async ({ params, depends }) => {
     gradeHistoryResult,
     medalResult,
     gradeDefinitions,
-    eventResult
+    eventResult,
+    linkResult
   ] = await Promise.all([
     supabaseClient.rpc('get_member_badges', { p_member_id: memberId }),
     supabaseClient.rpc('get_member_badge_progress', { p_member_id: memberId }),
@@ -79,6 +82,15 @@ export const load = (async ({ params, depends }) => {
       .lte('date', today)
       .order('date', { ascending: false })
       .limit(100),
+    // The provider a member comes from owns name, birthday, contact and groups,
+    // as long as it still has the member (no gone_at)
+    supabaseClient
+      .from('member_links')
+      .select('connection')
+      .eq('member_id', memberId)
+      .is('gone_at', null)
+      .limit(1)
+      .returns<{ connection: string }[]>(),
     resolveAvatar()
   ]);
 
@@ -94,6 +106,7 @@ export const load = (async ({ params, depends }) => {
     gradeHistory: list<MemberGrade>(gradeHistoryResult),
     medals: list<MemberMedal>(medalResult),
     gradeDefinitions,
-    pastEvents: list<PastEvent>(eventResult)
+    pastEvents: list<PastEvent>(eventResult),
+    managedBy: list<{ connection: string }>(linkResult)[0]?.connection ?? null
   };
 }) satisfies PageLoad;

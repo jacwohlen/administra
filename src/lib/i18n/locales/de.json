@@ -1,7 +1,7 @@
 {
   "page": {
     "routes": {
-      "welcomeMessage": "Willkommen bei Administra",
+      "welcomeMessage": "Willkommen bei Adsumus",
       "hi": "Hallo",
       "devLoginTitle": "Test-Login (nur Preview)",
       "email": "E-Mail",
@@ -20,7 +20,10 @@
       "settings": "Einstellungen",
       "myProfile": "Mein Profil",
       "js": "J+S-Export",
-      "exams": "Q-Prüfungen"
+      "exams": "Q-Prüfungen",
+      "assistant": "Daten-Assistent",
+      "integrations": "Integrationen",
+      "integrationsAlert": "Eine Integration braucht deine Aufmerksamkeit"
     },
     "pending": {
       "title": "Zugriff ausstehend",
@@ -28,8 +31,15 @@
       "disabledTitle": "Konto deaktiviert",
       "disabledMessage": "Dein Konto wurde deaktiviert. Bitte wende dich an einen Administrator.",
       "signedInAs": "Angemeldet als",
-      "noMemberMatch": "Diese E-Mail-Adresse ist bei keinem Mitglied hinterlegt. Melde dich mit der E-Mail an, die der Verein von dir hat – oder bitte deine Trainerin oder deinen Trainer, sie zu hinterlegen. Danach bist du automatisch drin.",
-      "otherEmail": "Mit anderer E-Mail anmelden"
+      "noMemberMatch": "Diese E-Mail-Adresse ist bei keinem Mitglied hinterlegt. Melde dich mit der E-Mail an, die der Verein von dir hat – oder bitte den Verein, sie bei deinem Mitgliedereintrag zu hinterlegen. Danach bist du automatisch drin.",
+      "otherEmail": "Mit anderer E-Mail anmelden",
+      "noAccessTitle": "Kein Zugang",
+      "inactiveTitle": "Keine aktive Mitgliedschaft",
+      "inactiveMessage": "Diese E-Mail-Adresse ist beim Verein hinterlegt, aber bei keiner aktiven oder passiven Mitgliedschaft. Laut Mitgliederliste:",
+      "endedMessage": "Dein Zugang ruht: Keiner deiner Mitgliedereinträge ist mehr aktiv oder passiv, zum Beispiel nach einem Austritt. Laut Mitgliederliste:",
+      "inactiveHelp": "Adsumus steht aktiven und passiven Mitgliedern offen. Stimmt das nicht – oder bist du inzwischen (wieder) Mitglied –, melde dich beim Verein. Die Mitgliederliste wird dort nachgeführt und kommt über Nacht in Adsumus an; danach bist du automatisch drin. Tippe dann auf «Aktualisieren».",
+      "trialMessage": "Du bist für ein Probetraining angemeldet. Adsumus steht Mitgliedern offen: Sobald du Mitglied bist, bist du mit dieser E-Mail-Adresse automatisch drin.",
+      "contact": "Kontakt:"
     },
     "users": {
       "title": "Benutzer",
@@ -77,6 +87,13 @@
       "disableConfirm": {
         "title": "Benutzer deaktivieren?",
         "message": "{name} kann sich danach nicht mehr anmelden, bis du das Konto wieder aktivierst."
+      },
+      "noAccess": "Kein Zugang",
+      "approveWithoutMembership": "Keine aktive oder passive Mitgliedschaft: Als Mitglied freigegeben, bekommt das Konto erst Zugang, wenn eine hinterlegt ist. Für Trainer und Vorstand zuerst die Rolle wählen.",
+      "accessReport": {
+        "title": "Mitglieder-Konten ohne Zugang",
+        "description": "Diese Konten sind als Mitglied freigegeben, aber keiner ihrer Mitglieder-Einträge ist eine aktive oder passive Mitgliedschaft (z. B. Nicht-Mitglieder, Ausgetretene, Probetraining oder archiviert). Sie sehen nichts und erfahren beim Anmelden, warum. Sobald ein Eintrag wieder aktiv oder passiv ist (Gruppe in Webling), haben sie automatisch wieder Zugang. Trainer und Vorstand bekommen ihren Zugang über die Rolle.",
+        "noMember": "kein Mitglied-Eintrag"
       }
     },
     "settings": {
@@ -169,6 +186,219 @@
         "locale": {
           "de": "Deutsch",
           "en": "Englisch"
+        }
+      }
+    },
+    "integrations": {
+      "title": "Integrationen",
+      "intro": "Woher Mitglieder, Events und Ferien kommen: was die letzten Läufe gebracht haben, was offen ist und wie Gruppen und Kalender zugeordnet sind.",
+      "empty": "Keine Verbindung eingerichtet.",
+      "runsIn": {
+        "sync": "Läuft in GitHub Actions",
+        "app": "Läuft in der App"
+      },
+      "disabled": "Ausgeschaltet",
+      "kpi": {
+        "membersLinked": "Mitglieder verknüpft",
+        "membersGone": "Mitglieder weg",
+        "eventsLinked": "Events verknüpft",
+        "breaks": "Ferien",
+        "issues": "Offene Probleme",
+        "toReview": "Neu zu prüfen"
+      },
+      "kind": {
+        "members": "Mitglieder",
+        "events": "Events",
+        "config": "Zuordnung"
+      },
+      "status": {
+        "running": "Läuft",
+        "applied": "Läuft",
+        "refused": "Gestoppt",
+        "ok": "OK",
+        "warning": "Warnung",
+        "failed": "Fehlgeschlagen"
+      },
+      "trigger": {
+        "schedule": "Zeitplan",
+        "manual": "Manuell",
+        "app": "App"
+      },
+      "dryRun": "Probelauf",
+      "never": "Noch nie gelaufen",
+      "stale": "Veraltet",
+      "lastSuccess": "zuletzt erfolgreich {ago}",
+      "alert": {
+        "refused": "Der letzte Lauf ({kind}) wurde gestoppt.",
+        "failed": "Der letzte Lauf ({kind}) ist fehlgeschlagen ({error}). Sieh im Actions-Log nach.",
+        "stale": "{kind}: zuletzt {ago} erfolgreich, das ist über {hours} Stunden her.",
+        "staleNever": "{kind}: noch kein erfolgreicher Lauf.",
+        "errors": "{count, plural, one {# Fehler ist offen} other {# Fehler sind offen}}, siehe Probleme."
+      },
+      "refused": {
+        "empty_snapshot": "{provider} hat niemanden geliefert. Prüfe {provider} und den API-Schlüssel und starte den Lauf neu.",
+        "members_gone": "{count} Mitglieder wären auf einmal weg. Prüfe zuerst {provider}.",
+        "status_drop": "{count} Mitglieder würden ihre Mitgliedschaft verlieren. Eine neue oder umbenannte Statusgruppe? Ordne sie unten zu und starte den Lauf neu.",
+        "status_gain": "{count} Mitglieder würden neu als Mitglied zählen und automatisch freigeschaltet. Prüfe die Gruppen in {provider}.",
+        "events_gone": "{count} Events wären auf einmal weg. Prüfe den Kalender in {provider}.",
+        "unknown": "Eine Sperre hat den Lauf gestoppt ({code})."
+      },
+      "override": {
+        "sync": "Ist es gewollt: Actions → Webling Sync → Run workflow mit {key} = {count}.",
+        "app": "Ist es gewollt: den Lauf mit {key} = {count} wiederholen."
+      },
+      "runs": {
+        "title": "Läufe",
+        "empty": "Noch keine Läufe.",
+        "started": "Start",
+        "kind": "Art",
+        "status": "Status",
+        "counts": "Zahlen",
+        "error": "Fehler",
+        "noChange": "keine Änderung",
+        "adapterErrors": "{count} Abruffehler"
+      },
+      "count": {
+        "received": "{count} gelesen",
+        "inserted": "{count} neu",
+        "adopted": "{count} übernommen",
+        "revived": "{count} wieder da",
+        "updated": "{count} geändert",
+        "gone": "{count} weg",
+        "former": "{count} alte Einträge weg",
+        "statuses_recomputed": "{count} Status neu berechnet",
+        "held": "{count} zurückgehalten",
+        "invalid": "{count} ungültig",
+        "conflicts": "{count} Konflikte",
+        "write_failed": "{count} nicht geschrieben",
+        "deleted": "{count} gelöscht",
+        "kept": "{count} behalten",
+        "breaks_inserted": "{count} Ferien neu",
+        "breaks_adopted": "{count} Ferien übernommen",
+        "breaks_updated": "{count} Ferien geändert",
+        "breaks_deleted": "{count} Ferien gelöscht",
+        "holiday_events_deleted": "{count} Ferien-Events ersetzt",
+        "holiday_events_kept": "{count} Ferien-Events behalten",
+        "registrations_added": "{count} Anmeldungen neu",
+        "registrations_removed": "{count} Anmeldungen entfernt",
+        "registrations_adopted": "{count} Anmeldungen übernommen",
+        "groups": "{count} Gruppen",
+        "calendars": "{count} Kalender",
+        "statuses_changed": "{count} Status geändert"
+      },
+      "issues": {
+        "title": "Probleme",
+        "empty": "Keine offenen Probleme.",
+        "dismissed": "Ausgeblendet",
+        "dismissedCount": "{count} ausgeblendet",
+        "record": "{provider}-Nr. {id}",
+        "participant": "Teilnehmer:in {provider}-Nr. {id}",
+        "merge": "Zusammenführen",
+        "notDuplicate": "Kein Duplikat",
+        "dismiss": "Ausblenden",
+        "reopen": "Wieder öffnen",
+        "dismissAll": "Alle ausblenden",
+        "dismissAllTitle": "Alle ausblenden?",
+        "dismissAllConfirm": "Alle {count} offenen Probleme «{code}» ausblenden? Sie bleiben ausgeblendet, auch wenn die nächsten Läufe sie wieder sehen; einzeln wieder öffnen geht jederzeit.",
+        "openInProvider": "In {provider} öffnen",
+        "severity": {
+          "error": "Fehler",
+          "warning": "Warnung",
+          "info": "Info"
+        },
+        "match": {
+          "email": "gleiche E-Mail",
+          "name_birthday": "gleicher Name und Geburtstag"
+        },
+        "code": {
+          "possible_duplicate": "Mögliche Duplikate",
+          "invalid_record": "Nicht übernommene Datensätze",
+          "invalid_event": "Nicht übernommene Events",
+          "id_conflict": "Konflikte",
+          "write_failed": "Nicht geschrieben",
+          "invalid_value": "Ungültige Werte",
+          "event_gone_kept": "Weg, aber behalten",
+          "unknown_participant": "Unbekannte Teilnehmende"
+        },
+        "help": {
+          "members": {
+            "possible_duplicate": "Gleiche E-Mail oder gleicher Name und Geburtstag wie ein Mitglied, das nicht aus dieser Verbindung kommt. Führe sie zusammen oder markiere sie als kein Duplikat.",
+            "invalid_record": "Datensätze, die der Lauf nicht schreiben konnte, z. B. weil ein Pflichtfeld fehlt. Korrigiere sie beim Anbieter.",
+            "id_conflict": "Der Datensatz gehört schon zu einem anderen Mitglied oder Anbieter.",
+            "write_failed": "Die Datenbank hat den Datensatz abgelehnt (Code). Die anderen wurden geschrieben.",
+            "invalid_value": "Ein Wert ist hier nicht gültig (z. B. ein Geburtstag, den es nicht gibt); der bisherige bleibt."
+          },
+          "events": {
+            "invalid_event": "Events ohne gültiges Datum beim Anbieter; sie werden nicht übernommen.",
+            "id_conflict": "Das Event ist schon mit einem anderen Anbieter verknüpft.",
+            "write_failed": "Die Datenbank hat das Event abgelehnt (Code). Die anderen wurden geschrieben.",
+            "invalid_value": "Ein Wert ist hier nicht gültig; der bisherige bleibt.",
+            "event_gone_kept": "Beim Anbieter gelöscht, aber in der App benutzt (Anmeldungen, Anwesenheit): es bleibt und gehört jetzt der App.",
+            "unknown_participant": "Beim Anbieter angemeldet, aber kein verknüpftes Mitglied hier."
+          }
+        },
+        "toast": {
+          "dismissed": "Ausgeblendet",
+          "dismissedAll": "{count} ausgeblendet",
+          "dismissAllError": "{dismissed, plural, =0 {Das hat nicht geklappt.} other {# von {count} ausgeblendet, dann hat es nicht geklappt.}} Versuch es noch einmal.",
+          "reopened": "Wieder geöffnet",
+          "error": "Das hat nicht geklappt. Versuch es noch einmal."
+        }
+      },
+      "mapping": {
+        "title": "Zuordnung",
+        "toReview": "{count} neu",
+        "intro": "Was die Gruppen und Kalender von {provider} in Adsumus bedeuten. Neue erscheinen hier als «Neu», bis du sie prüfst.",
+        "groups": "Gruppen",
+        "groupsHelp": "Hat ein Mitglied mehrere Statusgruppen, gilt die mit dem kleinsten Rang. Ausgeblendete Gruppen erscheinen nicht als Chip.",
+        "noGroups": "Noch keine Gruppen.",
+        "group": "Gruppe",
+        "asLabel": "als «{label}»",
+        "status": "Mitgliedschaft",
+        "noStatus": "–",
+        "rank": "Rang",
+        "hidden": "Ausblenden",
+        "role": "Rolle",
+        "noRole": "–",
+        "roleTrainer": "Trainer:in",
+        "reviewed": "Geprüft",
+        "new": "Neu",
+        "gone": "Nicht mehr in {provider}",
+        "calendars": "Kalender",
+        "calendarsHelp": "Events landen in der Sparte, Ferien in der Trainingsplanung. Ferien bis zur angegebenen Anzahl Tage schliessen das Dojo, leer heisst immer. Gilt ab dem nächsten Event-Lauf.",
+        "noCalendars": "Noch keine Kalender.",
+        "calendar": "Kalender",
+        "target": "Ziel",
+        "targets": {
+          "event": "Events",
+          "break": "Ferien",
+          "ignore": "Ignorieren"
+        },
+        "section": "Sparte",
+        "closedMaxDays": "Dojo zu bis (Tage)",
+        "invalid": "Rang und Tage sind Zahlen von 0 bis 999.",
+        "preview": "Vorschau",
+        "save": "Speichern",
+        "reset": "Zurücksetzen",
+        "previewResult": "{groups} Gruppen und {calendars} Kalender ändern sich, {statuses} Mitglieder bekommen einen anderen Status.",
+        "dropping": "{count} Mitglieder verlieren ihre Mitgliedschaft (Sperre ab mehr als {limit}).",
+        "droppingStatus": "{count} Mitglieder mit Status «{status}» verlieren ihre Mitgliedschaft: mehr als die Hälfte dieses Status.",
+        "droppingStatuses": "{count} Mitglieder verlieren ihre Mitgliedschaft ({list}): bei einem dieser Status mehr als die Hälfte.",
+        "statusCount": "{count} {status}",
+        "gaining": "{count} Mitglieder zählen neu als Mitglied und werden automatisch freigeschaltet (Sperre ab mehr als {limit}).",
+        "overGuard": "Das ist mehr, als die Sperre erlaubt. Speichern bestätigt genau diese Zahl.",
+        "calendarsLater": "Kalender wirken ab dem nächsten Event-Lauf.",
+        "previewOutdated": "Die Eingaben haben sich seither geändert: zeig die Vorschau noch einmal.",
+        "confirmTitle": "Zuordnung speichern?",
+        "confirmOverride": "Damit bestätigst du die Zahlen über der Sperre.",
+        "toast": {
+          "saved": "Zuordnung gespeichert",
+          "refused": "Die Zahlen haben sich geändert. Prüfe die neue Vorschau."
+        },
+        "error": {
+          "invalid": "Diese Zuordnung nimmt die Datenbank nicht an.",
+          "notAllowed": "Dazu fehlt dir die Berechtigung.",
+          "failed": "Das hat nicht geklappt. Versuch es noch einmal."
         }
       }
     },
@@ -326,7 +556,127 @@
       "archived": "Archiviert am {date} – erscheint nicht in der Mitgliederliste und der Suche.",
       "archivedLink": "Im Probetraining-Archiv wiederherstellen",
       "empty": "Noch keine Mitglieder erfasst.",
-      "noResults": "Keine Mitglieder entsprechen deiner Suche"
+      "noResults": "Keine Mitglieder entsprechen deiner Suche",
+      "status": {
+        "trial": "Probetraining",
+        "active": "Aktiv",
+        "passive": "Passiv",
+        "non_member": "Nicht-Mitglied",
+        "left": "Ausgetreten",
+        "archived": "Archiviert"
+      },
+      "showAll": "Auch Nicht-Mitglieder und Ausgetretene anzeigen",
+      "managedBy": "Name, Geburtstag, Telefon, E-Mail und Gruppen kommen aus {provider} und werden dort geändert, auch ein Austritt.",
+      "managedError": "Diese Angaben kommen aus {provider} und können nur dort geändert werden.",
+      "hiddenMatches": "{count, plural, one {# Treffer} other {# Treffer}} unter Nicht-Mitgliedern und Ausgetretenen.",
+      "merge": {
+        "action": "Duplikat zusammenführen",
+        "title": "Duplikat zusammenführen",
+        "intro": "Wähle den anderen Eintrag derselben Person. Alles vom entfernten Eintrag geht auf den bleibenden über, dann wird er gelöscht.",
+        "search": "Mitglied suchen…",
+        "noMatches": "Kein Mitglied gefunden",
+        "keep": "Bleibt",
+        "drop": "Wird entfernt",
+        "swap": "Tauschen",
+        "swapBlocked": "Der Eintrag aus {provider} muss bleiben.",
+        "inProvider": "aus {provider}",
+        "loadError": "Mitglieder konnten nicht geladen werden.",
+        "previewLoading": "Vorschau wird berechnet…",
+        "previewTitle": "Was übernommen wird",
+        "nothingToMove": "Der entfernte Eintrag hat keine Trainings, Anlässe, Graduierungen oder anderen Daten.",
+        "moved": "{count} übernommen",
+        "merged": "{count} zusammengelegt",
+        "removed": "{count} entfernt",
+        "refs": {
+          "attendance": "Trainingsbesuche",
+          "trainings": "Trainingszuteilungen",
+          "eventRegistrations": "Anmeldungen zu Anlässen",
+          "eventAttendance": "Teilnahmen an Anlässen",
+          "grades": "Graduierungen",
+          "medals": "Medaillen",
+          "badges": "Abzeichen",
+          "exams": "Q-Prüfungen",
+          "trialEmails": "Probetraining-E-Mails",
+          "planSessions": "Einträge im Trainingsplan",
+          "mainTrainer": "Haupttrainer von Trainings",
+          "account": "Benutzerkonto",
+          "links": "Webling-Verknüpfung (ausgetreten)",
+          "earlierMerges": "Frühere Zusammenführungen",
+          "other": "Weitere ({ref})"
+        },
+        "conflictsTitle": "Bei beiden vorhanden",
+        "conflict": {
+          "gradeExam": "{grade} ({section}): Die Graduierung aus der Q-Prüfung bleibt, die Notizen werden zusammengefügt.",
+          "gradeKeep": "{grade} ({section}): Die Graduierung des bleibenden Eintrags bleibt, die Notizen werden zusammengefügt.",
+          "medal": "{competition}: {kept} bleibt, {dropped} fällt weg.",
+          "medalSame": "{competition}: bei beiden {medal}, die Medaille bleibt einmal.",
+          "examSheet": "Q-Prüfung {title} ({date}): Die Anmeldung mit dem begonnenen Prüfungsblatt bleibt. Sie bekommt den weiteren Status beider (aufgeboten vor angemeldet vor abgemeldet) und die Notizen beider.",
+          "examStatus": "Q-Prüfung {title} ({date}): Die Anmeldung mit dem weiteren Status bleibt (aufgeboten vor angemeldet vor abgemeldet). Die Notizen werden zusammengefügt, leere Angaben kommen von der anderen.",
+          "other": "{ref}: Ein Eintrag bleibt."
+        },
+        "fieldsTitle": "Angaben des bleibenden Eintrags",
+        "statusSame": "Status bleibt: {status}",
+        "statusChanges": "Status: {before} → {after}",
+        "field": {
+          "birthday": "Geburtstag",
+          "mobile": "Mobiltelefon",
+          "email": "E-Mail"
+        },
+        "fieldDecision": {
+          "from_drop": "{field}: wird übernommen ({value})",
+          "kept_differs": "{field}: bleibt; der andere Wert ({value}) wird nicht übernommen",
+          "not_copied_provider": "{field}: kommt aus {provider}, {value} wird nicht übernommen. Ändere es dort.",
+          "not_copied_trial": "{field}: {value} stammt aus der Probetraining-Anmeldung und wird nicht übernommen. Trag es von Hand ein, wenn es stimmt."
+        },
+        "notesJoined": "Die Notizen beider Einträge werden zusammengefügt.",
+        "photoFromDrop": "Das Foto des entfernten Eintrags wird übernommen.",
+        "photoKeptBoth": "Das Foto des bleibenden Eintrags bleibt, das andere wird gelöscht.",
+        "unarchived": "Der bleibende Eintrag wird aus dem Archiv geholt.",
+        "trialFromDrop": "Der Probetraining-Verlauf und der Status-Link werden übernommen.",
+        "labelsNotCarried": "Nicht übernommene Labels: {labels}",
+        "badges": "Abzeichen werden neu berechnet: {added} neu, {removed} entfallen.",
+        "othersChanged": "{count, plural, one {# Saison-Abzeichen} other {# Saison-Abzeichen}} anderer Mitglieder ändern sich.",
+        "accountsTitle": "Benutzerkonten",
+        "account": {
+          "losesAccess": "{email} verliert den Zugang zu Adsumus. Verknüpfe das Konto unter Benutzer mit dem bleibenden Eintrag oder trag die E-Mail dort ein (bei Webling-Mitgliedern in Webling).",
+          "gainsAccess": "{email} bekommt Zugang zu Adsumus.",
+          "losesRecord": "{email} sieht den Eintrag danach nicht mehr (Mein Profil, Mitgliederbereich). Verknüpfe das Konto unter Benutzer, wenn es dazugehört. Ein Mitgliederkonto sieht ihn nur, solange er als aktives oder passives Mitglied zählt.",
+          "gainsRecord": "{email} sieht den Eintrag danach (Mein Profil, Mitgliederbereich)."
+        },
+        "warning": {
+          "TRIAL_LINK_ENDS": "Der Status-Link der Probetraining-Anmeldung funktioniert danach nicht mehr.",
+          "ACCOUNT_LOSES_ACCESS": "{count, plural, one {# Mitgliederkonto verliert} other {# Mitgliederkonten verlieren}} den Zugang zu Adsumus."
+        },
+        "confirmTitle": "Zusammenführen bestätigen",
+        "confirmMessage": "{drop} (#{dropId}) wird gelöscht, alles geht auf {keep} (#{keepId}) über. Das lässt sich nicht rückgängig machen.",
+        "confirm": "Zusammenführen",
+        "success": "Einträge zusammengeführt",
+        "error": {
+          "NOT_ALLOWED": "Nur Admins können Mitglieder zusammenführen.",
+          "SAME_MEMBER": "Wähle einen anderen Eintrag.",
+          "MEMBER_NOT_FOUND": "Einer der Einträge existiert nicht mehr.",
+          "BOTH_IN_PROVIDER": "Beide Einträge kommen aus {provider}. Führe sie zuerst dort zusammen.",
+          "KEEP_PROVIDER_ROW": "Der Eintrag aus {provider} muss bleiben.",
+          "ACCOUNT_CONFLICT": "Beide Einträge sind mit einem Benutzerkonto verknüpft. Löse zuerst eine Verknüpfung unter Benutzer.",
+          "EXAM_CONFLICT": "Beide Einträge wurden am selben Prüfungstag geprüft. Kläre das zuerst in den Q-Prüfungen.",
+          "UNHANDLED_REFERENCE": "Zusammenführen ist gesperrt: Die Datenbank hat eine neue Verknüpfung zu Mitgliedern, die das Zusammenführen noch nicht kennt.",
+          "unknown": "Zusammenführen fehlgeschlagen."
+        }
+      },
+      "duplicates": {
+        "link": "Duplikate",
+        "title": "Mögliche Duplikate",
+        "intro": "Einträge, die wahrscheinlich dieselbe Person sind. Prüf jedes Paar, bevor du es zusammenführst.",
+        "empty": "Keine möglichen Duplikate gefunden.",
+        "count": "{count, plural, one {# Paar} other {# Paare}}",
+        "reason": {
+          "name_birthday": "Name und Geburtstag",
+          "email_name": "E-Mail und Vorname",
+          "trial_name": "Probetraining mit gleichem Namen"
+        },
+        "merge": "Zusammenführen",
+        "mergeInProvider": "In {provider} zusammenführen"
+      }
     },
     "stats": {
       "all": "Alle",
@@ -395,6 +745,7 @@
       "today": "Heutige Events",
       "upcoming": "Kommende Events",
       "past": "Vergangene Events",
+      "allDay": "Ganztägig",
       "no_events": "Keine Events gefunden",
       "no_events_found": "Keine Events entsprechen deiner Suche",
       "search_placeholder": "Events suchen…",
@@ -432,6 +783,9 @@
         "description": "Beschreibung",
         "description_placeholder": "Beschreibe worum es bei diesem Event geht…",
         "date": "Datum",
+        "date_to": "Bis",
+        "date_to_hint": "Letzter Tag eines mehrtägigen Events, sonst leer lassen",
+        "all_day": "Ganztägig (ohne Zeiten)",
         "time_from": "Startzeit",
         "time_to": "Endzeit",
         "location": "Ort",
@@ -443,7 +797,8 @@
         "registration_deadline": "Anmeldeschluss"
       },
       "validation": {
-        "required_fields": "Bitte alle Pflichtfelder ausfüllen"
+        "required_fields": "Bitte alle Pflichtfelder ausfüllen",
+        "date_to": "Der letzte Tag kann nicht vor dem Datum liegen"
       },
       "deleteConfirmTitle": "Event löschen",
       "deleteConfirmMessage": "Bist du sicher, dass du das Event löschen möchtest",
@@ -462,7 +817,10 @@
       "createError": "Fehler beim Erstellen des Events",
       "updateError": "Fehler beim Aktualisieren des Events",
       "backToList": "Zurück zu den Events",
-      "backToEvent": "Zurück zum Event"
+      "backToEvent": "Zurück zum Event",
+      "managedBy": "Dieses Event kommt aus {provider}: die gesperrten Felder werden dort geändert. Teilnehmer, Anwesenheit und alles andere erfasst du hier.",
+      "lockedByProvider": "Dieses Event kommt aus {provider}. Gesperrte Felder änderst du dort, die übrigen wie den Anmeldeschluss hier.",
+      "openInProvider": "In {provider} öffnen"
     },
     "trialRegistration": {
       "title": "Anmeldung Probetraining",
@@ -485,7 +843,7 @@
         "required": "Bitte Vorname, Nachname, Geburtsdatum und E-Mail ausfüllen.",
         "invalid": "Bitte prüfe deine Angaben, vor allem E-Mail-Adresse und Geburtsdatum."
       },
-      "metaDescription": "Melde dich unverbindlich für ein Probetraining an – Judo und Aikido in Wohlen.",
+      "metaDescription": "{club} – {sections}: Melde dich unverbindlich für ein Probetraining an.",
       "backToWebsite": "Zur Vereinswebsite",
       "contactHint": "Fragen vorab? Schreib uns:",
       "submitError": "Die Anmeldung konnte gerade nicht gesendet werden. Bitte versuche es später noch einmal.",
@@ -658,7 +1016,25 @@
       "errorSend": "Der Code konnte nicht gesendet werden. Bitte prüfe die E-Mail-Adresse.",
       "errorCode": "Der Code ist falsch oder abgelaufen. Versuch es nochmals.",
       "errorRateLimit": "Zu viele Versuche. Bitte warte einen Moment und versuch es dann nochmals.",
-      "errorOAuth": "Die Anmeldung hat nicht geklappt: {reason}"
+      "errorOAuth": "Die Anmeldung hat nicht geklappt: {reason}",
+      "demo": {
+        "title": "Adsumus ausprobieren",
+        "intro": "Wähle eine Rolle – du bist sofort angemeldet. Der Budo-Club Musterwil ist erfunden; alle Daten werden jede Woche zurückgesetzt.",
+        "admin": {
+          "title": "Vorstand",
+          "description": "Alles sehen und verwalten: Mitglieder, Statistiken, Benutzer und Einstellungen."
+        },
+        "trainer": {
+          "title": "Trainerin oder Trainer",
+          "description": "Präsenz erfassen, Probetrainings zuteilen und Gurtprüfungen bewerten."
+        },
+        "member": {
+          "title": "Mitglied oder Eltern",
+          "description": "Fortschritte der eigenen Kinder sehen und sie für die Gurtprüfung anmelden."
+        },
+        "errorUnknownRole": "Diese Rolle gibt es in der Demo nicht. Wähle eine der Rollen oben.",
+        "errorSignIn": "Die Anmeldung hat gerade nicht geklappt. Versuch es in ein paar Minuten nochmals."
+      }
     },
     "club": {
       "myProfile": "Mein Profil",
@@ -1020,7 +1396,7 @@
       "previousYear": "Vorheriges Jahr",
       "nextYear": "Nächstes Jahr",
       "print": "Drucken",
-      "empty": "Noch keine Trainings in der Planung. Die TK wählt unter «Trainings & Ferien» aus, welche Trainings geplant werden, und kann dort den bisherigen Plan aus dem Google Sheet übernehmen.",
+      "empty": "Noch keine Trainings in der Planung. Die TK wählt unter «Trainings & Ferien» aus, welche Trainings geplant werden.",
       "nothingShown": "Keine Termine für diese Auswahl",
       "onlyOpen": "Trainer offen ({count})",
       "showPast": "Vergangene anzeigen",
@@ -1093,7 +1469,8 @@
         "breakDeleteConfirm": "«{title}» löschen?",
         "noBreaks": "Noch keine Ferien erfasst",
         "closed": "Dojo geschlossen: alle geplanten Trainings fallen aus",
-        "closedShort": "Dojo zu"
+        "closedShort": "Dojo zu",
+        "fromProvider": "Aus {provider}: dort gepflegt, hier nur «Dojo zu»"
       },
       "checkin": {
         "cancelled": "Laut Trainingsplan fällt dieses Training aus",
@@ -1103,24 +1480,9 @@
       "breakOpen": "Erwachsenentraining findet statt",
       "mainTrainer": "Haupttrainer",
       "import": {
-        "title": "Aus dem Google Sheet übernehmen",
-        "hint": "Im Sheet «Trainingsplanung» die Zeilen samt Kopfzeile (KW, Tag, Datum, Trainingstyp, …, Leiter, Thema, Info / Bemerkung) markieren, kopieren und hier einfügen, oder das Blatt als CSV herunterladen und wählen. Zuerst oben die geplanten Trainings wählen: die Zeilen gehen an das Training ihres Wochentags.",
-        "noTrainings": "Zuerst oben die geplanten Trainings wählen.",
-        "placeholder": "KW\tTag\tDatum\tTrainingstyp\t…",
-        "file": "oder CSV-Datei:",
-        "noHeader": "Keine Kopfzeile mit «Datum» gefunden. Bitte die Kopfzeile mitkopieren.",
-        "nothing": "Keine Zeilen für die geplanten Trainings gefunden.",
-        "summary": "{sessions} Termine vom {from} bis {to}, davon {cancelled} ohne Training.",
-        "skipped": "{count, plural, one {# Zeile} other {# Zeilen}} an Wochentagen ohne geplantes Training werden übersprungen.",
-        "leaders": "Leiter",
-        "leadersHint": "Zuordnung zu den Mitgliedern. Ohne Zuordnung (z. B. Gasttrainer) bleibt der Name in der Bemerkung.",
-        "holidays": "Ferien",
-        "holidaysHint": "Aus der Spalte «Info / Bemerkung». «Dojo zu» ist vorgeschlagen, wenn in dieser Zeit kein geplantes Training stattfand.",
-        "exists": "schon erfasst",
-        "overwrite": "Was an diesen Daten schon geplant ist, wird durch das Sheet ersetzt.",
-        "run": "{count} Termine übernehmen",
-        "done": "{sessions} Termine und {breaks} Ferien übernommen",
-        "error": "Fehler beim Übernehmen des Sheets"
+        "title": "Bestehenden Plan einlesen",
+        "hint": "Foto, PDF oder Tabelle des bisherigen Plans, auch direkt aus dem Google Sheet kopiert, am besten einen Monat aufs Mal. Die KI liest Leiter, Themen, Ausfälle und Ferien; du prüfst alles, bevor etwas gespeichert wird.",
+        "noTrainings": "Zuerst oben die geplanten Trainings wählen."
       },
       "view": {
         "list": "Übersicht",
@@ -1186,7 +1548,8 @@
     "editMember": {
       "title": "Mitglied bearbeiten",
       "updateSuccess": "Mitglied erfolgreich aktualisiert",
-      "updateError": "Fehler beim Aktualisieren des Mitglieds"
+      "updateError": "Fehler beim Aktualisieren des Mitglieds",
+      "managedHint": "Name, Geburtstag, Telefon, E-Mail und Gruppen kommen aus {provider} und werden dort geändert. Hier kannst du die Notizen bearbeiten."
     },
     "confirm": {
       "title": "Bitte bestätigen",
@@ -1386,5 +1749,397 @@
     "lastDaysAgo": "Zuletzt vor {n} Tagen",
     "last30": "{n, plural, one {# Training} other {# Trainings}} in den letzten 30 Tagen",
     "cell": "{date}: {n, plural, =0 {kein Training} one {# Training} other {# Trainings}}"
+  },
+  "assistant": {
+    "button": "Mit KI erfassen",
+    "title": "Daten-Assistent",
+    "chooseFiles": "Datei wählen",
+    "fileTypes": "Fotos, PDF, TXT oder CSV; höchstens {max} Fotos oder PDFs",
+    "takePhoto": "Foto aufnehmen",
+    "preparing": "Datei wird vorbereitet …",
+    "attachments": "Gewählte Dateien",
+    "pasteText": "Text einfügen",
+    "pasteTextPlaceholder": "Oder Text einfügen, auch aus Excel, z. B. {example}",
+    "hint": "Hinweis für die Auswertung (optional)",
+    "hintPlaceholder": "z. B. «Die zweite Spalte ist der Leiter»",
+    "privacy": "Fotos und Text gehen an Claude (Anthropic), ohne Mitgliederdaten aus Adsumus. Gespeichert wird erst nach deiner Prüfung.",
+    "analyze": "Auswerten",
+    "working": "Claude liest die Unterlagen …",
+    "workingSeconds": "{seconds} s – das dauert meist 10 bis 40 Sekunden.",
+    "remaining": "Heute noch {count, plural, one {# Auswertung} other {# Auswertungen}}",
+    "remainingShort": "Heute noch {count}",
+    "modelWarnings": "Hinweise zur Vorlage",
+    "kinds": {
+      "grades": {
+        "title": "Judo-Pass einlesen",
+        "hint": "Fotografiere die Seiten mit den Prüfungen (Kyu und Dan).",
+        "description": "Kyu- und Dan-Prüfungen aus dem Judo-Pass eines Mitglieds übernehmen.",
+        "example": "«5. Kyu am 12. Juni 2019, 4. Kyu am 3. Mai 2021»"
+      },
+      "attendance": {
+        "title": "Präsenzliste einlesen",
+        "button": "Liste einlesen",
+        "hint": "Liste eines Trainings oder Tabelle über mehrere Daten.",
+        "description": "Anwesenheiten aus einer Präsenzliste auf Papier oder in Excel erfassen.",
+        "example": "«Anwesend: Lena Müller, Tim Weber, Anna Keller; Leitung Beni Keller»"
+      },
+      "training_plan": {
+        "title": "Trainingsplan einlesen",
+        "hint": "Plan mit Datum, Training, Leiter, Thema, Ausfällen und Ferien, z. B. aus dem Google Sheet kopiert. Grosse Pläne am besten monatsweise.",
+        "description": "Leiter, Themen, Ausfälle und Ferien aus einem bestehenden Plan übernehmen.",
+        "example": "«2. November Kampftraining mit Sandra, Thema Ne-Waza; am 9. November fällt es aus»"
+      },
+      "lesson_plan": {
+        "title": "Lektionsplan einlesen",
+        "hint": "Der Lektionsplan für dieses Training, von Hand oder gedruckt.",
+        "description": "Einen Lektionsplan (Aufwärmen, Hauptteil, Ausklang) für ein Training und Datum erstellen.",
+        "example": "«Aufwärmen: Laufen und Fallschule. Hauptteil: O-Goshi in Paaren. Ausklang: Randori»"
+      },
+      "events": {
+        "title": "Termine einlesen",
+        "hint": "Wettkämpfe, Kurse, Lager oder Anlässe, z. B. aus einer Ausschreibung.",
+        "description": "Wettkämpfe, Kurse und Anlässe aus einer Liste oder Ausschreibung übernehmen.",
+        "example": "«Kids Cup am 14. November in Wohlen, 9 bis 16 Uhr»"
+      }
+    },
+    "errors": {
+      "not_configured": "Der Assistent ist auf dieser Installation nicht eingerichtet.",
+      "unauthorized": "Bitte melde dich erneut an.",
+      "forbidden": "Dafür fehlt dir die Berechtigung.",
+      "quota": "Das Tageslimit für Auswertungen ist erreicht. Morgen geht es weiter.",
+      "too_large": "Die Dateien sind zu gross. Zusammen höchstens 3.5 MB.",
+      "too_many_pages": "Das PDF ist zu umfangreich. Bitte nur die nötigen Seiten hochladen, etwa 30 Seiten oder weniger.",
+      "too_many_files": "Höchstens 4 Fotos oder PDFs pro Auswertung.",
+      "invalid_request": "Die Anfrage war unvollständig. Bitte die Dateien prüfen und nochmals versuchen.",
+      "not_found": "Die zugehörigen Daten wurden nicht gefunden, z. B. kein Training im Plan.",
+      "refused": "Claude hat die Auswertung abgelehnt. Versuche es mit einem anderen Ausschnitt.",
+      "incomplete": "Die Vorlage ist zu umfangreich. Bitte in kleinere Teile aufteilen, z. B. einen Monat.",
+      "invalid_output": "Die Antwort war unbrauchbar. Bitte nochmals versuchen.",
+      "timeout": "Die Auswertung hat zu lange gedauert. Versuche es mit weniger Seiten oder einem kleineren Ausschnitt.",
+      "busy": "Der KI-Dienst ist gerade ausgelastet. Bitte in einer Minute nochmals versuchen.",
+      "failed": "Die Auswertung ist fehlgeschlagen. Bitte nochmals versuchen.",
+      "network": "Keine Verbindung. Bitte die Internetverbindung prüfen.",
+      "heic": "HEIC-Fotos werden nicht unterstützt. Bitte als JPEG speichern oder auf dem Handy direkt mit «Foto aufnehmen» fotografieren.",
+      "unsupported_file": "Dieser Dateityp wird nicht unterstützt. Möglich sind Fotos (JPEG, PNG, WebP), PDF und Text- oder CSV-Dateien.",
+      "unreadable": "Die Datei konnte nicht gelesen werden.",
+      "text_too_long": "Der Text ist zu lang (höchstens 30 000 Zeichen). Bitte in kleinere Teile aufteilen, z. B. einen Monat."
+    },
+    "review": {
+      "apply": "{count, plural, one {# Eintrag übernehmen} other {# Einträge übernehmen}}",
+      "applying": "Wird gespeichert …",
+      "nothing": "Nichts zu übernehmen.",
+      "back": "Zurück zum Upload",
+      "uncertain": "Unsicher – bitte prüfen",
+      "status": {
+        "new": "Neu",
+        "exists": "Schon erfasst",
+        "changed": "Abweichend",
+        "invalid": "Unvollständig",
+        "duplicate": "Doppelt"
+      },
+      "done": "{count, plural, one {# Eintrag gespeichert} other {# Einträge gespeichert}}",
+      "partial": "{saved} gespeichert, {failed} fehlgeschlagen",
+      "error": "Speichern fehlgeschlagen",
+      "pickMember": "Mitglied wählen …",
+      "noMatch": "Kein passendes Mitglied gefunden",
+      "skip": "Nicht übernehmen"
+    },
+    "page": {
+      "intro": "Der Assistent hilft beim Einstieg: Bestehende Unterlagen auf Papier, als PDF oder in Excel werden eingelesen, statt alles von Hand abzutippen.",
+      "step1": "Foto, PDF oder Text hochladen, z. B. einen Judo-Pass, eine Präsenzliste oder einen Trainingsplan.",
+      "step2": "Claude liest die Unterlagen und macht einen Vorschlag.",
+      "step3": "Du prüfst den Vorschlag, ergänzt Fehlendes und korrigierst Abweichungen; Unsicheres ist markiert.",
+      "step4": "Erst wenn du «Übernehmen» drückst, wird gespeichert, mit deinen normalen Berechtigungen.",
+      "safety": "Die KI kann nichts selbst ändern: Sie liefert nur einen Vorschlag in einem festen Format, sieht keine Mitgliederdaten aus Adsumus und wählt keine Mitglieder aus. Namen werden hier im Browser zugeordnet.",
+      "notConfigured": "Der Assistent ist auf dieser Installation noch nicht eingerichtet. Ein Admin muss dafür einen API-Schlüssel von Anthropic hinterlegen (siehe docs/AI_ASSISTANT.md).",
+      "member": "Mitglied",
+      "memberPlaceholder": "Name suchen …",
+      "training": "Training",
+      "trainingPlaceholder": "Training wählen …",
+      "date": "Datum",
+      "start": "Starten"
+    },
+    "grades": {
+      "inPass": "Im Pass",
+      "inProfile": "Im Profil",
+      "holder": {
+        "doubt": "Name oder Geburtsdatum im Pass passen nicht zu {name}. Ist das der richtige Pass?",
+        "confirm": "Ja, das ist der Pass von {name}",
+        "profileUnchanged": "Name und Geburtsdatum im Profil werden nicht geändert. Falls sie falsch sind, korrigiere sie in Webling.",
+        "unknown": "Im Pass wurde kein Name erkannt. Prüfe, ob es der Pass von {name} ist."
+      },
+      "empty": "Im Pass wurden keine Prüfungen erkannt.",
+      "pickGrade": "Grad wählen …",
+      "recordedOn": "Schon erfasst am {date}, es wird nichts geändert.",
+      "correct": "Erfasst am {recorded} – Datum auf {date} korrigieren",
+      "duplicateOf": "Gleicher Grad wie Zeile {row}, wird nur einmal gespeichert.",
+      "plan": "Zu speichern: {inserts, plural, =0 {keine neue Prüfung} one {# neue Prüfung} other {# neue Prüfungen}} und {updates, plural, =0 {keine Datumskorrektur} one {# Datumskorrektur} other {# Datumskorrekturen}}.",
+      "progress": "Wird gespeichert … {done} von {total}",
+      "confirmFirst": "Bestätige zuerst oben, dass es der richtige Pass ist.",
+      "blocked": "{count, plural, one {Eine Zeile braucht} other {# Zeilen brauchen}} noch eine Angabe: ergänze sie oder wähle «Nicht übernehmen».",
+      "issues": {
+        "noGrade": "Grad nicht erkannt – bitte wählen.",
+        "noDate": "Datum fehlt – bitte eintragen.",
+        "partialDate": "Im Pass ist nur «{written}» lesbar – bitte das ganze Datum eintragen.",
+        "badDate": "Kein gültiges Datum.",
+        "futureDate": "Das Datum liegt in der Zukunft.",
+        "beforeBirthday": "Liegt vor dem Geburtsdatum im Profil ({birthday}).",
+        "beforeLower": "Früher datiert als der tiefere {grade} ({date}) – Reihenfolge prüfen.",
+        "afterHigher": "Später datiert als der höhere {grade} ({date}) – Reihenfolge prüfen.",
+        "mismatch": "Im Pass steht «{written}», das passt nicht zum gewählten Grad.",
+        "dan": "Dan-Grad: wird zum aktuellen Gurt{badge, select, true { und vergibt das Abzeichen «{badgeName}»} other {}}."
+      },
+      "saved": "Gespeichert",
+      "saveFailed": {
+        "failed": "Nicht gespeichert – versuche es nochmals oder lass die Zeile weg.",
+        "notUpdated": "Nicht gespeichert: Die Prüfung wurde inzwischen gelöscht, oder du darfst sie nicht ändern."
+      },
+      "retry": "{count, plural, one {Eine Prüfung wurde} other {# Prüfungen wurden}} nicht gespeichert. Versuche es nochmals oder schliesse den Assistenten – was gespeichert ist, bleibt gespeichert."
+    },
+    "attendance": {
+      "loading": "Mitglieder und bisherige Anwesenheiten werden geladen …",
+      "loadingExisting": "Bisherige Anwesenheiten werden geladen …",
+      "loadError": "Mitglieder oder bisherige Anwesenheiten konnten nicht geladen werden. Bitte nochmals laden.",
+      "noEntries": "Auf der Liste wurden keine Namen erkannt.",
+      "training": "Training: {training}",
+      "listTraining": "Auf der Liste: «{text}»",
+      "otherWeekday": "Die Liste nennt {written}, dieses Training ist am {weekday}. Prüfe, ob es wirklich die Liste dieses Trainings ist.",
+      "dates": {
+        "titleSingle": "Datum",
+        "titleGrid": "Daten auf der Liste",
+        "date": "Datum",
+        "include": "Datum {date} übernehmen",
+        "marked": "{count, plural, one {# Person} other {# Personen}}",
+        "listDate": "Auf der Liste steht {dates}. Übernommen wird das Datum oben.",
+        "notPageDate": "Nicht das Datum dieser Seite ({date}) – eingetragen wird das Datum hier.",
+        "cancelled": "Laut Trainingsplan fällt das Training an diesem Tag aus.",
+        "excluded": "Datum wird nicht übernommen",
+        "issues": {
+          "invalid": "Kein gültiges Datum",
+          "future": "Liegt in der Zukunft – wird nicht übernommen",
+          "weekday": "Ein {weekday}, das Training ist am {training}. Nur mit Häkchen übernehmen.",
+          "duplicate": "Datum kommt doppelt vor – wird nicht übernommen"
+        }
+      },
+      "people": {
+        "title": "{count, plural, one {# Name auf der Liste} other {# Namen auf der Liste}}",
+        "member": "Mitglied",
+        "role": "Rolle",
+        "filter": "Mitglied suchen …",
+        "search": "Anderes Mitglied suchen",
+        "suggestions": "Vorschläge",
+        "allMembers": "Alle Mitglieder",
+        "createNew": "Neues Mitglied erfassen",
+        "confirm": "Bestätigen",
+        "swapNames": "Vor- und Nachname tauschen",
+        "createWarning": "Erfasse nur Personen, die es noch nicht gibt – auch nicht in Webling. Sonst entsteht ein Duplikat, das später von Hand zusammengeführt werden muss.",
+        "similar": "Ähnliche Mitglieder: {names}",
+        "notOnRoster": "Kommt neu auf die Teilnehmerliste dieses Trainings.",
+        "duplicateOf": "Steht schon weiter oben («{name}») und wird damit zusammengeführt. Hat die Person an einem Datum zwei Rollen, gilt die höhere.",
+        "overwrite": "Schon erfasst als {roles} – mit der Rolle von der Liste überschreiben",
+        "skipOpen": "Offene nicht übernehmen",
+        "present": "Am {date} anwesend",
+        "confirmRoster": "{count, plural, one {# Vorschlag von der Teilnehmerliste bestätigen} other {# Vorschläge von der Teilnehmerliste bestätigen}}",
+        "notOnRosterConfirm": "Steht nicht auf der Teilnehmerliste dieses Trainings und kommt mit der Bestätigung neu darauf.",
+        "saved": "Gespeichert.",
+        "option": "{name} ({details})",
+        "details": {
+          "roster": "auf der Teilnehmerliste",
+          "notRoster": "nicht auf der Teilnehmerliste",
+          "former": "ausgetreten",
+          "passive": "passiv",
+          "trial": "Probetraining",
+          "new": "neu erfasst",
+          "id": "Nr. {id}"
+        }
+      },
+      "problems": {
+        "pick": "Wähle ein Mitglied, erfasse die Person neu oder übernimm sie nicht.",
+        "confirm": "Ist das die richtige Person? Bestätige die Zuordnung oder wähle ein anderes Mitglied.",
+        "name": "Für ein neues Mitglied braucht es Vor- und Nachname."
+      },
+      "status": {
+        "confirm": "Bitte bestätigen",
+        "empty": "Kein Datum"
+      },
+      "hints": {
+        "former": "Laut Webling ausgetreten.",
+        "passive": "Passivmitglied.",
+        "trial": "Probetraining-Kandidat/in. Kommt sie oder er auf die Teilnehmerliste, gilt das Probetraining als zugeteilt."
+      },
+      "roles": {
+        "attendee": "Teilnehmer/in",
+        "mainTrainer": "Haupttrainer/in",
+        "assistant": "Hilfstrainer/in"
+      },
+      "summary": "{checkIns, plural, one {# Anwesenheit} other {# Anwesenheiten}} an {dates, plural, one {# Datum} other {# Daten}}",
+      "summaryCreates": "{count, plural, one {# neues Mitglied} other {# neue Mitglieder}}",
+      "summaryRoster": "{count, plural, one {# Person kommt} other {# Personen kommen}} neu auf die Teilnehmerliste",
+      "open": "{count, plural, one {# Name braucht} other {# Namen brauchen}} noch eine Entscheidung.",
+      "onlyPresent": "Es werden nur Anwesenheiten eingetragen, nie welche entfernt. Bei älteren Daten dauert das Speichern etwas länger, weil die Abzeichen neu berechnet werden.",
+      "progress": "Wird gespeichert … {done} von {total}",
+      "failed": {
+        "create": "Das neue Mitglied konnte nicht erfasst werden, die Anwesenheit ist nicht gespeichert. Versuche es nochmals oder übernimm die Person nicht.",
+        "createdAnyway": "Das neue Mitglied wurde trotz Fehlermeldung erfasst und ist oben gewählt. Bestätige es, dann wird die Anwesenheit nochmals gespeichert.",
+        "roster": "Konnte nicht auf die Teilnehmerliste gesetzt werden, die Anwesenheit ist nicht gespeichert. Versuche es nochmals.",
+        "checkIn": "Anwesenheit nicht gespeichert: {dates}. Versuche es nochmals."
+      },
+      "partialHint": "Bei {count} Namen hat das Speichern nicht geklappt (rot markiert). Gespeichertes ist als «Schon erfasst» markiert und wird nicht nochmals gespeichert. Übernimm den Rest nochmals oder schliesse den Dialog.",
+      "reload": "Neu laden"
+    },
+    "trainingPlan": {
+      "summary": "{count, plural, one {# Termin} other {# Termine}} vom {from} bis {to}",
+      "keepHint": "Leere Felder im Dokument lassen die bestehende Planung unverändert, leere Felder der bestehenden Planung werden ergänzt. Ein anderer Leiter, ein anderes Thema oder ein Ausfall ersetzt die bestehende Planung nur, wenn du es beim Termin ankreuzt.",
+      "empty": "Im Dokument wurden keine Termine und keine Ferien erkannt.",
+      "loading": "Bestehende Planung wird geladen …",
+      "loadError": "Die bestehende Planung konnte nicht geladen werden. Ohne Vergleich wird nichts gespeichert.",
+      "retry": "Nochmals laden",
+      "leaders": "Leiter",
+      "leadersHint": "Zuordnung der Namen zu Mitgliedern, gilt für alle Termine mit diesem Namen. Ohne Zuordnung (z. B. Gasttrainer) bleibt der Name in der Bemerkung.",
+      "leaderCount": "{count, plural, one {# Termin} other {# Termine}}",
+      "leaderSuggested": "Bitte prüfen",
+      "confirmLeader": "Stimmt",
+      "inDocument": "Im Dokument",
+      "noTraining": "Kein Training gewählt",
+      "pickTraining": "Training wählen …",
+      "editDone": "Fertig",
+      "otherMember": "anderes Mitglied",
+      "status": {
+        "fill": "Ergänzung",
+        "provider": "Synchronisiert"
+      },
+      "fillHint": "Ergänzt die bestehende Planung:",
+      "changedHint": "Weicht von der bestehenden Planung ab:",
+      "exists": "Schon so geplant, es wird nichts geändert.",
+      "overwrite": "Bestehende Planung ersetzen",
+      "duplicateOf": "Gleicher Termin wie Zeile {row}, wird nur einmal gespeichert.",
+      "issues": {
+        "badDate": "Datum fehlt oder ist ungültig.",
+        "noTraining": "Kein geplantes Training erkannt – bitte wählen.",
+        "weekday": "Das Training ist am {training}, das Datum ist ein {date}. Bitte Datum oder Training korrigieren.",
+        "empty": "Nichts eingetragen – wird nicht übernommen.",
+        "trainerUnconfirmed": "«{name}» ist vermutlich {member} – bitte bestätigen oder anders zuordnen.",
+        "trainerUnmatched": "Kein Mitglied für «{name}», der Name steht in der Bemerkung.",
+        "closedBreak": "Dojo geschlossen ({title}): Das Training fällt trotzdem aus.",
+        "unusualYear": "Ungewöhnliches Jahr – stimmt das Datum?",
+        "trainingUnconfirmed": "Im Dokument steht kein geplantes Training, nach dem Wochentag wäre es dieses. Bitte bestätigen oder ein anderes wählen."
+      },
+      "holidays": "Ferien",
+      "holidaysHint": "Werden zu den Ferien und Ausfallzeiten hinzugefügt. «Dojo zu» lässt alle geplanten Trainings in dieser Zeit ausfallen.",
+      "addHoliday": "Übernehmen",
+      "holidayExists": "Schon erfasst, wird nicht nochmals hinzugefügt.",
+      "holidayFromProvider": "Kommt als «{title}» ({range}) aus {provider} und wird dort gepflegt, darum nicht übernommen.",
+      "holidayDuplicate": "Gleiche Ferien wie Zeile {row}, werden nur einmal hinzugefügt.",
+      "holidayOverlaps": "Überschneidet sich mit «{title}» ({range}).",
+      "holidayIssues": {
+        "noTitle": "Bezeichnung fehlt.",
+        "badDates": "Zeitraum fehlt oder ist ungültig."
+      },
+      "plan": "Zu speichern: {sessions, plural, =0 {kein Termin} one {# Termin} other {# Termine}} und {breaks, plural, =0 {keine Ferien} one {# Ferieneintrag} other {# Ferieneinträge}}.",
+      "progress": "Wird gespeichert … {done} von {total}",
+      "blocked": "{count, plural, one {Eine Zeile braucht} other {# Zeilen brauchen}} noch eine Angabe: ergänze sie oder wähle «Nicht übernehmen».",
+      "skipIncomplete": "Unvollständige nicht übernehmen",
+      "confirmTraining": "Training stimmt",
+      "confirmTrainingGroup": "Stimmt für alle {count} Termine «{name}»",
+      "guessDuplicateOf": "Im Dokument steht kein geplantes Training; nach dem Wochentag wäre es der gleiche Termin wie Zeile {row}. Wird nicht übernommen – wähle ein Training, wenn der Termin doch dazugehört.",
+      "saved": "Gespeichert",
+      "saveFailed": "Nicht gespeichert – versuche es nochmals oder lass den Termin weg.",
+      "holidaySaveFailed": "Nicht gespeichert – versuche es nochmals oder entferne das Häkchen bei «Übernehmen».",
+      "saveRetry": "{count, plural, one {Ein Eintrag wurde} other {# Einträge wurden}} nicht gespeichert. Versuche es nochmals oder schliesse den Assistenten – was gespeichert ist, bleibt gespeichert.",
+      "holidayNotPreselected": "Nicht vorgewählt, weil sich der Zeitraum mit erfassten Ferien überschneidet. Kreuze «Übernehmen» nur an, wenn es zusätzliche Ferien sind.",
+      "holidayOverlapsRow": "Überschneidet sich mit Zeile {row}, «{title}» ({range}).",
+      "holidayClosesOpen": "Überschneidet sich mit «{title}» ({range}), erfasst ohne «Dojo zu»: Dort findet das Training statt. Mit «Dojo zu» fallen in der Überschneidung alle geplanten Trainings aus."
+    },
+    "lessonPlan": {
+      "forDate": "Lektionsplan für den {date}",
+      "same": "Genau dieser Plan ist schon gespeichert.",
+      "contained": "Dieser Text steht schon im bisherigen Plan.",
+      "date": {
+        "differs": "Auf dem Plan steht der {written}, gespeichert wird er aber für den {date} – das Datum dieser Seite.",
+        "otherPage": "Gehört er zu einem anderen Tag, brich ab und lies ihn auf der Seite des Trainings an jenem Datum ein.",
+        "confirm": "Trotzdem für den {date} speichern"
+      },
+      "existing": {
+        "text": "Für diesen Tag gibt es schon einen Lektionsplan.",
+        "mode": "Was soll mit dem bisherigen Plan passieren?",
+        "replace": "Bisherigen Plan ersetzen",
+        "append": "Bisherigen Text behalten und den eingelesenen unten anhängen",
+        "show": "Bisherigen Inhalt anzeigen"
+      },
+      "file": {
+        "exists": "Für diesen Tag ist eine Datei als Lektionsplan hinterlegt: «{name}».",
+        "replaced": "Ein Lektionsplan ist entweder Text oder eine Datei. Speicherst du den eingelesenen Text, wird die Datei gelöscht – wie wenn du im Editor zu «Inhalt schreiben» wechselst und speicherst. Lade sie vorher herunter, wenn du sie behalten willst.",
+        "confirm": "Datei «{name}» löschen und durch den Text ersetzen",
+        "notRemoved": "Lektionsplan gespeichert, die alte Datei konnte aber nicht gelöscht werden."
+      },
+      "previousTitle": "Bisher: «{title}»",
+      "content": "Inhalt",
+      "contentAppend": "Inhalt, der unten angehängt wird",
+      "contentHelp": "Eine Zeile pro Eintrag: «## » beginnt einen Abschnitt, «- » einen Punkt.",
+      "preview": "Vorschau",
+      "previewEmpty": "Noch kein Inhalt.",
+      "errors": {
+        "target": "Training oder Datum dieser Seite sind ungültig, hier kann kein Lektionsplan gespeichert werden.",
+        "empty": "Der Inhalt ist leer. Ergänze ihn oder geh zurück zum Upload.",
+        "tooLong": "Der eingelesene Inhalt ist zu lang (höchstens {max} Zeichen).",
+        "fileNotConfirmed": "Bestätige zuerst, dass die Datei ersetzt werden darf.",
+        "dateNotConfirmed": "Bestätige zuerst das Datum."
+      },
+      "changedMeanwhile": "Der Lektionsplan wurde inzwischen geändert oder konnte nicht gespeichert werden. Der aktuelle Stand ist neu geladen – prüfe ihn und übernimm nochmals.",
+      "saveFailed": "Nicht gespeichert. Der Lektionsplan ist neu geladen – prüfe ihn und versuche es nochmals."
+    },
+    "events": {
+      "intro": "{count, plural, one {# Termin gelesen} other {# Termine gelesen}}. Angehakte Termine werden als neue Events erstellt, bestehende Events bleiben unverändert.",
+      "defaultSection": "Sektion für Termine ohne Sektion",
+      "defaultSectionNone": "Keine – pro Termin wählen",
+      "useDefault": "Standard: {section}",
+      "multiDay": "Mehrtägig",
+      "dateTo": "Bis (mehrtägig)",
+      "include": "Als Event erstellen",
+      "includeAnyway": "Trotzdem als neues Event erstellen",
+      "duplicateOf": "Ähnliches Event schon erfasst: «{title}» am {date}",
+      "duplicateOfRow": "Gleicher Termin wie Nr. {row}",
+      "fromProvider": "Kommt aus {provider} und wird automatisch synchronisiert. Nur erstellen, wenn es ein anderer Termin ist.",
+      "empty": "Im Dokument wurden keine Termine gefunden.",
+      "progress": "{done} von {total} gespeichert …",
+      "blocked": "{count, plural, one {# Termin ist unvollständig: korrigieren oder abwählen.} other {# Termine sind unvollständig: korrigieren oder abwählen.}}",
+      "issues": {
+        "noTitle": "Titel fehlt.",
+        "noDate": "Datum fehlt.",
+        "badDate": "Kein gültiges Datum.",
+        "noSection": "Sektion wählen.",
+        "unknownSection": "Die Sektion «{written}» gibt es hier nicht: bitte eine wählen.",
+        "badTimeFrom": "Startzeit als HH:MM angeben.",
+        "badTimeTo": "Endzeit als HH:MM angeben.",
+        "timeOrder": "Die Endzeit liegt nicht nach der Startzeit – endet der Anlass nach Mitternacht?",
+        "badDateTo": "Das Enddatum muss nach dem Datum liegen.",
+        "past": "Liegt in der Vergangenheit.",
+        "farFuture": "Liegt mehr als zwei Jahre in der Zukunft: Jahr prüfen."
+      },
+      "comparing": "Die bestehenden Events werden zum Vergleich geladen …",
+      "compareFailed": "Die bestehenden Events konnten nicht geladen werden. Ohne diesen Vergleich wird nichts gespeichert, damit kein Termin doppelt entsteht.",
+      "compareRetry": "Nochmals laden",
+      "saved": "Gespeichert",
+      "saveFailed": "Nicht gespeichert – versuche es nochmals oder wähle den Termin ab.",
+      "recordedAnyway": "Ein passendes Event ist jetzt erfasst, wohl trotz der Fehlermeldung. Der Termin bleibt abgewählt, damit er nicht doppelt entsteht.",
+      "failedTitles": "Nicht gespeichert: {titles}",
+      "retry": "{count, plural, one {# Termin wurde nicht gespeichert (rot markiert).} other {# Termine wurden nicht gespeichert (rot markiert).}} Gespeicherte sind markiert und werden nicht nochmals erstellt. Übernimm den Rest nochmals oder schliesse den Dialog."
+    },
+    "textLength": "{count} von {max} Zeichen",
+    "dictation": {
+      "start": "Diktieren",
+      "stop": "Diktieren beenden",
+      "listening": "Hört auf Deutsch zu … sprich in ganzen Sätzen, Namen deutlich.",
+      "privacy": "Die Spracherkennung macht dein Browser: Chrome und Edge über Google bzw. Microsoft, Safari über Apple.",
+      "errors": {
+        "denied": "Kein Zugriff auf das Mikrofon. Erlaube es in den Einstellungen des Browsers.",
+        "noSpeech": "Nichts gehört. Bitte nochmals versuchen.",
+        "failed": "Die Spracherkennung ist fehlgeschlagen. Tippe den Text oder versuche es nochmals."
+      }
+    }
+  },
+  "demo": {
+    "banner": "Demo – alle Daten sind erfunden und werden jede Woche zurückgesetzt.",
+    "learnMore": "Mehr über Adsumus"
   }
 }

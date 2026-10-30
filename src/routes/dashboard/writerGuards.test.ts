@@ -1,5 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { isRedirect } from '@sveltejs/kit';
+import { PROVIDER_EVENT_FIELDS } from '$lib/eventLinks';
 
 // The edit training page loads its main trainer options; every query comes
 // back empty here.
@@ -23,6 +24,7 @@ import { load as editJsCourse } from './js/[courseId]/edit/+page';
 import { load as newExam } from './exams/new/+page';
 import { load as editExam } from './exams/[examId]/edit/+page';
 import { load as trainingPlanSettings } from './training-plan/settings/+page';
+import { load as assistant } from './assistant/+page';
 
 // Create/edit pages send viewers back to the read-only page they came from;
 // exam days and the training plan settings need the TK (canManageExams /
@@ -77,6 +79,35 @@ describe('writer-only dashboard pages', () => {
   }
 });
 
+describe('events a provider maintains', () => {
+  const linked = (flags: Flags) =>
+    ({
+      parent: async () => ({ ...flags, eventLink: { connection: 'webling', url: null } }),
+      params: { eventId: '51830' },
+      depends: () => {}
+    }) as never;
+
+  it('edit event: still sends viewers back to the event', async () => {
+    try {
+      await (editEvent as Load)(linked(viewer));
+      expect.unreachable('a viewer must not open the edit page');
+    } catch (e) {
+      expect(isRedirect(e) && e.location).toBe('/dashboard/events/51830');
+    }
+  });
+
+  it('edit event: lets trainers and admins in for the registration deadline, the rest locked', async () => {
+    // no policy readable here: every field a provider may write is locked
+    expect(await (editEvent as Load)(linked(trainer))).toEqual({
+      lockedFields: [...PROVIDER_EVENT_FIELDS]
+    });
+    // the days and all day (phase 4) among them
+    expect(PROVIDER_EVENT_FIELDS).toEqual(
+      expect.arrayContaining(['date', 'date_to', 'all_day', 'timeFrom', 'timeTo'])
+    );
+  });
+});
+
 describe('TK-only exam pages', () => {
   const cases: [string, Load, Record<string, string>, string][] = [
     ['new exam day', newExam as Load, {}, '/dashboard/exams'],
@@ -94,4 +125,15 @@ describe('TK-only exam pages', () => {
       expect(await redirectTarget(load, tk, params)).toBeNull();
     });
   }
+});
+
+describe('Daten-Assistent overview', () => {
+  it('redirects viewers to the dashboard', async () => {
+    expect(await redirectTarget(assistant as Load, viewer)).toBe('/dashboard');
+  });
+
+  it('lets trainers, admins and the TK in', async () => {
+    expect(await redirectTarget(assistant as Load, trainer)).toBeNull();
+    expect(await redirectTarget(assistant as Load, tk)).toBeNull();
+  });
 });

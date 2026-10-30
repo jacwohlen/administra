@@ -1,6 +1,8 @@
 import { redirect, error as err } from '@sveltejs/kit';
 import type { PageLoad } from './$types';
 import { supabaseClient } from '$lib/supabase';
+import { canBeTrainer } from '$lib/memberStatus';
+import type { MembershipStatus } from '$lib/models';
 
 export interface TrainerOption {
   id: number;
@@ -12,19 +14,28 @@ export interface TrainerOption {
 
 // Viewers may look at a training but not edit it
 export const load: PageLoad = async ({ parent, params }) => {
-  const { canWrite } = await parent();
+  const { canWrite, mainTrainerId } = await parent();
   if (!canWrite) {
     redirect(303, `/dashboard/trainings/${params.trainingId}`);
   }
 
-  // Main trainer candidates: members, without trial candidates and archived ones.
+  // Main trainer candidates: active and passive members (no trial candidates,
+  // non-members or people who left), none archived. The current main trainer
+  // always stays selectable, so saving the form does not drop them.
   const { data: members, error } = await supabaseClient
     .from('members')
-    .select('id, firstname, lastname, labels')
+    .select('id, firstname, lastname, membership_status')
     .is('archivedAt', null)
     .order('lastname')
     .order('firstname')
-    .returns<{ id: number; firstname: string; lastname: string; labels: string[] | null }[]>();
+    .returns<
+      {
+        id: number;
+        firstname: string;
+        lastname: string;
+        membership_status: MembershipStatus | null;
+      }[]
+    >();
   if (error) throw err(500, error);
 
   const { data: participants, error: partErr } = await supabaseClient
@@ -35,7 +46,7 @@ export const load: PageLoad = async ({ parent, params }) => {
 
   const onList = new Set((participants ?? []).map((p) => p.memberId));
   const trainerOptions: TrainerOption[] = (members ?? [])
-    .filter((m) => !(m.labels ?? []).includes('probetraining'))
+    .filter((m) => m.id === mainTrainerId || canBeTrainer(m.membership_status))
     .map((m) => ({
       id: m.id,
       firstname: m.firstname,

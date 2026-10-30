@@ -1,6 +1,6 @@
 # Supabase Branching: Preview Databases per PR, Auto-Deploy on Merge
 
-This document describes how Administra's database changes flow from a pull
+This document describes how Adsumus's database changes flow from a pull
 request to production, the environment layout, and what remains to verify.
 
 ## Environments
@@ -86,6 +86,10 @@ in `src/routes/+page.server.ts`) only exist in builds with
 the action with 404. Supabase itself still accepts password logins for any
 account that has a password, so the real protection is that no persistent
 environment has an account with a known password.
+The public demo (`PUBLIC_MODE=DEMO`, demo.adsumus.ch) is the one deliberate
+exception: its accounts have a published password, which is why it runs on
+its own Supabase project, never the club's Dev or Prod (see
+[DEMO.md](DEMO.md)).
 
 ## Current state (verified via the Management API, 2026-09-05)
 

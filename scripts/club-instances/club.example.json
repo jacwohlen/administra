@@ -1,0 +1,12 @@
+{
+  "slug": "judo-muster",
+  "name": "Judo Club Muster",
+  "domain": "judo-muster.example.ch",
+  "adminEmails": ["praesident@judo-muster.ch"],
+  "sections": ["Judo", "Ju-Jitsu"],
+  "defaultLocale": "de",
+  "region": "eu-central-2",
+  "url": "https://judo-muster.ch",
+  "logo": "https://judo-muster.ch/logo.png",
+  "contactEmail": "info@judo-muster.ch"
+}

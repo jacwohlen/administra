@@ -1,4 +1,4 @@
-import type { Training, TrainerRole } from '$lib/models';
+import type { MembershipStatus, Training, TrainerRole } from '$lib/models';
 import utils from '$lib/utils';
 
 interface ChecklistMemberData {
@@ -9,6 +9,7 @@ interface ChecklistMemberData {
   img: string;
   date: string | null;
   trainerRole: TrainerRole;
+  membership_status?: MembershipStatus | null;
 }
 
 interface StreakRow {
@@ -26,6 +27,7 @@ export interface MemberWithStreak {
   isPresent: boolean;
   trainerRole: TrainerRole;
   streak: boolean[];
+  membership_status?: MembershipStatus;
 }
 
 /**
@@ -67,6 +69,7 @@ export function buildMembersWithStreaks(
     img: item.img,
     isPresent: item.date ? true : false,
     trainerRole: item.trainerRole || 'attendee',
+    membership_status: item.membership_status ?? undefined,
     streak: seqNumbers.map((seq) => memberSeqs.get(Number(item.memberId))?.has(seq) ?? false)
   }));
 }

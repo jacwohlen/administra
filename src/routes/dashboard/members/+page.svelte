@@ -2,15 +2,18 @@
   import { modalDialog } from '$lib/modalDialog';
   import type { PageData } from './$types';
   import Fa from 'svelte-fa';
-  import { faChevronRight, faPlus } from '@fortawesome/free-solid-svg-icons';
+  import { faChevronRight, faCodeMerge, faPlus } from '@fortawesome/free-solid-svg-icons';
   import { _ } from 'svelte-i18n';
   import { supabaseClient } from '$lib/supabase';
   import { toaster } from '$lib/toast';
   import { invalidate } from '$app/navigation';
   import MemberForm from './MemberForm.svelte';
+  import { isCurrentMember, statusChip, visibleLabels } from '$lib/memberStatus';
 
   let { data }: { data: PageData } = $props();
   let searchTerm = $state('');
+  // Non-members and people who left only on request
+  let showAll = $state(false);
   let isSubmitting = false;
   let showMemberFormDialog = $state(false);
 
@@ -20,6 +23,20 @@
     let lastfirst = lastname.toLowerCase() + ' ' + firstname.toLowerCase();
     return firstlast.startsWith(q) || lastfirst.startsWith(q);
   });
+
+  let shown = $derived(
+    data.members.filter(
+      (m) => (showAll || isCurrentMember(m.membership_status)) && search(m.firstname, m.lastname)
+    )
+  );
+  // Matches among the hidden non-members, so nobody creates a duplicate by mistake
+  let hiddenMatches = $derived(
+    showAll
+      ? 0
+      : data.members.filter(
+          (m) => !isCurrentMember(m.membership_status) && search(m.firstname, m.lastname)
+        ).length
+  );
 
   function showMemberForm() {
     showMemberFormDialog = true;
@@ -77,12 +94,20 @@
 
 <div class="page-header">
   <h1>{$_('page.members.title')}</h1>
-  {#if data.canWrite}
-    <button class="btn preset-filled-primary-500" onclick={showMemberForm}>
-      <Fa icon={faPlus} />
-      <span>{$_('page.members.addMember')}</span>
-    </button>
-  {/if}
+  <div class="flex gap-2">
+    {#if data.isAdmin}
+      <a href="/dashboard/members/duplicates" class="btn preset-tonal-surface">
+        <Fa icon={faCodeMerge} />
+        <span>{$_('page.members.duplicates.link')}</span>
+      </a>
+    {/if}
+    {#if data.canWrite}
+      <button class="btn preset-filled-primary-500" onclick={showMemberForm}>
+        <Fa icon={faPlus} />
+        <span>{$_('page.members.addMember')}</span>
+      </button>
+    {/if}
+  </div>
 </div>
 
 {#if showMemberFormDialog}
@@ -110,49 +135,61 @@
   </div>
 {/if}
 
-<div class="mb-4">
+<div class="mb-4 space-y-2">
   <input
     class="input"
     bind:value={searchTerm}
     type="text"
     placeholder={$_('page.trainings.searchMembersPlaceholder')}
   />
+  <label class="flex items-center gap-2 text-sm">
+    <input class="checkbox" type="checkbox" bind:checked={showAll} />
+    <span>{$_('page.members.showAll')}</span>
+  </label>
 </div>
 
 <ul class="flex flex-col gap-2">
-  {#each data.members as m (m.id)}
-    {#if search(m.firstname, m.lastname)}
-      <li>
-        <a href={'/dashboard/members/' + m.id} class="list-item list-item-link">
-          <div class="relative inline-block flex-shrink-0">
-            <div class="avatar-initials">
-              {m.lastname.charAt(0)}{m.firstname.charAt(0)}
-            </div>
+  {#each shown as m (m.id)}
+    {@const status = statusChip(m.membership_status)}
+    <li>
+      <a href={'/dashboard/members/' + m.id} class="list-item list-item-link">
+        <div class="relative inline-block flex-shrink-0">
+          <div class="avatar-initials">
+            {m.lastname.charAt(0)}{m.firstname.charAt(0)}
           </div>
-          <span class="list-item-content">
-            <dt class="font-bold truncate">
-              {m.lastname}
-              {m.firstname}{#if data.badgeMap[m.id]}<span
-                  class="ml-1 inline-block text-base leading-none align-middle"
-                  >{data.badgeMap[m.id]}</span
-                >{/if}
-            </dt>
-            <dd class="flex flex-wrap gap-1">
-              {#if m.labels}
-                {#each m.labels as l (l)}
-                  <span class="chip preset-tonal-secondary text-xs">{l}</span>
-                {/each}
-              {/if}
-            </dd>
-          </span>
-          <Fa icon={faChevronRight} class="text-surface-400-600 flex-none" />
-        </a>
-      </li>
-    {/if}
+        </div>
+        <span class="list-item-content">
+          <dt class="font-bold truncate">
+            {m.lastname}
+            {m.firstname}{#if data.badgeMap[m.id]}<span
+                class="ml-1 inline-block text-base leading-none align-middle"
+                >{data.badgeMap[m.id]}</span
+              >{/if}
+          </dt>
+          <dd class="flex flex-wrap gap-1">
+            {#if status}
+              <span class="chip preset-tonal-surface text-xs"
+                >{$_(`page.members.status.${status}`)}</span
+              >
+            {/if}
+            {#each visibleLabels(m.labels) as l (l)}
+              <span class="chip preset-tonal-secondary text-xs">{l}</span>
+            {/each}
+          </dd>
+        </span>
+        <Fa icon={faChevronRight} class="text-surface-400-600 flex-none" />
+      </a>
+    </li>
   {/each}
 </ul>
-{#if !data.members.some((m) => search(m.firstname, m.lastname))}
+{#if shown.length === 0}
   <p class="empty-state">
     {searchTerm.trim() ? $_('page.members.noResults') : $_('page.members.empty')}
+  </p>
+{/if}
+{#if searchTerm.trim() && hiddenMatches > 0}
+  <p class="text-sm text-surface-600-400 mt-3">
+    {$_('page.members.hiddenMatches', { values: { count: hiddenMatches } })}
+    <button class="anchor" onclick={() => (showAll = true)}>{$_('page.members.showAll')}</button>
   </p>
 {/if}

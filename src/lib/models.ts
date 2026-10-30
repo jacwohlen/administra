@@ -45,7 +45,8 @@ export interface PrivateDetails {
 /** Grades, medals and badges shown on every member profile */
 export interface MemberAchievements {
   badges: Badge[];
-  badgeProgress: BadgeProgress[];
+  /** null when not shown: other members' progress is attendance (club area) */
+  badgeProgress: BadgeProgress[] | null;
   badgeDefinitions: BadgeDefinition[];
   currentGrades: MemberCurrentGrade[];
   gradeHistory: MemberGrade[];
@@ -53,8 +54,140 @@ export interface MemberAchievements {
   gradeDefinitions: GradeDefinition[];
 }
 
+/** members.membership_status, derived from the labels in the database */
+export type MembershipStatus = 'trial' | 'active' | 'passive' | 'non_member' | 'left';
+
+/**
+ * Why a member record does or does not let its account in
+ * (member_access_status() in SQL): the status, or 'trial' / 'archived' for
+ * an active or passive record that does not count
+ */
+export type MemberAccessStatus = MembershipStatus | 'archived';
+
+/**
+ * my_access(): whether the signed-in account may use Adsumus now
+ * (is_approved_user(), the check RLS uses) and the reason per member record
+ */
+export interface MyAccess {
+  has_access: boolean;
+  member_statuses: MemberAccessStatus[];
+}
+
+/**
+ * member_access_report(): a member account (approved or waiting) none of
+ * whose member records is an active or passive membership
+ */
+export interface MemberAccessReportRow {
+  user_id: string;
+  email: string;
+  full_name: string | null;
+  member_ids: number[];
+  statuses: MemberAccessStatus[];
+}
+
+/** Rows of one reference a merge moved to the kept member, folded into its own, or removed */
+export interface MergeCount {
+  moved: number;
+  merged: number;
+  removed?: number;
+}
+
+/**
+ * A contact field of the kept member after a merge: 'same' (nothing to take
+ * over), 'from_drop', 'kept_differs' (both had one), or not copied because
+ * the kept member is in Webling or the value came from the trial form
+ */
+export type MergeFieldDecision =
+  'same' | 'from_drop' | 'kept_differs' | 'not_copied_provider' | 'not_copied_trial';
+
+/** A row both members had and which one stayed ('keep' or 'drop': whose row it was) */
+export type MergeConflict =
+  | {
+      ref: 'member_grades.memberId';
+      section: string;
+      grade: string;
+      kept: 'keep' | 'drop';
+      /** 'exam': the grade a Q-Prüfung recorded stays */
+      reason: 'exam' | 'keep';
+    }
+  | {
+      ref: 'member_medals.memberId';
+      competition: string;
+      date: string;
+      keptMedal: string;
+      droppedMedal: string;
+      kept: 'keep' | 'drop';
+    }
+  | {
+      ref: 'exam_candidates.member_id';
+      title: string;
+      date: string;
+      kept: 'keep' | 'drop';
+      /** 'sheet': the one with a started exam sheet stays */
+      reason: 'sheet' | 'status';
+      /** The registration removed, as it was (the one that stays has its notes too) */
+      removed: {
+        status: string;
+        grade: string;
+        trainer: string | null;
+        note: string | null;
+        staffNote: string | null;
+      };
+    };
+
+/**
+ * An account linked to either member or matching either e-mail: whether it
+ * gets in (is_approved_user) and finds the person (my_member_ids: approved,
+ * the link or the e-mail of a row without trial label, for a member account
+ * only a record that counts) before and after the merge
+ */
+export interface MergeAccount {
+  userId: string;
+  email: string | null;
+  role: UserRole;
+  before: boolean;
+  after: boolean;
+  findsBefore: boolean;
+  findsAfter: boolean;
+}
+
+/**
+ * merge_members() / merge_members_preview(): what moves from the dropped to
+ * the kept member, per reference ('logs.memberId', … see
+ * merge_member_references() in SQL), and what happens to the kept row.
+ */
+export interface MemberMergeResult {
+  keep: number;
+  drop: number;
+  keepInProvider: boolean;
+  /** membership_status of the kept member before and after */
+  status: { before: MembershipStatus | null; after: MembershipStatus | null };
+  moved: Record<string, MergeCount>;
+  conflicts: MergeConflict[];
+  fields: {
+    birthday: MergeFieldDecision;
+    mobile: MergeFieldDecision;
+    email: MergeFieldDecision;
+    notes: 'same' | 'joined';
+    photo: 'none' | 'kept' | 'from_drop' | 'kept_both';
+    /** imgUploaded of the dropped member's photo: its file is avatars/<drop>_<ms>.webp */
+    dropPhotoUploaded: string | null;
+    archived: 'not_archived' | 'archived' | 'unarchived';
+    labelsNotCarried: string[];
+    trial: 'none' | 'keep' | 'from_drop';
+    trialStatus: string | null;
+  };
+  accounts: MergeAccount[];
+  warnings: (string | { code: string; accounts?: number })[];
+  /** Badges of the kept member as 'badgeId:season:context', after recomputing */
+  badges: { added: string[]; removed: string[]; othersChanged: number };
+  /** member_merges.id, only after a merge */
+  mergeId?: number;
+}
+
 export interface Member {
   id: string;
+  membership_status?: MembershipStatus;
   firstname: string;
   lastname: string;
   birthday?: string;
@@ -186,6 +319,10 @@ export interface Event {
   title: string;
   description?: string;
   date: string;
+  /** Last day of a multi-day event (inclusive), null for one day */
+  date_to?: string | null;
+  /** The whole day (or days): no times */
+  all_day?: boolean;
   timeFrom?: string;
   timeTo?: string;
   location?: string;
@@ -195,6 +332,17 @@ export interface Event {
   createdAt: string;
   updatedAt: string;
   participants?: Member[];
+}
+
+/**
+ * The provider an event comes from while the provider still has it
+ * (event_links without gone_at, docs/INTEGRATIONS.md). Its fields are the
+ * provider's: the database refuses edits and deletes (MANAGED_BY_PROVIDER).
+ */
+export interface EventLink {
+  connection: string;
+  /** The event in the provider (Webling portal link) */
+  url: string | null;
 }
 
 export interface EventParticipant {
@@ -491,4 +639,10 @@ export interface TrainingPlanBreak {
   date_to: string;
   /** Dojo closed: planned trainings are dropped. False: holidays, the adults train on */
   cancels_training: boolean;
+  /**
+   * The provider the holiday comes from (integration_connections, e.g.
+   * Webling's "Ferien und Feiertage"), null for the TK's own: such a
+   * holiday is read-only but for "Dojo zu"
+   */
+  connection?: string | null;
 }

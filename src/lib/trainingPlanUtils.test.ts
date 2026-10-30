@@ -134,6 +134,24 @@ describe('buildPlan', () => {
     expect(rows[3].events.map((e) => e.title)).toEqual(['Vereinsmeisterschaft']);
   });
 
+  it('shows a multi-day event on every training of its days, also across the year', () => {
+    const camp = { id: 4, title: 'Herbstlager', date: '2026-10-11', date_to: '2026-10-19' };
+    const rows = buildPlan([friday, monday], [], [], [camp], '2026-10-12', '2026-10-25');
+    expect(rows.map((r) => [r.date, r.events.length])).toEqual([
+      ['2026-10-12', 1],
+      ['2026-10-16', 1],
+      ['2026-10-19', 1],
+      ['2026-10-23', 0]
+    ]);
+    // Begun in the year before: on the year's first Monday
+    const silvester = { id: 5, title: 'Silvesterlager', date: '2025-12-29', date_to: '2026-01-05' };
+    const january = buildPlan([monday], [], [], [silvester], '2026-01-01', '2026-01-12');
+    expect(january.map((r) => [r.date, r.events.map((e) => e.id)])).toEqual([
+      ['2026-01-05', [5]],
+      ['2026-01-12', []]
+    ]);
+  });
+
   it('falls back to the main trainer of the training', () => {
     const fixed = { ...monday, mainTrainerId: 5 };
     const rows = buildPlan(

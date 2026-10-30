@@ -1,4 +1,6 @@
 <script lang="ts">
+  import PillToggle from '$lib/components/PillToggle.svelte';
+  import { modalDialog } from '$lib/modalDialog';
   import { supabaseClient } from '$lib/supabase';
   import { toaster } from '$lib/toast';
   import { _ } from 'svelte-i18n';
@@ -178,23 +180,22 @@
 >
   <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
   <div
+    use:modalDialog
     class="card modal-dialog modal-dialog-lg max-h-[90vh] overflow-y-auto"
     onclick={(e) => e.stopPropagation()}
   >
     <h3>{$_('page.trainingPlan.rotation.title')}</h3>
-    <div class="flex rounded-lg overflow-hidden border border-surface-300-700 mb-3" role="group">
-      {#each ['trainers', 'topics'] as const as m (m)}
-        <button
-          type="button"
-          class="btn flex-1 rounded-none {mode === m
-            ? 'preset-filled-primary-500'
-            : 'preset-tonal-surface'}"
-          aria-pressed={mode === m}
-          onclick={() => (mode = m)}
-        >
-          {$_('page.trainingPlan.rotation.mode.' + m)}
-        </button>
-      {/each}
+    <div class="mb-3">
+      <PillToggle
+        name="rotation-mode"
+        label={$_('page.trainingPlan.rotation.title')}
+        value={mode}
+        options={(['trainers', 'topics'] as const).map((m) => ({
+          value: m,
+          label: $_('page.trainingPlan.rotation.mode.' + m)
+        }))}
+        onchange={(v) => (mode = v as typeof mode)}
+      />
     </div>
     <p class="text-sm text-surface-600-400 mb-3">
       {mode === 'trainers'

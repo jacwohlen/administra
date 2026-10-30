@@ -19,7 +19,8 @@
     faCalendarWeek
   } from '@fortawesome/free-solid-svg-icons';
   import dayjs from 'dayjs';
-  import { goto, preloadData } from '$app/navigation';
+  import { onMount } from 'svelte';
+  import { goto, invalidateAll, preloadData } from '$app/navigation';
   import AddParticipantInputBox from './AddParticipantInputBox.svelte';
   import { supabaseClient } from '$lib/supabase';
   import { toaster } from '$lib/toast';
@@ -28,11 +29,20 @@
   import { quintInOut } from 'svelte/easing';
   import LessonPlan from './LessonPlan.svelte';
   import { isCancelled } from '$lib/trainingPlanUtils';
+  import AssistantButton from '$lib/components/assistant/AssistantButton.svelte';
+  import AssistantDialog from '$lib/components/assistant/AssistantDialog.svelte';
+  import AttendanceReview from '$lib/components/assistant/AttendanceReview.svelte';
+  import { isAssistantRequested, takeAssistantRequest } from '$lib/assistant/autoOpen';
 
   let { data }: { data: PageData } = $props();
   let searchterm = $state('');
   let animateList = $state(true);
-  let showLessonPlan = $state(false);
+  // Daten-Assistent: a lesson plan to read opens on its tab, once. The page
+  // answers the request (LessonPlan mounts again on every tab switch).
+  const lessonPlanRequested = isAssistantRequested('lesson_plan');
+  let showLessonPlan = $state(lessonPlanRequested);
+  let lessonPlanAutoOpen = $state(lessonPlanRequested);
+  let showAssistant = $state(false);
   let celebrationBadges: Badge[] = $state([]);
   let celebrationMemberName = $state('');
 
@@ -204,6 +214,54 @@
   let planTrainer = $derived(data.plan?.session?.trainer);
 
   let formattedDate = $derived(dayjs(data.date, 'YYYY-MM-DD').format('DD. MMMM YYYY'));
+
+  // Daten-Assistent: the training of this page, only when its id is the page's own
+  let assistantTraining = $derived(
+    Number.isInteger(Number(data.id)) && Number(data.id) === Number(data.trainingId)
+      ? {
+          id: Number(data.id),
+          title: data.title,
+          weekday: data.weekday ?? null,
+          dateFrom: data.dateFrom ?? null
+        }
+      : null
+  );
+
+  onMount(() => {
+    if (lessonPlanRequested) takeAssistantRequest('lesson_plan');
+    if (data.canWrite && takeAssistantRequest('attendance')) showAssistant = true;
+  });
+
+  // A save that failed in part keeps the review open for the rest; what it
+  // wrote shows once the dialog closes
+  let assistantSavedSome = false;
+
+  async function reloadAfterAssistant() {
+    try {
+      await invalidateAll();
+    } finally {
+      filterData();
+    }
+  }
+
+  // After a bulk import: reload the list, and close the review even if that fails
+  async function assistantApplied() {
+    assistantSavedSome = false;
+    try {
+      await reloadAfterAssistant();
+    } finally {
+      showAssistant = false;
+    }
+  }
+
+  function closeAssistant() {
+    showAssistant = false;
+    if (!assistantSavedSome) return;
+    assistantSavedSome = false;
+    reloadAfterAssistant().catch((err) =>
+      console.error('Error reloading after the attendance list:', err)
+    );
+  }
 </script>
 
 <!-- Header: back to the training + title -->
@@ -321,7 +379,7 @@
 
 {#if !showLessonPlan}
   <!-- Stats bar -->
-  <div class="flex gap-2 mb-3 flex-wrap">
+  <div class="flex items-center gap-2 mb-3 flex-wrap">
     <span class="chip bg-surface-100-900 text-surface-900-50">
       <Fa icon={faUserCheck} size="sm" />
       <span>{presentParticipants.length} / {filteredData.length}</span>
@@ -337,6 +395,15 @@
         <Fa icon={faChalkboardTeacher} size="sm" />
         <span>{assistantTrainers.length}</span>
       </span>
+    {/if}
+    <!-- Daten-Assistent: a paper or Excel list, quiet beside the count. The
+         negative margin keeps the 44px touch target from heightening the row. -->
+    {#if data.canWrite && assistantTraining}
+      <AssistantButton
+        class="btn btn-sm -my-2.5 ml-auto text-surface-600-400 hover:bg-surface-200-800"
+        label={$_('assistant.kinds.attendance.button')}
+        onclick={() => (showAssistant = true)}
+      />
     {/if}
   </div>
 
@@ -397,7 +464,35 @@
     {/if}
   </ul>
 {:else}
-  <LessonPlan trainingId={data.trainingId} date={data.date} readonly={!data.canWrite} />
+  <LessonPlan
+    trainingId={data.trainingId}
+    date={data.date}
+    readonly={!data.canWrite}
+    autoOpen={lessonPlanAutoOpen}
+    onautoopened={() => (lessonPlanAutoOpen = false)}
+  />
 {/if}
 
 <BadgeCelebration badges={celebrationBadges} memberName={celebrationMemberName} />
+
+{#if showAssistant && data.canWrite && assistantTraining}
+  {@const training = assistantTraining}
+  <AssistantDialog
+    kind="attendance"
+    context={{ trainingId: training.id, date: data.date }}
+    onclose={closeAssistant}
+  >
+    {#snippet review(proposal, back)}
+      <AttendanceReview
+        {proposal}
+        {training}
+        date={data.date}
+        roster={data.participants.map((p) => Number(p.id))}
+        onback={back}
+        onclose={closeAssistant}
+        onapplied={assistantApplied}
+        onpartial={() => (assistantSavedSome = true)}
+      />
+    {/snippet}
+  </AssistantDialog>
+{/if}

@@ -18,12 +18,17 @@
     badges,
     progress = [],
     definitions = []
-  }: { badges: Badge[]; progress?: BadgeProgress[]; definitions?: BadgeDefinition[] } = $props();
+  }: {
+    badges: Badge[];
+    /** null: not shown (another member's profile in the club area) */
+    progress?: BadgeProgress[] | null;
+    definitions?: BadgeDefinition[];
+  } = $props();
 
   // Ladder categories are drawn as trails when the definitions are known;
   // without them (fetch failed) every category falls back to chips.
   let hasTrails = $derived(definitions.length > 0);
-  let groups = $derived(groupBadgesWithProgress(badges, progress));
+  let groups = $derived(groupBadgesWithProgress(badges, progress ?? []));
   let seasonGroup = $derived(groups.find((g) => g.category === 'season'));
   let otherGroups = $derived(
     groups.filter(
@@ -109,7 +114,7 @@
             <div class="trail">
               {#each trail.steps as step (step.def.id)}
                 {@const key = trail.category + ':' + step.def.id}
-                {@const current = step.state === 'next' ? step.current : undefined}
+                {@const current = step.state === 'next' ? (step.current ?? undefined) : undefined}
                 <button
                   type="button"
                   class="step {step.state}"
@@ -128,7 +133,7 @@
                     pinned={isPinned(key)}
                   />
                   <span class="lbl">
-                    {#if step.state === 'next'}
+                    {#if step.state === 'next' && step.current !== null}
                       {step.current} / {step.def.threshold}
                     {:else}
                       {step.def.threshold}

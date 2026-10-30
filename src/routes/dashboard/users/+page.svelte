@@ -32,6 +32,15 @@
     })).filter((g) => g.profiles.length > 0)
   );
 
+  // Member accounts none of whose records counts (member_access_report):
+  // approved ones have no access, waiting ones would get none as members
+  let reportByUser = $derived(new Map(data.accessReport.map((r) => [r.user_id, r])));
+  let approvedWithoutAccess = $derived(
+    data.accessReport.filter(
+      (r) => data.profiles.find((p) => p.user_id === r.user_id)?.status === 'approved'
+    )
+  );
+
   let memberName = $derived((memberId?: number): string | null => {
     if (memberId == null) return null;
     const m = data.members.find((x) => Number(x.id) === memberId);
@@ -146,6 +155,23 @@
               &middot; {memberName(p.member_id)}
             {/if}
           </dd>
+          {#if reportByUser.get(p.user_id)}
+            {@const report = reportByUser.get(p.user_id)!}
+            <dd class="flex flex-wrap items-center gap-1 mt-1">
+              {#if p.status === 'approved'}
+                <span class="chip preset-tonal-warning text-xs">{$_('page.users.noAccess')}</span>
+              {/if}
+              {#each report.statuses as s (s)}
+                <span class="chip preset-tonal-surface text-xs"
+                  >{$_(`page.members.status.${s}`)}</span
+                >
+              {:else}
+                <span class="chip preset-tonal-surface text-xs"
+                  >{$_('page.users.accessReport.noMember')}</span
+                >
+              {/each}
+            </dd>
+          {/if}
           <dd class="flex flex-wrap gap-2 mt-1">
             <select
               class="select w-auto text-sm py-1"
@@ -183,7 +209,13 @@
             >
               <option value="">{$_('page.users.unlinked')}</option>
               {#each data.members as m (m.id)}
-                <option value={m.id}>{m.lastname} {m.firstname}</option>
+                <!-- Only active and passive members let a member account in -->
+                <option value={m.id}
+                  >{m.lastname}
+                  {m.firstname}{m.membership_status && m.membership_status !== 'active'
+                    ? ` (${$_(`page.members.status.${m.membership_status}`)})`
+                    : ''}</option
+                >
               {/each}
             </select>
           </dd>
@@ -193,7 +225,9 @@
             class="btn preset-filled-primary-500 flex-shrink-0"
             disabled={busyId === p.user_id}
             onclick={() => approve(p.user_id)}
-            title={$_('page.users.action.approve')}
+            title={p.role === 'member' && reportByUser.has(p.user_id)
+              ? $_('page.users.approveWithoutMembership')
+              : $_('page.users.action.approve')}
           >
             <Fa icon={faCheck} />
             <span class="hidden sm:inline">{$_('page.users.action.approve')}</span>
@@ -225,6 +259,33 @@
     {/each}
   {/each}
 </ul>
+
+{#if approvedWithoutAccess.length > 0}
+  <details class="card border border-surface-200-800 p-4 mt-6">
+    <summary class="cursor-pointer font-bold">
+      {$_('page.users.accessReport.title')}
+      <span class="text-sm text-surface-600-400 font-normal">({approvedWithoutAccess.length})</span>
+    </summary>
+    <p class="text-sm text-surface-600-400 mt-2 mb-3">
+      {$_('page.users.accessReport.description')}
+    </p>
+    <ul class="flex flex-col gap-1">
+      {#each approvedWithoutAccess as r (r.user_id)}
+        <li class="flex flex-wrap items-center gap-1 text-sm">
+          <span class="font-medium">{r.full_name || r.email}</span>
+          {#if r.full_name}<span class="text-surface-600-400">{r.email}</span>{/if}
+          {#each r.statuses as s (s)}
+            <span class="chip preset-tonal-surface text-xs">{$_(`page.members.status.${s}`)}</span>
+          {:else}
+            <span class="chip preset-tonal-surface text-xs"
+              >{$_('page.users.accessReport.noMember')}</span
+            >
+          {/each}
+        </li>
+      {/each}
+    </ul>
+  </details>
+{/if}
 
 {#if confirmDisable}
   <ConfirmDialog
