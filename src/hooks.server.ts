@@ -5,14 +5,16 @@ import { createServerClient } from '@supabase/ssr';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Handle } from '@sveltejs/kit';
 import { sequence } from '@sveltejs/kit/hooks';
-import { locale } from 'svelte-i18n';
 import { clubConfig } from '$lib/clubConfig';
 import { sentryOptions } from '$lib/sentry';
 import { addSecurityHeaders } from '$lib/server/securityHeaders';
 import { parseUserLocale, USER_LOCALE_COOKIE } from '$lib/userLocale';
+import { setAppLocale } from '$lib/i18n/appLocale';
 
 // Error reports from the server, see docs/ERROR_MONITORING.md.
-Sentry.init(sentryOptions(env.PUBLIC_SENTRY_DSN, __NETLIFY_CONTEXT__));
+Sentry.init(
+  sentryOptions(env.PUBLIC_SENTRY_DSN, __NETLIFY_CONTEXT__, env.PUBLIC_SENTRY_TRACES_SAMPLE_RATE)
+);
 
 const setup: Handle = async ({ event, resolve }) => {
   // Created on first use: as soon as it exists, the Supabase client checks the
@@ -38,6 +40,10 @@ const setup: Handle = async ({ event, resolve }) => {
       }))
   });
 
+  // Checks the session cookie's token: with asymmetric JWT signing keys
+  // getClaims() verifies it locally against the cached public key (no request
+  // to Supabase Auth); with the legacy shared secret it asks the Auth server
+  // like getUser() (docs/PERFORMANCE.md).
   event.locals.safeGetSession = async () => {
     const {
       data: { session }
@@ -45,14 +51,12 @@ const setup: Handle = async ({ event, resolve }) => {
     if (!session) {
       return { session: null, user: null };
     }
-    const {
-      data: { user },
-      error
-    } = await event.locals.supabase.auth.getUser();
-    if (error) {
+    const { data, error } = await event.locals.supabase.auth.getClaims();
+    const userId = data?.claims.sub;
+    if (error || !userId || userId !== session.user.id) {
       return { session: null, user: null };
     }
-    return { session, user };
+    return { session, user: { id: userId } };
   };
 
   // A language picked in the profile menu wins over the browser's.
@@ -60,7 +64,7 @@ const setup: Handle = async ({ event, resolve }) => {
     parseUserLocale(event.cookies.get(USER_LOCALE_COOKIE)) ??
     event.request.headers.get('accept-language')?.split(',')[0];
   if (lang) {
-    locale.set(lang);
+    setAppLocale(lang);
   }
 
   // The public trial registration form is German-first (see its +page.ts);

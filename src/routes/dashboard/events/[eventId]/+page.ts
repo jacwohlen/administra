@@ -3,14 +3,15 @@ import { error as err } from '@sveltejs/kit';
 import type { Member, MemberMedal } from '$lib/models';
 
 export async function load({ params, parent }) {
-  const { event } = await parent();
-
+  // None of these needs the event: asked while the layouts still load
   const [
+    { event },
     { error: participantsError, data: participantsData },
     { error: logsError, data: logsData },
     { data: medalsData },
     { error: membersError, data: membersData }
   ] = await Promise.all([
+    parent(),
     // Event participants with member details
     supabaseClient
       .from('event_participants')

@@ -1,4 +1,4 @@
-import { scrubEvent } from './sentryScrub';
+import { scrubEvent, scrubTransaction } from './sentryScrub';
 
 /**
  * Sentry settings shared by the browser and the server, see
@@ -7,11 +7,20 @@ import { scrubEvent } from './sentryScrub';
  *
  * `deployContext` is Netlify's deploy context at build time (see
  * vite.config.js) and tells production errors apart from Dev and previews.
+ * `tracesSampleRate` is `PUBLIC_SENTRY_TRACES_SAMPLE_RATE` (performance
+ * monitoring, docs/PERFORMANCE.md).
  */
-export function sentryOptions(dsn: string | undefined, deployContext: string | undefined) {
+export function sentryOptions(
+  dsn: string | undefined,
+  deployContext: string | undefined,
+  tracesSampleRate?: string
+) {
   return {
     dsn: dsn || undefined,
     environment: sentryEnvironment(deployContext),
+    // Share of page loads, navigations and server requests sent as traces
+    // (Web Vitals, load functions, Supabase requests)
+    tracesSampleRate: parseSampleRate(tracesSampleRate),
     // No IP addresses, cookies or request bodies. Sentry 11 dropped
     // `sendDefaultPii` and collects all of this unless told otherwise; the
     // Daten-Assistent's uploads and the model's answers (names, birthdays)
@@ -33,10 +42,24 @@ export function sentryOptions(dsn: string | undefined, deployContext: string | u
       stackFrameVariables: false
     },
     beforeSend: scrubEvent,
-    // Not sent today (no tracesSampleRate), but scrubbed should tracing be
-    // turned on: transaction names and spans contain URLs too.
-    beforeSendTransaction: scrubEvent
+    // Transaction names and spans contain URLs too; request URLs (Supabase's
+    // filters) also lose their query values, which can hold a name
+    beforeSendTransaction: scrubTransaction
   };
+}
+
+/** Traces sent when `PUBLIC_SENTRY_TRACES_SAMPLE_RATE` is not set. */
+export const DEFAULT_TRACES_SAMPLE_RATE = 0.2;
+
+/**
+ * `PUBLIC_SENTRY_TRACES_SAMPLE_RATE` as a share between 0 (no traces) and 1
+ * (every page load); unset or invalid means the default.
+ */
+export function parseSampleRate(value: string | undefined): number {
+  if (value === undefined || value.trim() === '') return DEFAULT_TRACES_SAMPLE_RATE;
+  const rate = Number(value);
+  if (!Number.isFinite(rate) || rate < 0 || rate > 1) return DEFAULT_TRACES_SAMPLE_RATE;
+  return rate;
 }
 
 /**

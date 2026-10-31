@@ -7,21 +7,24 @@ import type { PageLoad } from './$types';
 
 export type ProgramSummary = Pick<ExamProgram, 'id' | 'grade' | 'title' | 'min_points'>;
 
-export const load: PageLoad = async ({ parent, depends }) => {
-  const { exam } = await parent();
+export const load: PageLoad = async ({ params, parent, depends }) => {
   depends('app:exam-candidates');
 
-  const [candidateResult, programResult, gradeDefinitions] = await Promise.all([
+  // The candidates need only the id: asked while the layouts still load
+  const [{ exam, programResult }, candidateResult, gradeDefinitions] = await Promise.all([
+    parent().then(async ({ exam }) => ({
+      exam,
+      programResult: await supabaseClient
+        .from('exam_programs')
+        .select('id, grade, title, min_points')
+        .eq('section', exam.section)
+        .returns<ProgramSummary[]>()
+    })),
     supabaseClient
       .from('exam_candidates')
       .select(CANDIDATE_COLUMNS)
-      .eq('exam_id', exam.id)
+      .eq('exam_id', params.examId)
       .returns<ExamCandidate[]>(),
-    supabaseClient
-      .from('exam_programs')
-      .select('id, grade, title, min_points')
-      .eq('section', exam.section)
-      .returns<ProgramSummary[]>(),
     getGradeDefinitions()
   ]);
   if (candidateResult.error) {

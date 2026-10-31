@@ -6,10 +6,11 @@ import { locale, waitLocale } from 'svelte-i18n';
 import { loadAppSettings } from '$lib/appSettings';
 import { readUserLocale } from '$lib/userLocale';
 import { applyDayjsLocale } from '$lib/dayjsLocale';
+import { setAppLocale } from '$lib/i18n/appLocale';
 
 export const load: LayoutLoad = async ({ data }) => {
   if (browser) {
-    locale.set(readUserLocale() ?? window.navigator.language);
+    setAppLocale(readUserLocale() ?? window.navigator.language);
   }
   // Apply admin-configured settings before any page renders. Cached per
   // app session; failures fall back to the environment defaults.

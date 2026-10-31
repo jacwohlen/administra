@@ -1,7 +1,7 @@
 import { browser } from '$app/environment';
-import { locale } from 'svelte-i18n';
 import { clubConfig } from '$lib/clubConfig';
 import type { PublicLocale } from '$lib/clubConfigParser';
+import { setAppLocale } from '$lib/i18n/appLocale';
 
 export type { PublicLocale };
 
@@ -36,7 +36,7 @@ export function readStoredLocale(): PublicLocale | null {
 }
 
 export function setPublicLocale(next: PublicLocale) {
-  locale.set(next);
+  setAppLocale(next);
   if (!browser) return;
   try {
     localStorage.setItem(STORAGE_KEY, next);
