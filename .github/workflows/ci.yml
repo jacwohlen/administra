@@ -128,13 +128,6 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      # Grade ladders edited in the app: admins only, renames move gradings,
-      # exam registrations and programs along, used grades stay, ranks 1..n
-      - name: Check grade ladders
-        run: >-
-          psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres"
-          -v ON_ERROR_STOP=1 -q -f supabase/checks/grade_ladders.sql
-
       - uses: actions/setup-python@v7
         with:
           python-version: '3.12'
@@ -235,6 +228,13 @@ jobs:
         run: >-
           psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres"
           -v ON_ERROR_STOP=1 -q -f supabase/checks/training_plan.sql
+
+      # Grade ladders edited in the app: admins only, renames move gradings,
+      # exam registrations and programs along, used grades stay, ranks 1..n
+      - name: Check grade ladders
+        run: >-
+          psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres"
+          -v ON_ERROR_STOP=1 -q -f supabase/checks/grade_ladders.sql
 
       - uses: actions/setup-python@v7
         with:
