@@ -6,8 +6,7 @@ import { CANDIDATE_COLUMNS } from '../../queries';
 import type { PageLoad } from './$types';
 
 // The sheet for one or more candidates: /dashboard/exams/[examId]/sheet?c=12,13
-export const load: PageLoad = async ({ parent, url, depends }) => {
-  const { exam } = await parent();
+export const load: PageLoad = async ({ params, parent, url, depends }) => {
   const ids = [
     ...new Set(
       (url.searchParams.get('c') ?? '')
@@ -17,25 +16,32 @@ export const load: PageLoad = async ({ parent, url, depends }) => {
     )
   ];
   if (ids.length === 0) {
-    redirect(303, `/dashboard/exams/${exam.id}`);
+    redirect(303, `/dashboard/exams/${params.examId}`);
   }
   depends('app:exam-sheet');
 
-  const [candidateResult, scoreResult, programResult, gradeDefinitions] = await Promise.all([
-    supabaseClient
-      .from('exam_candidates')
-      .select(`program, ${CANDIDATE_COLUMNS}`)
-      .eq('exam_id', exam.id)
-      .in('id', ids)
-      .returns<ExamCandidate[]>(),
-    supabaseClient.from('exam_scores').select('*').in('candidate_id', ids).returns<ExamScore[]>(),
-    supabaseClient
-      .from('exam_programs')
-      .select('*')
-      .eq('section', exam.section)
-      .returns<ExamProgram[]>(),
-    getGradeDefinitions()
-  ]);
+  // Opened on the phone straight from a link: candidates and scores are
+  // asked while the layouts still load, the programs once the exam's section
+  // is known
+  const [{ exam, programResult }, candidateResult, scoreResult, gradeDefinitions] =
+    await Promise.all([
+      parent().then(async ({ exam }) => ({
+        exam,
+        programResult: await supabaseClient
+          .from('exam_programs')
+          .select('*')
+          .eq('section', exam.section)
+          .returns<ExamProgram[]>()
+      })),
+      supabaseClient
+        .from('exam_candidates')
+        .select(`program, ${CANDIDATE_COLUMNS}`)
+        .eq('exam_id', params.examId)
+        .in('id', ids)
+        .returns<ExamCandidate[]>(),
+      supabaseClient.from('exam_scores').select('*').in('candidate_id', ids).returns<ExamScore[]>(),
+      getGradeDefinitions()
+    ]);
   if (candidateResult.error) {
     throw err(500, candidateResult.error.message);
   }

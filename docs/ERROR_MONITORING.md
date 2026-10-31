@@ -17,6 +17,15 @@ Without `PUBLIC_SENTRY_DSN` nothing is sent (local development, tests, CI).
 - Each report has the page (route), browser, release (Git commit) and the
   steps leading up to it (navigation, clicks, requests).
 
+## Performance (traces)
+
+With `PUBLIC_SENTRY_TRACES_SAMPLE_RATE` (default `0.2`, `0` turns it off)
+a share of page loads, navigations and server requests is sent as a trace:
+Web Vitals, load functions and the Supabase requests of the page. See
+`docs/PERFORMANCE.md`. Query values in request URLs are filtered
+(`scrubTransaction` in `src/lib/sentryScrub.ts`): Supabase's filters carry
+names and e-mail addresses.
+
 ## Privacy
 
 - `dataCollection` in `src/lib/sentry.ts`: no IP addresses, cookies,
