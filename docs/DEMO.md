@@ -64,7 +64,9 @@ section "Guards"):
   Brunner children) cannot be deleted, archived, relabelled or get another
   e-mail, and no other member can be given a demo login's e-mail.
 - Marco stays the main trainer of _Judo Jugend_, so the Trainer login can
-  always plan it (other trainings' main trainers may change).
+  always plan it (other trainings' main trainers may change, by the
+  Vorstand: only the TK sets main trainers and changes their e-mail, and
+  the Trainer login is not the TK).
 - The two exam days cannot be deleted or moved. When a visitor withdraws
   one of the Brunner children from the upcoming exam, the registration is
   removed, so the next visitor can register the child again; staff cannot

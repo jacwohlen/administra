@@ -1,6 +1,6 @@
 -- Checks for who writes the training plan
 -- (20261025090000_training_plan.sql, 20261107120000_main_trainer_plans_own_training.sql,
--- docs/TRAINING_PLAN.md).
+-- 20261108120000_tk_sets_main_trainer.sql, docs/TRAINING_PLAN.md).
 --
 -- Runs like member_access.sql: on a database with every migration and the
 -- seed, as postgres, inside one transaction that is rolled back; each
@@ -20,6 +20,11 @@
 --   N  nothing new for viewers (main trainer or not), waiting and disabled
 --      accounts, member accounts, anon, and main trainers of a training
 --      outside the plan
+--   R  the main trainer itself: only the TK sets, changes or clears it
+--      (insert, update, upsert); trainers still edit everything else; a
+--      member delete still clears it and a merge still moves it. And the
+--      e-mail of a main trainer (my_member_ids() finds members by it): only
+--      the TK changes it; other members' e-mails stay with trainers
 --   P  privileges and the policies themselves
 
 \set ON_ERROR_STOP 1
@@ -58,6 +63,16 @@ BEGIN
   RETURN '';
 EXCEPTION WHEN OTHERS THEN
   RETURN SQLSTATE;
+END $$;
+
+-- The SQLSTATE and message a statement raises, '' when it does not
+CREATE FUNCTION pg_temp.error(p_sql text) RETURNS text
+LANGUAGE plpgsql AS $$
+BEGIN
+  EXECUTE p_sql;
+  RETURN '';
+EXCEPTION WHEN OTHERS THEN
+  RETURN SQLSTATE || ' ' || SQLERRM;
 END $$;
 
 -- How many rows a statement wrote, as text (RLS hides the rows it may not
@@ -542,6 +557,335 @@ END $$;
 ROLLBACK TO SAVEPOINT s;
 
 -----------------
+-- R Only the TK sets the main trainer (20261108120000_tk_sets_main_trainer.sql)
+-----------------
+
+-- The trainings of these checks as postgres reads them: 'id title main,…'
+CREATE FUNCTION pg_temp.trainings() RETURNS text
+LANGUAGE sql AS $$
+  SELECT string_agg(id || ' ' || title || ' ' || coalesce("mainTrainerId"::text, '-'), ',' ORDER BY id)
+  FROM public.trainings WHERE id BETWEEN 961 AND 979;
+$$;
+
+-- A training without main trainer
+INSERT INTO public.trainings (id, title, weekday, "dateFrom", "dateTo", section) VALUES
+  (970, 'Ohne Haupttrainer', 'Tuesday', '17:00', '18:00', 'Judo');
+
+SAVEPOINT s;
+DO $$
+DECLARE
+  v_main uuid := '30000000-0000-4000-8000-000000000002';
+  v_before text := pg_temp.trainings();
+  v_refused constant text := '42501 only the TK sets the main trainer of a training';
+BEGIN
+  PERFORM pg_temp.act_as(v_main);
+  PERFORM pg_temp.eq('R1 a trainer does not set one on a training without',
+    pg_temp.error($q$UPDATE public.trainings SET "mainTrainerId" = 961 WHERE id = 970$q$), v_refused);
+  PERFORM pg_temp.eq('R1 does not make themselves main trainer of another planned training',
+    pg_temp.error($q$UPDATE public.trainings SET "mainTrainerId" = 961 WHERE id = 963$q$), v_refused);
+  PERFORM pg_temp.eq('R1 not along with other fields',
+    pg_temp.error($q$UPDATE public.trainings SET title = 'x', "mainTrainerId" = 961 WHERE id = 963$q$), v_refused);
+  PERFORM pg_temp.eq('R1 not in a statement where it stays the same on another row',
+    pg_temp.error($q$UPDATE public.trainings SET "mainTrainerId" = 961 WHERE id IN (961, 963)$q$), v_refused);
+  PERFORM pg_temp.eq('R1 does not hand their own training to another member',
+    pg_temp.error($q$UPDATE public.trainings SET "mainTrainerId" = 968 WHERE id = 961$q$), v_refused);
+  PERFORM pg_temp.eq('R1 nor clear it',
+    pg_temp.error($q$UPDATE public.trainings SET "mainTrainerId" = NULL WHERE id = 961$q$), v_refused);
+  PERFORM pg_temp.eq('R1 no new training with a main trainer',
+    pg_temp.error($q$INSERT INTO public.trainings (id, title, weekday, "dateFrom", section, "mainTrainerId")
+                    VALUES (971, 'Neu', 'Monday', '18:00', 'Judo', 961)$q$), v_refused);
+  PERFORM pg_temp.eq('R1 no upsert that sets it in its update',
+    pg_temp.error($q$INSERT INTO public.trainings (id, title, weekday, "dateFrom", section)
+                    VALUES (963, 'Plan Freitag', 'Friday', '19:00', 'Judo')
+                    ON CONFLICT (id) DO UPDATE SET "mainTrainerId" = 961$q$), v_refused);
+  PERFORM pg_temp.eq('R1 no upsert sending every column (as PostgREST merges duplicates)',
+    pg_temp.error($q$INSERT INTO public.trainings (id, title, weekday, "dateFrom", section, "mainTrainerId")
+                    VALUES (963, 'Plan Freitag', 'Friday', '19:00', 'Judo', 961)
+                    ON CONFLICT (id) DO UPDATE SET title = EXCLUDED.title,
+                      "mainTrainerId" = EXCLUDED."mainTrainerId"$q$), v_refused);
+  PERFORM pg_temp.eq('R1 no upsert sending the unchanged main trainer either (its insert is checked first)',
+    pg_temp.error($q$INSERT INTO public.trainings (id, title, weekday, "dateFrom", section, "mainTrainerId")
+                    VALUES (963, 'Plan Freitag', 'Friday', '19:00', 'Judo', 964)
+                    ON CONFLICT (id) DO UPDATE SET title = EXCLUDED.title,
+                      "mainTrainerId" = EXCLUDED."mainTrainerId"$q$), v_refused);
+  RESET ROLE;
+  PERFORM pg_temp.eq('R1 the trainings are unchanged', pg_temp.trainings(), v_before);
+  PERFORM pg_temp.eq('R1 and they plan what they planned before', pg_temp.mine(v_main), '961,962');
+
+  -- Everything else stays theirs, also with the same main trainer written
+  -- again (the edit page of the previous release sends every field)
+  PERFORM pg_temp.act_as(v_main);
+  PERFORM pg_temp.eq('R2 a trainer edits the other fields',
+    pg_temp.n($q$UPDATE public.trainings SET title = 'Plan Montag neu', "dateTo" = '20:45', "ageFrom" = 12
+                WHERE id = 961$q$), '1');
+  PERFORM pg_temp.eq('R2 the same main trainer written again passes, none too',
+    pg_temp.n($q$UPDATE public.trainings SET title = 'Plan Freitag neu', "mainTrainerId" = 964 WHERE id = 963$q$)
+    || pg_temp.n($q$UPDATE public.trainings SET title = 'Ohne neu', "mainTrainerId" = NULL WHERE id = 970$q$), '11');
+  PERFORM pg_temp.eq('R2 creates trainings without main trainer',
+    pg_temp.n($q$INSERT INTO public.trainings (id, title, weekday, "dateFrom", section)
+                VALUES (971, 'Neu', 'Monday', '18:00', 'Judo')$q$)
+    || pg_temp.n($q$INSERT INTO public.trainings (id, title, weekday, "dateFrom", section, "mainTrainerId")
+                VALUES (972, 'Neu leer', 'Monday', '18:00', 'Judo', NULL)$q$), '11');
+  PERFORM pg_temp.eq('R2 upserts what is not the main trainer',
+    pg_temp.n($q$INSERT INTO public.trainings (id, title, weekday, "dateFrom", section)
+                VALUES (962, 'Plan Mittwoch neu', 'Wednesday', '19:00', 'Judo')
+                ON CONFLICT (id) DO UPDATE SET title = EXCLUDED.title$q$), '1');
+  PERFORM pg_temp.eq('R2 deletes a training', pg_temp.n('DELETE FROM public.trainings WHERE id = 972'), '1');
+  RESET ROLE;
+  PERFORM pg_temp.eq('R2 what they wrote is there, the main trainers unchanged', pg_temp.trainings(),
+    '961 Plan Montag neu 961,962 Plan Mittwoch neu 962,963 Plan Freitag neu 964,964 Nicht im Plan 961,'
+    || '965 Plan Dienstag 963,966 Plan Samstag 966,967 Plan Sonntag 967,968 Auch nicht im Plan 965,'
+    || '969 Plan Sonntagabend 969,970 Ohne neu -,971 Neu -');
+END $$;
+ROLLBACK TO SAVEPOINT s;
+
+SAVEPOINT s;
+DO $$
+DECLARE
+  v_tk uuid := '30000000-0000-4000-8000-000000000001';
+  v_main uuid := '30000000-0000-4000-8000-000000000002';
+  v_viewer uuid := '30000000-0000-4000-8000-000000000003';
+  v_admin uuid := '30000000-0000-4000-8000-000000000005';
+BEGIN
+  PERFORM pg_temp.act_as(v_tk);
+  PERFORM pg_temp.eq('R3 the TK sets, changes and clears it',
+    pg_temp.n($q$UPDATE public.trainings SET "mainTrainerId" = 961 WHERE id = 970$q$)
+    || pg_temp.n($q$UPDATE public.trainings SET "mainTrainerId" = 968 WHERE id = 961$q$)
+    || pg_temp.n($q$UPDATE public.trainings SET "mainTrainerId" = NULL WHERE id = 962$q$), '111');
+  PERFORM pg_temp.eq('R3 the TK creates a training with one and upserts it',
+    pg_temp.n($q$INSERT INTO public.trainings (id, title, weekday, "dateFrom", section, "mainTrainerId")
+                VALUES (971, 'Neu', 'Monday', '18:00', 'Judo', 965)$q$)
+    || pg_temp.n($q$INSERT INTO public.trainings (id, title, weekday, "dateFrom", section, "mainTrainerId")
+                VALUES (963, 'Plan Freitag', 'Friday', '19:00', 'Judo', 961)
+                ON CONFLICT (id) DO UPDATE SET "mainTrainerId" = EXCLUDED."mainTrainerId"$q$), '11');
+  RESET ROLE;
+  PERFORM pg_temp.eq('R3 what the TK set is there',
+    (SELECT string_agg(id || ':' || coalesce("mainTrainerId"::text, '-'), ',' ORDER BY id)
+       FROM public.trainings WHERE id IN (961, 962, 963, 970, 971)),
+    '961:968,962:-,963:961,970:961,971:965');
+  PERFORM pg_temp.eq('R3 so the TK decides which trainings a trainer plans', pg_temp.mine(v_main), '963');
+
+  PERFORM pg_temp.act_as(v_admin);
+  PERFORM pg_temp.eq('R3 an admin (always TK) sets, changes and clears it',
+    pg_temp.n($q$UPDATE public.trainings SET "mainTrainerId" = 967 WHERE id = 966$q$)
+    || pg_temp.n($q$UPDATE public.trainings SET "mainTrainerId" = NULL WHERE id = 967$q$)
+    || pg_temp.n($q$INSERT INTO public.trainings (id, title, weekday, "dateFrom", section, "mainTrainerId")
+                VALUES (973, 'Admin', 'Sunday', '09:00', 'Judo', 967)$q$), '111');
+  RESET ROLE;
+  PERFORM pg_temp.eq('R3 what the admin set is there',
+    (SELECT string_agg(id || ':' || coalesce("mainTrainerId"::text, '-'), ',' ORDER BY id)
+       FROM public.trainings WHERE id IN (966, 967, 973)), '966:967,967:-,973:967');
+
+  -- The TK role is read per statement: taken away, refused again
+  UPDATE public.user_profiles SET exam_role = NULL WHERE user_id = v_tk;
+  PERFORM pg_temp.act_as(v_tk);
+  PERFORM pg_temp.eq('R3 a trainer no longer TK: refused',
+    pg_temp.state($q$UPDATE public.trainings SET "mainTrainerId" = 962 WHERE id = 962$q$), '42501');
+  RESET ROLE;
+
+  -- A viewer who is TK still edits no training (trainings_update: is_writer())
+  UPDATE public.user_profiles SET exam_role = 'manager' WHERE user_id = v_viewer;
+  PERFORM pg_temp.act_as(v_viewer);
+  PERFORM pg_temp.eq('R3 a viewer who is TK: no training to update, none to create',
+    pg_temp.n($q$UPDATE public.trainings SET "mainTrainerId" = 964 WHERE id = 970$q$)
+    || ' ' || pg_temp.state($q$INSERT INTO public.trainings (id, title, weekday, "dateFrom", section, "mainTrainerId")
+                              VALUES (974, 'Viewer', 'Monday', '18:00', 'Judo', 964)$q$), '0 42501');
+  RESET ROLE;
+END $$;
+ROLLBACK TO SAVEPOINT s;
+
+SAVEPOINT s;
+DO $$
+DECLARE
+  v_viewer uuid := '30000000-0000-4000-8000-000000000003';
+  v_member uuid := '30000000-0000-4000-8000-000000000004';
+  v_waiting uuid := '30000000-0000-4000-8000-000000000006';
+  v_before text := pg_temp.trainings();
+  v_insert constant text := $q$INSERT INTO public.trainings (id, title, weekday, "dateFrom", section, "mainTrainerId")
+                               VALUES (975, 'x', 'Monday', '18:00', 'Judo', 961)$q$;
+  v_update constant text := $q$UPDATE public.trainings SET "mainTrainerId" = 961 WHERE id = 970$q$;
+BEGIN
+  PERFORM pg_temp.act_as(v_viewer);
+  PERFORM pg_temp.eq('R4 a viewer: nothing',
+    pg_temp.state(v_insert) || ' ' || pg_temp.n(v_update), '42501 0');
+  RESET ROLE;
+  PERFORM pg_temp.act_as(v_member);
+  PERFORM pg_temp.eq('R4 a member account: nothing',
+    pg_temp.state(v_insert) || ' ' || pg_temp.n(v_update), '42501 0');
+  RESET ROLE;
+  PERFORM pg_temp.act_as(v_waiting);
+  PERFORM pg_temp.eq('R4 a waiting trainer: nothing',
+    pg_temp.state(v_insert) || ' ' || pg_temp.n(v_update), '42501 0');
+  RESET ROLE;
+  PERFORM pg_temp.as_anon();
+  PERFORM pg_temp.eq('R4 anon: nothing (refused before is_exam_manager(), which anon may not call)',
+    pg_temp.error(v_insert) || ', ' || pg_temp.n(v_update),
+    '42501 only the TK sets the main trainer of a training, 0');
+  RESET ROLE;
+  PERFORM pg_temp.eq('R4 the trainings are unchanged', pg_temp.trainings(), v_before);
+END $$;
+ROLLBACK TO SAVEPOINT s;
+
+SAVEPOINT s;
+DO $$
+DECLARE
+  v_main uuid := '30000000-0000-4000-8000-000000000002';
+  v_admin uuid := '30000000-0000-4000-8000-000000000005';
+  v_result jsonb;
+BEGIN
+  -- The owner is not restricted (migrations, seeds, these checks)
+  INSERT INTO public.members (id, firstname, lastname, labels) VALUES (971, 'Dora', 'Delete', '[]');
+  UPDATE public.trainings SET "mainTrainerId" = 971 WHERE id = 970;
+  PERFORM pg_temp.eq('R5 the owner sets it', (SELECT "mainTrainerId"::text FROM public.trainings WHERE id = 970), '971');
+
+  -- ON DELETE SET NULL runs as the owner of trainings: a trainer who is not
+  -- the TK deletes a member who is main trainer
+  PERFORM pg_temp.act_as(v_main);
+  PERFORM pg_temp.eq('R5 a trainer deletes a member who is main trainer',
+    pg_temp.n('DELETE FROM public.members WHERE id = 971'), '1');
+  RESET ROLE;
+  PERFORM pg_temp.eq('R5 the training has no main trainer any more',
+    (SELECT coalesce("mainTrainerId"::text, '-') FROM public.trainings WHERE id = 970), '-');
+
+  -- merge_members() (SECURITY DEFINER) moves it to the kept member, and
+  -- fills the kept member's e-mail (a main trainer's: R7) from the dropped one
+  INSERT INTO public.members (id, firstname, lastname, labels, email)
+  VALUES (10000961, 'Hanna', 'Haupt', '[]', 'hanna.neu@test.ch');
+  UPDATE public.trainings SET "mainTrainerId" = 10000961 WHERE id = 970;
+  INSERT INTO public.training_plan_trainings (training_id) VALUES (970);
+  PERFORM pg_temp.act_as(v_admin);
+  PERFORM pg_temp.eq('R6 the merge preview moves it',
+    public.merge_members_preview(961, 10000961)->'moved'->>'trainings.mainTrainerId',
+    '{"moved": 1, "merged": 0}');
+  v_result := public.merge_members(961, 10000961);
+  RESET ROLE;
+  PERFORM pg_temp.eq('R6 the merge moves it',
+    (v_result->'moved'->>'trainings.mainTrainerId') || ' '
+    || (SELECT "mainTrainerId" FROM public.trainings WHERE id = 970),
+    '{"moved": 1, "merged": 0} 961');
+  PERFORM pg_temp.eq('R6 and takes the dropped member''s e-mail onto the kept main trainer',
+    (v_result->'fields'->>'email') || ' ' || (SELECT email FROM public.members WHERE id = 961),
+    'from_drop hanna.neu@test.ch');
+  PERFORM pg_temp.eq('R6 so the kept member''s account plans that training', pg_temp.mine(v_main), '961,962,970');
+END $$;
+ROLLBACK TO SAVEPOINT s;
+
+-- R7-R10 The e-mail of a main trainer: my_member_ids() also finds an
+-- account's members by e-mail, so pointing a main trainer's e-mail at an
+-- account would make it plan that training without touching the main trainer
+
+-- The e-mails of these checks' members as postgres reads them: 'id e-mail,…'
+CREATE FUNCTION pg_temp.emails() RETURNS text
+LANGUAGE sql AS $$
+  SELECT string_agg(id || ' ' || coalesce(email, '-'), ',' ORDER BY id)
+  FROM public.members WHERE id BETWEEN 961 AND 979;
+$$;
+
+SAVEPOINT s;
+DO $$
+DECLARE
+  v_main uuid := '30000000-0000-4000-8000-000000000002';
+  v_outside uuid := '30000000-0000-4000-8000-000000000007';
+  v_before text := pg_temp.emails();
+  v_refused constant text := '42501 only the TK changes the e-mail of a main trainer';
+BEGIN
+  PERFORM pg_temp.act_as(v_main);
+  PERFORM pg_temp.eq('R7 a trainer does not point a main trainer''s e-mail at their own address',
+    pg_temp.error($q$UPDATE public.members SET email = 'plan.haupt@test.ch' WHERE id = 964$q$), v_refused);
+  PERFORM pg_temp.eq('R7 not written otherwise (my_member_ids() ignores case and spaces)',
+    pg_temp.error($q$UPDATE public.members SET email = ' Plan.Haupt@Test.CH ', mobile = '079' WHERE id = 964$q$),
+    v_refused);
+  PERFORM pg_temp.eq('R7 nor at an accomplice''s (another trainer''s account)',
+    pg_temp.error($q$UPDATE public.members SET email = 'plan.ausserhalb@test.ch' WHERE id = 964$q$), v_refused);
+  PERFORM pg_temp.eq('R7 nor of a main trainer outside the plan (the TK may plan it later)',
+    pg_temp.error($q$UPDATE public.members SET email = 'plan.haupt@test.ch' WHERE id = 965$q$), v_refused);
+  PERFORM pg_temp.eq('R7 nor change or clear a main trainer''s address',
+    pg_temp.error($q$UPDATE public.members SET email = 'neu@test.ch' WHERE id = 966$q$) || ', '
+    || pg_temp.error($q$UPDATE public.members SET email = NULL WHERE id = 962$q$),
+    v_refused || ', ' || v_refused);
+  PERFORM pg_temp.eq('R7 not along with a member who is main trainer of nothing',
+    pg_temp.error($q$UPDATE public.members SET email = 'plan.haupt@test.ch' WHERE id IN (968, 964)$q$), v_refused);
+  PERFORM pg_temp.eq('R7 not by an upsert',
+    pg_temp.error($q$INSERT INTO public.members (id, firstname, lastname, labels, email)
+                    VALUES (964, 'Vito', 'Viewer', '[]', 'plan.haupt@test.ch')
+                    ON CONFLICT (id) DO UPDATE SET email = EXCLUDED.email$q$), v_refused);
+  RESET ROLE;
+  PERFORM pg_temp.eq('R7 the e-mails are unchanged', pg_temp.emails(), v_before);
+  PERFORM pg_temp.eq('R7 so they plan what they planned before', pg_temp.mine(v_main), '961,962');
+  PERFORM pg_temp.eq('R7 and the accomplice nothing', pg_temp.mine(v_outside), '');
+  PERFORM pg_temp.act_as(v_main);
+  PERFORM pg_temp.eq('R7 the other training''s dates stay out of reach',
+    pg_temp.state($q$INSERT INTO public.training_plan_sessions (training_id, date, topic, cancelled)
+                    VALUES (963, '2031-01-17', 'gekapert', true)$q$)
+    || ' ' || pg_temp.n($q$UPDATE public.training_plan_sessions SET topic = 'gekapert', trainer_id = 961
+                          WHERE training_id = 963$q$), '42501 0');
+  RESET ROLE;
+
+  -- Everything else about members stays theirs
+  PERFORM pg_temp.act_as(v_main);
+  PERFORM pg_temp.eq('R8 the same address written again passes (the member form sends every field)',
+    pg_temp.n($q$UPDATE public.members SET email = 'plan.haupt@test.ch', mobile = '079 1' WHERE id = 962$q$)
+    || pg_temp.n($q$UPDATE public.members SET email = NULL, mobile = '079 2' WHERE id = 964$q$)
+    || pg_temp.n($q$UPDATE public.members SET email = 'plan.mitglied@test.ch', notes = 'x' WHERE id = 966$q$), '111');
+  PERFORM pg_temp.eq('R8 a main trainer''s other fields',
+    pg_temp.n($q$UPDATE public.members SET firstname = 'Vito B.', mobile = '079 3' WHERE id = 964$q$), '1');
+  PERFORM pg_temp.eq('R8 the e-mail of a member who is main trainer of nothing, any address',
+    pg_temp.n($q$UPDATE public.members SET email = 'gina@test.ch' WHERE id = 968$q$)
+    || pg_temp.n($q$UPDATE public.members SET email = 'plan.haupt@test.ch' WHERE id = 968$q$), '11');
+  RESET ROLE;
+  PERFORM pg_temp.eq('R8 what they wrote is there', pg_temp.emails(),
+    '961 -,962 plan.haupt@test.ch,963 plan.haupt@test.ch,964 -,965 -,966 plan.mitglied@test.ch,'
+    || '967 -,968 plan.haupt@test.ch,969 -');
+  PERFORM pg_temp.eq('R8 a member who is main trainer of nothing plans nothing', pg_temp.mine(v_main), '961,962');
+END $$;
+ROLLBACK TO SAVEPOINT s;
+
+SAVEPOINT s;
+DO $$
+DECLARE
+  v_tk uuid := '30000000-0000-4000-8000-000000000001';
+  v_main uuid := '30000000-0000-4000-8000-000000000002';
+  v_viewer uuid := '30000000-0000-4000-8000-000000000003';
+  v_admin uuid := '30000000-0000-4000-8000-000000000005';
+BEGIN
+  PERFORM pg_temp.act_as(v_tk);
+  PERFORM pg_temp.eq('R9 the TK changes and clears a main trainer''s e-mail',
+    pg_temp.n($q$UPDATE public.members SET email = 'vito@test.ch' WHERE id = 964$q$)
+    || pg_temp.n($q$UPDATE public.members SET email = NULL WHERE id = 966$q$), '11');
+  PERFORM pg_temp.eq('R9 also to a trainer''s address: the TK decides who plans',
+    pg_temp.n($q$UPDATE public.members SET email = 'plan.haupt@test.ch' WHERE id = 964$q$), '1');
+  RESET ROLE;
+  PERFORM pg_temp.eq('R9 so that trainer plans that training', pg_temp.mine(v_main), '961,962,963');
+  PERFORM pg_temp.act_as(v_admin);
+  PERFORM pg_temp.eq('R9 an admin (always TK) changes and clears it',
+    pg_temp.n($q$UPDATE public.members SET email = 'otto@test.ch' WHERE id = 965$q$)
+    || pg_temp.n($q$UPDATE public.members SET email = NULL WHERE id = 964$q$), '11');
+  RESET ROLE;
+  PERFORM pg_temp.eq('R9 what the TK and the admin wrote is there',
+    (SELECT string_agg(id || ' ' || coalesce(email, '-'), ',' ORDER BY id) FROM public.members
+      WHERE id IN (964, 965, 966)), '964 -,965 otto@test.ch,966 -');
+
+  -- A viewer who is TK still edits no member (members_update: is_writer())
+  UPDATE public.user_profiles SET exam_role = 'manager' WHERE user_id = v_viewer;
+  PERFORM pg_temp.act_as(v_viewer);
+  PERFORM pg_temp.eq('R9 a viewer who is TK: no member to update',
+    pg_temp.n($q$UPDATE public.members SET email = 'x@test.ch' WHERE id = 964$q$), '0');
+  RESET ROLE;
+
+  -- The service role (the Webling sync's key) is not restricted
+  SET LOCAL ROLE service_role;
+  PERFORM pg_temp.eq('R10 the service role changes it',
+    pg_temp.n($q$UPDATE public.members SET email = 'sync@test.ch' WHERE id = 967$q$), '1');
+  RESET ROLE;
+  PERFORM pg_temp.eq('R10 the owner changes it (migrations, seeds)',
+    pg_temp.n($q$UPDATE public.members SET email = 'owner@test.ch' WHERE id = 969$q$), '1');
+  PERFORM pg_temp.eq('R10 what they wrote is there',
+    (SELECT string_agg(email, ',' ORDER BY id) FROM public.members WHERE id IN (967, 969)),
+    'sync@test.ch,owner@test.ch');
+END $$;
+ROLLBACK TO SAVEPOINT s;
+
+-----------------
 -- P Privileges and policies
 -----------------
 
@@ -589,6 +933,30 @@ SELECT pg_temp.eq('P4 reading unchanged: all staff',
   'training_plan_breaks SELECT (SELECT is_staff() AS is_staff), '
   || 'training_plan_sessions SELECT (SELECT is_staff() AS is_staff), '
   || 'training_plan_trainings SELECT (SELECT is_staff() AS is_staff)');
+SELECT pg_temp.eq('P5 the main trainer''s guard: before insert and update of each row, with the caller''s role',
+  (SELECT concat_ws(' ', t.tgname, t.tgenabled, p.proname, p.prosecdef,
+                    array_to_string(p.proconfig, ','),
+                    has_function_privilege('authenticated', p.oid, 'EXECUTE'),
+                    has_function_privilege('anon', p.oid, 'EXECUTE'))
+     FROM pg_trigger t JOIN pg_proc p ON p.oid = t.tgfoid
+    WHERE t.tgrelid = 'public.trainings'::regclass AND NOT t.tgisinternal
+      AND p.proname = 'guard_training_main_trainer'
+      -- ROW (1) | BEFORE (2) | INSERT (4) | UPDATE (16), no columns
+      AND t.tgtype = (1 | 2 | 4 | 16) AND t.tgattr = ''::int2vector),
+  'trainings_guard_main_trainer O guard_training_main_trainer f search_path=public f f');
+SELECT pg_temp.eq('P6 the main trainer''s e-mail guard: before update of members.email, with the caller''s role',
+  (SELECT concat_ws(' ', t.tgname, t.tgenabled, p.proname, p.prosecdef,
+                    array_to_string(p.proconfig, ','),
+                    has_function_privilege('authenticated', p.oid, 'EXECUTE'),
+                    has_function_privilege('anon', p.oid, 'EXECUTE'))
+     FROM pg_trigger t JOIN pg_proc p ON p.oid = t.tgfoid
+    WHERE t.tgrelid = 'public.members'::regclass AND NOT t.tgisinternal
+      AND p.proname = 'guard_main_trainer_email'
+      -- ROW (1) | BEFORE (2) | UPDATE (16), of the column email only
+      AND t.tgtype = (1 | 2 | 16)
+      AND t.tgattr = (SELECT attnum::text::int2vector FROM pg_attribute
+                       WHERE attrelid = 'public.members'::regclass AND attname = 'email')),
+  'members_guard_main_trainer_email O guard_main_trainer_email f search_path=public f f');
 
 ROLLBACK;
 

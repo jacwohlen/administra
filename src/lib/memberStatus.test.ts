@@ -3,6 +3,7 @@ import {
   canBeTrainer,
   hasTrainerLabel,
   isCurrentMember,
+  isMainTrainerEmailError,
   isManagedByProviderError,
   providerName,
   statusChip,
@@ -109,5 +110,21 @@ describe('isManagedByProviderError', () => {
     ).toBe(true);
     expect(isManagedByProviderError({ message: 'other' })).toBe(false);
     expect(isManagedByProviderError(null)).toBe(false);
+  });
+});
+
+describe('isMainTrainerEmailError', () => {
+  it('recognises the main trainer e-mail guard error', () => {
+    expect(
+      isMainTrainerEmailError({
+        code: '42501',
+        message: 'only the TK changes the e-mail of a main trainer'
+      })
+    ).toBe(true);
+    expect(isMainTrainerEmailError({ code: '42501', message: 'permission denied' })).toBe(false);
+    expect(
+      isMainTrainerEmailError({ message: 'only the TK sets the main trainer of a training' })
+    ).toBe(false);
+    expect(isMainTrainerEmailError(null)).toBe(false);
   });
 });

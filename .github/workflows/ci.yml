@@ -222,7 +222,8 @@ jobs:
 
       # Who writes the training plan: the TK everything, a trainer every date
       # of a planned training he is main trainer of (not other trainings, the
-      # holidays or which trainings are planned), viewers and members nothing
+      # holidays or which trainings are planned), viewers and members nothing;
+      # only the TK sets a training's main trainer and changes their e-mail
       - name: Check training plan rights
         run: >-
           psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres"
