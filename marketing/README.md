@@ -64,33 +64,10 @@ Keep in mind that the demo (demo.alleda.ch) builds `prod`: describe a
 new app feature on the site only once it is promoted, or the screenshots
 and the demo disagree.
 
-### Switching from adsumus.ch (once)
-
-The pull request that renames the site to Alleda goes live when it is
-merged: the demo buttons then link to `demo.alleda.ch`, the legal pages
-name `kontakt@alleda.ch`, and adsumus.ch redirects to alleda.ch. So before
-merging it:
-
-1. Netlify site `adsumus-demo`: add `demo.alleda.ch` (CNAME, certificate
-   issued) and keep `demo.adsumus.ch` as an alias (see
-   [`docs/DEMO.md`](../docs/DEMO.md), step 5).
-2. Make `kontakt@alleda.ch` and `demo@alleda.ch` deliver (alias domain in
-   the club's Google Workspace, or a forwarder named in the
-   Datenschutzerklärung).
-3. Site `administra-marketing`: `alleda.ch` as primary domain, the other
-   three as aliases (step 3 below).
-
-The app's part (the demo strip's link, the demo accounts' e-mails) follows
-with the next `main` → `prod` promotion; the demo reset it starts
-re-creates the accounts, so the demo's role buttons may fail for a few
-minutes until both the build and the reset are done. Then set the demo
-project's Site URL and `PUBLIC_SUPABASE_SITE_URL` to
-`https://demo.alleda.ch` (docs/DEMO.md, steps 1 and 4).
-
 ## Netlify setup (once)
 
-The project already exists: **administra-marketing** in the team
-"Andreas Schmid’s team" (https://app.netlify.com/projects/administra-marketing),
+The project already exists: **alleda-marketing** in the team
+"Andreas Schmid’s team" (https://app.netlify.com/projects/alleda-marketing),
 form detection on. What is left:
 
 1. Project configuration → Build & deploy → **Link repository** → GitHub →
@@ -98,12 +75,11 @@ form detection on. What is left:
 2. **Base directory: `marketing`**. Build command and publish directory
    come from [`marketing/netlify.toml`](netlify.toml) (`node
 check-placeholders.mjs`, `public`). **Production branch: `main`**.
-3. Domains: `alleda.ch` as primary domain; `www.alleda.ch`,
-   `adsumus.ch` and `www.adsumus.ch` (the former name) as aliases, which
-   `netlify.toml` redirects to `https://alleda.ch`. In the DNS of both
-   domains: the apex to Netlify (A record `75.2.60.5`, or a flattened CNAME
-   to `administra-marketing.netlify.app`) and `www` as a CNAME to
-   `administra-marketing.netlify.app`, with any proxy off ("DNS only"), so
+3. Domains: `alleda.ch` as primary domain and `www.alleda.ch` as an
+   alias, which `netlify.toml` redirects to `https://alleda.ch`. In the
+   DNS: the apex to Netlify (A record `75.2.60.5`, or a flattened CNAME
+   to `alleda-marketing.netlify.app`) and `www` as a CNAME to
+   `alleda-marketing.netlify.app`, with any proxy off ("DNS only"), so
    Netlify can issue the certificates.
 4. **Forms**: add an e-mail notification for the form `kontakt` to your
    address (Forms → Notifications). Netlify detects the form at deploy time

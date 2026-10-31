@@ -1,6 +1,6 @@
 # Alleda
 
-Attendance tracking app for martial arts clubs (formerly Administra and Adsumus: the repository, package, file and project names such as `administra-logo.svg` or `administra-demo` keep the old name, and the Netlify demo site is still called `adsumus-demo`). SvelteKit frontend + Supabase (PostgreSQL) backend, deployed on Netlify.
+Attendance tracking app for martial arts clubs (formerly Administra and Adsumus: the repository, package, file and project names such as `administra-logo.svg` or `administra-demo` keep the old name). SvelteKit frontend + Supabase (PostgreSQL) backend, deployed on Netlify.
 
 ## Commands
 
@@ -37,7 +37,7 @@ Attendance tracking app for martial arts clubs (formerly Administra and Adsumus:
 - `supabase/migrations/` - Versioned SQL migrations
 - `supabase/seed.sql` - Database seed data (local, CI, preview branches)
 - `supabase/demo/seed.sql` - The made-up demo club for demo.alleda.ch, all dates relative to the reset day; checked by `supabase/checks/demo_seed.sql`
-- `marketing/` - The marketing site alleda.ch (static HTML/CSS; adsumus.ch redirects there)
+- `marketing/` - The marketing site alleda.ch (static HTML/CSS)
 - `static/brand/` - Brand guide extracted from the app (logo, `tokens.css`/`tokens.json`, style sheet at `/brand/`); not imported by the app, update it when the theme or `src/app.css` changes
 
 ## Conventions
