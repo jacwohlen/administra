@@ -25,7 +25,11 @@
   import { goto, invalidate } from '$app/navigation';
   import {
     buildPlan,
+    parseTrainingIds,
+    pickedTrainings,
+    planKey,
     planTopics,
+    togglePicked,
     trainerCounts,
     type PlanEvent,
     type PlanRow
@@ -50,7 +54,7 @@
   let rotationOpen = $state(false);
   let calendarOpen = $state(false);
 
-  // The chosen view and training stay for the next visit (this browser only)
+  // The chosen view and trainings stay for the next visit (this browser only)
   function stored(key: string): string | null {
     try {
       return localStorage.getItem(key);
@@ -66,16 +70,20 @@
     }
   }
   let view = $state<'list' | 'table'>(stored('trainingPlan.view') === 'table' ? 'table' : 'list');
-  let gridTrainingId = $state<number | null>(Number(stored('trainingPlan.training')) || null);
+  // The trainings of the table; before several could be picked, it kept one
+  let gridIds = $state(
+    parseTrainingIds(stored('trainingPlan.trainings') ?? stored('trainingPlan.training'))
+  );
 
   function setView(v: 'list' | 'table') {
     view = v;
     selected = [];
     store('trainingPlan.view', v);
   }
-  function setGridTraining(id: number) {
-    gridTrainingId = id;
-    store('trainingPlan.training', String(id));
+  function toggleGridTraining(id: number) {
+    const picked = gridTrainings.map((t) => t.id);
+    gridIds = togglePicked(picked, id);
+    store('trainingPlan.trainings', gridIds.join(','));
   }
 
   let rows = $derived(
@@ -93,8 +101,6 @@
   let openCount = $derived(
     rows.filter((r) => r.date >= today && !r.cancelled && r.trainerId == null).length
   );
-
-  const key = (r: PlanRow) => `${r.training.id}|${r.date}`;
 
   type Item =
     | { kind: 'row'; date: string; row: PlanRow }
@@ -146,22 +152,22 @@
     return groups;
   });
 
-  let gridTraining = $derived(
-    data.trainings.find((t) => t.id === gridTrainingId) ?? data.trainings[0]
-  );
+  // The trainings of the table, their dates interleaved (Mo, Fr, Mo, Fr, …)
+  let gridTrainings = $derived(pickedTrainings(gridIds, data.trainings));
   let gridRows = $derived.by(() => {
     const start = showPast || data.year !== dayjs().year() ? data.from : today;
-    return rows.filter((r) => r.training.id === gridTraining?.id && r.date >= start);
+    const ids = new Set(gridTrainings.map((t) => t.id));
+    return rows.filter((r) => ids.has(r.training.id) && r.date >= start);
   });
 
-  let selectedRows = $derived(rows.filter((r) => selected.includes(key(r))));
+  let selectedRows = $derived(rows.filter((r) => selected.includes(planKey(r))));
 
   function toggleTraining(id: number) {
     hidden = hidden.includes(id) ? hidden.filter((h) => h !== id) : [...hidden, id];
   }
 
   function toggleSelected(r: PlanRow) {
-    const k = key(r);
+    const k = planKey(r);
     selected = selected.includes(k) ? selected.filter((s) => s !== k) : [...selected, k];
   }
 
@@ -170,11 +176,25 @@
     goto(`/dashboard/training-plan?year=${data.year + by}`, { noScroll: true });
   }
 
+  // Reloads of the plan under way. Until they land, the table is read-only
+  // and the rotation waits: both have the plan from before the last saves
+  // and would overwrite them
+  let reloads = $state(0);
+  async function reload(saves?: Promise<unknown>) {
+    reloads++;
+    try {
+      await saves;
+      await invalidate('training-plan:year');
+    } finally {
+      reloads--;
+    }
+  }
+
   async function saved() {
     dialogRows = null;
     rotationOpen = false;
     selected = [];
-    await invalidate('training-plan:year');
+    await reload();
   }
 
   function monthLabel(month: string) {
@@ -255,7 +275,7 @@
   </button>
 </div>
 
-<!-- Filter chips: on/off toggles (several), or one training to pick in the table -->
+<!-- Filter chips: on/off toggles (several), also the trainings of the table -->
 {#snippet toggleChip(
   on: boolean,
   label: string,
@@ -283,7 +303,7 @@
     {/if}
   </div>
 {:else}
-  <!-- View: overview of all trainings, or one training as a table to fill in quickly -->
+  <!-- View: overview of all trainings, or the picked trainings as a table to fill in quickly -->
   <div class="mb-3 print:hidden">
     <PillToggle
       name="plan-view"
@@ -298,17 +318,19 @@
   </div>
 
   {#if view === 'table'}
+    {#if data.trainings.length > 1}
+      <p class="text-xs text-surface-600-400 mb-2 print:hidden">
+        {$_('page.trainingPlan.grid.pickSeveral')}
+      </p>
+    {/if}
     <div class="flex flex-wrap gap-2 mb-4 print:hidden">
       {#each data.trainings as t (t.id)}
-        <button
-          class="chip min-h-9 {gridTraining?.id === t.id
-            ? 'preset-filled-primary-500'
-            : 'preset-tonal-surface'}"
-          onclick={() => setGridTraining(t.id)}
-          aria-pressed={gridTraining?.id === t.id}
-        >
-          {$_('weekdayShort.' + t.weekday)} · {t.title}
-        </button>
+        {@render toggleChip(
+          gridTrainings.some((g) => g.id === t.id),
+          `${$_('weekdayShort.' + t.weekday)} · ${t.title}`,
+          () => toggleGridTraining(t.id),
+          'preset-filled-primary-500'
+        )}
       {/each}
       {#if data.year === dayjs().year()}
         {@render toggleChip(
@@ -318,15 +340,18 @@
         )}
       {/if}
     </div>
-    {#if gridTraining}
-      {#key `${gridTraining.id}|${data.year}|${showPast}`}
+    {#if gridTrainings.length > 0}
+      <!-- Picking trainings only changes the rows. A new table per year, and
+           while the rotation is open: the old one saves what is pending and
+           the plan is reloaded, so the rotation and the next table see it -->
+      {#key `${data.year}|${rotationOpen}`}
         <PlanGrid
-          training={gridTraining}
           rows={gridRows}
           members={data.members}
           {topics}
           canEdit={data.canPlanTrainings}
-          onchanged={() => invalidate('training-plan:year')}
+          waiting={reloads > 0}
+          onchanged={reload}
         />
       {/key}
     {/if}
@@ -385,7 +410,7 @@
           <ul
             class="card border border-surface-200-800 divide-y divide-surface-200-800 overflow-hidden"
           >
-            {#each group.items as item (item.kind + item.date + (item.kind === 'row' ? key(item.row) : item.kind === 'event' ? item.event.id : item.brk.id))}
+            {#each group.items as item (item.kind + item.date + (item.kind === 'row' ? planKey(item.row) : item.kind === 'event' ? item.event.id : item.brk.id))}
               {#if item.kind === 'break'}
                 <li
                   class="flex items-center gap-3 px-3 py-2 text-sm {item.brk.cancels_training
@@ -441,7 +466,7 @@
                       <input
                         type="checkbox"
                         class="checkbox size-5"
-                        checked={selected.includes(key(r))}
+                        checked={selected.includes(planKey(r))}
                         onchange={() => toggleSelected(r)}
                         aria-label={$_('page.trainingPlan.select')}
                       />
@@ -594,6 +619,7 @@
     {topics}
     from={data.from}
     to={data.to}
+    waiting={reloads > 0}
     onclose={() => (rotationOpen = false)}
     onsaved={saved}
   />

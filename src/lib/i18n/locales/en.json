@@ -1509,7 +1509,8 @@
       "grid": {
         "date": "Date",
         "hint": "Type right in, every cell saves on its own. Enter or the arrow keys move to the next row; a column copied from Excel or Google Sheets fills the rows below when pasted.",
-        "pasted": "{count, plural, one {# row} other {# rows}} pasted"
+        "pasted": "{count, plural, one {# row} other {# rows}} pasted",
+        "pickSeveral": "You can pick several trainings: their dates then appear in one table, in date order."
       },
       "calendar": {
         "button": "Subscribe to calendar",

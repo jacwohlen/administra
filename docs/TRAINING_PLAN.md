@@ -26,6 +26,9 @@ the plan into a calendar app (see _Kalender abonnieren (ICS)_). A row links
 to the training's check-in for that date, which in turn shows the plan
 (topic, trainer, or that the training is cancelled).
 
+That is the view _Übersicht_; _Pro Training_ shows the plan as a table to
+fill in (see _Planning_).
+
 ## Planning
 
 Only the TK edits (see _Roles_):
@@ -63,6 +66,19 @@ Only the TK edits (see _Roles_):
 5. **Several dates** – tick the rows and tap _Bearbeiten_ to set the trainer,
    a topic or the status for all of them; fields left on _unverändert_ stay
    as they are per date.
+6. **Pro Training** – the view to fill in like a spreadsheet: a row per
+   date with trainer, topic, note and _Fällt aus_, and every cell saves on
+   its own. Enter and the arrow keys move down a column; a column copied
+   from Excel or Google Sheets fills the rows below when pasted. The chips
+   above pick the trainings, several at once: Monday and Friday give one
+   table Mo, Fr, Mo, Fr, … (by date and start time, as in the overview),
+   and each row then names its training, so two trainings on the same day
+   (Friday kids and adults) stay apart. The last picked training cannot be
+   unpicked. The choice stays for the next visit in this browser, and
+   picking keeps what is being typed. Leaving the table, or opening
+   _Rotation_, saves it and reloads the plan; until the reload is in, the
+   table is read-only and the rotation does not apply, so neither writes
+   back the plan from before. Trainers and viewers see the table read-only.
 
 ## Import
 
