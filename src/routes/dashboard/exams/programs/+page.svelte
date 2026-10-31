@@ -55,7 +55,12 @@
   <h1 class="flex-1 min-w-0 truncate">{$_('page.exams.programs.title')}</h1>
 </div>
 
-<p class="text-sm text-surface-600-400 mb-4">{$_('page.exams.programs.intro')}</p>
+<p class="text-sm text-surface-600-400 mb-4">
+  {$_('page.exams.programs.intro')}
+  {#if data.isAdmin}
+    <a href="/dashboard/settings/grades" class="anchor">{$_('page.gradeLadders.link')}</a>
+  {/if}
+</p>
 
 <div class="space-y-6">
   {#each ladders as ladder (ladder.section)}

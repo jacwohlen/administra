@@ -20,6 +20,7 @@ vi.mock('$lib/appSettings', () => ({
 }));
 import { load as users } from './users/+page';
 import { load as settings } from './settings/+page';
+import { load as gradeLadders } from './settings/grades/+page';
 import { load as integrations } from './integrations/+page';
 import { load as duplicates } from './members/duplicates/+page';
 
@@ -49,6 +50,7 @@ describe('admin-only dashboard pages', () => {
   const cases: [string, Load, string][] = [
     ['users', users as Load, '/dashboard'],
     ['settings', settings as Load, '/dashboard'],
+    ['grade ladders', gradeLadders as Load, '/dashboard'],
     ['integrations', integrations as Load, '/dashboard'],
     ['duplicates', duplicates as Load, '/dashboard/members']
   ];

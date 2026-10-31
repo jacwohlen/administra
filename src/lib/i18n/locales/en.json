@@ -189,6 +189,58 @@
         }
       }
     },
+    "gradeLadders": {
+      "title": "Grade ladders",
+      "back": "Back to settings",
+      "link": "Grade ladders",
+      "linkHint": "Grades and belt colours per section, for any sport",
+      "intro": "Each section has its own ladder of grades, lowest first. Gradings, exam registrations and exam programs refer to these grades: a renamed grade is renamed everywhere, a grade still in use cannot be removed.",
+      "gradeCount": "{count, plural, one {# grade} other {# grades}}",
+      "noLadderShort": "no ladder",
+      "newSection": "Other section",
+      "addSection": "Add a ladder for another section",
+      "notClubSection": "\"{section}\" is not one of the club's sections (Settings → Club). Its ladder is kept, but the app offers it nowhere until the section is added again.",
+      "empty": "{section} has no grade ladder yet. Start from a kyu/dan template, copy another ladder or start empty.",
+      "template": {
+        "kyu": "Kyu grades",
+        "dan": "Dan grades",
+        "use": "Use template"
+      },
+      "copyFrom": "Copy from:",
+      "startEmpty": "Start empty",
+      "orderHint": "Lowest grade first. The order decides which grade comes next.",
+      "grade": "Grade",
+      "gradePlaceholder": "e.g. 5. Kyu",
+      "color": "Belt colour",
+      "color2": "Second colour",
+      "twoColors": "Two colours",
+      "dan": "Dan",
+      "danHint": "Dan grades count as black belts (badge, stripes on the belt)",
+      "inUse": "{count, plural, one {used once} other {used # times}}",
+      "inUseHint": "Used by gradings, exam registrations or an exam program: can be renamed and moved, not removed",
+      "moveUp": "Move up",
+      "moveDown": "Move down",
+      "remove": "Remove grade",
+      "addGrade": "Add grade",
+      "discard": "Discard changes",
+      "save": "Save ladder",
+      "confirmRemove": "These grades will be deleted: {grades}",
+      "confirmDeleteLadder": "The grade ladder of {section} will be deleted.",
+      "problem": {
+        "emptyName": "Grade {n} needs a name.",
+        "nameTooLong": "The name of grade {n} is longer than {max} characters.",
+        "duplicate": "\"{grade}\" appears twice.",
+        "badColor": "Grade {n} has an invalid colour."
+      },
+      "toast": {
+        "saved": "Grade ladder saved",
+        "failed": "Error saving the grade ladder",
+        "inUse": "Still in use, not removed: {grades}",
+        "duplicate": "Two grades have the same name",
+        "stale": "The ladder was changed in the meantime. Reload the page and try again.",
+        "notAllowed": "Only admins can edit grade ladders"
+      }
+    },
     "integrations": {
       "title": "Integrations",
       "intro": "Where members, events and holidays come from: what the latest runs did, what is open and how groups and calendars are mapped.",

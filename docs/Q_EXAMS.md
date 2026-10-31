@@ -79,6 +79,8 @@ result and feedback.
 
 The half belts (5.5 Kyu Halbgelb, 4.5 Kyu Halborange, 3.5 Kyu Halbgrün) are
 rungs of the Judo grade ladder with two colours (`grade_definitions."beltColor2"`).
+Admins edit the ladders in the app (Settings → Grade ladders, see
+[GRADE_LADDERS.md](GRADE_LADDERS.md)).
 
 ## Live sheets
 

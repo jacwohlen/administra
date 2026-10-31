@@ -404,6 +404,7 @@ INSERT INTO api_guard VALUES
   ('member_access_report',       'is_admin\('),
   ('merge_members',              'is_admin\('),
   ('merge_members_preview',      'is_admin\('),
+  ('save_grade_ladder',          'is_admin\('),
   ('refresh_all_member_badges',  'is_writer\('),
   ('ai_import_begin',            'is_writer\('),
   ('ai_import_remaining',        'is_writer\('),

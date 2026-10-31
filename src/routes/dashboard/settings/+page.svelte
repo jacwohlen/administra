@@ -7,6 +7,8 @@
   import { toaster } from '$lib/toast';
   import { invalidateAll } from '$app/navigation';
   import { _ } from 'svelte-i18n';
+  import Fa from 'svelte-fa';
+  import { faChevronRight, faMedal } from '@fortawesome/free-solid-svg-icons';
 
   let { data }: { data: PageData } = $props();
   let busy = $state(false);
@@ -143,6 +145,18 @@
 </div>
 
 <p class="text-sm text-surface-600-400 mb-4">{$_('page.settings.intro')}</p>
+
+<a
+  href="/dashboard/settings/grades"
+  class="card p-3 mb-2 bg-surface-50-950 border border-surface-300-700 flex items-center gap-3 hover:bg-surface-100-900 transition-colors"
+>
+  <Fa icon={faMedal} class="text-surface-600-400" />
+  <div class="flex-1 min-w-0">
+    <div class="font-semibold">{$_('page.gradeLadders.link')}</div>
+    <div class="text-xs text-surface-600-400">{$_('page.gradeLadders.linkHint')}</div>
+  </div>
+  <Fa icon={faChevronRight} class="text-surface-400-600" />
+</a>
 
 {#snippet fieldInput(field: SettingField)}
   <label class="label" for={field.key}>
