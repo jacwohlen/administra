@@ -225,7 +225,7 @@
 
 {#if section}
   {@const info = sections.find((s) => s.section === section)}
-  {#if info && !info.isClubSection}
+  {#if info && !clubConfig.sections.includes(section)}
     <p class="text-sm p-3 rounded-lg preset-tonal-warning mb-3">
       {$_('page.gradeLadders.notClubSection', { values: { section } })}
     </p>
@@ -288,7 +288,7 @@
             size="md"
           />
           <input
-            class="input flex-1 min-w-36"
+            class="input flex-1 min-w-36 sm:max-w-64"
             type="text"
             maxlength={MAX_GRADE_NAME}
             placeholder={$_('page.gradeLadders.gradePlaceholder')}
@@ -320,17 +320,20 @@
             />
             <span>{$_('page.gradeLadders.twoColors')}</span>
           </label>
-          {#if row.beltColor2 !== null}
-            <input
-              type="color"
-              class="h-8 w-10 cursor-pointer rounded border border-surface-300-700"
-              aria-label={$_('page.gradeLadders.color2')}
-              title={$_('page.gradeLadders.color2')}
-              value={toHexColor(row.beltColor2)}
-              oninput={(e) => update(i, { beltColor2: e.currentTarget.value })}
-              disabled={busy}
-            />
-          {/if}
+          <!-- Same width with or without a second colour, so the rows line up -->
+          <span class="w-10 flex-none">
+            {#if row.beltColor2 !== null}
+              <input
+                type="color"
+                class="h-8 w-10 cursor-pointer rounded border border-surface-300-700"
+                aria-label={$_('page.gradeLadders.color2')}
+                title={$_('page.gradeLadders.color2')}
+                value={toHexColor(row.beltColor2)}
+                oninput={(e) => update(i, { beltColor2: e.currentTarget.value })}
+                disabled={busy}
+              />
+            {/if}
+          </span>
           <label class="flex items-center gap-1 text-xs" title={$_('page.gradeLadders.danHint')}>
             <input
               type="checkbox"
@@ -342,14 +345,16 @@
             <span>{$_('page.gradeLadders.dan')}</span>
           </label>
           <div class="flex items-center gap-1 ml-auto">
-            {#if used > 0}
-              <span
-                class="chip preset-tonal-surface text-xs"
-                title={$_('page.gradeLadders.inUseHint')}
-              >
-                {$_('page.gradeLadders.inUse', { values: { count: used } })}
-              </span>
-            {/if}
+            <span class="w-28 text-right">
+              {#if used > 0}
+                <span
+                  class="chip preset-tonal-surface text-xs"
+                  title={$_('page.gradeLadders.inUseHint')}
+                >
+                  {$_('page.gradeLadders.inUse', { values: { count: used } })}
+                </span>
+              {/if}
+            </span>
             <button
               type="button"
               class="btn-icon btn-icon-sm preset-tonal-surface"
