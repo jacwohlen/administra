@@ -32,6 +32,7 @@
     topics,
     from,
     to,
+    waiting = false,
     onclose,
     onsaved
   }: {
@@ -43,6 +44,11 @@
     topics: string[];
     from: string;
     to: string;
+    /**
+     * The plan is being reloaded with what the table saved: applying waits
+     * for it, as the rows are from before and would overwrite it
+     */
+    waiting?: boolean;
     onclose: () => void;
     onsaved: () => void;
   } = $props();
@@ -140,7 +146,7 @@
   }
 
   async function apply() {
-    if (changes.length === 0) return;
+    if (waiting || changes.length === 0) return;
     saving = true;
     const upserts = changes.map(({ row, trainer, topic }) => ({
       training_id: row.training.id,
@@ -365,9 +371,9 @@
         <button
           type="submit"
           class="btn preset-filled-primary-500"
-          disabled={saving || changes.length === 0}
+          disabled={saving || waiting || changes.length === 0}
         >
-          {#if saving}<Fa icon={faSpinner} spin />{/if}
+          {#if saving || waiting}<Fa icon={faSpinner} spin />{/if}
           <span>
             {$_('page.trainingPlan.rotation.apply', { values: { count: changes.length } })}
           </span>

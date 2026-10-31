@@ -41,6 +41,11 @@ export interface PlanRow {
   events: PlanEvent[];
 }
 
+/** A row's key: two trainings can fall on the same date (Friday's kids and adults) */
+export function planKey(row: { training: { id: number }; date: string }): string {
+  return `${row.training.id}|${row.date}`;
+}
+
 /** The dates (YYYY-MM-DD) a weekly training falls on between from and to, inclusive */
 export function trainingDates(weekday: string, from: string, to: string): string[] {
   const day = WEEKDAYS.indexOf(weekday);
@@ -208,4 +213,27 @@ export function trainerCounts(rows: PlanRow[]): Map<number, number> {
     counts.set(id, (counts.get(id) ?? 0) + 1);
   }
   return counts;
+}
+
+/** Training ids as the browser keeps them ("27,23"); anything else is left out */
+export function parseTrainingIds(value: string | null): number[] {
+  return (value ?? '')
+    .split(',')
+    .map(Number)
+    .filter((id) => Number.isSafeInteger(id) && id > 0);
+}
+
+/**
+ * The trainings picked for the table, in the order of the trainings: ids no
+ * longer planned are left out, and with none left it is the first training
+ */
+export function pickedTrainings<T extends { id: number }>(ids: number[], trainings: T[]): T[] {
+  const picked = trainings.filter((t) => ids.includes(t.id));
+  return picked.length > 0 ? picked : trainings.slice(0, 1);
+}
+
+/** Picks a training for the table or drops it again, but never the last one */
+export function togglePicked(ids: number[], id: number): number[] {
+  if (!ids.includes(id)) return [...ids, id];
+  return ids.length > 1 ? ids.filter((i) => i !== id) : ids;
 }
