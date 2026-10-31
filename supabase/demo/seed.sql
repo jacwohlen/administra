@@ -875,6 +875,332 @@ SET created_at = now() - interval '1 day'
 WHERE user_id = 'd3e40000-0000-4000-8000-000000000004';
 
 -- ---------------------------------------------------------------------------
+-- Prüfungsprogramme
+-- ---------------------------------------------------------------------------
+-- The migration (20261021120000_q_exams.sql) seeds the real club's Judo
+-- programs; the public demo shows invented ones instead, same grades and
+-- structure (parts of items, 0-2 points per scored side, about 70 % of the
+-- points to pass), techniques, tasks and questions chosen anew. Replaced
+-- before the exam sheets below snapshot them.
+
+UPDATE public.exam_programs p
+SET title = v.title, min_points = v.min_points, parts = v.parts::jsonb,
+    updated_at = now() - interval '200 days', updated_by = NULL
+FROM (VALUES
+  ('5.5 Kyu', 'Halbgelbgurt', 25,
+   $prog$[
+    {"key": "tachi", "title": "Tachi-waza", "subtitle": "Würfe im Stand", "minPoints": 8, "items": [
+      {"key": "tachi-1", "name": "O-goshi", "sides": 2, "description": "Grosser Hüftwurf"},
+      {"key": "tachi-2", "name": "O-soto-otoshi", "sides": 2, "description": "Grosser Aussenfall"},
+      {"key": "tachi-3", "name": "De-ashi-barai", "sides": 2, "description": "Fussfeger"}
+    ]},
+    {"key": "ukemi", "title": "Fallschule", "items": [
+      {"key": "ukemi-1", "name": "Ushiro-ukemi", "sides": 1, "description": "rückwärts"},
+      {"key": "ukemi-2", "name": "Yoko-ukemi", "sides": 2, "description": "seitwärts"},
+      {"key": "ukemi-3", "name": "Zempo-kaiten-ukemi", "sides": 2, "description": "Rolle vorwärts"}
+    ]},
+    {"key": "newaza", "title": "Ne-waza", "subtitle": "Bodentechniken", "minPoints": 4, "items": [
+      {"key": "newaza-1", "name": "Kesa-gatame", "sides": 1},
+      {"key": "newaza-2", "name": "Mune-gatame", "sides": 1},
+      {"key": "newaza-3", "name": "Befreiung aus Kesa-gatame", "sides": 1}
+    ]},
+    {"key": "spiel", "title": "Bewegung und Spiel", "items": [
+      {"key": "spiel-1", "name": "Gleichgewichtsspiel zu zweit", "sides": 1},
+      {"key": "spiel-2", "name": "Bodenrandori kniend", "sides": 1}
+    ]},
+    {"key": "wissen", "title": "Wissen", "subtitle": "Fragen zur Theorie", "items": [
+      {"key": "wissen-1", "name": "Begrüssung und Dojo-Regeln", "sides": 1},
+      {"key": "wissen-2", "name": "Was ist ein Ippon?", "sides": 1}
+    ]}
+   ]$prog$),
+  ('5. Kyu', 'Gelbgurt', 35,
+   $prog$[
+    {"key": "tachi", "title": "Tachi-waza", "subtitle": "Würfe im Stand", "minPoints": 14, "items": [
+      {"key": "tachi-1", "name": "O-goshi", "sides": 2},
+      {"key": "tachi-2", "name": "O-soto-otoshi", "sides": 2},
+      {"key": "tachi-3", "name": "De-ashi-barai", "sides": 2},
+      {"key": "tachi-4", "name": "O-uchi-gari", "sides": 2, "description": "Grosse Innensichel"},
+      {"key": "tachi-5", "name": "Seoi-otoshi", "sides": 2}
+    ]},
+    {"key": "ukemi", "title": "Fallschule", "items": [
+      {"key": "ukemi-1", "name": "Ushiro-ukemi", "sides": 1},
+      {"key": "ukemi-2", "name": "Yoko-ukemi", "sides": 2},
+      {"key": "ukemi-3", "name": "Zempo-kaiten-ukemi", "sides": 2}
+    ]},
+    {"key": "newaza", "title": "Ne-waza", "subtitle": "Bodentechniken", "minPoints": 6, "items": [
+      {"key": "newaza-1", "name": "Kesa-gatame", "sides": 1},
+      {"key": "newaza-2", "name": "Mune-gatame", "sides": 1},
+      {"key": "newaza-3", "name": "Kami-shiho-gatame", "sides": 1},
+      {"key": "newaza-4", "name": "Befreiung aus Kesa-gatame", "sides": 1},
+      {"key": "newaza-5", "name": "Befreiung aus Mune-gatame", "sides": 1}
+    ]},
+    {"key": "randori", "title": "Randori-Aufgaben", "items": [
+      {"key": "randori-1", "name": "Bodenrandori", "sides": 1},
+      {"key": "randori-2", "name": "Griffkampf im Stand", "sides": 1}
+    ]},
+    {"key": "wissen", "title": "Wissen", "subtitle": "Fragen zur Theorie", "items": [
+      {"key": "wissen-1", "name": "Japanisch zählen von 1 bis 10", "sides": 1},
+      {"key": "wissen-2", "name": "Was ist ein Ippon?", "sides": 1},
+      {"key": "wissen-3", "name": "Was bedeutet «Judo»?", "sides": 1}
+    ]}
+   ]$prog$),
+  ('4.5 Kyu', 'Halborangegurt', 31,
+   $prog$[
+    {"key": "tachi", "title": "Tachi-waza", "subtitle": "Würfe im Stand", "minPoints": 11, "items": [
+      {"key": "tachi-1", "name": "Ko-uchi-gari", "sides": 2, "description": "Kleine Innensichel"},
+      {"key": "tachi-2", "name": "Hiza-guruma", "sides": 2},
+      {"key": "tachi-3", "name": "Tsuri-goshi", "sides": 2},
+      {"key": "tachi-4", "name": "Ko-soto-gari", "sides": 2}
+    ]},
+    {"key": "ukemi", "title": "Fallschule", "items": [
+      {"key": "ukemi-1", "name": "Yoko-ukemi", "sides": 2},
+      {"key": "ukemi-2", "name": "Zempo-kaiten-ukemi", "sides": 2}
+    ]},
+    {"key": "newaza", "title": "Ne-waza", "subtitle": "Bodentechniken", "minPoints": 5, "items": [
+      {"key": "newaza-1", "name": "Yoko-shiho-gatame", "sides": 1},
+      {"key": "newaza-2", "name": "Kuzure-kesa-gatame", "sides": 1},
+      {"key": "newaza-3", "name": "Befreiung aus Yoko-shiho-gatame", "sides": 1},
+      {"key": "newaza-4", "name": "Umdrehen aus der Bankstellung", "sides": 1}
+    ]},
+    {"key": "randori", "title": "Randori-Aufgaben", "items": [
+      {"key": "randori-1", "name": "Kombination aus zwei Würfen", "sides": 1},
+      {"key": "randori-2", "name": "Bodenrandori", "sides": 1}
+    ]},
+    {"key": "wiederholung", "title": "Wiederholung", "subtitle": "aus dem Gelbgurt", "items": [
+      {"key": "wiederholung-1", "name": "O-goshi", "sides": 1},
+      {"key": "wiederholung-2", "name": "O-uchi-gari", "sides": 1}
+    ]},
+    {"key": "wissen", "title": "Wissen", "subtitle": "Fragen zur Theorie", "items": [
+      {"key": "wissen-1", "name": "Wer ist Tori, wer ist Uke?", "sides": 1},
+      {"key": "wissen-2", "name": "Was ist im Bodenkampf erlaubt?", "sides": 1}
+    ]}
+   ]$prog$),
+  ('4. Kyu', 'Orangegurt', 46,
+   $prog$[
+    {"key": "tachi", "title": "Tachi-waza", "subtitle": "Würfe im Stand", "minPoints": 20, "items": [
+      {"key": "tachi-1", "name": "Ko-uchi-gari", "sides": 2},
+      {"key": "tachi-2", "name": "Ko-soto-gari", "sides": 2},
+      {"key": "tachi-3", "name": "Hiza-guruma", "sides": 2},
+      {"key": "tachi-4", "name": "Tsuri-goshi", "sides": 2},
+      {"key": "tachi-5", "name": "Sasae-tsuri-komi-ashi", "sides": 2},
+      {"key": "tachi-6", "name": "Morote-seoi-nage", "sides": 2},
+      {"key": "tachi-7", "name": "Uki-goshi", "sides": 2}
+    ]},
+    {"key": "ukemi", "title": "Fallschule", "items": [
+      {"key": "ukemi-1", "name": "Yoko-ukemi", "sides": 2},
+      {"key": "ukemi-2", "name": "Zempo-kaiten-ukemi", "sides": 2}
+    ]},
+    {"key": "newaza", "title": "Ne-waza", "subtitle": "Bodentechniken", "minPoints": 7, "items": [
+      {"key": "newaza-1", "name": "Yoko-shiho-gatame", "sides": 1},
+      {"key": "newaza-2", "name": "Tate-shiho-gatame", "sides": 1},
+      {"key": "newaza-3", "name": "Kuzure-kesa-gatame", "sides": 1},
+      {"key": "newaza-4", "name": "Befreiung aus Tate-shiho-gatame", "sides": 1},
+      {"key": "newaza-5", "name": "Umdrehen aus der Bankstellung", "sides": 1},
+      {"key": "newaza-6", "name": "Umdrehen aus der Bauchlage", "sides": 1}
+    ]},
+    {"key": "randori", "title": "Randori-Aufgaben", "items": [
+      {"key": "randori-1", "name": "Kombination vorwärts–rückwärts", "sides": 1},
+      {"key": "randori-2", "name": "Übergang Stand–Boden", "sides": 1},
+      {"key": "randori-3", "name": "Bodenrandori", "sides": 1}
+    ]},
+    {"key": "wiederholung", "title": "Wiederholung", "subtitle": "aus den Gurten davor", "items": [
+      {"key": "wiederholung-1", "name": "O-goshi", "sides": 1},
+      {"key": "wiederholung-2", "name": "De-ashi-barai", "sides": 1},
+      {"key": "wiederholung-3", "name": "Kesa-gatame", "sides": 1}
+    ]},
+    {"key": "wissen", "title": "Wissen", "subtitle": "Fragen zur Theorie", "items": [
+      {"key": "wissen-1", "name": "Was bedeutet «Kuzushi»?", "sides": 1},
+      {"key": "wissen-2", "name": "Welche Strafen gibt es im Wettkampf?", "sides": 1},
+      {"key": "wissen-3", "name": "Warum verbeugen wir uns?", "sides": 1}
+    ]}
+   ]$prog$),
+  ('3.5 Kyu', 'Halbgrüngurt', 39,
+   $prog$[
+    {"key": "tachi", "title": "Tachi-waza", "subtitle": "Würfe im Stand", "minPoints": 14, "items": [
+      {"key": "tachi-1", "name": "Harai-goshi", "sides": 2},
+      {"key": "tachi-2", "name": "Okuri-ashi-barai", "sides": 2},
+      {"key": "tachi-3", "name": "Ko-soto-gake", "sides": 2},
+      {"key": "tachi-4", "name": "Tai-otoshi", "sides": 2},
+      {"key": "tachi-5", "name": "Ippon-seoi-nage", "sides": 2}
+    ]},
+    {"key": "ukemi", "title": "Fallschule", "items": [
+      {"key": "ukemi-1", "name": "Rolle vorwärts über ein Hindernis", "sides": 1},
+      {"key": "ukemi-2", "name": "Yoko-ukemi aus dem Wurf", "sides": 2}
+    ]},
+    {"key": "newaza", "title": "Ne-waza", "subtitle": "Bodentechniken", "minPoints": 7, "items": [
+      {"key": "newaza-1", "name": "Kata-gatame", "sides": 1},
+      {"key": "newaza-2", "name": "Ushiro-kesa-gatame", "sides": 1},
+      {"key": "newaza-3", "name": "Kami-shiho-gatame", "sides": 1},
+      {"key": "newaza-4", "name": "Befreiung aus Kata-gatame", "sides": 1},
+      {"key": "newaza-5", "name": "Angriff aus der Rückenlage", "sides": 1},
+      {"key": "newaza-6", "name": "Angriff gegen die Bankstellung", "sides": 1}
+    ]},
+    {"key": "randori", "title": "Randori-Aufgaben", "items": [
+      {"key": "randori-1", "name": "Randori im Stand", "sides": 1},
+      {"key": "randori-2", "name": "Randori am Boden", "sides": 1},
+      {"key": "randori-3", "name": "Konter auf einen Fussfeger", "sides": 1}
+    ]},
+    {"key": "wiederholung", "title": "Wiederholung", "subtitle": "aus den Gurten davor", "items": [
+      {"key": "wiederholung-1", "name": "Ko-uchi-gari", "sides": 1},
+      {"key": "wiederholung-2", "name": "Morote-seoi-nage", "sides": 1},
+      {"key": "wiederholung-3", "name": "Tate-shiho-gatame", "sides": 1}
+    ]},
+    {"key": "wissen", "title": "Wissen", "subtitle": "Fragen zur Theorie", "items": [
+      {"key": "wissen-1", "name": "Unterschied zwischen Randori und Shiai", "sides": 1},
+      {"key": "wissen-2", "name": "Wofür gibt es Waza-ari?", "sides": 1},
+      {"key": "wissen-3", "name": "Die Grundsätze von Jigoro Kano", "sides": 1}
+    ]}
+   ]$prog$),
+  ('3. Kyu', 'Grüngurt', 49,
+   $prog$[
+    {"key": "tachi", "title": "Tachi-waza", "subtitle": "Würfe im Stand", "minPoints": 22, "items": [
+      {"key": "tachi-1", "name": "Harai-goshi", "sides": 2},
+      {"key": "tachi-2", "name": "Okuri-ashi-barai", "sides": 2},
+      {"key": "tachi-3", "name": "Ko-soto-gake", "sides": 2},
+      {"key": "tachi-4", "name": "Tai-otoshi", "sides": 2},
+      {"key": "tachi-5", "name": "Ippon-seoi-nage", "sides": 2},
+      {"key": "tachi-6", "name": "Uchi-mata", "sides": 2},
+      {"key": "tachi-7", "name": "Ashi-guruma", "sides": 2},
+      {"key": "tachi-8", "name": "Koshi-guruma", "sides": 2}
+    ]},
+    {"key": "ukemi", "title": "Fallschule", "items": [
+      {"key": "ukemi-1", "name": "Yoko-ukemi aus dem Wurf", "sides": 2},
+      {"key": "ukemi-2", "name": "Rolle vorwärts über ein Hindernis", "sides": 1}
+    ]},
+    {"key": "newaza", "title": "Ne-waza", "subtitle": "Bodentechniken", "minPoints": 8, "items": [
+      {"key": "newaza-1", "name": "Kata-gatame", "sides": 1},
+      {"key": "newaza-2", "name": "Ushiro-kesa-gatame", "sides": 1},
+      {"key": "newaza-3", "name": "Kami-shiho-gatame", "sides": 1},
+      {"key": "newaza-4", "name": "Juji-gatame", "sides": 1, "description": "Armstreckhebel"},
+      {"key": "newaza-5", "name": "Befreiung aus Kami-shiho-gatame", "sides": 1},
+      {"key": "newaza-6", "name": "Angriff gegen die Bankstellung", "sides": 1}
+    ]},
+    {"key": "randori", "title": "Randori-Aufgaben", "items": [
+      {"key": "randori-1", "name": "Randori im Stand", "sides": 1},
+      {"key": "randori-2", "name": "Randori am Boden", "sides": 1},
+      {"key": "randori-3", "name": "Kombination zur Spezialtechnik", "sides": 1}
+    ]},
+    {"key": "wiederholung", "title": "Wiederholung", "subtitle": "aus den Gurten davor", "items": [
+      {"key": "wiederholung-1", "name": "Hiza-guruma", "sides": 1},
+      {"key": "wiederholung-2", "name": "Tsuri-goshi", "sides": 1},
+      {"key": "wiederholung-3", "name": "Sasae-tsuri-komi-ashi", "sides": 1},
+      {"key": "wiederholung-4", "name": "Yoko-shiho-gatame", "sides": 1}
+    ]},
+    {"key": "wissen", "title": "Wissen", "subtitle": "Fragen zur Theorie", "items": [
+      {"key": "wissen-1", "name": "Wie gibt man bei einem Hebel auf?", "sides": 1},
+      {"key": "wissen-2", "name": "Was bedeutet «Sono-mama»?", "sides": 1},
+      {"key": "wissen-3", "name": "Aufgaben der Kampfrichter", "sides": 1}
+    ]}
+   ]$prog$),
+  ('2. Kyu', 'Blaugurt', 53,
+   $prog$[
+    {"key": "tachi", "title": "Tachi-waza", "subtitle": "Würfe im Stand", "minPoints": 22, "items": [
+      {"key": "tachi-1", "name": "Hane-goshi", "sides": 2},
+      {"key": "tachi-2", "name": "O-guruma", "sides": 2},
+      {"key": "tachi-3", "name": "Sumi-gaeshi", "sides": 2},
+      {"key": "tachi-4", "name": "Tomoe-nage", "sides": 2},
+      {"key": "tachi-5", "name": "Kata-guruma", "sides": 2},
+      {"key": "tachi-6", "name": "Seoi-otoshi", "sides": 2},
+      {"key": "tachi-7", "name": "Ko-uchi-makikomi", "sides": 2},
+      {"key": "tachi-8", "name": "Uki-waza", "sides": 2}
+    ]},
+    {"key": "ukemi", "title": "Fallschule", "items": [
+      {"key": "ukemi-1", "name": "Freier Fall seitwärts", "sides": 2}
+    ]},
+    {"key": "newaza", "title": "Ne-waza", "subtitle": "Würge- und Hebeltechniken", "minPoints": 9, "items": [
+      {"key": "newaza-1", "name": "Okuri-eri-jime", "sides": 1},
+      {"key": "newaza-2", "name": "Hadaka-jime", "sides": 1},
+      {"key": "newaza-3", "name": "Kata-juji-jime", "sides": 1},
+      {"key": "newaza-4", "name": "Ude-garami", "sides": 1},
+      {"key": "newaza-5", "name": "Waki-gatame", "sides": 1},
+      {"key": "newaza-6", "name": "Befreiung aus der Beinklammer", "sides": 1}
+    ]},
+    {"key": "kata", "title": "Kata", "subtitle": "Nage-no-kata", "items": [
+      {"key": "kata-1", "name": "Te-waza (Tori)", "sides": 1},
+      {"key": "kata-2", "name": "Koshi-waza (Tori)", "sides": 1},
+      {"key": "kata-3", "name": "Ashi-waza (Tori)", "sides": 1}
+    ]},
+    {"key": "randori", "title": "Randori-Aufgaben", "items": [
+      {"key": "randori-1", "name": "Spezialtechnik links und rechts", "sides": 1},
+      {"key": "randori-2", "name": "Spezialtechnik gegen Verteidigung", "sides": 1},
+      {"key": "randori-3", "name": "Randori im Stand", "sides": 1},
+      {"key": "randori-4", "name": "Randori am Boden", "sides": 1}
+    ]},
+    {"key": "wiederholung", "title": "Wiederholung", "subtitle": "aus den Gurten davor", "items": [
+      {"key": "wiederholung-1", "name": "Uchi-mata", "sides": 1},
+      {"key": "wiederholung-2", "name": "Harai-goshi", "sides": 1},
+      {"key": "wiederholung-3", "name": "Kata-gatame", "sides": 1},
+      {"key": "wiederholung-4", "name": "Juji-gatame", "sides": 1}
+    ]},
+    {"key": "wissen", "title": "Wissen", "subtitle": "Fragen zur Theorie", "items": [
+      {"key": "wissen-1", "name": "Die Gruppen der Gokyo", "sides": 1},
+      {"key": "wissen-2", "name": "Erste Hilfe auf der Matte", "sides": 1},
+      {"key": "wissen-3", "name": "Worauf achten bei Würgetechniken?", "sides": 1}
+    ]}
+   ]$prog$),
+  ('1. Kyu', 'Braungurt', 57,
+   $prog$[
+    {"key": "tachi", "title": "Tachi-waza", "subtitle": "Würfe im Stand", "minPoints": 22, "items": [
+      {"key": "tachi-1", "name": "Utsuri-goshi", "sides": 2},
+      {"key": "tachi-2", "name": "Ushiro-goshi", "sides": 2},
+      {"key": "tachi-3", "name": "Ura-nage", "sides": 2},
+      {"key": "tachi-4", "name": "Yoko-guruma", "sides": 2},
+      {"key": "tachi-5", "name": "Tani-otoshi", "sides": 2},
+      {"key": "tachi-6", "name": "Soto-makikomi", "sides": 2},
+      {"key": "tachi-7", "name": "Sukui-nage", "sides": 2},
+      {"key": "tachi-8", "name": "Te-guruma", "sides": 2}
+    ]},
+    {"key": "ukemi", "title": "Fallschule", "items": [
+      {"key": "ukemi-1", "name": "Freier Fall vorwärts", "sides": 2},
+      {"key": "ukemi-2", "name": "Freier Fall seitwärts", "sides": 2}
+    ]},
+    {"key": "newaza", "title": "Ne-waza", "subtitle": "Würge- und Hebeltechniken", "minPoints": 9, "items": [
+      {"key": "newaza-1", "name": "Sankaku-jime", "sides": 1},
+      {"key": "newaza-2", "name": "Hiza-gatame", "sides": 1},
+      {"key": "newaza-3", "name": "Hara-gatame", "sides": 1},
+      {"key": "newaza-4", "name": "Ude-gatame", "sides": 1},
+      {"key": "newaza-5", "name": "Varianten von Kesa-gatame", "sides": 1},
+      {"key": "newaza-6", "name": "Angriff aus der Beinklammer", "sides": 1}
+    ]},
+    {"key": "kata", "title": "Kata", "subtitle": "Nage-no-kata und Katame-no-kata", "items": [
+      {"key": "kata-1", "name": "Te-waza (Uke)", "sides": 1},
+      {"key": "kata-2", "name": "Koshi-waza (Uke)", "sides": 1},
+      {"key": "kata-3", "name": "Ashi-waza (Uke)", "sides": 1},
+      {"key": "kata-4", "name": "Katame-no-kata: Osaekomi-waza", "sides": 1}
+    ]},
+    {"key": "randori", "title": "Randori-Aufgaben", "items": [
+      {"key": "randori-1", "name": "Spezialtechnik links und rechts", "sides": 1},
+      {"key": "randori-2", "name": "Kombination aus einem Konter", "sides": 1},
+      {"key": "randori-3", "name": "Randori im Stand", "sides": 1},
+      {"key": "randori-4", "name": "Randori am Boden", "sides": 1}
+    ]},
+    {"key": "wiederholung", "title": "Wiederholung", "subtitle": "aus den Gurten davor", "items": [
+      {"key": "wiederholung-1", "name": "Hane-goshi", "sides": 1},
+      {"key": "wiederholung-2", "name": "Tomoe-nage", "sides": 1},
+      {"key": "wiederholung-3", "name": "Okuri-eri-jime", "sides": 1},
+      {"key": "wiederholung-4", "name": "Waki-gatame", "sides": 1}
+    ]},
+    {"key": "wissen", "title": "Wissen", "subtitle": "Fragen zur Theorie", "items": [
+      {"key": "wissen-1", "name": "Geschichte des Judo", "sides": 1},
+      {"key": "wissen-2", "name": "Gürtelordnung und Prüfungsweg", "sides": 1},
+      {"key": "wissen-3", "name": "Ein Aufwärmen anleiten", "sides": 1}
+    ]}
+   ]$prog$)
+) AS v(grade, title, min_points, parts)
+WHERE p.section = 'Judo' AND p.grade = v.grade;
+
+-- Every program in the database is the demo's own: a grade the migration
+-- gains later must get one here too
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM public.exam_programs WHERE NOT parts @> '[{"key": "tachi"}]') THEN
+    RAISE EXCEPTION 'The demo seed has no invented program for: %',
+      (SELECT string_agg(section || ' ' || grade, ', ') FROM public.exam_programs
+        WHERE NOT parts @> '[{"key": "tachi"}]');
+  END IF;
+END $$;
+
+-- ---------------------------------------------------------------------------
 -- Q-Prüfungen
 -- ---------------------------------------------------------------------------
 -- (a) A finished Judo exam day ~40 days ago: sheets snapshotted from

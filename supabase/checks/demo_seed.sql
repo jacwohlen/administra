@@ -237,6 +237,14 @@ SELECT pg_temp.ok('passed sheets reach the minimum, the failed one does not',
                      OR (c.result = 'passed') <> (c.total_points >= c.min_points))));
 SELECT pg_temp.ok('one failed candidate',
   (SELECT count(*) FROM public.exam_candidates WHERE result = 'failed') = 1);
+-- The migration seeds the real club's programs; the demo replaces them
+SELECT pg_temp.ok('exam programs and sheets are the demo''s invented ones, not the club''s',
+  EXISTS (SELECT 1 FROM public.exam_programs)
+  AND NOT EXISTS (SELECT 1 FROM public.exam_programs
+                  WHERE NOT parts @> '[{"key": "tachi"}]'
+                     OR parts @> '[{"key": "stichproben"}]' OR parts @> '[{"key": "boden"}]')
+  AND NOT EXISTS (SELECT 1 FROM public.exam_candidates
+                  WHERE program IS NOT NULL AND NOT program @> '[{"key": "tachi"}]'));
 SELECT pg_temp.ok('the demo member has an eligible child not yet registered',
   EXISTS (SELECT 1 FROM public.exams e
           CROSS JOIN (VALUES (120), (150)) AS k(member_id)
