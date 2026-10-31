@@ -432,8 +432,9 @@ BEGIN
 END $$;
 
 -- Who leads (rotating by calendar week where several; a substitute takes
--- over ~7 % of the sessions of an unplanned training), who assists and how
--- often, which trainings keep going in the summer holidays, plan topics.
+-- over ~7 % of the sessions where one is listed), who assists and how
+-- often, which trainings keep going in the summer holidays, which are in the
+-- training plan with which topics.
 -- The roster lists trainers only for the trainings they attend as students.
 CREATE TEMP TABLE demo_rotation (
   training_id integer PRIMARY KEY,
@@ -448,7 +449,10 @@ CREATE TEMP TABLE demo_rotation (
 
 INSERT INTO demo_rotation VALUES
   (1, '{102}', '{107,110}', '{107}', 45, false, false, NULL),
-  (2, '{102}', '{105,110}', '{110}', 50, false, false, NULL),
+  (2, '{102}', '{105,110}', '{110}', 50, false, true,
+   ARRAY['Ukemi (Fallschule)', 'O-goshi', 'Haltegriffe (Osae-komi-waza)', 'Seoi-nage',
+         'Kumikata (Griffkampf)', 'Ko-soto-gari', 'Randori-Spiele', 'Befreiungen am Boden',
+         'Tai-otoshi', 'Prüfungsprogramm 4. Kyu']),
   (3, '{104,104,106,105}', '{}', '{}', 0, true, true,
    ARRAY['Uchi-mata', 'O-soto-gari und Kombinationen', 'Ne-waza: Befreiungen',
          'Seoi-nage', 'Nage-no-kata (1. und 2. Gruppe)', 'Ko-uchi-gari / O-uchi-gari',
@@ -1348,10 +1352,14 @@ FROM (VALUES
 -- ---------------------------------------------------------------------------
 -- Trainingsplanung
 -- ---------------------------------------------------------------------------
--- The TK plans the three adult trainings from five weeks back to four months
--- ahead: rotating trainers (the same as in the logs), topics, a few
--- cancellations. Holidays come from the calendar: school holidays shown only,
--- the Christmas break closes the dojo, plus one closed day.
+-- The plan covers the three adult trainings and Judo Jugend from five weeks
+-- back to four months ahead: rotating trainers (the same as in the logs, with
+-- the odd substitute), topics, a few cancellations. The TK plans the adult
+-- trainings; Judo Jugend is planned by its main trainer Marco Rossi (102,
+-- the demo trainer account), who may plan exactly that one training (Judo
+-- Kinder, which he leads too, is not in the plan). Holidays come from the
+-- calendar: school holidays shown only, the Christmas break closes the dojo,
+-- plus one closed day.
 
 INSERT INTO public.training_plan_trainings (training_id, created_at)
 SELECT training_id, now() - interval '60 days' FROM demo_rotation WHERE planned;
@@ -1672,12 +1680,13 @@ END $$;
 -- ---------------------------------------------------------------------------
 -- One visitor must not break the demo for everyone until the next reset:
 -- the three login accounts keep their password, e-mail, role and member
--- records, the club identity on the public trial page stays, the exam days
--- stay and the member can withdraw and register again, the showcase rows
--- (events, exam programs, planned trainings, trial candidates, the pending
--- request) stay and nothing is deleted in bulk. Everything else may be
--- changed freely; the next reset rebuilds it. The reset drops the
--- public schema, and with it these functions and (CASCADE) their triggers.
+-- records, the trainer stays main trainer of the training he plans, the
+-- club identity on the public trial page stays, the exam days stay and the
+-- member can withdraw and register again, the showcase rows (events, exam
+-- programs, planned trainings, trial candidates, the pending request) stay
+-- and nothing is deleted in bulk. Everything else may be changed freely;
+-- the next reset rebuilds it. The reset drops the public schema, and with
+-- it these functions and (CASCADE) their triggers.
 
 -- a. auth.users: GoTrue may update the demo logins (last_sign_in_at etc.),
 --    but password, e-mail, phone and display name keep their old values; no
@@ -1818,6 +1827,31 @@ $$;
 CREATE OR REPLACE TRIGGER demo_guard_member_emails
   BEFORE INSERT OR UPDATE OF email, id ON public.members
   FOR EACH ROW EXECUTE FUNCTION public.demo_guard_member_emails();
+
+--    Marco stays main trainer of Judo Jugend (2): that makes the demo
+--    trainer login plan it in the training plan (my_main_training_ids());
+--    the training stays in the plan through guard g. Other trainings' main
+--    trainers may change.
+CREATE OR REPLACE FUNCTION public.demo_guard_trainings()
+RETURNS trigger
+LANGUAGE plpgsql
+SET search_path = pg_catalog
+AS $$
+BEGIN
+  IF OLD.id = 2
+     AND (NEW.id IS DISTINCT FROM OLD.id
+          OR NEW."mainTrainerId" IS DISTINCT FROM OLD."mainTrainerId") THEN
+    RAISE EXCEPTION USING ERRCODE = '42501', MESSAGE =
+      'In der Demo bleibt Marco Rossi Haupttrainer von Judo Jugend, damit das Trainer-Konto '
+      || 'dieses Training selbst planen kann.';
+  END IF;
+  RETURN NEW;
+END;
+$$;
+
+CREATE OR REPLACE TRIGGER demo_guard_trainings
+  BEFORE UPDATE OF id, "mainTrainerId" ON public.trainings
+  FOR EACH ROW EXECUTE FUNCTION public.demo_guard_trainings();
 
 -- d. app_settings: the club identity shown on the public trial page, the
 --    sections and the default language. Writing the same value again is
@@ -2074,6 +2108,7 @@ REVOKE EXECUTE ON FUNCTION public.demo_guard_exams() FROM PUBLIC, anon, authenti
 REVOKE EXECUTE ON FUNCTION public.demo_reopen_exam_registration()
   FROM PUBLIC, anon, authenticated;
 REVOKE EXECUTE ON FUNCTION public.demo_guard_member_emails() FROM PUBLIC, anon, authenticated;
+REVOKE EXECUTE ON FUNCTION public.demo_guard_trainings() FROM PUBLIC, anon, authenticated;
 REVOKE EXECUTE ON FUNCTION public.demo_guard_exam_candidates() FROM PUBLIC, anon, authenticated;
 REVOKE EXECUTE ON FUNCTION public.demo_guard_seeded_rows() FROM PUBLIC, anon, authenticated;
 REVOKE EXECUTE ON FUNCTION public.demo_guard_bulk_delete() FROM PUBLIC, anon, authenticated;

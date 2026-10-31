@@ -2,9 +2,11 @@
 
 The TK (technical committee) plans the adult trainings for the year: which
 trainer leads which training, which topic is on, and which dates are dropped
-for holidays or club events. Until now this lived in a Google Sheet (one row
-per day: KW, Tag, Datum, Trainingstyp, Von, Bis, Leiter, Thema, Info /
-Bemerkung), which the Daten-Assistent can read in (see _Import_).
+for holidays or club events. A trainer who is a planned training's main
+trainer plans that training's dates themselves (see _Roles_). Until now this
+lived in a Google Sheet (one row per day: KW, Tag, Datum, Trainingstyp, Von,
+Bis, Leiter, Thema, Info / Bemerkung), which the Daten-Assistent can read in
+(see _Import_).
 
 Under _Trainings → Trainingsplanung_ (`/dashboard/training-plan`) the plan
 shows one calendar year (arrows switch the year), grouped by month:
@@ -26,9 +28,13 @@ the plan into a calendar app (see _Kalender abonnieren (ICS)_). A row links
 to the training's check-in for that date, which in turn shows the plan
 (topic, trainer, or that the training is cancelled).
 
+That is the view _Übersicht_; _Pro Training_ shows the plan as a table to
+fill in (see _Planning_).
+
 ## Planning
 
-Only the TK edits (see _Roles_):
+The TK edits everything below; a main trainer plans the dates of their own
+trainings with steps 2 to 6 (see _Roles_):
 
 1. **Trainings & Ferien** – pick the trainings that are planned (usually the
    adult trainings) and enter the holidays: a period with a name, or a single
@@ -63,6 +69,21 @@ Only the TK edits (see _Roles_):
 5. **Several dates** – tick the rows and tap _Bearbeiten_ to set the trainer,
    a topic or the status for all of them; fields left on _unverändert_ stay
    as they are per date.
+6. **Pro Training** – the view to fill in like a spreadsheet: a row per
+   date with trainer, topic, note and _Fällt aus_, and every cell saves on
+   its own. Enter and the arrow keys move down a column; a column copied
+   from Excel or Google Sheets fills the rows below when pasted. The chips
+   above pick the trainings, several at once: Monday and Friday give one
+   table Mo, Fr, Mo, Fr, … (by date and start time, as in the overview),
+   and each row then names its training, so two trainings on the same day
+   (Friday kids and adults) stay apart. The last picked training cannot be
+   unpicked. The choice stays for the next visit in this browser, and
+   picking keeps what is being typed. Leaving the table, or opening
+   _Rotation_, saves it and reloads the plan; until the reload is in, the
+   table is read-only and the rotation does not apply, so neither writes
+   back the plan from before. Viewers and trainers see the table read-only;
+   a main trainer edits the rows of their own trainings, the other trainings'
+   rows show a lock, and Enter, the arrow keys and pasting skip them.
 
 ## Import
 
@@ -171,16 +192,38 @@ disabled account, or one that is no longer staff, gets 404 too.
 
 ## Roles
 
-| Who                      | Read | Edit |
-| ------------------------ | ---- | ---- |
-| Admin                    | yes  | yes  |
-| TK (`exam_role=manager`) | yes  | yes  |
-| Trainer, viewer          | yes  | –    |
-| Member                   | –    | –    |
+| Who                           | Read | Edit                                  |
+| ----------------------------- | ---- | ------------------------------------- |
+| Admin                         | yes  | yes                                   |
+| TK (`exam_role=manager`)      | yes  | yes                                   |
+| Main trainer (role `trainer`) | yes  | every date of their planned trainings |
+| Other trainers, viewers       | yes  | –                                     |
+| Member                        | –    | –                                     |
 
 The TK is the same exam role as in the Q-Prüfungen (`docs/Q_EXAMS.md`), set
 by admins in _Benutzer_. In the database the policies use
 `is_exam_manager()`, in the app `canPlanTrainings` (`src/lib/roles.ts`).
+
+A main trainer is an account with a writing role (`is_writer()`: trainer;
+admins plan everything anyway) whose member is the main trainer of a
+training in the plan (`trainings."mainTrainerId"`, the member found as for
+_Mein Profil_: `my_member_ids()`). He plans every date of that training:
+trainer or substitute, topic, note, _Fällt aus_ and _Findet statt_ (also a
+date in a closing break), with the pencil, several dates at once, the
+rotation and the table; a note on the plan page names their trainings.
+Holidays, which trainings are planned (_Trainings & Ferien_) and the import
+stay with the TK. A viewer who is main trainer only reads, and so does the
+main trainer of a training not in the plan.
+
+In the database `my_main_training_ids()` returns the planned trainings
+whose main trainer is one of the account's members, and nothing without a
+writing role; the insert, update and delete policies of
+`training_plan_sessions` allow `is_exam_manager()` or a `training_id` in
+it (an update in both `USING` and `WITH CHECK`, so a date cannot be moved
+to another training). Holidays and the planned trainings stay
+`is_exam_manager()` only. The plan page asks for it once per load
+(`plannableIds` in `+page.ts`, only for trainers who are not TK; TK: all
+trainings) and shows the edit controls per training; RLS stays the guard.
 
 ## Data
 

@@ -5,9 +5,14 @@ import {
   buildPlan,
   hasAssignment,
   isCancelled,
+  parseTrainingIds,
+  pickedTrainings,
+  planKey,
   planTopics,
+  plannableTrainingIds,
   rotate,
   slotPatch,
+  togglePicked,
   topicLabel,
   trainerCounts,
   trainingDates,
@@ -269,5 +274,54 @@ describe('helpers', () => {
       [1, 1],
       [2, 1]
     ]);
+  });
+});
+
+describe('trainings of the table', () => {
+  const kids: PlanTraining = { ...friday, id: 31, title: 'Judo Kinder', dateFrom: '17:30' };
+
+  it('keys a row by training and date', () => {
+    const rows = buildPlan([friday, kids], [], [], [], '2026-11-06', '2026-11-06');
+    expect(rows.map(planKey)).toEqual(['31|2026-11-06', '23|2026-11-06']);
+  });
+
+  it('reads the ids the browser kept, also the single one from before', () => {
+    expect(parseTrainingIds('27,23')).toEqual([27, 23]);
+    expect(parseTrainingIds('27')).toEqual([27]);
+    expect(parseTrainingIds(' 27 , x,,-1,2.5,23')).toEqual([27, 23]);
+    expect(parseTrainingIds('')).toEqual([]);
+    expect(parseTrainingIds(null)).toEqual([]);
+  });
+
+  it('picks the trainings still planned, in their order, else the first', () => {
+    const trainings = [monday, friday, kids];
+    expect(pickedTrainings([31, 27], trainings)).toEqual([monday, kids]);
+    expect(pickedTrainings([99, 23], trainings)).toEqual([friday]);
+    expect(pickedTrainings([99], trainings)).toEqual([monday]);
+    expect(pickedTrainings([], trainings)).toEqual([monday]);
+    expect(pickedTrainings([27], [])).toEqual([]);
+  });
+
+  it("falls back to a main trainer's own training, not just the first", () => {
+    const trainings = [monday, friday, kids];
+    expect(pickedTrainings([], trainings, [31, 23])).toEqual([friday]);
+    expect(pickedTrainings([99], trainings, [31])).toEqual([kids]);
+    // What was picked before stays, also another training
+    expect(pickedTrainings([27], trainings, [31])).toEqual([monday]);
+    expect(pickedTrainings([], trainings, [99])).toEqual([monday]);
+  });
+
+  it('lets the TK plan every training, a main trainer his own, others none', () => {
+    const trainings = [monday, friday, kids];
+    expect(plannableTrainingIds(trainings, true, [])).toEqual([27, 23, 31]);
+    // Only what is in the plan, in its order
+    expect(plannableTrainingIds(trainings, false, [31, 99, 27])).toEqual([27, 31]);
+    expect(plannableTrainingIds(trainings, false, [])).toEqual([]);
+  });
+
+  it('picks and drops a training, but keeps the last one', () => {
+    expect(togglePicked([27], 23)).toEqual([27, 23]);
+    expect(togglePicked([27, 23], 27)).toEqual([23]);
+    expect(togglePicked([23], 23)).toEqual([23]);
   });
 });
