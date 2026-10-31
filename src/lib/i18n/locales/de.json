@@ -1497,6 +1497,7 @@
       "breakClosed": "Dojo geschlossen, kein Training",
       "breakOpen": "Erwachsenentraining findet statt",
       "mainTrainer": "Haupttrainer",
+      "mainTrainerHint": "Als Haupttrainer planst du deine Trainings selber ({trainings}): Trainer und Stellvertretung, Thema, Bemerkung und Ausfälle, auch mit der Rotation und in der Tabelle. Ferien und welche Trainings in der Planung sind, bestimmt die TK.",
       "import": {
         "title": "Bestehenden Plan einlesen",
         "hint": "Foto, PDF oder Tabelle des bisherigen Plans, auch direkt aus dem Google Sheet kopiert, am besten einen Monat aufs Mal. Die KI liest Leiter, Themen, Ausfälle und Ferien; du prüfst alles, bevor etwas gespeichert wird.",
@@ -1510,7 +1511,8 @@
         "date": "Datum",
         "hint": "Direkt eintippen, jede Zelle speichert sofort. Enter oder Pfeiltasten springen zur nächsten Zeile; eine aus Excel oder Google Sheets kopierte Spalte füllt beim Einfügen die Zeilen nach unten.",
         "pasted": "{count, plural, one {# Zeile} other {# Zeilen}} eingefügt",
-        "pickSeveral": "Du kannst mehrere Trainings anwählen: ihre Termine stehen dann nach Datum geordnet in einer Tabelle."
+        "pickSeveral": "Du kannst mehrere Trainings anwählen: ihre Termine stehen dann nach Datum geordnet in einer Tabelle.",
+        "readOnly": "Nur lesen: dieses Training plant die TK oder sein Haupttrainer"
       },
       "calendar": {
         "button": "Kalender abonnieren",

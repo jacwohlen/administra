@@ -393,6 +393,9 @@ INSERT INTO api_guard VALUES
   ('get_my_exam_registrations',  'my_member_ids\('),
   ('register_for_exam',          'my_member_ids\('),
   ('withdraw_exam_registration', 'my_member_ids\('),
+  -- the planned trainings an own member leads, for trainers and admins
+  -- (supabase/checks/training_plan.sql)
+  ('my_main_training_ids',       'is_writer\(.*my_member_ids\('),
   -- staff pages only
   ('get_badge_leaderboard',      'is_staff\('),
   ('get_members_medal_counts',   'is_staff\('),

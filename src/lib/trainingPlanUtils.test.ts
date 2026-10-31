@@ -9,6 +9,7 @@ import {
   pickedTrainings,
   planKey,
   planTopics,
+  plannableTrainingIds,
   rotate,
   slotPatch,
   togglePicked,
@@ -299,6 +300,23 @@ describe('trainings of the table', () => {
     expect(pickedTrainings([99], trainings)).toEqual([monday]);
     expect(pickedTrainings([], trainings)).toEqual([monday]);
     expect(pickedTrainings([27], [])).toEqual([]);
+  });
+
+  it("falls back to a main trainer's own training, not just the first", () => {
+    const trainings = [monday, friday, kids];
+    expect(pickedTrainings([], trainings, [31, 23])).toEqual([friday]);
+    expect(pickedTrainings([99], trainings, [31])).toEqual([kids]);
+    // What was picked before stays, also another training
+    expect(pickedTrainings([27], trainings, [31])).toEqual([monday]);
+    expect(pickedTrainings([], trainings, [99])).toEqual([monday]);
+  });
+
+  it('lets the TK plan every training, a main trainer his own, others none', () => {
+    const trainings = [monday, friday, kids];
+    expect(plannableTrainingIds(trainings, true, [])).toEqual([27, 23, 31]);
+    // Only what is in the plan, in its order
+    expect(plannableTrainingIds(trainings, false, [31, 99, 27])).toEqual([27, 31]);
+    expect(plannableTrainingIds(trainings, false, [])).toEqual([]);
   });
 
   it('picks and drops a training, but keeps the last one', () => {

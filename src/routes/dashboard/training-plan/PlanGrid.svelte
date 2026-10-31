@@ -6,6 +6,7 @@
     faCheck,
     faCircleExclamation,
     faDoorClosed,
+    faLock,
     faSpinner,
     faUmbrellaBeach
   } from '@fortawesome/free-solid-svg-icons';
@@ -21,7 +22,7 @@
     rows,
     members,
     topics,
-    canEdit,
+    plannable,
     waiting = false,
     onchanged
   }: {
@@ -34,7 +35,11 @@
     members: PlanMember[];
     /** Topics used so far, offered as suggestions */
     topics: string[];
-    canEdit: boolean;
+    /**
+     * The trainings this account plans (the TK all, a main trainer their
+     * own): their rows are edited here, the others are read-only
+     */
+    plannable: number[];
     /**
      * The plan is being reloaded with what was saved: the rows are from
      * before, so the cells wait for it
@@ -80,8 +85,15 @@
     }
   });
 
-  // Read-only for viewers, and until the plan is reloaded
-  let editable = $derived(canEdit && !waiting);
+  // Read-only for viewers, for a main trainer the other trainings' rows,
+  // and everything until the plan is reloaded
+  let plannableIds = $derived(new Set(plannable));
+  const canEdit = (row: PlanRow) => plannableIds.has(row.training.id);
+  const editable = (row: PlanRow) => !waiting && canEdit(row);
+  // Some rows can be edited here (also while waiting: the hint stays put)
+  let anyEditable = $derived(rows.some(canEdit));
+  // Rows another training's main trainer or the TK plans, among one's own
+  const locked = (row: PlanRow) => plannable.length > 0 && !canEdit(row);
 
   // Several trainings: each row says which one it is
   let several = $derived(new Set(rows.map((r) => r.training.id)).size > 1);
@@ -179,10 +191,15 @@
 
   let grid: HTMLDivElement | undefined = $state();
 
-  function focusCell(index: number, col: string) {
-    grid
-      ?.querySelector<HTMLElement>(`[data-row="${index}"][data-col="${col}"]`)
-      ?.focus({ preventScroll: false });
+  /** Focuses a column's cell from the row index on, skipping read-only rows */
+  function focusCell(index: number, col: string, step: 1 | -1 = 1) {
+    for (let i = index; i >= 0 && i < rows.length; i += step) {
+      const cell = grid?.querySelector<HTMLInputElement>(`[data-row="${i}"][data-col="${col}"]`);
+      if (cell && !cell.disabled) {
+        cell.focus({ preventScroll: false });
+        return;
+      }
+    }
   }
 
   /** Enter and the arrow keys move up and down a column, as in a spreadsheet */
@@ -190,31 +207,34 @@
     const select = (e.target as HTMLElement).tagName === 'SELECT';
     if (e.key === 'Enter' || (e.key === 'ArrowDown' && !select)) {
       e.preventDefault();
-      focusCell(e.shiftKey ? index - 1 : index + 1, col);
+      if (e.shiftKey) focusCell(index - 1, col, -1);
+      else focusCell(index + 1, col);
     } else if (e.key === 'ArrowUp' && !select) {
       e.preventDefault();
-      focusCell(index - 1, col);
+      focusCell(index - 1, col, -1);
     }
   }
 
-  /** A column copied from a spreadsheet fills this row and the ones below */
+  /**
+   * A column copied from a spreadsheet fills this row and the ones below;
+   * rows of trainings planned by others are skipped
+   */
   async function onPaste(e: ClipboardEvent, index: number, field: 'topic' | 'notes') {
     const text = e.clipboardData?.getData('text/plain') ?? '';
     if (!/\r?\n/.test(text.trim())) return;
     e.preventDefault();
     const lines = text.replace(/\r?\n$/, '').split(/\r?\n/);
-    lines.forEach((line, j) => {
-      const row = rows[index + j];
-      if (!row) return;
-      drafts[planKey(row)][field] = line.split('\t')[0].trim();
+    const targets = rows.slice(index).filter(editable);
+    const filled = targets.slice(0, lines.length);
+    filled.forEach((row, j) => {
+      drafts[planKey(row)][field] = lines[j].split('\t')[0].trim();
       schedule(row);
     });
     await tick();
-    focusCell(Math.min(index + lines.length, rows.length - 1), field);
+    const next = targets[filled.length] ?? filled.at(-1);
+    if (next) focusCell(rows.indexOf(next), field);
     toaster.success({
-      title: $_('page.trainingPlan.grid.pasted', {
-        values: { count: Math.min(lines.length, rows.length - index) }
-      })
+      title: $_('page.trainingPlan.grid.pasted', { values: { count: filled.length } })
     });
   }
 
@@ -249,8 +269,15 @@
   );
 </script>
 
-{#snippet saveState(key: string)}
-  {#if status[key] === 'saving'}
+{#snippet saveState(row: PlanRow)}
+  {@const key = planKey(row)}
+  {#if locked(row)}
+    <!-- Read-only among one's own: the TK or that training's main trainer plans it -->
+    <span title={$_('page.trainingPlan.grid.readOnly')}>
+      <Fa icon={faLock} size="xs" class="text-surface-500" />
+      <span class="sr-only">{$_('page.trainingPlan.grid.readOnly')}</span>
+    </span>
+  {:else if status[key] === 'saving'}
     <Fa icon={faSpinner} spin size="xs" class="text-surface-500" />
   {:else if status[key] === 'saved'}
     <Fa icon={faCheck} size="xs" class="text-success-600-400" />
@@ -259,7 +286,7 @@
   {/if}
 {/snippet}
 
-{#if canEdit}
+{#if anyEditable}
   <p class="text-xs text-surface-600-400 mb-3 print:hidden">{$_('page.trainingPlan.grid.hint')}</p>
 {/if}
 
@@ -285,6 +312,7 @@
     {@const k = planKey(row)}
     {@const d = drafts[k]}
     {@const off = isOff(row)}
+    {@const enabled = editable(row)}
     {#if i === 0 || row.date.slice(0, 7) !== rows[i - 1].date.slice(0, 7)}
       <h3 class="mt-4 mb-1">{monthLabel(row.date)}</h3>
     {/if}
@@ -314,7 +342,7 @@
             {dayjs(row.date).format('DD.MM.')}
           </div>
           <!-- On phones the save state sits under the date -->
-          <div class="sm:hidden h-4 mt-0.5">{@render saveState(k)}</div>
+          <div class="sm:hidden h-4 mt-0.5">{@render saveState(row)}</div>
         </div>
 
         <div class="grid grid-cols-[minmax(0,1fr)_auto] gap-1 sm:contents">
@@ -334,7 +362,7 @@
             aria-label={$_('page.trainingPlan.trainer')}
             data-row={i}
             data-col="trainer"
-            disabled={!editable}
+            disabled={!enabled}
             onchange={() => schedule(row)}
             onkeydown={(e: KeyboardEvent) => onKey(e, i, 'trainer')}
           />
@@ -345,7 +373,7 @@
               type="checkbox"
               class="checkbox"
               checked={off}
-              disabled={!editable}
+              disabled={!enabled}
               onchange={() => toggleOff(row)}
             />
             <span>{$_('page.trainingPlan.cancelled')}</span>
@@ -360,7 +388,7 @@
             bind:value={drafts[k].topic}
             data-row={i}
             data-col="topic"
-            disabled={!editable}
+            disabled={!enabled}
             oninput={() => schedule(row, 600)}
             onblur={() => timers.has(k) && schedule(row)}
             onkeydown={(e) => onKey(e, i, 'topic')}
@@ -373,7 +401,7 @@
             bind:value={drafts[k].notes}
             data-row={i}
             data-col="notes"
-            disabled={!editable}
+            disabled={!enabled}
             oninput={() => schedule(row, 600)}
             onblur={() => timers.has(k) && schedule(row)}
             onkeydown={(e) => onKey(e, i, 'notes')}
@@ -384,7 +412,7 @@
               type="checkbox"
               class="checkbox"
               checked={off}
-              disabled={!editable}
+              disabled={!enabled}
               aria-label={$_('page.trainingPlan.cancelled')}
               data-row={i}
               data-col="off"
@@ -395,7 +423,7 @@
         </div>
 
         <span class="hidden sm:inline-flex justify-center" aria-live="polite">
-          {@render saveState(k)}
+          {@render saveState(row)}
         </span>
 
         {#if row.break || row.events.length > 0}
