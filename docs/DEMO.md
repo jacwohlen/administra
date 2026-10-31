@@ -118,6 +118,10 @@ has the schema of the code the demo site runs), and by hand.
    All dates are relative to the day of the reset, so the club always looks
    current: attendance up to the previous days, an exam day open for
    registration, the training plan for the coming weeks.
+   The exam programs are invented: the migration seeds the real club's
+   Judo programs, and the seed replaces them before the exam sheets copy
+   them (same grades and structure, techniques, tasks and questions chosen
+   anew), so the club's own program is not published by the demo.
 4. `supabase/checks/demo_seed.sql` checks the result (accounts, dates,
    guards, …).
 5. The `avatars` and `lesson-plans` buckets are emptied through the
