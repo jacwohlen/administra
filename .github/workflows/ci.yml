@@ -220,6 +220,14 @@ jobs:
           psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres"
           -v ON_ERROR_STOP=1 -q -f supabase/checks/calendar_feeds.sql
 
+      # Who writes the training plan: the TK everything, a trainer every date
+      # of a planned training he is main trainer of (not other trainings, the
+      # holidays or which trainings are planned), viewers and members nothing
+      - name: Check training plan rights
+        run: >-
+          psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres"
+          -v ON_ERROR_STOP=1 -q -f supabase/checks/training_plan.sql
+
       - uses: actions/setup-python@v7
         with:
           python-version: '3.12'

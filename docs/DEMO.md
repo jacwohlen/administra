@@ -33,14 +33,21 @@ none of this is reachable.
 All with the password `administra-demo` — public on purpose, they exist
 only in the demo project.
 
-| Button                 | Account                   | Role                                                                  | Lands on     |
-| ---------------------- | ------------------------- | --------------------------------------------------------------------- | ------------ |
-| Vorstand               | `vorstand@demo.alleda.ch` | admin (Sandra Keller)                                                 | `/dashboard` |
-| Trainerin oder Trainer | `trainer@demo.alleda.ch`  | trainer + examiner (Marco Rossi)                                      | `/dashboard` |
-| Mitglied oder Eltern   | `mitglied@demo.alleda.ch` | member account of two children (Familie Brunner), approved via e-mail | `/club`      |
+| Button                 | Account                   | Role                                                                                                    | Lands on     |
+| ---------------------- | ------------------------- | ------------------------------------------------------------------------------------------------------- | ------------ |
+| Vorstand               | `vorstand@demo.alleda.ch` | admin (Sandra Keller)                                                                                   | `/dashboard` |
+| Trainerin oder Trainer | `trainer@demo.alleda.ch`  | trainer + examiner (Marco Rossi), main trainer of _Judo Jugend_, which they plan themselves (see below) | `/dashboard` |
+| Mitglied oder Eltern   | `mitglied@demo.alleda.ch` | member account of two children (Familie Brunner), approved via e-mail                                   | `/club`      |
 
 The seed also adds one pending account (`neu@demo.alleda.ch`, no known
 password), so the Vorstand sees an approval request under Benutzer.
+
+The training plan (`docs/TRAINING_PLAN.md`) holds the three adult
+trainings and _Judo Jugend_. Marco is the main trainer of _Judo Jugend_
+(and of _Judo Kinder_, which is not in the plan) and not the TK, so as
+Trainer a visitor plans exactly that one training (trainer, topic,
+cancellations, rotation, table) and only reads the rest; as Vorstand (admin,
+so also TK) everything, holidays and the planned trainings included.
 
 ## Keeping one visitor from breaking it for the next
 
@@ -56,6 +63,8 @@ section "Guards"):
 - The member records those accounts depend on (Sandra's, Marco's, the two
   Brunner children) cannot be deleted, archived, relabelled or get another
   e-mail, and no other member can be given a demo login's e-mail.
+- Marco stays the main trainer of _Judo Jugend_, so the Trainer login can
+  always plan it (other trainings' main trainers may change).
 - The two exam days cannot be deleted or moved. When a visitor withdraws
   one of the Brunner children from the upcoming exam, the registration is
   removed, so the next visitor can register the child again; staff cannot

@@ -308,6 +308,32 @@ SELECT pg_temp.ok('plan sessions only for planned trainings',
   NOT EXISTS (SELECT 1 FROM public.training_plan_sessions s
               WHERE s.training_id NOT IN (SELECT training_id
                                           FROM public.training_plan_trainings)));
+-- The trainer login plans exactly one training himself: the one he is main
+-- trainer of (docs/TRAINING_PLAN.md); the other accounts as their role says
+CREATE FUNCTION pg_temp.main_trainings(p_id uuid) RETURNS text
+LANGUAGE plpgsql AS $$
+DECLARE
+  v text;
+BEGIN
+  PERFORM pg_temp.act_as(p_id);
+  v := (SELECT string_agg(t.id || ' ' || t.title, ',' ORDER BY t.id)
+        FROM public.my_main_training_ids() x JOIN public.trainings t ON t.id = x);
+  RESET ROLE;
+  RETURN coalesce(v, '-');
+END $$;
+
+SELECT pg_temp.eq('trainer: plans exactly one training himself, as its main trainer',
+  pg_temp.main_trainings('d3e40000-0000-4000-8000-000000000002')
+  || ' ' || (SELECT "mainTrainerId" FROM public.trainings WHERE id = 2), '2 Judo Jugend 102');
+SELECT pg_temp.ok('trainer: that training has plan sessions ahead',
+  EXISTS (SELECT 1 FROM public.training_plan_sessions
+          WHERE training_id = 2 AND date >= to_char(current_date + 28, 'YYYY-MM-DD')));
+SELECT pg_temp.ok('trainer: is not the TK (plans no other training)',
+  NOT EXISTS (SELECT 1 FROM public.user_profiles
+              WHERE user_id = 'd3e40000-0000-4000-8000-000000000002'
+                AND exam_role = 'manager'));
+SELECT pg_temp.eq('mitglied: plans nothing',
+  pg_temp.main_trainings('d3e40000-0000-4000-8000-000000000003'), '-');
 SELECT pg_temp.ok('a future school holiday and a future closed day',
   EXISTS (SELECT 1 FROM public.training_plan_breaks
           WHERE NOT cancels_training AND date_to >= to_char(current_date, 'YYYY-MM-DD'))
@@ -427,6 +453,12 @@ SELECT pg_temp.raises('guard: archiving a Brunner child',
   $$UPDATE public.members SET "archivedAt" = now() WHERE id = 150$$);
 SELECT pg_temp.raises('guard: changing the trainer''s member e-mail',
   $$UPDATE public.members SET email = 'x@example.com' WHERE id = 102$$);
+SELECT pg_temp.raises('guard: giving Judo Jugend another main trainer',
+  $$UPDATE public.trainings SET "mainTrainerId" = 105 WHERE id = 2$$);
+SELECT pg_temp.raises('guard: as the demo trainer, handing over his training',
+  $$SELECT pg_temp.act_as('d3e40000-0000-4000-8000-000000000002');
+    UPDATE public.trainings SET "mainTrainerId" = NULL WHERE id = 2$$);
+RESET ROLE;
 SELECT pg_temp.raises('guard: approving the pending example request',
   $$UPDATE public.user_profiles SET status = 'approved', role = 'admin'
     WHERE user_id = 'd3e40000-0000-4000-8000-000000000004'$$);
@@ -506,6 +538,11 @@ BEGIN
   UPDATE public.exams SET notes = 'Neue Notiz' WHERE id IN (1, 2);
   PERFORM pg_temp.ok('guard: exam notes may change',
     (SELECT count(*) FROM public.exams WHERE notes = 'Neue Notiz') = 2);
+  UPDATE public.trainings SET title = 'Judo Jugend (ab 11)', "dateTo" = '20:15' WHERE id = 2;
+  UPDATE public.trainings SET "mainTrainerId" = 106 WHERE id = 3;
+  PERFORM pg_temp.eq('guard: Judo Jugend may change otherwise, other main trainers too',
+    (SELECT string_agg(title || ' ' || "mainTrainerId", ',' ORDER BY id) FROM public.trainings
+     WHERE id IN (2, 3)), 'Judo Jugend (ab 11) 102,Judo Erwachsene 106');
   UPDATE public.members SET mobile = '079 000 00 00', notes = 'geändert' WHERE id = 120;
   PERFORM pg_temp.eq('guard: a protected member''s mobile may change',
     (SELECT mobile FROM public.members WHERE id = 120), '079 000 00 00');
@@ -570,6 +607,60 @@ BEGIN
     EXISTS (SELECT 1 FROM public.logs WHERE date = v_log.date
               AND "trainingId" = v_log."trainingId" AND "memberId" = v_log."memberId"));
 END $$;
+
+-- The trainer plans Judo Jugend (a date's topic and trainer, a new date
+-- cancelled, then cleared again), but not another training or the holidays
+DO $$
+DECLARE
+  v_session record;
+  v_other record;
+  v_date text;
+  v_n bigint;
+  v_breaks text := (SELECT string_agg(id || ':' || cancels_training, ',' ORDER BY id)
+                    FROM public.training_plan_breaks);
+BEGIN
+  SELECT * INTO v_session FROM public.training_plan_sessions
+  WHERE training_id = 2 AND date >= to_char(current_date, 'YYYY-MM-DD') ORDER BY date LIMIT 1;
+  SELECT * INTO v_other FROM public.training_plan_sessions
+  WHERE training_id = 3 AND date >= to_char(current_date, 'YYYY-MM-DD') ORDER BY date LIMIT 1;
+  -- a Monday of Judo Jugend without a session yet
+  SELECT to_char(d, 'YYYY-MM-DD') INTO v_date
+  FROM generate_series(current_date + 7, current_date + 400, interval '1 day') d
+  WHERE extract(isodow FROM d) = 1
+    AND NOT EXISTS (SELECT 1 FROM public.training_plan_sessions s
+                    WHERE s.training_id = 2 AND s.date = to_char(d, 'YYYY-MM-DD'))
+  ORDER BY d LIMIT 1;
+
+  PERFORM pg_temp.act_as('d3e40000-0000-4000-8000-000000000002');
+  UPDATE public.training_plan_sessions SET topic = 'Ippon-seoi-nage', trainer_id = 110
+  WHERE id = v_session.id;
+  GET DIAGNOSTICS v_n = ROW_COUNT;
+  INSERT INTO public.training_plan_sessions (training_id, date, notes, cancelled)
+  VALUES (2, v_date, 'Fällt aus: Trainerweiterbildung', true)
+  ON CONFLICT (training_id, date) DO UPDATE SET notes = EXCLUDED.notes,
+                                                cancelled = EXCLUDED.cancelled;
+  DELETE FROM public.training_plan_sessions WHERE training_id = 2 AND date = v_date;
+  UPDATE public.training_plan_sessions SET topic = 'Fremdes Thema' WHERE id = v_other.id;
+  UPDATE public.training_plan_breaks SET cancels_training = NOT cancels_training;
+  RESET ROLE;
+  PERFORM pg_temp.eq('trainer: plans a date of Judo Jugend',
+    v_n || ' ' || (SELECT topic || ' ' || trainer_id FROM public.training_plan_sessions
+                   WHERE id = v_session.id), '1 Ippon-seoi-nage 110');
+  PERFORM pg_temp.ok('trainer: adds and clears a date of Judo Jugend',
+    v_date IS NOT NULL AND NOT EXISTS (SELECT 1 FROM public.training_plan_sessions
+                                       WHERE training_id = 2 AND date = v_date));
+  PERFORM pg_temp.eq('trainer: leaves the other trainings and the holidays alone',
+    (SELECT coalesce(topic, '-') FROM public.training_plan_sessions WHERE id = v_other.id)
+    || ' ' || (SELECT string_agg(id || ':' || cancels_training, ',' ORDER BY id)
+               FROM public.training_plan_breaks),
+    coalesce(v_other.topic, '-') || ' ' || v_breaks);
+END $$;
+SELECT pg_temp.raises('trainer: cannot add a date to a training he does not plan',
+  $$SELECT pg_temp.act_as('d3e40000-0000-4000-8000-000000000002');
+    INSERT INTO public.training_plan_sessions (training_id, date, topic)
+    VALUES (3, '2099-01-06', 'x')$$,
+  'new row violates row-level security policy%');
+RESET ROLE;
 
 -- The member flow, as the member account: register Lena for the upcoming
 -- exam, withdraw, register again; the same for Jonas' seeded registration

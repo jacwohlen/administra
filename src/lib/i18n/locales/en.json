@@ -1497,6 +1497,7 @@
       "breakClosed": "Dojo closed, no training",
       "breakOpen": "Adult training takes place",
       "mainTrainer": "main trainer",
+      "mainTrainerHint": "As main trainer you plan your own trainings ({trainings}): trainer and substitute, topic, note and cancellations, also with the rotation and in the table. The technical committee sets the holidays and which trainings are in the plan.",
       "import": {
         "title": "Read in the existing plan",
         "hint": "A photo, PDF or table of the current plan, also copied straight from the Google Sheet, best one month at a time. The AI reads leaders, topics, cancellations and holidays; you check everything before anything is saved.",
@@ -1510,7 +1511,8 @@
         "date": "Date",
         "hint": "Type right in, every cell saves on its own. Enter or the arrow keys move to the next row; a column copied from Excel or Google Sheets fills the rows below when pasted.",
         "pasted": "{count, plural, one {# row} other {# rows}} pasted",
-        "pickSeveral": "You can pick several trainings: their dates then appear in one table, in date order."
+        "pickSeveral": "You can pick several trainings: their dates then appear in one table, in date order.",
+        "readOnly": "Read only: this training is planned by the technical committee or its main trainer"
       },
       "calendar": {
         "button": "Subscribe to calendar",

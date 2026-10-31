@@ -86,10 +86,13 @@ function plan(trainings: PlanTraining[], sessions = planned) {
   return buildPlan(trainings, sessions, [], [], '2026-11-02', '2026-11-13');
 }
 
-function renderGrid(rows = plan([monday, friday, kids])) {
+/** The TK plans every training */
+const all = [monday.id, friday.id, kids.id];
+
+function renderGrid(rows = plan([monday, friday, kids]), plannable = all) {
   const onchanged = vi.fn();
   const result = render(PlanGrid, {
-    props: { rows, members, topics: [], canEdit: true, onchanged }
+    props: { rows, members, topics: [], plannable, onchanged }
   });
   return { ...result, onchanged };
 }
@@ -101,6 +104,21 @@ const topicOf = (name: string) => within(row(name)).getByPlaceholderText('Thema'
 const MO_02 = 'Mo 02.11.2026 · Judo Kampftraining';
 const KIDS_06 = 'Fr 06.11.2026 · Judo Kinder';
 const ADULTS_06 = 'Fr 06.11.2026 · Judo Techniktraining';
+const ADULTS_13 = 'Fr 13.11.2026 · Judo Techniktraining';
+
+/** Per row: its fields (trainer, topic, note, «Fällt aus») all editable, or all read-only */
+function editableRows() {
+  return Object.fromEntries(
+    screen.getAllByRole('group', { name: / · Judo/ }).map((g) => {
+      const fields = [...g.querySelectorAll<HTMLInputElement>('input, select')];
+      const enabled = fields.filter((f) => !f.disabled).length;
+      expect(fields).toHaveLength(5);
+      expect([0, 5]).toContain(enabled);
+      return [g.getAttribute('aria-label'), enabled === 5];
+    })
+  );
+}
+const READ_ONLY = 'Nur lesen: dieses Training plant die TK oder sein Haupttrainer';
 
 describe('PlanGrid', () => {
   it('interleaves the dates of several trainings, each row naming its training', () => {
@@ -252,7 +270,7 @@ describe('PlanGrid', () => {
         rows: plan([kids]),
         members,
         topics: [],
-        canEdit: true,
+        plannable: all,
         waiting: true,
         onchanged() {}
       }
@@ -292,5 +310,72 @@ describe('PlanGrid', () => {
     // What was typed here stays
     expect(topicOf(KIDS_06)).toHaveValue('Ukemi');
     expect(topicOf(ADULTS_06)).toHaveValue('Uchi-mata');
+  });
+
+  it('lets a main trainer edit only the rows of their own training', async () => {
+    renderGrid(plan([monday, friday, kids]), [friday.id]);
+    expect(editableRows()).toEqual({
+      [MO_02]: false,
+      [KIDS_06]: false,
+      [ADULTS_06]: true,
+      'Mo 09.11.2026 · Judo Kampftraining': false,
+      'Fr 13.11.2026 · Judo Kinder': false,
+      [ADULTS_13]: true
+    });
+    // Trainer and «Fällt aus» too, and the others' rows say why
+    expect(within(row(MO_02)).getByRole('combobox', { name: 'Trainer' })).toBeDisabled();
+    for (const box of within(row(KIDS_06)).getAllByRole('checkbox', { name: 'Fällt aus' })) {
+      expect(box).toBeDisabled();
+    }
+    expect(within(row(ADULTS_06)).getByRole('combobox', { name: 'Trainer' })).toBeEnabled();
+    expect(within(row(KIDS_06)).getAllByTitle(READ_ONLY)).not.toHaveLength(0);
+    expect(within(row(ADULTS_06)).queryByTitle(READ_ONLY)).not.toBeInTheDocument();
+    expect(screen.getByText(/Direkt eintippen/)).toBeInTheDocument();
+
+    // Enter jumps over the others' rows to their next date
+    topicOf(ADULTS_06).focus();
+    await fireEvent.keyDown(topicOf(ADULTS_06), { key: 'Enter' });
+    expect(topicOf(ADULTS_13)).toHaveFocus();
+    await fireEvent.keyDown(topicOf(ADULTS_13), { key: 'ArrowUp' });
+    expect(topicOf(ADULTS_06)).toHaveFocus();
+
+    await fireEvent.input(topicOf(ADULTS_06), { target: { value: 'Ukemi' } });
+    await fireEvent.blur(topicOf(ADULTS_06));
+    await waitFor(() => expect(upsert).toHaveBeenCalledTimes(1));
+    expect(upsert.mock.calls[0][1]).toMatchObject({ training_id: friday.id, topic: 'Ukemi' });
+  });
+
+  it("pastes a column into a main trainer's own rows only", async () => {
+    renderGrid(plan([monday, friday, kids]), [friday.id]);
+    await fireEvent.paste(topicOf(ADULTS_06), {
+      clipboardData: { getData: () => 'Ukemi\nO-goshi\nSeoi-nage\n' }
+    });
+    await waitFor(() => expect(upsert).toHaveBeenCalledTimes(2));
+    expect(upsert.mock.calls.map(([, v]) => [v.training_id, v.date, v.topic])).toEqual([
+      [friday.id, '2026-11-06', 'Ukemi'],
+      [friday.id, '2026-11-13', 'O-goshi']
+    ]);
+    expect(topicOf('Fr 13.11.2026 · Judo Kinder')).toHaveValue('');
+    expect(toaster.success).toHaveBeenCalledWith({ title: '2 Zeilen eingefügt' });
+  });
+
+  it('shows the TK every row editable, without locks', () => {
+    renderGrid();
+    expect(Object.values(editableRows()).every(Boolean)).toBe(true);
+    expect(screen.queryAllByTitle(READ_ONLY)).toHaveLength(0);
+  });
+
+  it('shows viewers the table read-only, without hint or locks', () => {
+    renderGrid(plan([monday, friday, kids]), []);
+    expect(Object.values(editableRows()).some(Boolean)).toBe(false);
+    expect(screen.queryByText(/Direkt eintippen/)).not.toBeInTheDocument();
+    expect(screen.queryAllByTitle(READ_ONLY)).toHaveLength(0);
+  });
+
+  it('keeps the hint off when only other trainings are picked', () => {
+    renderGrid(plan([monday, kids]), [friday.id]);
+    expect(Object.values(editableRows()).some(Boolean)).toBe(false);
+    expect(screen.queryByText(/Direkt eintippen/)).not.toBeInTheDocument();
+    expect(within(row(MO_02)).getAllByTitle(READ_ONLY)).not.toHaveLength(0);
   });
 });

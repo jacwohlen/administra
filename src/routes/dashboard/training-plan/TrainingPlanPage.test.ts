@@ -69,7 +69,12 @@ const kids: PlanTraining = {
   section: 'Judo'
 };
 
-function pageData(sessions: TrainingPlanSession[] = []) {
+/** Who looks at the plan: the TK plans every training, a main trainer their own */
+const tk = { canPlanTrainings: true, plannableIds: [monday.id, friday.id, kids.id] };
+const mainTrainer = { canPlanTrainings: false, plannableIds: [friday.id] };
+const viewer = { canPlanTrainings: false, plannableIds: [] };
+
+function pageData(sessions: TrainingPlanSession[] = [], access = tk) {
   return {
     year: 2027,
     from: '2027-01-01',
@@ -79,12 +84,12 @@ function pageData(sessions: TrainingPlanSession[] = []) {
     breaks: [],
     events: [],
     members: [{ id: 7, firstname: 'Anna', lastname: 'Muster', trainer: true }],
-    canPlanTrainings: true
+    ...access
   };
 }
 
-function renderPage() {
-  return render(Page, { props: { data: pageData() } as never });
+function renderPage(access = tk) {
+  return render(Page, { props: { data: pageData([], access) } as never });
 }
 
 /** Monday's topic as the database has it once the table has saved it */
@@ -266,5 +271,105 @@ describe('training plan table', () => {
     await waitFor(() => expect(topicOf(MO_04)).toBeEnabled());
     expect(topicOf(MO_04)).toHaveValue('Ukemi');
     expect(upsert).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('who plans which training', () => {
+  beforeEach(() => localStorage.setItem('trainingPlan.view', 'list'));
+
+  /** The dates of the list with a pencil, and with a box to select */
+  const pencils = () =>
+    screen.queryAllByRole('button', { name: /^Bearbeiten: / }).map((b) => b.ariaLabel);
+  const boxes = () =>
+    screen.queryAllByRole('checkbox', { name: /^Termin auswählen: / }).map((b) => b.ariaLabel);
+  const settings = () => screen.queryByRole('link', { name: 'Trainings & Ferien' });
+  const hint = () => screen.queryByText(/Als Haupttrainer planst du/);
+  const rotationTrainings = () =>
+    within(screen.getByRole('combobox', { name: 'Training' }))
+      .getAllByRole('option')
+      .map((o) => o.textContent?.replace(/\s+/g, ' ').trim());
+
+  it('gives a main trainer the controls of their own training only', async () => {
+    renderPage(mainTrainer);
+    expect(pencils()).toEqual([
+      'Bearbeiten: Judo Techniktraining 2027-01-01',
+      'Bearbeiten: Judo Techniktraining 2027-01-08'
+    ]);
+    expect(boxes()).toEqual([
+      'Termin auswählen: Judo Techniktraining 2027-01-01',
+      'Termin auswählen: Judo Techniktraining 2027-01-08'
+    ]);
+    expect(hint()).toHaveTextContent(
+      'Als Haupttrainer planst du deine Trainings selber (Fr · Judo Techniktraining)'
+    );
+    // Holidays and which trainings are planned stay with the TK
+    expect(settings()).not.toBeInTheDocument();
+
+    // Several of their dates at once
+    await fireEvent.click(screen.getByRole('checkbox', { name: /Techniktraining 2027-01-01/ }));
+    await fireEvent.click(screen.getByRole('checkbox', { name: /Techniktraining 2027-01-08/ }));
+    await fireEvent.click(screen.getByRole('button', { name: 'Bearbeiten' }));
+    expect(screen.getByRole('heading', { name: '2 Termine bearbeiten' })).toBeInTheDocument();
+  });
+
+  it('offers a main trainer the rotation for their own trainings only', async () => {
+    renderPage(mainTrainer);
+    await fireEvent.click(chip('Rotation'));
+    expect(rotationTrainings()).toEqual(['Fr 20:00 · Judo Techniktraining']);
+
+    await fireEvent.click(screen.getByRole('button', { name: '2 Termine einteilen' }));
+    await waitFor(() => expect(upsert).toHaveBeenCalledTimes(1));
+    expect(
+      upsert.mock.calls[0][1].map((v: { training_id: number; date: string }) => [
+        v.training_id,
+        v.date
+      ])
+    ).toEqual([
+      [friday.id, '2027-01-01'],
+      [friday.id, '2027-01-08']
+    ]);
+  });
+
+  it('opens the table of a main trainer on their own training, the others read-only', async () => {
+    localStorage.setItem('trainingPlan.view', 'table');
+    renderPage(mainTrainer);
+    expect(chip('Fr · Judo Techniktraining')).toHaveAttribute('aria-pressed', 'true');
+    expect(chip('Mo · Judo Kampftraining')).toHaveAttribute('aria-pressed', 'false');
+    expect(topicOf('Fr 01.01.2027 · Judo Techniktraining')).toBeEnabled();
+
+    await fireEvent.click(chip('Mo · Judo Kampftraining'));
+    expect(topicOf(MO_04)).toBeDisabled();
+    expect(topicOf('Fr 08.01.2027 · Judo Techniktraining')).toBeEnabled();
+  });
+
+  it('leaves the TK everything, as before', async () => {
+    renderPage(tk);
+    expect(pencils()).toHaveLength(6);
+    expect(boxes()).toHaveLength(6);
+    expect(settings()).toBeInTheDocument();
+    expect(hint()).not.toBeInTheDocument();
+    await fireEvent.click(chip('Rotation'));
+    expect(rotationTrainings()).toEqual([
+      'Mo 20:00 · Judo Kampftraining',
+      'Fr 20:00 · Judo Techniktraining',
+      'Fr 17:30 · Judo Kinder'
+    ]);
+  });
+
+  it('shows viewers the plan read-only, as before', () => {
+    renderPage(viewer);
+    expect(screen.getAllByRole('link', { name: /Judo/ })).toHaveLength(6);
+    expect(pencils()).toEqual([]);
+    expect(boxes()).toEqual([]);
+    expect(screen.queryByRole('button', { name: 'Rotation' })).not.toBeInTheDocument();
+    expect(settings()).not.toBeInTheDocument();
+    expect(hint()).not.toBeInTheDocument();
+  });
+
+  it("keeps a viewer's table read-only, also on the first training", () => {
+    localStorage.setItem('trainingPlan.view', 'table');
+    renderPage(viewer);
+    expect(chip('Mo · Judo Kampftraining')).toHaveAttribute('aria-pressed', 'true');
+    expect(topicOf(MO_04)).toBeDisabled();
   });
 });

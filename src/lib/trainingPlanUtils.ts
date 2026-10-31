@@ -225,15 +225,35 @@ export function parseTrainingIds(value: string | null): number[] {
 
 /**
  * The trainings picked for the table, in the order of the trainings: ids no
- * longer planned are left out, and with none left it is the first training
+ * longer planned are left out, and with none left it is the first preferred
+ * one (a main trainer's own), else the first training
  */
-export function pickedTrainings<T extends { id: number }>(ids: number[], trainings: T[]): T[] {
+export function pickedTrainings<T extends { id: number }>(
+  ids: number[],
+  trainings: T[],
+  preferred: number[] = []
+): T[] {
   const picked = trainings.filter((t) => ids.includes(t.id));
-  return picked.length > 0 ? picked : trainings.slice(0, 1);
+  if (picked.length > 0) return picked;
+  const own = trainings.find((t) => preferred.includes(t.id));
+  return own ? [own] : trainings.slice(0, 1);
 }
 
 /** Picks a training for the table or drops it again, but never the last one */
 export function togglePicked(ids: number[], id: number): number[] {
   if (!ids.includes(id)) return [...ids, id];
   return ids.length > 1 ? ids.filter((i) => i !== id) : ids;
+}
+
+/**
+ * The planned trainings an account plans, in their order: the TK all of
+ * them, a main trainer with a writing role the ones they lead (`own`, from
+ * my_main_training_ids(), the rule of the RLS policies), everybody else none
+ */
+export function plannableTrainingIds(
+  trainings: { id: number }[],
+  all: boolean,
+  own: number[]
+): number[] {
+  return trainings.filter((t) => all || own.includes(t.id)).map((t) => t.id);
 }

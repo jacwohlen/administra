@@ -17,6 +17,7 @@
     faDoorClosed,
     faUmbrellaBeach,
     faUser,
+    faUserPen,
     faUserSlash,
     faXmark
   } from '@fortawesome/free-solid-svg-icons';
@@ -70,6 +71,13 @@
     }
   }
   let view = $state<'list' | 'table'>(stored('trainingPlan.view') === 'table' ? 'table' : 'list');
+  // The trainings whose dates this account plans: the TK all of them, a
+  // main trainer their own (my_main_training_ids()), viewers none
+  let plannable = $derived(new Set(data.plannableIds));
+  let canPlanAny = $derived(plannable.size > 0);
+  let ownTrainings = $derived(data.trainings.filter((t) => plannable.has(t.id)));
+  const canPlan = (r: PlanRow) => plannable.has(r.training.id);
+
   // The trainings of the table; before several could be picked, it kept one
   let gridIds = $state(
     parseTrainingIds(stored('trainingPlan.trainings') ?? stored('trainingPlan.training'))
@@ -153,14 +161,15 @@
   });
 
   // The trainings of the table, their dates interleaved (Mo, Fr, Mo, Fr, …)
-  let gridTrainings = $derived(pickedTrainings(gridIds, data.trainings));
+  // Nothing kept yet: a main trainer starts on their own training
+  let gridTrainings = $derived(pickedTrainings(gridIds, data.trainings, data.plannableIds));
   let gridRows = $derived.by(() => {
     const start = showPast || data.year !== dayjs().year() ? data.from : today;
     const ids = new Set(gridTrainings.map((t) => t.id));
     return rows.filter((r) => ids.has(r.training.id) && r.date >= start);
   });
 
-  let selectedRows = $derived(rows.filter((r) => selected.includes(planKey(r))));
+  let selectedRows = $derived(rows.filter((r) => canPlan(r) && selected.includes(planKey(r))));
 
   function toggleTraining(id: number) {
     hidden = hidden.includes(id) ? hidden.filter((h) => h !== id) : [...hidden, id];
@@ -240,16 +249,30 @@
 
 <p class="text-sm text-surface-600-400 mb-4 print:hidden">{$_('page.trainingPlan.intro')}</p>
 
+{#if !data.canPlanTrainings && canPlanAny}
+  <!-- A main trainer plans the dates of their own trainings, the TK the rest -->
+  <p class="flex items-start gap-2 p-3 mb-4 rounded-lg preset-tonal-primary text-sm print:hidden">
+    <Fa icon={faUserPen} class="mt-0.5 flex-none" />
+    <span>
+      {$_('page.trainingPlan.mainTrainerHint', {
+        values: {
+          trainings: ownTrainings
+            .map((t) => `${$_('weekdayShort.' + t.weekday)} · ${t.title}`)
+            .join(', ')
+        }
+      })}
+    </span>
+  </p>
+{/if}
+
 <div class="flex flex-wrap gap-2 mb-4 print:hidden">
-  {#if data.canPlanTrainings}
-    <button
-      class="btn preset-filled-primary-500"
-      onclick={() => (rotationOpen = true)}
-      disabled={data.trainings.length === 0}
-    >
+  {#if canPlanAny}
+    <button class="btn preset-filled-primary-500" onclick={() => (rotationOpen = true)}>
       <Fa icon={faRotate} />
       <span>{$_('page.trainingPlan.rotation.button')}</span>
     </button>
+  {/if}
+  {#if data.canPlanTrainings}
     <a href="/dashboard/training-plan/settings" class="btn preset-tonal-surface">
       <Fa icon={faGear} />
       <span>{$_('page.trainingPlan.settings.button')}</span>
@@ -349,7 +372,7 @@
           rows={gridRows}
           members={data.members}
           {topics}
-          canEdit={data.canPlanTrainings}
+          plannable={data.plannableIds}
           waiting={reloads > 0}
           onchanged={reload}
         />
@@ -417,7 +440,7 @@
                     ? 'preset-tonal-warning'
                     : 'bg-surface-100-900 text-surface-700-300'}"
                 >
-                  {#if data.canPlanTrainings}
+                  {#if canPlanAny}
                     <span class="w-5 flex-none print:hidden"></span>
                   {/if}
                   <span class="w-12 flex-none text-center">
@@ -435,7 +458,7 @@
                 </li>
               {:else if item.kind === 'event'}
                 <li class="flex items-center gap-3 px-3 py-2 text-sm preset-tonal-secondary">
-                  {#if data.canPlanTrainings}
+                  {#if canPlanAny}
                     <span class="w-5 flex-none print:hidden"></span>
                   {/if}
                   <span class="w-12 flex-none text-center font-semibold tabular-nums">
@@ -460,7 +483,7 @@
                     ? 'bg-primary-500/10'
                     : ''}"
                 >
-                  {#if data.canPlanTrainings}
+                  {#if canPlan(r)}
                     <!-- 44 px tap area around the box; the negative margin keeps the row as it was -->
                     <label class="flex flex-none -m-3 p-3 cursor-pointer print:hidden">
                       <input
@@ -468,9 +491,12 @@
                         class="checkbox size-5"
                         checked={selected.includes(planKey(r))}
                         onchange={() => toggleSelected(r)}
-                        aria-label={$_('page.trainingPlan.select')}
+                        aria-label="{$_('page.trainingPlan.select')}: {r.training.title} {r.date}"
                       />
                     </label>
+                  {:else if canPlanAny}
+                    <!-- Another training: a main trainer only plans their own -->
+                    <span class="w-5 flex-none print:hidden"></span>
                   {/if}
                   <div
                     class="w-12 flex-none text-center leading-tight {r.cancelled
@@ -552,7 +578,7 @@
                       </div>
                     {/if}
                   </a>
-                  {#if data.canPlanTrainings}
+                  {#if canPlan(r)}
                     <button
                       class="btn preset-tonal-primary flex-none print:hidden"
                       onclick={() => (dialogRows = [r])}
@@ -572,7 +598,7 @@
     </div>
 
     <!-- Selection bar, as on the exam day -->
-    {#if data.canPlanTrainings && selected.length > 0}
+    {#if canPlanAny && selected.length > 0}
       <div
         class="fixed bottom-0 inset-x-0 z-40 bg-surface-100-900 border-t border-surface-300-700 p-3 print:hidden"
       >
@@ -613,7 +639,7 @@
 
 {#if rotationOpen}
   <RotationDialog
-    trainings={data.trainings}
+    trainings={ownTrainings}
     {rows}
     members={data.members}
     {topics}
