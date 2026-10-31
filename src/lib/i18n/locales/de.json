@@ -497,7 +497,8 @@
         "no_main_trainer": "Keine/r (Trainer wechseln)",
         "main_trainer_participants": "Auf der Teilnehmerliste",
         "main_trainer_others": "Weitere Mitglieder",
-        "main_trainer_hint": "Leitet das Training in der Regel. Name, Telefon und E-Mail stehen im E-Mail an zugewiesene Probetraining-Kandidaten."
+        "main_trainer_hint": "Leitet das Training in der Regel. Name, Telefon und E-Mail stehen im E-Mail an zugewiesene Probetraining-Kandidaten.",
+        "main_trainer_tk_only": "Die Haupttrainerin oder den Haupttrainer bestimmt die TK. Soll sich das ändern, wende dich an die TK."
       },
       "validation": {
         "required_fields": "Bitte alle Pflichtfelder ausfüllen",
@@ -586,6 +587,7 @@
       "showAll": "Auch Nicht-Mitglieder und Ausgetretene anzeigen",
       "managedBy": "Name, Geburtstag, Telefon, E-Mail und Gruppen kommen aus {provider} und werden dort geändert, auch ein Austritt.",
       "managedError": "Diese Angaben kommen aus {provider} und können nur dort geändert werden.",
+      "mainTrainerEmailError": "Die E-Mail-Adresse einer Haupttrainerin oder eines Haupttrainers ändert nur die TK: Davon hängt ab, wer das Training plant. Wende dich an die TK.",
       "hiddenMatches": "{count, plural, one {# Treffer} other {# Treffer}} unter Nicht-Mitgliedern und Ausgetretenen.",
       "merge": {
         "action": "Duplikat zusammenführen",

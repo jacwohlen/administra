@@ -27,6 +27,7 @@
   import { avatarPath } from '$lib/memberMerge';
   import { toaster } from '$lib/toast';
   import {
+    isMainTrainerEmailError,
     isManagedByProviderError,
     providerName,
     statusChip,
@@ -177,7 +178,8 @@
 
     try {
       // Update the member in the database; the database refuses changes to
-      // the fields a provider owns (trigger_guard_provider_fields)
+      // the fields a provider owns (trigger_guard_provider_fields), and a new
+      // e-mail for a main trainer unless the TK sends it (guard_main_trainer_email)
       const changes = provider
         ? { notes: result.notes || null }
         : {
@@ -206,7 +208,9 @@
       toaster.error({
         title: isManagedByProviderError(error)
           ? $_('page.members.managedError', { values: { provider: provider ?? 'Webling' } })
-          : $_('dialog.editMember.updateError')
+          : isMainTrainerEmailError(error)
+            ? $_('page.members.mainTrainerEmailError')
+            : $_('dialog.editMember.updateError')
       });
     } finally {
       isEditing = false;

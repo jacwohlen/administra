@@ -49,8 +49,12 @@ the status page. Once it has passed, it is left out of mails and the status page
 A training can have a main trainer (**Trainings → Bearbeiten →
 Haupttrainer/in**, `trainings."mainTrainerId"`), for trainings that are
 always led by the same person, such as the kids' trainings. Leave it empty
-when the trainers rotate. Trainers are members, so name, mobile and e-mail
-come from their member record. In `{trainings}` the training then gets an
+when the trainers rotate. Only the TK sets it: the main trainer of a
+training in the training plan also plans its dates, and the TK can add any
+training to the plan (`docs/TRAINING_PLAN.md`, _Roles_); other trainers see
+it read-only. Trainers are members, so name, mobile and e-mail come from
+their member record (a main trainer's e-mail, too, is changed only by the
+TK). In `{trainings}` the training then gets an
 indented line, e.g. "Ansprechperson: Anna Muster, 079 123 45 67,
 anna@example.ch", so the candidate contacts the trainer directly from then
 on. The status page does not show it: it needs no account, and the

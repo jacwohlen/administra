@@ -1831,7 +1831,9 @@ CREATE OR REPLACE TRIGGER demo_guard_member_emails
 --    Marco stays main trainer of Judo Jugend (2): that makes the demo
 --    trainer login plan it in the training plan (my_main_training_ids());
 --    the training stays in the plan through guard g. Other trainings' main
---    trainers may change.
+--    trainers may change. Only the TK sets main trainers (migration
+--    20261108120000), so the trainer login changes none; this guard is for
+--    the Vorstand, who is TK as admin.
 CREATE OR REPLACE FUNCTION public.demo_guard_trainings()
 RETURNS trigger
 LANGUAGE plpgsql

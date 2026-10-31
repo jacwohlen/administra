@@ -459,6 +459,19 @@ SELECT pg_temp.raises('guard: as the demo trainer, handing over his training',
   $$SELECT pg_temp.act_as('d3e40000-0000-4000-8000-000000000002');
     UPDATE public.trainings SET "mainTrainerId" = NULL WHERE id = 2$$);
 RESET ROLE;
+-- Not a demo guard: only the TK sets main trainers and changes their e-mail
+-- (20261108120000), and the trainer login is not the TK, so it cannot take
+-- over another training
+SELECT pg_temp.raises('the demo trainer makes themselves main trainer of another training',
+  $$SELECT pg_temp.act_as('d3e40000-0000-4000-8000-000000000002');
+    UPDATE public.trainings SET "mainTrainerId" = 102 WHERE id = 3$$,
+  'only the TK sets the main trainer of a training');
+RESET ROLE;
+SELECT pg_temp.raises('the demo trainer changes the e-mail of another training''s main trainer',
+  $$SELECT pg_temp.act_as('d3e40000-0000-4000-8000-000000000002');
+    UPDATE public.members SET email = 'x@example.com' WHERE id = 104$$,
+  'only the TK changes the e-mail of a main trainer');
+RESET ROLE;
 SELECT pg_temp.raises('guard: approving the pending example request',
   $$UPDATE public.user_profiles SET status = 'approved', role = 'admin'
     WHERE user_id = 'd3e40000-0000-4000-8000-000000000004'$$);
@@ -543,6 +556,11 @@ BEGIN
   PERFORM pg_temp.eq('guard: Judo Jugend may change otherwise, other main trainers too',
     (SELECT string_agg(title || ' ' || "mainTrainerId", ',' ORDER BY id) FROM public.trainings
      WHERE id IN (2, 3)), 'Judo Jugend (ab 11) 102,Judo Erwachsene 106');
+  PERFORM pg_temp.act_as('d3e40000-0000-4000-8000-000000000001');
+  UPDATE public.trainings SET "mainTrainerId" = 105 WHERE id = 3;
+  RESET ROLE;
+  PERFORM pg_temp.eq('the Vorstand (admin, so TK) sets other trainings'' main trainers in the app',
+    (SELECT "mainTrainerId"::text FROM public.trainings WHERE id = 3), '105');
   UPDATE public.members SET mobile = '079 000 00 00', notes = 'geändert' WHERE id = 120;
   PERFORM pg_temp.eq('guard: a protected member''s mobile may change',
     (SELECT mobile FROM public.members WHERE id = 120), '079 000 00 00');
