@@ -102,8 +102,18 @@ FAQ of `marketing/public/index.html` and in the demo section of
 What the demo deliberately does **not** do:
 
 - **No e-mails.** Leave every `PRIVATE_SMTP_*` unset: the public trial form
-  would otherwise mail any address someone types in. Trial mails are logged
-  as "nicht gesendet".
+  would otherwise mail any address someone types in. The mailer itself
+  refuses under `PUBLIC_MODE=DEMO` too, even with SMTP set
+  (`docs/TRIAL_EMAILS.md`, _Guards in the mailer_). Trial mails are logged
+  as "nicht gesendet". _Trainer informieren_ on the training plan
+  (`docs/TRAINING_PLAN.md`) is simulated, as everywhere outside production
+  (Dev too: plan mails leave only under `PUBLIC_MODE=PROD`): the dialog
+  says so, sending saves what the trainers were told and logs the mail as
+  "Nicht gesendet". The
+  demo seed has no told state, so the plan opens with the first-time flow
+  (overview, or _Alle als mitgeteilt markieren_). Like the calendar links,
+  that state is shared: a visitor's sending or marking is what the next one
+  sees, until the weekly reset.
 - **No Daten-Assistent.** Leave `PRIVATE_ANTHROPIC_API_KEY` unset: shared
   accounts would let anyone spend the AI budget.
 - **No sign-ups.** In the demo project, sign-ups are disabled; only the

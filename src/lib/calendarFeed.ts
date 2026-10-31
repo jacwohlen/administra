@@ -82,7 +82,7 @@ export function zurichToday(now: Date): string {
   return `${parts.year}-${parts.month}-${parts.day}`;
 }
 
-function addDays(date: string, days: number): string {
+export function addDays(date: string, days: number): string {
   const [y, m, d] = date.split('-').map(Number);
   return new Date(Date.UTC(y, m - 1, d + days)).toISOString().slice(0, 10);
 }
@@ -156,7 +156,7 @@ const TEXTS = {
 const DEFAULT_MINUTES = 90;
 
 /** Minutes after midnight of "18.00" or "18:00" (both occur), null when it is no time */
-function parseTime(value: string | null | undefined): number | null {
+export function parseTime(value: string | null | undefined): number | null {
   const m = /^(\d{1,2})[.:](\d{2})(?::\d{2})?$/.exec((value ?? '').trim());
   if (!m) return null;
   const [hours, minutes] = [Number(m[1]), Number(m[2])];

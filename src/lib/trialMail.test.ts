@@ -9,6 +9,7 @@ import {
   renderTrialMail,
   trialMailLocale,
   trialMailSettingKey,
+  trialMailSkippedKey,
   trialMailTemplate,
   trialStatusUrl,
   buildTrialMailVars,
@@ -207,5 +208,15 @@ describe('buildTrialMailVars', () => {
         );
       }
     }
+  });
+});
+
+describe('trialMailSkippedKey', () => {
+  it('names why a mail was not sent', () => {
+    expect(trialMailSkippedKey('demo')).toBe('page.probetraining.mail.skippedDemo');
+    expect(trialMailSkippedKey('invalid_address')).toBe('page.probetraining.mail.skippedInvalid');
+    expect(trialMailSkippedKey('not_configured')).toBe('page.probetraining.mail.skipped');
+    // An older server without a reason
+    expect(trialMailSkippedKey(undefined)).toBe('page.probetraining.mail.skipped');
   });
 });

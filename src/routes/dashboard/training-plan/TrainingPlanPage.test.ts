@@ -5,6 +5,9 @@ import de from '$lib/i18n/locales/de.json';
 import { invalidate } from '$app/navigation';
 import type { TrainingPlanSession } from '$lib/models';
 import type { PlanTraining } from '$lib/trainingPlanUtils';
+import type { MailPlanData } from '$lib/trainingPlanMail';
+import { loadMailPlan } from '$lib/trainingPlanMailData';
+import { loadNotifyMode } from '$lib/trainingPlanMailClient';
 import Page from './+page.svelte';
 
 // The real German texts, so a broken message (ICU syntax, missing key) shows here
@@ -32,6 +35,29 @@ vi.mock('$lib/supabase', () => ({
 }));
 vi.mock('$app/navigation', () => ({ goto: vi.fn(), invalidate: vi.fn(async () => {}) }));
 vi.mock('$lib/toast', () => ({ toaster: { error: vi.fn(), success: vi.fn() } }));
+// Plan mails: off unless a test switches them on
+vi.mock('$lib/trainingPlanMailClient', () => ({
+  loadNotifyMode: vi.fn(async () => 'off'),
+  postNotify: vi.fn()
+}));
+vi.mock('$lib/trainingPlanMailData', () => ({ loadMailPlan: vi.fn(), loadMailScope: vi.fn() }));
+vi.mock('$lib/clubConfig', () => ({ clubConfig: { name: 'Testclub' } }));
+
+/** What the plan mails load when every trainer is up to date */
+const noChanges: MailPlanData = {
+  today: '2026-10-30',
+  to: '2027-12-04',
+  trainings: [],
+  sessions: [],
+  breaks: [],
+  toldTrainings: [],
+  toldDates: [],
+  optOuts: [],
+  ownMemberIds: [],
+  members: [],
+  addresses: [],
+  pendingMails: []
+};
 
 afterEach(() => {
   cleanup();
@@ -45,6 +71,8 @@ beforeEach(() => {
   localStorage.setItem('trainingPlan.view', 'table');
   upsert.mockReset().mockResolvedValue({ error: null });
   vi.mocked(invalidate).mockClear();
+  vi.mocked(loadNotifyMode).mockReset().mockResolvedValue('off');
+  vi.mocked(loadMailPlan).mockReset().mockResolvedValue(noChanges);
 });
 
 const monday: PlanTraining = {
@@ -371,5 +399,66 @@ describe('who plans which training', () => {
     renderPage(viewer);
     expect(chip('Mo · Judo Kampftraining')).toHaveAttribute('aria-pressed', 'true');
     expect(topicOf(MO_04)).toBeDisabled();
+  });
+});
+
+describe('Trainer informieren', () => {
+  beforeEach(() => localStorage.setItem('trainingPlan.view', 'list'));
+
+  const notify = () => screen.queryByRole('button', { name: 'Trainer informieren' });
+
+  it('is offered to the TK and to main trainers when mails can be sent', async () => {
+    vi.mocked(loadNotifyMode).mockResolvedValue('smtp');
+    const { unmount } = renderPage(tk);
+    expect(await screen.findByRole('button', { name: 'Trainer informieren' })).toBeInTheDocument();
+    unmount();
+
+    renderPage(mainTrainer);
+    expect(await screen.findByRole('button', { name: 'Trainer informieren' })).toBeInTheDocument();
+    expect(loadNotifyMode).toHaveBeenCalledTimes(2);
+  });
+
+  it('is not offered to viewers, nor when mails are off', async () => {
+    vi.mocked(loadNotifyMode).mockResolvedValue('smtp');
+    const { unmount } = renderPage(viewer);
+    await Promise.resolve();
+    expect(notify()).not.toBeInTheDocument();
+    expect(loadNotifyMode).not.toHaveBeenCalled();
+    unmount();
+
+    vi.mocked(loadNotifyMode).mockResolvedValue('off');
+    renderPage(tk);
+    await waitFor(() => expect(loadNotifyMode).toHaveBeenCalledTimes(1));
+    await new Promise((resolve) => setTimeout(resolve, 10));
+    expect(notify()).not.toBeInTheDocument();
+    expect(loadMailPlan).not.toHaveBeenCalled();
+  });
+
+  it('saves what the table has before it works out the changes', async () => {
+    localStorage.setItem('trainingPlan.view', 'table');
+    localStorage.setItem('trainingPlan.trainings', '27');
+    vi.mocked(loadNotifyMode).mockResolvedValue('smtp');
+    const { rerender } = renderPage();
+    const button = await screen.findByRole('button', { name: 'Trainer informieren' });
+    // The banner counted (nobody pending: no banner)
+    await waitFor(() => expect(loadMailPlan).toHaveBeenCalledTimes(1));
+
+    const reloaded = slowReload();
+    await fireEvent.input(topicOf(MO_04), { target: { value: 'Ukemi' } });
+    await fireEvent.click(button);
+    expect(upsert).toHaveBeenCalledTimes(1);
+    expect(upsert.mock.calls[0][1]).toMatchObject({ date: '2027-01-04', topic: 'Ukemi' });
+    await waitFor(() => expect(invalidate).toHaveBeenCalledTimes(1));
+    expect(screen.getByText('Gespeicherte Änderungen werden geladen…')).toBeInTheDocument();
+    await new Promise((resolve) => setTimeout(resolve, 10));
+    expect(loadMailPlan).toHaveBeenCalledTimes(1);
+
+    await rerender({ data: pageData([ukemi]) } as never);
+    reloaded();
+    expect(
+      await screen.findByText('Alle Trainer sind auf dem neuesten Stand.')
+    ).toBeInTheDocument();
+    // The dialog and the banner, both on the reloaded plan
+    expect(loadMailPlan).toHaveBeenCalledTimes(3);
   });
 });

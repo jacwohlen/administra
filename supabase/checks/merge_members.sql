@@ -200,6 +200,18 @@ INSERT INTO public.trial_emails (member_id, kind, to_email, status, token)
 SELECT id, 'welcome', email, 'sent', "trialToken" FROM public.members WHERE id = 10000901;
 INSERT INTO public.training_plan_sessions (training_id, date, trainer_id) VALUES (990, '2024-03-25', 10000901);
 UPDATE public.trainings SET "mainTrainerId" = 10000901 WHERE id = 990;
+-- What plan mails told W and T: training 990 under both (T's is newer and
+-- wins, with its date), 23 only T; an opt-out under both; a mail for T
+INSERT INTO public.training_plan_told_trainings (member_id, training_id, is_main, title, weekday, time_from, time_to, told_at) VALUES
+  (5901, 990, false, 'Merge-Training', 'Monday', '18:00', '19:30', '2026-01-01 10:00+00'),
+  (10000901, 990, true, 'Merge-Training', 'Monday', '18:00', '19:30', '2026-02-01 10:00+00'),
+  (10000901, 23, false, 'Judo Techniktraining', 'Friday', '20:00', '21:30', '2026-02-01 10:00+00');
+INSERT INTO public.training_plan_told (member_id, training_id, date, state) VALUES
+  (5901, 990, '2031-03-03', 'lead'),
+  (10000901, 990, '2031-03-10', 'not_lead'),
+  (10000901, 23, '2031-03-07', 'lead');
+INSERT INTO public.training_plan_mail_optouts (member_id) VALUES (5901), (10000901);
+INSERT INTO public.training_plan_mails (member_id, to_email, status) VALUES (10000901, 'mira.trial@test.ch', 'sent');
 
 -- T's account (a parent signed up with the trial address, linked by an admin)
 SELECT pg_temp.sign_up('20000000-0000-4000-8000-000000000001', 'mira.trial@test.ch');
@@ -413,6 +425,19 @@ BEGIN
     || ' ' || (SELECT "mainTrainerId" FROM public.trainings WHERE id = 990)
     || ' ' || (SELECT member_id FROM public.user_profiles WHERE user_id = '20000000-0000-4000-8000-000000000001'),
     '1 5901 5901 5901');
+  PERFORM pg_temp.eq('plan mails: told state, newer one per training, dates follow',
+    (SELECT string_agg(tt.training_id || ':' || tt.is_main || ':' || coalesce((SELECT string_agg(t.date || ' ' || t.state, ',' ORDER BY t.date)
+       FROM public.training_plan_told t WHERE t.member_id = tt.member_id AND t.training_id = tt.training_id), '-'), ' ' ORDER BY tt.training_id)
+     FROM public.training_plan_told_trainings tt WHERE tt.member_id = 5901),
+    '23:false:2031-03-07 lead 990:true:2031-03-10 not_lead');
+  PERFORM pg_temp.eq('plan mails: moved and merged',
+    concat_ws(' ', v_result->'moved'->>'training_plan_told_trainings.member_id',
+                   v_result->'moved'->>'training_plan_mail_optouts.member_id',
+                   v_result->'moved'->>'training_plan_mails.member_id'),
+    '{"moved": 2, "merged": 1} {"moved": 0, "merged": 1} {"moved": 1, "merged": 0}');
+  PERFORM pg_temp.eq('plan mails: one opt-out, the log moved',
+    (SELECT count(*) FROM public.training_plan_mail_optouts WHERE member_id = 5901)
+    || ' ' || (SELECT count(*) FROM public.training_plan_mails WHERE member_id = 5901), '1 1');
 
   -- Badges: twelve in a row now; the earn date of a badge T had stays
   v_badges := (SELECT string_agg("badgeId", ',' ORDER BY "badgeId") FROM public.member_badges WHERE "memberId" = 5901 AND season = 0);

@@ -229,6 +229,14 @@ jobs:
           psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres"
           -v ON_ERROR_STOP=1 -q -f supabase/checks/training_plan.sql
 
+      # Trainer mails about the plan: what each trainer was told, opt-outs
+      # and the mail log per role, the address lookup's guard, the atomic
+      # told-state write and the merge rules
+      - name: Check training plan mails
+        run: >-
+          psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres"
+          -v ON_ERROR_STOP=1 -q -f supabase/checks/training_plan_mail.sql
+
       - uses: actions/setup-python@v7
         with:
           python-version: '3.12'
