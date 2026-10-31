@@ -189,6 +189,58 @@
         }
       }
     },
+    "gradeLadders": {
+      "title": "Graduierungen",
+      "back": "Zurück zu den Einstellungen",
+      "link": "Graduierungen",
+      "linkHint": "Grade und Gurtfarben pro Sektion, für jede Sportart",
+      "intro": "Jede Sektion hat ihre eigene Reihe von Graden, der tiefste zuerst. Graduierungen, Prüfungsanmeldungen und Prüfungsprogramme verweisen auf diese Grade: Ein umbenannter Grad heisst überall neu, ein Grad, der noch verwendet wird, lässt sich nicht entfernen.",
+      "gradeCount": "{count, plural, one {# Grad} other {# Grade}}",
+      "noLadderShort": "keine Grade",
+      "newSection": "Andere Sektion",
+      "addSection": "Grade für eine weitere Sektion erfassen",
+      "notClubSection": "«{section}» ist keine Sektion des Vereins (Einstellungen → Verein). Die Grade bleiben erhalten, die App bietet sie aber nirgends an, bis die Sektion wieder erfasst ist.",
+      "empty": "{section} hat noch keine Grade. Starte mit einer Kyu/Dan-Vorlage, kopiere die Grade einer anderen Sektion oder beginne leer.",
+      "template": {
+        "kyu": "Kyu-Grade",
+        "dan": "Dan-Grade",
+        "use": "Vorlage verwenden"
+      },
+      "copyFrom": "Kopieren von:",
+      "startEmpty": "Leer beginnen",
+      "orderHint": "Tiefster Grad zuerst. Die Reihenfolge bestimmt, welcher Grad als nächster folgt.",
+      "grade": "Grad",
+      "gradePlaceholder": "z. B. 5. Kyu",
+      "color": "Gurtfarbe",
+      "color2": "Zweite Farbe",
+      "twoColors": "Zweifarbig",
+      "dan": "Dan",
+      "danHint": "Dan-Grade zählen als Schwarzgurt (Abzeichen, Streifen auf dem Gurt)",
+      "inUse": "{count, plural, one {einmal verwendet} other {#-mal verwendet}}",
+      "inUseHint": "Von Graduierungen, Prüfungsanmeldungen oder einem Prüfungsprogramm verwendet: umbenennen und verschieben ja, entfernen nein",
+      "moveUp": "Nach oben",
+      "moveDown": "Nach unten",
+      "remove": "Grad entfernen",
+      "addGrade": "Grad hinzufügen",
+      "discard": "Änderungen verwerfen",
+      "save": "Grade speichern",
+      "confirmRemove": "Diese Grade werden gelöscht: {grades}",
+      "confirmDeleteLadder": "Die Grade von {section} werden gelöscht.",
+      "problem": {
+        "emptyName": "Grad {n} braucht einen Namen.",
+        "nameTooLong": "Der Name von Grad {n} ist länger als {max} Zeichen.",
+        "duplicate": "«{grade}» kommt zweimal vor.",
+        "badColor": "Grad {n} hat eine ungültige Farbe."
+      },
+      "toast": {
+        "saved": "Grade gespeichert",
+        "failed": "Fehler beim Speichern der Grade",
+        "inUse": "Noch verwendet, nicht entfernt: {grades}",
+        "duplicate": "Zwei Grade haben denselben Namen",
+        "stale": "Die Grade wurden inzwischen geändert. Lade die Seite neu und versuche es nochmals.",
+        "notAllowed": "Nur Admins können Graduierungen bearbeiten"
+      }
+    },
     "integrations": {
       "title": "Integrationen",
       "intro": "Woher Mitglieder, Events und Ferien kommen: was die letzten Läufe gebracht haben, was offen ist und wie Gruppen und Kalender zugeordnet sind.",
