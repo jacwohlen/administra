@@ -436,7 +436,10 @@ INSERT INTO api_guard VALUES
   ('register_trial',             'TRIAL_MAX_PER_EMAIL'),
   -- calendar feeds: the secret token of an approved staff account
   -- (supabase/checks/calendar_feeds.sql)
-  ('calendar_feed',              'p_token');
+  ('calendar_feed',              'p_token'),
+  -- plan mails: the TK, or a main trainer for the members of their own
+  -- trainings (supabase/checks/training_plan_mail.sql)
+  ('training_plan_mail_addresses', 'is_exam_manager\(.*my_main_training_ids\(');
 
 SELECT pg_temp.eq('API functions bypassing RLS without their guard',
   (SELECT string_agg(coalesce(p.proname, g.proname)

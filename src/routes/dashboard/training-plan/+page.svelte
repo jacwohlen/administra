@@ -15,12 +15,14 @@
     faPrint,
     faRotate,
     faDoorClosed,
+    faEnvelope,
     faUmbrellaBeach,
     faUser,
     faUserPen,
     faUserSlash,
     faXmark
   } from '@fortawesome/free-solid-svg-icons';
+  import { onMount } from 'svelte';
   import { _, locale } from 'svelte-i18n';
   import dayjs from 'dayjs';
   import { goto, invalidate } from '$app/navigation';
@@ -41,6 +43,9 @@
   import PlanGrid from './PlanGrid.svelte';
   import RotationDialog from './RotationDialog.svelte';
   import CalendarFeedDialog from './CalendarFeedDialog.svelte';
+  import NotifyBanner from './NotifyBanner.svelte';
+  import NotifyDialog from './NotifyDialog.svelte';
+  import { loadNotifyMode, type MailMode } from '$lib/trainingPlanMailClient';
   import type { PageData } from './$types';
 
   let { data }: { data: PageData } = $props();
@@ -54,6 +59,11 @@
   let dialogRows = $state<PlanRow[] | null>(null);
   let rotationOpen = $state(false);
   let calendarOpen = $state(false);
+  let notifyOpen = $state(false);
+  // Counts up when the dialog closes, so the banner counts again
+  let notifyVersion = $state(0);
+  // Whether plan mails can be sent here (the server knows): off until it answers
+  let notifyMode = $state<MailMode>('off');
 
   // The chosen view and trainings stay for the next visit (this browser only)
   function stored(key: string): string | null {
@@ -77,6 +87,14 @@
   let canPlanAny = $derived(plannable.size > 0);
   let ownTrainings = $derived(data.trainings.filter((t) => plannable.has(t.id)));
   const canPlan = (r: PlanRow) => plannable.has(r.training.id);
+  // Trainer informieren: the TK for every training (also those taken out of
+  // the plan), a main trainer for their own; the server derives the same
+  let notifyScope = $derived({ all: data.canPlanTrainings, trainingIds: data.plannableIds });
+  let canNotify = $derived(data.canPlanTrainings || canPlanAny);
+
+  onMount(() => {
+    if (canNotify) loadNotifyMode().then((mode) => (notifyMode = mode));
+  });
 
   // The trainings of the table; before several could be picked, it kept one
   let gridIds = $state(
@@ -265,11 +283,28 @@
   </p>
 {/if}
 
+{#if canNotify && notifyMode !== 'off'}
+  <NotifyBanner
+    mode={notifyMode}
+    scope={notifyScope}
+    reloadKey={data}
+    waiting={reloads > 0}
+    version={notifyVersion}
+    onopen={() => (notifyOpen = true)}
+  />
+{/if}
+
 <div class="flex flex-wrap gap-2 mb-4 print:hidden">
   {#if canPlanAny}
     <button class="btn preset-filled-primary-500" onclick={() => (rotationOpen = true)}>
       <Fa icon={faRotate} />
       <span>{$_('page.trainingPlan.rotation.button')}</span>
+    </button>
+  {/if}
+  {#if canNotify && notifyMode !== 'off'}
+    <button class="btn preset-tonal-surface" onclick={() => (notifyOpen = true)}>
+      <Fa icon={faEnvelope} />
+      <span>{$_('page.trainingPlan.notify.button')}</span>
     </button>
   {/if}
   {#if data.canPlanTrainings}
@@ -365,9 +400,10 @@
     </div>
     {#if gridTrainings.length > 0}
       <!-- Picking trainings only changes the rows. A new table per year, and
-           while the rotation is open: the old one saves what is pending and
-           the plan is reloaded, so the rotation and the next table see it -->
-      {#key `${data.year}|${rotationOpen}`}
+           while the rotation or "Trainer informieren" is open: the old one
+           saves what is pending and the plan is reloaded, so the dialog and
+           the next table see it -->
+      {#key `${data.year}|${rotationOpen}|${notifyOpen}`}
         <PlanGrid
           rows={gridRows}
           members={data.members}
@@ -653,4 +689,18 @@
 
 {#if calendarOpen}
   <CalendarFeedDialog onclose={() => (calendarOpen = false)} />
+{/if}
+
+{#if notifyOpen}
+  <NotifyDialog
+    mode={notifyMode}
+    scope={notifyScope}
+    senderName={data.userProfile?.full_name?.trim() || data.session?.user?.email || ''}
+    senderEmail={data.session?.user?.email ?? null}
+    waiting={reloads > 0}
+    onclose={() => {
+      notifyOpen = false;
+      notifyVersion++;
+    }}
+  />
 {/if}

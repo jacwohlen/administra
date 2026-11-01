@@ -24,7 +24,9 @@ shows one calendar year (arrows switch the year), grouped by month:
 Filters show single trainings or only dates whose trainer is still open;
 _Einsätze pro Trainer_ counts the sessions each trainer leads, to keep the
 rotation fair. _Drucken_ prints the shown list, _Kalender abonnieren_ puts
-the plan into a calendar app (see _Kalender abonnieren (ICS)_). A row links
+the plan into a calendar app (see _Kalender abonnieren (ICS)_), and
+_Trainer informieren_ mails the trainers what changed for them (see
+_Trainer informieren (E-Mail)_). A row links
 to the training's check-in for that date, which in turn shows the plan
 (topic, trainer, or that the training is cancelled).
 
@@ -190,15 +192,163 @@ disabled account, or one that is no longer staff, gets 404 too.
   subscriber until the next fetch). Sentry reports get the token removed
   from the path (`docs/ERROR_MONITORING.md`)
 
+## Trainer informieren (E-Mail)
+
+Planners tell the trainers about changes by e-mail, by hand: _Trainer
+informieren_ on the plan page, for the TK (every training) and for main
+trainers (their own trainings), only while mails can be sent (SMTP
+configured; outside production, e.g. on Dev and in the demo, sending is
+simulated). A banner above the buttons says how many trainers have changes
+they were not told yet; the dialog lists them with the lines of their mail.
+
+What counts as a change, for each trainer against what they were last
+told:
+
+- a date they now lead (`Neu: Mo 10.11.2026 – du leitest`, with the topic
+  when there is one) or no longer lead
+  (`Nicht mehr bei dir: Mo 17.11.2026 – übernimmt Max Muster`, or
+  `– Trainer offen`, `– fällt aus`, or nothing when the date no longer
+  exists)
+- a date they lead is dropped (`Fällt aus: Mo 24.11.2026 (Herbstferien)`,
+  the holiday closing the dojo as the reason; a date cancelled on its own
+  has none, since notes are never mailed) or takes place again
+  (`Findet wieder statt: Mo 1.12.2026 – du leitest`)
+- becoming or no longer being a training's main trainer; the new main
+  trainer gets an overview (leads every date, except the dates someone else
+  leads or that are dropped, every one of them listed anew, also dates they
+  heard of as a substitute)
+- a training's weekday or time
+  (`Neu am Mittwoch 18:30–20:00 (bisher Montag 18:00–19:30).`): for the
+  main trainer the dates move with it, a substitute's dates on the old
+  weekday each get `Nicht mehr bei dir`
+- a training taken out of the plan, or deleted
+  (`Dieses Training ist nicht mehr im Trainingsplan.`)
+
+Not a change: the topic alone (it is only added to dates listed anyway),
+notes (never in a mail, not even loaded for it), past dates, and whether a
+date someone else leads is cancelled. More than 6 lines of one kind per
+training become one line that still names every date
+(`Neu: du leitest 14 Termine: 3.11., 17.11., …`: for a trainer without the
+app the mail is all they have), two or more dates dropped by the same
+holiday one line (`Fällt aus (Herbstferien): 6.10., 13.10.2026`; more than 6
+weekly dates without a gap as `8 Termine vom 6.10.2026 bis 24.11.2026`).
+A mail has every line: what it left out would be stored as told all the
+same.
+
+There is no change log and no trigger on the plan. Per member the database
+keeps what they were last told, and `src/lib/trainingPlanMail.ts` compares
+it with the plan as it is now, by the rules of the plan page and the feeds
+(`buildPlan()`): per training whether they were told as its main trainer or
+for single dates, with the weekday and times they were told
+(`training_plan_told_trainings`), and per date only the exceptions
+(`training_plan_told`): a main trainer's dates that someone else leads
+(`not_lead`) or that are dropped (`cancelled`), a substitute's dates they
+lead (`lead`, or `cancelled` when dropped). A main trainer's ordinary weekly
+dates need no row, so a new year costs nothing. Dates from today
+(Europe/Zurich) up to 400 days ahead are compared; one planned further
+ahead shows up once it is inside. Typing in the table, changes that cancel
+each other out, holidays from Webling, a new main trainer, a member deleted
+or merged: all of it comes out of the same comparison. A trainer told
+nothing yet gets the overview of their dates the first time (subject
+_Übersicht_), worded as an overview, not as news: `Du bist Haupttrainer/in
+und leitest alle Termine`, `Du leitest: Di 10.11.2026`.
+
+- **Who sends**: the TK for every training, also for trainings taken out of
+  the plan; a main trainer for their own planned trainings (their dialog,
+  and what they write, covers only those). The sender's own members
+  (`my_member_ids()`: the linked member, and members with the account's
+  e-mail, e.g. a parent's children) are never mailed; what they were told is
+  updated silently with each mail or marking. Viewers and other trainers do
+  not see it.
+- **Addresses**: the sign-in address of the approved account linked to the
+  member (_Benutzer_), else the member's e-mail (from Webling); a member
+  whose own address is a test address (`*.invalid`) keeps it even with a
+  linked account, so they are never mailed, not even at that account's
+  real address. Members sharing an address (a family) get one mail with a
+  section each. Not
+  mailed, and listed under _Nicht per Mail_ with the reason: no address, a
+  test address (`*.invalid`, the anonymized addresses of databases other
+  than production) and trainers who want no mails. The TK switches mails
+  off per trainer in the dialog (_Keine Mails_). These trainers stay
+  pending, in the banner too, until someone tells them in person and marks
+  them.
+- **The dialog**: opening it lets the table save what is being typed and
+  reloads the plan first, as the rotation does, so the preview has it. One
+  card per address with the lines (_Mail ansehen_ shows the whole mail),
+  checked by default for sending. _Mails senden_ sends the checked cards
+  one after the other, one request per address (a Netlify function's time
+  limit; the mailer opens one connection per mail). Marking without a mail,
+  for trainers told in person or informed otherwise, is a separate choice:
+  _Ohne Mail als mitgeteilt markieren_ on a mail card marks that card, and
+  _Als mitgeteilt markieren_ in the footer marks the ticked cards under
+  _Nicht per Mail_ and mails that left but were not saved as told, never a
+  mail card that was not sent. While nobody has been told yet, the dialog
+  says that sending gives everyone an overview, and _Alle als mitgeteilt
+  markieren_ (after a confirmation) takes the plan as known instead (e.g.
+  when the trainers have it as a spreadsheet): from then on only changes go
+  out. Each card shows its status: _Gesendet_, _Fehlgeschlagen_ (with the
+  SMTP error), _Unklar, ob
+  gesendet_ (the request timed out or the connection dropped, so the mail
+  may have left: the card stays in view, unchecked, and the toast names
+  whom to ask), _Gesendet, aber nicht als mitgeteilt gespeichert_ (then
+  mark it). Such a mail's log row stays `pending`, and the dialog reads the
+  newest one per trainer: a `pending` row newer than what they were last
+  told leaves their card unchecked, with the time of that mail, also when
+  the dialog is opened again later, until they are sent to on purpose or
+  marked. _Letzte Mails_ shows the last 20 entries of the log.
+- **The server** (`/api/training-plan/notify`): runs with the signed-in
+  user's session, so row-level security decides. Nothing the mail says comes
+  from the browser: the endpoint loads the plan and the told state again
+  (`src/lib/trainingPlanMailData.ts`), recomputes the lines with the same
+  code, looks up the address, and compares a fingerprint of the lines and
+  the address with the preview's. A mismatch (the plan changed meanwhile)
+  is a 409, and the dialog loads its preview again; so is an address or
+  opt-out that changed since (400 `unreachable`, `several_addresses`). Only
+  members with pending lines can be mailed, so the endpoint sends nothing
+  else, and once mailed they are told. The log row is written before
+  sending (`pending`) and then gets the result; after a mail went out (or
+  was simulated) `training_plan_set_told()` replaces what the members were
+  told, in one transaction. A mail cut off in between (Netlify ends the
+  function, the connection drops) may have left without being stored as
+  told; its `pending` row is part of the fingerprint, so a preview from
+  before it (another planner's) is stale, and the dialog shows it (above)
+  instead of sending it again by itself. `GET` says whether mails leave
+  (`smtp`), are simulated (`demo`, `test`) or are off.
+- **The mail**: plain text in the sender's app language (German or English,
+  `src/lib/trainingPlanMailText.ts`), from the club's SMTP sender
+  (`PRIVATE_SMTP_FROM`, `docs/TRIAL_EMAILS.md`), with `Reply-To` the
+  sender's sign-in address, so questions go to the planner. Subject
+  `{club} – Trainingsplan: Änderungen für Max`; per training its title and
+  time, then the lines; at the end that the plan in the app is binding
+  (with the link), that subscribed calendars show changes only after a few
+  hours, and that a reply goes to the sender.
+- **Production only**: plan mails leave only under `PUBLIC_MODE=PROD`, as
+  JAC Wohlen's production and every club instance run
+  (`planMailMode()` in `src/lib/server/mailer.ts`). The demo
+  (`PUBLIC_MODE=DEMO`, the mailer never sends there) and, with SMTP set,
+  every other build, such as Dev (main.admin.jacwohlen.ch, `PUBLIC_MODE=DEV`,
+  which has the club's SMTP server for the trial mails), simulate: the
+  dialog and the banner say so, the told state is saved and the log says
+  _Nicht gesendet_, so the whole flow can be tried. Dev's members are
+  anonymized (`*.invalid`), but an account an admin links to one there has
+  a real sign-in address: simulating, and the test address winning over
+  the account's, both keep it silent. Deploy previews and local development
+  have no `PRIVATE_SMTP_*`: no button, no banner. To try real sending
+  locally, run with `PUBLIC_MODE=PROD` and an SMTP sink such as Mailpit
+  (sign in with the e-mail code, as `PROD` has no password form).
+- **Limits**: one trainer per date, so co-trainers written in the note are
+  not told; sending is by hand only (nothing scheduled); no WhatsApp or SMS;
+  trainers answer only by replying to the mail.
+
 ## Roles
 
-| Who                           | Read | Edit                                  | Sets main trainers (and their e-mail) |
-| ----------------------------- | ---- | ------------------------------------- | ------------------------------------- |
-| Admin                         | yes  | yes                                   | yes                                   |
-| TK (`exam_role=manager`)      | yes  | yes                                   | yes                                   |
-| Main trainer (role `trainer`) | yes  | every date of their planned trainings | –                                     |
-| Other trainers, viewers       | yes  | –                                     | –                                     |
-| Member                        | –    | –                                     | –                                     |
+| Who                           | Read | Edit                                  | Sets main trainers (and their e-mail) | Trainer informieren           |
+| ----------------------------- | ---- | ------------------------------------- | ------------------------------------- | ----------------------------- |
+| Admin                         | yes  | yes                                   | yes                                   | every training, sets opt-outs |
+| TK (`exam_role=manager`)      | yes  | yes                                   | yes                                   | every training, sets opt-outs |
+| Main trainer (role `trainer`) | yes  | every date of their planned trainings | –                                     | their planned trainings       |
+| Other trainers, viewers       | yes  | –                                     | –                                     | –                             |
+| Member                        | –    | –                                     | –                                     | –                             |
 
 The TK is the same exam role as in the Q-Prüfungen (`docs/Q_EXAMS.md`), set
 by admins in _Benutzer_. In the database the policies use
@@ -207,7 +357,7 @@ by admins in _Benutzer_. In the database the policies use
 A main trainer is an account with a writing role (`is_writer()`: trainer;
 admins plan everything anyway) whose member is the main trainer of a
 training in the plan (`trainings."mainTrainerId"`, the member found as for
-_Mein Profil_: `my_member_ids()`). He plans every date of that training:
+_Mein Profil_: `my_member_ids()`). They plan every date of that training:
 trainer or substitute, topic, note, _Fällt aus_ and _Findet statt_ (also a
 date in a closing break), with the pencil, several dates at once, the
 rotation and the table; a note on the plan page names their trainings.
@@ -266,6 +416,19 @@ to another training). Holidays and the planned trainings stay
 (`plannableIds` in `+page.ts`, only for trainers who are not TK; TK: all
 trainings) and shows the edit controls per training; RLS stays the guard.
 
+Plan mails (_Trainer informieren_) follow the same split. All staff read
+what was told and the opt-outs, as they read the plan; the told state is
+written by the TK for every training (also one no longer planned) and by a
+main trainer for `training_id IN my_main_training_ids()`; only the TK sets
+opt-outs. The mail log is read by the TK and by whoever wrote the row
+(`is_staff()` and `is_exam_manager()` or `created_by`); a planner inserts
+only rows of their own (`pending` or `marked`) and only moves their own
+`pending` rows to `sent`, `failed` or `skipped`. The TK may be a viewer with
+the exam role, so nothing here asks for `is_writer()`.
+`training_plan_mail_addresses()` answers planners only, for the members
+involved in what they plan. `supabase/checks/training_plan_mail.sql` checks
+it per role.
+
 ## Data
 
 - `training_plan_trainings` – the planned trainings
@@ -278,6 +441,31 @@ trainings) and shows the edit controls per training; RLS stays the guard.
 - `training_plan_breaks` – holidays (`date_from`–`date_to`, inclusive);
   `cancels_training` marks the dojo closed. When periods overlap (Karfreitag
   within the Frühlingsferien), the closing one wins.
+- `training_plan_told_trainings` – per member and training, what they were
+  last told (_Trainer informieren_): as main trainer (`is_main`) or for
+  single dates, with the title, weekday and times told. No foreign key to
+  `trainings`, so a deleted training still gives "nicht mehr im
+  Trainingsplan"
+- `training_plan_told` – per member, training and date, only the exceptions
+  from today on (`lead`, `cancelled`, `not_lead`); they go with their
+  training row (delete, merge)
+- `training_plan_mail_optouts` – trainers who get no plan mails
+- `training_plan_mails` – the log: one row per member per mail or marking
+  (`pending`, `sent`, `failed`, `skipped`, `marked`), with address, subject,
+  text and error
+- `training_plan_mail_addresses(p_member_ids)` – where a trainer gets mail:
+  the sign-in address of the linked approved account, else `members.email`;
+  a `*.invalid` `members.email` wins over the account's.
+  SECURITY DEFINER, as `user_profiles` is for admins only; it answers
+  planners only, and only for members involved in what they plan (main
+  trainers of the planned trainings, trainers of dates from today on,
+  members with a told state). Listed with its guard in
+  `supabase/checks/member_data.sql`
+- `training_plan_set_told(p_states)` – replaces what the given members were
+  told about the given trainings, in one transaction and under row-level
+  security (one refused row fails the whole call); dates before today are
+  dropped. Merging two members moves their told state, opt-out and log to
+  the kept one (`docs/INTEGRATIONS.md`)
 
 The trainings' dates are computed from their weekday
 (`src/lib/trainingPlanUtils.ts`, also the rotation); nothing is generated in

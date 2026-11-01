@@ -41,6 +41,9 @@ export const MERGE_REFS: readonly (readonly [ref: string, key: string])[] = [
   ['trial_emails.member_id', 'trialEmails'],
   ['training_plan_sessions.trainer_id', 'planSessions'],
   ['trainings.mainTrainerId', 'mainTrainer'],
+  ['training_plan_told_trainings.member_id', 'planTold'],
+  ['training_plan_mail_optouts.member_id', 'planOptOut'],
+  ['training_plan_mails.member_id', 'planMails'],
   ['user_profiles.member_id', 'account'],
   ['member_links.member_id', 'links'],
   ['member_merges.kept_id', 'earlierMerges']

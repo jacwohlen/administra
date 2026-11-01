@@ -18,6 +18,7 @@
     buildTrialMailVars,
     renderTrialMail,
     trialMailLocale,
+    trialMailSkippedKey,
     trialMailTemplate,
     trialStatusUrl,
     type TrialMailKind
@@ -89,12 +90,13 @@
         body: JSON.stringify({ memberId: member.id, kind, subject, body })
       });
       const result = res.ok
-        ? ((await res.json()) as { status: string; error?: string })
+        ? ((await res.json()) as { status: string; error?: string; reason?: string })
         : { status: 'failed', error: (await res.text()) || String(res.status) };
       if (result.status === 'sent') {
         toaster.success({ title: $_('page.probetraining.mail.sent') });
       } else if (result.status === 'skipped') {
-        toaster.warning({ title: $_('page.probetraining.mail.skipped') });
+        // Not set up, the demo, or a test address (Dev's anonymized members)
+        toaster.warning({ title: $_(trialMailSkippedKey(result.reason)) });
       } else {
         toaster.error({
           title: $_('page.probetraining.mail.failed'),

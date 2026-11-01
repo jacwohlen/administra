@@ -311,6 +311,16 @@ export interface MailClub {
 }
 
 /** Link to the candidate's public status page (/probetraining/status/<token>). */
+/**
+ * The message for a mail the server did not send, by the mailer's reason
+ * (src/lib/server/mailer.ts): the demo, a test address, or SMTP not set up
+ */
+export function trialMailSkippedKey(reason: unknown): string {
+  if (reason === 'demo') return 'page.probetraining.mail.skippedDemo';
+  if (reason === 'invalid_address') return 'page.probetraining.mail.skippedInvalid';
+  return 'page.probetraining.mail.skipped';
+}
+
 export function trialStatusUrl(origin: string, token: string | null | undefined): string {
   return token ? `${origin.replace(/\/+$/, '')}/probetraining/status/${token}` : origin;
 }
