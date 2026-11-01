@@ -1,6 +1,6 @@
 import { browser } from '$app/environment';
-import { locale } from 'svelte-i18n';
 import type { PublicLocale } from '$lib/clubConfigParser';
+import { setAppLocale } from '$lib/i18n/appLocale';
 
 /**
  * Language chosen in the profile menu. Stored in a cookie (not
@@ -22,7 +22,7 @@ export function readUserLocale(): PublicLocale | null {
 }
 
 export function setUserLocale(next: PublicLocale) {
-  locale.set(next);
+  setAppLocale(next);
   if (!browser) return;
   document.cookie = `${USER_LOCALE_COOKIE}=${next}; path=/; max-age=${ONE_YEAR}; samesite=lax`;
 }

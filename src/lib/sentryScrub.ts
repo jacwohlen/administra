@@ -50,3 +50,57 @@ function scrubValue(value: unknown, seen: WeakSet<object>): unknown {
   }
   return value;
 }
+
+// Query parameters whose values say which data a request reads, never whose:
+// PostgREST's column list, sort order and paging
+const KEPT_QUERY_PARAMS = new Set(['select', 'order', 'limit', 'offset', 'columns']);
+
+const QUERY_PARAM = /([?&])([^=&#\s"']+)=([^&#\s"']*)/g;
+
+/**
+ * Replaces the value of every query parameter but `select`, `order`, `limit`
+ * and `offset` with "[Filtered]". Supabase's filters are query parameters
+ * (`?name=ilike.*Muster*`, `?email=eq.…`), so a request URL in a trace span
+ * would otherwise carry a member's name; the column names stay, they tell
+ * which query was slow.
+ */
+export function filterQueryValues(text: string): string {
+  return text.replace(QUERY_PARAM, (match, sep: string, key: string) =>
+    KEPT_QUERY_PARAMS.has(decodeURIComponentSafe(key)) ? match : `${sep}${key}=[Filtered]`
+  );
+}
+
+function decodeURIComponentSafe(value: string): string {
+  try {
+    return decodeURIComponent(value);
+  } catch {
+    return value;
+  }
+}
+
+/**
+ * `beforeSendTransaction`: like scrubEvent, and the query values of every URL
+ * in the transaction and its spans are filtered (filterQueryValues).
+ */
+export function scrubTransaction<T>(event: T): T {
+  filterValue(event, new WeakSet(), '');
+  return scrubEvent(event);
+}
+
+function filterValue(value: unknown, seen: WeakSet<object>, key: string): unknown {
+  if (typeof value === 'string') {
+    // Sentry keeps the query string without "?" in its own attribute too
+    if (/query/i.test(key) && !value.startsWith('?')) {
+      return filterQueryValues(`?${value}`).slice(1);
+    }
+    return filterQueryValues(value);
+  }
+  if (value === null || typeof value !== 'object' || seen.has(value)) return value;
+  seen.add(value);
+  const record = value as Record<string, unknown>;
+  for (const k of Object.keys(record)) {
+    if (k === 'sdkProcessingMetadata') continue;
+    record[k] = filterValue(record[k], seen, k);
+  }
+  return value;
+}

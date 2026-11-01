@@ -497,7 +497,8 @@
         "no_main_trainer": "None (trainers rotate)",
         "main_trainer_participants": "On the participant list",
         "main_trainer_others": "Other members",
-        "main_trainer_hint": "Usually leads the training. Name, phone and e-mail go into the mail to assigned trial candidates."
+        "main_trainer_hint": "Usually leads the training. Name, phone and e-mail go into the mail to assigned trial candidates.",
+        "main_trainer_tk_only": "The technical committee sets the main trainer. To change it, ask the technical committee."
       },
       "validation": {
         "required_fields": "Please fill in all required fields",
@@ -586,6 +587,7 @@
       "showAll": "Also show non-members and people who left",
       "managedBy": "Name, birthday, phone, e-mail and groups come from {provider} and are changed there, leaving the club too.",
       "managedError": "These details come from {provider} and can only be changed there.",
+      "mainTrainerEmailError": "Only the technical committee changes a main trainer's e-mail: it decides who plans the training. Ask the technical committee.",
       "hiddenMatches": "{count, plural, one {# match} other {# matches}} among non-members and people who left.",
       "merge": {
         "action": "Merge duplicate",

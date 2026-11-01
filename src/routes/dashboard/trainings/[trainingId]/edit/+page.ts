@@ -14,9 +14,13 @@ export interface TrainerOption {
 
 // Viewers may look at a training but not edit it
 export const load: PageLoad = async ({ parent, params }) => {
-  const { canWrite, mainTrainerId } = await parent();
+  const { canWrite, canPlanTrainings, mainTrainerId } = await parent();
   if (!canWrite) {
     redirect(303, `/dashboard/trainings/${params.trainingId}`);
+  }
+  // Only the TK sets the main trainer; the others see it read-only
+  if (!canPlanTrainings) {
+    return { trainerOptions: [] as TrainerOption[] };
   }
 
   // Main trainer candidates: active and passive members (no trial candidates,

@@ -21,8 +21,16 @@
   let error = $state('');
 
   const sections = clubConfig.sections;
+  // Only the TK sets the main trainer (trigger trainings_guard_main_trainer);
+  // everyone else sees it read-only and the form leaves it out
+  let canSetMainTrainer = $derived(data.canPlanTrainings);
   let participantTrainers = $derived(data.trainerOptions.filter((o) => o.participant));
   let otherTrainers = $derived(data.trainerOptions.filter((o) => !o.participant));
+  let mainTrainerName = $derived(
+    data.mainTrainer
+      ? `${data.mainTrainer.lastname} ${data.mainTrainer.firstname}`
+      : $_('page.trainings.form.no_main_trainer')
+  );
 
   const weekdays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
@@ -51,7 +59,7 @@
           section,
           ageFrom,
           ageTo,
-          mainTrainerId
+          ...(canSetMainTrainer ? { mainTrainerId } : {})
         })
         .eq('id', data.id);
 
@@ -186,24 +194,31 @@
       <label class="label" for="mainTrainer">
         <span>{$_('page.trainings.form.main_trainer')}</span>
       </label>
-      <select id="mainTrainer" class="select" bind:value={mainTrainerId}>
-        <option value={null}>{$_('page.trainings.form.no_main_trainer')}</option>
-        {#if participantTrainers.length > 0}
-          <optgroup label={$_('page.trainings.form.main_trainer_participants')}>
-            {#each participantTrainers as o (o.id)}
+      {#if canSetMainTrainer}
+        <select id="mainTrainer" class="select" bind:value={mainTrainerId}>
+          <option value={null}>{$_('page.trainings.form.no_main_trainer')}</option>
+          {#if participantTrainers.length > 0}
+            <optgroup label={$_('page.trainings.form.main_trainer_participants')}>
+              {#each participantTrainers as o (o.id)}
+                <option value={o.id}>{o.lastname} {o.firstname}</option>
+              {/each}
+            </optgroup>
+          {/if}
+          <optgroup label={$_('page.trainings.form.main_trainer_others')}>
+            {#each otherTrainers as o (o.id)}
               <option value={o.id}>{o.lastname} {o.firstname}</option>
             {/each}
           </optgroup>
-        {/if}
-        <optgroup label={$_('page.trainings.form.main_trainer_others')}>
-          {#each otherTrainers as o (o.id)}
-            <option value={o.id}>{o.lastname} {o.firstname}</option>
-          {/each}
-        </optgroup>
-      </select>
-      <p class="text-xs text-surface-600-400 mt-1">
-        {$_('page.trainings.form.main_trainer_hint')}
-      </p>
+        </select>
+        <p class="text-xs text-surface-600-400 mt-1">
+          {$_('page.trainings.form.main_trainer_hint')}
+        </p>
+      {:else}
+        <input id="mainTrainer" type="text" class="input" value={mainTrainerName} disabled />
+        <p class="text-xs text-surface-600-400 mt-1">
+          {$_('page.trainings.form.main_trainer_tk_only')}
+        </p>
+      {/if}
     </div>
   </div>
 

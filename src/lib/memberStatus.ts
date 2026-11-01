@@ -89,3 +89,13 @@ export function isManagedByProviderError(error: unknown): boolean {
   const message = (error as { message?: string } | null)?.message ?? '';
   return message.includes('MANAGED_BY_PROVIDER');
 }
+
+/**
+ * The database refused a new e-mail for a member who is main trainer of a
+ * training: only the TK changes it, since my_member_ids() finds an account's
+ * members by e-mail (guard_main_trainer_email, docs/TRAINING_PLAN.md)
+ */
+export function isMainTrainerEmailError(error: unknown): boolean {
+  const message = (error as { message?: string } | null)?.message ?? '';
+  return message.includes('only the TK changes the e-mail of a main trainer');
+}

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { scrubEvent, scrubText } from './sentryScrub';
+import { filterQueryValues, scrubEvent, scrubText, scrubTransaction } from './sentryScrub';
 
 describe('scrubText', () => {
   it('removes sensitive query values but keeps the others', () => {
@@ -146,5 +146,48 @@ describe('scrubEvent with a calendar feed URL', () => {
     expect(json).not.toContain(token);
     expect(event.request.url).toBe('https://admin.example/api/calendar/[token]/alle.ics');
     expect(event.transaction).toBe('GET /api/calendar/[token]/[feed].ics');
+  });
+});
+
+describe('filterQueryValues', () => {
+  it('keeps the column list, order and paging but filters every other value', () => {
+    expect(
+      filterQueryValues(
+        'GET https://x.supabase.co/rest/v1/members?select=id%2Cname&name=ilike.*Muster*&order=name.asc&limit=20'
+      )
+    ).toBe(
+      'GET https://x.supabase.co/rest/v1/members?select=id%2Cname&name=[Filtered]&order=name.asc&limit=20'
+    );
+    expect(filterQueryValues('/rest/v1/members?id=eq.12')).toBe('/rest/v1/members?id=[Filtered]');
+    expect(filterQueryValues('/dashboard/members')).toBe('/dashboard/members');
+  });
+});
+
+describe('scrubTransaction', () => {
+  it('filters request URLs in spans, also a query string without "?"', () => {
+    const event = {
+      transaction: '/dashboard/members/[id]',
+      spans: [
+        {
+          op: 'http.client',
+          description: 'GET https://x.supabase.co/rest/v1/members?select=*&lastname=eq.Muster',
+          data: {
+            url: 'https://x.supabase.co/rest/v1/members',
+            'http.query': 'select=*&email=eq.anna%40example.ch&lastname=eq.Muster'
+          }
+        }
+      ]
+    };
+    const scrubbed = scrubTransaction(event);
+    const json = JSON.stringify(scrubbed);
+    expect(json).not.toContain('Muster');
+    expect(json).not.toContain('anna');
+    expect(scrubbed.spans[0].description).toBe(
+      'GET https://x.supabase.co/rest/v1/members?select=*&lastname=[Filtered]'
+    );
+    expect(scrubbed.spans[0].data['http.query']).toBe(
+      'select=*&email=[Filtered]&lastname=[Filtered]'
+    );
+    expect(scrubbed.transaction).toBe('/dashboard/members/[id]');
   });
 });

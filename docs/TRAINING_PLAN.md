@@ -192,13 +192,13 @@ disabled account, or one that is no longer staff, gets 404 too.
 
 ## Roles
 
-| Who                           | Read | Edit                                  |
-| ----------------------------- | ---- | ------------------------------------- |
-| Admin                         | yes  | yes                                   |
-| TK (`exam_role=manager`)      | yes  | yes                                   |
-| Main trainer (role `trainer`) | yes  | every date of their planned trainings |
-| Other trainers, viewers       | yes  | –                                     |
-| Member                        | –    | –                                     |
+| Who                           | Read | Edit                                  | Sets main trainers (and their e-mail) |
+| ----------------------------- | ---- | ------------------------------------- | ------------------------------------- |
+| Admin                         | yes  | yes                                   | yes                                   |
+| TK (`exam_role=manager`)      | yes  | yes                                   | yes                                   |
+| Main trainer (role `trainer`) | yes  | every date of their planned trainings | –                                     |
+| Other trainers, viewers       | yes  | –                                     | –                                     |
+| Member                        | –    | –                                     | –                                     |
 
 The TK is the same exam role as in the Q-Prüfungen (`docs/Q_EXAMS.md`), set
 by admins in _Benutzer_. In the database the policies use
@@ -214,6 +214,47 @@ rotation and the table; a note on the plan page names their trainings.
 Holidays, which trainings are planned (_Trainings & Ferien_) and the import
 stay with the TK. A viewer who is main trainer only reads, and so does the
 main trainer of a training not in the plan.
+
+Since the main trainer decides who plans a training, only the TK sets,
+changes or clears it (_Trainings → Bearbeiten → Haupttrainer/in_). Other
+trainers see the field read-only with a note that the TK sets it, and the
+form leaves it out, so their other changes to the training still save; a
+new training starts without main trainer. Everything else about trainings
+stays with trainers and admins (`is_writer()`), so the TK sets main trainers
+with a trainer or admin account (a viewer who is TK edits no trainings).
+
+In the database the trigger `trainings_guard_main_trainer`
+(`guard_training_main_trainer()`, migration `20261108120000`) refuses, for
+an API caller (`authenticated`, `anon`) who is not `is_exam_manager()`, an
+insert with a main trainer and an update that changes it (`42501`, "only
+the TK sets the main trainer of a training"); an upsert is checked as both,
+so one that sends a main trainer is refused even when the value does not
+change; a plain update that writes the same value again passes (the
+previous release's edit page sends every field). Not restricted, as in the
+other guards: migrations, seeds and checks (the owner), the service role,
+`merge_members()` (SECURITY DEFINER: moves the main trainer to the kept
+member) and deleting a member, which clears it (`ON DELETE SET NULL` runs
+as the owner of `trainings`), whoever may delete members. The app shows the
+field editable for `canPlanTrainings`; the trigger stays the guard
+(`supabase/checks/training_plan.sql`, section R).
+
+`my_member_ids()` also finds an account's members by e-mail, so the e-mail
+of a main trainer decides as much as the main trainer: a trainer who pointed
+it at their own account's address, or an accomplice's, would plan that
+training. So the e-mail of a member who is main trainer of a training (any
+training, since the TK may plan it later) is changed only by the TK too;
+for a Webling member it is read-only in the app anyway (`field_policy`).
+The trigger `members_guard_main_trainer_email` (`guard_main_trainer_email()`,
+same migration) refuses it for an API caller who is not
+`is_exam_manager()` (`42501`, "only the TK changes the e-mail of a main
+trainer"; the member page says so). The same address written again passes
+(compared as `my_member_ids()` does, ignoring case and spaces), and so does
+the e-mail of a member who is main trainer of nothing. Not restricted, as
+above: the owner, the service role, the Webling sync (`integration_apply()`)
+and `merge_members()` filling the kept member's e-mail. Left open, as
+practically harmless: a trial record carrying an account's e-mail counts
+once its trial label is removed; that matters only if the TK made a trial
+record main trainer, which the edit page does not offer.
 
 In the database `my_main_training_ids()` returns the planned trainings
 whose main trainer is one of the account's members, and nothing without a

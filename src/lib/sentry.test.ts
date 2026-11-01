@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import {
   browserBeforeSend,
+  DEFAULT_TRACES_SAMPLE_RATE,
   isBrowserNetworkNoise,
+  parseSampleRate,
   sentryEnvironment,
   sentryOptions
 } from './sentry';
@@ -62,5 +64,17 @@ describe('sentryOptions', () => {
     const headers = dataCollection.httpHeaders.request as { allow: string[] };
     expect(headers.allow).not.toContain('x-nf-client-connection-ip');
     expect(headers.allow).not.toContain('x-forwarded-for');
+  });
+});
+
+describe('parseSampleRate', () => {
+  it('takes a share between 0 and 1, else the default', () => {
+    expect(parseSampleRate('0')).toBe(0);
+    expect(parseSampleRate('1')).toBe(1);
+    expect(parseSampleRate(' 0.5 ')).toBe(0.5);
+    expect(parseSampleRate(undefined)).toBe(DEFAULT_TRACES_SAMPLE_RATE);
+    expect(parseSampleRate('')).toBe(DEFAULT_TRACES_SAMPLE_RATE);
+    expect(parseSampleRate('2')).toBe(DEFAULT_TRACES_SAMPLE_RATE);
+    expect(parseSampleRate('abc')).toBe(DEFAULT_TRACES_SAMPLE_RATE);
   });
 });

@@ -56,9 +56,25 @@ export function getSettingDefaults(): SettingValues {
 }
 
 let loaded = false;
+let pending: Promise<void> | null = null;
 
-export async function loadAppSettings(): Promise<void> {
-  if (loaded) return;
+/**
+ * Loads the settings once per app session. Concurrent callers share one
+ * request: hooks.client.ts starts it as the app boots, alongside the root
+ * layout's server data, and the root layout awaits the same request.
+ */
+export function loadAppSettings(): Promise<void> {
+  if (loaded) return Promise.resolve();
+  if (!pending) {
+    const request: Promise<void> = fetchAppSettings().finally(() => {
+      if (pending === request) pending = null;
+    });
+    pending = request;
+  }
+  return pending;
+}
+
+async function fetchAppSettings(): Promise<void> {
   const { data, error } = await supabaseClient.from('app_settings').select('key, value');
   if (error || !Array.isArray(data)) return;
   const values: SettingValues = Object.fromEntries(data.map((row) => [row.key, row.value]));
@@ -72,4 +88,5 @@ export async function loadAppSettings(): Promise<void> {
 /** Call after editing `app_settings` so the next load refetches. */
 export function invalidateAppSettings(): void {
   loaded = false;
+  pending = null;
 }
