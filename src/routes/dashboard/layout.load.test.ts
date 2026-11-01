@@ -18,17 +18,25 @@ const { mockSupabase } = vi.hoisted(() => ({
 vi.mock('$lib/supabase', () => ({ supabaseClient: mockSupabase }));
 
 import { load } from './+layout';
+import { load as serverLoad } from './+layout.server';
 import { integrationConfig } from '$lib/integrationConfig';
 import { invalidateIntegrationConfig } from '$lib/integrationConfigLoad';
 
 const admin = { role: 'admin', status: 'approved' };
 const trainer = { role: 'trainer', status: 'approved' };
 
+/** The server load (admin badges, see +layout.server.ts), then the universal one */
 async function layout(userProfile: object) {
-  return (await load({
-    parent: async () => ({ session: {}, userProfile, access: null }),
-    depends: () => {}
-  } as never)) as { integrationAlert: boolean; pendingUsers: number };
+  const parent = async () => ({ session: {}, userProfile, access: null });
+  const data = await serverLoad({
+    parent,
+    depends: () => {},
+    locals: { supabase: mockSupabase }
+  } as never);
+  return (await load({ data, parent } as never)) as {
+    integrationAlert: boolean;
+    pendingUsers: number;
+  };
 }
 
 const hourAgo = new Date(Date.now() - 3_600_000).toISOString();
@@ -81,6 +89,16 @@ describe('dashboard layout: integrations', () => {
     expect(mockSupabase.from).toHaveBeenCalledWith('integration_member_groups');
     expect(integrationConfig.loaded).toBe(true);
     expect(integrationConfig.groupHidden.get('Vorstand')).toBe(true);
+  });
+
+  it('leaves the admin badges to the server: the universal load asks no more', async () => {
+    answer(status(ok));
+    await load({
+      data: { pendingUsers: 3, integrationAlert: true },
+      parent: async () => ({ session: {}, userProfile: admin, access: null })
+    } as never);
+    expect(mockSupabase.rpc).not.toHaveBeenCalled();
+    expect(mockSupabase.from).not.toHaveBeenCalledWith('user_profiles');
   });
 
   it('asks trainers nothing about runs and shows them no dot', async () => {

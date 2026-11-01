@@ -27,7 +27,9 @@ type Load = (event: never) => unknown;
 async function target(load: unknown, userProfile: object | null, access: object | null) {
   const event = {
     parent: async () => ({ session: {}, userProfile, access }),
-    depends: () => {}
+    depends: () => {},
+    // A layout's own server data (the dashboard's admin badges)
+    data: { pendingUsers: 0, integrationAlert: false }
   } as never;
   try {
     await (load as Load)(event);
