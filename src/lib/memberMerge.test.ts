@@ -88,7 +88,10 @@ describe('mergeSummary', () => {
       'member_medals.memberId',
       'member_merges.kept_id',
       'participants.memberId',
+      'training_plan_mail_optouts.member_id',
+      'training_plan_mails.member_id',
       'training_plan_sessions.trainer_id',
+      'training_plan_told_trainings.member_id',
       'trainings.mainTrainerId',
       'trial_emails.member_id',
       'user_profiles.member_id'

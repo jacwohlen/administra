@@ -929,7 +929,9 @@ SELECT pg_temp.eq('P3 holidays and the planned trainings: only the TK writes',
 SELECT pg_temp.eq('P4 reading unchanged: all staff',
   (SELECT string_agg(tablename || ' ' || cmd || ' ' || pg_temp.expr(qual), ', ' ORDER BY tablename)
      FROM pg_policies
-    WHERE schemaname = 'public' AND tablename LIKE 'training_plan%' AND cmd IN ('SELECT', 'ALL')),
+    WHERE schemaname = 'public' AND cmd IN ('SELECT', 'ALL')
+      -- the mail tables: training_plan_mail.sql
+      AND tablename IN ('training_plan_breaks', 'training_plan_sessions', 'training_plan_trainings')),
   'training_plan_breaks SELECT (SELECT is_staff() AS is_staff), '
   || 'training_plan_sessions SELECT (SELECT is_staff() AS is_staff), '
   || 'training_plan_trainings SELECT (SELECT is_staff() AS is_staff)');

@@ -1,5 +1,5 @@
 import { json, error, type RequestHandler } from '@sveltejs/kit';
-import { isMailConfigured, sendMail } from '$lib/server/mailer';
+import { mailMode, sendMail } from '$lib/server/mailer';
 import { loadMailSettings } from '$lib/server/trialMailContext';
 import { TRIAL_MAIL_KINDS, type TrialMailKind } from '$lib/trialMail';
 
@@ -10,11 +10,14 @@ import { TRIAL_MAIL_KINDS, type TrialMailKind } from '$lib/trialMail';
  * admin). The recipient is always the candidate's stored address.
  */
 
-/** Whether mails would actually leave, for the hint in the preview dialog. */
+/**
+ * Whether mails would actually leave, for the hint in the preview dialog:
+ * not without SMTP, and never in the demo (the mailer refuses there).
+ */
 export const GET: RequestHandler = async ({ locals }) => {
   const { session } = await locals.safeGetSession();
   if (!session) error(401, 'Not signed in');
-  return json({ configured: isMailConfigured() });
+  return json({ configured: mailMode() === 'smtp' });
 };
 
 export const POST: RequestHandler = async ({ request, locals }) => {

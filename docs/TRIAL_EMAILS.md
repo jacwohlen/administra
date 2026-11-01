@@ -13,7 +13,8 @@ Staff can also open any of the three from the candidate's row ("E-Mail"),
 e.g. to resend one that failed. Every mail is logged in `trial_emails` and
 shown in the candidate's timeline with its status: _gesendet_,
 _fehlgeschlagen_ (with the SMTP error), _nicht gesendet_ (SMTP not
-configured) or _ausstehend_.
+configured, the demo, or an address that cannot receive mail: see _Guards
+in the mailer_; the toast after sending names which) or _ausstehend_.
 
 Mails are plain text in the language the candidate registered in (the
 public form's DE/EN switch; stored as `members."trialLocale"`).
@@ -134,6 +135,37 @@ Replies go to the contact e-mail from the settings (`Reply-To`). The
 variables are read at runtime (`$env/dynamic/private`), so a deploy without
 them still builds; mails are then logged as _nicht gesendet_ and the preview
 dialog says so. Changing them takes effect with the next deploy.
+
+## Guards in the mailer
+
+`sendMail()` (`src/lib/server/mailer.ts`) refuses some mails whatever the
+configuration, before it opens a connection. They come back as
+`skipped`, with a `reason`, and the log says _nicht gesendet_:
+
+| `reason`          | When                                                                                                                             |
+| ----------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| `demo`            | `PUBLIC_MODE=DEMO` (`docs/DEMO.md`), even with SMTP variables set; checked first                                                 |
+| `invalid_address` | the address ends in `.invalid`: the Webling sync gives members such addresses outside production (`member-<id>@example.invalid`) |
+| `not_configured`  | `PRIVATE_SMTP_HOST` or `PRIVATE_SMTP_FROM` is missing (Deploy Previews, local development)                                       |
+
+A mail the SMTP server refuses is `failed` with the server's message. SMTP
+servers like to quote addresses, so the message is scrubbed of e-mail
+addresses (`scrubText()`, `src/lib/sentryScrub.ts`) before it is logged
+and returned. The connection always uses TLS: implicit on port 465,
+STARTTLS required on every other port (587 by default), so credentials
+never travel in the clear; a server without STARTTLS fails.
+
+The plan mails (_Trainer informieren_, `docs/TRAINING_PLAN.md`) go through
+the same mailer and SMTP server, so they share its sending limits with the
+trial mails and the sign-in codes. They send one mail per request, each over
+its own connection, and leave only in production: `planMailMode()` is
+`smtp` only under `PUBLIC_MODE=PROD` (JAC Wohlen's production and every club
+instance), `demo` in the demo, `test` (simulated, the mailer is not asked)
+in any other build with SMTP set, such as Dev, and `off` without SMTP. Dev
+has the SMTP server for the trial mails, which still leave there, but an
+account linked to one of its anonymized members has a real sign-in address
+(`training_plan_mail_addresses()` lets the member's `*.invalid` address win
+over it, too).
 
 ## How it works
 

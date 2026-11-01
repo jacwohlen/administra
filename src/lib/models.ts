@@ -650,3 +650,17 @@ export interface TrainingPlanBreak {
    */
   connection?: string | null;
 }
+
+/** Row of training_plan_mails: one member's part of a plan mail, or a marking without mail */
+export interface TrainingPlanMailLog {
+  id: number;
+  member_id: number;
+  to_email: string | null;
+  subject: string | null;
+  body: string | null;
+  status: 'pending' | 'sent' | 'failed' | 'skipped' | 'marked';
+  error: string | null;
+  created_at: string;
+  sent_at: string | null;
+  created_by: string | null;
+}

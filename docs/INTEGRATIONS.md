@@ -241,22 +241,25 @@ What happens to each reference (`merge_member_references()`, the reviewed
 list; `supabase/checks/merge_members.sql` fails when a foreign key to
 `members` appears that it does not name, and the merge refuses to run):
 
-| Reference                           | Same row under both                                                                                                                                                   |
-| ----------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `logs.memberId`                     | One attendance per training and date, the higher trainer role                                                                                                         |
-| `participants.memberId`             | One assignment per training, the trial start date kept                                                                                                                |
-| `event_participants.memberId`       | One registration per event, the furthest status, the earliest time; one entered in the app wins over a Webling import, so the sync never removes it                   |
-| `event_logs.memberId`               | One attendance per event, coach if either was, notes of both                                                                                                          |
-| `member_grades.memberId`            | The grade an exam sheet recorded stays, otherwise the kept one; notes of both                                                                                         |
-| `member_medals.memberId`            | The better medal per competition, with category and section of the other where it has none; exact duplicates without event removed                                    |
-| `member_badges.memberId`            | Earliest earn date; then every badge of the kept member is recomputed, and the season badges of each section and year the dropped one trained in (and the year after) |
-| `exam_candidates.member_id`         | The one with a sheet stays (both: refused), else the furthest status; it takes the furthest status, notes of both, empty fields; the other is kept in the log         |
-| `trial_emails.member_id`            | Moved                                                                                                                                                                 |
-| `training_plan_sessions.trainer_id` | Moved                                                                                                                                                                 |
-| `trainings.mainTrainerId`           | Moved                                                                                                                                                                 |
-| `member_merges.kept_id`             | Moved                                                                                                                                                                 |
-| `user_profiles.member_id`           | Moved when only the dropped member is linked                                                                                                                          |
-| `member_links.member_id`            | A gone link goes with the dropped row; the kept member's link stays                                                                                                   |
+| Reference                                | Same row under both                                                                                                                                                                   |
+| ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `logs.memberId`                          | One attendance per training and date, the higher trainer role                                                                                                                         |
+| `participants.memberId`                  | One assignment per training, the trial start date kept                                                                                                                                |
+| `event_participants.memberId`            | One registration per event, the furthest status, the earliest time; one entered in the app wins over a Webling import, so the sync never removes it                                   |
+| `event_logs.memberId`                    | One attendance per event, coach if either was, notes of both                                                                                                                          |
+| `member_grades.memberId`                 | The grade an exam sheet recorded stays, otherwise the kept one; notes of both                                                                                                         |
+| `member_medals.memberId`                 | The better medal per competition, with category and section of the other where it has none; exact duplicates without event removed                                                    |
+| `member_badges.memberId`                 | Earliest earn date; then every badge of the kept member is recomputed, and the season badges of each section and year the dropped one trained in (and the year after)                 |
+| `exam_candidates.member_id`              | The one with a sheet stays (both: refused), else the furthest status; it takes the furthest status, notes of both, empty fields; the other is kept in the log                         |
+| `trial_emails.member_id`                 | Moved                                                                                                                                                                                 |
+| `training_plan_sessions.trainer_id`      | Moved                                                                                                                                                                                 |
+| `trainings.mainTrainerId`                | Moved                                                                                                                                                                                 |
+| `training_plan_told_trainings.member_id` | Moved with its dates in `training_plan_told`; told about the same training under both: the newer told state stays (the kept member's when equally new), the other goes with its dates |
+| `training_plan_mail_optouts.member_id`   | Moved; opted out under both: one opt-out                                                                                                                                              |
+| `training_plan_mails.member_id`          | Moved                                                                                                                                                                                 |
+| `member_merges.kept_id`                  | Moved                                                                                                                                                                                 |
+| `user_profiles.member_id`                | Moved when only the dropped member is linked                                                                                                                                          |
+| `member_links.member_id`                 | A gone link goes with the dropped row; the kept member's link stays                                                                                                                   |
 
 The kept row keeps its name, labels and status. Birthday, mobile, e-mail and
 the Lizenznummer (`20261105130000_merge_license_number.sql`) are only filled
