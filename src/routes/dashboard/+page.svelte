@@ -11,58 +11,39 @@
   import type { Training, Event } from '$lib/models';
   import dayjs, { type Dayjs } from 'dayjs';
   import utils from '$lib/utils';
-  import { supabaseClient } from '$lib/supabase';
   import { _ } from 'svelte-i18n';
   import RecentAchievements from '$lib/components/RecentAchievements.svelte';
-  import { compareTrainings, formatTime } from '$lib/trainingUtils';
-  import { endsOnOrAfter, formatEventDates } from '$lib/eventUtils';
+  import { formatTime } from '$lib/trainingUtils';
+  import { formatEventDates } from '$lib/eventUtils';
 
-  let date: Dayjs = utils.getMostRecentDateByWeekday(dayjs().day());
+  import type { PageData } from './$types';
+  import { loadDayOverview } from './dayOverview';
+
+  export let data: PageData;
+
+  let date: Dayjs = dayjs(data.date);
   const dateFormat = 'YYYY-MM-DD';
-  let trainings: Training[] = [];
-  let todayEvents: Event[] = [];
+  let trainings: Training[] = data.day.trainings;
+  let todayEvents: Event[] = data.day.events;
+  // Answers of an earlier day that arrive late are dropped
+  let shown = 0;
+
+  async function showDay(next: Dayjs) {
+    date = next;
+    const request = ++shown;
+    const day = await loadDayOverview(next);
+    if (request !== shown) return;
+    trainings = day.trainings;
+    todayEvents = day.events;
+  }
 
   function nextDay() {
-    date = utils.getMostRecentDateByWeekday(date.add(1, 'days').day());
-    getTrainingsForDay();
-    getTodayEvents();
+    showDay(utils.getMostRecentDateByWeekday(date.add(1, 'days').day()));
   }
 
   function previousDay() {
-    date = utils.getMostRecentDateByWeekday(date.subtract(1, 'days').day());
-    getTrainingsForDay();
-    getTodayEvents();
+    showDay(utils.getMostRecentDateByWeekday(date.subtract(1, 'days').day()));
   }
-
-  async function getTrainingsForDay() {
-    const { data } = await supabaseClient
-      .from('trainings')
-      .select(`id, title, dateFrom, dateTo, weekday, section`)
-      .eq('weekday', date.locale('en').format('dddd'))
-      .returns<Training[]>();
-
-    if (data) trainings = [...data].sort(compareTrainings);
-  }
-
-  // The events on the day: one-day events of that day and multi-day events
-  // under way (first day on or before it, last day on or after it); all-day
-  // ones (no time) first
-  async function getTodayEvents() {
-    const today = date.format('YYYY-MM-DD');
-    const { data } = await supabaseClient
-      .from('events')
-      .select('*')
-      .lte('date', today)
-      .or(endsOnOrAfter(today))
-      .order('timeFrom', { ascending: true, nullsFirst: true })
-      .order('date', { ascending: true })
-      .returns<Event[]>();
-
-    if (data) todayEvents = data;
-  }
-
-  getTrainingsForDay();
-  getTodayEvents();
 </script>
 
 <div class="page-header">

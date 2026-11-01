@@ -1,8 +1,9 @@
 import type { PageLoad } from './$types';
-import { locale, waitLocale } from 'svelte-i18n';
+import { waitLocale } from 'svelte-i18n';
 import { supabaseClient } from '$lib/supabase';
 import { defaultPublicLocale, readStoredLocale } from '$lib/publicLocale';
 import { loadAppSettings } from '$lib/appSettings';
+import { setAppLocale } from '$lib/i18n/appLocale';
 
 export interface TrialStatusView {
   firstname: string;
@@ -35,7 +36,7 @@ export const load: PageLoad = async ({ params, depends }) => {
   }
 
   // The visitor's own choice wins, then the language they registered in.
-  locale.set(readStoredLocale() ?? status?.locale ?? defaultPublicLocale());
+  setAppLocale(readStoredLocale() ?? status?.locale ?? defaultPublicLocale());
   await waitLocale();
 
   return { token: params.token, status };

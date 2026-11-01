@@ -2,7 +2,7 @@
 // for information about these interfaces
 // and what to do when importing types
 
-import type { SupabaseClient, Session, User } from '@supabase/supabase-js';
+import type { SupabaseClient, Session } from '@supabase/supabase-js';
 import type { UserProfile } from '$lib/models';
 import type { AssistantKind } from '$lib/assistant/types';
 
@@ -20,7 +20,8 @@ declare global {
     }
     interface Locals {
       supabase: SupabaseClient;
-      safeGetSession: () => Promise<{ session: Session | null; user: User | null }>;
+      /** The verified account of the session cookie (hooks.server.ts) */
+      safeGetSession: () => Promise<{ session: Session | null; user: { id: string } | null }>;
     }
     interface PageData {
       session: Session | null;
