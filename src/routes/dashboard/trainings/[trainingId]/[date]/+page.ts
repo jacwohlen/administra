@@ -14,9 +14,10 @@ import { breakOn } from '$lib/trainingPlanUtils';
 import { displayConfig, loadAppSettings } from '$lib/appSettings';
 
 export const load = (async ({ params }) => {
-  // Page loads run concurrently with the root layout load, so make sure any
-  // admin-configured streak length is applied before querying.
-  await loadAppSettings();
+  // Page loads run concurrently with the root layout load, so the streak
+  // waits for any admin-configured streak length; every other query starts
+  // right away instead of one round trip later.
+  const settings = loadAppSettings();
   const [
     checklistResult,
     streakResult,
@@ -35,11 +36,13 @@ export const load = (async ({ params }) => {
       })
       .order('lastname', { ascending: true })
       .order('firstname', { ascending: true }),
-    supabaseClient.rpc('get_checklist_member_streak', {
-      tid: params.trainingId,
-      before_date: params.date,
-      n: displayConfig.checklistStreakLength
-    }),
+    settings.then(() =>
+      supabaseClient.rpc('get_checklist_member_streak', {
+        tid: params.trainingId,
+        before_date: params.date,
+        n: displayConfig.checklistStreakLength
+      })
+    ),
     supabaseClient.rpc('get_members_top_badges'),
     supabaseClient.rpc('get_members_current_grades'),
     supabaseClient.rpc('get_members_medal_counts'),

@@ -10,7 +10,7 @@ export const load: PageLoad = async ({ url, depends }) => {
   const selected = myMembers.find((m) => m.id === requested) ?? myMembers[0];
 
   const [profile, exams] = selected
-    ? await Promise.all([loadMemberProfile(selected.id), loadMemberExams(selected)])
+    ? await Promise.all([loadMemberProfile(selected), loadMemberExams(selected)])
     : [null, null];
 
   return { myMembers, profile, exams };
