@@ -56,7 +56,9 @@ const setup: Handle = async ({ event, resolve }) => {
     if (error || !userId || userId !== session.user.id) {
       return { session: null, user: null };
     }
-    return { session, user: { id: userId } };
+    // The e-mail from the same verified token: plan mails use it as Reply-To
+    const email = typeof data.claims.email === 'string' ? data.claims.email : undefined;
+    return { session, user: { id: userId, email } };
   };
 
   // A language picked in the profile menu wins over the browser's.

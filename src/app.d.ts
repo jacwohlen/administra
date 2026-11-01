@@ -21,7 +21,10 @@ declare global {
     interface Locals {
       supabase: SupabaseClient;
       /** The verified account of the session cookie (hooks.server.ts) */
-      safeGetSession: () => Promise<{ session: Session | null; user: { id: string } | null }>;
+      safeGetSession: () => Promise<{
+        session: Session | null;
+        user: { id: string; email?: string } | null;
+      }>;
     }
     interface PageData {
       session: Session | null;
