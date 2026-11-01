@@ -104,6 +104,18 @@ and most frequent statements).
    charts (Carbon, d3, about 150 KB gzip) are a dynamic import of the
    statistics page; keep big dependencies out of layouts and shared modules.
 
+5. **The connection to Supabase opens early.** `app.html` has a
+   `%supabase.preconnect%` placeholder that `hooks.server.ts` fills with
+   `<link rel="preconnect" … crossorigin>` for this deploy's Supabase
+   (`src/lib/server/preconnect.ts`; built in, so a Deploy Preview points at
+   its preview branch). DNS, TCP and TLS then happen while the JavaScript
+   loads, not in front of the first query. `crossorigin` is required:
+   supabase-js fetches without credentials, and the browser only reuses a
+   preconnected connection of the same mode. Check it in the browser's
+   DevTools: the first Supabase request's timing has no "Initial
+   connection". (In a sandbox behind a proxy that opens a new connection
+   per request, the gain does not show.)
+
 ## Known, not changed
 
 - **Check-in writes**: an insert into `logs` takes about 25 ms in the
@@ -116,5 +128,11 @@ and most frequent statements).
   evaluated once per statement (`(SELECT is_staff())`), so merging them
   gains nothing measurable. The unindexed foreign keys are audit columns
   (`created_by`, `updated_by`) that no query filters by.
+- **CORS preflights**: every Supabase request from the browser carries
+  `apikey`/`authorization` headers, so the browser asks with an `OPTIONS`
+  request first. Supabase allows caching that answer for an hour
+  (`access-control-max-age: 3600`), but per URL: a query with new filter
+  values pays the extra round trip again. Avoiding it would mean routing
+  queries through our own origin; not worth it.
 - **Sentry in the entry chunk** (about 46 KB gzip): loading it later would
   lose errors of the first moments; kept.

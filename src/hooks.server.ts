@@ -7,6 +7,7 @@ import type { Handle } from '@sveltejs/kit';
 import { sequence } from '@sveltejs/kit/hooks';
 import { clubConfig } from '$lib/clubConfig';
 import { sentryOptions } from '$lib/sentry';
+import { supabasePreconnectTags } from '$lib/server/preconnect';
 import { addSecurityHeaders } from '$lib/server/securityHeaders';
 import { parseUserLocale, USER_LOCALE_COOKIE } from '$lib/userLocale';
 import { setAppLocale } from '$lib/i18n/appLocale';
@@ -15,6 +16,10 @@ import { setAppLocale } from '$lib/i18n/appLocale';
 Sentry.init(
   sentryOptions(env.PUBLIC_SENTRY_DSN, __NETLIFY_CONTEXT__, env.PUBLIC_SENTRY_TRACES_SAMPLE_RATE)
 );
+
+// This deploy's Supabase (a preview branch's on Deploy Previews), see
+// src/lib/server/preconnect.ts
+const preconnect = supabasePreconnectTags(PUBLIC_SUPABASE_DATABASE_URL);
 
 const setup: Handle = async ({ event, resolve }) => {
   // Created on first use: as soon as it exists, the Supabase client checks the
@@ -76,7 +81,8 @@ const setup: Handle = async ({ event, resolve }) => {
     : (lang?.split('-')[0] ?? 'en');
 
   const response = await resolve(event, {
-    transformPageChunk: ({ html }) => html.replace('%lang%', documentLang),
+    transformPageChunk: ({ html }) =>
+      html.replace('%lang%', documentLang).replace('%supabase.preconnect%', preconnect),
     filterSerializedResponseHeaders(name) {
       return name === 'content-range' || name === 'x-supabase-api-version';
     }
