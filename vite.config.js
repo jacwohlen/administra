@@ -12,7 +12,11 @@ export default defineConfig({
     __GIT_BRANCH__: JSON.stringify(process.env.HEAD || process.env.BRANCH || 'local'),
     // Netlify's deploy context (production, branch-deploy, deploy-preview),
     // used as the Sentry environment (src/lib/sentry.ts).
-    __NETLIFY_CONTEXT__: JSON.stringify(process.env.CONTEXT ?? '')
+    __NETLIFY_CONTEXT__: JSON.stringify(process.env.CONTEXT ?? ''),
+    // Leaves the Sentry SDK's debug logging out of the bundles (what the
+    // plugin's bundleSizeOptimizations.excludeDebugStatements does, without
+    // switching on its source map and release handling for every build)
+    __SENTRY_DEBUG__: false
   },
   plugins: [
     // Uploads source maps to Sentry so stack traces show our code, then

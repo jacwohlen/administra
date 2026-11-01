@@ -47,13 +47,23 @@ async function loadDetails(member: DirectoryMember): Promise<PrivateDetails | nu
 /**
  * Everything the club area shows about one member. Returns null when the
  * member is not in the directory (inactive, trial candidate or unknown id).
+ * Pass the directory row when the caller already has it (the account's own
+ * members): that saves asking the directory for it a second time.
  */
-export async function loadMemberProfile(memberId: number): Promise<MemberProfileData | null> {
-  const { data: member } = await supabaseClient
-    .rpc('get_member_directory')
-    .eq('id', memberId)
-    .maybeSingle<DirectoryMember>();
+export async function loadMemberProfile(
+  memberOrId: number | DirectoryMember
+): Promise<MemberProfileData | null> {
+  const member =
+    typeof memberOrId === 'number'
+      ? (
+          await supabaseClient
+            .rpc('get_member_directory')
+            .eq('id', memberOrId)
+            .maybeSingle<DirectoryMember>()
+        ).data
+      : memberOrId;
   if (!member) return null;
+  const memberId = member.id;
 
   const [
     photo,

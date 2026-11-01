@@ -73,6 +73,14 @@ and most frequent statements).
      queries that need only `params` together with `parent()` in one
      `Promise.all` (see `exams/[examId]/+page.ts`, `sheet`, `print`,
      `events/[eventId]/+page.ts`), never one after the other.
+   - What a layout only needs the account for can come with
+     `__data.json` itself: the admin's badges on the avatar (pending
+     accounts, the integrations' warning dot) are asked in
+     `dashboard/+layout.server.ts`, a few milliseconds from Netlify to
+     Supabase, instead of one round trip after `parent()` in the browser.
+   - A query waits only for what it needs: the check-in page starts its
+     queries at once and only the streak waits for the settings (its
+     length); `/club` reuses the member row it already has.
    - Data for the first view belongs in `+page.ts`, not in the component
      (`onMount` or top-level calls): a component asks only once all loads
      are done and it is shown. The dashboard's day (`dashboard/+page.ts`,
@@ -135,4 +143,5 @@ and most frequent statements).
   values pays the extra round trip again. Avoiding it would mean routing
   queries through our own origin; not worth it.
 - **Sentry in the entry chunk** (about 46 KB gzip): loading it later would
-  lose errors of the first moments; kept.
+  lose errors of the first moments; kept. `__SENTRY_DEBUG__: false` (`vite.config.js`)
+  leaves its debug logging out (about 2.5 KB gzip).
