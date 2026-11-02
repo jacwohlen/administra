@@ -151,8 +151,8 @@ jobs:
 
       - uses: supabase/setup-cli@v3
         with:
-          # Pinned: CLI 3.0 (2026-11-02) refuses [inbucket] in config.toml, which
-          # Branching still reads; keep in step with the supabase devDependency.
+          # Pinned: CLI 3.0 (2026-11-02) refuses [inbucket] in config.toml; keep
+          # in step with the supabase devDependency.
           version: 2.122.0
           # Resolving "latest" hits the GitHub API; without a token the runner's
           # shared unauthenticated quota can be exhausted and the job dies in setup.
