@@ -401,7 +401,7 @@ and the main trainer when a date is still open a few days ahead, the
 request in the calendar feed (_Ersatz gesucht:_), and the two trainers
 marked as told for _Trainer informieren_ when they confirm.
 
-In the database (`20261111120000_training_plan_requests.sql`,
+In the database (`20261112120000_training_plan_requests.sql`,
 `supabase/checks/training_plan_requests.sql`):
 
 - `training_plan_requests` – kind, the asker's date (`training_id`,

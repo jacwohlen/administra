@@ -3,7 +3,7 @@
  * "Vertretung und Tausch"): the trainer of a date asks one other member to
  * take it over (substitute), or to trade it for one of their dates (swap).
  * Only the person asked confirms; the database applies it
- * (training_plan_request_*(), 20261111120000_training_plan_requests.sql).
+ * (training_plan_request_*(), 20261112120000_training_plan_requests.sql).
  *
  * This module is pure: what the plan page shows and offers, and the mails
  * the server sends (in the sender's language, like the plan mails).

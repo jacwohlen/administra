@@ -1,5 +1,5 @@
 -- Checks for substitutes and swaps in the training plan
--- (20261111120000_training_plan_requests.sql, docs/TRAINING_PLAN.md).
+-- (20261112120000_training_plan_requests.sql, docs/TRAINING_PLAN.md).
 --
 -- Runs like member_access.sql: on a database with every migration and the
 -- seed, as postgres, inside one transaction that is rolled back; each
