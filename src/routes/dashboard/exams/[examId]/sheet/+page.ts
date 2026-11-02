@@ -1,7 +1,7 @@
-import { supabaseClient } from '$lib/supabase';
+import { supabaseClient } from '#lib/supabase.ts';
 import { error as err, redirect } from '@sveltejs/kit';
-import { getGradeDefinitions } from '$lib/referenceData';
-import type { ExamCandidate, ExamProgram, ExamScore } from '$lib/models';
+import { getGradeDefinitions } from '#lib/referenceData.ts';
+import type { ExamCandidate, ExamProgram, ExamScore } from '#lib/models.ts';
 import { CANDIDATE_COLUMNS } from '../../queries';
 import type { PageLoad } from './$types';
 

@@ -1,6 +1,6 @@
 <script lang="ts">
-  import type { Badge } from '$lib/models';
-  import { getTopBadges } from '$lib/badgeUtils';
+  import type { Badge } from '#lib/models.ts';
+  import { getTopBadges } from '#lib/badgeUtils.ts';
 
   let { badges, count = 1 }: { badges: Badge[]; count?: number } = $props();
 

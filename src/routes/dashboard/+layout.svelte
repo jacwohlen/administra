@@ -20,15 +20,15 @@
     faPlug,
     faWandMagicSparkles
   } from '@fortawesome/free-solid-svg-icons';
-  import type { SubmitFunction } from '@sveltejs/kit';
-  import { supabaseClient } from '$lib/supabase';
+  import type { SubmitFunction } from '$app/forms';
+  import { supabaseClient } from '#lib/supabase.ts';
   import { enhance } from '$app/forms';
   import type { LayoutData } from './$types';
   import { _ } from 'svelte-i18n';
   import type { Snippet } from 'svelte';
-  import AppToaster from '$lib/components/AppToaster.svelte';
-  import LanguageSwitcher from '$lib/components/LanguageSwitcher.svelte';
-  import { loadAssistantStatus } from '$lib/assistant/client';
+  import AppToaster from '#lib/components/AppToaster.svelte';
+  import LanguageSwitcher from '#lib/components/LanguageSwitcher.svelte';
+  import { loadAssistantStatus } from '#lib/assistant/client.ts';
 
   let { data, children }: { data: LayoutData; children: Snippet } = $props();
 
@@ -119,14 +119,14 @@
             users: '/dashboard/users',
             settings: '/dashboard/settings'
           };
-          if (e.value && routes[e.value]) goto(routes[e.value], { invalidateAll: true });
+          if (e.value && routes[e.value]) goto(routes[e.value], { refreshAll: true });
         }}
       >
         <Tabs.List>
           <Tabs.Trigger
             value="today"
             onclick={() => {
-              if (getActiveTab() === 'today') goto('/dashboard', { invalidateAll: true });
+              if (getActiveTab() === 'today') goto('/dashboard', { refreshAll: true });
             }}
           >
             <Fa icon={faCalendarCheck} class="nav-icon" />
@@ -136,7 +136,7 @@
             value="trainings"
             onclick={() => {
               if (getActiveTab() === 'trainings')
-                goto('/dashboard/trainings', { invalidateAll: true });
+                goto('/dashboard/trainings', { refreshAll: true });
             }}
           >
             <Fa icon={faList} class="nav-icon" />
@@ -145,7 +145,7 @@
           <Tabs.Trigger
             value="events"
             onclick={() => {
-              if (getActiveTab() === 'events') goto('/dashboard/events', { invalidateAll: true });
+              if (getActiveTab() === 'events') goto('/dashboard/events', { refreshAll: true });
             }}
           >
             <Fa icon={faCalendarDays} class="nav-icon" />
@@ -154,7 +154,7 @@
           <Tabs.Trigger
             value="exams"
             onclick={() => {
-              if (getActiveTab() === 'exams') goto('/dashboard/exams', { invalidateAll: true });
+              if (getActiveTab() === 'exams') goto('/dashboard/exams', { refreshAll: true });
             }}
           >
             <Fa icon={faAward} class="nav-icon" />
@@ -163,7 +163,7 @@
           <Tabs.Trigger
             value="members"
             onclick={() => {
-              if (getActiveTab() === 'members') goto('/dashboard/members', { invalidateAll: true });
+              if (getActiveTab() === 'members') goto('/dashboard/members', { refreshAll: true });
             }}
           >
             <Fa icon={faUser} class="nav-icon" />
@@ -173,7 +173,7 @@
             value="probetraining"
             onclick={() => {
               if (getActiveTab() === 'probetraining')
-                goto('/dashboard/probetraining', { invalidateAll: true });
+                goto('/dashboard/probetraining', { refreshAll: true });
             }}
           >
             <Fa icon={faUserPlus} class="nav-icon" />
@@ -182,7 +182,7 @@
           <Tabs.Trigger
             value="stats"
             onclick={() => {
-              if (getActiveTab() === 'stats') goto('/dashboard/stats', { invalidateAll: true });
+              if (getActiveTab() === 'stats') goto('/dashboard/stats', { refreshAll: true });
             }}
           >
             <Fa icon={faChartSimple} class="nav-icon" />
@@ -238,7 +238,7 @@
               class="btn preset-tonal-surface w-full mb-2"
               onclick={() => {
                 popoverOpen = false;
-                goto('/dashboard/users', { invalidateAll: true });
+                goto('/dashboard/users', { refreshAll: true });
               }}
             >
               <Fa icon={faUsersGear} />
@@ -257,7 +257,7 @@
               class="btn preset-tonal-surface w-full mb-2"
               onclick={() => {
                 popoverOpen = false;
-                goto('/dashboard/settings', { invalidateAll: true });
+                goto('/dashboard/settings', { refreshAll: true });
               }}
             >
               <Fa icon={faGear} />
@@ -268,7 +268,7 @@
               class="btn preset-tonal-surface w-full mb-2"
               onclick={() => {
                 popoverOpen = false;
-                goto('/dashboard/integrations', { invalidateAll: true });
+                goto('/dashboard/integrations', { refreshAll: true });
               }}
             >
               <Fa icon={faPlug} />

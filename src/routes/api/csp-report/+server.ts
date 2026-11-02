@@ -1,5 +1,5 @@
 import type { RequestHandler } from '@sveltejs/kit';
-import { summarizeCspReport } from '$lib/server/cspReport';
+import { summarizeCspReport } from '#lib/server/cspReport.ts';
 
 /**
  * Receives Content Security Policy violation reports from browsers (the

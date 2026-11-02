@@ -10,8 +10,8 @@
     faSpinner,
     faTrash
   } from '@fortawesome/free-solid-svg-icons';
-  import { supabaseClient } from '$lib/supabase';
-  import { toaster } from '$lib/toast';
+  import { supabaseClient } from '#lib/supabase.ts';
+  import { toaster } from '#lib/toast.ts';
   import {
     defaultMinPoints,
     newItemKey,
@@ -19,8 +19,8 @@
     partMaxPoints,
     programMaxPoints,
     programProblems
-  } from '$lib/examUtils';
-  import type { ExamPart, ExamProgram } from '$lib/models';
+  } from '#lib/examUtils.ts';
+  import type { ExamPart, ExamProgram } from '#lib/models.ts';
   import RowMenu from './RowMenu.svelte';
 
   let {

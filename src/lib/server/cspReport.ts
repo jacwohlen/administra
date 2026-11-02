@@ -1,8 +1,8 @@
-import { scrubText } from '$lib/sentryScrub';
+import { scrubText } from '#lib/sentryScrub.ts';
 
 /**
  * One log line for a Content Security Policy violation report (the JSON
- * body a browser POSTs to the `report-uri`, see svelte.config.js), or null
+ * body a browser POSTs to the `report-uri`, see vite.config.js), or null
  * if the body is not a report.
  *
  * Only the directive, the blocked origin (or "inline"/"eval") and the page

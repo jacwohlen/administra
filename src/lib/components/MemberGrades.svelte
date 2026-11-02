@@ -1,16 +1,16 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
-  import CreateButton from '$lib/components/assistant/CreateButton.svelte';
-  import AssistantDialog from '$lib/components/assistant/AssistantDialog.svelte';
-  import GradesReview from '$lib/components/assistant/GradesReview.svelte';
-  import { takeAssistantRequest } from '$lib/assistant/autoOpen';
-  import { loadAssistantStatus } from '$lib/assistant/client';
-  import { modalDialog } from '$lib/modalDialog';
-  import type { GradeDefinition, MemberCurrentGrade, MemberGrade } from '$lib/models';
-  import { gradesBySection } from '$lib/gradeUtils';
-  import { supabaseClient } from '$lib/supabase';
-  import { toaster } from '$lib/toast';
+  import ConfirmDialog from '#lib/components/ConfirmDialog.svelte';
+  import CreateButton from '#lib/components/assistant/CreateButton.svelte';
+  import AssistantDialog from '#lib/components/assistant/AssistantDialog.svelte';
+  import GradesReview from '#lib/components/assistant/GradesReview.svelte';
+  import { takeAssistantRequest } from '#lib/assistant/autoOpen.ts';
+  import { loadAssistantStatus } from '#lib/assistant/client.ts';
+  import { modalDialog } from '#lib/modalDialog.ts';
+  import type { GradeDefinition, MemberCurrentGrade, MemberGrade } from '#lib/models.ts';
+  import { gradesBySection } from '#lib/gradeUtils.ts';
+  import { supabaseClient } from '#lib/supabase.ts';
+  import { toaster } from '#lib/toast.ts';
   import BeltStrip from './BeltStrip.svelte';
   import Fa from 'svelte-fa';
   import { faSpinner, faTrash } from '@fortawesome/free-solid-svg-icons';

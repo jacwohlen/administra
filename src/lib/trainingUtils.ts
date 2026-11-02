@@ -1,5 +1,5 @@
-import type { MembershipStatus, Training, TrainerRole } from '$lib/models';
-import utils from '$lib/utils';
+import type { MembershipStatus, Training, TrainerRole } from '#lib/models.ts';
+import utils from '#lib/utils.ts';
 
 interface ChecklistMemberData {
   memberId: string;

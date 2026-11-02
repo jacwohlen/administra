@@ -1,4 +1,4 @@
-import type { GradeDefinition, Medal, MemberMedal } from '$lib/models';
+import type { GradeDefinition, Medal, MemberMedal } from '#lib/models.ts';
 
 export const MEDALS: Medal[] = ['gold', 'silver', 'bronze'];
 

@@ -1,4 +1,4 @@
-import type { TrainerRole } from '$lib/models';
+import type { TrainerRole } from '#lib/models.ts';
 
 /**
  * Daten-Assistent (docs/AI_ASSISTANT.md): a staff member uploads a photo, a

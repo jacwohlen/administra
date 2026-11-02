@@ -1,8 +1,8 @@
 import type { Dayjs } from 'dayjs';
-import type { Event, Training } from '$lib/models';
-import { supabaseClient } from '$lib/supabase';
-import { compareTrainings } from '$lib/trainingUtils';
-import { endsOnOrAfter } from '$lib/eventUtils';
+import type { Event, Training } from '#lib/models.ts';
+import { supabaseClient } from '#lib/supabase.ts';
+import { compareTrainings } from '#lib/trainingUtils.ts';
+import { endsOnOrAfter } from '#lib/eventUtils.ts';
 
 export interface DayOverview {
   trainings: Training[];

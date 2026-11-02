@@ -1,8 +1,8 @@
 <script lang="ts">
   import dayjs from 'dayjs';
   import { _, locale } from 'svelte-i18n';
-  import { supabaseClient } from '$lib/supabase';
-  import { activityStart, buildActivity, type ActivitySummary } from '$lib/activityUtils';
+  import { supabaseClient } from '#lib/supabase.ts';
+  import { activityStart, buildActivity, type ActivitySummary } from '#lib/activityUtils.ts';
   import ActivityGrid from './ActivityGrid.svelte';
 
   /**

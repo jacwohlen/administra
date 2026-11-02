@@ -1,12 +1,12 @@
 import type { LayoutLoad } from './$types';
-import { browser } from '$app/environment';
-import '$lib/i18n';
+import { browser } from '$app/env';
+import '#lib/i18n/index.ts';
 import { get } from 'svelte/store';
 import { locale, waitLocale } from 'svelte-i18n';
-import { loadAppSettings } from '$lib/appSettings';
-import { readUserLocale } from '$lib/userLocale';
-import { applyDayjsLocale } from '$lib/dayjsLocale';
-import { setAppLocale } from '$lib/i18n/appLocale';
+import { loadAppSettings } from '#lib/appSettings.ts';
+import { readUserLocale } from '#lib/userLocale.ts';
+import { applyDayjsLocale } from '#lib/dayjsLocale.ts';
+import { setAppLocale } from '#lib/i18n/appLocale.ts';
 
 export const load: LayoutLoad = async ({ data }) => {
   if (browser) {

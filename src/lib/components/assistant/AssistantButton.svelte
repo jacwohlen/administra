@@ -2,7 +2,7 @@
   import { _ } from 'svelte-i18n';
   import Fa from 'svelte-fa';
   import { faWandMagicSparkles } from '@fortawesome/free-solid-svg-icons';
-  import { loadAssistantStatus } from '$lib/assistant/client';
+  import { loadAssistantStatus } from '#lib/assistant/client.ts';
 
   /**
    * Opens the Daten-Assistent. Renders nothing on a deployment without

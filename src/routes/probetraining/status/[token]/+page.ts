@@ -1,9 +1,9 @@
 import type { PageLoad } from './$types';
 import { waitLocale } from 'svelte-i18n';
-import { supabaseClient } from '$lib/supabase';
-import { defaultPublicLocale, readStoredLocale } from '$lib/publicLocale';
-import { loadAppSettings } from '$lib/appSettings';
-import { setAppLocale } from '$lib/i18n/appLocale';
+import { supabaseClient } from '#lib/supabase.ts';
+import { defaultPublicLocale, readStoredLocale } from '#lib/publicLocale.ts';
+import { loadAppSettings } from '#lib/appSettings.ts';
+import { setAppLocale } from '#lib/i18n/appLocale.ts';
 
 export interface TrialStatusView {
   firstname: string;

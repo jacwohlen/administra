@@ -1,7 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
-import type { LadderGrade, SanitizeContext } from '$lib/assistant/proposals';
-import type { AssistantRequest } from '$lib/assistant/types';
-import { loadMailSettings } from '$lib/server/trialMailContext';
+import type { LadderGrade, SanitizeContext } from '#lib/assistant/proposals.ts';
+import type { AssistantRequest } from '#lib/assistant/types.ts';
+import { loadMailSettings } from '#lib/server/trialMailContext.ts';
 import { tagSafe } from './prompts';
 import { AssistantError } from './request';
 

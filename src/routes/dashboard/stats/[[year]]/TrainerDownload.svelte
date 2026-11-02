@@ -1,11 +1,11 @@
 <script lang="ts">
-  import { csvCell } from '$lib/csv';
-  import { rpcRows } from '$lib/supabase';
-  import type { TrainerTrackingRecord, TrainerRole } from '$lib/models';
+  import { csvCell } from '#lib/csv.ts';
+  import { rpcRows } from '#lib/supabase.ts';
+  import type { TrainerTrackingRecord, TrainerRole } from '#lib/models.ts';
   import Fa from 'svelte-fa';
   import { faDownload, faSpinner } from '@fortawesome/free-solid-svg-icons';
   import { _ } from 'svelte-i18n';
-  import { toaster } from '$lib/toast';
+  import { toaster } from '#lib/toast.ts';
 
   let { year, yearmode }: { year: number | string; yearmode: 'YEAR' | 'ALL' } = $props();
 

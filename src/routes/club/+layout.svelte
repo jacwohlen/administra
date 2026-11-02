@@ -13,9 +13,9 @@
   import { onMount, type Snippet } from 'svelte';
   import { _ } from 'svelte-i18n';
   import { Tabs } from '@skeletonlabs/skeleton-svelte';
-  import { supabaseClient } from '$lib/supabase';
-  import AppToaster from '$lib/components/AppToaster.svelte';
-  import LanguageSwitcher from '$lib/components/LanguageSwitcher.svelte';
+  import { supabaseClient } from '#lib/supabase.ts';
+  import AppToaster from '#lib/components/AppToaster.svelte';
+  import LanguageSwitcher from '#lib/components/LanguageSwitcher.svelte';
   import type { LayoutData } from './$types';
 
   let { data, children }: { data: LayoutData; children: Snippet } = $props();
@@ -76,7 +76,7 @@
       <Tabs
         value={activeTab}
         onValueChange={(e) => {
-          if (e.value) goto(e.value, { invalidateAll: true });
+          if (e.value) goto(e.value, { refreshAll: true });
         }}
       >
         <Tabs.List>
@@ -84,7 +84,7 @@
             <Tabs.Trigger
               value={tab.href}
               onclick={() => {
-                if (activeTab === tab.href) goto(tab.href, { invalidateAll: true });
+                if (activeTab === tab.href) goto(tab.href, { refreshAll: true });
               }}
             >
               <Fa icon={tab.icon} class="nav-icon" />

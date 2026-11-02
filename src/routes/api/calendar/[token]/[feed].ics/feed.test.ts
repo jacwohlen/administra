@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const loadMailSettings = vi.fn();
-vi.mock('$lib/server/trialMailContext', () => ({ loadMailSettings }));
+vi.mock('#lib/server/trialMailContext.ts', () => ({ loadMailSettings }));
 
 const { GET } = await import('./+server');
 

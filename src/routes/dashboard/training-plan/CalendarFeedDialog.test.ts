@@ -1,8 +1,8 @@
 import { describe, it, expect, vi, afterEach, beforeAll, beforeEach } from 'vitest';
 import { render, screen, cleanup, fireEvent, waitFor, within } from '@testing-library/svelte';
 import { addMessages, init } from 'svelte-i18n';
-import de from '$lib/i18n/locales/de.json';
-import { toaster } from '$lib/toast';
+import de from '#lib/i18n/locales/de.json';
+import { toaster } from '#lib/toast.ts';
 import CalendarFeedDialog from './CalendarFeedDialog.svelte';
 
 // The real German texts, so a broken message (ICU syntax, missing key) shows here
@@ -12,8 +12,8 @@ beforeAll(() => {
 });
 
 const { rpc } = vi.hoisted(() => ({ rpc: vi.fn() }));
-vi.mock('$lib/supabase', () => ({ supabaseClient: { rpc } }));
-vi.mock('$lib/toast', () => ({ toaster: { error: vi.fn(), success: vi.fn() } }));
+vi.mock('#lib/supabase.ts', () => ({ supabaseClient: { rpc } }));
+vi.mock('#lib/toast.ts', () => ({ toaster: { error: vi.fn(), success: vi.fn() } }));
 
 const TOKEN = 'a'.repeat(64);
 const RENEWED = 'b'.repeat(64);

@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen } from '@testing-library/svelte';
 
 const status = vi.hoisted(() => ({ configured: false }));
-vi.mock('$lib/assistant/client', () => ({
+vi.mock('#lib/assistant/client.ts', () => ({
   loadAssistantStatus: () => Promise.resolve({ configured: status.configured, remaining: null })
 }));
 

@@ -2,9 +2,9 @@
   import { error as err } from '@sveltejs/kit';
   import Fa from 'svelte-fa';
   import { faChevronLeft, faChevronRight } from '@fortawesome/free-solid-svg-icons';
-  import { supabaseClient } from '$lib/supabase';
+  import { supabaseClient } from '#lib/supabase.ts';
   import { _ } from 'svelte-i18n';
-  import type { Log } from '$lib/models';
+  import type { Log } from '#lib/models.ts';
   import AttendanceGraph from './AttendanceGraph.svelte';
   import AttendanceLog from './AttendanceLog.svelte';
   import AttendanceSummary from './AttendanceSummary.svelte';
@@ -26,7 +26,7 @@
       .returns<Log[]>();
 
     if (error) {
-      throw err(404, error);
+      throw err(404, error.message);
     }
 
     return data;

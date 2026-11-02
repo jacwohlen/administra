@@ -1,7 +1,7 @@
 import { error, redirect } from '@sveltejs/kit';
-import { supabaseClient } from '$lib/supabase';
-import { getSettingDefaults, loadAppSettings } from '$lib/appSettings';
-import type { SettingValues } from '$lib/appSettingsParser';
+import { supabaseClient } from '#lib/supabase.ts';
+import { getSettingDefaults, loadAppSettings } from '#lib/appSettings.ts';
+import type { SettingValues } from '#lib/appSettingsParser.ts';
 import type { PageLoad } from './$types';
 
 export const load: PageLoad = async ({ parent }) => {

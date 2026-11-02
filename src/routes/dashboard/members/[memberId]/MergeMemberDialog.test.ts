@@ -1,8 +1,8 @@
 import { describe, it, expect, vi, afterEach, beforeEach } from 'vitest';
 import { render, cleanup, fireEvent, waitFor } from '@testing-library/svelte';
 import { readable } from 'svelte/store';
-import type { MergeMember } from '$lib/memberMerge';
-import type { MemberMergeResult } from '$lib/models';
+import type { MergeMember } from '#lib/memberMerge.ts';
+import type { MemberMergeResult } from '#lib/models.ts';
 import MergeMemberDialog from './MergeMemberDialog.svelte';
 
 vi.mock('svelte-i18n', () => ({
@@ -32,7 +32,7 @@ const { calls, mock } = vi.hoisted(() => {
   return { calls, mock };
 });
 
-vi.mock('$lib/supabase', () => ({
+vi.mock('#lib/supabase.ts', () => ({
   supabaseClient: {
     rpc: (name: string, args: unknown) => {
       calls.push(`rpc ${name}`);
@@ -53,8 +53,8 @@ vi.mock('$lib/supabase', () => ({
   }
 }));
 // With the pair preset only the member links are loaded
-vi.mock('$lib/assistant/attendance', () => ({ fetchAllRows: () => mock.links() }));
-vi.mock('$lib/toast', () => ({
+vi.mock('#lib/assistant/attendance.ts', () => ({ fetchAllRows: () => mock.links() }));
+vi.mock('#lib/toast.ts', () => ({
   toaster: { error: mock.toastError, success: mock.toastSuccess }
 }));
 

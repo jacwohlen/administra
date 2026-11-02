@@ -10,10 +10,10 @@
     faTriangleExclamation
   } from '@fortawesome/free-solid-svg-icons';
   import { goto } from '$app/navigation';
-  import { supabaseClient } from '$lib/supabase';
-  import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
-  import MoreMenu from '$lib/components/MoreMenu.svelte';
-  import { toaster } from '$lib/toast';
+  import { supabaseClient } from '#lib/supabase.ts';
+  import ConfirmDialog from '#lib/components/ConfirmDialog.svelte';
+  import MoreMenu from '#lib/components/MoreMenu.svelte';
+  import { toaster } from '#lib/toast.ts';
   import {
     ACTIVITY_HEADER,
     ATTENDANCE_HEADER,
@@ -25,7 +25,7 @@
     formatDate,
     toCsv,
     type CourseMember
-  } from '$lib/jsExport';
+  } from '#lib/jsExport.ts';
 
   let { data }: { data: PageData } = $props();
 
@@ -62,7 +62,7 @@
       return;
     }
     toaster.success({ title: $_('page.js.delete_success') });
-    await goto('/dashboard/js', { invalidateAll: true });
+    await goto('/dashboard/js', { refreshAll: true });
   }
 
   const names = (members: CourseMember[]) =>

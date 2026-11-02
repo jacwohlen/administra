@@ -1,11 +1,11 @@
 <script lang="ts">
-  import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
+  import ConfirmDialog from '#lib/components/ConfirmDialog.svelte';
   import { goto, invalidate } from '$app/navigation';
   import { _ } from 'svelte-i18n';
   import Fa from 'svelte-fa';
   import { faArrowLeft, faTrash } from '@fortawesome/free-solid-svg-icons';
-  import { supabaseClient } from '$lib/supabase';
-  import { toaster } from '$lib/toast';
+  import { supabaseClient } from '#lib/supabase.ts';
+  import { toaster } from '#lib/toast.ts';
   import ExamForm from '../../ExamForm.svelte';
   import type { PageData } from './$types';
 

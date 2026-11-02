@@ -9,7 +9,7 @@
     faPlus
   } from '@fortawesome/free-solid-svg-icons';
   import { _ } from 'svelte-i18n';
-  import { formatDate } from '$lib/jsExport';
+  import { formatDate } from '#lib/jsExport.ts';
 
   let { data }: { data: PageData } = $props();
 </script>

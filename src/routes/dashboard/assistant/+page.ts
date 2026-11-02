@@ -1,7 +1,7 @@
 import { redirect, error as err } from '@sveltejs/kit';
-import { supabaseClient } from '$lib/supabase';
-import { compareTrainings } from '$lib/trainingUtils';
-import type { Training } from '$lib/models';
+import { supabaseClient } from '#lib/supabase.ts';
+import { compareTrainings } from '#lib/trainingUtils.ts';
+import type { Training } from '#lib/models.ts';
 import type { PageLoad } from './$types';
 
 // The Daten-Assistent overview: for anyone who may save at least one of

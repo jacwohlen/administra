@@ -3,7 +3,7 @@
   import Fa from 'svelte-fa';
   import { faArrowLeft, faPrint } from '@fortawesome/free-solid-svg-icons';
   import dayjs from 'dayjs';
-  import { groupCandidates } from '$lib/examUtils';
+  import { groupCandidates } from '#lib/examUtils.ts';
   import type { PageData } from './$types';
 
   // The registration list for the dojo wall, like the paper sheet it replaces:

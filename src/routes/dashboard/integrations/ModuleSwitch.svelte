@@ -2,10 +2,10 @@
   import { _ } from 'svelte-i18n';
   import Fa from 'svelte-fa';
   import { faPowerOff } from '@fortawesome/free-solid-svg-icons';
-  import { supabaseClient } from '$lib/supabase';
-  import { toaster } from '$lib/toast';
-  import { modalDialog } from '$lib/modalDialog';
-  import type { ConnectionStatus } from '$lib/integrations';
+  import { supabaseClient } from '#lib/supabase.ts';
+  import { toaster } from '#lib/toast.ts';
+  import { modalDialog } from '#lib/modalDialog.ts';
+  import type { ConnectionStatus } from '#lib/integrations.ts';
 
   /**
    * Switches a connection on or off (integration_set_enabled, admins). Off:

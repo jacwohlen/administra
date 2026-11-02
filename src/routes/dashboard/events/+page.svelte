@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { invalidateAll } from '$app/navigation';
+  import { refreshAll } from '$app/navigation';
   import type { PageData } from './$types';
   import Fa from 'svelte-fa';
   import {
@@ -11,13 +11,13 @@
   } from '@fortawesome/free-solid-svg-icons';
   import { _ } from 'svelte-i18n';
   import dayjs from 'dayjs';
-  import type { Event } from '$lib/models';
-  import { eventPhase, formatEventDates, type EventPhase } from '$lib/eventUtils';
-  import CreateButton from '$lib/components/assistant/CreateButton.svelte';
-  import AssistantDialog from '$lib/components/assistant/AssistantDialog.svelte';
-  import EventsReview from '$lib/components/assistant/EventsReview.svelte';
-  import { takeAssistantRequest } from '$lib/assistant/autoOpen';
-  import { loadAssistantStatus } from '$lib/assistant/client';
+  import type { Event } from '#lib/models.ts';
+  import { eventPhase, formatEventDates, type EventPhase } from '#lib/eventUtils.ts';
+  import CreateButton from '#lib/components/assistant/CreateButton.svelte';
+  import AssistantDialog from '#lib/components/assistant/AssistantDialog.svelte';
+  import EventsReview from '#lib/components/assistant/EventsReview.svelte';
+  import { takeAssistantRequest } from '#lib/assistant/autoOpen.ts';
+  import { loadAssistantStatus } from '#lib/assistant/client.ts';
 
   let { data }: { data: PageData } = $props();
 
@@ -37,14 +37,14 @@
     assistantSavedSome = false;
     // Closed first, so the review does not show the new events as duplicates of themselves
     showAssistant = false;
-    await invalidateAll();
+    await refreshAll();
   }
 
   function closeAssistant() {
     showAssistant = false;
     if (!assistantSavedSome) return;
     assistantSavedSome = false;
-    invalidateAll().catch((err) =>
+    refreshAll().catch((err) =>
       console.error('Error reloading the events after the assistant:', err)
     );
   }

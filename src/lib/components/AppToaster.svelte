@@ -1,7 +1,7 @@
 <script lang="ts">
   import { Toast } from '@skeletonlabs/skeleton-svelte';
   import { _ } from 'svelte-i18n';
-  import { toaster } from '$lib/toast';
+  import { toaster } from '#lib/toast.ts';
 
   // Skeleton v4 is headless: the group renders only this template, nothing by
   // itself (styles in app.css). The colour follows the toast type.

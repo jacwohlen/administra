@@ -8,11 +8,11 @@ import type {
   MemberGrade,
   MemberMedal,
   PastEvent
-} from '$lib/models';
-import { supabaseClient } from '$lib/supabase';
-import { getBadgeDefinitions, getGradeDefinitions } from '$lib/referenceData';
-import { blobToDataUrl } from '$lib/imageUtils';
-import { avatarPath } from '$lib/memberMerge';
+} from '#lib/models.ts';
+import { supabaseClient } from '#lib/supabase.ts';
+import { getBadgeDefinitions, getGradeDefinitions } from '#lib/referenceData.ts';
+import { blobToDataUrl } from '#lib/imageUtils.ts';
+import { avatarPath } from '#lib/memberMerge.ts';
 import dayjs from 'dayjs';
 
 export const load = (async ({ params, depends }) => {
@@ -25,7 +25,7 @@ export const load = (async ({ params, depends }) => {
     .single<Member>();
 
   if (memberError) {
-    throw err(404, memberError);
+    throw err(404, memberError.message);
   }
   const member = memberData;
 

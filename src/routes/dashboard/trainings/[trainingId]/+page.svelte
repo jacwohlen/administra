@@ -1,10 +1,10 @@
 <script lang="ts">
-  import MoreMenu from '$lib/components/MoreMenu.svelte';
-  import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
+  import MoreMenu from '#lib/components/MoreMenu.svelte';
+  import ConfirmDialog from '#lib/components/ConfirmDialog.svelte';
   import type { PageData } from './$types';
   let { data }: { data: PageData } = $props();
   import LogList from './LogList.svelte';
-  import utils from '$lib/utils';
+  import utils from '#lib/utils.ts';
   import { _ } from 'svelte-i18n';
   import Fa from 'svelte-fa';
   import {
@@ -16,9 +16,9 @@
     faTrash,
     faUserTie
   } from '@fortawesome/free-solid-svg-icons';
-  import { supabaseClient } from '$lib/supabase';
+  import { supabaseClient } from '#lib/supabase.ts';
   import { goto } from '$app/navigation';
-  import { toaster } from '$lib/toast';
+  import { toaster } from '#lib/toast.ts';
 
   let isDeleting = $state(false);
   let showDeleteConfirm = $state(false);

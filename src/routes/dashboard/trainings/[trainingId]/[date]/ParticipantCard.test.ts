@@ -12,7 +12,7 @@ vi.mock('svelte-i18n', () => ({
   getLocaleFromNavigator: vi.fn()
 }));
 
-vi.mock('$env/dynamic/public', () => ({ env: {} }));
+vi.mock('$app/env/public', async () => (await import('#lib/test/envMock.ts')).envMock());
 
 afterEach(() => cleanup());
 

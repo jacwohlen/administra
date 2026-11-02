@@ -1,7 +1,7 @@
 export const ssr = false;
 import { redirect } from '@sveltejs/kit';
-import { isModuleEnabled } from '$lib/integrationConfig';
-import { loadIntegrationConfig } from '$lib/integrationConfigLoad';
+import { isModuleEnabled } from '#lib/integrationConfig.ts';
+import { loadIntegrationConfig } from '#lib/integrationConfigLoad.ts';
 import {
   canGrade,
   canManageExams,
@@ -10,7 +10,7 @@ import {
   isAdmin,
   isStaff,
   isWriter
-} from '$lib/roles';
+} from '#lib/roles.ts';
 import type { LayoutLoad } from './$types';
 
 export const load: LayoutLoad = async ({ data, parent }) => {

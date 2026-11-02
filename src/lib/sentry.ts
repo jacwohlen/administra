@@ -104,3 +104,17 @@ export function sentryEnvironment(context: string | undefined): string {
   if (context === 'deploy-preview') return 'preview';
   return context || 'local';
 }
+
+/**
+ * Whether `handleErrorWithSentry` reports an error passed to the handleError
+ * hooks: unknown errors (bugs, failed requests) and app or framework errors
+ * with a status from 500 on. Since SvelteKit 3 the hooks also see expected
+ * errors (`error(404, …)`, unknown routes); only a reported error gets the
+ * Sentry event id on the error page, any other would show an older report's.
+ */
+export function isReportedError(kind: string, error: unknown): boolean {
+  if (kind === 'validation') return false;
+  if (kind === 'unknown') return true;
+  const status = (error as { status?: unknown } | null)?.status;
+  return typeof status !== 'number' || status >= 500;
+}

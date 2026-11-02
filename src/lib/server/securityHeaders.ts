@@ -3,7 +3,7 @@
  * src/hooks.server.ts. Static files (served by Netlify's CDN, not by the
  * function) get the same basic headers from netlify.toml. The content
  * policy (Content-Security-Policy-Report-Only) is `kit.csp` in
- * svelte.config.js. See docs/SECURITY_HEADERS.md.
+ * vite.config.js. See docs/SECURITY_HEADERS.md.
  */
 
 const PERMISSIONS_POLICY = [

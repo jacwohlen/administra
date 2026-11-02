@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { danLevel } from '$lib/gradeUtils';
+  import { danLevel } from '#lib/gradeUtils.ts';
 
   let {
     color,

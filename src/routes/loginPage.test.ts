@@ -9,7 +9,7 @@ import Page from './+page.svelte';
  * (a second copy of the Svelte runtime would break rendering).
  */
 const env = vi.hoisted(() => ({ mode: 'PROD' }));
-vi.mock('$env/static/public', () => ({
+vi.mock('$app/env/public', () => ({
   get PUBLIC_MODE() {
     return env.mode;
   },
@@ -24,7 +24,7 @@ vi.mock('svelte-i18n', () => ({
   register: vi.fn(),
   getLocaleFromNavigator: vi.fn()
 }));
-vi.mock('$lib/supabase', () => ({ supabaseClient: { auth: { signOut: vi.fn() } } }));
+vi.mock('#lib/supabase.ts', () => ({ supabaseClient: { auth: { signOut: vi.fn() } } }));
 vi.mock('$app/state', () => ({ page: { url: new URL('http://localhost/') } }));
 
 async function renderPage(mode: string, form: unknown = null) {

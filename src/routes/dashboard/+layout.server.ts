@@ -1,5 +1,5 @@
-import { isAdmin } from '$lib/roles';
-import { needsAttention, parseConnectionStatuses } from '$lib/integrations';
+import { isAdmin } from '#lib/roles.ts';
+import { needsAttention, parseConnectionStatuses } from '#lib/integrations.ts';
 import type { LayoutServerLoad } from './$types';
 
 /**

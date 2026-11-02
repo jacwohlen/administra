@@ -203,7 +203,7 @@ export function authConfig(club, op, signInCodeTemplate) {
 
 /**
  * Netlify environment variables for a club's site. Everything the build
- * reads via $env/static/public must be here, or the build fails.
+ * requires (static in src/env.ts) must be here, or the build fails.
  *
  * @param {Club} club
  * @param {OperatorEnv} op

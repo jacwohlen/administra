@@ -7,11 +7,11 @@ import type {
   MemberGrade,
   MemberMedal,
   PrivateDetails
-} from '$lib/models';
-import { supabaseClient } from '$lib/supabase';
-import { getBadgeDefinitions, getGradeDefinitions } from '$lib/referenceData';
-import { blobToDataUrl } from '$lib/imageUtils';
-import { avatarPath } from '$lib/memberMerge';
+} from '#lib/models.ts';
+import { supabaseClient } from '#lib/supabase.ts';
+import { getBadgeDefinitions, getGradeDefinitions } from '#lib/referenceData.ts';
+import { blobToDataUrl } from '#lib/imageUtils.ts';
+import { avatarPath } from '#lib/memberMerge.ts';
 
 export interface MemberProfileData extends MemberAchievements {
   member: DirectoryMember;

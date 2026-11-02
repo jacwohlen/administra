@@ -1,7 +1,7 @@
 import { redirect } from '@sveltejs/kit';
 import type { PageLoad } from './$types';
-import { supabaseClient } from '$lib/supabase';
-import { lockedEventFields } from '$lib/eventLinks';
+import { supabaseClient } from '#lib/supabase.ts';
+import { lockedEventFields } from '#lib/eventLinks.ts';
 
 // Viewers may look at an event but not edit it. An event its provider
 // maintains stays editable in what the provider leaves to the app (the

@@ -55,6 +55,9 @@
     "vitest": "^4.1.12"
   },
   "type": "module",
+  "imports": {
+    "#lib/*": "./src/lib/*"
+  },
   "lint-staged": {
     "*.{js,ts,svelte}": [
       "prettier --write",

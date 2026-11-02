@@ -3,11 +3,11 @@
   import { _ } from 'svelte-i18n';
   import Fa from 'svelte-fa';
   import { faEye } from '@fortawesome/free-solid-svg-icons';
-  import { supabaseClient } from '$lib/supabase';
-  import { toaster } from '$lib/toast';
-  import { clubConfig } from '$lib/clubConfig';
-  import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
-  import { invalidateIntegrationConfig } from '$lib/integrationConfigLoad';
+  import { supabaseClient } from '#lib/supabase.ts';
+  import { toaster } from '#lib/toast.ts';
+  import { clubConfig } from '#lib/clubConfig.ts';
+  import ConfirmDialog from '#lib/components/ConfirmDialog.svelte';
+  import { invalidateIntegrationConfig } from '#lib/integrationConfigLoad.ts';
   import {
     calendarDraft,
     changesKey,
@@ -26,8 +26,8 @@
     type GroupDraft,
     type MappingResult,
     type MemberGroupRow
-  } from '$lib/integrations';
-  import type { MembershipStatus } from '$lib/models';
+  } from '#lib/integrations.ts';
+  import type { MembershipStatus } from '#lib/models.ts';
 
   /**
    * What the provider's groups and calendars mean in Alleda

@@ -1,20 +1,23 @@
 import * as Sentry from '@sentry/sveltekit';
-import { env } from '$env/dynamic/public';
-import { PUBLIC_SUPABASE_ANON_KEY, PUBLIC_SUPABASE_DATABASE_URL } from '$env/static/public';
+import {
+  PUBLIC_SENTRY_DSN,
+  PUBLIC_SENTRY_TRACES_SAMPLE_RATE,
+  PUBLIC_SUPABASE_ANON_KEY,
+  PUBLIC_SUPABASE_DATABASE_URL
+} from '$app/env/public';
 import { createServerClient } from '@supabase/ssr';
 import type { SupabaseClient } from '@supabase/supabase-js';
-import type { Handle } from '@sveltejs/kit';
-import { sequence } from '@sveltejs/kit/hooks';
-import { clubConfig } from '$lib/clubConfig';
-import { sentryOptions } from '$lib/sentry';
-import { supabasePreconnectTags } from '$lib/server/preconnect';
-import { addSecurityHeaders } from '$lib/server/securityHeaders';
-import { parseUserLocale, USER_LOCALE_COOKIE } from '$lib/userLocale';
-import { setAppLocale } from '$lib/i18n/appLocale';
+import { sequence, type Handle } from '@sveltejs/kit/hooks';
+import { clubConfig } from '#lib/clubConfig.ts';
+import { isReportedError, sentryOptions } from '#lib/sentry.ts';
+import { supabasePreconnectTags } from '#lib/server/preconnect.ts';
+import { addSecurityHeaders } from '#lib/server/securityHeaders.ts';
+import { parseUserLocale, USER_LOCALE_COOKIE } from '#lib/userLocale.ts';
+import { setAppLocale } from '#lib/i18n/appLocale.ts';
 
 // Error reports from the server, see docs/ERROR_MONITORING.md.
 Sentry.init(
-  sentryOptions(env.PUBLIC_SENTRY_DSN, __NETLIFY_CONTEXT__, env.PUBLIC_SENTRY_TRACES_SAMPLE_RATE)
+  sentryOptions(PUBLIC_SENTRY_DSN, __NETLIFY_CONTEXT__, PUBLIC_SENTRY_TRACES_SAMPLE_RATE)
 );
 
 // This deploy's Supabase (a preview branch's on Deploy Previews), see
@@ -101,13 +104,14 @@ const securityHeaders: Handle = async ({ event, resolve }) => {
 
 export const handle = sequence(
   // No inline fetch proxy script: SvelteKit >= 2.16 does not need it, and it
-  // would violate the Content Security Policy (svelte.config.js).
+  // would violate the Content Security Policy (vite.config.js).
   Sentry.sentryHandle({ injectFetchProxyScript: false }),
   securityHeaders,
   setup
 );
 
-export const handleError = Sentry.handleErrorWithSentry(({ message }) => ({
-  message,
-  errorId: Sentry.lastEventId()
-}));
+// The message and status stay SvelteKit's (the safe message, 'Internal Error'
+// for unknown errors); reported errors get their Sentry event id.
+export const handleError = Sentry.handleErrorWithSentry(({ kind, error }) =>
+  isReportedError(kind, error) ? { errorId: Sentry.lastEventId() } : undefined
+);

@@ -2,7 +2,7 @@ import { describe, it, expect, vi, afterEach } from 'vitest';
 import { render, cleanup, fireEvent, screen } from '@testing-library/svelte';
 import { readable } from 'svelte/store';
 import Page from './+page.svelte';
-import { PROVIDER_EVENT_FIELDS } from '$lib/eventLinks';
+import { PROVIDER_EVENT_FIELDS } from '#lib/eventLinks.ts';
 
 const update = vi.fn();
 vi.mock('svelte-i18n', () => ({
@@ -12,8 +12,8 @@ vi.mock('svelte-i18n', () => ({
   register: vi.fn(),
   getLocaleFromNavigator: vi.fn()
 }));
-vi.mock('$lib/clubConfig', () => ({ clubConfig: { sections: ['Judo', 'Aikido'] } }));
-vi.mock('$lib/supabase', () => ({
+vi.mock('#lib/clubConfig.ts', () => ({ clubConfig: { sections: ['Judo', 'Aikido'] } }));
+vi.mock('#lib/supabase.ts', () => ({
   supabaseClient: {
     from: () => ({
       update: (fields: unknown) => {
@@ -23,7 +23,7 @@ vi.mock('$lib/supabase', () => ({
     })
   }
 }));
-vi.mock('$app/navigation', () => ({ goto: vi.fn(), invalidateAll: vi.fn() }));
+vi.mock('$app/navigation', () => ({ goto: vi.fn(), refreshAll: vi.fn() }));
 
 afterEach(() => {
   cleanup();

@@ -1,7 +1,7 @@
-import { json, type RequestHandler } from '@sveltejs/kit';
-import { planMailMode, sendMail, type SendResult } from '$lib/server/mailer';
-import { loadMailSettings } from '$lib/server/trialMailContext';
-import { scrubText } from '$lib/sentryScrub';
+import type { RequestHandler } from '@sveltejs/kit';
+import { planMailMode, sendMail, type SendResult } from '#lib/server/mailer.ts';
+import { loadMailSettings } from '#lib/server/trialMailContext.ts';
+import { scrubText } from '#lib/sentryScrub.ts';
 import {
   computeNotices,
   fingerprint,
@@ -11,9 +11,9 @@ import {
   type NotifyErrorCode,
   type NotifyRequest,
   type NotifyResult
-} from '$lib/trainingPlanMail';
-import { loadMailPlan, loadMailScope } from '$lib/trainingPlanMailData';
-import { renderMail } from '$lib/trainingPlanMailText';
+} from '#lib/trainingPlanMail.ts';
+import { loadMailPlan, loadMailScope } from '#lib/trainingPlanMailData.ts';
+import { renderMail } from '#lib/trainingPlanMailText.ts';
 
 /**
  * "Trainer informieren" (docs/TRAINING_PLAN.md): a planner mails trainers
@@ -41,14 +41,14 @@ import { renderMail } from '$lib/trainingPlanMailText';
 const MAX_MEMBERS = 500;
 
 function failure(code: NotifyErrorCode, status: number) {
-  return json({ code }, { status });
+  return Response.json({ code }, { status });
 }
 
 /** Whether plan mails leave (smtp), are simulated (demo, test) or are off */
 export const GET: RequestHandler = async ({ locals }) => {
   const { session } = await locals.safeGetSession();
   if (!session) return failure('not_signed_in', 401);
-  return json({ mode: planMailMode() });
+  return Response.json({ mode: planMailMode() });
 };
 
 /** Logged for a mail simulated outside production */
@@ -170,7 +170,7 @@ export const POST: RequestHandler = async ({ request, locals, url }) => {
     );
     if (logError) console.error('Plan mails: logging the marking failed:', logError.code);
     const result: NotifyResult = { status: 'marked', simulated: false, toldSaved: true };
-    return json(result);
+    return Response.json(result);
   }
 
   const mail = renderMail(notices, ctx);
@@ -230,5 +230,5 @@ export const POST: RequestHandler = async ({ request, locals, url }) => {
     toldSaved,
     ...(error ? { error } : {})
   };
-  return json(result);
+  return Response.json(result);
 };

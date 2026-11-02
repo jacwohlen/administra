@@ -1,7 +1,7 @@
 <script lang="ts">
   import dayjs from 'dayjs';
   import { _ } from 'svelte-i18n';
-  import type { ActivityWeek } from '$lib/activityUtils';
+  import type { ActivityWeek } from '#lib/activityUtils.ts';
 
   /**
    * GitHub-style attendance grid: one column per week (month label + 7 days,

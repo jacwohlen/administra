@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { DirectoryMember } from '$lib/models';
+import type { DirectoryMember } from '#lib/models.ts';
 import { directorySections, filterDirectory } from './directory';
 
 const member = (

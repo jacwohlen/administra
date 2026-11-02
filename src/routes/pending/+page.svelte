@@ -1,10 +1,10 @@
 <script lang="ts">
   import LogoImage from '../LogoImage.svelte';
-  import { supabaseClient } from '$lib/supabase';
-  import { goto, invalidateAll } from '$app/navigation';
+  import { supabaseClient } from '#lib/supabase.ts';
+  import { goto, refreshAll } from '$app/navigation';
   import { _ } from 'svelte-i18n';
-  import { clubConfig } from '$lib/clubConfig';
-  import { homePath } from '$lib/roles';
+  import { clubConfig } from '#lib/clubConfig.ts';
+  import { homePath } from '#lib/roles.ts';
   import type { PageData } from './$types';
 
   let { data }: { data: PageData } = $props();
@@ -29,7 +29,7 @@
   }
 
   async function refresh() {
-    await invalidateAll();
+    await refreshAll();
     const home = homePath(data.userProfile, data.access);
     if (home !== '/pending') {
       await goto(home);

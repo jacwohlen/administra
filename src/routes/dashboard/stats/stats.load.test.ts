@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import type { Athletes } from '$lib/models';
+import type { Athletes } from '#lib/models.ts';
 
 function createChainFromResult(result: { data: unknown; error: unknown }) {
   const handler: ProxyHandler<Record<string, unknown>> = {
@@ -23,7 +23,7 @@ const { mockSupabase } = vi.hoisted(() => ({
   }
 }));
 
-vi.mock('$lib/supabase', () => ({
+vi.mock('#lib/supabase.ts', () => ({
   supabaseClient: mockSupabase,
   // Same as the real helper, but on the mocked client
   rpcRows: async (fn: string, args?: Record<string, unknown>) => {

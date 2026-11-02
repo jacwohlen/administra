@@ -1,6 +1,6 @@
-import { browser } from '$app/environment';
+import { browser } from '$app/env';
 import { init, register } from 'svelte-i18n';
-import { readUserLocale } from '$lib/userLocale';
+import { readUserLocale } from '#lib/userLocale.ts';
 import { fallbackLocaleFor } from './appLocale';
 
 const defaultLocale = 'en';

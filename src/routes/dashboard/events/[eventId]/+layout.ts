@@ -1,7 +1,7 @@
-import { supabaseClient } from '$lib/supabase';
+import { supabaseClient } from '#lib/supabase.ts';
 import { error as err } from '@sveltejs/kit';
-import type { Event } from '$lib/models';
-import { eventLinkFromResult } from '$lib/eventLinks';
+import type { Event } from '#lib/models.ts';
+import { eventLinkFromResult } from '#lib/eventLinks.ts';
 
 export async function load({ params }) {
   const [{ error, data }, linkResult] = await Promise.all([
@@ -17,7 +17,7 @@ export async function load({ params }) {
   ]);
 
   if (error) {
-    throw err(404, error);
+    throw err(404, error.message);
   }
 
   return {

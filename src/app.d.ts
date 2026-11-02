@@ -3,8 +3,8 @@
 // and what to do when importing types
 
 import type { SupabaseClient, Session } from '@supabase/supabase-js';
-import type { UserProfile } from '$lib/models';
-import type { AssistantKind } from '$lib/assistant/types';
+import type { UserProfile } from '#lib/models.ts';
+import type { AssistantKind } from '#lib/assistant/types.ts';
 
 declare global {
   // Injected by the `define` block in vite.config.js.

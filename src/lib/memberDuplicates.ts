@@ -1,4 +1,4 @@
-import { normalizeName } from '$lib/assistant/nameMatch';
+import { normalizeName } from '#lib/assistant/nameMatch.ts';
 import type { MembershipStatus } from './models';
 
 /**

@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { render, cleanup } from '@testing-library/svelte';
 import { readable } from 'svelte/store';
-import type { MemberAchievements } from '$lib/models';
+import type { MemberAchievements } from '#lib/models.ts';
 import MemberProfile from './MemberProfile.svelte';
 
 vi.mock('svelte-i18n', () => ({
@@ -12,10 +12,10 @@ vi.mock('svelte-i18n', () => ({
   getLocaleFromNavigator: vi.fn()
 }));
 
-vi.mock('$env/dynamic/public', () => ({ env: {} }));
+vi.mock('$app/env/public', async () => (await import('#lib/test/envMock.ts')).envMock());
 
 // Attendance queries: an empty result is enough to render the sections
-vi.mock('$lib/supabase', () => {
+vi.mock('#lib/supabase.ts', () => {
   const query: Record<string, unknown> = {};
   for (const m of ['select', 'eq', 'gte', 'lte', 'order', 'returns']) {
     query[m] = () => query;

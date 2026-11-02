@@ -1,12 +1,12 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { PROVIDER_EVENT_FIELDS } from '$lib/eventLinks';
+import { PROVIDER_EVENT_FIELDS } from '#lib/eventLinks.ts';
 
 const maybeSingle = vi.fn();
 const from = vi.fn((table: string) => {
   expect(table).toBe('integration_connections');
   return { select: () => ({ eq: () => ({ maybeSingle }) }) };
 });
-vi.mock('$lib/supabase', () => ({ supabaseClient: { from: (table: string) => from(table) } }));
+vi.mock('#lib/supabase.ts', () => ({ supabaseClient: { from: (table: string) => from(table) } }));
 
 const { load } = await import('./+page');
 

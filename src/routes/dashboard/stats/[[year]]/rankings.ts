@@ -1,6 +1,6 @@
-import type { Athletes } from '$lib/models';
-import { rpcRows } from '$lib/supabase';
-import { groupBySection } from '$lib/statsUtils';
+import type { Athletes } from '#lib/models.ts';
+import { rpcRows } from '#lib/supabase.ts';
+import { groupBySection } from '#lib/statsUtils.ts';
 
 export type Rankings = { [section: string]: Athletes[] };
 

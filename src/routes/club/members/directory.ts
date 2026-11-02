@@ -1,4 +1,4 @@
-import type { DirectoryMember } from '$lib/models';
+import type { DirectoryMember } from '#lib/models.ts';
 
 function normalize(value: string): string {
   return value.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();

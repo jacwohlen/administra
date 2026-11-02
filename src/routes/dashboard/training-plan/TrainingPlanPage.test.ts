@@ -1,13 +1,13 @@
 import { describe, it, expect, vi, afterEach, beforeAll, beforeEach } from 'vitest';
 import { render, screen, cleanup, fireEvent, waitFor, within } from '@testing-library/svelte';
 import { addMessages, init } from 'svelte-i18n';
-import de from '$lib/i18n/locales/de.json';
+import de from '#lib/i18n/locales/de.json';
 import { invalidate } from '$app/navigation';
-import type { TrainingPlanSession } from '$lib/models';
-import type { PlanTraining } from '$lib/trainingPlanUtils';
-import type { MailPlanData } from '$lib/trainingPlanMail';
-import { loadMailPlan } from '$lib/trainingPlanMailData';
-import { loadNotifyMode } from '$lib/trainingPlanMailClient';
+import type { TrainingPlanSession } from '#lib/models.ts';
+import type { PlanTraining } from '#lib/trainingPlanUtils.ts';
+import type { MailPlanData } from '#lib/trainingPlanMail.ts';
+import { loadMailPlan } from '#lib/trainingPlanMailData.ts';
+import { loadNotifyMode } from '#lib/trainingPlanMailClient.ts';
 import Page from './+page.svelte';
 
 // The real German texts, so a broken message (ICU syntax, missing key) shows here
@@ -26,7 +26,7 @@ beforeAll(() => {
 });
 
 const { upsert } = vi.hoisted(() => ({ upsert: vi.fn() }));
-vi.mock('$lib/supabase', () => ({
+vi.mock('#lib/supabase.ts', () => ({
   supabaseClient: {
     from: (table: string) => ({
       upsert: (values: unknown, options: unknown) => upsert(table, values, options)
@@ -34,14 +34,14 @@ vi.mock('$lib/supabase', () => ({
   }
 }));
 vi.mock('$app/navigation', () => ({ goto: vi.fn(), invalidate: vi.fn(async () => {}) }));
-vi.mock('$lib/toast', () => ({ toaster: { error: vi.fn(), success: vi.fn() } }));
+vi.mock('#lib/toast.ts', () => ({ toaster: { error: vi.fn(), success: vi.fn() } }));
 // Plan mails: off unless a test switches them on
-vi.mock('$lib/trainingPlanMailClient', () => ({
+vi.mock('#lib/trainingPlanMailClient.ts', () => ({
   loadNotifyMode: vi.fn(async () => 'off'),
   postNotify: vi.fn()
 }));
-vi.mock('$lib/trainingPlanMailData', () => ({ loadMailPlan: vi.fn(), loadMailScope: vi.fn() }));
-vi.mock('$lib/clubConfig', () => ({ clubConfig: { name: 'Testclub' } }));
+vi.mock('#lib/trainingPlanMailData.ts', () => ({ loadMailPlan: vi.fn(), loadMailScope: vi.fn() }));
+vi.mock('#lib/clubConfig.ts', () => ({ clubConfig: { name: 'Testclub' } }));
 
 /** What the plan mails load when every trainer is up to date */
 const noChanges: MailPlanData = {

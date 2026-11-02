@@ -10,11 +10,11 @@
     faTriangleExclamation
   } from '@fortawesome/free-solid-svg-icons';
   import dayjs from 'dayjs';
-  import BeltStrip from '$lib/components/BeltStrip.svelte';
-  import { gradesBySection } from '$lib/gradeUtils';
-  import type { GradeDefinition, MemberCurrentGrade, MemberGrade } from '$lib/models';
-  import { supabaseClient } from '$lib/supabase';
-  import { toaster } from '$lib/toast';
+  import BeltStrip from '#lib/components/BeltStrip.svelte';
+  import { gradesBySection } from '#lib/gradeUtils.ts';
+  import type { GradeDefinition, MemberCurrentGrade, MemberGrade } from '#lib/models.ts';
+  import { supabaseClient } from '#lib/supabase.ts';
+  import { toaster } from '#lib/toast.ts';
   import {
     NOTE_MAX,
     buildGradeWrites,
@@ -31,9 +31,9 @@
     type GradeRowInput,
     type GradeRowStatus,
     type GradeSaveFailure
-  } from '$lib/assistant/grades';
-  import { clubToday, isIsoDate } from '$lib/assistant/proposals';
-  import type { GradeEntry, GradesProposal } from '$lib/assistant/types';
+  } from '#lib/assistant/grades.ts';
+  import { clubToday, isIsoDate } from '#lib/assistant/proposals.ts';
+  import type { GradeEntry, GradesProposal } from '#lib/assistant/types.ts';
 
   /**
    * Review step of the Daten-Assistent for a Judo pass: every grading the

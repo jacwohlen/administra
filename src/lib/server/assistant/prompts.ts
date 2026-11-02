@@ -2,7 +2,7 @@ import type {
   BetaContentBlockParam,
   MessageCreateParamsNonStreaming
 } from '@anthropic-ai/sdk/resources/beta/messages/messages';
-import type { AssistantKind, AssistantRequest } from '$lib/assistant/types';
+import type { AssistantKind, AssistantRequest } from '#lib/assistant/types.ts';
 import { ASSISTANT_SCHEMAS } from './schemas';
 
 /**

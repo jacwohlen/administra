@@ -1,11 +1,11 @@
 <script lang="ts">
   import type { PageData } from './$types';
   import type { MMember } from './types';
-  import type { Badge, Member } from '$lib/models';
-  import type { TrainerRole } from '$lib/models';
+  import type { Badge, Member } from '#lib/models.ts';
+  import type { TrainerRole } from '#lib/models.ts';
   import ParticipantCard from './ParticipantCard.svelte';
-  import BadgeCelebration from '$lib/components/BadgeCelebration.svelte';
-  import { compareChecklistMembers } from '$lib/trainingUtils';
+  import BadgeCelebration from '#lib/components/BadgeCelebration.svelte';
+  import { compareChecklistMembers } from '#lib/trainingUtils.ts';
   import Fa from 'svelte-fa';
   import {
     faArrowLeft,
@@ -20,19 +20,19 @@
   } from '@fortawesome/free-solid-svg-icons';
   import dayjs from 'dayjs';
   import { onMount } from 'svelte';
-  import { goto, invalidateAll, preloadData } from '$app/navigation';
+  import { goto, refreshAll, preloadData } from '$app/navigation';
   import AddParticipantInputBox from './AddParticipantInputBox.svelte';
-  import { supabaseClient } from '$lib/supabase';
-  import { toaster } from '$lib/toast';
+  import { supabaseClient } from '#lib/supabase.ts';
+  import { toaster } from '#lib/toast.ts';
   import { _ } from 'svelte-i18n';
   import { flip } from 'svelte/animate';
   import { quintInOut } from 'svelte/easing';
   import LessonPlan from './LessonPlan.svelte';
-  import { isCancelled } from '$lib/trainingPlanUtils';
-  import AssistantButton from '$lib/components/assistant/AssistantButton.svelte';
-  import AssistantDialog from '$lib/components/assistant/AssistantDialog.svelte';
-  import AttendanceReview from '$lib/components/assistant/AttendanceReview.svelte';
-  import { isAssistantRequested, takeAssistantRequest } from '$lib/assistant/autoOpen';
+  import { isCancelled } from '#lib/trainingPlanUtils.ts';
+  import AssistantButton from '#lib/components/assistant/AssistantButton.svelte';
+  import AssistantDialog from '#lib/components/assistant/AssistantDialog.svelte';
+  import AttendanceReview from '#lib/components/assistant/AttendanceReview.svelte';
+  import { isAssistantRequested, takeAssistantRequest } from '#lib/assistant/autoOpen.ts';
 
   let { data }: { data: PageData } = $props();
   let searchterm = $state('');
@@ -238,7 +238,7 @@
 
   async function reloadAfterAssistant() {
     try {
-      await invalidateAll();
+      await refreshAll();
     } finally {
       filterData();
     }

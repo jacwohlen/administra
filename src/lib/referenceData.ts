@@ -1,5 +1,5 @@
-import { supabaseClient } from '$lib/supabase';
-import type { BadgeDefinition, GradeDefinition } from '$lib/models';
+import { supabaseClient } from '#lib/supabase.ts';
+import type { BadgeDefinition, GradeDefinition } from '#lib/models.ts';
 
 // Badge and grade definitions are static reference data (they only change
 // through migrations), so fetch them once per app session instead of on

@@ -1,4 +1,4 @@
-import { replaceState } from '$app/navigation';
+import { goto } from '$app/navigation';
 import { page } from '$app/state';
 import type { AssistantKind } from './types';
 
@@ -21,21 +21,18 @@ export function isAssistantRequested(kind: AssistantKind): boolean {
 
 export function takeAssistantRequest(kind: AssistantKind): boolean {
   if (!isAssistantRequested(kind)) return false;
-  const url = new URL(page.url);
+  const url = new URL(page.url.href);
   url.searchParams.delete('assistant');
-  const mark = () => replaceState(url, { ...page.state, assistantTaken: kind });
-  try {
-    mark();
-  } catch {
-    // On a full page load onMount can run before the router has started
-    setTimeout(() => {
-      try {
-        mark();
-      } catch {
+  const state = { ...page.state, assistantTaken: kind };
+  const mark = () => goto(url, { shallow: true, replace: true, state });
+  // On a full page load onMount can run before the router has started
+  mark().catch(() =>
+    setTimeout(() =>
+      mark().catch(() => {
         // Only cosmetic: the dialog could open once more
-      }
-    });
-  }
+      })
+    )
+  );
   return true;
 }
 

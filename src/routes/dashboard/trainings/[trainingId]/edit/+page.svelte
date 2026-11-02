@@ -1,11 +1,11 @@
 <script lang="ts">
   import type { PageData } from './$types';
-  import { supabaseClient } from '$lib/supabase';
-  import { goto, invalidateAll } from '$app/navigation';
+  import { supabaseClient } from '#lib/supabase.ts';
+  import { goto, refreshAll } from '$app/navigation';
   import { _ } from 'svelte-i18n';
   import Fa from 'svelte-fa';
   import { faSave, faArrowLeft } from '@fortawesome/free-solid-svg-icons';
-  import { clubConfig } from '$lib/clubConfig';
+  import { clubConfig } from '#lib/clubConfig.ts';
 
   let { data }: { data: PageData } = $props();
 
@@ -69,7 +69,7 @@
         return;
       }
 
-      await invalidateAll();
+      await refreshAll();
       await goto(`/dashboard/trainings/${data.id}`);
     } catch (e) {
       console.error('Error updating training:', e);
