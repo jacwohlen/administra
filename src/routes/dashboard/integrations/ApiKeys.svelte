@@ -182,6 +182,10 @@
   <p class="text-xs text-surface-600-400">
     {$_('page.integrations.api.endpoint')}
     <code class="break-all">GET {endpoint}</code>
+    ·
+    <a class="anchor" href="/api/docs" target="_blank" rel="noopener">
+      {$_('page.integrations.api.docs')}
+    </a>
   </p>
 </section>
 
