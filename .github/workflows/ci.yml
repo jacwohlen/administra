@@ -237,6 +237,14 @@ jobs:
           psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres"
           -v ON_ERROR_STOP=1 -q -f supabase/checks/training_plan_mail.sql
 
+      # The API: keys only for admins, the hash unreadable, the public
+      # training plan only for a key with the scope, without notes, names
+      # as the key says
+      - name: Check API keys
+        run: >-
+          psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres"
+          -v ON_ERROR_STOP=1 -q -f supabase/checks/api_keys.sql
+
       - uses: actions/setup-python@v7
         with:
           python-version: '3.12'

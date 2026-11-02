@@ -6,6 +6,7 @@ import { parseConnectionStatuses } from '#lib/integrations.ts';
 import type { MergeMember } from '#lib/memberMerge.ts';
 import { invalidate, refreshAll } from '$app/navigation';
 import { toaster } from '#lib/toast.ts';
+import type { ApiKeyRow } from '#lib/publicApi.ts';
 import Page from './+page.svelte';
 
 // The real German texts, so a broken message (ICU syntax, missing key) shows here
@@ -14,8 +15,8 @@ beforeAll(() => {
   init({ fallbackLocale: 'de', initialLocale: 'de' });
 });
 
-const { rpc } = vi.hoisted(() => ({ rpc: vi.fn() }));
-vi.mock('#lib/supabase.ts', () => ({ supabaseClient: { rpc } }));
+const { rpc, from } = vi.hoisted(() => ({ rpc: vi.fn(), from: vi.fn() }));
+vi.mock('#lib/supabase.ts', () => ({ supabaseClient: { rpc, from } }));
 vi.mock('$app/navigation', () => ({
   invalidate: vi.fn(async () => {}),
   refreshAll: vi.fn(async () => {})
@@ -29,6 +30,7 @@ vi.mock('#lib/toast.ts', () => ({ toaster: { error: vi.fn(), success: vi.fn() } 
 afterEach(() => cleanup());
 beforeEach(() => {
   rpc.mockReset();
+  from.mockReset();
   vi.mocked(invalidate).mockClear();
   vi.mocked(toaster.success).mockClear();
   vi.mocked(toaster.error).mockClear();
@@ -239,7 +241,8 @@ function data(status: object = STATUS) {
     events: [{ id: 61001, title: 'Kurs 1', date: '2026-11-02' }],
     groups: GROUPS,
     calendars: CALENDARS,
-    eventUrls: {} as Record<string, string>
+    eventUrls: {} as Record<string, string>,
+    apiKeys: [] as ApiKeyRow[]
   };
 }
 
@@ -720,5 +723,97 @@ describe('modules on and off', () => {
       'href',
       '/dashboard/js'
     );
+  });
+});
+
+describe('API keys', () => {
+  const KEY: ApiKeyRow = {
+    id: 'k1',
+    name: 'Vereinswebseite',
+    prefix: '1a2b3c4d',
+    scopes: ['training_plan:read'],
+    allowed_origins: ['https://www.jtc.ch'],
+    trainer_names: 'initial',
+    created_at: '2026-11-01T10:00:00Z',
+    last_used_at: null
+  };
+
+  function section() {
+    return screen.getByRole('heading', { name: 'API-Schlüssel' }).closest('section')!;
+  }
+
+  it('lists the keys by prefix, never in full', () => {
+    renderPage({ ...data(), apiKeys: [KEY] });
+    const card = section();
+    expect(within(card).getByText('Vereinswebseite')).toBeInTheDocument();
+    expect(within(card).getByText('alleda_1a2b3c4d…')).toBeInTheDocument();
+    expect(card.textContent).toContain('Vorname und Initiale (Anna M.)');
+    expect(card.textContent).toContain('https://www.jtc.ch');
+    expect(card.textContent).toContain('zuletzt genutzt nie');
+  });
+
+  it('says when there is none yet', () => {
+    renderPage();
+    expect(within(section()).getByText('Noch keine Schlüssel.')).toBeInTheDocument();
+  });
+
+  it('creates a key and shows it once', async () => {
+    const key = 'alleda_' + 'ab'.repeat(24);
+    rpc.mockResolvedValue({ data: { id: 'k2', key }, error: null });
+    renderPage();
+    await fireEvent.click(within(section()).getByRole('button', { name: 'Neuer Schlüssel' }));
+    await fireEvent.input(screen.getByPlaceholderText('z. B. Vereinswebseite'), {
+      target: { value: ' Webseite ' }
+    });
+    await fireEvent.input(screen.getByPlaceholderText('https://www.example.ch'), {
+      target: { value: 'https://www.JTC.ch/\nhttps://jtc.ch' }
+    });
+    expect(screen.getByText(/steht der Schlüssel in ihrem Quelltext/)).toBeInTheDocument();
+    await fireEvent.click(screen.getByRole('button', { name: 'Schlüssel erstellen' }));
+
+    expect(rpc).toHaveBeenCalledWith('api_key_create', {
+      p_name: 'Webseite',
+      p_scopes: ['training_plan:read'],
+      p_allowed_origins: ['https://www.jtc.ch', 'https://jtc.ch'],
+      p_trainer_names: 'full'
+    });
+    await waitFor(() =>
+      expect(
+        screen.getByRole('heading', { name: 'Schlüssel «Webseite» erstellt' })
+      ).toBeInTheDocument()
+    );
+    expect(screen.getByLabelText('API-Schlüssel')).toHaveValue(key);
+    expect(invalidate).toHaveBeenCalledWith('integrations:page');
+    await fireEvent.click(screen.getByRole('button', { name: 'Schliessen' }));
+    expect(screen.queryByDisplayValue(key)).toBeNull();
+  });
+
+  it('does not create a key with an invalid website', async () => {
+    renderPage();
+    await fireEvent.click(within(section()).getByRole('button', { name: 'Neuer Schlüssel' }));
+    await fireEvent.input(screen.getByPlaceholderText('z. B. Vereinswebseite'), {
+      target: { value: 'Webseite' }
+    });
+    await fireEvent.input(screen.getByPlaceholderText('https://www.example.ch'), {
+      target: { value: 'www.jtc.ch' }
+    });
+    expect(screen.getByText('Keine gültige Adresse: www.jtc.ch')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Schlüssel erstellen' })).toBeDisabled();
+  });
+
+  it('deletes a key after confirming', async () => {
+    const eq = vi.fn().mockResolvedValue({ error: null });
+    const del = vi.fn(() => ({ eq }));
+    from.mockReturnValue({ delete: del });
+    renderPage({ ...data(), apiKeys: [KEY] });
+    await fireEvent.click(within(section()).getByRole('button', { name: 'Löschen' }));
+    expect(del).not.toHaveBeenCalled();
+    const dialog = screen.getByRole('heading', {
+      name: 'Schlüssel «Vereinswebseite» löschen?'
+    }).parentElement!;
+    await fireEvent.click(within(dialog).getByRole('button', { name: 'Löschen' }));
+    expect(from).toHaveBeenCalledWith('api_keys');
+    expect(eq).toHaveBeenCalledWith('id', 'k1');
+    await waitFor(() => expect(invalidate).toHaveBeenCalledWith('integrations:page'));
   });
 });

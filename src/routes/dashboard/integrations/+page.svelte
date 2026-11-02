@@ -11,12 +11,14 @@
   import IssueList from './IssueList.svelte';
   import MappingEditor from './MappingEditor.svelte';
   import ModuleSwitch from './ModuleSwitch.svelte';
+  import ApiKeys from './ApiKeys.svelte';
 
   /**
    * Admins: where members, events and holidays come from (one card per
    * connection of the integration layer), what the latest runs did, the
    * open issues and the mapping of groups and calendars
-   * (docs/INTEGRATIONS.md, "Integrations page").
+   * (docs/INTEGRATIONS.md, "Integrations page"), and the API keys of
+   * other systems (docs/API.md).
    */
   let { data }: { data: PageData } = $props();
 
@@ -134,3 +136,7 @@
     {/each}
   </div>
 {/if}
+
+<div class="mt-6">
+  <ApiKeys keys={data.apiKeys} onchanged={() => invalidate('integrations:page')} />
+</div>
