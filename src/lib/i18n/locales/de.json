@@ -447,6 +447,7 @@
         "lastUsed": "zuletzt genutzt {date}",
         "never": "nie",
         "endpoint": "Trainingsplan:",
+        "docs": "API-Dokumentation (zum Ausprobieren)",
         "createdTitle": "Schlüssel «{name}» erstellt",
         "createdOnce": "Kopiere den Schlüssel jetzt: Er wird nur dieses eine Mal angezeigt. Geht er verloren, löschst du ihn und erstellst einen neuen.",
         "keyLabel": "API-Schlüssel",
