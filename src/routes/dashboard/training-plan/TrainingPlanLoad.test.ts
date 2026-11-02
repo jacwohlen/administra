@@ -59,7 +59,7 @@ describe('training plan load: who plans which training', () => {
 
   it('lets the TK plan every planned training, without asking', async () => {
     expect(await plannable(tk)).toEqual([27, 23]);
-    expect(rpc).not.toHaveBeenCalled();
+    expect(rpc).not.toHaveBeenCalledWith('my_main_training_ids', undefined);
   });
 
   it('lets a trainer plan the trainings they lead as main trainer', async () => {
@@ -74,7 +74,20 @@ describe('training plan load: who plans which training', () => {
 
   it('gives viewers nothing to plan, without asking', async () => {
     expect(await plannable(viewer)).toEqual([]);
-    expect(rpc).not.toHaveBeenCalled();
+    expect(rpc).not.toHaveBeenCalledWith('my_main_training_ids', undefined);
+  });
+
+  it("loads the account's members and the requests to stand in or swap, for everybody", async () => {
+    tables.training_plan_requests = [{ id: 5, from_member_id: 1, to_member_id: 2 }];
+    const data = (await load({
+      url: new URL('http://localhost/dashboard/training-plan?year=2027'),
+      depends: () => {},
+      parent: async () => viewer
+    } as never)) as { myMemberIds: number[]; requests: { id: number }[] };
+    expect(rpc).toHaveBeenCalledWith('my_member_ids', undefined);
+    expect(data.myMemberIds).toEqual([23]);
+    expect(data.requests.map((r) => r.id)).toEqual([5]);
+    delete tables.training_plan_requests;
   });
 
   it('leaves the plan read-only when the database does not answer', async () => {

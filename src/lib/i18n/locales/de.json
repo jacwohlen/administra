@@ -432,6 +432,13 @@
         "namePlaceholder": "z. B. Vereinswebseite",
         "scopes": "Darf lesen",
         "scopeTrainingPlan": "Trainingsplan: Trainings mit Zeit, Leitung, Thema und Ausfällen, Ferien",
+        "scopeEventParticipants": "Event-Teilnehmende: Events mit Datum und Ort, pro Event Name und Vorname der Angemeldeten und Anwesenden (Personendaten, nur für Server)",
+        "scopeShort": {
+          "training_plan:read": "Trainingsplan",
+          "event_participants:read": "Event-Teilnehmende"
+        },
+        "noScopes": "darf nichts lesen",
+        "serverOnlyHint": "Personendaten: Dieser Schlüssel ist nur für Server (z. B. ein Programm für Berichte). Im Browser wird er abgelehnt, darum lassen sich keine Webseiten eintragen. Bewahre ihn geheim auf.",
         "trainerNamesLabel": "Trainernamen",
         "trainerNames": {
           "full": "Voller Name (Anna Muster)",
@@ -446,14 +453,14 @@
         "created": "erstellt {date}",
         "lastUsed": "zuletzt genutzt {date}",
         "never": "nie",
-        "endpoint": "Trainingsplan:",
+        "docs": "API-Dokumentation (zum Ausprobieren)",
         "createdTitle": "Schlüssel «{name}» erstellt",
         "createdOnce": "Kopiere den Schlüssel jetzt: Er wird nur dieses eine Mal angezeigt. Geht er verloren, löschst du ihn und erstellst einen neuen.",
         "keyLabel": "API-Schlüssel",
         "copy": "Schlüssel kopieren",
         "copied": "Kopiert",
         "copyError": "Kopieren fehlgeschlagen",
-        "example": "So ruft ein Server den Trainingsplan ab:",
+        "example": "So ruft ein Server die Daten ab:",
         "saved": "Gespeichert",
         "saveError": "Speichern fehlgeschlagen",
         "revoke": "Löschen",
@@ -1663,6 +1670,72 @@
           "failed": "Fehlgeschlagen",
           "skipped": "Nicht gesendet",
           "marked": "Als mitgeteilt markiert"
+        }
+      },
+      "request": {
+        "button": "Abgeben",
+        "title": "Training abgeben",
+        "kind": {
+          "substitute": "Vertretung",
+          "swap": "Tauschen"
+        },
+        "kindHint": {
+          "substitute": "Jemand übernimmt diesen Termin. Thema und Notiz bleiben beim Termin.",
+          "swap": "Ihr tauscht die Termine: Jede und jeder nimmt das eigene Thema mit."
+        },
+        "askWho": "Wen fragst du?",
+        "swapWith": "Mit wem tauschst du?",
+        "pickPerson": "Person wählen",
+        "pickDate": "Welchen Termin übernimmst du dafür?",
+        "noDates": "{name} leitet in diesem Jahr keinen kommenden Termin, der getauscht werden kann.",
+        "preview": "So sieht der Plan nach der Zusage aus",
+        "moveNote": "Notiz mitnehmen: {note}",
+        "message": "Nachricht (optional)",
+        "messagePlaceholder": "z.B. Abgemacht am Telefon, danke!",
+        "confirmHint": "Die Person bekommt eine Anfrage in der App und per Mail. Der Plan ändert sich erst, wenn sie zusagt.",
+        "send": "Anfrage senden",
+        "inSubstitute": "{name} fragt dich, ob du das Training am {date} übernimmst",
+        "outSubstitute": "Du hast {name} gefragt, ob sie oder er das Training am {date} übernimmt",
+        "inSwap": "{name} möchte mit dir tauschen:",
+        "outSwap": "Du hast {name} einen Tausch vorgeschlagen:",
+        "youTake": "Du leitest {date}",
+        "theyTake": "{name} leitet {date}",
+        "accept": "Zusagen",
+        "decline": "Absagen",
+        "withdraw": "Zurückziehen",
+        "waiting": "Wartet auf Antwort.",
+        "stale": "Gilt nicht mehr: Der Termin hat sich inzwischen geändert.",
+        "rowSubstitute": "Vertretung angefragt bei {name}",
+        "rowSwap": "Tausch angefragt mit {name}",
+        "rowStandsIn": "Vertritt {name}",
+        "rowSwapped": "Getauscht mit {name}",
+        "done": {
+          "asked": "Anfrage an {name} gesendet",
+          "accepted": "Zugesagt, der Plan ist angepasst",
+          "declined": "Abgesagt",
+          "withdrawn": "Anfrage zurückgezogen",
+          "expired": "Die Anfrage gilt nicht mehr, der Termin hat sich geändert. Der Plan bleibt, wie er ist."
+        },
+        "mail": {
+          "sent": "{name} hat eine Mail bekommen.",
+          "simulated": "Testumgebung: Die Mail an {name} wurde nur simuliert.",
+          "skipped": "{name} bekommt keine Mail (keine Adresse oder keine Plan-Mails gewünscht).",
+          "failed": "Die Mail an {name} konnte nicht gesendet werden. Sag es am besten direkt.",
+          "off": "Ohne Mail: Hier werden keine Mails versendet."
+        },
+        "error": {
+          "not_signed_in": "Bitte melde dich neu an.",
+          "bad_request": "Die Anfrage ist unvollständig.",
+          "not_allowed": "Das darfst du nicht.",
+          "not_your_date": "Du leitest diesen Termin nicht (mehr).",
+          "not_planned": "Dieser Termin ist nicht im Trainingsplan.",
+          "past": "Der Termin liegt in der Vergangenheit.",
+          "cancelled": "Das Training fällt an diesem Termin aus.",
+          "bad_member": "Diese Person kann nicht gefragt werden.",
+          "not_their_date": "Diese Person leitet den gewählten Termin nicht (mehr).",
+          "busy": "Für einen der Termine läuft schon eine Anfrage.",
+          "not_found": "Die Anfrage gibt es nicht mehr.",
+          "failed": "Das hat nicht geklappt. Bitte versuch es nochmals."
         }
       }
     }

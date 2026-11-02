@@ -13,6 +13,7 @@
     faPen,
     faPlus,
     faPrint,
+    faRightLeft,
     faRotate,
     faDoorClosed,
     faEnvelope,
@@ -46,6 +47,14 @@
   import NotifyBanner from './NotifyBanner.svelte';
   import NotifyDialog from './NotifyDialog.svelte';
   import { loadNotifyMode, type MailMode } from '#lib/trainingPlanMailClient.ts';
+  import {
+    acceptedOnRow,
+    canHandOver,
+    openRequestsBySlot,
+    requestOnRow
+  } from '#lib/trainingPlanRequests.ts';
+  import RequestDialog from './RequestDialog.svelte';
+  import RequestBanner from './RequestBanner.svelte';
   import type { PageData } from './$types';
 
   let { data }: { data: PageData } = $props();
@@ -57,6 +66,8 @@
   let showPast = $state(false);
   let selected = $state<string[]>([]);
   let dialogRows = $state<PlanRow[] | null>(null);
+  // The date the account's member hands on (substitute or swap)
+  let requestRow = $state<PlanRow | null>(null);
   let rotationOpen = $state(false);
   let calendarOpen = $state(false);
   let notifyOpen = $state(false);
@@ -119,6 +130,10 @@
     new Map(data.members.map((m) => [m.id, `${m.firstname} ${m.lastname}`] as const))
   );
   let topics = $derived(planTopics(data.sessions));
+  // Substitutes and swaps: the account's members, the open requests by date
+  let mine = $derived(new Set(data.myMemberIds));
+  let openRequests = $derived(data.requests.filter((r) => r.status === 'open'));
+  let bySlot = $derived(openRequestsBySlot(data.requests));
   let counts = $derived(
     [...trainerCounts(rows)]
       .map(([id, count]) => ({ id, count, name: memberName.get(id) ?? '?' }))
@@ -219,6 +234,7 @@
 
   async function saved() {
     dialogRows = null;
+    requestRow = null;
     rotationOpen = false;
     selected = [];
     await reload();
@@ -293,6 +309,15 @@
     onopen={() => (notifyOpen = true)}
   />
 {/if}
+
+<RequestBanner
+  requests={openRequests}
+  {rows}
+  {mine}
+  {memberName}
+  {today}
+  onchanged={() => reload()}
+/>
 
 <div class="flex flex-wrap gap-2 mb-4 print:hidden">
   {#if canPlanAny}
@@ -602,6 +627,42 @@
                           {r.session.notes}
                         </div>
                       {/if}
+                      {@const asked = requestOnRow(r, bySlot)}
+                      {@const history = asked ? null : acceptedOnRow(r, data.requests)}
+                      {#if asked}
+                        <div class="meta-item text-xs text-warning-700-300 font-semibold mt-0.5">
+                          <Fa icon={faRightLeft} size="xs" class="flex-none" />
+                          <span class="truncate">
+                            {asked.kind === 'swap'
+                              ? $_('page.trainingPlan.request.rowSwap', {
+                                  values: {
+                                    name:
+                                      memberName.get(
+                                        asked.training_id === r.training.id && asked.date === r.date
+                                          ? asked.to_member_id
+                                          : asked.from_member_id
+                                      ) ?? '?'
+                                  }
+                                })
+                              : $_('page.trainingPlan.request.rowSubstitute', {
+                                  values: { name: memberName.get(asked.to_member_id) ?? '?' }
+                                })}
+                          </span>
+                        </div>
+                      {:else if history}
+                        <div class="meta-item text-xs text-surface-600-400 mt-0.5">
+                          <Fa icon={faRightLeft} size="xs" class="flex-none" />
+                          <span class="truncate">
+                            {history.kind === 'swap'
+                              ? $_('page.trainingPlan.request.rowSwapped', {
+                                  values: { name: memberName.get(history.with) ?? '?' }
+                                })
+                              : $_('page.trainingPlan.request.rowStandsIn', {
+                                  values: { name: memberName.get(history.for) ?? '?' }
+                                })}
+                          </span>
+                        </div>
+                      {/if}
                     {/if}
                     {#if r.events.length > 0}
                       <div class="flex flex-wrap gap-1 mt-1">
@@ -614,6 +675,18 @@
                       </div>
                     {/if}
                   </a>
+                  {#if canHandOver(r, mine, today) && !requestOnRow(r, bySlot)}
+                    <button
+                      class="btn preset-tonal-surface flex-none print:hidden"
+                      onclick={() => (requestRow = r)}
+                      title={$_('page.trainingPlan.request.button')}
+                      aria-label="{$_('page.trainingPlan.request.button')}: {r.training
+                        .title} {r.date}"
+                    >
+                      <Fa icon={faRightLeft} />
+                      <span class="hidden sm:inline">{$_('page.trainingPlan.request.button')}</span>
+                    </button>
+                  {/if}
                   {#if canPlan(r)}
                     <button
                       class="btn preset-tonal-primary flex-none print:hidden"
@@ -669,6 +742,18 @@
     members={data.members}
     {topics}
     onclose={() => (dialogRows = null)}
+    onsaved={saved}
+  />
+{/if}
+
+{#if requestRow}
+  <RequestDialog
+    row={requestRow}
+    {rows}
+    members={data.members}
+    {bySlot}
+    {today}
+    onclose={() => (requestRow = null)}
     onsaved={saved}
   />
 {/if}
