@@ -94,7 +94,7 @@
           : $_('page.trainingPlan.request.theyTake', {
               values: { name: name(r.to_member_id), date: a.label }
             })}{#if b.topic}
-          · {$_('page.trainingPlan.topic')}: {b.topic}{/if}
+          {' · '}{$_('page.trainingPlan.topic')}: {b.topic}{/if}
       </li>
       <li>
         {forMe
@@ -102,7 +102,7 @@
               values: { name: name(r.from_member_id), date: b.label }
             })
           : $_('page.trainingPlan.request.youTake', { values: { date: b.label } })}{#if a.topic}
-          · {$_('page.trainingPlan.topic')}: {a.topic}{/if}
+          {' · '}{$_('page.trainingPlan.topic')}: {a.topic}{/if}
       </li>
     </ul>
   {:else}
@@ -114,7 +114,7 @@
         : $_('page.trainingPlan.request.outSubstitute', {
             values: { name: name(r.to_member_id), date: a.label }
           })}{#if a.topic}
-        · {$_('page.trainingPlan.topic')}: {a.topic}{/if}
+        {' · '}{$_('page.trainingPlan.topic')}: {a.topic}{/if}
     </p>
   {/if}
   {#if r.message}

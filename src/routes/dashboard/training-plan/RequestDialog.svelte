@@ -121,7 +121,7 @@
     <h3>{$_('page.trainingPlan.request.title')}</h3>
     <p class="text-sm text-surface-600-400 mb-3">
       {dateLabel(row)}{#if row.session?.topic}
-        · {row.session.topic}{/if}
+        {' · '}{row.session.topic}{/if}
     </p>
 
     <form
@@ -181,7 +181,7 @@
                 />
                 <span>
                   {dateLabel(c)}{#if c.session?.topic}
-                    <span class="text-surface-600-400"> · {c.session.topic}</span>{/if}
+                    <span class="text-surface-600-400">{' · '}{c.session.topic}</span>{/if}
                 </span>
               </label>
             {/each}
@@ -197,8 +197,8 @@
                 <span>
                   <span class="font-semibold">{dateLabel(p.r)}</span><br />
                   {memberName.get(p.who ?? -1) ?? '?'}{#if p.next.topic}
-                    · {p.next.topic}{/if}{#if p.next.notes}
-                    <span class="italic text-surface-600-400"> · {p.next.notes}</span>{/if}
+                    {' · '}{p.next.topic}{/if}{#if p.next.notes}
+                    <span class="italic text-surface-600-400">{' · '}{p.next.notes}</span>{/if}
                 </span>
               </div>
             {/each}
