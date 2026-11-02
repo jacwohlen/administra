@@ -13,6 +13,9 @@
 --      holidays of the period, no notes, names as the key says
 --   N  no plan: unknown, malformed or deleted key, a key without the scope;
 --      a bad period is refused
+--   V  events and their participants (event_participants:read,
+--      20261111120000_api_event_participants.sql): servers only, the events
+--      of a period, per event who registered or attended, names only
 
 \set ON_ERROR_STOP 1
 \o /dev/null
@@ -239,6 +242,12 @@ SELECT pg_temp.ok('P1 anon and signed-in accounts may ask for the plan',
 SELECT pg_temp.ok('P2 api_key_use is internal', NOT (
      has_function_privilege('anon', 'public.api_key_use(text, text)', 'EXECUTE')
   OR has_function_privilege('authenticated', 'public.api_key_use(text, text)', 'EXECUTE')));
+SELECT pg_temp.ok('P4 anon may ask for events and participants (the key decides)',
+  has_function_privilege('anon', 'public.api_events(text, date, date)', 'EXECUTE')
+  AND has_function_privilege('anon', 'public.api_event_participants(text, integer)', 'EXECUTE'));
+SELECT pg_temp.ok('P5 api_event_json is internal', NOT (
+     has_function_privilege('anon', 'public.api_event_json(public.events)', 'EXECUTE')
+  OR has_function_privilege('authenticated', 'public.api_event_json(public.events)', 'EXECUTE')));
 SELECT pg_temp.ok('P3 only signed-in accounts reach api_key_create (it checks is_admin)',
   NOT has_function_privilege('anon', 'public.api_key_create(text, text[], text[], text)', 'EXECUTE'));
 
@@ -336,6 +345,131 @@ BEGIN
 
   DELETE FROM public.api_keys WHERE name = 'Webseite';
   PERFORM pg_temp.ok('N4 a deleted key: null at once', pg_temp.plan(k) IS NULL);
+END $$;
+ROLLBACK TO SAVEPOINT s;
+
+-----------------
+-- V Events and their participants
+-----------------
+
+SAVEPOINT s;
+INSERT INTO public.members (id, firstname, lastname, labels, email, birthday) VALUES
+  (965, 'Zoe', 'Zurück', '[]', 'zoe@test.ch', '2010-05-01'),
+  (966, 'Ida', 'Abwesend', '[]', NULL, NULL),
+  (967, 'Kai', 'Coach', '[]', NULL, NULL);
+INSERT INTO public.events (id, title, description, date, date_to, "timeFrom", "timeTo", location, section) VALUES
+  (961, 'API Lager', 'intern: Budget', pg_temp.d(-10), pg_temp.d(-8), '09:00', '17:00', 'Tenero', 'Judo'),
+  (962, 'API Turnier', NULL, pg_temp.d(-3), NULL, '08:00', NULL, NULL, 'Judo'),
+  (963, 'API zu früh', NULL, pg_temp.d(-40), NULL, NULL, NULL, NULL, NULL),
+  (964, 'API Leer', NULL, pg_temp.d(5), NULL, NULL, NULL, NULL, NULL);
+INSERT INTO public.event_participants ("eventId", "memberId", "attendanceStatus", notes) VALUES
+  (961, 961, 'attended', 'braucht Shuttle'),
+  (961, 962, 'registered', NULL),
+  (961, 965, 'cancelled', NULL),
+  (961, 966, 'absent', NULL),
+  (962, 963, 'registered', NULL);
+INSERT INTO public.event_logs ("eventId", "memberId", "isCoach") VALUES
+  (961, 961, false),
+  (961, 967, true),
+  (961, 967, true);
+
+DO $$
+DECLARE
+  k text := pg_temp.new_key('Berichte', ARRAY['event_participants:read']);
+  k_plan text := pg_temp.new_key('Webseite', ARRAY['training_plan:read'], ARRAY['https://www.jtc.ch']);
+  v_id uuid;
+  e jsonb;
+  p jsonb;
+BEGIN
+  -- Keys: the scope exists, and a key with it never lists a website
+  SELECT id INTO v_id FROM public.api_keys WHERE name = 'Webseite';
+  PERFORM pg_temp.act_as('30000000-0000-4000-8000-000000000003');
+  PERFORM pg_temp.eq('V1 a key with event participants and a website is refused',
+    pg_temp.state($q$SELECT public.api_key_create('x', ARRAY['event_participants:read'], ARRAY['https://www.jtc.ch'])$q$),
+    '23514');
+  PERFORM pg_temp.eq('V1 nor can a website key get the scope',
+    pg_temp.state(format($q$UPDATE public.api_keys SET scopes = scopes || 'event_participants:read'::text WHERE id = %L$q$, v_id)),
+    '23514');
+  UPDATE public.api_keys SET scopes = ARRAY['training_plan:read', 'event_participants:read'],
+                             allowed_origins = '{}'
+   WHERE id = v_id;
+  PERFORM pg_temp.eq('V1 without websites it can',
+    (SELECT array_to_string(scopes, ',') FROM public.api_keys WHERE id = v_id),
+    'training_plan:read,event_participants:read');
+  UPDATE public.api_keys SET scopes = ARRAY['training_plan:read'], allowed_origins = ARRAY['https://www.jtc.ch']
+   WHERE id = v_id;
+  RESET ROLE;
+
+  -- The events of a period
+  PERFORM pg_temp.as_anon();
+  e := public.api_events(k, current_date - 20, current_date + 10);
+  RESET ROLE;
+  PERFORM pg_temp.eq('V2 the answer''s parts', pg_temp.keys(e), 'allowed_origins,events');
+  PERFORM pg_temp.eq('V2 a server key lists no websites', e->>'allowed_origins', '[]');
+  -- (the seed's events aside)
+  PERFORM pg_temp.eq('V2 the events overlapping the period, by date',
+    (SELECT string_agg(x->>'title', ',') FROM jsonb_array_elements(e->'events') x
+     WHERE x->>'title' LIKE 'API %'),
+    'API Lager,API Turnier,API Leer');
+  e := jsonb_build_object('events', (SELECT jsonb_agg(x) FROM jsonb_array_elements(e->'events') x
+                                      WHERE x->>'title' LIKE 'API %'));
+  PERFORM pg_temp.eq('V2 an event''s fields',
+    pg_temp.keys(e->'events'->0),
+    'all_day,attended,date,date_to,id,location,registered,section,timeFrom,timeTo,title');
+  PERFORM pg_temp.eq('V2 counts: registered not cancelled, attended once per member',
+    (e->'events'->0->>'registered') || '/' || (e->'events'->0->>'attended'), '3/2');
+  PERFORM pg_temp.ok('V2 no description', e::text NOT LIKE '%Budget%');
+  PERFORM pg_temp.as_anon();
+  PERFORM pg_temp.eq('V2 a multi-day event that began before the period',
+    (SELECT string_agg(x->>'title', ',') FROM jsonb_array_elements(
+       public.api_events(k, current_date - 9, current_date - 9)->'events') x
+     WHERE x->>'title' LIKE 'API %'),
+    'API Lager');
+  PERFORM pg_temp.eq('V2 a bad period is refused',
+    pg_temp.state(format('SELECT public.api_events(%L, current_date, current_date + 401)', k)),
+    '22023');
+  RESET ROLE;
+
+  -- Who took part
+  PERFORM pg_temp.as_anon();
+  p := public.api_event_participants(k, 961);
+  RESET ROLE;
+  PERFORM pg_temp.eq('V3 the answer''s parts', pg_temp.keys(p), 'allowed_origins,event,participants');
+  PERFORM pg_temp.eq('V3 the event', p->'event'->>'title', 'API Lager');
+  PERFORM pg_temp.eq('V3 registered or attended, by last name; not who cancelled',
+    (SELECT string_agg(x->>'lastname', ',') FROM jsonb_array_elements(p->'participants') x),
+    'Abwesend,Beispiel,Coach,Muster');
+  PERFORM pg_temp.eq('V3 a participant: id, name and flags only',
+    pg_temp.keys(p->'participants'->0), 'attended,coach,firstname,id,lastname,registered');
+  PERFORM pg_temp.eq('V3 flags per participant',
+    (SELECT string_agg(x->>'id' || ':' || (x->>'registered')::boolean::int || (x->>'attended')::boolean::int
+                       || (x->>'coach')::boolean::int, ',' ORDER BY (x->>'id')::int)
+     FROM jsonb_array_elements(p->'participants') x),
+    '961:110,962:100,966:100,967:011');
+  PERFORM pg_temp.eq('V3 names trimmed',
+    (SELECT x->>'lastname' FROM jsonb_array_elements(p->'participants') x WHERE x->>'id' = '962'),
+    'Beispiel');
+  PERFORM pg_temp.ok('V3 no e-mail, birthday or notes',
+    p::text NOT LIKE '%@%' AND p::text NOT LIKE '%2010%' AND p::text NOT LIKE '%Shuttle%'
+    AND p::text NOT LIKE '%Zurück%');
+
+  PERFORM pg_temp.as_anon();
+  PERFORM pg_temp.eq('V4 an event without participants',
+    public.api_event_participants(k, 964)->>'participants', '[]');
+  PERFORM pg_temp.eq('V4 an unknown event: event null',
+    public.api_event_participants(k, 999999)::text, '{"event": null, "allowed_origins": []}');
+  PERFORM pg_temp.ok('V5 the training plan key gets nothing',
+    public.api_events(k_plan, current_date - 20, current_date) IS NULL
+    AND public.api_event_participants(k_plan, 961) IS NULL);
+  PERFORM pg_temp.ok('V5 an unknown or malformed key gets nothing',
+    public.api_event_participants('alleda_' || repeat('0', 48), 961) IS NULL
+    AND public.api_event_participants(NULL, 961) IS NULL
+    AND public.api_events('x', current_date, current_date) IS NULL);
+  PERFORM pg_temp.ok('V5 nor does the participants key get the plan',
+    public.api_training_plan(k, current_date, current_date) IS NULL);
+  RESET ROLE;
+  PERFORM pg_temp.ok('V6 the use is noted',
+    (SELECT last_used_at = now() FROM public.api_keys WHERE name = 'Berichte'));
 END $$;
 ROLLBACK TO SAVEPOINT s;
 

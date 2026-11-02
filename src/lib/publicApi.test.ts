@@ -1,10 +1,17 @@
 import { describe, expect, it } from 'vitest';
 import {
   bearerKey,
+  buildApiEventParticipants,
+  buildApiEvents,
   buildApiTrainingPlan,
   normalizeOrigin,
+  parseAttendedFilter,
+  parseEventId,
+  parseEventsQuery,
   parseOrigins,
   parseTrainingPlanQuery,
+  scopesAllowOrigins,
+  type ApiEventData,
   type ApiTrainingPlanData
 } from './publicApi';
 
@@ -258,5 +265,163 @@ describe('buildApiTrainingPlan', () => {
         'trainingId'
       ].sort()
     );
+  });
+});
+
+describe('scopesAllowOrigins', () => {
+  it('allows websites only without personal data', () => {
+    expect(scopesAllowOrigins(['training_plan:read'])).toBe(true);
+    expect(scopesAllowOrigins([])).toBe(true);
+    expect(scopesAllowOrigins(['event_participants:read'])).toBe(false);
+    expect(scopesAllowOrigins(['training_plan:read', 'event_participants:read'])).toBe(false);
+  });
+});
+
+describe('parseEventsQuery', () => {
+  const now = new Date('2026-11-02T23:30:00Z'); // already 3 November in Zurich
+
+  it('defaults to 90 days back and 180 days in all', () => {
+    expect(parseEventsQuery(new URLSearchParams(), now)).toEqual({
+      ok: true,
+      query: { from: '2026-08-05', to: '2027-01-31' }
+    });
+  });
+
+  it('takes from and to', () => {
+    expect(parseEventsQuery(new URLSearchParams('from=2026-10-01&to=2026-10-31'), now)).toEqual({
+      ok: true,
+      query: { from: '2026-10-01', to: '2026-10-31' }
+    });
+  });
+
+  it.each(['from=2026-13-01', 'from=2026-10-02&to=2026-10-01', 'from=2026-01-01&to=2027-01-02'])(
+    'refuses %s',
+    (query) => {
+      expect(parseEventsQuery(new URLSearchParams(query), now).ok).toBe(false);
+    }
+  );
+});
+
+describe('parseEventId and parseAttendedFilter', () => {
+  it('reads an event id', () => {
+    expect(parseEventId('42')).toBe(42);
+    expect(parseEventId('10000001')).toBe(10000001);
+  });
+
+  it.each([undefined, '', '0', '-1', '1.5', 'abc', '2147483648', '12345678901'])(
+    'refuses %s as event id',
+    (value) => {
+      expect(parseEventId(value)).toBeNull();
+    }
+  );
+
+  it('reads attended', () => {
+    expect(parseAttendedFilter(new URLSearchParams())).toEqual({ ok: true, attendedOnly: false });
+    expect(parseAttendedFilter(new URLSearchParams('attended=false')).ok).toBe(true);
+    expect(parseAttendedFilter(new URLSearchParams('attended=true'))).toEqual({
+      ok: true,
+      attendedOnly: true
+    });
+    expect(parseAttendedFilter(new URLSearchParams('attended=1')).ok).toBe(false);
+  });
+});
+
+describe('buildApiEvents and buildApiEventParticipants', () => {
+  const event: ApiEventData = {
+    id: 10000005,
+    title: 'Sommerlager',
+    date: '2026-07-06',
+    date_to: '2026-07-10',
+    all_day: true,
+    timeFrom: '09:00',
+    timeTo: '17:00',
+    location: ' Tenero ',
+    section: '',
+    registered: 3,
+    attended: 2
+  };
+
+  it('shapes an event: last day, no times all day, empty text as null', () => {
+    const answer = buildApiEvents(
+      {
+        allowed_origins: [],
+        events: [
+          event,
+          { ...event, id: 7, date_to: null, all_day: false, timeFrom: '18.00', timeTo: null }
+        ]
+      },
+      { from: '2026-07-01', to: '2026-07-31' }
+    );
+    expect(answer).toEqual({
+      from: '2026-07-01',
+      to: '2026-07-31',
+      timezone: 'Europe/Zurich',
+      events: [
+        {
+          id: 10000005,
+          title: 'Sommerlager',
+          date: '2026-07-06',
+          dateTo: '2026-07-10',
+          allDay: true,
+          start: null,
+          end: null,
+          location: 'Tenero',
+          section: null,
+          registered: 3,
+          attended: 2
+        },
+        expect.objectContaining({ id: 7, dateTo: '2026-07-06', start: '18:00', end: null })
+      ]
+    });
+    expect(JSON.stringify(answer)).not.toContain('allowed_origins');
+  });
+
+  const participants = [
+    { id: 1, firstname: 'Anna', lastname: 'Muster', registered: true, attended: true, coach: true },
+    {
+      id: 2,
+      firstname: 'Beni',
+      lastname: 'Beispiel',
+      registered: true,
+      attended: false,
+      coach: false
+    },
+    { id: 3, firstname: 'Clara', lastname: 'Neu', registered: false, attended: true, coach: false }
+  ];
+
+  it('lists every participant with their flags', () => {
+    const answer = buildApiEventParticipants({ allowed_origins: [], event, participants }, false);
+    expect(answer.event.id).toBe(10000005);
+    expect(answer.participants).toEqual([
+      {
+        memberId: 1,
+        firstname: 'Anna',
+        lastname: 'Muster',
+        registered: true,
+        attended: true,
+        coach: true
+      },
+      {
+        memberId: 2,
+        firstname: 'Beni',
+        lastname: 'Beispiel',
+        registered: true,
+        attended: false,
+        coach: false
+      },
+      {
+        memberId: 3,
+        firstname: 'Clara',
+        lastname: 'Neu',
+        registered: false,
+        attended: true,
+        coach: false
+      }
+    ]);
+  });
+
+  it('only who attended when asked', () => {
+    const answer = buildApiEventParticipants({ allowed_origins: [], event, participants }, true);
+    expect(answer.participants.map((p) => p.memberId)).toEqual([1, 3]);
   });
 });

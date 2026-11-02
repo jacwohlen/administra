@@ -8,12 +8,21 @@
  * and every route under src/routes/api/v1/ is described.
  */
 
-import { API_SCOPES, DEFAULT_RANGE_DAYS, MAX_RANGE_DAYS, type ApiScope } from './publicApi';
+import {
+  API_SCOPES,
+  DEFAULT_RANGE_DAYS,
+  EVENTS_DEFAULT_PAST_DAYS,
+  EVENTS_DEFAULT_RANGE_DAYS,
+  MAX_RANGE_DAYS,
+  type ApiScope
+} from './publicApi';
 
 /** What each scope gives, shown with the authentication */
 const SCOPE_TEXT: Record<ApiScope, string> = {
   'training_plan:read':
-    '`GET /api/v1/training-plan`: planned trainings, dates, who leads, topic, cancellations, holidays'
+    '`GET /api/v1/training-plan`: planned trainings, dates, who leads, topic, cancellations, holidays',
+  'event_participants:read':
+    '`GET /api/v1/events`, `GET /api/v1/events/{eventId}/participants`: events with date, place and counts, and per event the names of who took part. Personal data: such a key is for servers only (it lists no websites)'
 };
 
 const DATE = { type: 'string', format: 'date', examples: ['2026-11-04'] };
@@ -74,6 +83,26 @@ const ERRORS = {
   )
 };
 
+/** The event endpoints: no caching, and every website is refused */
+const NO_STORE = {
+  description: 'Personal data: never kept',
+  schema: { type: 'string', examples: ['no-store'] }
+};
+
+const EVENT_ERRORS = {
+  ...ERRORS,
+  '403': errorResponse(
+    'Sent from a website (`Origin`): keys with personal data are for servers only',
+    'origin_not_allowed',
+    'This API key is for servers only.'
+  ),
+  '503': errorResponse(
+    'The database did not answer; retry later',
+    'unavailable',
+    'The events are temporarily unavailable.'
+  )
+};
+
 const DESCRIPTION = `Read Alleda from other systems, for example the club's website.
 
 **Authentication.** Every request sends an API key in the header
@@ -91,9 +120,15 @@ not stored.
 its key (CORS); requests from other websites are refused with \`403\`.
 Servers and \`curl\` send no \`Origin\` and are not affected.
 
-**Caching.** Answers may be kept for five minutes
+**Personal data.** A key with \`event_participants:read\` lists no websites,
+so every request from a browser is refused (\`403\`); keep it on the
+program's server like a password. Trying it on this page is possible all the
+same: it is Alleda's own page, not another website.
+
+**Caching.** Training plan answers may be kept for five minutes
 (\`Cache-Control: private, max-age=300\`), by browsers and the website's
-server, not by shared caches.`;
+server, not by shared caches. Event answers are never kept
+(\`Cache-Control: no-store\`).`;
 
 /** The OpenAPI document; origin: the instance's, so "Try it" calls it */
 export function openApiDocument(origin: string): Record<string, unknown> {
@@ -111,6 +146,11 @@ export function openApiDocument(origin: string): Record<string, unknown> {
         name: 'Training plan',
         description:
           'Who leads which training on which date, the topic, cancellations and holidays, as on the plan page in Alleda.'
+      },
+      {
+        name: 'Events',
+        description:
+          'Events and who took part, e.g. for a program writing reports. Personal data: keys for servers only.'
       }
     ],
     paths: {
@@ -162,6 +202,84 @@ Scope: \`training_plan:read\`.`,
               }
             },
             ...ERRORS
+          }
+        }
+      },
+      '/events': {
+        get: {
+          tags: ['Events'],
+          operationId: 'listEvents',
+          summary: 'Events of a period',
+          description: `Every event overlapping the period (a camp that began before \`from\` too), by date and start time, with its counts. Use it to find an event's \`id\`.
+The description is never in the answer.
+
+Scope: \`event_participants:read\`.`,
+          parameters: [
+            {
+              name: 'from',
+              in: 'query',
+              description: `First date, \`YYYY-MM-DD\`. Default: ${EVENTS_DEFAULT_PAST_DAYS} days ago (Europe/Zurich).`,
+              schema: PARAM_DATE
+            },
+            {
+              name: 'to',
+              in: 'query',
+              description: `Last date, inclusive. Default: \`from\` + ${EVENTS_DEFAULT_RANGE_DAYS - 1} days; at most ${MAX_RANGE_DAYS - 1} days after \`from\`.`,
+              schema: PARAM_DATE
+            }
+          ],
+          responses: {
+            '200': {
+              description: 'The events of the period',
+              headers: { 'Cache-Control': NO_STORE },
+              content: {
+                'application/json': {
+                  schema: { $ref: '#/components/schemas/Events' },
+                  example: EVENTS_EXAMPLE
+                }
+              }
+            },
+            ...EVENT_ERRORS
+          }
+        }
+      },
+      '/events/{eventId}/participants': {
+        get: {
+          tags: ['Events'],
+          operationId: 'listEventParticipants',
+          summary: 'Who took part in an event',
+          description: `Every member registered (not cancelled) or recorded as present, by last and first name.
+Only id and name: never e-mail, phone, address, birthday, notes or grades.
+
+Scope: \`event_participants:read\`.`,
+          parameters: [
+            {
+              name: 'eventId',
+              in: 'path',
+              required: true,
+              description: 'The event, `id` from `GET /events`',
+              schema: { type: 'integer', minimum: 1 }
+            },
+            {
+              name: 'attended',
+              in: 'query',
+              description: '`true`: only members recorded as present. Default: `false`, everyone.',
+              schema: { type: 'boolean' }
+            }
+          ],
+          responses: {
+            '200': {
+              description: 'The event and its participants',
+              headers: { 'Cache-Control': NO_STORE },
+              content: {
+                'application/json': {
+                  schema: { $ref: '#/components/schemas/EventParticipants' },
+                  example: { event: EVENTS_EXAMPLE.events[0], participants: PARTICIPANTS_EXAMPLE }
+                }
+              }
+            },
+            ...EVENT_ERRORS,
+            '404': errorResponse('No event with this id', 'not_found', 'No event with this id.')
           }
         }
       }
@@ -273,6 +391,84 @@ Scope: \`training_plan:read\`.`,
             }
           }
         },
+        Events: {
+          type: 'object',
+          required: ['from', 'to', 'timezone', 'events'],
+          properties: {
+            from: { ...DATE, description: 'First date of the period' },
+            to: { ...DATE, description: 'Last date of the period, inclusive' },
+            timezone: { type: 'string', const: 'Europe/Zurich' },
+            events: {
+              type: 'array',
+              description: 'Every event overlapping the period, by date and start time',
+              items: { $ref: '#/components/schemas/Event' }
+            }
+          }
+        },
+        Event: {
+          type: 'object',
+          required: [
+            'id',
+            'title',
+            'date',
+            'dateTo',
+            'allDay',
+            'start',
+            'end',
+            'location',
+            'section',
+            'registered',
+            'attended'
+          ],
+          properties: {
+            id: { type: 'integer', examples: [10000005] },
+            title: { type: 'string', examples: ['Sommerlager'] },
+            date: { ...DATE, description: 'First day' },
+            dateTo: { ...DATE, description: 'Last day, inclusive; the same as `date` for one day' },
+            allDay: { type: 'boolean' },
+            start: { ...TIME, description: 'Local time `HH:MM`; `null` all day or without a time' },
+            end: { ...TIME, description: 'Local time `HH:MM`; `null` all day or without a time' },
+            location: { type: ['string', 'null'], examples: ['Tenero'] },
+            section: { type: ['string', 'null'], examples: ['Judo'] },
+            registered: { type: 'integer', description: 'Registrations not cancelled' },
+            attended: { type: 'integer', description: 'Members recorded as present' }
+          }
+        },
+        EventParticipants: {
+          type: 'object',
+          required: ['event', 'participants'],
+          properties: {
+            event: { $ref: '#/components/schemas/Event' },
+            participants: {
+              type: 'array',
+              description: 'By last and first name',
+              items: { $ref: '#/components/schemas/Participant' }
+            }
+          }
+        },
+        Participant: {
+          type: 'object',
+          required: ['memberId', 'firstname', 'lastname', 'registered', 'attended', 'coach'],
+          properties: {
+            memberId: {
+              type: 'integer',
+              description:
+                "The member's id in Alleda (the Webling id for members from Webling), to tell two people with the same name apart",
+              examples: [4711]
+            },
+            firstname: { type: 'string', examples: ['Anna'] },
+            lastname: { type: 'string', examples: ['Muster'] },
+            registered: {
+              type: 'boolean',
+              description: 'Registered and not cancelled (also when then absent)'
+            },
+            attended: {
+              type: 'boolean',
+              description: 'Recorded as present (also without a registration)'
+            },
+            coach: { type: 'boolean', description: 'Present as coach / leader' }
+          }
+        },
         Error: {
           type: 'object',
           required: ['error'],
@@ -334,3 +530,43 @@ const TRAINING_PLAN_EXAMPLE = {
   ],
   holidays: [{ title: 'Weihnachten', from: '2026-12-21', to: '2027-01-03', dojoClosed: true }]
 };
+
+const EVENTS_EXAMPLE = {
+  from: '2026-06-01',
+  to: '2026-07-31',
+  timezone: 'Europe/Zurich',
+  events: [
+    {
+      id: 10000005,
+      title: 'Sommerlager',
+      date: '2026-07-06',
+      dateTo: '2026-07-10',
+      allDay: true,
+      start: null,
+      end: null,
+      location: 'Tenero',
+      section: 'Judo',
+      registered: 24,
+      attended: 22
+    }
+  ]
+};
+
+const PARTICIPANTS_EXAMPLE = [
+  {
+    memberId: 4711,
+    firstname: 'Anna',
+    lastname: 'Muster',
+    registered: true,
+    attended: true,
+    coach: false
+  },
+  {
+    memberId: 4712,
+    firstname: 'Beni',
+    lastname: 'Beispiel',
+    registered: true,
+    attended: false,
+    coach: false
+  }
+];
