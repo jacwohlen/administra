@@ -1423,6 +1423,69 @@ FROM (
       WHERE b.cancels_training AND pg_temp.ds(d::date) BETWEEN b.date_from AND b.date_to)
 ) s;
 
+-- Substitutes and swaps (docs/TRAINING_PLAN.md, "Vertretung und Tausch"):
+-- one open request for each login that can answer one, and a confirmed
+-- substitute further ahead, so the plan shows "Vertritt …". The askers have
+-- no login; a visitor's answer stays until the reset like any other change.
+--   Nicole Favre (105) asks Marco (102, Trainer login) to stand in for her
+--   next Randori or Erwachsene date at least four days ahead
+--   Pascal Rochat (109) offers Sandra (101, Vorstand login) a swap of his next
+--   Aikido Erwachsene date with hers
+--   Beat Zürcher (104) asked Goran Petrović (106), who said yes
+INSERT INTO public.training_plan_requests (kind, training_id, date, from_member_id,
+                                           to_member_id, message, created_at)
+SELECT 'substitute', s.training_id, s.date, 105, 102,
+       'Ich bin an dem Tag als Coach an einem Turnier. Kannst du übernehmen?',
+       now() - interval '26 hours'
+FROM public.training_plan_sessions s
+WHERE s.trainer_id = 105 AND s.cancelled IS NOT TRUE
+  AND s.date >= pg_temp.ds(current_date + 4)
+ORDER BY s.date
+LIMIT 1;
+
+INSERT INTO public.training_plan_requests (kind, training_id, date, other_training_id,
+                                           other_date, from_member_id, to_member_id, message,
+                                           created_at)
+SELECT 'swap', a.training_id, a.date, b.training_id, b.date, 109, 101,
+       'Ich bin an meinem Datum in den Ferien. Tauschen wir?', now() - interval '3 hours'
+FROM (SELECT training_id, date FROM public.training_plan_sessions
+      WHERE trainer_id = 109 AND cancelled IS NOT TRUE
+        AND date >= pg_temp.ds(current_date + 7)
+      ORDER BY date LIMIT 1) a
+CROSS JOIN (SELECT training_id, date FROM public.training_plan_sessions
+            WHERE trainer_id = 101 AND cancelled IS NOT TRUE
+              AND date >= pg_temp.ds(current_date + 3)
+            ORDER BY date LIMIT 1) b;
+
+WITH d AS (
+  SELECT training_id, date FROM public.training_plan_sessions
+  WHERE trainer_id = 104 AND cancelled IS NOT TRUE
+    AND date >= pg_temp.ds(current_date + 10)
+  ORDER BY date LIMIT 1
+), req AS (
+  INSERT INTO public.training_plan_requests (kind, training_id, date, from_member_id,
+                                             to_member_id, message, status, created_at,
+                                             answered_at)
+  SELECT 'substitute', d.training_id, d.date, 104, 106, 'Bin an einem Kurs. Merci!',
+         'accepted', now() - interval '6 days', now() - interval '5 days'
+  FROM d
+  RETURNING training_id, date
+)
+UPDATE public.training_plan_sessions s
+SET trainer_id = 106, updated_at = now() - interval '5 days'
+FROM req
+WHERE s.training_id = req.training_id AND s.date = req.date;
+
+-- An example API key (docs/API.md) on the Integrations page: the club
+-- website reading the training plan. Its secret is random and known to
+-- nobody; to try the API, a visitor creates a key of their own (shown once).
+INSERT INTO public.api_keys (name, prefix, key_hash, scopes, allowed_origins, trainer_names,
+                             created_at, last_used_at)
+VALUES ('Vereinswebsite', substr(md5(random()::text), 1, 8),
+        md5(random()::text) || md5(random()::text), '{training_plan:read}',
+        '{https://alleda.ch}', 'initial', now() - interval '40 days',
+        now() - interval '2 hours');
+
 -- ---------------------------------------------------------------------------
 -- Trial candidates
 -- ---------------------------------------------------------------------------
