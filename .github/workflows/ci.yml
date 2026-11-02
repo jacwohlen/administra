@@ -239,6 +239,13 @@ jobs:
           psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres"
           -v ON_ERROR_STOP=1 -q -f supabase/checks/training_plan_mail.sql
 
+      # Substitutes and swaps: who asks and answers, a swap in one step, a
+      # request whose dates changed expires, the mail data, merge rules
+      - name: Check training plan requests
+        run: >-
+          psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres"
+          -v ON_ERROR_STOP=1 -q -f supabase/checks/training_plan_requests.sql
+
       # The API: keys only for admins, the hash unreadable, the public
       # training plan only for a key with the scope, without notes, names
       # as the key says

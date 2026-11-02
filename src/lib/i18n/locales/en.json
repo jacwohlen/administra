@@ -1671,6 +1671,72 @@
           "skipped": "Not sent",
           "marked": "Marked as informed"
         }
+      },
+      "request": {
+        "button": "Hand over",
+        "title": "Hand over a training",
+        "kind": {
+          "substitute": "Substitute",
+          "swap": "Swap"
+        },
+        "kindHint": {
+          "substitute": "Someone takes over this date. Topic and note stay with the date.",
+          "swap": "You trade dates: each of you takes their own topic along."
+        },
+        "askWho": "Who do you ask?",
+        "swapWith": "Who do you swap with?",
+        "pickPerson": "Choose a person",
+        "pickDate": "Which of their dates do you take instead?",
+        "noDates": "{name} leads no upcoming date this year that could be swapped.",
+        "preview": "The plan once they accept",
+        "moveNote": "Take the note along: {note}",
+        "message": "Message (optional)",
+        "messagePlaceholder": "e.g. As agreed on the phone, thanks!",
+        "confirmHint": "They get a request in the app and by e-mail. The plan only changes once they accept.",
+        "send": "Send request",
+        "inSubstitute": "{name} asks whether you take over the training on {date}",
+        "outSubstitute": "You asked {name} to take over the training on {date}",
+        "inSwap": "{name} would like to swap with you:",
+        "outSwap": "You proposed a swap to {name}:",
+        "youTake": "You lead {date}",
+        "theyTake": "{name} leads {date}",
+        "accept": "Accept",
+        "decline": "Decline",
+        "withdraw": "Withdraw",
+        "waiting": "Waiting for an answer.",
+        "stale": "No longer valid: the date has changed meanwhile.",
+        "rowSubstitute": "Substitute asked: {name}",
+        "rowSwap": "Swap asked with {name}",
+        "rowStandsIn": "Stands in for {name}",
+        "rowSwapped": "Swapped with {name}",
+        "done": {
+          "asked": "Request sent to {name}",
+          "accepted": "Accepted, the plan has been updated",
+          "declined": "Declined",
+          "withdrawn": "Request withdrawn",
+          "expired": "The request is no longer valid, the date has changed. The plan stays as it is."
+        },
+        "mail": {
+          "sent": "{name} got an e-mail.",
+          "simulated": "Test environment: the e-mail to {name} was only simulated.",
+          "skipped": "{name} gets no e-mail (no address, or no plan mails wanted).",
+          "failed": "The e-mail to {name} could not be sent. Best tell them directly.",
+          "off": "No e-mail: mails are not sent here."
+        },
+        "error": {
+          "not_signed_in": "Please sign in again.",
+          "bad_request": "The request is incomplete.",
+          "not_allowed": "You are not allowed to do this.",
+          "not_your_date": "You do not lead this date (any more).",
+          "not_planned": "This date is not in the training plan.",
+          "past": "The date is in the past.",
+          "cancelled": "The training is cancelled on this date.",
+          "bad_member": "This person cannot be asked.",
+          "not_their_date": "This person does not lead the chosen date (any more).",
+          "busy": "A request is already open for one of the dates.",
+          "not_found": "The request no longer exists.",
+          "failed": "That did not work. Please try again."
+        }
       }
     }
   },

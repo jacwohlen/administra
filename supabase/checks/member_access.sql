@@ -832,7 +832,9 @@ SELECT pg_temp.eq('new accounts default to member',
 -- is_staff() to the account its token belongs to (calendar_feeds.sql).
 -- training_plan_mail_addresses reads the sign-in address of the account
 -- linked to a trainer, for planners and involved members only; it grants the
--- account nothing (training_plan_mail.sql).
+-- account nothing (training_plan_mail.sql). training_plan_request_mail does
+-- the same for the two people of a substitute or swap request and the TK
+-- (training_plan_requests.sql).
 SELECT pg_temp.ok('no policy reads user_profiles itself',
   NOT EXISTS (SELECT 1 FROM pg_policies
               WHERE coalesce(qual, '') || coalesce(with_check, '') ~ 'user_profiles'));
@@ -843,7 +845,7 @@ SELECT pg_temp.eq('API functions reading user_profiles',
      AND p.prosrc ~ 'user_profiles'
      AND (has_function_privilege('authenticated', p.oid, 'EXECUTE')
           OR has_function_privilege('anon', p.oid, 'EXECUTE'))),
-  'calendar_feed,is_admin,is_approved_user,is_exam_manager,is_examiner,is_staff,is_writer,member_access_report,my_access,my_member_ids,training_plan_mail_addresses');
+  'calendar_feed,is_admin,is_approved_user,is_exam_manager,is_examiner,is_staff,is_writer,member_access_report,my_access,my_member_ids,training_plan_mail_addresses,training_plan_request_mail');
 
 ROLLBACK;
 

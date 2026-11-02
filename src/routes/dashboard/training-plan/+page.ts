@@ -5,7 +5,40 @@ import type { TrainingPlanBreak, TrainingPlanSession } from '#lib/models.ts';
 import { plannableTrainingIds, type PlanEvent, type PlanTraining } from '#lib/trainingPlanUtils.ts';
 import { endsOnOrAfter } from '#lib/eventUtils.ts';
 import { loadPlanMembers } from './members';
+import { REQUEST_COLUMNS, type PlanRequest } from '#lib/trainingPlanRequests.ts';
 import type { PageLoad } from './$types';
+
+/** The account's members (my_member_ids()): the dates they lead can be handed on */
+async function myMemberIds(): Promise<number[]> {
+  const { data, error } = await rpcRows<number>('my_member_ids');
+  if (error) {
+    console.error('Error loading the own members:', error);
+    return [];
+  }
+  return data.map(Number).filter((id) => Number.isSafeInteger(id));
+}
+
+/**
+ * Substitutes and swaps: every open request (a few at most), and the
+ * confirmed ones of the year, for the hints on the rows. Without an answer
+ * (the database before the migration) there are none
+ */
+async function loadRequests(from: string, to: string): Promise<PlanRequest[]> {
+  const { data, error } = await supabaseClient
+    .from('training_plan_requests')
+    .select(REQUEST_COLUMNS)
+    .or(
+      `status.eq.open,and(status.eq.accepted,date.gte.${from},date.lte.${to}),` +
+        `and(status.eq.accepted,other_date.gte.${from},other_date.lte.${to})`
+    )
+    .order('created_at')
+    .returns<PlanRequest[]>();
+  if (error) {
+    console.error('Error loading the plan requests:', error);
+    return [];
+  }
+  return data ?? [];
+}
 
 /**
  * The planned trainings an account leads as main trainer while it has a
@@ -37,7 +70,7 @@ export const load: PageLoad = async ({ url, depends, parent }) => {
     own: canWrite && !canPlanTrainings ? await mainTrainingIds() : []
   }));
 
-  const [plan, sessions, breaks, events, { all, own }] = await Promise.all([
+  const [plan, sessions, breaks, events, { all, own }, myIds, requests] = await Promise.all([
     supabaseClient
       .from('training_plan_trainings')
       .select('training:trainings (id, title, weekday, dateFrom, section, mainTrainerId)')
@@ -63,7 +96,9 @@ export const load: PageLoad = async ({ url, depends, parent }) => {
       .or(endsOnOrAfter(from))
       .order('date')
       .returns<PlanEvent[]>(),
-    access
+    access,
+    myMemberIds(),
+    loadRequests(from, to)
   ]);
   for (const r of [plan, sessions, breaks, events]) {
     if (r.error) throw err(500, r.error.message);
@@ -72,10 +107,10 @@ export const load: PageLoad = async ({ url, depends, parent }) => {
   const trainings = (plan.data ?? []).map((p) => p.training).filter(Boolean);
   let members;
   try {
-    members = await loadPlanMembers(
-      trainings,
-      (sessions.data ?? []).flatMap((s) => (s.trainer_id ? [s.trainer_id] : []))
-    );
+    members = await loadPlanMembers(trainings, [
+      ...(sessions.data ?? []).flatMap((s) => (s.trainer_id ? [s.trainer_id] : [])),
+      ...requests.flatMap((r) => [r.from_member_id, r.to_member_id])
+    ]);
   } catch (e) {
     throw err(500, (e as Error).message);
   }
@@ -89,6 +124,9 @@ export const load: PageLoad = async ({ url, depends, parent }) => {
     breaks: breaks.data ?? [],
     events: events.data ?? [],
     members,
+    // The account's members, and the requests to stand in or swap
+    myMemberIds: myIds,
+    requests,
     // The trainings whose dates this account edits; RLS stays the guard
     plannableIds: plannableTrainingIds(trainings, all, own)
   };
