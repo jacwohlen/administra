@@ -8,57 +8,106 @@
   import { supabaseClient } from '#lib/supabase.ts';
   import { toaster } from '#lib/toast.ts';
   import {
+    API_SCOPES,
     TRAINER_NAME_MODES,
     parseOrigins,
+    scopesAllowOrigins,
     type ApiKeyRow,
+    type ApiScope,
     type TrainerNameMode
   } from '#lib/publicApi.ts';
 
   /**
    * Admins: the API keys other systems (the club's website) use to read
    * Alleda under /api/v1/ (docs/API.md). A new key is shown once; editing
-   * changes name, websites (CORS) and how trainers are named; deleting
-   * revokes it at once.
+   * changes name, what it may read, websites (CORS) and how trainers are
+   * named; deleting revokes it at once. A key for personal data (event
+   * participants) is for servers only: it lists no websites.
    */
   let { keys, onchanged }: { keys: ApiKeyRow[]; onchanged: () => Promise<void> | void } = $props();
 
-  type Draft = { id: string | null; name: string; origins: string; trainerNames: TrainerNameMode };
+  type Draft = {
+    id: string | null;
+    name: string;
+    scopes: ApiScope[];
+    origins: string;
+    trainerNames: TrainerNameMode;
+  };
+
+  /** The endpoint each scope opens, for the list and the example */
+  const SCOPE_PATHS: Record<ApiScope, string[]> = {
+    'training_plan:read': ['/api/v1/training-plan'],
+    'event_participants:read': ['/api/v1/events', '/api/v1/events/{id}/participants']
+  };
+  const SCOPE_LABELS: Record<ApiScope, string> = {
+    'training_plan:read': 'scopeTrainingPlan',
+    'event_participants:read': 'scopeEventParticipants'
+  };
 
   let draft = $state<Draft | null>(null);
   let saving = $state(false);
   /** The plaintext of the key just created, shown once */
-  let created = $state<{ name: string; key: string } | null>(null);
+  let created = $state<{ name: string; key: string; scopes: ApiScope[] } | null>(null);
   let revoking = $state<ApiKeyRow | null>(null);
 
-  let parsed = $derived(draft ? parseOrigins(draft.origins) : { origins: [], invalid: [] });
-  let endpoint = $derived(
-    typeof window === 'undefined'
-      ? '/api/v1/training-plan'
-      : `${window.location.origin}/api/v1/training-plan`
+  /** Websites only for keys without personal data */
+  let originsAllowed = $derived(draft ? scopesAllowOrigins(draft.scopes) : true);
+  let parsed = $derived(
+    draft && originsAllowed ? parseOrigins(draft.origins) : { origins: [], invalid: [] }
   );
+  let base = $derived(typeof window === 'undefined' ? '' : window.location.origin);
+
+  /** The example for a new key: the first endpoint it may read */
+  function example(scopes: ApiScope[]): string {
+    if (scopes.includes('training_plan:read')) {
+      return `${base}/api/v1/training-plan?from=${dayjs().format('YYYY-MM-DD')}`;
+    }
+    return `${base}/api/v1/events?from=${dayjs().subtract(30, 'day').format('YYYY-MM-DD')}`;
+  }
+
+  function toggleScope(scope: ApiScope, on: boolean) {
+    if (!draft) return;
+    draft.scopes = on
+      ? API_SCOPES.filter((s) => s === scope || draft!.scopes.includes(s))
+      : draft.scopes.filter((s) => s !== scope);
+  }
 
   function startNew() {
-    draft = { id: null, name: '', origins: '', trainerNames: 'full' };
+    draft = {
+      id: null,
+      name: '',
+      scopes: ['training_plan:read'],
+      origins: '',
+      trainerNames: 'full'
+    };
   }
 
   function startEdit(key: ApiKeyRow) {
     draft = {
       id: key.id,
       name: key.name,
+      scopes: [...key.scopes],
       origins: key.allowed_origins.join('\n'),
       trainerNames: key.trainer_names
     };
   }
 
   async function save() {
-    if (!draft || !draft.name.trim() || parsed.invalid.length > 0) return;
+    if (!draft || !draft.name.trim() || draft.scopes.length === 0 || parsed.invalid.length > 0) {
+      return;
+    }
     saving = true;
-    const { id, name, trainerNames } = draft;
+    const { id, name, scopes, trainerNames } = draft;
     const origins = parsed.origins;
     if (id) {
       const { error } = await supabaseClient
         .from('api_keys')
-        .update({ name: name.trim(), allowed_origins: origins, trainer_names: trainerNames })
+        .update({
+          name: name.trim(),
+          scopes,
+          allowed_origins: origins,
+          trainer_names: trainerNames
+        })
         .eq('id', id);
       saving = false;
       if (error) {
@@ -69,7 +118,7 @@
     } else {
       const { data, error } = await supabaseClient.rpc('api_key_create', {
         p_name: name.trim(),
-        p_scopes: ['training_plan:read'],
+        p_scopes: scopes,
         p_allowed_origins: origins,
         p_trainer_names: trainerNames
       });
@@ -82,7 +131,7 @@
         });
         return;
       }
-      created = { name: name.trim(), key };
+      created = { name: name.trim(), key, scopes };
     }
     draft = null;
     await onchanged();
@@ -139,7 +188,13 @@
             <div class="font-medium">{key.name}</div>
             <div class="font-mono text-xs text-surface-600-400">alleda_{key.prefix}…</div>
             <div class="text-xs text-surface-600-400">
-              {$_(`page.integrations.api.trainerNames.${key.trainer_names}`)} ·
+              {key.scopes.map((s) => $_(`page.integrations.api.scopeShort.${s}`)).join(', ') ||
+                $_('page.integrations.api.noScopes')}
+            </div>
+            <div class="text-xs text-surface-600-400">
+              {#if key.scopes.includes('training_plan:read')}
+                {$_(`page.integrations.api.trainerNames.${key.trainer_names}`)} ·
+              {/if}
               {key.allowed_origins.length > 0
                 ? key.allowed_origins.join(', ')
                 : $_('page.integrations.api.serverOnly')}
@@ -179,10 +234,17 @@
     </ul>
   {/if}
 
-  <p class="text-xs text-surface-600-400">
-    {$_('page.integrations.api.endpoint')}
-    <code class="break-all">GET {endpoint}</code>
-  </p>
+  <div class="text-xs text-surface-600-400">
+    {#each API_SCOPES as scope (scope)}
+      <p>
+        {$_(`page.integrations.api.scopeShort.${scope}`)}:
+        {#each SCOPE_PATHS[scope] as path, i (path)}
+          {#if i > 0},{/if}
+          <code class="break-all">GET {base}{path}</code>
+        {/each}
+      </p>
+    {/each}
+  </div>
 </section>
 
 {#if draft}
@@ -220,39 +282,57 @@
         />
       </label>
 
-      <div class="text-sm">
-        <span class="font-medium">{$_('page.integrations.api.scopes')}</span>
-        <p class="text-surface-600-400">{$_('page.integrations.api.scopeTrainingPlan')}</p>
-      </div>
+      <fieldset class="text-sm space-y-2">
+        <legend class="font-medium">{$_('page.integrations.api.scopes')}</legend>
+        {#each API_SCOPES as scope (scope)}
+          <label class="flex items-start gap-2">
+            <input
+              class="checkbox mt-0.5"
+              type="checkbox"
+              checked={draft.scopes.includes(scope)}
+              onchange={(e) => toggleScope(scope, e.currentTarget.checked)}
+            />
+            <span>{$_(`page.integrations.api.${SCOPE_LABELS[scope]}`)}</span>
+          </label>
+        {/each}
+      </fieldset>
 
-      <label class="label">
-        <span>{$_('page.integrations.api.trainerNamesLabel')}</span>
-        <select class="select" bind:value={draft.trainerNames}>
-          {#each TRAINER_NAME_MODES as mode (mode)}
-            <option value={mode}>{$_(`page.integrations.api.trainerNames.${mode}`)}</option>
-          {/each}
-        </select>
-      </label>
+      {#if draft.scopes.includes('training_plan:read')}
+        <label class="label">
+          <span>{$_('page.integrations.api.trainerNamesLabel')}</span>
+          <select class="select" bind:value={draft.trainerNames}>
+            {#each TRAINER_NAME_MODES as mode (mode)}
+              <option value={mode}>{$_(`page.integrations.api.trainerNames.${mode}`)}</option>
+            {/each}
+          </select>
+        </label>
+      {/if}
 
-      <label class="label">
-        <span>{$_('page.integrations.api.origins')}</span>
-        <textarea
-          class="textarea font-mono text-sm"
-          rows="3"
-          bind:value={draft.origins}
-          placeholder="https://www.example.ch"
-        ></textarea>
-        <span class="block text-xs leading-snug text-surface-600-400">
-          {$_('page.integrations.api.originsHint')}
-        </span>
-        {#if parsed.invalid.length > 0}
-          <span class="block text-xs leading-snug text-error-600-400">
-            {$_('page.integrations.api.originsInvalid', {
-              values: { origins: parsed.invalid.join(', ') }
-            })}
+      {#if !originsAllowed}
+        <p class="rounded-md bg-surface-100-900 px-3 py-2 text-sm">
+          {$_('page.integrations.api.serverOnlyHint')}
+        </p>
+      {:else}
+        <label class="label">
+          <span>{$_('page.integrations.api.origins')}</span>
+          <textarea
+            class="textarea font-mono text-sm"
+            rows="3"
+            bind:value={draft.origins}
+            placeholder="https://www.example.ch"
+          ></textarea>
+          <span class="block text-xs leading-snug text-surface-600-400">
+            {$_('page.integrations.api.originsHint')}
           </span>
-        {/if}
-      </label>
+          {#if parsed.invalid.length > 0}
+            <span class="block text-xs leading-snug text-error-600-400">
+              {$_('page.integrations.api.originsInvalid', {
+                values: { origins: parsed.invalid.join(', ') }
+              })}
+            </span>
+          {/if}
+        </label>
+      {/if}
 
       {#if parsed.origins.length > 0}
         <p class="rounded-md bg-warning-500/10 px-3 py-2 text-sm text-warning-800-200">
@@ -267,7 +347,10 @@
         <button
           type="submit"
           class="btn preset-filled-primary-500"
-          disabled={saving || !draft.name.trim() || parsed.invalid.length > 0}
+          disabled={saving ||
+            !draft.name.trim() ||
+            draft.scopes.length === 0 ||
+            parsed.invalid.length > 0}
         >
           {draft.id ? $_('button.save') : $_('page.integrations.api.create')}
         </button>
@@ -300,7 +383,7 @@
       <p class="text-sm">{$_('page.integrations.api.example')}</p>
       <pre
         class="text-xs whitespace-pre-wrap break-all rounded-md bg-surface-100-900 p-2">curl -H "Authorization: Bearer {created.key}" \
-  "{endpoint}?from={dayjs().format('YYYY-MM-DD')}"</pre>
+  "{example(created.scopes)}"</pre>
       <footer class="flex justify-end">
         <button
           type="button"
