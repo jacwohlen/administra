@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { envMock, resetEnv } from '#lib/test/envMock.ts';
 
 /**
  * The mailer's guards (src/lib/server/mailer.ts). PUBLIC_MODE is a static
@@ -11,25 +12,24 @@ const SMTP = {
   PRIVATE_SMTP_FROM: 'Club <club@test.ch>'
 };
 
-const env: Record<string, string | undefined> = {};
+const env = envMock();
 const sendMail = vi.fn();
 const createTransport = vi.fn(() => ({ sendMail }));
 
-vi.mock('$env/dynamic/private', () => ({ env }));
+vi.mock('$app/env/private', () => env);
 vi.mock('nodemailer', () => ({ default: { createTransport } }));
 
 async function load(mode: string, smtp: Record<string, string> | null = SMTP) {
-  for (const key of Object.keys(env)) delete env[key];
-  Object.assign(env, smtp ?? {});
+  resetEnv(env, smtp ?? {});
   vi.resetModules();
-  vi.doMock('$env/static/public', () => ({ PUBLIC_MODE: mode }));
+  vi.doMock('$app/env/public', () => ({ PUBLIC_MODE: mode }));
   return import('./mailer');
 }
 
 const mail = { to: 'max@test.ch', subject: 'Betreff', text: 'Hallo', replyTo: 'tk@test.ch' };
 
 afterEach(() => {
-  vi.doUnmock('$env/static/public');
+  vi.doUnmock('$app/env/public');
   sendMail.mockReset();
   createTransport.mockClear();
   vi.restoreAllMocks();

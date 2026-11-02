@@ -132,7 +132,7 @@ password — so enter the same values a second time in Netlify:
   sign-in codes and trial mails.
 
 Replies go to the contact e-mail from the settings (`Reply-To`). The
-variables are read at runtime (`$env/dynamic/private`), so a deploy without
+variables are read at runtime (`$app/env/private`, declared in `src/env.ts`), so a deploy without
 them still builds; mails are then logged as _nicht gesendet_ and the preview
 dialog says so. Changing them takes effect with the next deploy.
 

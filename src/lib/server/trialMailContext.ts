@@ -1,7 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
-import { env } from '$env/dynamic/public';
-import { parseClubConfig, type ClubConfig } from '$lib/clubConfigParser';
-import { applyClubSettings, type SettingValues } from '$lib/appSettingsParser';
+import * as env from '$app/env/public';
+import { parseClubConfig, type ClubConfig } from '#lib/clubConfigParser.ts';
+import { applyClubSettings, type SettingValues } from '#lib/appSettingsParser.ts';
 
 /**
  * Club settings and raw `app_settings` rows for rendering a mail on the

@@ -1,6 +1,6 @@
 <script lang="ts">
   import { _ } from 'svelte-i18n';
-  import { modalDialog } from '$lib/modalDialog';
+  import { modalDialog } from '#lib/modalDialog.ts';
 
   /**
    * Confirmation before a destructive or irreversible action. Cancel is the

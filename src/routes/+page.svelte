@@ -1,7 +1,7 @@
 <script lang="ts">
   import LogoImage from './LogoImage.svelte';
   import { error as err } from '@sveltejs/kit';
-  import { supabaseClient } from '$lib/supabase';
+  import { supabaseClient } from '#lib/supabase.ts';
   import { _ } from 'svelte-i18n';
   import Fa from 'svelte-fa';
   import {
@@ -15,7 +15,7 @@
   } from '@fortawesome/free-solid-svg-icons';
   import { AuthApiError, type SignInWithOAuthCredentials } from '@supabase/supabase-js';
   import { page } from '$app/state';
-  import { PUBLIC_MODE } from '$env/static/public';
+  import { PUBLIC_MODE } from '$app/env/public';
   import { onDestroy, tick } from 'svelte';
   import type { ActionData, PageData } from './$types';
 
@@ -27,7 +27,7 @@
       }
     };
     const { error } = await supabaseClient.auth.signInWithOAuth(config);
-    if (error) throw err(404, error);
+    if (error) throw err(404, error.message);
   }
 
   // If the OAuth provider reports an error it is passed back via GET

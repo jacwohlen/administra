@@ -10,9 +10,11 @@ vi.mock('svelte-i18n', () => ({
   register: vi.fn(),
   getLocaleFromNavigator: vi.fn()
 }));
-vi.mock('$env/dynamic/public', () => ({ env: { PUBLIC_CLUB_CONTACT_EMAIL: 'info@example.com' } }));
-vi.mock('$lib/supabase', () => ({ supabaseClient: { auth: { signOut: vi.fn() } } }));
-vi.mock('$app/navigation', () => ({ goto: vi.fn(), invalidateAll: vi.fn() }));
+vi.mock('$app/env/public', async () =>
+  (await import('#lib/test/envMock.ts')).envMock({ PUBLIC_CLUB_CONTACT_EMAIL: 'info@example.com' })
+);
+vi.mock('#lib/supabase.ts', () => ({ supabaseClient: { auth: { signOut: vi.fn() } } }));
+vi.mock('$app/navigation', () => ({ goto: vi.fn(), refreshAll: vi.fn() }));
 
 afterEach(() => cleanup());
 

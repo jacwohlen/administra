@@ -11,8 +11,8 @@
     faTriangleExclamation
   } from '@fortawesome/free-solid-svg-icons';
   import dayjs from 'dayjs';
-  import { supabaseClient } from '$lib/supabase';
-  import { toaster } from '$lib/toast';
+  import { supabaseClient } from '#lib/supabase.ts';
+  import { toaster } from '#lib/toast.ts';
   import {
     CONTENT_MAX,
     buildLessonPlanWrite,
@@ -26,9 +26,9 @@
     type LessonPlanInput,
     type LessonPlanMode,
     type LessonPlanStatus
-  } from '$lib/assistant/lessonPlan';
-  import { isIsoDate, MAX_LENGTH } from '$lib/assistant/proposals';
-  import type { LessonPlanProposal } from '$lib/assistant/types';
+  } from '#lib/assistant/lessonPlan.ts';
+  import { isIsoDate, MAX_LENGTH } from '#lib/assistant/proposals.ts';
+  import type { LessonPlanProposal } from '#lib/assistant/types.ts';
 
   /**
    * Review step of the Daten-Assistent for a lesson plan: the plan read

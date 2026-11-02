@@ -3,11 +3,11 @@ import { render, cleanup, screen } from '@testing-library/svelte';
 import { createRawSnippet } from 'svelte';
 import { readable } from 'svelte/store';
 import Layout from './+layout.svelte';
-import { DEMO_INFO_URL } from '$lib/demo';
+import { DEMO_INFO_URL } from '#lib/demo.ts';
 
 /** The environment strip of the root layout per PUBLIC_MODE (read through a getter). */
 const env = vi.hoisted(() => ({ mode: 'PROD' }));
-vi.mock('$env/static/public', () => ({
+vi.mock('$app/env/public', () => ({
   get PUBLIC_MODE() {
     return env.mode;
   },
@@ -21,12 +21,12 @@ vi.mock('svelte-i18n', () => ({
   register: vi.fn(),
   getLocaleFromNavigator: vi.fn()
 }));
-vi.mock('$lib/supabase', () => ({
+vi.mock('#lib/supabase.ts', () => ({
   supabaseClient: {
     auth: { onAuthStateChange: () => ({ data: { subscription: { unsubscribe: vi.fn() } } }) }
   }
 }));
-vi.mock('$app/navigation', () => ({ invalidateAll: vi.fn() }));
+vi.mock('$app/navigation', () => ({ refreshAll: vi.fn() }));
 vi.mock('@sentry/sveltekit', () => ({ setUser: vi.fn() }));
 
 const children = createRawSnippet(() => ({ render: () => '<main>page content</main>' }));

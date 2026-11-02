@@ -1,4 +1,4 @@
-import type { TrainerRole } from '$lib/models';
+import type { TrainerRole } from '#lib/models.ts';
 import {
   CONFIDENCES,
   type AssistantKind,

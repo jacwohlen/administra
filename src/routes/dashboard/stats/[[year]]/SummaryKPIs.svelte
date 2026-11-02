@@ -1,7 +1,7 @@
 <script lang="ts">
   let { year, yearmode }: { year: number; yearmode: 'YEAR' | 'ALL' } = $props();
 
-  import { supabaseClient } from '$lib/supabase';
+  import { supabaseClient } from '#lib/supabase.ts';
   import { _, locale } from 'svelte-i18n';
   import Fa from 'svelte-fa';
   import {

@@ -3,12 +3,12 @@
   import { _ } from 'svelte-i18n';
   import Fa from 'svelte-fa';
   import { faArrowLeft, faChevronRight, faPlus } from '@fortawesome/free-solid-svg-icons';
-  import { supabaseClient } from '$lib/supabase';
-  import { toaster } from '$lib/toast';
-  import BeltStrip from '$lib/components/BeltStrip.svelte';
-  import { gradesBySection } from '$lib/gradeUtils';
-  import { programMaxPoints } from '$lib/examUtils';
-  import type { GradeDefinition } from '$lib/models';
+  import { supabaseClient } from '#lib/supabase.ts';
+  import { toaster } from '#lib/toast.ts';
+  import BeltStrip from '#lib/components/BeltStrip.svelte';
+  import { gradesBySection } from '#lib/gradeUtils.ts';
+  import { programMaxPoints } from '#lib/examUtils.ts';
+  import type { GradeDefinition } from '#lib/models.ts';
   import type { PageData } from './$types';
 
   let { data }: { data: PageData } = $props();

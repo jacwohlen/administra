@@ -1,11 +1,11 @@
 <script lang="ts">
   import type { PageData } from './$types';
-  import { SETTING_FIELDS, type SettingField, type SettingGroup } from '$lib/appSettingsParser';
-  import { TRIAL_MAIL_KINDS, TRIAL_MAIL_PLACEHOLDERS } from '$lib/trialMail';
-  import { invalidateAppSettings } from '$lib/appSettings';
-  import { supabaseClient } from '$lib/supabase';
-  import { toaster } from '$lib/toast';
-  import { invalidateAll } from '$app/navigation';
+  import { SETTING_FIELDS, type SettingField, type SettingGroup } from '#lib/appSettingsParser.ts';
+  import { TRIAL_MAIL_KINDS, TRIAL_MAIL_PLACEHOLDERS } from '#lib/trialMail.ts';
+  import { invalidateAppSettings } from '#lib/appSettings.ts';
+  import { supabaseClient } from '#lib/supabase.ts';
+  import { toaster } from '#lib/toast.ts';
+  import { refreshAll } from '$app/navigation';
   import { _ } from 'svelte-i18n';
 
   let { data }: { data: PageData } = $props();
@@ -133,7 +133,7 @@
       // Refetch even after a partial failure — some rows may have changed.
       invalidateAppSettings();
       busy = false;
-      await invalidateAll();
+      await refreshAll();
     }
   }
 </script>

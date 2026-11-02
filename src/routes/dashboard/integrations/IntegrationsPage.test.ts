@@ -1,11 +1,11 @@
 import { describe, it, expect, vi, afterEach, beforeAll, beforeEach } from 'vitest';
 import { render, screen, cleanup, fireEvent, waitFor, within } from '@testing-library/svelte';
 import { addMessages, init } from 'svelte-i18n';
-import de from '$lib/i18n/locales/de.json';
-import { parseConnectionStatuses } from '$lib/integrations';
-import type { MergeMember } from '$lib/memberMerge';
-import { invalidate, invalidateAll } from '$app/navigation';
-import { toaster } from '$lib/toast';
+import de from '#lib/i18n/locales/de.json';
+import { parseConnectionStatuses } from '#lib/integrations.ts';
+import type { MergeMember } from '#lib/memberMerge.ts';
+import { invalidate, refreshAll } from '$app/navigation';
+import { toaster } from '#lib/toast.ts';
 import Page from './+page.svelte';
 
 // The real German texts, so a broken message (ICU syntax, missing key) shows here
@@ -15,16 +15,16 @@ beforeAll(() => {
 });
 
 const { rpc } = vi.hoisted(() => ({ rpc: vi.fn() }));
-vi.mock('$lib/supabase', () => ({ supabaseClient: { rpc } }));
+vi.mock('#lib/supabase.ts', () => ({ supabaseClient: { rpc } }));
 vi.mock('$app/navigation', () => ({
   invalidate: vi.fn(async () => {}),
-  invalidateAll: vi.fn(async () => {})
+  refreshAll: vi.fn(async () => {})
 }));
-vi.mock('$lib/integrationConfigLoad', () => ({ invalidateIntegrationConfig: vi.fn() }));
-vi.mock('$lib/clubConfig', () => ({
+vi.mock('#lib/integrationConfigLoad.ts', () => ({ invalidateIntegrationConfig: vi.fn() }));
+vi.mock('#lib/clubConfig.ts', () => ({
   clubConfig: { sections: ['Judo', 'Aikido', 'Club', 'General'] }
 }));
-vi.mock('$lib/toast', () => ({ toaster: { error: vi.fn(), success: vi.fn() } }));
+vi.mock('#lib/toast.ts', () => ({ toaster: { error: vi.fn(), success: vi.fn() } }));
 
 afterEach(() => cleanup());
 beforeEach(() => {
@@ -696,7 +696,7 @@ describe('modules on and off', () => {
       p_connection: 'js',
       p_enabled: true
     });
-    await waitFor(() => expect(invalidateAll).toHaveBeenCalled());
+    await waitFor(() => expect(refreshAll).toHaveBeenCalled());
   });
 
   it('asks before switching Webling off', async () => {

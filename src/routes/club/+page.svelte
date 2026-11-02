@@ -5,7 +5,7 @@
   import MemberAvatar from './MemberAvatar.svelte';
   import ClubProfile from './ClubProfile.svelte';
   import ClubExams from './ClubExams.svelte';
-  import { invalidateAll } from '$app/navigation';
+  import { refreshAll } from '$app/navigation';
   import type { PageData } from './$types';
 
   let { data }: { data: PageData } = $props();
@@ -19,7 +19,7 @@
   $effect(() => {
     if (!data.isStaff && data.myMembers.length === 0 && !rechecked) {
       rechecked = true;
-      invalidateAll();
+      refreshAll();
     }
   });
 </script>

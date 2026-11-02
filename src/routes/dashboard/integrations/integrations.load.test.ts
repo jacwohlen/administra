@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import type { UserProfile } from '$lib/models';
+import type { UserProfile } from '#lib/models.ts';
 
 type Result = { data: unknown; error: unknown };
 
@@ -26,7 +26,7 @@ const { mockSupabase } = vi.hoisted(() => ({
   mockSupabase: { from: vi.fn(), rpc: vi.fn() }
 }));
 
-vi.mock('$lib/supabase', () => ({ supabaseClient: mockSupabase }));
+vi.mock('#lib/supabase.ts', () => ({ supabaseClient: mockSupabase }));
 
 vi.mock('@sveltejs/kit', () => ({
   error: (status: number, body: unknown) => {

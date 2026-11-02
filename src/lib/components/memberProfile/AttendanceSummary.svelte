@@ -1,7 +1,7 @@
 <script lang="ts">
   import { _ } from 'svelte-i18n';
-  import type { Log } from '$lib/models';
-  import { attendanceByTraining } from '$lib/activityUtils';
+  import type { Log } from '#lib/models.ts';
+  import { attendanceByTraining } from '#lib/activityUtils.ts';
 
   // Per training of the selected year: one bar each, split into attendance
   // and trainer sessions. The year totals are the stat tiles above.

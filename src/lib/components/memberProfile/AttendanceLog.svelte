@@ -2,8 +2,8 @@
   import Fa from 'svelte-fa';
   import { faChevronRight } from '@fortawesome/free-solid-svg-icons';
   import { _ } from 'svelte-i18n';
-  import type { Log } from '$lib/models';
-  import { displayConfig } from '$lib/appSettings';
+  import type { Log } from '#lib/models.ts';
+  import { displayConfig } from '#lib/appSettings.ts';
 
   let { logs }: { logs: Promise<Log[]> } = $props();
   let currentItem = $state(displayConfig.attendanceLogPageSize);

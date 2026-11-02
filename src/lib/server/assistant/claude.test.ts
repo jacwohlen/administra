@@ -1,8 +1,8 @@
 import { describe, expect, it, vi } from 'vitest';
 import type { BetaMessage } from '@anthropic-ai/sdk/resources/beta/messages/messages';
 
-vi.mock('$env/dynamic/private', () => ({ env: {} }));
-vi.mock('$lib/server/trialMailContext', () => ({ loadMailSettings: vi.fn() }));
+vi.mock('$app/env/private', async () => (await import('#lib/test/envMock.ts')).envMock());
+vi.mock('#lib/server/trialMailContext.ts', () => ({ loadMailSettings: vi.fn() }));
 
 const Anthropic = (await import('@anthropic-ai/sdk')).default;
 const { apiError, readAnswer, timeLeft, usageOf } = await import('./claude');

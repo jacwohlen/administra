@@ -8,10 +8,10 @@
     faRotateLeft
   } from '@fortawesome/free-solid-svg-icons';
   import dayjs from 'dayjs';
-  import { supabaseClient } from '$lib/supabase';
-  import { toaster } from '$lib/toast';
-  import type { MergeMember } from '$lib/memberMerge';
-  import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
+  import { supabaseClient } from '#lib/supabase.ts';
+  import { toaster } from '#lib/toast.ts';
+  import type { MergeMember } from '#lib/memberMerge.ts';
+  import ConfirmDialog from '#lib/components/ConfirmDialog.svelte';
   import {
     canDismissAll,
     dismissIssues,
@@ -20,7 +20,7 @@
     type IntegrationIssue,
     type IssueEvent,
     type IssueSeverity
-  } from '$lib/integrations';
+  } from '#lib/integrations.ts';
   import MergeMemberDialog from '../members/[memberId]/MergeMemberDialog.svelte';
 
   /**

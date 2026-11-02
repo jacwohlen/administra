@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { badgeTip, dismissTip } from '$lib/badgeTip.svelte';
+  import { badgeTip, dismissTip } from '#lib/badgeTip.svelte.ts';
   import { _ } from 'svelte-i18n';
 
   function onWindowClick(e: MouseEvent) {

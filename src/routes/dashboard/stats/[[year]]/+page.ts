@@ -1,8 +1,8 @@
-import { rpcRows } from '$lib/supabase';
+import { rpcRows } from '#lib/supabase.ts';
 import type { PageLoad } from './$types';
 import { error as err } from '@sveltejs/kit';
-import type { Athletes } from '$lib/models';
-import { groupBySection, resolveYearParam } from '$lib/statsUtils';
+import type { Athletes } from '#lib/models.ts';
+import { groupBySection, resolveYearParam } from '#lib/statsUtils.ts';
 
 export const load = (async ({ params }) => {
   const { year, yearmode } = resolveYearParam(params.year);
@@ -14,7 +14,7 @@ export const load = (async ({ params }) => {
     });
 
     if (error) {
-      throw err(404, error);
+      throw err(404, error.message);
     }
 
     return groupBySection(data);

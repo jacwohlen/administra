@@ -1,6 +1,6 @@
-import { browser } from '$app/environment';
-import type { PublicLocale } from '$lib/clubConfigParser';
-import { setAppLocale } from '$lib/i18n/appLocale';
+import { browser } from '$app/env';
+import type { PublicLocale } from '#lib/clubConfigParser.ts';
+import { setAppLocale } from '#lib/i18n/appLocale.ts';
 
 /**
  * Language chosen in the profile menu. Stored in a cookie (not

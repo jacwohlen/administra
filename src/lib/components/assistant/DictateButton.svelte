@@ -11,11 +11,11 @@
     speechRecognition,
     type DictationError,
     type SpeechRecognitionLike
-  } from '$lib/assistant/dictation';
+  } from '#lib/assistant/dictation.ts';
 
   /**
    * «Diktieren»: speech to text with the browser's own recognition
-   * ($lib/assistant/dictation.ts). While listening, `ontext` gets the
+   * (#lib/assistant/dictation.ts). While listening, `ontext` gets the
    * field's text as it was at the start plus everything dictated since, so
    * a revised guess replaces the old one; the parent should keep the field
    * read-only meanwhile (`onlistening`). What is still being recognised

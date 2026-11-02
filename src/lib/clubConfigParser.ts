@@ -3,7 +3,7 @@
  *
  * This module deliberately has no SvelteKit imports so it can be unit-tested
  * as-is. The running app gets its parsed `clubConfig` from `./clubConfig`,
- * which is the only place that touches `$env/dynamic/public`.
+ * which is the only place that touches `$app/env/public`.
  */
 
 export type PublicLocale = 'de' | 'en';

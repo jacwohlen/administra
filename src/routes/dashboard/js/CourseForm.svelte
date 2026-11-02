@@ -1,12 +1,12 @@
 <script lang="ts">
   import { untrack } from 'svelte';
-  import { goto, invalidateAll } from '$app/navigation';
+  import { goto, refreshAll } from '$app/navigation';
   import { _ } from 'svelte-i18n';
   import Fa from 'svelte-fa';
   import { faSave } from '@fortawesome/free-solid-svg-icons';
-  import { supabaseClient } from '$lib/supabase';
-  import type { Training } from '$lib/models';
-  import { DEFAULT_DURATIONS, parseDurations, type JsCourse } from '$lib/jsExport';
+  import { supabaseClient } from '#lib/supabase.ts';
+  import type { Training } from '#lib/models.ts';
+  import { DEFAULT_DURATIONS, parseDurations, type JsCourse } from '#lib/jsExport.ts';
 
   let {
     course = null,
@@ -80,7 +80,7 @@
         if (addError) throw addError;
       }
 
-      await invalidateAll();
+      await refreshAll();
       await goto(`/dashboard/js/${saved.id}`);
     } catch (e) {
       console.error('Error saving J+S course:', e);

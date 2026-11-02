@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import type { GradeDefinition, MemberGrade } from '$lib/models';
-import { gradesBySection } from '$lib/gradeUtils';
+import type { GradeDefinition, MemberGrade } from '#lib/models.ts';
+import { gradesBySection } from '#lib/gradeUtils.ts';
 import {
   buildGradeWrites,
   checkHolder,

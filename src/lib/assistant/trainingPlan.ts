@@ -1,6 +1,6 @@
 import dayjs from 'dayjs';
-import type { TrainingPlanBreak, TrainingPlanSession } from '$lib/models';
-import type { PlanTraining } from '$lib/trainingPlanUtils';
+import type { TrainingPlanBreak, TrainingPlanSession } from '#lib/models.ts';
+import type { PlanTraining } from '#lib/trainingPlanUtils.ts';
 import { SUGGEST_SCORE, bestMatch, normalizeName, type MatchableMember } from './nameMatch';
 import { MAX_LENGTH, cleanText, isIsoDate } from './proposals';
 import type { HolidayEntry, PlanSessionEntry } from './types';

@@ -1,7 +1,7 @@
 <script lang="ts">
   import { _ } from 'svelte-i18n';
-  import { SCORE_VALUES } from '$lib/examUtils';
-  import { SCORE_TONES } from '$lib/components/exams/examStyles';
+  import { SCORE_VALUES } from '#lib/examUtils.ts';
+  import { SCORE_TONES } from '#lib/components/exams/examStyles.ts';
 
   let {
     value,

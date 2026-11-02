@@ -1,6 +1,6 @@
 export const ssr = false;
 import { redirect } from '@sveltejs/kit';
-import { canUseClub, homePath, isStaff } from '$lib/roles';
+import { canUseClub, homePath, isStaff } from '#lib/roles.ts';
 import type { LayoutLoad } from './$types';
 
 // Personal club area: staff, and member accounts while a member record is an

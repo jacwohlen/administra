@@ -13,11 +13,11 @@
     faTriangleExclamation,
     faWandMagicSparkles
   } from '@fortawesome/free-solid-svg-icons';
-  import { supabaseClient } from '$lib/supabase';
-  import { loadAssistantStatus } from '$lib/assistant/client';
-  import { assistantHref } from '$lib/assistant/autoOpen';
-  import type { AssistantKind, AssistantStatus } from '$lib/assistant/types';
-  import utils from '$lib/utils';
+  import { supabaseClient } from '#lib/supabase.ts';
+  import { loadAssistantStatus } from '#lib/assistant/client.ts';
+  import { assistantHref } from '#lib/assistant/autoOpen.ts';
+  import type { AssistantKind, AssistantStatus } from '#lib/assistant/types.ts';
+  import utils from '#lib/utils.ts';
   import type { PageData } from './$types';
 
   /**

@@ -1,6 +1,6 @@
 <script lang="ts">
-  import PillToggle from '$lib/components/PillToggle.svelte';
-  import { modalDialog } from '$lib/modalDialog';
+  import PillToggle from '#lib/components/PillToggle.svelte';
+  import { modalDialog } from '#lib/modalDialog.ts';
   import { goto, invalidate } from '$app/navigation';
   import { _ } from 'svelte-i18n';
   import Fa from 'svelte-fa';
@@ -23,12 +23,12 @@
     faXmark
   } from '@fortawesome/free-solid-svg-icons';
   import dayjs from 'dayjs';
-  import { supabaseClient } from '$lib/supabase';
-  import { toaster } from '$lib/toast';
-  import BeltStrip from '$lib/components/BeltStrip.svelte';
-  import ExamStateChip from '$lib/components/exams/ExamStateChip.svelte';
-  import { candidateState, examinerName, groupCandidates } from '$lib/examUtils';
-  import type { ExamCandidate } from '$lib/models';
+  import { supabaseClient } from '#lib/supabase.ts';
+  import { toaster } from '#lib/toast.ts';
+  import BeltStrip from '#lib/components/BeltStrip.svelte';
+  import ExamStateChip from '#lib/components/exams/ExamStateChip.svelte';
+  import { candidateState, examinerName, groupCandidates } from '#lib/examUtils.ts';
+  import type { ExamCandidate } from '#lib/models.ts';
   import { assignExaminer } from '../queries';
   import CandidateDialog from './CandidateDialog.svelte';
   import type { PageData } from './$types';

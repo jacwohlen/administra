@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { clubConfig } from '$lib/clubConfig';
+  import { clubConfig } from '#lib/clubConfig.ts';
 
   /**
    * The club's logo for public-facing pages, taken from `clubConfig.logo`

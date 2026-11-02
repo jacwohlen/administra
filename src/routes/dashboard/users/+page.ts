@@ -1,6 +1,6 @@
 import { error, redirect } from '@sveltejs/kit';
-import { supabaseClient } from '$lib/supabase';
-import type { Member, MemberAccessReportRow, UserProfile } from '$lib/models';
+import { supabaseClient } from '#lib/supabase.ts';
+import type { Member, MemberAccessReportRow, UserProfile } from '#lib/models.ts';
 import type { PageLoad } from './$types';
 
 export const load: PageLoad = async ({ parent }) => {

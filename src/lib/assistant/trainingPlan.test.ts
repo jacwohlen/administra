@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { PlanTraining } from '$lib/trainingPlanUtils';
+import type { PlanTraining } from '#lib/trainingPlanUtils.ts';
 import {
   applyLeaderChoice,
   buildBreakWrites,

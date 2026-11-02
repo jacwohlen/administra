@@ -1,6 +1,6 @@
 import { error as err } from '@sveltejs/kit';
-import type { Member, MemberTopBadge } from '$lib/models';
-import { supabaseClient } from '$lib/supabase';
+import type { Member, MemberTopBadge } from '#lib/models.ts';
+import { supabaseClient } from '#lib/supabase.ts';
 
 export async function load({ depends }) {
   // Set a dependency for this route to reload when member data changes
@@ -16,7 +16,7 @@ export async function load({ depends }) {
       .returns<Member[]>(),
     supabaseClient.rpc('get_members_top_badges')
   ]);
-  if (error) throw err(404, error);
+  if (error) throw err(404, error.message);
 
   const badgeMap: Record<string, string> = {};
   if (Array.isArray(topBadges)) {

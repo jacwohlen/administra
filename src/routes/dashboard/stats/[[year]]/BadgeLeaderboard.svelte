@@ -1,8 +1,8 @@
 <script lang="ts">
-  import type { BadgeLeaderboardEntry } from '$lib/models';
-  import { supabaseClient } from '$lib/supabase';
+  import type { BadgeLeaderboardEntry } from '#lib/models.ts';
+  import { supabaseClient } from '#lib/supabase.ts';
   import { _ } from 'svelte-i18n';
-  import { toaster } from '$lib/toast';
+  import { toaster } from '#lib/toast.ts';
   import Fa from 'svelte-fa';
   import { faRotate } from '@fortawesome/free-solid-svg-icons';
   import StatsSection from './StatsSection.svelte';

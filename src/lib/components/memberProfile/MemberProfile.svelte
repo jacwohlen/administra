@@ -4,15 +4,15 @@
   import Fa from 'svelte-fa';
   import { faCakeCandles, faEnvelope, faPhone } from '@fortawesome/free-solid-svg-icons';
   import type { Snippet } from 'svelte';
-  import ActivityOverview from '$lib/components/ActivityOverview.svelte';
-  import BeltStrip from '$lib/components/BeltStrip.svelte';
-  import MedalTally from '$lib/components/MedalTally.svelte';
-  import MemberBadges from '$lib/components/MemberBadges.svelte';
-  import MemberGrades from '$lib/components/MemberGrades.svelte';
-  import MemberMedals from '$lib/components/MemberMedals.svelte';
-  import { beltRingColor, highestGrade, medalTally } from '$lib/gradeUtils';
-  import type { MemberAchievements, PastEvent, PrivateDetails } from '$lib/models';
-  import { calculateAge } from '$lib/utils';
+  import ActivityOverview from '#lib/components/ActivityOverview.svelte';
+  import BeltStrip from '#lib/components/BeltStrip.svelte';
+  import MedalTally from '#lib/components/MedalTally.svelte';
+  import MemberBadges from '#lib/components/MemberBadges.svelte';
+  import MemberGrades from '#lib/components/MemberGrades.svelte';
+  import MemberMedals from '#lib/components/MemberMedals.svelte';
+  import { beltRingColor, highestGrade, medalTally } from '#lib/gradeUtils.ts';
+  import type { MemberAchievements, PastEvent, PrivateDetails } from '#lib/models.ts';
+  import { calculateAge } from '#lib/utils.ts';
   import MemberLogs from './MemberLogs.svelte';
 
   // The one member profile, shown to staff (/dashboard/members/[id]) and in

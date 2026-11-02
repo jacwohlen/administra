@@ -1,20 +1,20 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { supabaseClient } from '$lib/supabase';
-  import type { LessonPlan } from '$lib/models';
+  import { supabaseClient } from '#lib/supabase.ts';
+  import type { LessonPlan } from '#lib/models.ts';
   import Fa from 'svelte-fa';
-  import { toaster } from '$lib/toast';
-  import CreateButton from '$lib/components/assistant/CreateButton.svelte';
-  import AssistantDialog from '$lib/components/assistant/AssistantDialog.svelte';
-  import LessonPlanReview from '$lib/components/assistant/LessonPlanReview.svelte';
-  import { loadAssistantStatus } from '$lib/assistant/client';
+  import { toaster } from '#lib/toast.ts';
+  import CreateButton from '#lib/components/assistant/CreateButton.svelte';
+  import AssistantDialog from '#lib/components/assistant/AssistantDialog.svelte';
+  import LessonPlanReview from '#lib/components/assistant/LessonPlanReview.svelte';
+  import { loadAssistantStatus } from '#lib/assistant/client.ts';
   import {
     lessonPlanLines,
     lessonPlanTarget,
     sameTarget,
     toExistingPlan,
     type LessonPlanTarget
-  } from '$lib/assistant/lessonPlan';
+  } from '#lib/assistant/lessonPlan.ts';
   import {
     faEdit,
     faSave,

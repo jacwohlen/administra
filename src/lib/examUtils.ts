@@ -5,7 +5,7 @@ import type {
   ExamResult,
   ExamScore,
   GradeDefinition
-} from '$lib/models';
+} from '#lib/models.ts';
 
 /**
  * The sheet's general feedback is stored as an exam_scores row under this key, so

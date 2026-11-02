@@ -1,7 +1,7 @@
 import { error as err } from '@sveltejs/kit';
-import { supabaseClient } from '$lib/supabase';
-import { loadCourseData } from '$lib/jsCourseData';
-import { buildCourseExport } from '$lib/jsExport';
+import { supabaseClient } from '#lib/supabase.ts';
+import { loadCourseData } from '#lib/jsCourseData.ts';
+import { buildCourseExport } from '#lib/jsExport.ts';
 import type { PageLoad } from './$types';
 
 export const load: PageLoad = async ({ params }) => {

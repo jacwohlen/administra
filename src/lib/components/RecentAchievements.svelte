@@ -1,11 +1,11 @@
 <script lang="ts">
-  import type { RecentAchievement } from '$lib/models';
-  import { badgeKey, badgeSuffix } from '$lib/badgeUtils';
-  import { hoverTip, isPinned, leaveTip, tapTip } from '$lib/badgeTip.svelte';
+  import type { RecentAchievement } from '#lib/models.ts';
+  import { badgeKey, badgeSuffix } from '#lib/badgeUtils.ts';
+  import { hoverTip, isPinned, leaveTip, tapTip } from '#lib/badgeTip.svelte.ts';
   import BadgeTile from './BadgeTile.svelte';
   import BadgeTooltip from './BadgeTooltip.svelte';
-  import { supabaseClient } from '$lib/supabase';
-  import { displayConfig } from '$lib/appSettings';
+  import { supabaseClient } from '#lib/supabase.ts';
+  import { displayConfig } from '#lib/appSettings.ts';
   import { _ } from 'svelte-i18n';
   import dayjs from 'dayjs';
   import relativeTime from 'dayjs/plugin/relativeTime';

@@ -6,7 +6,7 @@
     faCheckCircle,
     faChevronRight
   } from '@fortawesome/free-solid-svg-icons';
-  import { supabaseClient } from '$lib/supabase';
+  import { supabaseClient } from '#lib/supabase.ts';
   import { _ } from 'svelte-i18n';
   import dayjs from 'dayjs';
 
@@ -37,7 +37,7 @@
       .returns<LogSummary[]>();
 
     if (error) {
-      throw err(404, error);
+      throw err(404, error.message);
     }
     return data;
   }

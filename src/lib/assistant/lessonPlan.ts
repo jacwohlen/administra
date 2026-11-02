@@ -1,4 +1,4 @@
-import type { LessonPlan } from '$lib/models';
+import type { LessonPlan } from '#lib/models.ts';
 import { cleanText, isIsoDate, MAX_LENGTH } from './proposals';
 import type { LessonPlanProposal } from './types';
 

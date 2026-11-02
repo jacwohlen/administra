@@ -1,5 +1,5 @@
-import type { DirectoryMember, Exam, ExamCandidateStatus, ExamProgram } from '$lib/models';
-import { supabaseClient } from '$lib/supabase';
+import type { DirectoryMember, Exam, ExamCandidateStatus, ExamProgram } from '#lib/models.ts';
+import { supabaseClient } from '#lib/supabase.ts';
 import dayjs from 'dayjs';
 
 /**

@@ -5,7 +5,7 @@
   import dayjs from 'dayjs';
   import { invalidate } from '$app/navigation';
   import MergeMemberDialog from '../[memberId]/MergeMemberDialog.svelte';
-  import type { MergeMember } from '$lib/memberMerge';
+  import type { MergeMember } from '#lib/memberMerge.ts';
   import type { PageData } from './$types';
 
   let { data }: { data: PageData } = $props();

@@ -1,6 +1,6 @@
-import { supabaseClient } from '$lib/supabase';
+import { supabaseClient } from '#lib/supabase.ts';
 import { error as err } from '@sveltejs/kit';
-import type { Exam } from '$lib/models';
+import type { Exam } from '#lib/models.ts';
 import type { LayoutLoad } from './$types';
 
 export const load: LayoutLoad = async ({ params, depends }) => {

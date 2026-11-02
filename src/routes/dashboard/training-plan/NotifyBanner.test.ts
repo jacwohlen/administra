@@ -1,15 +1,15 @@
 import { describe, it, expect, vi, afterEach, beforeAll, beforeEach } from 'vitest';
 import { render, screen, cleanup, fireEvent, waitFor } from '@testing-library/svelte';
 import { addMessages, init } from 'svelte-i18n';
-import de from '$lib/i18n/locales/de.json';
-import { addDays } from '$lib/calendarFeed';
+import de from '#lib/i18n/locales/de.json';
+import { addDays } from '#lib/calendarFeed.ts';
 import {
   MAIL_DAYS_AHEAD,
   computeNotices,
   type MailPlanData,
   type MailScope
-} from '$lib/trainingPlanMail';
-import { loadMailPlan } from '$lib/trainingPlanMailData';
+} from '#lib/trainingPlanMail.ts';
+import { loadMailPlan } from '#lib/trainingPlanMailData.ts';
 import NotifyBanner from './NotifyBanner.svelte';
 
 // The real German texts, so a broken message (ICU syntax, missing key) shows here
@@ -18,8 +18,8 @@ beforeAll(() => {
   init({ fallbackLocale: 'de', initialLocale: 'de' });
 });
 
-vi.mock('$lib/supabase', () => ({ supabaseClient: {} }));
-vi.mock('$lib/trainingPlanMailData', () => ({ loadMailPlan: vi.fn(), loadMailScope: vi.fn() }));
+vi.mock('#lib/supabase.ts', () => ({ supabaseClient: {} }));
+vi.mock('#lib/trainingPlanMailData.ts', () => ({ loadMailPlan: vi.fn(), loadMailScope: vi.fn() }));
 
 const TK: MailScope = { all: true, trainingIds: [] };
 // A Monday

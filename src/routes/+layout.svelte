@@ -1,12 +1,12 @@
 <script lang="ts">
-  import { PUBLIC_MODE } from '$env/static/public';
+  import { PUBLIC_MODE } from '$app/env/public';
   import { setUser } from '@sentry/sveltekit';
-  import { invalidateAll } from '$app/navigation';
-  import { supabaseClient } from '$lib/supabase';
+  import { refreshAll } from '$app/navigation';
+  import { supabaseClient } from '#lib/supabase.ts';
   import { onMount } from 'svelte';
   import { _, locale } from 'svelte-i18n';
-  import { DEMO_INFO_URL } from '$lib/demo';
-  import { applyDayjsLocale } from '$lib/dayjsLocale';
+  import { DEMO_INFO_URL } from '#lib/demo.ts';
+  import { applyDayjsLocale } from '#lib/dayjsLocale.ts';
   import type { Snippet } from 'svelte';
   import type { LayoutData } from './$types';
 
@@ -35,7 +35,7 @@
       // only when it differs from the one the page was loaded with;
       // otherwise every page would load all of its data twice.
       if (session?.expires_at !== data.session?.expires_at) {
-        invalidateAll();
+        refreshAll();
       }
     });
     return () => {

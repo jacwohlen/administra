@@ -1,6 +1,6 @@
 <script lang="ts">
-  import PillToggle from '$lib/components/PillToggle.svelte';
-  import { modalDialog } from '$lib/modalDialog';
+  import PillToggle from '#lib/components/PillToggle.svelte';
+  import { modalDialog } from '#lib/modalDialog.ts';
   import type { PageData } from './$types';
   import { untrack } from 'svelte';
   import { _ } from 'svelte-i18n';
@@ -28,7 +28,7 @@
     faBoxOpen,
     faBed
   } from '@fortawesome/free-solid-svg-icons';
-  import { calculateAge } from '$lib/utils';
+  import { calculateAge } from '#lib/utils.ts';
   import {
     trialProgress,
     matchesTrialTab,
@@ -37,14 +37,14 @@
     isTrialInactive,
     lastTrialActivity,
     type TrialTab
-  } from '$lib/trialUtils';
-  import { clubConfig } from '$lib/clubConfig';
-  import { supabaseClient } from '$lib/supabase';
-  import { toaster } from '$lib/toast';
+  } from '#lib/trialUtils.ts';
+  import { clubConfig } from '#lib/clubConfig.ts';
+  import { supabaseClient } from '#lib/supabase.ts';
+  import { toaster } from '#lib/toast.ts';
   import { invalidate } from '$app/navigation';
   import AssignTrainingDialog from './AssignTrainingDialog.svelte';
   import MailDialog from './MailDialog.svelte';
-  import { trialStatusUrl, type TrialMailKind } from '$lib/trialMail';
+  import { trialStatusUrl, type TrialMailKind } from '#lib/trialMail.ts';
   import type {
     AssignedTraining,
     TrialEmail,
@@ -52,7 +52,7 @@
     TrialStatus,
     Training,
     TrainingActivity
-  } from '$lib/models';
+  } from '#lib/models.ts';
   import dayjs from 'dayjs';
 
   const TABS: TrialTab[] = [

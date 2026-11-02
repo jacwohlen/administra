@@ -1,8 +1,8 @@
 import { describe, expect, it, vi } from 'vitest';
 
 const mailMode = vi.fn(() => 'smtp');
-vi.mock('$lib/server/mailer', () => ({ mailMode, sendMail: vi.fn() }));
-vi.mock('$lib/server/trialMailContext', () => ({ loadMailSettings: vi.fn() }));
+vi.mock('#lib/server/mailer.ts', () => ({ mailMode, sendMail: vi.fn() }));
+vi.mock('#lib/server/trialMailContext.ts', () => ({ loadMailSettings: vi.fn() }));
 
 const { GET } = await import('./+server');
 

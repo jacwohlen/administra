@@ -2,10 +2,10 @@
   import { _ } from 'svelte-i18n';
   import Fa from 'svelte-fa';
   import { faEnvelope } from '@fortawesome/free-solid-svg-icons';
-  import { supabaseClient } from '$lib/supabase';
-  import { computeNotices, type MailScope, type NoticeSet } from '$lib/trainingPlanMail';
-  import { loadMailPlan } from '$lib/trainingPlanMailData';
-  import type { MailMode } from '$lib/trainingPlanMailClient';
+  import { supabaseClient } from '#lib/supabase.ts';
+  import { computeNotices, type MailScope, type NoticeSet } from '#lib/trainingPlanMail.ts';
+  import { loadMailPlan } from '#lib/trainingPlanMailData.ts';
+  import type { MailMode } from '#lib/trainingPlanMailClient.ts';
 
   /**
    * "Trainer informieren" on the plan page: how many trainers have changes

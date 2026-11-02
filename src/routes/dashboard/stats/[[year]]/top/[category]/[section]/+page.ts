@@ -1,7 +1,7 @@
 import { error as err } from '@sveltejs/kit';
-import type { Athletes } from '$lib/models';
-import { rpcRows } from '$lib/supabase';
-import { resolveYearForRpc } from '$lib/statsUtils';
+import type { Athletes } from '#lib/models.ts';
+import { rpcRows } from '#lib/supabase.ts';
+import { resolveYearForRpc } from '#lib/statsUtils.ts';
 
 export async function load({ params }) {
   const year = resolveYearForRpc(params.year);
@@ -18,7 +18,7 @@ export async function load({ params }) {
       );
 
       if (athletesError) {
-        throw err(404, athletesError);
+        throw err(404, athletesError.message);
       }
       return {
         year: params.year,
@@ -38,7 +38,7 @@ export async function load({ params }) {
       );
 
       if (trainersError) {
-        throw err(404, trainersError);
+        throw err(404, trainersError.message);
       }
 
       return {
@@ -59,7 +59,7 @@ export async function load({ params }) {
       );
 
       if (eventsError) {
-        throw err(404, eventsError);
+        throw err(404, eventsError.message);
       }
 
       return {
@@ -80,7 +80,7 @@ export async function load({ params }) {
       );
 
       if (coachesError) {
-        throw err(404, coachesError);
+        throw err(404, coachesError.message);
       }
 
       return {

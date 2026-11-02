@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { addDays, type FeedTraining } from '$lib/calendarFeed';
-import type { TrainingPlanSession } from '$lib/models';
+import { addDays, type FeedTraining } from '#lib/calendarFeed.ts';
+import type { TrainingPlanSession } from '#lib/models.ts';
 import {
   MAIL_DAYS_AHEAD,
   computeNotices,
@@ -8,13 +8,13 @@ import {
   type MailPlanData,
   type MailScope,
   type MemberNotice
-} from '$lib/trainingPlanMail';
-import { renderMail } from '$lib/trainingPlanMailText';
+} from '#lib/trainingPlanMail.ts';
+import { renderMail } from '#lib/trainingPlanMailText.ts';
 
 const sendMail = vi.fn();
 const planMailMode = vi.fn(() => 'smtp');
-vi.mock('$lib/server/mailer', () => ({ sendMail, planMailMode }));
-vi.mock('$lib/server/trialMailContext', () => ({
+vi.mock('#lib/server/mailer.ts', () => ({ sendMail, planMailMode }));
+vi.mock('#lib/server/trialMailContext.ts', () => ({
   loadMailSettings: vi.fn(async () => ({
     club: { name: 'Testclub', contactEmail: 'club@test.ch' },
     values: {}
@@ -22,7 +22,7 @@ vi.mock('$lib/server/trialMailContext', () => ({
 }));
 const loadMailScope = vi.fn();
 const loadMailPlan = vi.fn();
-vi.mock('$lib/trainingPlanMailData', () => ({ loadMailScope, loadMailPlan }));
+vi.mock('#lib/trainingPlanMailData.ts', () => ({ loadMailScope, loadMailPlan }));
 
 const { GET, POST } = await import('./+server');
 

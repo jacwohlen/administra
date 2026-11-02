@@ -1,10 +1,10 @@
 <script lang="ts">
-  import MoreMenu from '$lib/components/MoreMenu.svelte';
-  import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
-  import { modalDialog } from '$lib/modalDialog';
+  import MoreMenu from '#lib/components/MoreMenu.svelte';
+  import ConfirmDialog from '#lib/components/ConfirmDialog.svelte';
+  import { modalDialog } from '#lib/modalDialog.ts';
   import type { PageData } from './$types';
   import { _ } from 'svelte-i18n';
-  import MemberProfile from '$lib/components/memberProfile/MemberProfile.svelte';
+  import MemberProfile from '#lib/components/memberProfile/MemberProfile.svelte';
   import {
     faArrowLeft,
     faArrowsRotate,
@@ -15,24 +15,24 @@
     faTrash,
     faUpload
   } from '@fortawesome/free-solid-svg-icons';
-  import { supabaseClient } from '$lib/supabase';
+  import { supabaseClient } from '#lib/supabase.ts';
   import { error as err } from '@sveltejs/kit';
   import Fa from 'svelte-fa';
   import { fromBlob } from 'image-resize-compress';
-  import { blobToDataUrl } from '$lib/imageUtils';
+  import { blobToDataUrl } from '#lib/imageUtils.ts';
   import dayjs, { type Dayjs } from 'dayjs';
   import { goto, invalidate } from '$app/navigation';
   import MemberForm from '../MemberForm.svelte';
   import MergeMemberDialog from './MergeMemberDialog.svelte';
-  import { avatarPath } from '$lib/memberMerge';
-  import { toaster } from '$lib/toast';
+  import { avatarPath } from '#lib/memberMerge.ts';
+  import { toaster } from '#lib/toast.ts';
   import {
     isMainTrainerEmailError,
     isManagedByProviderError,
     providerName,
     statusChip,
     visibleLabels
-  } from '$lib/memberStatus';
+  } from '#lib/memberStatus.ts';
 
   let { data }: { data: PageData } = $props();
   let loadingImage = $state(false);
@@ -89,7 +89,7 @@
       .eq('id', data.id);
 
     if (error) {
-      throw err(404, error);
+      throw err(404, error.message);
     }
   }
 
@@ -101,7 +101,7 @@
         .remove([oldFileName]);
 
       if (deleteError) {
-        throw err(404, deleteError);
+        throw err(404, deleteError.message);
       }
     }
   }
@@ -119,7 +119,7 @@
       });
 
     if (uploadError) {
-      throw err(404, uploadError);
+      throw err(404, uploadError.message);
     }
 
     return url;
@@ -134,7 +134,7 @@
       .select();
 
     if (error) {
-      throw err(404, error);
+      throw err(404, error.message);
     }
 
     await removeOldProfilePictureFromStorage(data.imgUploaded);

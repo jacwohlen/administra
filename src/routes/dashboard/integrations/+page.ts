@@ -1,8 +1,8 @@
 import { error, redirect } from '@sveltejs/kit';
-import { supabaseClient } from '$lib/supabase';
-import { fetchAllRows } from '$lib/assistant/attendance';
-import { isAdmin } from '$lib/roles';
-import { MERGE_COLUMNS, type MergeMember } from '$lib/memberMerge';
+import { supabaseClient } from '#lib/supabase.ts';
+import { fetchAllRows } from '#lib/assistant/attendance.ts';
+import { isAdmin } from '#lib/roles.ts';
+import { MERGE_COLUMNS, type MergeMember } from '#lib/memberMerge.ts';
 import {
   CALENDAR_COLUMNS,
   GROUP_COLUMNS,
@@ -16,7 +16,7 @@ import {
   type IntegrationRun,
   type IssueEvent,
   type MemberGroupRow
-} from '$lib/integrations';
+} from '#lib/integrations.ts';
 import type { PageLoad } from './$types';
 
 /** Runs the table shows */

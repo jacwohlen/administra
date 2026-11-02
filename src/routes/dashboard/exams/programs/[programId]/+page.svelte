@@ -4,9 +4,9 @@
   import Fa from 'svelte-fa';
   import { faArrowLeft, faEdit } from '@fortawesome/free-solid-svg-icons';
   import dayjs from 'dayjs';
-  import BeltStrip from '$lib/components/BeltStrip.svelte';
-  import ExamProgramView from '$lib/components/exams/ExamProgramView.svelte';
-  import { supabaseClient } from '$lib/supabase';
+  import BeltStrip from '#lib/components/BeltStrip.svelte';
+  import ExamProgramView from '#lib/components/exams/ExamProgramView.svelte';
+  import { supabaseClient } from '#lib/supabase.ts';
   import ProgramEditor from './ProgramEditor.svelte';
   import type { PageData } from './$types';
 

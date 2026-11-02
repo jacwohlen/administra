@@ -11,8 +11,8 @@ vi.mock('svelte-i18n', () => ({
   register: vi.fn(),
   getLocaleFromNavigator: vi.fn()
 }));
-vi.mock('$lib/clubConfig', () => ({ clubConfig: { sections: ['Judo', 'Aikido'] } }));
-vi.mock('$lib/supabase', () => ({
+vi.mock('#lib/clubConfig.ts', () => ({ clubConfig: { sections: ['Judo', 'Aikido'] } }));
+vi.mock('#lib/supabase.ts', () => ({
   supabaseClient: {
     from: () => ({
       update: (fields: unknown) => {
@@ -22,7 +22,7 @@ vi.mock('$lib/supabase', () => ({
     })
   }
 }));
-vi.mock('$app/navigation', () => ({ goto: vi.fn(), invalidateAll: vi.fn() }));
+vi.mock('$app/navigation', () => ({ goto: vi.fn(), refreshAll: vi.fn() }));
 
 afterEach(() => {
   cleanup();

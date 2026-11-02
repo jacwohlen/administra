@@ -1,4 +1,4 @@
-import type { Badge, BadgeDefinition, BadgeProgress } from '$lib/models';
+import type { Badge, BadgeDefinition, BadgeProgress } from '#lib/models.ts';
 
 const CATEGORY_ORDER = ['season', 'attendance', 'streak', 'trainer', 'event', 'grade', 'medal'];
 

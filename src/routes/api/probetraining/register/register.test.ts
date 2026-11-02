@@ -1,8 +1,8 @@
 import { describe, expect, it, vi } from 'vitest';
 
 const sendMail = vi.fn();
-vi.mock('$lib/server/mailer', () => ({ sendMail }));
-vi.mock('$lib/server/trialMailContext', () => ({ loadMailSettings: vi.fn() }));
+vi.mock('#lib/server/mailer.ts', () => ({ sendMail }));
+vi.mock('#lib/server/trialMailContext.ts', () => ({ loadMailSettings: vi.fn() }));
 
 const { POST } = await import('./+server');
 

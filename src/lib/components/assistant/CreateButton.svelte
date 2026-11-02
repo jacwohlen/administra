@@ -5,7 +5,7 @@
     faWandMagicSparkles,
     type IconDefinition
   } from '@fortawesome/free-solid-svg-icons';
-  import { loadAssistantStatus } from '$lib/assistant/client';
+  import { loadAssistantStatus } from '#lib/assistant/client.ts';
 
   /**
    * A page's own create button with the Daten-Assistent attached as a

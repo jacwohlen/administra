@@ -1,8 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { envMock } from '#lib/test/envMock.ts';
 
-const env: Record<string, string | undefined> = { PRIVATE_ANTHROPIC_API_KEY: 'sk-test' };
-vi.mock('$env/dynamic/private', () => ({ env }));
-vi.mock('$lib/server/trialMailContext', () => ({
+const env = envMock({ PRIVATE_ANTHROPIC_API_KEY: 'sk-test' });
+vi.mock('$app/env/private', () => env);
+vi.mock('#lib/server/trialMailContext.ts', () => ({
   loadMailSettings: vi.fn().mockResolvedValue({ club: { sections: ['Judo', 'Aikido'] } })
 }));
 

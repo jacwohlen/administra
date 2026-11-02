@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { MedalTally } from '$lib/gradeUtils';
+  import type { MedalTally } from '#lib/gradeUtils.ts';
 
   let { tally, compact = false }: { tally: MedalTally; compact?: boolean } = $props();
 </script>

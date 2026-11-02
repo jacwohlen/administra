@@ -26,7 +26,7 @@ that page in `securityHeaders.ts`.
 
 ## Content Security Policy
 
-Configured as `kit.csp` in `svelte.config.js`. SvelteKit adds a nonce to its
+Configured as `csp` of the `sveltekit()` plugin in `vite.config.js`. SvelteKit adds a nonce to its
 own inline scripts. Allowed besides the app itself:
 
 - requests: Supabase (`*.supabase.co` and the configured
@@ -44,7 +44,7 @@ enforce it:
 1. Use the app for a while (dashboard, statistics, lesson plans with PDF and
    image, member photos, trial form) and check the function log and the
    browser console for `CSP violation` / `[Report Only]`.
-2. Fix or allow what shows up, then in `svelte.config.js` rename
+2. Fix or allow what shows up, then in `vite.config.js` rename
    `reportOnly` to `directives` and drop `report-uri` (or keep it).
 
 ## Static files

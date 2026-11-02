@@ -8,11 +8,11 @@
     faTriangleExclamation
   } from '@fortawesome/free-solid-svg-icons';
   import dayjs from 'dayjs';
-  import { modalDialog } from '$lib/modalDialog';
-  import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
-  import { supabaseClient } from '$lib/supabase';
-  import { fetchAllRows } from '$lib/assistant/attendance';
-  import { normalizeName } from '$lib/assistant/nameMatch';
+  import { modalDialog } from '#lib/modalDialog.ts';
+  import ConfirmDialog from '#lib/components/ConfirmDialog.svelte';
+  import { supabaseClient } from '#lib/supabase.ts';
+  import { fetchAllRows } from '#lib/assistant/attendance.ts';
+  import { normalizeName } from '#lib/assistant/nameMatch.ts';
   import {
     findDuplicatePairs,
     inProvider,
@@ -21,7 +21,7 @@
     mergeOrderProblem,
     suggestKeep,
     type LinkState
-  } from '$lib/memberDuplicates';
+  } from '#lib/memberDuplicates.ts';
   import {
     MERGE_COLUMNS,
     accountChanges,
@@ -32,10 +32,10 @@
     mergeWithPhoto,
     type MergeErrorCode,
     type MergeMember
-  } from '$lib/memberMerge';
-  import { statusChip, visibleLabels } from '$lib/memberStatus';
-  import type { MemberMergeResult } from '$lib/models';
-  import { toaster } from '$lib/toast';
+  } from '#lib/memberMerge.ts';
+  import { statusChip, visibleLabels } from '#lib/memberStatus.ts';
+  import type { MemberMergeResult } from '#lib/models.ts';
+  import { toaster } from '#lib/toast.ts';
 
   /**
    * Merge a duplicate into one member (admins): pick the other record (or get

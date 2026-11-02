@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { modalDialog } from '$lib/modalDialog';
+  import { modalDialog } from '#lib/modalDialog.ts';
   import { tick } from 'svelte';
   import { fly } from 'svelte/transition';
   import { beforeNavigate, invalidate } from '$app/navigation';
@@ -21,12 +21,12 @@
     faUserPlus,
     faXmark
   } from '@fortawesome/free-solid-svg-icons';
-  import { supabaseClient } from '$lib/supabase';
-  import { toaster } from '$lib/toast';
-  import BeltStrip from '$lib/components/BeltStrip.svelte';
-  import ExamPartHeader from '$lib/components/exams/ExamPartHeader.svelte';
-  import ExamStateChip from '$lib/components/exams/ExamStateChip.svelte';
-  import ScoreLegend from '$lib/components/exams/ScoreLegend.svelte';
+  import { supabaseClient } from '#lib/supabase.ts';
+  import { toaster } from '#lib/toast.ts';
+  import BeltStrip from '#lib/components/BeltStrip.svelte';
+  import ExamPartHeader from '#lib/components/exams/ExamPartHeader.svelte';
+  import ExamStateChip from '#lib/components/exams/ExamStateChip.svelte';
+  import ScoreLegend from '#lib/components/exams/ScoreLegend.svelte';
   import {
     FEEDBACK_KEY,
     applyScore,
@@ -39,13 +39,13 @@
     sheetGroups,
     sidePoints,
     type ScoreSide
-  } from '$lib/examUtils';
+  } from '#lib/examUtils.ts';
   import {
     applyCandidateChange,
     applyExaminerChange,
     applyScoreChange,
     type RowChange
-  } from '$lib/examLive';
+  } from '#lib/examLive.ts';
   import type {
     ExamCandidate,
     ExamExaminer,
@@ -53,7 +53,7 @@
     ExamPart,
     ExamResult,
     ExamScore
-  } from '$lib/models';
+  } from '#lib/models.ts';
   import { assignExaminer } from '../../queries';
   import ScoreButtons from './ScoreButtons.svelte';
   import type { PageData } from './$types';

@@ -1,9 +1,9 @@
-import { supabaseClient } from '$lib/supabase';
+import { supabaseClient } from '#lib/supabase.ts';
 import dayjs from 'dayjs';
-import type { PlanTraining } from '$lib/trainingPlanUtils';
-import { canBeTrainer, hasTrainerLabel } from '$lib/memberStatus';
-import { loadIntegrationConfig } from '$lib/integrationConfigLoad';
-import type { MembershipStatus } from '$lib/models';
+import type { PlanTraining } from '#lib/trainingPlanUtils.ts';
+import { canBeTrainer, hasTrainerLabel } from '#lib/memberStatus.ts';
+import { loadIntegrationConfig } from '#lib/integrationConfigLoad.ts';
+import type { MembershipStatus } from '#lib/models.ts';
 
 export interface PlanMember {
   id: number;

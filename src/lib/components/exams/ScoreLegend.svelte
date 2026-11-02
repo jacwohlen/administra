@@ -1,6 +1,6 @@
 <script lang="ts">
   import { _ } from 'svelte-i18n';
-  import { SCORE_VALUES } from '$lib/examUtils';
+  import { SCORE_VALUES } from '#lib/examUtils.ts';
   import { SCORE_TONES } from './examStyles';
 
   // What 0 / 1 / 2 mean, in the colours of the score keys

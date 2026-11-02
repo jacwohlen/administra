@@ -1,4 +1,4 @@
-import type { GradeDefinition, MemberCurrentGrade, MemberGrade } from '$lib/models';
+import type { GradeDefinition, MemberCurrentGrade, MemberGrade } from '#lib/models.ts';
 import { sameName } from './nameMatch';
 import { cleanText, isIsoDate } from './proposals';
 import type { GradeEntry, GradesProposal } from './types';

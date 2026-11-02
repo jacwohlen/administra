@@ -1,10 +1,10 @@
 <script lang="ts">
   import { _ } from 'svelte-i18n';
-  import { invalidate, invalidateAll } from '$app/navigation';
+  import { invalidate, refreshAll } from '$app/navigation';
   import Fa from 'svelte-fa';
   import { faArrowRight } from '@fortawesome/free-solid-svg-icons';
-  import { invalidateIntegrationConfig } from '$lib/integrationConfigLoad';
-  import { hasSync } from '$lib/integrations';
+  import { invalidateIntegrationConfig } from '#lib/integrationConfigLoad.ts';
+  import { hasSync } from '#lib/integrations.ts';
   import type { PageData } from './$types';
   import ConnectionOverview from './ConnectionOverview.svelte';
   import RunTable from './RunTable.svelte';
@@ -31,7 +31,7 @@
   // A connection switched on or off: menus and modules (J+S) follow at once
   async function switched() {
     invalidateIntegrationConfig();
-    await invalidateAll();
+    await refreshAll();
   }
 </script>
 

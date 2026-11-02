@@ -1,5 +1,5 @@
 import { redirect } from '@sveltejs/kit';
-import { resolveYearParam } from '$lib/statsUtils';
+import { resolveYearParam } from '#lib/statsUtils.ts';
 import type { PageLoad } from './$types';
 
 export const load = (({ params }) => {

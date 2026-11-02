@@ -22,7 +22,7 @@
     type IntegrationAlert,
     type IntegrationRun,
     type SyncKind
-  } from '$lib/integrations';
+  } from '#lib/integrations.ts';
 
   dayjs.extend(relativeTime);
 

@@ -1,8 +1,8 @@
 <script lang="ts">
-  import { modalDialog } from '$lib/modalDialog';
-  import type { Badge } from '$lib/models';
-  import { badgeKey, badgeSuffix } from '$lib/badgeUtils';
-  import { displayConfig } from '$lib/appSettings';
+  import { modalDialog } from '#lib/modalDialog.ts';
+  import type { Badge } from '#lib/models.ts';
+  import { badgeKey, badgeSuffix } from '#lib/badgeUtils.ts';
+  import { displayConfig } from '#lib/appSettings.ts';
   import { _ } from 'svelte-i18n';
 
   let { badges, memberName }: { badges: Badge[]; memberName: string } = $props();

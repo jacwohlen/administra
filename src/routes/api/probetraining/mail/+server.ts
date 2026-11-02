@@ -1,7 +1,7 @@
-import { json, error, type RequestHandler } from '@sveltejs/kit';
-import { mailMode, sendMail } from '$lib/server/mailer';
-import { loadMailSettings } from '$lib/server/trialMailContext';
-import { TRIAL_MAIL_KINDS, type TrialMailKind } from '$lib/trialMail';
+import { error, type RequestHandler } from '@sveltejs/kit';
+import { mailMode, sendMail } from '#lib/server/mailer.ts';
+import { loadMailSettings } from '#lib/server/trialMailContext.ts';
+import { TRIAL_MAIL_KINDS, type TrialMailKind } from '#lib/trialMail.ts';
 
 /**
  * Mails staff send to a trial candidate after previewing them in the
@@ -17,7 +17,7 @@ import { TRIAL_MAIL_KINDS, type TrialMailKind } from '$lib/trialMail';
 export const GET: RequestHandler = async ({ locals }) => {
   const { session } = await locals.safeGetSession();
   if (!session) error(401, 'Not signed in');
-  return json({ configured: mailMode() === 'smtp' });
+  return Response.json({ configured: mailMode() === 'smtp' });
 };
 
 export const POST: RequestHandler = async ({ request, locals }) => {
@@ -76,5 +76,5 @@ export const POST: RequestHandler = async ({ request, locals }) => {
     .eq('id', logged.id);
   if (updateError) console.error('Updating trial_emails failed:', updateError);
 
-  return json(result);
+  return Response.json(result);
 };

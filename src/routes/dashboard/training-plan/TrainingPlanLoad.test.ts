@@ -5,7 +5,7 @@ const { rpc, tables } = vi.hoisted(() => ({
   rpc: vi.fn(),
   tables: {} as Record<string, unknown[]>
 }));
-vi.mock('$lib/supabase', () => {
+vi.mock('#lib/supabase.ts', () => {
   const chain = (table: string): unknown =>
     new Proxy(
       {},

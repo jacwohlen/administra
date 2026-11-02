@@ -1,14 +1,14 @@
 <script lang="ts">
-  import { modalDialog } from '$lib/modalDialog';
+  import { modalDialog } from '#lib/modalDialog.ts';
   import type { PageData } from './$types';
   import Fa from 'svelte-fa';
   import { faChevronRight, faCodeMerge, faPlus } from '@fortawesome/free-solid-svg-icons';
   import { _ } from 'svelte-i18n';
-  import { supabaseClient } from '$lib/supabase';
-  import { toaster } from '$lib/toast';
+  import { supabaseClient } from '#lib/supabase.ts';
+  import { toaster } from '#lib/toast.ts';
   import { invalidate } from '$app/navigation';
   import MemberForm from './MemberForm.svelte';
-  import { isCurrentMember, statusChip, visibleLabels } from '$lib/memberStatus';
+  import { isCurrentMember, statusChip, visibleLabels } from '#lib/memberStatus.ts';
 
   let { data }: { data: PageData } = $props();
   let searchTerm = $state('');

@@ -1,13 +1,13 @@
-import { json, error, type RequestHandler } from '@sveltejs/kit';
-import { sendMail } from '$lib/server/mailer';
-import { loadMailSettings } from '$lib/server/trialMailContext';
+import { error, type RequestHandler } from '@sveltejs/kit';
+import { sendMail } from '#lib/server/mailer.ts';
+import { loadMailSettings } from '#lib/server/trialMailContext.ts';
 import {
   buildTrialMailVars,
   renderTrialMail,
   trialMailLocale,
   trialMailTemplate,
   trialStatusUrl
-} from '$lib/trialMail';
+} from '#lib/trialMail.ts';
 
 /**
  * Public trial registration (the /probetraining form). Creates the
@@ -60,7 +60,7 @@ export const POST: RequestHandler = async ({ request, locals, url }) => {
   }
 
   // Bots get a success response and nothing happens.
-  if (str(body.website)) return json({ ok: true });
+  if (str(body.website)) return Response.json({ ok: true });
 
   const registration = {
     p_firstname: str(body.firstname),
@@ -128,5 +128,5 @@ export const POST: RequestHandler = async ({ request, locals, url }) => {
     if (logError) console.error('complete_trial_email failed:', logError);
   }
 
-  return json({ ok: true, statusUrl: statusToken ? statusUrl : null });
+  return Response.json({ ok: true, statusUrl: statusToken ? statusUrl : null });
 };

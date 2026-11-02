@@ -6,7 +6,7 @@ const { mockSupabase } = vi.hoisted(() => ({
   }
 }));
 
-vi.mock('$lib/supabase', () => ({
+vi.mock('#lib/supabase.ts', () => ({
   supabaseClient: mockSupabase
 }));
 

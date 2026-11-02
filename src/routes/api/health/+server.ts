@@ -1,4 +1,4 @@
-import { json, type RequestHandler } from '@sveltejs/kit';
+import type { RequestHandler } from '@sveltejs/kit';
 
 /**
  * Health check for the uptime monitor (see docs/UPTIME_MONITORING.md).
@@ -18,9 +18,9 @@ export const GET: RequestHandler = async ({ locals }) => {
       .limit(1)
       .abortSignal(AbortSignal.timeout(5000));
     if (error) throw error;
-    return json({ status: 'ok' }, { headers });
+    return Response.json({ status: 'ok' }, { headers });
   } catch (e) {
     console.error('Health check failed:', e);
-    return json({ status: 'error' }, { status: 503, headers });
+    return Response.json({ status: 'error' }, { status: 503, headers });
   }
 };

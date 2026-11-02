@@ -1,13 +1,13 @@
 <script lang="ts">
   import type { PageData } from './$types';
-  import type { ExamRole, UserProfile, UserRole, UserStatus } from '$lib/models';
+  import type { ExamRole, UserProfile, UserRole, UserStatus } from '#lib/models.ts';
   import Fa from 'svelte-fa';
   import { faCheck, faBan, faRotateLeft } from '@fortawesome/free-solid-svg-icons';
   import { _ } from 'svelte-i18n';
-  import { supabaseClient } from '$lib/supabase';
-  import { toaster } from '$lib/toast';
-  import { invalidateAll } from '$app/navigation';
-  import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
+  import { supabaseClient } from '#lib/supabase.ts';
+  import { toaster } from '#lib/toast.ts';
+  import { refreshAll } from '$app/navigation';
+  import ConfirmDialog from '#lib/components/ConfirmDialog.svelte';
 
   let { data }: { data: PageData } = $props();
   let busyId = $state<string | null>(null);
@@ -75,7 +75,7 @@
       toaster.error({ title: errorMessage(e) });
     } finally {
       busyId = null;
-      await invalidateAll();
+      await refreshAll();
     }
   }
 

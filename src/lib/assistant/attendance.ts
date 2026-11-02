@@ -1,5 +1,5 @@
-import type { TrainerRole, TrainingPlanBreak, TrainingPlanSession } from '$lib/models';
-import { breakOn, isCancelled } from '$lib/trainingPlanUtils';
+import type { TrainerRole, TrainingPlanBreak, TrainingPlanSession } from '#lib/models.ts';
+import { breakOn, isCancelled } from '#lib/trainingPlanUtils.ts';
 import {
   bestMatch,
   normalizeName,

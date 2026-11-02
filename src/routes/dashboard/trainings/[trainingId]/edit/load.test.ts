@@ -17,7 +17,7 @@ function chain(result: { data: unknown; error: unknown }) {
 }
 
 const { mockSupabase } = vi.hoisted(() => ({ mockSupabase: { from: vi.fn() } }));
-vi.mock('$lib/supabase', () => ({ supabaseClient: mockSupabase }));
+vi.mock('#lib/supabase.ts', () => ({ supabaseClient: mockSupabase }));
 vi.mock('@sveltejs/kit', () => ({
   redirect: (status: number, location: string) => {
     throw Object.assign(new Error(location), { status, location });
