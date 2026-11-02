@@ -157,21 +157,21 @@
           <div class="flex gap-1">
             <button
               type="button"
-              class="btn-icon btn-icon-sm preset-tonal-surface"
+              class="btn-icon size-11 p-0 flex-none text-surface-600-400 hover:bg-surface-200-800"
               title={$_('page.integrations.api.edit')}
               aria-label={$_('page.integrations.api.edit')}
               onclick={() => startEdit(key)}
             >
-              <Fa icon={faPen} size="xs" />
+              <Fa icon={faPen} />
             </button>
             <button
               type="button"
-              class="btn-icon btn-icon-sm preset-tonal-error"
+              class="btn-icon size-11 p-0 flex-none text-surface-600-400 hover:text-error-600-400 hover:bg-surface-200-800"
               title={$_('page.integrations.api.revoke')}
               aria-label={$_('page.integrations.api.revoke')}
               onclick={() => (revoking = key)}
             >
-              <Fa icon={faTrash} size="xs" />
+              <Fa icon={faTrash} />
             </button>
           </div>
         </li>
@@ -242,9 +242,11 @@
           bind:value={draft.origins}
           placeholder="https://www.example.ch"
         ></textarea>
-        <span class="text-xs text-surface-600-400">{$_('page.integrations.api.originsHint')}</span>
+        <span class="block text-xs leading-snug text-surface-600-400">
+          {$_('page.integrations.api.originsHint')}
+        </span>
         {#if parsed.invalid.length > 0}
-          <span class="text-xs text-error-600-400">
+          <span class="block text-xs leading-snug text-error-600-400">
             {$_('page.integrations.api.originsInvalid', {
               values: { origins: parsed.invalid.join(', ') }
             })}
