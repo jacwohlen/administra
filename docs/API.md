@@ -8,6 +8,38 @@ gives the participants of an event, for a program writing reports about
 events. More endpoints follow the same rules: versioned path, API key with
 scopes, JSON, only what the key's scope names.
 
+## Browsing and trying the API
+
+Every instance documents its API itself:
+
+- **`/api/docs`**: the API reference (Scalar), linked from _API-Schlüssel_.
+  It lists the endpoints, parameters, answers and errors with examples and
+  request snippets (curl, JavaScript, PHP, Python …). _Test Request_ sends a
+  real request to this instance with a key pasted under _Authentication_.
+- **`/api/v1/openapi.json`**: the OpenAPI 3.1 description it shows, for
+  tools such as Postman, Bruno or Insomnia (import the URL), or to generate
+  a client. Public, without data.
+
+The description is code: `openApiDocument()` in `src/lib/openApi.ts`, with
+the scopes and limits from `src/lib/publicApi.ts`. `openApi.test.ts` fails
+when an endpoint under `src/routes/api/v1/` or a scope is missing from it.
+
+The page (`src/lib/server/apiDocs.ts`) loads Scalar's standalone bundle from
+jsDelivr, pinned to a version and checked with its SRI hash (update both
+together; the hash is `openssl dgst -sha384 -binary standalone.js | openssl
+base64 -A` of the npm package's `dist/browser/standalone.js`). It has its own,
+enforced Content-Security-Policy: scripts only from jsDelivr and the page's
+nonce, `connect-src 'self'`. So a key pasted there goes only to this
+instance, never to Scalar's proxy or services; telemetry, the AI chat, the
+MCP button and Scalar's fonts are switched off, and the key is not stored
+(`persistAuth: false`). Same origin, so trying it needs no website on the
+key.
+
+Why Scalar: Swagger UI (what Webling uses) works but looks dated; Redoc
+reads well but cannot send requests; Stoplight Elements is barely
+maintained since 2024. Scalar is current, open source (MIT), one script
+tag, with a request client, dark mode and code snippets.
+
 ## API keys
 
 Admins manage keys on _Integrationen_ (`/dashboard/integrations`, section
@@ -47,7 +79,8 @@ A new scope needs the scope in the `api_keys.scopes` check, in `API_SCOPES`
 (`src/lib/publicApi.ts`; in `SERVER_ONLY_SCOPES` and the
 `api_keys_personal_data_server_only` check when it gives personal data), a
 `SECURITY DEFINER` function that calls `api_key_use(p_key, '<scope>')`
-first, and its line in `supabase/checks/member_data.sql`.
+first, its line in `supabase/checks/member_data.sql`, and its endpoints in
+the OpenAPI description (`src/lib/openApi.ts`, below).
 
 ### Trainer names
 

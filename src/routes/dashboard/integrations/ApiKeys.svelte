@@ -244,6 +244,11 @@
         {/each}
       </p>
     {/each}
+    <p>
+      <a class="anchor" href="/api/docs" target="_blank" rel="noopener">
+        {$_('page.integrations.api.docs')}
+      </a>
+    </p>
   </div>
 </section>
 

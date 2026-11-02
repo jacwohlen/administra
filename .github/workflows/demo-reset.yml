@@ -79,6 +79,8 @@ jobs:
       - uses: supabase/setup-cli@v3
         if: steps.config.outputs.configured == 'true'
         with:
+          # Pinned: CLI 3.0 (2026-11-02) refuses [inbucket] in config.toml; keep
+          # in step with the supabase devDependency.
           version: 2.122.0
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
