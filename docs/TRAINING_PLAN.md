@@ -192,6 +192,15 @@ disabled account, or one that is no longer staff, gets 404 too.
   subscriber until the next fetch). Sentry reports get the token removed
   from the path (`docs/ERROR_MONITORING.md`)
 
+## API (club website)
+
+Other systems, first the club's website, read the public part of the plan
+through `GET /api/v1/training-plan` with an API key an admin creates on
+_Integrationen_: per training and date the time, who leads (full name,
+first name and initial, or none, per key), the topic and whether it is
+dropped (with the closing holiday as the reason), and the holidays; never
+notes. Computed with `buildPlan()` like the feeds; see `docs/API.md`.
+
 ## Trainer informieren (E-Mail)
 
 Planners tell the trainers about changes by e-mail, by hand: _Trainer
