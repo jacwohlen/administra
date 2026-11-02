@@ -49,6 +49,19 @@ Trainer a visitor plans exactly that one training (trainer, topic,
 cancellations, rotation, table) and only reads the rest; as Vorstand (admin,
 so also TK) everything, holidays and the planned trainings included.
 
+Substitutes and swaps (_Vertretung und Tausch_): Nicole Favre asks Marco to
+stand in for one of her next dates, and Pascal Rochat offers Sandra a swap,
+so both the Trainer and the Vorstand login have an open request to accept or
+decline; a confirmed substitute (Goran for Beat) shows _Vertritt …_ further
+ahead. The askers have no login, so a request a visitor sends to one of
+them stays open until the date passes or the reset.
+
+The Integrations page lists an example API key (_Vereinswebsite_, training
+plan, initials only) whose secret nobody knows. A visitor who wants to try
+the API at `/api/docs` creates a key of their own as Vorstand: like
+everything else, the keys are shared with the next visitors until the reset
+deletes them.
+
 ## Keeping one visitor from breaking it for the next
 
 Anyone can log in as admin, so the seed installs demo-only triggers (they
