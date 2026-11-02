@@ -9,10 +9,10 @@
     faTriangleExclamation
   } from '@fortawesome/free-solid-svg-icons';
   import dayjs from 'dayjs';
-  import { supabaseClient } from '$lib/supabase';
-  import { toaster } from '$lib/toast';
-  import { formatTime } from '$lib/trainingUtils';
-  import type { TrainerRole, TrainingPlanBreak, TrainingPlanSession } from '$lib/models';
+  import { supabaseClient } from '#lib/supabase.ts';
+  import { toaster } from '#lib/toast.ts';
+  import { formatTime } from '#lib/trainingUtils.ts';
+  import type { TrainerRole, TrainingPlanBreak, TrainingPlanSession } from '#lib/models.ts';
   import {
     adoptMember,
     cancelledDates,
@@ -43,15 +43,15 @@
     type EntryReview,
     type NewMember,
     type SaveFailure
-  } from '$lib/assistant/attendance';
-  import { isIsoDate, MAX_LENGTH, clubToday } from '$lib/assistant/proposals';
-  import type { AttendanceProposal } from '$lib/assistant/types';
+  } from '#lib/assistant/attendance.ts';
+  import { isIsoDate, MAX_LENGTH, clubToday } from '#lib/assistant/proposals.ts';
+  import type { AttendanceProposal } from '#lib/assistant/types.ts';
 
   /**
    * Review of an attendance list read by the Daten-Assistent: every name is
    * matched to a member (or created, or left out), every date checked
    * against the training, and only what the user confirms is written, the
-   * way the check-in page does it. Logic in $lib/assistant/attendance.
+   * way the check-in page does it. Logic in #lib/assistant/attendance.
    */
   let {
     proposal,

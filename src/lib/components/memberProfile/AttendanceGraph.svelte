@@ -1,8 +1,8 @@
 <script lang="ts">
   import dayjs from 'dayjs';
-  import type { Log } from '$lib/models';
-  import { buildActivity } from '$lib/activityUtils';
-  import ActivityGrid from '$lib/components/ActivityGrid.svelte';
+  import type { Log } from '#lib/models.ts';
+  import { buildActivity } from '#lib/activityUtils.ts';
+  import ActivityGrid from '#lib/components/ActivityGrid.svelte';
 
   // Same grid and colour scale as the activity overview in the profile hero,
   // for one calendar year.

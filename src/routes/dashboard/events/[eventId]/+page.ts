@@ -1,6 +1,6 @@
-import { supabaseClient } from '$lib/supabase';
+import { supabaseClient } from '#lib/supabase.ts';
 import { error as err } from '@sveltejs/kit';
-import type { Member, MemberMedal } from '$lib/models';
+import type { Member, MemberMedal } from '#lib/models.ts';
 
 export async function load({ params, parent }) {
   // None of these needs the event: asked while the layouts still load
@@ -53,13 +53,13 @@ export async function load({ params, parent }) {
   ]);
 
   if (participantsError) {
-    throw err(404, participantsError);
+    throw err(404, participantsError.message);
   }
   if (logsError) {
-    throw err(404, logsError);
+    throw err(404, logsError.message);
   }
   if (membersError) {
-    throw err(404, membersError);
+    throw err(404, membersError.message);
   }
 
   return {

@@ -1,19 +1,19 @@
 import { describe, it, expect, vi, afterEach, beforeAll, beforeEach } from 'vitest';
 import { render, screen, cleanup, fireEvent, waitFor, within } from '@testing-library/svelte';
 import { addMessages, init } from 'svelte-i18n';
-import de from '$lib/i18n/locales/de.json';
-import { toaster } from '$lib/toast';
-import { addDays } from '$lib/calendarFeed';
-import type { TrainingPlanSession } from '$lib/models';
+import de from '#lib/i18n/locales/de.json';
+import { toaster } from '#lib/toast.ts';
+import { addDays } from '#lib/calendarFeed.ts';
+import type { TrainingPlanSession } from '#lib/models.ts';
 import {
   MAIL_DAYS_AHEAD,
   computeNotices,
   fingerprint,
   type MailPlanData,
   type MailScope
-} from '$lib/trainingPlanMail';
-import { loadMailPlan } from '$lib/trainingPlanMailData';
-import { postNotify, type NotifyResponse } from '$lib/trainingPlanMailClient';
+} from '#lib/trainingPlanMail.ts';
+import { loadMailPlan } from '#lib/trainingPlanMailData.ts';
+import { postNotify, type NotifyResponse } from '#lib/trainingPlanMailClient.ts';
 import NotifyDialog from './NotifyDialog.svelte';
 
 // The real German texts, so a broken message (ICU syntax, missing key) shows here
@@ -27,7 +27,7 @@ const { insert, remove, history } = vi.hoisted(() => ({
   remove: vi.fn(),
   history: vi.fn()
 }));
-vi.mock('$lib/supabase', () => ({
+vi.mock('#lib/supabase.ts', () => ({
   supabaseClient: {
     from: (table: string) => ({
       insert: (values: unknown) => insert(table, values),
@@ -38,10 +38,10 @@ vi.mock('$lib/supabase', () => ({
     })
   }
 }));
-vi.mock('$lib/trainingPlanMailData', () => ({ loadMailPlan: vi.fn(), loadMailScope: vi.fn() }));
-vi.mock('$lib/trainingPlanMailClient', () => ({ postNotify: vi.fn(), loadNotifyMode: vi.fn() }));
-vi.mock('$lib/toast', () => ({ toaster: { error: vi.fn(), success: vi.fn() } }));
-vi.mock('$lib/clubConfig', () => ({ clubConfig: { name: 'Testclub' } }));
+vi.mock('#lib/trainingPlanMailData.ts', () => ({ loadMailPlan: vi.fn(), loadMailScope: vi.fn() }));
+vi.mock('#lib/trainingPlanMailClient.ts', () => ({ postNotify: vi.fn(), loadNotifyMode: vi.fn() }));
+vi.mock('#lib/toast.ts', () => ({ toaster: { error: vi.fn(), success: vi.fn() } }));
+vi.mock('#lib/clubConfig.ts', () => ({ clubConfig: { name: 'Testclub' } }));
 
 const TK: MailScope = { all: true, trainingIds: [] };
 const MAIN_TRAINER: MailScope = { all: false, trainingIds: [1] };

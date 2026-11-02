@@ -1,5 +1,5 @@
 import { redirect } from '@sveltejs/kit';
-import { homePath } from '$lib/roles';
+import { homePath } from '#lib/roles.ts';
 import type { PageLoad } from './$types';
 
 export const load: PageLoad = async ({ parent }) => {

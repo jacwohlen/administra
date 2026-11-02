@@ -1,7 +1,7 @@
 import type { LayoutLoad } from './$types';
 import { error as err } from '@sveltejs/kit';
-import type { Training } from '$lib/models';
-import { supabaseClient } from '$lib/supabase';
+import type { Training } from '#lib/models.ts';
+import { supabaseClient } from '#lib/supabase.ts';
 
 export const load = (async ({ params }) => {
   const { error, data } = await supabaseClient
@@ -13,7 +13,7 @@ export const load = (async ({ params }) => {
     .single();
 
   if (error) {
-    throw err(404, error);
+    throw err(404, error.message);
   }
 
   return data as Training;

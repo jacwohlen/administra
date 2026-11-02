@@ -1,5 +1,5 @@
 import dayjs from 'dayjs';
-import utils from '$lib/utils';
+import utils from '#lib/utils.ts';
 import { loadDayOverview } from './dayOverview';
 import type { PageLoad } from './$types';
 

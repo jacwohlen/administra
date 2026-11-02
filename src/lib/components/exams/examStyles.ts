@@ -1,4 +1,4 @@
-import type { CandidateState } from '$lib/examUtils';
+import type { CandidateState } from '#lib/examUtils.ts';
 
 // One look for the Q-Prüfung states and scores on every page (sheet, exam
 // day, member area), built from the app's chip and preset colours.

@@ -1,6 +1,6 @@
 import type { RequestHandler } from '@sveltejs/kit';
-import { buildCalendarFeed, parseFeedName, type CalendarFeedData } from '$lib/calendarFeed';
-import { loadMailSettings } from '$lib/server/trialMailContext';
+import { buildCalendarFeed, parseFeedName, type CalendarFeedData } from '#lib/calendarFeed.ts';
+import { loadMailSettings } from '#lib/server/trialMailContext.ts';
 
 /**
  * The training plan as a calendar feed: /api/calendar/<token>/<feed>.ics,

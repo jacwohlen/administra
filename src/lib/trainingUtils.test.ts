@@ -7,7 +7,7 @@ import {
   formatTime,
   timeToMinutes
 } from './trainingUtils';
-import type { Training } from '$lib/models';
+import type { Training } from '#lib/models.ts';
 
 describe('buildStreakMap', () => {
   it('returns empty map and zero dates for empty input', () => {

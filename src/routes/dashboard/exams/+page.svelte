@@ -10,7 +10,7 @@
   } from '@fortawesome/free-solid-svg-icons';
   import { _ } from 'svelte-i18n';
   import dayjs from 'dayjs';
-  import { candidateState } from '$lib/examUtils';
+  import { candidateState } from '#lib/examUtils.ts';
   import type { ExamListEntry } from './+page';
   import type { PageData } from './$types';
 

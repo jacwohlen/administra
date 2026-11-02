@@ -1,10 +1,10 @@
 <script lang="ts">
-  import { supabaseClient } from '$lib/supabase';
+  import { supabaseClient } from '#lib/supabase.ts';
   import { goto } from '$app/navigation';
   import { _ } from 'svelte-i18n';
   import Fa from 'svelte-fa';
   import { faSave, faArrowLeft } from '@fortawesome/free-solid-svg-icons';
-  import { clubConfig } from '$lib/clubConfig';
+  import { clubConfig } from '#lib/clubConfig.ts';
 
   let title = $state('');
   let weekday = $state('');

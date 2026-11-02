@@ -1,10 +1,10 @@
 <script lang="ts">
-  import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
-  import { modalDialog } from '$lib/modalDialog';
-  import type { Medal, MemberMedal, PastEvent } from '$lib/models';
-  import { MEDALS, medalEmoji, medalTally, sortMedals } from '$lib/gradeUtils';
-  import { supabaseClient } from '$lib/supabase';
-  import { toaster } from '$lib/toast';
+  import ConfirmDialog from '#lib/components/ConfirmDialog.svelte';
+  import { modalDialog } from '#lib/modalDialog.ts';
+  import type { Medal, MemberMedal, PastEvent } from '#lib/models.ts';
+  import { MEDALS, medalEmoji, medalTally, sortMedals } from '#lib/gradeUtils.ts';
+  import { supabaseClient } from '#lib/supabase.ts';
+  import { toaster } from '#lib/toast.ts';
   import MedalTally from './MedalTally.svelte';
   import Fa from 'svelte-fa';
   import { faPlus, faSpinner, faTrash } from '@fortawesome/free-solid-svg-icons';

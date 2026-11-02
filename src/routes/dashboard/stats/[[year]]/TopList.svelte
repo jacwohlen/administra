@@ -1,6 +1,6 @@
 <script lang="ts">
-  import type { Athletes } from '$lib/models';
-  import { supabaseClient } from '$lib/supabase';
+  import type { Athletes } from '#lib/models.ts';
+  import { supabaseClient } from '#lib/supabase.ts';
   import { faAngleRight } from '@fortawesome/free-solid-svg-icons';
   import Fa from 'svelte-fa';
   import { _ } from 'svelte-i18n';

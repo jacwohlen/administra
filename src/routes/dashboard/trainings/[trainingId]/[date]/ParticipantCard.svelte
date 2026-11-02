@@ -1,19 +1,19 @@
 <script lang="ts">
-  import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
+  import ConfirmDialog from '#lib/components/ConfirmDialog.svelte';
   import Fa from 'svelte-fa';
   import { faEllipsisVertical, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
   import Labels from './Labels.svelte';
   import ParticipantFrequency from './ParticipantFrequency.svelte';
-  import BeltStrip from '$lib/components/BeltStrip.svelte';
-  import MedalTally from '$lib/components/MedalTally.svelte';
-  import { beltRingColor } from '$lib/gradeUtils';
-  import { trialProgress } from '$lib/trialUtils';
-  import { statusChip } from '$lib/memberStatus';
-  import { clubConfig } from '$lib/clubConfig';
+  import BeltStrip from '#lib/components/BeltStrip.svelte';
+  import MedalTally from '#lib/components/MedalTally.svelte';
+  import { beltRingColor } from '#lib/gradeUtils.ts';
+  import { trialProgress } from '#lib/trialUtils.ts';
+  import { statusChip } from '#lib/memberStatus.ts';
+  import { clubConfig } from '#lib/clubConfig.ts';
   import { _ } from 'svelte-i18n';
 
   import type { MMember } from './types';
-  import type { MedalCounts, MemberSectionGrade, TrainerRole } from '$lib/models';
+  import type { MedalCounts, MemberSectionGrade, TrainerRole } from '#lib/models.ts';
 
   let {
     member,

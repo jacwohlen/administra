@@ -10,17 +10,17 @@
     faSpinner,
     faTriangleExclamation
   } from '@fortawesome/free-solid-svg-icons';
-  import { modalDialog } from '$lib/modalDialog';
-  import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
-  import { supabaseClient } from '$lib/supabase';
-  import { toaster } from '$lib/toast';
+  import { modalDialog } from '#lib/modalDialog.ts';
+  import ConfirmDialog from '#lib/components/ConfirmDialog.svelte';
+  import { supabaseClient } from '#lib/supabase.ts';
+  import { toaster } from '#lib/toast.ts';
   import {
     calendarFeedUrl,
     googleCalendarUrl,
     webcalUrl,
     type FeedKind,
     type FeedLocale
-  } from '$lib/calendarFeed';
+  } from '#lib/calendarFeed.ts';
 
   /**
    * The training plan as calendar feeds (all staff): the secret links of

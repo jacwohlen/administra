@@ -1,5 +1,5 @@
 <script lang="ts">
-  import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
+  import ConfirmDialog from '#lib/components/ConfirmDialog.svelte';
   import { invalidate } from '$app/navigation';
   import { _ } from 'svelte-i18n';
   import Fa from 'svelte-fa';
@@ -11,13 +11,13 @@
     faUserPlus
   } from '@fortawesome/free-solid-svg-icons';
   import dayjs from 'dayjs';
-  import { supabaseClient } from '$lib/supabase';
-  import { toaster } from '$lib/toast';
-  import BeltStrip from '$lib/components/BeltStrip.svelte';
-  import ExamStateChip from '$lib/components/exams/ExamStateChip.svelte';
-  import { registrableGrades, suggestedGrade, type CandidateState } from '$lib/examUtils';
-  import { gradesBySection } from '$lib/gradeUtils';
-  import type { DirectoryMember, Exam, GradeDefinition, MemberCurrentGrade } from '$lib/models';
+  import { supabaseClient } from '#lib/supabase.ts';
+  import { toaster } from '#lib/toast.ts';
+  import BeltStrip from '#lib/components/BeltStrip.svelte';
+  import ExamStateChip from '#lib/components/exams/ExamStateChip.svelte';
+  import { registrableGrades, suggestedGrade, type CandidateState } from '#lib/examUtils.ts';
+  import { gradesBySection } from '#lib/gradeUtils.ts';
+  import type { DirectoryMember, Exam, GradeDefinition, MemberCurrentGrade } from '#lib/models.ts';
   import type { MemberExams, MemberRegistration } from './memberExams';
 
   // Q-Prüfung on the member's own profile: register for the next exam day

@@ -8,13 +8,13 @@
     faLocationDot,
     faUsers
   } from '@fortawesome/free-solid-svg-icons';
-  import type { Training, Event } from '$lib/models';
+  import type { Training, Event } from '#lib/models.ts';
   import dayjs, { type Dayjs } from 'dayjs';
-  import utils from '$lib/utils';
+  import utils from '#lib/utils.ts';
   import { _ } from 'svelte-i18n';
-  import RecentAchievements from '$lib/components/RecentAchievements.svelte';
-  import { formatTime } from '$lib/trainingUtils';
-  import { formatEventDates } from '$lib/eventUtils';
+  import RecentAchievements from '#lib/components/RecentAchievements.svelte';
+  import { formatTime } from '#lib/trainingUtils.ts';
+  import { formatEventDates } from '#lib/eventUtils.ts';
 
   import type { PageData } from './$types';
   import { loadDayOverview } from './dayOverview';

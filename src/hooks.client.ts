@@ -1,18 +1,14 @@
 import * as Sentry from '@sentry/sveltekit';
-import { env } from '$env/dynamic/public';
-import { browserBeforeSend, sentryOptions } from '$lib/sentry';
-import { loadAppSettings } from '$lib/appSettings';
-import { loadIntegrationConfig } from '$lib/integrationConfigLoad';
-import { supabaseClient } from '$lib/supabase';
+import { PUBLIC_SENTRY_DSN, PUBLIC_SENTRY_TRACES_SAMPLE_RATE } from '$app/env/public';
+import { browserBeforeSend, isReportedError, sentryOptions } from '#lib/sentry.ts';
+import { loadAppSettings } from '#lib/appSettings.ts';
+import { loadIntegrationConfig } from '#lib/integrationConfigLoad.ts';
+import { supabaseClient } from '#lib/supabase.ts';
 
 // Error reports from the browser, see docs/ERROR_MONITORING.md.
 // Dropped connections are not reported (see browserNetworkNoise).
 Sentry.init({
-  ...sentryOptions(
-    env.PUBLIC_SENTRY_DSN,
-    __NETLIFY_CONTEXT__,
-    env.PUBLIC_SENTRY_TRACES_SAMPLE_RATE
-  ),
+  ...sentryOptions(PUBLIC_SENTRY_DSN, __NETLIFY_CONTEXT__, PUBLIC_SENTRY_TRACES_SAMPLE_RATE),
   beforeSend: browserBeforeSend
 });
 
@@ -29,7 +25,8 @@ if (window.location.pathname.startsWith('/dashboard')) {
   });
 }
 
-export const handleError = Sentry.handleErrorWithSentry(({ message }) => ({
-  message,
-  errorId: Sentry.lastEventId()
-}));
+// The message and status stay SvelteKit's (the safe message, 'Internal Error'
+// for unknown errors); reported errors get their Sentry event id.
+export const handleError = Sentry.handleErrorWithSentry(({ kind, error }) =>
+  isReportedError(kind, error) ? { errorId: Sentry.lastEventId() } : undefined
+);

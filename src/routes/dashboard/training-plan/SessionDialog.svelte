@@ -1,12 +1,12 @@
 <script lang="ts">
-  import { modalDialog } from '$lib/modalDialog';
-  import { supabaseClient } from '$lib/supabase';
-  import { toaster } from '$lib/toast';
+  import { modalDialog } from '#lib/modalDialog.ts';
+  import { supabaseClient } from '#lib/supabase.ts';
+  import { toaster } from '#lib/toast.ts';
   import { _ } from 'svelte-i18n';
   import Fa from 'svelte-fa';
   import { faCalendarDays, faSpinner } from '@fortawesome/free-solid-svg-icons';
   import dayjs from 'dayjs';
-  import type { PlanRow } from '$lib/trainingPlanUtils';
+  import type { PlanRow } from '#lib/trainingPlanUtils.ts';
   import TrainerSelect from './TrainerSelect.svelte';
   import type { PlanMember } from './members';
 

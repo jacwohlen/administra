@@ -1,11 +1,11 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
-  import AssistantButton from '$lib/components/assistant/AssistantButton.svelte';
-  import AssistantDialog from '$lib/components/assistant/AssistantDialog.svelte';
+  import ConfirmDialog from '#lib/components/ConfirmDialog.svelte';
+  import AssistantButton from '#lib/components/assistant/AssistantButton.svelte';
+  import AssistantDialog from '#lib/components/assistant/AssistantDialog.svelte';
   import TrainingPlanReview from './TrainingPlanReview.svelte';
-  import { takeAssistantRequest } from '$lib/assistant/autoOpen';
-  import { loadAssistantStatus } from '$lib/assistant/client';
+  import { takeAssistantRequest } from '#lib/assistant/autoOpen.ts';
+  import { loadAssistantStatus } from '#lib/assistant/client.ts';
   import Fa from 'svelte-fa';
   import {
     faArrowLeft,
@@ -17,10 +17,10 @@
   import { _ } from 'svelte-i18n';
   import dayjs from 'dayjs';
   import { invalidate } from '$app/navigation';
-  import { supabaseClient } from '$lib/supabase';
-  import { toaster } from '$lib/toast';
-  import { providerName } from '$lib/memberStatus';
-  import type { TrainingPlanBreak } from '$lib/models';
+  import { supabaseClient } from '#lib/supabase.ts';
+  import { toaster } from '#lib/toast.ts';
+  import { providerName } from '#lib/memberStatus.ts';
+  import type { TrainingPlanBreak } from '#lib/models.ts';
   import type { PageData } from './$types';
 
   let { data }: { data: PageData } = $props();

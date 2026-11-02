@@ -6,12 +6,12 @@ import type {
   MemberTopBadge,
   TrainingPlanBreak,
   TrainingPlanSession
-} from '$lib/models';
-import { supabaseClient } from '$lib/supabase';
+} from '#lib/models.ts';
+import { supabaseClient } from '#lib/supabase.ts';
 import { error as err } from '@sveltejs/kit';
-import { buildMembersWithStreaks } from '$lib/trainingUtils';
-import { breakOn } from '$lib/trainingPlanUtils';
-import { displayConfig, loadAppSettings } from '$lib/appSettings';
+import { buildMembersWithStreaks } from '#lib/trainingUtils.ts';
+import { breakOn } from '#lib/trainingPlanUtils.ts';
+import { displayConfig, loadAppSettings } from '#lib/appSettings.ts';
 
 export const load = (async ({ params }) => {
   // Page loads run concurrently with the root layout load, so the streak

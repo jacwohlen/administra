@@ -1,5 +1,5 @@
-import { supabaseClient } from '$lib/supabase';
-import type { ExamCandidate } from '$lib/models';
+import { supabaseClient } from '#lib/supabase.ts';
+import type { ExamCandidate } from '#lib/models.ts';
 
 /** Candidate columns for lists: everything but the program snapshot. */
 export const CANDIDATE_COLUMNS =

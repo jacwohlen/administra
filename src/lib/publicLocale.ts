@@ -1,7 +1,7 @@
-import { browser } from '$app/environment';
-import { clubConfig } from '$lib/clubConfig';
-import type { PublicLocale } from '$lib/clubConfigParser';
-import { setAppLocale } from '$lib/i18n/appLocale';
+import { browser } from '$app/env';
+import { clubConfig } from '#lib/clubConfig.ts';
+import type { PublicLocale } from '#lib/clubConfigParser.ts';
+import { setAppLocale } from '#lib/i18n/appLocale.ts';
 
 export type { PublicLocale };
 
@@ -17,7 +17,7 @@ const STORAGE_KEY = 'trial-registration-locale';
 
 /**
  * Read at call time, not import time: admins can override the club's
- * language at runtime (see $lib/appSettings), which mutates `clubConfig`
+ * language at runtime (see #lib/appSettings), which mutates `clubConfig`
  * after this module is first imported.
  */
 export function defaultPublicLocale(): PublicLocale {

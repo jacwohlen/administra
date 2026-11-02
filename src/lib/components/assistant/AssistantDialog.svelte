@@ -16,14 +16,14 @@
     faWandMagicSparkles,
     faXmark
   } from '@fortawesome/free-solid-svg-icons';
-  import { modalDialog } from '$lib/modalDialog';
+  import { modalDialog } from '#lib/modalDialog.ts';
   import DictateButton from './DictateButton.svelte';
   import {
     AssistantRequestError,
     refreshAssistantStatus,
     requestProposal,
     type ClientErrorCode
-  } from '$lib/assistant/client';
+  } from '#lib/assistant/client.ts';
   import {
     formatSize,
     prepareUpload,
@@ -31,13 +31,13 @@
     UploadError,
     type PreparedUpload,
     type UploadErrorCode
-  } from '$lib/assistant/files';
+  } from '#lib/assistant/files.ts';
   import {
     ASSISTANT_LIMITS,
     type AssistantContext,
     type AssistantKind,
     type ProposalMap
-  } from '$lib/assistant/types';
+  } from '#lib/assistant/types.ts';
 
   /**
    * The Daten-Assistent dialog (docs/AI_ASSISTANT.md): photos, a PDF or

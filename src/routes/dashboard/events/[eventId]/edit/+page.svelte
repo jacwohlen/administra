@@ -1,14 +1,14 @@
 <script lang="ts">
   import type { PageData } from './$types';
-  import { supabaseClient } from '$lib/supabase';
-  import { goto, invalidateAll } from '$app/navigation';
+  import { supabaseClient } from '#lib/supabase.ts';
+  import { goto, refreshAll } from '$app/navigation';
   import { _ } from 'svelte-i18n';
   import Fa from 'svelte-fa';
   import { faSave, faArrowLeft, faArrowsRotate } from '@fortawesome/free-solid-svg-icons';
-  import { clubConfig } from '$lib/clubConfig';
-  import { eventDateInput, eventDateValues, type EventDateInput } from '$lib/eventUtils';
+  import { clubConfig } from '#lib/clubConfig.ts';
+  import { eventDateInput, eventDateValues, type EventDateInput } from '#lib/eventUtils.ts';
   import EventDateFields from '../../EventDateFields.svelte';
-  import { isManagedByProviderError, providerName } from '$lib/memberStatus';
+  import { isManagedByProviderError, providerName } from '#lib/memberStatus.ts';
 
   let { data }: { data: PageData } = $props();
 
@@ -74,7 +74,7 @@
       }
 
       // Invalidate all data to ensure fresh data is loaded
-      await invalidateAll();
+      await refreshAll();
       await goto(`/dashboard/events/${data.event.id}`);
     } catch (e) {
       console.error('Error updating event:', e);

@@ -13,7 +13,7 @@ import {
   type NewMemberRow,
   type RetentionRow
 } from './statsUtils';
-import type { Athletes } from '$lib/models';
+import type { Athletes } from '#lib/models.ts';
 
 function makeAthlete(overrides: Partial<Athletes> = {}): Athletes {
   return {

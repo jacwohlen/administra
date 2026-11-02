@@ -1,4 +1,4 @@
-import type { AssistantKind } from '$lib/assistant/types';
+import type { AssistantKind } from '#lib/assistant/types.ts';
 
 /**
  * The JSON schemas Claude's answer is constrained to (structured outputs).
@@ -8,7 +8,7 @@ import type { AssistantKind } from '$lib/assistant/types';
  * well within the API's limits on optional and union-typed fields.
  *
  * The answer is still checked field by field afterwards
- * ($lib/assistant/proposals.ts), since the schema cannot express lengths,
+ * (#lib/assistant/proposals.ts), since the schema cannot express lengths,
  * real dates or which training keys exist.
  */
 

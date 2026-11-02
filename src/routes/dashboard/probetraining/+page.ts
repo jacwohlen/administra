@@ -1,7 +1,7 @@
 import type { PageLoad } from './$types';
 import { error as err } from '@sveltejs/kit';
-import { supabaseClient } from '$lib/supabase';
-import type { TrialEmail, TrialMember, Training, TrainingActivity } from '$lib/models';
+import { supabaseClient } from '#lib/supabase.ts';
+import type { TrialEmail, TrialMember, Training, TrainingActivity } from '#lib/models.ts';
 
 export const load = (async ({ depends }) => {
   depends('probetraining:list');
@@ -13,7 +13,7 @@ export const load = (async ({ depends }) => {
     .order('lastname', { ascending: true })
     .returns<TrialMember[]>();
 
-  if (trialErr) throw err(404, trialErr);
+  if (trialErr) throw err(404, trialErr.message);
 
   const { data: trainings, error: trainingsErr } = await supabaseClient
     .from('trainings')
@@ -22,14 +22,14 @@ export const load = (async ({ depends }) => {
     )
     .returns<Training[]>();
 
-  if (trainingsErr) throw err(404, trainingsErr);
+  if (trainingsErr) throw err(404, trainingsErr.message);
 
   const { data: trainingActivity, error: activityErr } = await supabaseClient
     .from('view_training_activity')
     .select('*')
     .returns<TrainingActivity[]>();
 
-  if (activityErr) throw err(404, activityErr);
+  if (activityErr) throw err(404, activityErr.message);
 
   const memberIds = (trialMembers ?? []).map((m) => m.id);
   let assignments: { memberId: number; trainingId: number; trialStartDate: string | null }[] = [];
@@ -39,7 +39,7 @@ export const load = (async ({ depends }) => {
       .from('participants')
       .select('memberId, trainingId, trialStartDate')
       .in('memberId', memberIds);
-    if (partErr) throw err(404, partErr);
+    if (partErr) throw err(404, partErr.message);
     assignments = participantRows ?? [];
 
     const { data: emailRows, error: emailErr } = await supabaseClient
@@ -48,7 +48,7 @@ export const load = (async ({ depends }) => {
       .in('member_id', memberIds)
       .order('created_at', { ascending: true })
       .returns<TrialEmail[]>();
-    if (emailErr) throw err(404, emailErr);
+    if (emailErr) throw err(404, emailErr.message);
     emails = emailRows ?? [];
   }
 

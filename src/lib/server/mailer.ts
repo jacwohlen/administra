@@ -1,14 +1,14 @@
-import { env } from '$env/dynamic/private';
-import { PUBLIC_MODE } from '$env/static/public';
+import * as env from '$app/env/private';
+import { PUBLIC_MODE } from '$app/env/public';
 import nodemailer, { type Transporter } from 'nodemailer';
-import { scrubText } from '$lib/sentryScrub';
+import { scrubText } from '#lib/sentryScrub.ts';
 
 /**
  * Outgoing e-mail through the club's SMTP server.
  *
  * Configured with PRIVATE_SMTP_HOST / _PORT / _USER / _PASSWORD / _FROM
  * (see .env.example and docs/TRIAL_EMAILS.md). They are read at runtime from
- * `$env/dynamic/private`, so a deploy without them still builds: mails are
+ * `$app/env/private` (optional in src/env.ts), so a deploy without them still builds: mails are
  * then logged as "skipped" instead of sent. That is also how Deploy Previews
  * stay silent — leave the SMTP variables out of the deploy-preview context.
  *

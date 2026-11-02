@@ -2,9 +2,9 @@
   import { _, locale } from 'svelte-i18n';
   import Fa from 'svelte-fa';
   import { faSpinner, faCheck, faArrowUpRightFromSquare } from '@fortawesome/free-solid-svg-icons';
-  import { clubConfig } from '$lib/clubConfig';
-  import ClubLogo from '$lib/components/ClubLogo.svelte';
-  import { setPublicLocale } from '$lib/publicLocale';
+  import { clubConfig } from '#lib/clubConfig.ts';
+  import ClubLogo from '#lib/components/ClubLogo.svelte';
+  import { setPublicLocale } from '#lib/publicLocale.ts';
 
   let firstname = $state('');
   let lastname = $state('');

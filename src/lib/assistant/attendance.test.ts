@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { TrainerRole } from '$lib/models';
+import type { TrainerRole } from '#lib/models.ts';
 import {
   adoptMember,
   cancelledDates,

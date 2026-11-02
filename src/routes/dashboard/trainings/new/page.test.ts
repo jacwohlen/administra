@@ -11,8 +11,8 @@ vi.mock('svelte-i18n', () => ({
   register: vi.fn(),
   getLocaleFromNavigator: vi.fn()
 }));
-vi.mock('$lib/clubConfig', () => ({ clubConfig: { sections: ['Judo', 'Aikido'] } }));
-vi.mock('$lib/supabase', () => ({
+vi.mock('#lib/clubConfig.ts', () => ({ clubConfig: { sections: ['Judo', 'Aikido'] } }));
+vi.mock('#lib/supabase.ts', () => ({
   supabaseClient: {
     from: () => ({
       insert: (fields: unknown) => {

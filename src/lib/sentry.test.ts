@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  isReportedError,
   browserBeforeSend,
   DEFAULT_TRACES_SAMPLE_RATE,
   isBrowserNetworkNoise,
@@ -76,5 +77,19 @@ describe('parseSampleRate', () => {
     expect(parseSampleRate('')).toBe(DEFAULT_TRACES_SAMPLE_RATE);
     expect(parseSampleRate('2')).toBe(DEFAULT_TRACES_SAMPLE_RATE);
     expect(parseSampleRate('abc')).toBe(DEFAULT_TRACES_SAMPLE_RATE);
+  });
+});
+
+describe('isReportedError', () => {
+  it('reports unknown errors and errors from status 500 on', () => {
+    expect(isReportedError('unknown', new Error('boom'))).toBe(true);
+    expect(isReportedError('app', { status: 500, message: 'Loading failed' })).toBe(true);
+    expect(isReportedError('framework', { status: 503, message: 'x' })).toBe(true);
+  });
+
+  it('leaves out expected errors and invalid arguments', () => {
+    expect(isReportedError('app', { status: 404, message: 'Member not found' })).toBe(false);
+    expect(isReportedError('framework', { status: 404, message: 'Not Found' })).toBe(false);
+    expect(isReportedError('validation', { status: 400, message: 'Bad Request' })).toBe(false);
   });
 });

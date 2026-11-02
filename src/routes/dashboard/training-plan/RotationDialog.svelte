@@ -1,8 +1,8 @@
 <script lang="ts">
-  import PillToggle from '$lib/components/PillToggle.svelte';
-  import { modalDialog } from '$lib/modalDialog';
-  import { supabaseClient } from '$lib/supabase';
-  import { toaster } from '$lib/toast';
+  import PillToggle from '#lib/components/PillToggle.svelte';
+  import { modalDialog } from '#lib/modalDialog.ts';
+  import { supabaseClient } from '#lib/supabase.ts';
+  import { toaster } from '#lib/toast.ts';
   import { _ } from 'svelte-i18n';
   import Fa from 'svelte-fa';
   import {
@@ -21,7 +21,7 @@
     type PlanRow,
     type PlanTraining,
     type RotationSlot
-  } from '$lib/trainingPlanUtils';
+  } from '#lib/trainingPlanUtils.ts';
   import TrainerSelect from './TrainerSelect.svelte';
   import type { PlanMember } from './members';
 

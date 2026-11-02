@@ -1,7 +1,7 @@
-import { supabaseClient } from '$lib/supabase';
+import { supabaseClient } from '#lib/supabase.ts';
 import { error as err } from '@sveltejs/kit';
-import type { Event } from '$lib/models';
-import { fetchAllRows } from '$lib/assistant/attendance';
+import type { Event } from '#lib/models.ts';
+import { fetchAllRows } from '#lib/assistant/attendance.ts';
 
 export async function load() {
   let events: Event[];

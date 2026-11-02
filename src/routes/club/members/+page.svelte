@@ -2,8 +2,8 @@
   import { _ } from 'svelte-i18n';
   import Fa from 'svelte-fa';
   import { faChevronRight, faMagnifyingGlass } from '@fortawesome/free-solid-svg-icons';
-  import BeltStrip from '$lib/components/BeltStrip.svelte';
-  import { beltRingColor } from '$lib/gradeUtils';
+  import BeltStrip from '#lib/components/BeltStrip.svelte';
+  import { beltRingColor } from '#lib/gradeUtils.ts';
   import MemberAvatar from '../MemberAvatar.svelte';
   import { directorySections, filterDirectory } from './directory';
   import type { PageData } from './$types';

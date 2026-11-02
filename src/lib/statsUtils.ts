@@ -1,4 +1,4 @@
-import type { Athletes } from '$lib/models';
+import type { Athletes } from '#lib/models.ts';
 
 /**
  * Groups an array of Athletes by their section, sorted alphabetically by section name.

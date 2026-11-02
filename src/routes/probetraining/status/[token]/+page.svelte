@@ -15,11 +15,11 @@
   } from '@fortawesome/free-solid-svg-icons';
   import dayjs from 'dayjs';
   import { invalidate } from '$app/navigation';
-  import { supabaseClient } from '$lib/supabase';
-  import { clubConfig } from '$lib/clubConfig';
-  import ClubLogo from '$lib/components/ClubLogo.svelte';
-  import { setPublicLocale } from '$lib/publicLocale';
-  import { formatTrainingLines } from '$lib/trialMail';
+  import { supabaseClient } from '#lib/supabase.ts';
+  import { clubConfig } from '#lib/clubConfig.ts';
+  import ClubLogo from '#lib/components/ClubLogo.svelte';
+  import { setPublicLocale } from '#lib/publicLocale.ts';
+  import { formatTrainingLines } from '#lib/trialMail.ts';
 
   let { data }: { data: PageData } = $props();
 

@@ -11,13 +11,13 @@
 </script>
 
 <script lang="ts">
-  import { supabaseClient } from '$lib/supabase';
-  import { clubConfig } from '$lib/clubConfig';
+  import { supabaseClient } from '#lib/supabase.ts';
+  import { clubConfig } from '#lib/clubConfig.ts';
   import { _ } from 'svelte-i18n';
   import Fa from 'svelte-fa';
   import { faSave, faSpinner } from '@fortawesome/free-solid-svg-icons';
   import dayjs from 'dayjs';
-  import type { Exam } from '$lib/models';
+  import type { Exam } from '#lib/models.ts';
 
   let {
     exam = null,

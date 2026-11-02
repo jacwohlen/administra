@@ -4,7 +4,7 @@
   import { goto } from '$app/navigation';
   import dayjs from 'dayjs';
   import { _, locale } from 'svelte-i18n';
-  import { supabaseClient } from '$lib/supabase';
+  import { supabaseClient } from '#lib/supabase.ts';
   import {
     churnByAge,
     churnByTraining,
@@ -12,7 +12,7 @@
     countByTraining,
     type NewMemberRow,
     type RetentionRow
-  } from '$lib/statsUtils';
+  } from '#lib/statsUtils.ts';
   import type { PageData } from './$types';
   import StatsSection from '../StatsSection.svelte';
   import MemberRetention from '../MemberRetention.svelte';

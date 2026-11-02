@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import type { Training } from '$lib/models';
+import type { Training } from '#lib/models.ts';
 
 // Helper to create a chainable mock from a result
 function createChainFromResult(result: { data: unknown; error: unknown }) {
@@ -24,7 +24,7 @@ const { mockSupabase } = vi.hoisted(() => ({
   }
 }));
 
-vi.mock('$lib/supabase', () => ({
+vi.mock('#lib/supabase.ts', () => ({
   supabaseClient: mockSupabase
 }));
 

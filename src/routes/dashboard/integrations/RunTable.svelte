@@ -8,7 +8,7 @@
     runCounts,
     runStatusClass,
     type IntegrationRun
-  } from '$lib/integrations';
+  } from '#lib/integrations.ts';
 
   /**
    * The connection's latest runs: when, what, how it ended, the counts

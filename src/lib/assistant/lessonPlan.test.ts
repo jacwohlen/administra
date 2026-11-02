@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { LessonPlan } from '$lib/models';
+import type { LessonPlan } from '#lib/models.ts';
 import {
   CONTENT_MAX,
   buildLessonPlanWrite,

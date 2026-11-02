@@ -1,6 +1,6 @@
-import { supabaseClient } from '$lib/supabase';
+import { supabaseClient } from '#lib/supabase.ts';
 import dayjs from 'dayjs';
-import { endsOnOrAfter } from '$lib/eventUtils';
+import { endsOnOrAfter } from '#lib/eventUtils.ts';
 import type { EventOption } from './ExamForm.svelte';
 
 /**

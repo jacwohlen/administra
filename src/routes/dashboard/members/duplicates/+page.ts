@@ -1,9 +1,9 @@
 import { error, redirect } from '@sveltejs/kit';
-import { supabaseClient } from '$lib/supabase';
-import { fetchAllRows } from '$lib/assistant/attendance';
-import { isAdmin } from '$lib/roles';
-import { findDuplicatePairs, linkStates } from '$lib/memberDuplicates';
-import { MERGE_COLUMNS, type MergeMember } from '$lib/memberMerge';
+import { supabaseClient } from '#lib/supabase.ts';
+import { fetchAllRows } from '#lib/assistant/attendance.ts';
+import { isAdmin } from '#lib/roles.ts';
+import { findDuplicatePairs, linkStates } from '#lib/memberDuplicates.ts';
+import { MERGE_COLUMNS, type MergeMember } from '#lib/memberMerge.ts';
 import type { PageLoad } from './$types';
 
 /** Likely duplicate members, for admins (they merge them) */

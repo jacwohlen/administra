@@ -12,12 +12,12 @@
     faTriangleExclamation
   } from '@fortawesome/free-solid-svg-icons';
   import dayjs from 'dayjs';
-  import type { TrainingPlanBreak } from '$lib/models';
-  import { supabaseClient } from '$lib/supabase';
-  import { toaster } from '$lib/toast';
-  import { providerName } from '$lib/memberStatus';
-  import type { PlanTraining } from '$lib/trainingPlanUtils';
-  import { MAX_LENGTH, clubToday, isIsoDate } from '$lib/assistant/proposals';
+  import type { TrainingPlanBreak } from '#lib/models.ts';
+  import { supabaseClient } from '#lib/supabase.ts';
+  import { toaster } from '#lib/toast.ts';
+  import { providerName } from '#lib/memberStatus.ts';
+  import type { PlanTraining } from '#lib/trainingPlanUtils.ts';
+  import { MAX_LENGTH, clubToday, isIsoDate } from '#lib/assistant/proposals.ts';
   import {
     PORTION,
     applyLeaderChoice,
@@ -55,8 +55,8 @@
     type PlanRowStatus,
     type PlannedBreak,
     type PlannedSession
-  } from '$lib/assistant/trainingPlan';
-  import type { PlanSessionEntry, TrainingPlanProposal } from '$lib/assistant/types';
+  } from '#lib/assistant/trainingPlan.ts';
+  import type { PlanSessionEntry, TrainingPlanProposal } from '#lib/assistant/types.ts';
   // The plan's own trainer picker (trainers first, then the other members)
   import TrainerSelect from '../TrainerSelect.svelte';
 

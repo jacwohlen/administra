@@ -1,5 +1,5 @@
 import dayjs, { type Dayjs } from 'dayjs';
-import { initialLocale } from '$lib/i18n';
+import { initialLocale } from '#lib/i18n/index.ts';
 
 export enum Weekday {
   Sunday = 0,

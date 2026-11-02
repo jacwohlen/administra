@@ -1,6 +1,6 @@
-import type { DirectoryMember, MemberSectionGrade, MemberTopBadge } from '$lib/models';
-import { supabaseClient } from '$lib/supabase';
-import { highestGrade } from '$lib/gradeUtils';
+import type { DirectoryMember, MemberSectionGrade, MemberTopBadge } from '#lib/models.ts';
+import { supabaseClient } from '#lib/supabase.ts';
+import { highestGrade } from '#lib/gradeUtils.ts';
 import type { PageLoad } from './$types';
 
 export const load: PageLoad = async () => {

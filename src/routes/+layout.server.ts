@@ -1,6 +1,6 @@
 import type { LayoutServerLoad } from './$types';
-import type { MyAccess, UserProfile } from '$lib/models';
-import { followsMembership } from '$lib/roles';
+import type { MyAccess, UserProfile } from '#lib/models.ts';
+import { followsMembership } from '#lib/roles.ts';
 
 export const load: LayoutServerLoad = async ({ locals: { safeGetSession, supabase } }) => {
   const { session, user } = await safeGetSession();
@@ -18,7 +18,7 @@ export const load: LayoutServerLoad = async ({ locals: { safeGetSession, supabas
 
   // A member account may use Alleda only while a member record counts,
   // which the nightly Webling sync can change at any time: ask whenever this
-  // load runs (page load, invalidateAll, the hourly token refresh). Staff get
+  // load runs (page load, refreshAll, the hourly token refresh). Staff get
   // in by their role and skip the call. On an error access stays null and
   // routing goes by the status alone; the database still refuses every query.
   if (userProfile && followsMembership(userProfile)) {

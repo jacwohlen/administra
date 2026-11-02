@@ -11,12 +11,12 @@
     faTriangleExclamation
   } from '@fortawesome/free-solid-svg-icons';
   import dayjs from 'dayjs';
-  import { modalDialog } from '$lib/modalDialog';
-  import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
-  import { clubConfig } from '$lib/clubConfig';
-  import { supabaseClient } from '$lib/supabase';
-  import { toaster } from '$lib/toast';
-  import type { TrainingPlanMailLog } from '$lib/models';
+  import { modalDialog } from '#lib/modalDialog.ts';
+  import ConfirmDialog from '#lib/components/ConfirmDialog.svelte';
+  import { clubConfig } from '#lib/clubConfig.ts';
+  import { supabaseClient } from '#lib/supabase.ts';
+  import { toaster } from '#lib/toast.ts';
+  import type { TrainingPlanMailLog } from '#lib/models.ts';
   import {
     computeNotices,
     fingerprint,
@@ -26,10 +26,10 @@
     type NoticeSet,
     type RecipientGroup,
     type UnreachableMember
-  } from '$lib/trainingPlanMail';
-  import { mailLocale, memberBlocks, renderMail } from '$lib/trainingPlanMailText';
-  import { loadMailPlan } from '$lib/trainingPlanMailData';
-  import { postNotify, type MailMode, type NotifyResponse } from '$lib/trainingPlanMailClient';
+  } from '#lib/trainingPlanMail.ts';
+  import { mailLocale, memberBlocks, renderMail } from '#lib/trainingPlanMailText.ts';
+  import { loadMailPlan } from '#lib/trainingPlanMailData.ts';
+  import { postNotify, type MailMode, type NotifyResponse } from '#lib/trainingPlanMailClient.ts';
 
   /**
    * "Trainer informieren" (docs/TRAINING_PLAN.md): every trainer whose plan

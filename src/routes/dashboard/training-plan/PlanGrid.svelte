@@ -12,9 +12,9 @@
   } from '@fortawesome/free-solid-svg-icons';
   import { _, locale } from 'svelte-i18n';
   import dayjs from 'dayjs';
-  import { supabaseClient } from '$lib/supabase';
-  import { toaster } from '$lib/toast';
-  import { planKey, type PlanRow } from '$lib/trainingPlanUtils';
+  import { supabaseClient } from '#lib/supabase.ts';
+  import { toaster } from '#lib/toast.ts';
+  import { planKey, type PlanRow } from '#lib/trainingPlanUtils.ts';
   import TrainerSelect from './TrainerSelect.svelte';
   import type { PlanMember } from './members';
 

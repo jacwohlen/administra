@@ -1,19 +1,19 @@
 <script lang="ts">
-  import { modalDialog } from '$lib/modalDialog';
-  import { supabaseClient } from '$lib/supabase';
-  import { toaster } from '$lib/toast';
+  import { modalDialog } from '#lib/modalDialog.ts';
+  import { supabaseClient } from '#lib/supabase.ts';
+  import { toaster } from '#lib/toast.ts';
   import { _ } from 'svelte-i18n';
   import Fa from 'svelte-fa';
   import { faMagnifyingGlass, faSpinner, faTrash } from '@fortawesome/free-solid-svg-icons';
-  import BeltStrip from '$lib/components/BeltStrip.svelte';
-  import { registrableGrades, suggestedGrade } from '$lib/examUtils';
+  import BeltStrip from '#lib/components/BeltStrip.svelte';
+  import { registrableGrades, suggestedGrade } from '#lib/examUtils.ts';
   import type {
     Exam,
     ExamCandidate,
     ExamCandidateStatus,
     GradeDefinition,
     MemberCurrentGrade
-  } from '$lib/models';
+  } from '#lib/models.ts';
 
   let {
     exam,

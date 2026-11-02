@@ -1,7 +1,7 @@
-import { json, type RequestHandler } from '@sveltejs/kit';
+import type { RequestHandler } from '@sveltejs/kit';
 import type { SupabaseClient } from '@supabase/supabase-js';
-import { clubToday, sanitizeProposal } from '$lib/assistant/proposals';
-import { ASSISTANT_LIMITS, type AssistantErrorCode } from '$lib/assistant/types';
+import { clubToday, sanitizeProposal } from '#lib/assistant/proposals.ts';
+import { ASSISTANT_LIMITS, type AssistantErrorCode } from '#lib/assistant/types.ts';
 import {
   apiError,
   countInputTokens,
@@ -11,10 +11,10 @@ import {
   readAnswer,
   timeLeft,
   usageOf
-} from '$lib/server/assistant/claude';
-import { loadPromptContext } from '$lib/server/assistant/context';
-import { buildParams } from '$lib/server/assistant/prompts';
-import { AssistantError, parseAssistantRequest } from '$lib/server/assistant/request';
+} from '#lib/server/assistant/claude.ts';
+import { loadPromptContext } from '#lib/server/assistant/context.ts';
+import { buildParams } from '#lib/server/assistant/prompts.ts';
+import { AssistantError, parseAssistantRequest } from '#lib/server/assistant/request.ts';
 
 /**
  * Daten-Assistent (docs/AI_ASSISTANT.md): turns an upload into a proposal.
@@ -31,16 +31,16 @@ import { AssistantError, parseAssistantRequest } from '$lib/server/assistant/req
  */
 
 function failure(code: AssistantErrorCode, status: number) {
-  return json({ code }, { status });
+  return Response.json({ code }, { status });
 }
 
 /** Whether the assistant is offered at all, and how many extractions are left today. */
 export const GET: RequestHandler = async ({ locals }) => {
   const { session } = await locals.safeGetSession();
   if (!session) return failure('unauthorized', 401);
-  if (!isAssistantConfigured()) return json({ configured: false, remaining: null });
+  if (!isAssistantConfigured()) return Response.json({ configured: false, remaining: null });
   const { data, error } = await locals.supabase.rpc('ai_import_remaining');
-  return json({ configured: true, remaining: error ? null : (data as number) });
+  return Response.json({ configured: true, remaining: error ? null : (data as number) });
 };
 
 interface Started {
@@ -124,7 +124,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 
     const proposal = sanitizeProposal(input.kind, answer.raw, context.sanitize);
     await finish(locals.supabase, started.id, 'ok', answer);
-    return json({ kind: input.kind, proposal, remaining: started.remaining });
+    return Response.json({ kind: input.kind, proposal, remaining: started.remaining });
   } catch (err) {
     const failed = apiError(err);
     if (started) await finish(locals.supabase, started.id, 'failed');

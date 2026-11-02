@@ -1,5 +1,5 @@
 <script lang="ts">
-  import PillToggle from '$lib/components/PillToggle.svelte';
+  import PillToggle from '#lib/components/PillToggle.svelte';
   import Fa from 'svelte-fa';
   import {
     faArrowLeft,
@@ -36,16 +36,16 @@
     trainerCounts,
     type PlanEvent,
     type PlanRow
-  } from '$lib/trainingPlanUtils';
-  import type { TrainingPlanBreak } from '$lib/models';
-  import { eventEnd, formatEventDates } from '$lib/eventUtils';
+  } from '#lib/trainingPlanUtils.ts';
+  import type { TrainingPlanBreak } from '#lib/models.ts';
+  import { eventEnd, formatEventDates } from '#lib/eventUtils.ts';
   import SessionDialog from './SessionDialog.svelte';
   import PlanGrid from './PlanGrid.svelte';
   import RotationDialog from './RotationDialog.svelte';
   import CalendarFeedDialog from './CalendarFeedDialog.svelte';
   import NotifyBanner from './NotifyBanner.svelte';
   import NotifyDialog from './NotifyDialog.svelte';
-  import { loadNotifyMode, type MailMode } from '$lib/trainingPlanMailClient';
+  import { loadNotifyMode, type MailMode } from '#lib/trainingPlanMailClient.ts';
   import type { PageData } from './$types';
 
   let { data }: { data: PageData } = $props();
@@ -200,7 +200,7 @@
 
   function changeYear(by: number) {
     selected = [];
-    goto(`/dashboard/training-plan?year=${data.year + by}`, { noScroll: true });
+    goto(`/dashboard/training-plan?year=${data.year + by}`, { reset: false });
   }
 
   // Reloads of the plan under way. Until they land, the table is read-only

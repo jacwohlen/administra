@@ -8,7 +8,7 @@
  * club; the club's Dev and Prod projects have no such accounts, so these
  * values open nothing there. See docs/DEMO.md.
  *
- * Kept under $lib/server so client code cannot import it; the browser only
+ * Kept under #lib/server so client code cannot import it; the browser only
  * ever sends a role name.
  */
 

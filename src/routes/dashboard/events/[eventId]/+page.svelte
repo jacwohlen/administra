@@ -1,10 +1,10 @@
 <script lang="ts">
-  import MoreMenu from '$lib/components/MoreMenu.svelte';
+  import MoreMenu from '#lib/components/MoreMenu.svelte';
   import type { PageData } from './$types';
-  import { supabaseClient } from '$lib/supabase';
+  import { supabaseClient } from '#lib/supabase.ts';
   import { _ } from 'svelte-i18n';
   import Fa from 'svelte-fa';
-  import { toaster } from '$lib/toast';
+  import { toaster } from '#lib/toast.ts';
   import {
     faCalendarDays,
     faLocationDot,
@@ -21,9 +21,9 @@
     faArrowUpRightFromSquare
   } from '@fortawesome/free-solid-svg-icons';
   import dayjs from 'dayjs';
-  import { invalidateAll, goto } from '$app/navigation';
+  import { refreshAll, goto } from '$app/navigation';
   import AddEventParticipant from './AddEventParticipant.svelte';
-  import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
+  import ConfirmDialog from '#lib/components/ConfirmDialog.svelte';
   import {
     canTrackAttendance as _canTrackAttendance,
     isRegistrationOpen as _isRegistrationOpen,
@@ -31,11 +31,11 @@
     attendanceTimestamp,
     calculateAttendanceRate,
     formatEventDates
-  } from '$lib/eventUtils';
-  import type { Medal } from '$lib/models';
-  import { MEDALS, medalEmoji } from '$lib/gradeUtils';
-  import { canDeleteEvent } from '$lib/eventLinks';
-  import { isManagedByProviderError, providerName } from '$lib/memberStatus';
+  } from '#lib/eventUtils.ts';
+  import type { Medal } from '#lib/models.ts';
+  import { MEDALS, medalEmoji } from '#lib/gradeUtils.ts';
+  import { canDeleteEvent } from '#lib/eventLinks.ts';
+  import { isManagedByProviderError, providerName } from '#lib/memberStatus.ts';
 
   let { data }: { data: PageData } = $props();
 
@@ -113,14 +113,14 @@
         toaster.error({ title: $_('medals.saveError') });
         return;
       }
-      await invalidateAll();
+      await refreshAll();
     } finally {
       loading = false;
     }
   }
 
   async function onParticipantAdded() {
-    await invalidateAll();
+    await refreshAll();
     // Keep the search area open so the user can add more participants
   }
 
@@ -139,7 +139,7 @@
         return;
       }
 
-      await invalidateAll();
+      await refreshAll();
     } finally {
       loading = false;
     }
@@ -191,7 +191,7 @@
           .eq('memberId', memberId);
       }
 
-      await invalidateAll();
+      await refreshAll();
     } finally {
       loading = false;
     }
@@ -216,7 +216,7 @@
         return;
       }
 
-      await invalidateAll();
+      await refreshAll();
     } finally {
       loading = false;
     }

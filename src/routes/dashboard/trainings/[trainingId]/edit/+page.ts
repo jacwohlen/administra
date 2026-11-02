@@ -1,8 +1,8 @@
 import { redirect, error as err } from '@sveltejs/kit';
 import type { PageLoad } from './$types';
-import { supabaseClient } from '$lib/supabase';
-import { canBeTrainer } from '$lib/memberStatus';
-import type { MembershipStatus } from '$lib/models';
+import { supabaseClient } from '#lib/supabase.ts';
+import { canBeTrainer } from '#lib/memberStatus.ts';
+import type { MembershipStatus } from '#lib/models.ts';
 
 export interface TrainerOption {
   id: number;
@@ -40,13 +40,13 @@ export const load: PageLoad = async ({ parent, params }) => {
         membership_status: MembershipStatus | null;
       }[]
     >();
-  if (error) throw err(500, error);
+  if (error) throw err(500, error.message);
 
   const { data: participants, error: partErr } = await supabaseClient
     .from('participants')
     .select('memberId')
     .eq('trainingId', Number(params.trainingId));
-  if (partErr) throw err(500, partErr);
+  if (partErr) throw err(500, partErr.message);
 
   const onList = new Set((participants ?? []).map((p) => p.memberId));
   const trainerOptions: TrainerOption[] = (members ?? [])

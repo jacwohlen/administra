@@ -1,6 +1,6 @@
-import { supabaseClient } from '$lib/supabase';
+import { supabaseClient } from '#lib/supabase.ts';
 import { error as err } from '@sveltejs/kit';
-import type { ExamCandidate } from '$lib/models';
+import type { ExamCandidate } from '#lib/models.ts';
 import { CANDIDATE_COLUMNS } from '../../queries';
 import type { PageLoad } from './$types';
 

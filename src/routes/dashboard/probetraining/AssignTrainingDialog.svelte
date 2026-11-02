@@ -9,13 +9,13 @@
     faUsers,
     faUserTie
   } from '@fortawesome/free-solid-svg-icons';
-  import { supabaseClient } from '$lib/supabase';
-  import { toaster } from '$lib/toast';
+  import { supabaseClient } from '#lib/supabase.ts';
+  import { toaster } from '#lib/toast.ts';
   import { invalidate } from '$app/navigation';
   import dayjs from 'dayjs';
-  import { calculateAge } from '$lib/utils';
-  import { splitTrainingsByAge, upcomingTrainingDates } from '$lib/trialUtils';
-  import type { Training, TrainingActivity, TrialMember } from '$lib/models';
+  import { calculateAge } from '#lib/utils.ts';
+  import { splitTrainingsByAge, upcomingTrainingDates } from '#lib/trialUtils.ts';
+  import type { Training, TrainingActivity, TrialMember } from '#lib/models.ts';
 
   let {
     member,

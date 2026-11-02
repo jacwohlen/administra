@@ -10,10 +10,10 @@
     faSpinner,
     faTriangleExclamation
   } from '@fortawesome/free-solid-svg-icons';
-  import { clubConfig } from '$lib/clubConfig';
-  import { supabaseClient } from '$lib/supabase';
-  import { toaster } from '$lib/toast';
-  import { fetchAllRows } from '$lib/assistant/attendance';
+  import { clubConfig } from '#lib/clubConfig.ts';
+  import { supabaseClient } from '#lib/supabase.ts';
+  import { toaster } from '#lib/toast.ts';
+  import { fetchAllRows } from '#lib/assistant/attendance.ts';
   import {
     buildEventInserts,
     comparisonSpan,
@@ -36,10 +36,10 @@
     type EventRowInput,
     type EventRowStatus,
     type KnownEvent
-  } from '$lib/assistant/events';
-  import { clubToday, isIsoDate, MAX_LENGTH } from '$lib/assistant/proposals';
-  import { providerName } from '$lib/memberStatus';
-  import type { EventsProposal } from '$lib/assistant/types';
+  } from '#lib/assistant/events.ts';
+  import { clubToday, isIsoDate, MAX_LENGTH } from '#lib/assistant/proposals.ts';
+  import { providerName } from '#lib/memberStatus.ts';
+  import type { EventsProposal } from '#lib/assistant/types.ts';
 
   /**
    * Review step of the Daten-Assistent for club dates: one editable row per

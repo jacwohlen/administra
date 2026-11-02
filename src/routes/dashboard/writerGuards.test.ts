@@ -1,10 +1,10 @@
 import { describe, it, expect, vi } from 'vitest';
 import { isRedirect } from '@sveltejs/kit';
-import { PROVIDER_EVENT_FIELDS } from '$lib/eventLinks';
+import { PROVIDER_EVENT_FIELDS } from '#lib/eventLinks.ts';
 
 // The edit training page loads its main trainer options; every query comes
 // back empty here.
-vi.mock('$lib/supabase', () => {
+vi.mock('#lib/supabase.ts', () => {
   const handler: ProxyHandler<object> = {
     get(_target, prop) {
       if (prop === 'then') {

@@ -1,4 +1,4 @@
-import type { Member, TrainerRole } from '$lib/models';
+import type { Member, TrainerRole } from '#lib/models.ts';
 
 export interface MMember extends Member {
   isPresent: boolean;

@@ -15,12 +15,12 @@ function chain(result: Result) {
 const { mockSupabase } = vi.hoisted(() => ({
   mockSupabase: { from: vi.fn(), rpc: vi.fn() }
 }));
-vi.mock('$lib/supabase', () => ({ supabaseClient: mockSupabase }));
+vi.mock('#lib/supabase.ts', () => ({ supabaseClient: mockSupabase }));
 
 import { load } from './+layout';
 import { load as serverLoad } from './+layout.server';
-import { integrationConfig } from '$lib/integrationConfig';
-import { invalidateIntegrationConfig } from '$lib/integrationConfigLoad';
+import { integrationConfig } from '#lib/integrationConfig.ts';
+import { invalidateIntegrationConfig } from '#lib/integrationConfigLoad.ts';
 
 const admin = { role: 'admin', status: 'approved' };
 const trainer = { role: 'trainer', status: 'approved' };

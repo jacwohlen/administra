@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { visibleLabels } from '$lib/memberStatus';
+  import { visibleLabels } from '#lib/memberStatus.ts';
 
   let { labels: allLabels = [] }: { labels?: string[] } = $props();
   // Without status groups and Webling bookkeeping

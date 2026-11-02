@@ -1,22 +1,24 @@
 <script lang="ts">
   import { _ } from 'svelte-i18n';
-  import { invalidate, invalidateAll } from '$app/navigation';
+  import { invalidate, refreshAll } from '$app/navigation';
   import Fa from 'svelte-fa';
   import { faArrowRight } from '@fortawesome/free-solid-svg-icons';
-  import { invalidateIntegrationConfig } from '$lib/integrationConfigLoad';
-  import { hasSync } from '$lib/integrations';
+  import { invalidateIntegrationConfig } from '#lib/integrationConfigLoad.ts';
+  import { hasSync } from '#lib/integrations.ts';
   import type { PageData } from './$types';
   import ConnectionOverview from './ConnectionOverview.svelte';
   import RunTable from './RunTable.svelte';
   import IssueList from './IssueList.svelte';
   import MappingEditor from './MappingEditor.svelte';
   import ModuleSwitch from './ModuleSwitch.svelte';
+  import ApiKeys from './ApiKeys.svelte';
 
   /**
    * Admins: where members, events and holidays come from (one card per
    * connection of the integration layer), what the latest runs did, the
    * open issues and the mapping of groups and calendars
-   * (docs/INTEGRATIONS.md, "Integrations page").
+   * (docs/INTEGRATIONS.md, "Integrations page"), and the API keys of
+   * other systems (docs/API.md).
    */
   let { data }: { data: PageData } = $props();
 
@@ -31,7 +33,7 @@
   // A connection switched on or off: menus and modules (J+S) follow at once
   async function switched() {
     invalidateIntegrationConfig();
-    await invalidateAll();
+    await refreshAll();
   }
 </script>
 
@@ -134,3 +136,7 @@
     {/each}
   </div>
 {/if}
+
+<div class="mt-6">
+  <ApiKeys keys={data.apiKeys} onchanged={() => invalidate('integrations:page')} />
+</div>

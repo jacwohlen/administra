@@ -1,9 +1,9 @@
-import { rpcRows, supabaseClient } from '$lib/supabase';
+import { rpcRows, supabaseClient } from '#lib/supabase.ts';
 import { error as err } from '@sveltejs/kit';
 import dayjs from 'dayjs';
-import type { TrainingPlanBreak, TrainingPlanSession } from '$lib/models';
-import { plannableTrainingIds, type PlanEvent, type PlanTraining } from '$lib/trainingPlanUtils';
-import { endsOnOrAfter } from '$lib/eventUtils';
+import type { TrainingPlanBreak, TrainingPlanSession } from '#lib/models.ts';
+import { plannableTrainingIds, type PlanEvent, type PlanTraining } from '#lib/trainingPlanUtils.ts';
+import { endsOnOrAfter } from '#lib/eventUtils.ts';
 import { loadPlanMembers } from './members';
 import type { PageLoad } from './$types';
 

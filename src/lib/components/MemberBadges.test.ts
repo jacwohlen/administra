@@ -1,8 +1,8 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { render, cleanup, fireEvent } from '@testing-library/svelte';
 import { readable } from 'svelte/store';
-import type { Badge, BadgeDefinition, BadgeProgress } from '$lib/models';
-import { dismissTip } from '$lib/badgeTip.svelte';
+import type { Badge, BadgeDefinition, BadgeProgress } from '#lib/models.ts';
+import { dismissTip } from '#lib/badgeTip.svelte.ts';
 import MemberBadges from './MemberBadges.svelte';
 
 vi.mock('svelte-i18n', () => ({

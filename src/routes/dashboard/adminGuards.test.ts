@@ -2,7 +2,7 @@ import { describe, it, expect, vi } from 'vitest';
 import { isRedirect } from '@sveltejs/kit';
 
 // Every query comes back empty; the guards only look at parent()
-vi.mock('$lib/supabase', () => {
+vi.mock('#lib/supabase.ts', () => {
   const handler: ProxyHandler<object> = {
     get(_target, prop) {
       if (prop === 'then') {
@@ -14,7 +14,7 @@ vi.mock('$lib/supabase', () => {
   return { supabaseClient: new Proxy({}, handler) };
 });
 // The settings page reads the environment's defaults, which tests do not have
-vi.mock('$lib/appSettings', () => ({
+vi.mock('#lib/appSettings.ts', () => ({
   loadAppSettings: async () => {},
   getSettingDefaults: () => ({})
 }));

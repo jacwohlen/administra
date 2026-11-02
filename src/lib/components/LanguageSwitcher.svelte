@@ -2,8 +2,8 @@
   import { _, locale } from 'svelte-i18n';
   import Fa from 'svelte-fa';
   import { faLanguage } from '@fortawesome/free-solid-svg-icons';
-  import { setUserLocale } from '$lib/userLocale';
-  import type { PublicLocale } from '$lib/clubConfigParser';
+  import { setUserLocale } from '#lib/userLocale.ts';
+  import type { PublicLocale } from '#lib/clubConfigParser.ts';
 
   let { onselect }: { onselect?: (value: PublicLocale) => void } = $props();
 

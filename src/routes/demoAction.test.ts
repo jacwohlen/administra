@@ -9,7 +9,7 @@ type Actions = (typeof import('./+page.server'))['actions'];
 
 async function loadActions(mode: string): Promise<Actions> {
   vi.resetModules();
-  vi.doMock('$env/static/public', () => ({
+  vi.doMock('$app/env/public', () => ({
     PUBLIC_MODE: mode,
     PUBLIC_SUPABASE_DATABASE_URL: 'http://localhost',
     PUBLIC_SUPABASE_ANON_KEY: 'anon'
@@ -41,7 +41,7 @@ async function run(actions: Actions, event: never): Promise<unknown> {
 }
 
 afterEach(() => {
-  vi.doUnmock('$env/static/public');
+  vi.doUnmock('$app/env/public');
   vi.restoreAllMocks();
 });
 

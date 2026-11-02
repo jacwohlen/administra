@@ -3,7 +3,7 @@ import type {
   BetaMessage,
   MessageCreateParamsNonStreaming
 } from '@anthropic-ai/sdk/resources/beta/messages/messages';
-import { env } from '$env/dynamic/private';
+import * as env from '$app/env/private';
 import type { ModelSettings } from './prompts';
 import { AssistantError } from './request';
 
@@ -43,7 +43,7 @@ let client: { key: string; anthropic: Anthropic } | null = null;
 
 function getClient(): Anthropic {
   const key = env.PRIVATE_ANTHROPIC_API_KEY?.trim() ?? '';
-  if (client?.key !== key) {
+  if (!client || client.key !== key) {
     // No retries: a retry would rarely fit into the function's time limit,
     // and the user can simply try again.
     client = {

@@ -1,10 +1,10 @@
 <script lang="ts">
-  import { csvCell } from '$lib/csv';
+  import { csvCell } from '#lib/csv.ts';
   import type { PageData } from './$types';
   import Fa from 'svelte-fa';
   import { faArrowLeft, faDownload } from '@fortawesome/free-solid-svg-icons';
   import { _ } from 'svelte-i18n';
-  import type { Athletes } from '$lib/models';
+  import type { Athletes } from '#lib/models.ts';
 
   let { data }: { data: PageData } = $props();
   let searchTerm = $state('');

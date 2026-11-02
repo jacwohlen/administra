@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 
 // Every query comes back empty; the guards only look at parent()
-vi.mock('$lib/supabase', () => {
+vi.mock('#lib/supabase.ts', () => {
   const handler: ProxyHandler<object> = {
     get(_target, prop) {
       if (prop === 'then') {

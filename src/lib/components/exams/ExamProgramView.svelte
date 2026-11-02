@@ -1,7 +1,7 @@
 <script lang="ts">
   import { _ } from 'svelte-i18n';
-  import { itemMaxPoints, partMaxPoints, programMaxPoints } from '$lib/examUtils';
-  import type { ExamPart } from '$lib/models';
+  import { itemMaxPoints, partMaxPoints, programMaxPoints } from '#lib/examUtils.ts';
+  import type { ExamPart } from '#lib/models.ts';
   import ExamPartHeader from './ExamPartHeader.svelte';
   import ScoreLegend from './ScoreLegend.svelte';
 

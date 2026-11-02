@@ -1,5 +1,5 @@
 <script lang="ts">
-  import PillToggle from '$lib/components/PillToggle.svelte';
+  import PillToggle from '#lib/components/PillToggle.svelte';
   import { onMount, untrack } from 'svelte';
   import { _ } from 'svelte-i18n';
   import Fa from 'svelte-fa';
@@ -10,9 +10,9 @@
     faEnvelope
   } from '@fortawesome/free-solid-svg-icons';
   import { invalidate } from '$app/navigation';
-  import { clubConfig } from '$lib/clubConfig';
-  import { settingValues } from '$lib/appSettings';
-  import { toaster } from '$lib/toast';
+  import { clubConfig } from '#lib/clubConfig.ts';
+  import { settingValues } from '#lib/appSettings.ts';
+  import { toaster } from '#lib/toast.ts';
   import {
     TRIAL_MAIL_KINDS,
     buildTrialMailVars,
@@ -22,8 +22,8 @@
     trialMailTemplate,
     trialStatusUrl,
     type TrialMailKind
-  } from '$lib/trialMail';
-  import type { AssignedTraining, TrialMember } from '$lib/models';
+  } from '#lib/trialMail.ts';
+  import type { AssignedTraining, TrialMember } from '#lib/models.ts';
 
   /**
    * Preview of a mail to a trial candidate: the template for the chosen

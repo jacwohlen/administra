@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { Badge, BadgeDefinition, BadgeProgress } from '$lib/models';
+  import type { Badge, BadgeDefinition, BadgeProgress } from '#lib/models.ts';
   import {
     badgeKey,
     badgeSuffix,
@@ -8,8 +8,8 @@
     progressPercent,
     TRAIL_CATEGORIES,
     type BadgeCategoryGroup
-  } from '$lib/badgeUtils';
-  import { hoverTip, isPinned, leaveTip, tapTip } from '$lib/badgeTip.svelte';
+  } from '#lib/badgeUtils.ts';
+  import { hoverTip, isPinned, leaveTip, tapTip } from '#lib/badgeTip.svelte.ts';
   import BadgeTile from './BadgeTile.svelte';
   import BadgeTooltip from './BadgeTooltip.svelte';
   import { _ } from 'svelte-i18n';

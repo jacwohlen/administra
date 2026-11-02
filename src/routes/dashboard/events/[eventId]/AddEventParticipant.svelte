@@ -1,10 +1,10 @@
 <script lang="ts">
-  import type { Member } from '$lib/models';
+  import type { Member } from '#lib/models.ts';
   import Fa from 'svelte-fa';
   import { faUserPlus } from '@fortawesome/free-solid-svg-icons';
-  import { supabaseClient } from '$lib/supabase';
+  import { supabaseClient } from '#lib/supabase.ts';
   import { _ } from 'svelte-i18n';
-  import { toaster } from '$lib/toast';
+  import { toaster } from '#lib/toast.ts';
 
   let {
     eventId,

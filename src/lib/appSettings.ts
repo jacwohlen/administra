@@ -31,7 +31,7 @@ export const displayConfig: DisplayConfig = { ...DEFAULT_DISPLAY_CONFIG };
 /**
  * The raw `app_settings` rows of the last load, for settings that are read
  * by key rather than through `clubConfig` / `displayConfig` (the trial
- * e-mail templates, see `$lib/trialMail`).
+ * e-mail templates, see `#lib/trialMail.ts`).
  */
 export const settingValues: SettingValues = {};
 

@@ -1,8 +1,8 @@
 import { error, redirect } from '@sveltejs/kit';
-import { supabaseClient } from '$lib/supabase';
-import { fetchAllRows } from '$lib/assistant/attendance';
-import { isAdmin } from '$lib/roles';
-import { MERGE_COLUMNS, type MergeMember } from '$lib/memberMerge';
+import { supabaseClient } from '#lib/supabase.ts';
+import { fetchAllRows } from '#lib/assistant/attendance.ts';
+import { isAdmin } from '#lib/roles.ts';
+import { MERGE_COLUMNS, type MergeMember } from '#lib/memberMerge.ts';
 import {
   CALENDAR_COLUMNS,
   GROUP_COLUMNS,
@@ -16,7 +16,8 @@ import {
   type IntegrationRun,
   type IssueEvent,
   type MemberGroupRow
-} from '$lib/integrations';
+} from '#lib/integrations.ts';
+import { API_KEY_COLUMNS, type ApiKeyRow } from '#lib/publicApi.ts';
 import type { PageLoad } from './$types';
 
 /** Runs the table shows */
@@ -73,7 +74,7 @@ export const load: PageLoad = async ({ parent, depends }) => {
   }
 
   try {
-    const [runs, issues, groups, calendars, eventUrls] = await Promise.all([
+    const [runs, issues, groups, calendars, eventUrls, apiKeys] = await Promise.all([
       supabaseClient
         .from('integration_runs')
         .select(RUN_COLUMNS)
@@ -107,9 +108,16 @@ export const load: PageLoad = async ({ parent, depends }) => {
           .order('id')
           .range(from, to)
       ),
-      loadEventUrls()
+      loadEventUrls(),
+      // API keys for other systems (docs/API.md)
+      supabaseClient
+        .from('api_keys')
+        .select(API_KEY_COLUMNS)
+        .order('created_at')
+        .returns<ApiKeyRow[]>()
     ]);
     if (runs.error) throw runs.error;
+    if (apiKeys.error) throw apiKeys.error;
 
     // Names for the issues (the log itself holds ids only)
     const refs = issueReferences(issues);
@@ -126,7 +134,8 @@ export const load: PageLoad = async ({ parent, depends }) => {
       events: events.map((e) => ({ ...e, id: Number(e.id) })),
       groups,
       calendars,
-      eventUrls
+      eventUrls,
+      apiKeys: apiKeys.data ?? []
     };
   } catch (e) {
     error(500, (e as { message?: string } | null)?.message ?? 'Integrations not loaded');

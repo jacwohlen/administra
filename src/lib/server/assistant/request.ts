@@ -1,4 +1,4 @@
-import { isIsoDate } from '$lib/assistant/proposals';
+import { isIsoDate } from '#lib/assistant/proposals.ts';
 import {
   ASSISTANT_LIMITS,
   ASSISTANT_MEDIA_TYPES,
@@ -8,7 +8,7 @@ import {
   type AssistantFile,
   type AssistantMediaType,
   type AssistantRequest
-} from '$lib/assistant/types';
+} from '#lib/assistant/types.ts';
 
 /** A failure with the error code and HTTP status /api/assistant answers with. */
 export class AssistantError extends Error {

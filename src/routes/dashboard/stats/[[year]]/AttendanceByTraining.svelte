@@ -2,8 +2,8 @@
   let { year, yearmode }: { year: number; yearmode: 'YEAR' | 'ALL' } = $props();
 
   import { ScaleTypes } from '@carbon/charts/interfaces';
-  import { supabaseClient } from '$lib/supabase';
-  import { seriesColors } from '$lib/statsUtils';
+  import { supabaseClient } from '#lib/supabase.ts';
+  import { seriesColors } from '#lib/statsUtils.ts';
   import { _, locale } from 'svelte-i18n';
   import ChartFrame from './ChartFrame.svelte';
   import { baseChartOptions } from './chartOptions';

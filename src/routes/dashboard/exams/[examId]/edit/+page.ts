@@ -1,5 +1,5 @@
 import { redirect } from '@sveltejs/kit';
-import { supabaseClient } from '$lib/supabase';
+import { supabaseClient } from '#lib/supabase.ts';
 import { loadEventOptions } from '../../events';
 import type { PageLoad } from './$types';
 
