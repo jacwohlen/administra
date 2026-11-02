@@ -151,7 +151,7 @@ jobs:
 
       - uses: supabase/setup-cli@v3
         with:
-          version: latest
+          version: 2.122.0
           # Resolving "latest" hits the GitHub API; without a token the runner's
           # shared unauthenticated quota can be exhausted and the job dies in setup.
           github-token: ${{ secrets.GITHUB_TOKEN }}

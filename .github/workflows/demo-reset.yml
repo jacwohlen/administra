@@ -79,7 +79,7 @@ jobs:
       - uses: supabase/setup-cli@v3
         if: steps.config.outputs.configured == 'true'
         with:
-          version: latest
+          version: 2.122.0
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
       # The next steps delete everything in the database DEMO_DB_URL points
