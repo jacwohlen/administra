@@ -440,6 +440,13 @@ INSERT INTO api_guard VALUES
   -- plan mails: the TK, or a main trainer for the members of their own
   -- trainings (supabase/checks/training_plan_mail.sql)
   ('training_plan_mail_addresses', 'is_exam_manager\(.*my_main_training_ids\('),
+  -- substitutes and swaps: staff, the asker leads the date, only the person
+  -- asked answers, the mail data for the two of them and the TK
+  -- (supabase/checks/training_plan_requests.sql)
+  ('training_plan_request_create',   'is_staff\(.*my_member_ids\('),
+  ('training_plan_request_answer',   'is_staff\(.*to_member_id NOT IN \(SELECT public\.my_member_ids\('),
+  ('training_plan_request_withdraw', 'is_staff\(.*from_member_id IN \(SELECT public\.my_member_ids\('),
+  ('training_plan_request_mail',     'is_staff\(.*my_member_ids\(.*is_exam_manager\('),
   -- API keys: admins create them; the API answers only for a key with the
   -- scope (supabase/checks/api_keys.sql)
   ('api_key_create',             'is_admin\('),

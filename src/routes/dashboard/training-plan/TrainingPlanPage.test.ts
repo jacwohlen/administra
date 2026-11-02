@@ -112,6 +112,8 @@ function pageData(sessions: TrainingPlanSession[] = [], access = tk) {
     breaks: [],
     events: [],
     members: [{ id: 7, firstname: 'Anna', lastname: 'Muster', trainer: true }],
+    myMemberIds: [],
+    requests: [],
     ...access
   };
 }
@@ -460,5 +462,76 @@ describe('Trainer informieren', () => {
     ).toBeInTheDocument();
     // The dialog and the banner, both on the reloaded plan
     expect(loadMailPlan).toHaveBeenCalledTimes(3);
+  });
+});
+
+describe('Vertretung und Tausch', () => {
+  beforeEach(() => localStorage.setItem('trainingPlan.view', 'list'));
+
+  const session = (training_id: number, date: string, trainer_id: number) =>
+    ({
+      id: 1,
+      training_id,
+      date,
+      trainer_id,
+      topic: 'Ukemi',
+      notes: null,
+      cancelled: null
+    }) as never;
+  const handOver = () => screen.queryAllByRole('button', { name: /^Abgeben: / });
+
+  it('offers to hand on only the dates the account leads, also to a viewer', () => {
+    render(Page, {
+      props: {
+        data: {
+          ...pageData([session(monday.id, '2027-01-04', 7)], viewer),
+          myMemberIds: [7]
+        }
+      } as never
+    });
+    expect(handOver().map((b) => b.getAttribute('aria-label'))).toEqual([
+      'Abgeben: Judo Kampftraining 2027-01-04'
+    ]);
+  });
+
+  it('shows a request to the account with accept and decline, and marks the date', () => {
+    render(Page, {
+      props: {
+        data: {
+          ...pageData([session(friday.id, '2027-01-08', 8)], viewer),
+          members: [
+            { id: 7, firstname: 'Anna', lastname: 'Muster', trainer: true },
+            { id: 8, firstname: 'Max', lastname: 'Meier', trainer: true }
+          ],
+          myMemberIds: [7],
+          requests: [
+            {
+              id: 3,
+              kind: 'substitute',
+              training_id: friday.id,
+              date: '2027-01-08',
+              other_training_id: null,
+              other_date: null,
+              from_member_id: 8,
+              to_member_id: 7,
+              message: 'Danke!',
+              move_note: true,
+              other_move_note: true,
+              status: 'open',
+              created_at: '2026-10-30T10:00:00Z',
+              answered_at: null
+            }
+          ]
+        }
+      } as never
+    });
+    expect(
+      screen.getByText(/Max Meier fragt dich, ob du das Training am Fr 08\.01\./)
+    ).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Zusagen' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Absagen' })).toBeInTheDocument();
+    expect(screen.getByText('Vertretung angefragt bei Anna Muster')).toBeInTheDocument();
+    // An open request: the date is not offered again
+    expect(handOver()).toEqual([]);
   });
 });

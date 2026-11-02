@@ -349,15 +349,92 @@ und leitest alle Termine`, `Du leitest: Di 10.11.2026`.
   not told; sending is by hand only (nothing scheduled); no WhatsApp or SMS;
   trainers answer only by replying to the mail.
 
+## Vertretung und Tausch
+
+Whoever leads a date (the planned trainer, else the training's main
+trainer, as `buildPlan()`) hands it on themselves, without the TK: on the
+plan page each of their dates from today on that is held has _Abgeben_
+(every staff account whose member leads it, also a viewer). The dialog
+offers two kinds, and the trainer asks **one** person:
+
+- **Vertretung** – the person takes over the date. Topic and note stay with
+  the date.
+- **Tauschen** – the two trade dates: the trainer picks the person, then one
+  of that person's upcoming held dates (any planned training, Monday
+  against Friday works). Each takes their own topic along; each note goes
+  along too unless _Notiz mitnehmen_ is unticked (a note left behind stays
+  with its date). A preview shows both dates as they will be.
+
+An optional message goes with the request. The plan does not change yet:
+the date shows _Vertretung angefragt bei …_ / _Tausch angefragt mit …_, and
+cannot be asked for again while the request is open (for a swap, both
+dates). The person asked sees the request above the plan with _Zusagen_ and
+_Absagen_; the asker sees it with _Zurückziehen_. Only the person asked
+confirms (decided 2026-11-02: no approval by the TK or the main trainer,
+who see it in the plan and can correct it as before). The TK and the main
+trainer of the asker's training can withdraw a request too.
+
+Accepting writes the plan in one transaction: a substitute becomes the
+date's trainer; a swap sets both dates (trainer, topic, notes). A request
+whose dates no longer look as they did when it was made (another trainer
+planned meanwhile, cancelled, a date in the past) is not applied: it
+expires, and the banner says _Gilt nicht mehr_. Afterwards the rows say
+_Vertritt …_ / _Getauscht mit …_ while the plan still shows that trainer.
+The calendar feeds and the API (`/api/v1/training-plan`) simply show the
+new trainer; open requests are not in them.
+
+**Mails.** Each step mails the other person right away, in the sender's app
+language, with `Reply-To` the sender (`/api/training-plan/requests`,
+texts in `src/lib/trainingPlanRequests.ts`): the request to the person
+asked (date, training, time, topic, the message, the link to the plan), the
+answer (zugesagt / abgesagt) to the asker, a withdrawal to the person
+asked. Like the plan mails they leave only under `PUBLIC_MODE=PROD` and are
+simulated elsewhere; nobody is mailed who has no address, a `*.invalid`
+one or _Keine Mails_ (`training_plan_mail_optouts`). The mail is a
+courtesy: the request (and the plan) is saved first, and the toast says
+whether the mail went out. _Trainer informieren_ is not told of the change:
+it will list the two trainers as pending until a planner sends or marks it.
+
+**Not yet (stage 2):** an open search asking all trainers at once (the
+trainer pool: all trainers, first come first served), a reminder to the TK
+and the main trainer when a date is still open a few days ahead, the
+request in the calendar feed (_Ersatz gesucht:_), and the two trainers
+marked as told for _Trainer informieren_ when they confirm.
+
+In the database (`20261111120000_training_plan_requests.sql`,
+`supabase/checks/training_plan_requests.sql`):
+
+- `training_plan_requests` – kind, the asker's date (`training_id`,
+  `date`), for a swap the other date (`other_training_id`, `other_date`),
+  `from_member_id` (who led it when asking), `to_member_id`, `message`,
+  `move_note` / `other_move_note`, `status` (`open`, `accepted`,
+  `declined`, `withdrawn`, `expired`), who and when. Staff read it
+  (`is_staff()`); nobody writes it but the functions below. One open
+  request per date (unique index; the functions also check the other date)
+- `training_plan_request_create()` – staff whose member (`my_member_ids()`)
+  leads the date; refuses a date outside the plan, in the past or
+  cancelled, asking oneself or an archived member, a swap date the person
+  asked does not lead, and a date with an open request (`BUSY`). Expires
+  stale open requests first
+- `training_plan_request_answer(p_id, p_accept)` – only the person asked;
+  applies the request or lets it expire; returns the status afterwards
+- `training_plan_request_withdraw(p_id)` – the asker, the TK, the asker's
+  main trainer
+- `training_plan_request_mail(p_id)` – both people with name and address
+  (as `training_plan_mail_addresses()`), opt-out and both dates, for the two
+  people and the TK only
+- merging two members moves both references; a request between the two is
+  withdrawn
+
 ## Roles
 
-| Who                           | Read | Edit                                  | Sets main trainers (and their e-mail) | Trainer informieren           |
-| ----------------------------- | ---- | ------------------------------------- | ------------------------------------- | ----------------------------- |
-| Admin                         | yes  | yes                                   | yes                                   | every training, sets opt-outs |
-| TK (`exam_role=manager`)      | yes  | yes                                   | yes                                   | every training, sets opt-outs |
-| Main trainer (role `trainer`) | yes  | every date of their planned trainings | –                                     | their planned trainings       |
-| Other trainers, viewers       | yes  | –                                     | –                                     | –                             |
-| Member                        | –    | –                                     | –                                     | –                             |
+| Who                           | Read | Edit                                  | Sets main trainers (and their e-mail) | Trainer informieren           | Vertretung und Tausch                          |
+| ----------------------------- | ---- | ------------------------------------- | ------------------------------------- | ----------------------------- | ---------------------------------------------- |
+| Admin                         | yes  | yes                                   | yes                                   | every training, sets opt-outs | as the dates they lead; withdraws any request  |
+| TK (`exam_role=manager`)      | yes  | yes                                   | yes                                   | every training, sets opt-outs | as the dates they lead; withdraws any request  |
+| Main trainer (role `trainer`) | yes  | every date of their planned trainings | –                                     | their planned trainings       | their dates; withdraws on their trainings      |
+| Other trainers, viewers       | yes  | –                                     | –                                     | –                             | hands on the dates they lead, answers requests |
+| Member                        | –    | –                                     | –                                     | –                             | –                                              |
 
 The TK is the same exam role as in the Q-Prüfungen (`docs/Q_EXAMS.md`), set
 by admins in _Benutzer_. In the database the policies use
