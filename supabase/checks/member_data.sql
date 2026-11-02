@@ -356,7 +356,7 @@ SELECT pg_temp.eq('API functions bypassing RLS that anon may call',
    WHERE p.pronamespace = 'public'::regnamespace AND p.prosecdef
      AND p.prorettype <> 'trigger'::regtype
      AND has_function_privilege('anon', p.oid, 'EXECUTE')),
-  'api_training_plan,calendar_feed,cancel_trial,complete_trial_email,get_trial_status,is_admin,is_approved_user,is_writer,register_trial');
+  'api_event_participants,api_events,api_training_plan,calendar_feed,cancel_trial,complete_trial_email,get_trial_status,is_admin,is_approved_user,is_writer,register_trial');
 
 -- A trigger function is never an RPC (Postgres refuses to call it outside a
 -- trigger), but EXECUTE for the API roles shows up as advisor noise
@@ -450,7 +450,9 @@ INSERT INTO api_guard VALUES
   -- API keys: admins create them; the API answers only for a key with the
   -- scope (supabase/checks/api_keys.sql)
   ('api_key_create',             'is_admin\('),
-  ('api_training_plan',          'api_key_use\(p_key, ''training_plan:read''\)');
+  ('api_training_plan',          'api_key_use\(p_key, ''training_plan:read''\)'),
+  ('api_events',                 'api_key_use\(p_key, ''event_participants:read''\)'),
+  ('api_event_participants',     'api_key_use\(p_key, ''event_participants:read''\)');
 
 SELECT pg_temp.eq('API functions bypassing RLS without their guard',
   (SELECT string_agg(coalesce(p.proname, g.proname)

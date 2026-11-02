@@ -3,21 +3,55 @@
 Alleda answers other systems under `/api/v1/` of each instance (JAC Wohlen:
 `https://admin.jacwohlen.ch/api/v1/…`, a club instance on its own domain).
 The first endpoint is the training plan, for the club's website: who leads
-which training on which date, the topic, and what is dropped. More
-endpoints follow the same rules: versioned path, API key with scopes, JSON,
-only what the key's scope names.
+which training on which date, the topic, and what is dropped. The second
+gives the participants of an event, for a program writing reports about
+events. More endpoints follow the same rules: versioned path, API key with
+scopes, JSON, only what the key's scope names.
+
+## Browsing and trying the API
+
+Every instance documents its API itself:
+
+- **`/api/docs`**: the API reference (Scalar), linked from _API-Schlüssel_.
+  It lists the endpoints, parameters, answers and errors with examples and
+  request snippets (curl, JavaScript, PHP, Python …). _Test Request_ sends a
+  real request to this instance with a key pasted under _Authentication_.
+- **`/api/v1/openapi.json`**: the OpenAPI 3.1 description it shows, for
+  tools such as Postman, Bruno or Insomnia (import the URL), or to generate
+  a client. Public, without data.
+
+The description is code: `openApiDocument()` in `src/lib/openApi.ts`, with
+the scopes and limits from `src/lib/publicApi.ts`. `openApi.test.ts` fails
+when an endpoint under `src/routes/api/v1/` or a scope is missing from it.
+
+The page (`src/lib/server/apiDocs.ts`) loads Scalar's standalone bundle from
+jsDelivr, pinned to a version and checked with its SRI hash (update both
+together; the hash is `openssl dgst -sha384 -binary standalone.js | openssl
+base64 -A` of the npm package's `dist/browser/standalone.js`). It has its own,
+enforced Content-Security-Policy: scripts only from jsDelivr and the page's
+nonce, `connect-src 'self'`. So a key pasted there goes only to this
+instance, never to Scalar's proxy or services; telemetry, the AI chat, the
+MCP button and Scalar's fonts are switched off, and the key is not stored
+(`persistAuth: false`). Same origin, so trying it needs no website on the
+key.
+
+Why Scalar: Swagger UI (what Webling uses) works but looks dated; Redoc
+reads well but cannot send requests; Stoplight Elements is barely
+maintained since 2024. Scalar is current, open source (MIT), one script
+tag, with a request client, dark mode and code snippets.
 
 ## API keys
 
 Admins manage keys on _Integrationen_ (`/dashboard/integrations`, section
 _API-Schlüssel_):
 
-- **New key**: a name (e.g. "Vereinswebseite"), what it may read (so far
-  only the training plan), how trainers are named and which websites may
-  read in the browser. The key (`alleda_` and 48 hex characters) is shown
+- **New key**: a name (e.g. "Vereinswebseite"), what it may read (scopes,
+  below), how trainers are named (training plan) and which websites may
+  read in the browser (not for personal data). The key (`alleda_` and 48 hex characters) is shown
   **once**; the database keeps only its SHA-256 and the first 8 characters
   to recognise it in the list.
-- **Edit**: name, trainer names and websites; the key stays the same.
+- **Edit**: name, scopes, trainer names and websites; the key stays the
+  same.
 - **Delete**: revokes it at once. A lost key is deleted and replaced.
 - The list shows when each key was last used (noted at most once a
   minute).
@@ -30,14 +64,23 @@ Authorization: Bearer alleda_…
 
 ### Scopes
 
-| Scope                | Endpoint                    | Gives                                                                        |
-| -------------------- | --------------------------- | ---------------------------------------------------------------------------- |
-| `training_plan:read` | `GET /api/v1/training-plan` | Planned trainings, every date with time, who leads, topic, dropped, holidays |
+| Scope                     | Endpoints                                                    | Gives                                                                        |
+| ------------------------- | ------------------------------------------------------------ | ---------------------------------------------------------------------------- |
+| `training_plan:read`      | `GET /api/v1/training-plan`                                  | Planned trainings, every date with time, who leads, topic, dropped, holidays |
+| `event_participants:read` | `GET /api/v1/events`, `GET /api/v1/events/{id}/participants` | Events with date, place and counts; per event the names of who took part     |
+
+`event_participants:read` gives personal data, so such a key is **for
+servers only**: the database refuses websites for it
+(`api_keys_personal_data_server_only`), and with no website listed every
+request from a browser is refused (`403 origin_not_allowed`, below). The
+key stays on the program's server, like a password.
 
 A new scope needs the scope in the `api_keys.scopes` check, in `API_SCOPES`
-(`src/lib/publicApi.ts`), a `SECURITY DEFINER` function that calls
-`api_key_use(p_key, '<scope>')` first, and its line in
-`supabase/checks/member_data.sql`.
+(`src/lib/publicApi.ts`; in `SERVER_ONLY_SCOPES` and the
+`api_keys_personal_data_server_only` check when it gives personal data), a
+`SECURITY DEFINER` function that calls `api_key_use(p_key, '<scope>')`
+first, its line in `supabase/checks/member_data.sql`, and its endpoints in
+the OpenAPI description (`src/lib/openApi.ts`, below).
 
 ### Trainer names
 
@@ -158,9 +201,10 @@ names.
 
 | Status | Code                 | When                                                         |
 | ------ | -------------------- | ------------------------------------------------------------ |
-| 400    | `invalid_request`    | `from`, `to` or `training` malformed, period too long        |
+| 400    | `invalid_request`    | A parameter or the event id malformed, period too long       |
 | 401    | `unauthorized`       | No key, a malformed or unknown one, or one without the scope |
 | 403    | `origin_not_allowed` | Sent from a website the key does not list                    |
+| 404    | `not_found`          | No event with this id (participants)                         |
 | 503    | `unavailable`        | The database did not answer (retry later)                    |
 
 ### Caching
@@ -169,6 +213,96 @@ names.
 may keep an answer for five minutes; shared caches (CDNs) must not, since
 the answer depends on the key. Changes in the plan show after at most that.
 A website that fetches on every page view should cache on its side as well.
+
+## GET /api/v1/events
+
+Finds an event (its `id`) for the participants below.
+
+```
+GET /api/v1/events?from=2026-06-01&to=2026-07-31
+Authorization: Bearer alleda_…
+```
+
+| Parameter | Default           | Meaning                                             |
+| --------- | ----------------- | --------------------------------------------------- |
+| `from`    | 90 days ago       | First date, `YYYY-MM-DD`                            |
+| `to`      | `from` + 179 days | Last date, inclusive; at most 366 days after `from` |
+
+Every event overlapping the period (a camp that began before `from` too),
+by date and start time:
+
+```json
+{
+  "from": "2026-06-01",
+  "to": "2026-07-31",
+  "timezone": "Europe/Zurich",
+  "events": [
+    {
+      "id": 10000005,
+      "title": "Sommerlager",
+      "date": "2026-07-06",
+      "dateTo": "2026-07-10",
+      "allDay": true,
+      "start": null,
+      "end": null,
+      "location": "Tenero",
+      "section": "Judo",
+      "registered": 24,
+      "attended": 22
+    }
+  ]
+}
+```
+
+- `dateTo`: the last day, the same as `date` for a one-day event.
+- `start` / `end`: local time `HH:MM`, `null` all day or without a time.
+- `registered`: registrations not cancelled; `attended`: members recorded
+  as present (_Anwesenheit_ on the event page).
+- Not in the answer: the description (it can hold anything).
+
+## GET /api/v1/events/{id}/participants
+
+Who took part in an event, e.g. for the participants section of a report.
+
+```
+GET /api/v1/events/10000005/participants?attended=true
+Authorization: Bearer alleda_…
+```
+
+| Parameter  | Default | Meaning                                                    |
+| ---------- | ------- | ---------------------------------------------------------- |
+| `attended` | `false` | `true`: only members recorded as present; else all of them |
+
+```json
+{
+  "event": { "id": 10000005, "title": "Sommerlager", "date": "2026-07-06", "…": "as above" },
+  "participants": [
+    {
+      "memberId": 4711,
+      "firstname": "Anna",
+      "lastname": "Muster",
+      "registered": true,
+      "attended": true,
+      "coach": false
+    }
+  ]
+}
+```
+
+- `participants`: every member registered (not cancelled) or recorded as
+  present, by last and first name. A cancelled registration without
+  attendance is no participant.
+  - `registered`: registered for the event (also _abwesend_: registered,
+    not there)
+  - `attended`: recorded as present (also without registration, e.g.
+    added on the day)
+  - `coach`: present as coach / leader
+  - `memberId`: the member's id in Alleda (the Webling id for members from
+    Webling), to tell two people with the same name apart
+- Not in the answer, whatever the key: e-mail, phone, address, birthday,
+  notes, grades, anything else about members.
+- `404 not_found`: no event with this id. Both endpoints answer
+  `Cache-Control: no-store`.
 
 ## Examples
 
@@ -181,6 +315,21 @@ $response = wp_remote_get(
 );
 $plan = json_decode(wp_remote_retrieve_body($response), true);
 set_transient('alleda_training_plan', $plan, 15 * MINUTE_IN_SECONDS);
+```
+
+Report program (Python), the key from the environment, never in the code:
+
+```python
+import os, requests
+
+r = requests.get(
+    f"https://admin.jacwohlen.ch/api/v1/events/{event_id}/participants",
+    params={"attended": "true"},
+    headers={"Authorization": f"Bearer {os.environ['ALLEDA_API_KEY']}"},
+    timeout=10,
+)
+r.raise_for_status()
+names = [f"{p['firstname']} {p['lastname']}" for p in r.json()["participants"]]
 ```
 
 Browser (the key is public, see above; the website listed on the key):
@@ -211,17 +360,30 @@ for (const s of sessions) {
     origins (for CORS), the planned trainings, the sessions of the period
     without notes, the overlapping holidays and the trainers' names as the
     key says.
+- `supabase/migrations/20261111120000_api_event_participants.sql`: the
+  scope `event_participants:read` (no websites with it),
+  `api_events(p_key, p_from, p_to)` and
+  `api_event_participants(p_key, p_event_id)`, granted to `anon` like the
+  plan; `NULL` for any other key. They read `events`, `event_participants`
+  (registrations) and `event_logs` (attendance) and return members' id and
+  name only.
 - `src/routes/api/v1/training-plan/+server.ts`: reads the key and the
   query, calls the function with the anon key (no session), checks the
   origin, builds the answer with `buildApiTrainingPlan()`
   (`src/lib/publicApi.ts`). The key goes to the database in the RPC's POST
   body, never in a URL; Sentry keeps no `Authorization` header
   (`docs/ERROR_MONITORING.md`).
+- `src/routes/api/v1/events/+server.ts`,
+  `src/routes/api/v1/events/[eventId]/participants/+server.ts`: the same
+  for events, without a preflight (no browser may read them) and without
+  caching; answers built by `buildApiEvents()` /
+  `buildApiEventParticipants()`.
 - `src/lib/server/api.ts`: JSON answers, errors, preflight and the origin
   check for every `/api/v1/` endpoint.
 - `src/routes/dashboard/integrations/ApiKeys.svelte`: the admin section.
 - Checks: `supabase/checks/api_keys.sql` (keys per role, the hash
-  unreadable, the plan per key, refused keys and periods) and the list of
+  unreadable, the plan per key, refused keys and periods, events and
+  participants: servers only, names only) and the list of
   anon functions in `supabase/checks/member_data.sql`.
 
 ### Limits
