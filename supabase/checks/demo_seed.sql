@@ -340,6 +340,44 @@ SELECT pg_temp.ok('a future school holiday and a future closed day',
   AND EXISTS (SELECT 1 FROM public.training_plan_breaks
               WHERE cancels_training AND date_from >= to_char(current_date, 'YYYY-MM-DD')));
 
+-- Substitutes and swaps: an open request for the Trainer and the Vorstand
+-- login that still applies, and a confirmed substitute the plan shows
+SELECT pg_temp.ok('trainer: an open substitute request to answer',
+  EXISTS (SELECT 1 FROM public.training_plan_requests r
+          WHERE r.status = 'open' AND r.kind = 'substitute' AND r.to_member_id = 102
+            AND public.training_plan_request_valid(r)));
+SELECT pg_temp.ok('vorstand: an open swap request to answer',
+  EXISTS (SELECT 1 FROM public.training_plan_requests r
+          WHERE r.status = 'open' AND r.kind = 'swap' AND r.to_member_id = 101
+            AND public.training_plan_request_valid(r)));
+SELECT pg_temp.ok('a confirmed substitute leads its date',
+  EXISTS (SELECT 1 FROM public.training_plan_requests r
+          JOIN public.training_plan_sessions s ON s.training_id = r.training_id
+                                              AND s.date = r.date
+          WHERE r.status = 'accepted' AND s.trainer_id = r.to_member_id
+            AND r.date >= to_char(current_date, 'YYYY-MM-DD')));
+
+CREATE FUNCTION pg_temp.answer_request(p_user uuid, p_to integer) RETURNS text
+LANGUAGE plpgsql AS $$
+DECLARE
+  v text;
+BEGIN
+  PERFORM pg_temp.act_as(p_user);
+  v := public.training_plan_request_answer(
+         (SELECT id FROM public.training_plan_requests
+          WHERE status = 'open' AND to_member_id = p_to ORDER BY id LIMIT 1), true);
+  RESET ROLE;
+  RETURN v;
+END $$;
+
+-- Accepting changes the plan: undone right after, for the checks below
+SAVEPOINT answer_requests;
+SELECT pg_temp.eq('trainer: can accept the substitute request',
+  pg_temp.answer_request('d3e40000-0000-4000-8000-000000000002', 102), 'accepted');
+SELECT pg_temp.eq('vorstand: can accept the swap request',
+  pg_temp.answer_request('d3e40000-0000-4000-8000-000000000001', 101), 'accepted');
+ROLLBACK TO SAVEPOINT answer_requests;
+
 -- ---------------------------------------------------------------------------
 -- Events and trial candidates
 -- ---------------------------------------------------------------------------
