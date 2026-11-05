@@ -1,7 +1,8 @@
 <script lang="ts">
-  import { csvCell } from '#lib/csv.ts';
+  import { buildXlsx, XLSX_MIME } from '#lib/xlsx.ts';
+  import { trainerReportSheet, type TrainerReportLabels } from '#lib/trainerReport.ts';
   import { rpcRows } from '#lib/supabase.ts';
-  import type { TrainerTrackingRecord, TrainerRole } from '#lib/models.ts';
+  import type { TrainerTrackingRecord } from '#lib/models.ts';
   import Fa from 'svelte-fa';
   import { faDownload, faSpinner } from '@fortawesome/free-solid-svg-icons';
   import { _ } from 'svelte-i18n';
@@ -31,19 +32,14 @@
         return;
       }
 
-      // Generate CSV
-      const csv = generateTrainerCSV(data);
-
-      // Download
-      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const period = yearmode === 'ALL' ? $_('page.stats.all') : String(year);
+      const sheet = trainerReportSheet(data, reportLabels(), period);
+      const blob = new Blob([buildXlsx(sheet)], { type: XLSX_MIME });
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
-
-      const filename = `trainer_tracking_${yearmode === 'ALL' ? 'all' : year}.csv`;
       a.setAttribute('href', url);
-      a.setAttribute('download', filename);
+      a.setAttribute('download', `trainer_tracking_${yearmode === 'ALL' ? 'all' : year}.xlsx`);
       a.click();
-
       window.URL.revokeObjectURL(url);
     } catch (err) {
       console.error('Download error:', err);
@@ -53,99 +49,24 @@
     }
   }
 
-  function generateTrainerCSV(data: TrainerTrackingRecord[]): string {
-    // Headers
-    const headers = [
-      'Date',
-      'Training',
-      'Section',
-      'Trainer Lastname',
-      'Trainer Firstname',
-      'Role',
-      'Attendee Count'
-    ];
-
-    // Build CSV rows
-    const rows = data.map((record) => [
-      record.date,
-      record.trainingTitle,
-      record.section,
-      record.lastname,
-      record.firstname,
-      getRoleLabel(record.trainerRole),
-      record.attendeeCount.toString()
-    ]);
-
-    // Add summary section
-    const summaryData = generateSummary(data);
-    rows.push([]); // Empty row
-    rows.push(['Summary Statistics']);
-    rows.push(['Trainer', 'Main Trainer Sessions', 'Assistant Sessions', 'Total Sessions']);
-
-    summaryData.forEach((summary) => {
-      rows.push([
-        `${summary.lastname} ${summary.firstname}`,
-        summary.mainTrainerCount.toString(),
-        summary.assistantCount.toString(),
-        summary.totalCount.toString()
-      ]);
-    });
-
-    // Convert to CSV string with proper escaping
-    const csvContent = [
-      headers.join(','),
-      ...rows.map((row) => row.map((cell) => csvCell(cell)).join(','))
-    ].join('\n');
-
-    return csvContent;
-  }
-
-  function getRoleLabel(role: TrainerRole): string {
-    switch (role) {
-      case 'main_trainer':
-        return 'Main Trainer';
-      case 'assistant':
-        return 'Assistant';
-      default:
-        return 'Attendee';
-    }
-  }
-
-  function generateSummary(data: TrainerTrackingRecord[]) {
-    const trainerMap = new Map<
-      number,
-      {
-        lastname: string;
-        firstname: string;
-        mainTrainerCount: number;
-        assistantCount: number;
-        totalCount: number;
-      }
-    >();
-
-    data.forEach((record) => {
-      if (!trainerMap.has(record.memberId)) {
-        trainerMap.set(record.memberId, {
-          lastname: record.lastname,
-          firstname: record.firstname,
-          mainTrainerCount: 0,
-          assistantCount: 0,
-          totalCount: 0
-        });
-      }
-
-      const trainer = trainerMap.get(record.memberId)!;
-      if (record.trainerRole === 'main_trainer') {
-        trainer.mainTrainerCount++;
-      } else if (record.trainerRole === 'assistant') {
-        trainer.assistantCount++;
-      }
-      trainer.totalCount++;
-    });
-
-    return Array.from(trainerMap.values()).sort(
-      (a, b) => b.totalCount - a.totalCount || a.lastname.localeCompare(b.lastname)
-    );
+  function reportLabels(): TrainerReportLabels {
+    const t = (key: string) => $_(`page.stats.trainerReport.${key}`);
+    return {
+      sheetName: t('sheetName'),
+      title: t('title'),
+      summary: t('summary'),
+      log: t('log'),
+      trainer: t('trainer'),
+      mainTrainer: t('mainTrainer'),
+      assistant: t('assistant'),
+      total: t('total'),
+      date: t('date'),
+      training: t('training'),
+      section: t('section'),
+      mainTrainers: t('mainTrainers'),
+      assistants: t('assistants'),
+      attendees: t('attendees')
+    };
   }
 </script>
 
