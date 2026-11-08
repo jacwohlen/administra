@@ -162,12 +162,37 @@
     filterData();
   }
 
+  /** In the trial right now: removing them reports a no-show (remove_trial_participant()). */
+  function inTrial(id: string): boolean {
+    const status = data.trialMap[id]?.status;
+    return status === 'assigned' || status === 'new';
+  }
+
   async function removeParticipant(detail: { member: MMember }) {
-    await supabaseClient
-      .from('participants')
-      .delete()
-      .eq('trainingId', data.trainingId)
-      .eq('memberId', detail.member.id);
+    if (inTrial(detail.member.id)) {
+      const { data: status, error } = await supabaseClient.rpc('remove_trial_participant', {
+        p_training_id: Number(data.trainingId),
+        p_member_id: Number(detail.member.id)
+      });
+      if (error) {
+        console.error('Removing trial candidate failed:', error);
+        toaster.error({ title: $_('page.trainings.removeParticipantError') });
+        return;
+      }
+      if (status === 'no_show') {
+        toaster.success({
+          title: $_('page.trainings.trialNoShowReported', {
+            values: { name: `${detail.member.firstname} ${detail.member.lastname}` }
+          })
+        });
+      }
+    } else {
+      await supabaseClient
+        .from('participants')
+        .delete()
+        .eq('trainingId', data.trainingId)
+        .eq('memberId', detail.member.id);
+    }
     const index = data.participants.findIndex((p) => p.id === detail.member.id);
     if (index > -1) {
       data.participants.splice(index, 1);
@@ -447,6 +472,8 @@
           grade={data.gradeMap[p.id]?.find((g) => g.section === data.section)}
           medals={data.medalMap[p.id]}
           trialAttendedCount={data.trialCountMap[p.id]}
+          trial={inTrial(p.id) ? data.trialMap[p.id] : undefined}
+          date={data.date}
           onchange={changePresence}
           onremove={removeParticipant}
           readonly={!data.canWrite}

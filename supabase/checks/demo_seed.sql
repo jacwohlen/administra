@@ -388,7 +388,10 @@ SELECT pg_temp.ok('past and upcoming events',
               WHERE date >= to_char(current_date + 70, 'YYYY-MM-DD')));
 SELECT pg_temp.ok('trial candidates in every status',
   (SELECT count(DISTINCT "trialStatus") FROM public.members
-   WHERE "trialStatus" IN ('new', 'waitlist', 'assigned', 'cancelled')) = 4);
+   WHERE "trialStatus" IN ('new', 'waitlist', 'assigned', 'no_show', 'cancelled')) = 5);
+SELECT pg_temp.ok('an assigned trial candidate who confirmed, one who did not',
+  EXISTS (SELECT 1 FROM public.members WHERE "trialStatus" = 'assigned' AND "trialConfirmedAt" IS NOT NULL)
+  AND EXISTS (SELECT 1 FROM public.members WHERE "trialStatus" = 'assigned' AND "trialConfirmedAt" IS NULL));
 SELECT pg_temp.ok('fewer than 20 trial registrations in the last hour (rate limit)',
   (SELECT count(*) FROM public.members
    WHERE "trialRegisteredAt" > now() - interval '1 hour') < 20);

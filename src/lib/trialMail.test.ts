@@ -15,6 +15,8 @@ import {
   buildTrialMailVars,
   type TrialMailVars
 } from './trialMail';
+import de from './i18n/locales/de.json';
+import en from './i18n/locales/en.json';
 
 const vars: TrialMailVars = {
   firstname: 'Noah',
@@ -218,5 +220,20 @@ describe('trialMailSkippedKey', () => {
     expect(trialMailSkippedKey('not_configured')).toBe('page.probetraining.mail.skipped');
     // An older server without a reason
     expect(trialMailSkippedKey(undefined)).toBe('page.probetraining.mail.skipped');
+  });
+});
+
+describe('assignment mail', () => {
+  // The status page's button confirms; the mail names it as the page shows it
+  it('asks to confirm with the status page button', () => {
+    const button = {
+      de: de.page.trialStatus.confirm.button,
+      en: en.page.trialStatus.confirm.button
+    };
+    for (const locale of TRIAL_MAIL_LOCALES) {
+      const { body } = DEFAULT_TRIAL_MAIL_TEMPLATES.assigned[locale];
+      expect(body).toContain(button[locale]);
+      expect(body).toContain('{statusLink}');
+    }
   });
 });

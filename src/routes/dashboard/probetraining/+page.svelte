@@ -26,7 +26,10 @@
     faLink,
     faBoxArchive,
     faBoxOpen,
-    faBed
+    faBed,
+    faUserSlash,
+    faCircleCheck,
+    faCircleQuestion
   } from '@fortawesome/free-solid-svg-icons';
   import { calculateAge } from '#lib/utils.ts';
   import {
@@ -59,6 +62,7 @@
     'new',
     'waitlist',
     'assigned',
+    'no_show',
     'convert',
     'inactive',
     'cancelled',
@@ -75,6 +79,7 @@
     { tab: 'new', icon: faInbox, badge: 'bg-primary-500/15 text-primary-700-300' },
     { tab: 'waitlist', icon: faHourglassHalf, badge: 'bg-warning-500/20 text-warning-800-200' },
     { tab: 'assigned', icon: faCalendarCheck, badge: 'bg-success-500/20 text-success-800-200' },
+    { tab: 'no_show', icon: faUserSlash, badge: 'bg-error-500/15 text-error-700-300' },
     { tab: 'convert', icon: faUserCheck, badge: 'bg-tertiary-500/20 text-tertiary-800-200' }
   ] as const;
 
@@ -95,6 +100,11 @@
       dot: 'bg-success-500',
       chip: 'preset-tonal-success'
     },
+    no_show: {
+      avatar: 'bg-error-500/15 text-error-700-300',
+      dot: 'bg-error-500',
+      chip: 'preset-tonal-error'
+    },
     cancelled: {
       avatar: 'bg-surface-200-800 text-surface-600-400',
       dot: 'bg-surface-400-600',
@@ -113,11 +123,14 @@
   let confirmBulkArchive = $state(false);
   let busyId = $state<number | null>(null);
   let searchTerm = $state('');
-  // Open on the work queue; fall back to everyone when nothing new came in.
+  // Open on the work queue: new registrations, then no-shows to follow up,
+  // else everyone.
   let tab = $state<TrialTab>(
-    untrack(() => data.trialMembers.some((m) => m.trialStatus === 'new' && !m.archivedAt))
-      ? 'new'
-      : 'all'
+    untrack(() => {
+      const open = (s: TrialStatus) =>
+        data.trialMembers.some((m) => m.trialStatus === s && !m.archivedAt);
+      return open('new') ? 'new' : open('no_show') ? 'no_show' : 'all';
+    })
   );
 
   let trainingById = $derived.by(() => {
@@ -371,6 +384,29 @@
   </a>
 </div>
 
+<!-- Whether an assigned candidate confirmed on the status page that they come -->
+{#snippet confirmation(m: TrialMember)}
+  {#if m.trialConfirmedAt}
+    <span
+      class="chip preset-tonal-success text-xs gap-1 flex-shrink-0"
+      title={$_('page.probetraining.confirmation.confirmedOn', {
+        values: { date: dayjs(m.trialConfirmedAt).format('DD.MM.YYYY') }
+      })}
+    >
+      <Fa icon={faCircleCheck} size="xs" />
+      {$_('page.probetraining.confirmation.confirmed')}
+    </span>
+  {:else}
+    <span
+      class="chip preset-tonal-warning text-xs gap-1 flex-shrink-0"
+      title={$_('page.probetraining.confirmation.openHint')}
+    >
+      <Fa icon={faCircleQuestion} size="xs" />
+      {$_('page.probetraining.confirmation.open')}
+    </span>
+  {/if}
+{/snippet}
+
 {#if data.trialMembers.length === 0}
   <section
     class="card border border-surface-200-800 p-8 flex flex-col items-center gap-3 text-center"
@@ -382,7 +418,7 @@
   </section>
 {:else}
   <!-- Work queues -->
-  <div class="grid grid-cols-2 lg:grid-cols-4 gap-2 mb-3" role="tablist">
+  <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 mb-3" role="tablist">
     {#each TILES as tile (tile.tab)}
       {@const active = tab === tile.tab}
       <button
@@ -562,10 +598,13 @@
                     <Fa icon={faBoxArchive} size="xs" />
                     {$_('page.probetraining.archive.chip')}
                   </span>
-                {:else if tab !== 'new' && tab !== 'waitlist' && tab !== 'assigned'}
+                {:else if !['new', 'waitlist', 'assigned', 'no_show'].includes(tab)}
                   <span class="chip text-[10px] py-0 px-1.5 {style.chip}">
                     {statusLabel(m)}
                   </span>
+                {/if}
+                {#if m.trialStatus === 'assigned' && m.attendedCount === 0}
+                  <span class="sm:hidden flex">{@render confirmation(m)}</span>
                 {/if}
                 {#if m.trialSection}
                   <span class="truncate">{m.trialSection}</span>
@@ -614,6 +653,9 @@
                 {#if assigned.length > 1}
                   <span class="text-xs text-surface-600-400">+{assigned.length - 1}</span>
                 {/if}
+                {#if m.trialStatus === 'assigned' && m.attendedCount === 0}
+                  {@render confirmation(m)}
+                {/if}
               {/if}
             </span>
 
@@ -642,6 +684,14 @@
 
           {#if isOpen}
             <div class="px-3 pb-3 sm:pl-16 space-y-3 text-sm">
+              {#if m.trialStatus === 'no_show'}
+                <p
+                  class="flex items-center gap-2 rounded-md bg-error-500/10 px-3 py-2 text-xs text-error-800-200"
+                >
+                  <Fa icon={faUserSlash} size="xs" />
+                  {$_('page.probetraining.noShowHint')}
+                </p>
+              {/if}
               {#if showProgress}
                 <p
                   class="flex items-center gap-2 rounded-md bg-warning-500/10 px-3 py-2 text-xs text-warning-800-200"
@@ -750,6 +800,19 @@
                         {$_('page.probetraining.attendedCount', {
                           values: { count: m.attendedCount }
                         })}
+                      </span>
+                    </li>
+                  {/if}
+                  {#if m.trialConfirmedAt}
+                    <li class="pl-4 relative">
+                      <span
+                        class="absolute -left-[7px] top-1 size-3 rounded-full bg-success-500 ring-2 ring-surface-50-950"
+                      ></span>
+                      <span class="block font-medium"
+                        >{$_('page.probetraining.timeline.confirmed')}</span
+                      >
+                      <span class="text-xs text-surface-600-400">
+                        {dayjs(m.trialConfirmedAt).format('DD.MM.YYYY HH:mm')}
                       </span>
                     </li>
                   {/if}
@@ -949,7 +1012,7 @@
                       <span>{$_('page.probetraining.mail.write')}</span>
                     </button>
                   {/if}
-                  {#if m.trialStatus === 'new' && data.canWrite}
+                  {#if (m.trialStatus === 'new' || m.trialStatus === 'no_show') && data.canWrite}
                     <button
                       class="btn btn-sm preset-tonal-warning"
                       disabled={busyId === m.id}

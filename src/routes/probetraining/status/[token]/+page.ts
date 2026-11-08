@@ -7,12 +7,14 @@ import { setAppLocale } from '#lib/i18n/appLocale.ts';
 
 export interface TrialStatusView {
   firstname: string;
-  status: 'new' | 'waitlist' | 'assigned' | 'cancelled' | 'member';
+  status: 'new' | 'waitlist' | 'assigned' | 'no_show' | 'cancelled' | 'member';
   selfCancelled: boolean;
   section: string | null;
   locale: 'de' | 'en' | null;
   registeredAt: string | null;
   statusChangedAt: string | null;
+  /** When the candidate confirmed they come (confirm_trial()); null before */
+  confirmedAt?: string | null;
   trainings: {
     title: string;
     weekday: string;

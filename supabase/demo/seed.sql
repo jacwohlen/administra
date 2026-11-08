@@ -1516,7 +1516,8 @@ FROM (VALUES
    'Ist sehr bewegungsfreudig und hat schon etwas Erfahrung vom Schulsport.', interval '9 days'),
   (386, 'Matilda', 'Schürch', 13, 'familie.schuerch@example.com', 'Judo', NULL,
    interval '30 days'),
-  (387, 'Cedric', 'Vogt', 36, 'cedric.vogt@example.com', 'Judo', NULL, interval '150 days')
+  (387, 'Cedric', 'Vogt', 36, 'cedric.vogt@example.com', 'Judo', NULL, interval '150 days'),
+  (388, 'Elin', 'Gashi', 10, 'familie.gashi@example.com', 'Judo', NULL, interval '16 days')
 ) AS v(id, firstname, lastname, age, email, section, notes, ago);
 
 UPDATE public.members SET "trialStatus" = 'waitlist' WHERE id IN (382, 387);
@@ -1562,6 +1563,9 @@ FROM (SELECT d FROM demo_sessions WHERE training_id = 8 ORDER BY d DESC LIMIT 4)
 ON CONFLICT DO NOTHING;
 
 UPDATE public.members SET "trialStatus" = 'cancelled' WHERE id = 386;
+-- Elin was assigned but never came; the trainer removed her from the
+-- check-in list (remove_trial_participant()), so she waits for a follow-up
+UPDATE public.members SET "trialStatus" = 'no_show' WHERE id = 388;
 UPDATE public.members SET "trialSelfCancelled" = true WHERE id = 386;
 
 UPDATE public.members m
@@ -1569,11 +1573,15 @@ SET "trialStatusChangedAt" = m."trialRegisteredAt" + v.after
 FROM (VALUES
   (380, interval '0'), (381, interval '0'), (382, interval '2 days'),
   (383, interval '3 days'), (384, interval '3 days'), (385, interval '2 days'),
-  (386, interval '9 days'), (387, interval '3 days')
+  (386, interval '9 days'), (387, interval '3 days'), (388, interval '12 days')
 ) AS v(id, after)
 WHERE m.id = v.id;
 
 UPDATE public.members SET "archivedAt" = now() - interval '60 days' WHERE id = 387;
+
+-- Sven confirmed on his status page that he comes; Luan has not answered
+UPDATE public.members SET "trialConfirmedAt" = "trialStatusChangedAt" + interval '5 hours'
+WHERE id = 383;
 
 -- The mails the app sent (no SMTP in the demo, so new ones end as 'skipped')
 INSERT INTO public.trial_emails (member_id, kind, to_email, subject, body, status, created_at,
