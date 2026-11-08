@@ -42,6 +42,22 @@ access: the public trial form lets anyone create such a record with any
 email. Once a trainer takes them on (removes the label), access follows.
 While a member is in Webling, the email can only be changed there.
 
+### Mistyped addresses
+
+Supabase creates the account with the first code request, before anyone
+entered a code. So the login page checks the address first: the syntax and
+common typos in the browser (`src/lib/emailAddress.ts`: `name@gmail`,
+`bluewin.ch.ch`, "Meintest du …@gmail.com?" for `gmial.com`), then whether
+the domain receives mail (`/api/email-check`, DNS in
+`src/lib/server/emailDomain.ts`; a failed lookup never blocks). The trial
+form (`/probetraining`) uses the same checks, and its server refuses such an
+address before `register_trial()`.
+
+An account created anyway shows _E-Mail nie bestätigt_ on the users page.
+Admins delete waiting or disabled accounts there (`delete_user_account()`,
+the auth user and with it its profile); an approved account is disabled
+first, and nobody deletes their own.
+
 ### Losing and regaining access
 
 A member account keeps access only while one of its member records is an

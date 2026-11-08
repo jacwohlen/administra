@@ -54,7 +54,8 @@
       "pendingCount": "{count} Benutzer warten auf Freigabe",
       "error": {
         "lastAdmin": "Der letzte Administrator kann nicht entfernt werden",
-        "memberTaken": "Dieses Mitglied ist bereits mit einem anderen Benutzer verknüpft"
+        "memberTaken": "Dieses Mitglied ist bereits mit einem anderen Benutzer verknüpft",
+        "approved": "Ein freigegebenes Konto zuerst sperren, dann löschen."
       },
       "status": {
         "pending": "Ausstehend",
@@ -75,14 +76,16 @@
       "action": {
         "approve": "Freigeben",
         "disable": "Deaktivieren",
-        "reEnable": "Wieder aktivieren"
+        "reEnable": "Wieder aktivieren",
+        "delete": "Löschen"
       },
       "toast": {
         "approved": "Benutzer freigegeben",
         "disabled": "Benutzer deaktiviert",
         "roleChanged": "Rolle aktualisiert",
         "memberLinked": "Mitgliedsverknüpfung aktualisiert",
-        "examRoleChanged": "Prüfungsrolle aktualisiert"
+        "examRoleChanged": "Prüfungsrolle aktualisiert",
+        "deleted": "Konto gelöscht"
       },
       "disableConfirm": {
         "title": "Benutzer deaktivieren?",
@@ -94,7 +97,13 @@
         "title": "Mitglieder-Konten ohne Zugang",
         "description": "Diese Konten sind als Mitglied freigegeben, aber keiner ihrer Mitglieder-Einträge ist eine aktive oder passive Mitgliedschaft (z. B. Nicht-Mitglieder, Ausgetretene, Probetraining oder archiviert). Sie sehen nichts und erfahren beim Anmelden, warum. Sobald ein Eintrag wieder aktiv oder passiv ist (Gruppe in Webling), haben sie automatisch wieder Zugang. Trainer und Vorstand bekommen ihren Zugang über die Rolle.",
         "noMember": "kein Mitglied-Eintrag"
-      }
+      },
+      "deleteConfirm": {
+        "title": "Konto löschen?",
+        "message": "Das Konto von {name} wird endgültig gelöscht. Meldet sich die Person wieder an, wartet sie erneut auf Freigabe."
+      },
+      "unconfirmed": "E-Mail nie bestätigt",
+      "unconfirmedHint": "Mit dieser Adresse wurde nie ein Code eingegeben, vielleicht ist sie vertippt."
     },
     "settings": {
       "title": "Einstellungen",
@@ -1766,6 +1775,14 @@
     },
     "ParticipantFrequency": {
       "sessions": "Trainings besucht"
+    },
+    "emailCheck": {
+      "invalid": "Diese E-Mail-Adresse ist nicht gültig. Bitte prüfe sie.",
+      "unreachable": "An diese E-Mail-Adresse kann keine E-Mail zugestellt werden. Bitte prüfe sie.",
+      "suggestion": "Meintest du {email}?",
+      "useSuggestion": "Ja, übernehmen",
+      "keep": "Nein, stimmt so",
+      "checkAbove": "Bitte prüfe deine E-Mail-Adresse beim Feld oben."
     }
   },
   "button": {

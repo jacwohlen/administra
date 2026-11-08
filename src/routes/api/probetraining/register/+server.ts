@@ -1,4 +1,6 @@
 import { error, type RequestHandler } from '@sveltejs/kit';
+import { emailDomain } from '#lib/emailAddress.ts';
+import { domainReceivesMail } from '#lib/server/emailDomain.ts';
 import { sendMail } from '#lib/server/mailer.ts';
 import { loadMailSettings } from '#lib/server/trialMailContext.ts';
 import {
@@ -79,6 +81,14 @@ export const POST: RequestHandler = async ({ request, locals, url }) => {
     !registration.p_email
   ) {
     error(400, 'Missing required fields');
+  }
+  // Checked before the database so a typo never creates a candidate nobody can reach.
+  const domain = emailDomain(registration.p_email);
+  if (!domain || !(await domainReceivesMail(domain))) {
+    return Response.json(
+      { message: 'Invalid email address', code: 'invalid_email' },
+      { status: 400 }
+    );
   }
 
   const {
