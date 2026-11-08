@@ -84,10 +84,28 @@ describe('users admin load', () => {
 
     const result = await load({ parent: parentWith(adminProfile) } as never);
 
-    expect(result).toEqual({ profiles, members, accessReport: [] });
+    expect(result).toEqual({ profiles, members, accessReport: [], unconfirmedUserIds: [] });
     expect(mockSupabase.from).toHaveBeenCalledWith('user_profiles');
     expect(mockSupabase.from).toHaveBeenCalledWith('members');
     expect(mockSupabase.rpc).toHaveBeenCalledWith('member_access_report');
+    expect(mockSupabase.rpc).toHaveBeenCalledWith('unconfirmed_user_ids');
+  });
+
+  it('marks the accounts whose e-mail was never confirmed, and skips the marker on an error', async () => {
+    mockSupabase.from.mockReturnValue(createChainFromResult({ data: [], error: null }));
+    mockSupabase.rpc
+      .mockReturnValueOnce(createChainFromResult({ data: [], error: null }))
+      .mockReturnValueOnce(createChainFromResult({ data: ['u7'], error: null }));
+    expect(await load({ parent: parentWith(adminProfile) } as never)).toMatchObject({
+      unconfirmedUserIds: ['u7']
+    });
+
+    mockSupabase.rpc
+      .mockReturnValueOnce(createChainFromResult({ data: [], error: null }))
+      .mockReturnValueOnce(createChainFromResult({ data: null, error: { message: 'missing' } }));
+    expect(await load({ parent: parentWith(adminProfile) } as never)).toMatchObject({
+      unconfirmedUserIds: []
+    });
   });
 
   it('returns the accounts that would lose access', async () => {
@@ -136,6 +154,11 @@ describe('users admin load', () => {
       .mockReturnValueOnce(createChainFromResult({ data: [], error: null }));
 
     const result = await load({ parent: parentWith(adminProfile) } as never);
-    expect(result).toEqual({ profiles: [], members: [], accessReport: [] });
+    expect(result).toEqual({
+      profiles: [],
+      members: [],
+      accessReport: [],
+      unconfirmedUserIds: []
+    });
   });
 });

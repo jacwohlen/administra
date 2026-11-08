@@ -54,7 +54,8 @@
       "pendingCount": "{count} users waiting for approval",
       "error": {
         "lastAdmin": "The last administrator cannot be removed",
-        "memberTaken": "This member is already linked to another user"
+        "memberTaken": "This member is already linked to another user",
+        "approved": "Disable an approved account first, then delete it."
       },
       "status": {
         "pending": "Pending",
@@ -75,14 +76,16 @@
       "action": {
         "approve": "Approve",
         "disable": "Disable",
-        "reEnable": "Re-enable"
+        "reEnable": "Re-enable",
+        "delete": "Delete"
       },
       "toast": {
         "approved": "User approved",
         "disabled": "User disabled",
         "roleChanged": "Role updated",
         "memberLinked": "Member link updated",
-        "examRoleChanged": "Exam role updated"
+        "examRoleChanged": "Exam role updated",
+        "deleted": "Account deleted"
       },
       "disableConfirm": {
         "title": "Disable user?",
@@ -94,7 +97,13 @@
         "title": "Member accounts without access",
         "description": "These accounts are approved as members, but none of their member records is an active or passive membership (e.g. non-members, people who left, trial candidates or archived records). They see nothing and are told why when they sign in. As soon as a record is active or passive again (group in Webling), they get access back automatically. Trainers and board members get their access from their role.",
         "noMember": "no member record"
-      }
+      },
+      "deleteConfirm": {
+        "title": "Delete account?",
+        "message": "The account of {name} is deleted for good. If the person signs in again, they wait for approval again."
+      },
+      "unconfirmed": "E-mail never confirmed",
+      "unconfirmedHint": "No code was ever entered for this address; it may be mistyped."
     },
     "settings": {
       "title": "Settings",
@@ -1766,6 +1775,14 @@
     },
     "ParticipantFrequency": {
       "sessions": "sessions attended"
+    },
+    "emailCheck": {
+      "invalid": "This e-mail address is not valid. Please check it.",
+      "unreachable": "No e-mail can be delivered to this address. Please check it.",
+      "suggestion": "Did you mean {email}?",
+      "useSuggestion": "Yes, use it",
+      "keep": "No, it is correct",
+      "checkAbove": "Please check your e-mail address in the field above."
     }
   },
   "button": {

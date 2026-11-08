@@ -402,6 +402,8 @@ INSERT INTO api_guard VALUES
   ('get_recent_achievements',    'is_staff\('),
   ('calendar_feed_token',        'is_staff\('),
   ('member_access_report',       'is_admin\('),
+  ('unconfirmed_user_ids',       'is_admin\('),
+  ('delete_user_account',        'is_admin\('),
   ('merge_members',              'is_admin\('),
   ('merge_members_preview',      'is_admin\('),
   ('refresh_all_member_badges',  'is_writer\('),

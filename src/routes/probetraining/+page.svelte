@@ -5,6 +5,9 @@
   import { clubConfig } from '#lib/clubConfig.ts';
   import ClubLogo from '#lib/components/ClubLogo.svelte';
   import { setPublicLocale } from '#lib/publicLocale.ts';
+  import { isValidEmail } from '#lib/emailAddress.ts';
+  import { checkEmail } from '#lib/emailCheck.ts';
+  import EmailSuggestion from '#lib/components/EmailSuggestion.svelte';
 
   let firstname = $state('');
   let lastname = $state('');
@@ -21,6 +24,10 @@
   /** Link to the candidate's status page, returned by the server. */
   let statusUrl = $state<string | null>(null);
   let error = $state('');
+  // A likely typo in the address ("Meintest du …?"), and the address the
+  // person kept anyway after being asked once
+  let emailSuggestion = $state<string | null>(null);
+  let keptEmail = $state<string | null>(null);
 
   const sections = clubConfig.sections;
   // "Judo und Aikido" / "Judo and Aikido" for the search and share snippet
@@ -45,6 +52,17 @@
       error = $_('page.trialRegistration.validation.required');
       return;
     }
+    // The address is the only way to reach the candidate: catch typos here,
+    // the server checks the syntax and the domain again.
+    email = email.trim();
+    const check = checkEmail(email, keptEmail);
+    emailSuggestion = check.result === 'ok' ? null : check.suggestion;
+    if (check.result !== 'ok') {
+      error = emailSuggestion
+        ? $_('components.emailCheck.checkAbove')
+        : $_('components.emailCheck.invalid');
+      return;
+    }
 
     submitting = true;
     try {
@@ -66,12 +84,15 @@
       });
 
       if (!response.ok) {
+        const { code } = (await response.json().catch(() => ({}))) as { code?: string };
         error =
-          response.status === 400
-            ? $_('page.trialRegistration.validation.invalid')
-            : response.status === 429
-              ? $_('page.trialRegistration.tooManyRequests')
-              : $_('page.trialRegistration.submitError');
+          code === 'invalid_email'
+            ? $_('components.emailCheck.unreachable')
+            : response.status === 400
+              ? $_('page.trialRegistration.validation.invalid')
+              : response.status === 429
+                ? $_('page.trialRegistration.tooManyRequests')
+                : $_('page.trialRegistration.submitError');
         return;
       }
 
@@ -224,11 +245,29 @@
             required
             autocomplete="email"
             placeholder="name@example.com"
+            oninput={() => (emailSuggestion = null)}
           />
           <span class="text-xs text-surface-600-400">
             {$_('page.trialRegistration.emailHint')}
           </span>
         </label>
+        {#if emailSuggestion}
+          <EmailSuggestion
+            suggestion={emailSuggestion}
+            onaccept={() => {
+              email = emailSuggestion!;
+              emailSuggestion = null;
+              error = '';
+            }}
+            onkeep={isValidEmail(email)
+              ? () => {
+                  keptEmail = email.trim();
+                  emailSuggestion = null;
+                  error = '';
+                }
+              : undefined}
+          />
+        {/if}
 
         <label class="label">
           <span>{$_('page.trialRegistration.mobile')}</span>
