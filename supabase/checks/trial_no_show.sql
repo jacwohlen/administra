@@ -60,8 +60,8 @@ SELECT pg_temp.sign_up('00000000-0000-0000-0000-00000000a701', 'trainer.noshow@e
 SELECT pg_temp.sign_up('00000000-0000-0000-0000-00000000a702', 'viewer.noshow@example.invalid', 'viewer');
 
 INSERT INTO public.trainings (id, title, weekday, "dateFrom", "dateTo", section)
-VALUES (970001, 'Check Kinder', 'Friday', '17:30', '18:30', 'Judo'),
-       (970002, 'Check Jugend', 'Tuesday', '18:30', '19:45', 'Judo');
+VALUES (9701, 'Check Kinder', 'Friday', '17:30', '18:30', 'Judo'),
+       (9702, 'Check Jugend', 'Tuesday', '18:30', '19:45', 'Judo');
 
 INSERT INTO public.members (id, firstname, lastname, labels, "trialRegisteredAt")
 VALUES (970101, 'Nora', 'Noshow', '["probetraining"]', now()),
@@ -71,7 +71,7 @@ INSERT INTO public.members (id, firstname, lastname, labels)
 VALUES (970104, 'Max', 'Member', '[]');
 
 INSERT INTO public.participants ("trainingId", "memberId")
-VALUES (970001, 970101), (970001, 970102), (970002, 970102), (970001, 970103), (970001, 970104);
+VALUES (9701, 970101), (9701, 970102), (9702, 970102), (9701, 970103), (9701, 970104);
 
 SELECT pg_temp.eq('assigning makes a candidate assigned', pg_temp.status(970101), 'assigned');
 
@@ -82,7 +82,7 @@ SAVEPOINT r;
 DO $$
 BEGIN
   PERFORM pg_temp.act_as('00000000-0000-0000-0000-00000000a702');
-  PERFORM public.remove_trial_participant(970001, 970101);
+  PERFORM public.remove_trial_participant(9701, 970101);
   RESET ROLE;
   PERFORM pg_temp.eq('a viewer removes nothing',
     (SELECT count(*)::text FROM public.participants WHERE "memberId" = 970101), '1');
@@ -90,18 +90,18 @@ BEGIN
 
   PERFORM pg_temp.act_as('00000000-0000-0000-0000-00000000a701');
   PERFORM pg_temp.eq('last training removed: no show',
-    public.remove_trial_participant(970001, 970101), 'no_show');
+    public.remove_trial_participant(9701, 970101), 'no_show');
   PERFORM pg_temp.eq('another training left: still assigned',
-    public.remove_trial_participant(970001, 970102), 'assigned');
+    public.remove_trial_participant(9701, 970102), 'assigned');
   PERFORM pg_temp.ok('a member has no trial status',
-    public.remove_trial_participant(970001, 970104) IS NULL);
+    public.remove_trial_participant(9701, 970104) IS NULL);
   RESET ROLE;
   PERFORM pg_temp.eq('the member is out of the training',
     (SELECT count(*)::text FROM public.participants WHERE "memberId" = 970104), '0');
   PERFORM pg_temp.eq('the no-show is stored', pg_temp.status(970101), 'no_show');
 
   -- Assigning again takes the candidate out of no show
-  INSERT INTO public.participants ("trainingId", "memberId") VALUES (970002, 970101);
+  INSERT INTO public.participants ("trainingId", "memberId") VALUES (9702, 970101);
   PERFORM pg_temp.eq('assigned again', pg_temp.status(970101), 'assigned');
 END $$;
 ROLLBACK TO SAVEPOINT r;
@@ -113,7 +113,7 @@ SAVEPOINT u;
 DO $$
 BEGIN
   PERFORM pg_temp.act_as('00000000-0000-0000-0000-00000000a701');
-  DELETE FROM public.participants WHERE "trainingId" = 970001 AND "memberId" = 970103;
+  DELETE FROM public.participants WHERE "trainingId" = 9701 AND "memberId" = 970103;
   RESET ROLE;
   PERFORM pg_temp.eq('unassigned: new again', pg_temp.status(970103), 'new');
 END $$;
@@ -145,7 +145,7 @@ BEGIN
   PERFORM pg_temp.eq('confirming twice keeps the first time',
     (SELECT "trialConfirmedAt"::date::text FROM public.members WHERE id = 970101), '2026-01-01');
 
-  INSERT INTO public.participants ("trainingId", "memberId") VALUES (970002, 970101);
+  INSERT INTO public.participants ("trainingId", "memberId") VALUES (9702, 970101);
   PERFORM pg_temp.ok('a second training keeps the confirmation',
     (SELECT "trialConfirmedAt" IS NOT NULL FROM public.members WHERE id = 970101));
 
