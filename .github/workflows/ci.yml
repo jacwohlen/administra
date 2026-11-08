@@ -214,6 +214,13 @@ jobs:
           psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres"
           -v ON_ERROR_STOP=1 -q -f supabase/checks/event_dates.sql
 
+      # Trial candidates: removed from a check-in list they are a no-show,
+      # unassigned they are new again; confirming through the status link
+      - name: Check trial no-shows and confirmations
+        run: >-
+          psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres"
+          -v ON_ERROR_STOP=1 -q -f supabase/checks/trial_no_show.sql
+
       # The training plan's calendar feeds: tokens only for staff, renewal,
       # nobody reads them through the API, the feed's data by token and
       # nothing for an account no longer staff

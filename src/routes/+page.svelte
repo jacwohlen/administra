@@ -17,6 +17,9 @@
   import { page } from '$app/state';
   import { PUBLIC_MODE } from '$app/env/public';
   import { onDestroy, tick } from 'svelte';
+  import { checkEmail, emailReachable } from '#lib/emailCheck.ts';
+  import { isValidEmail } from '#lib/emailAddress.ts';
+  import EmailSuggestion from '#lib/components/EmailSuggestion.svelte';
   import type { ActionData, PageData } from './$types';
 
   async function login() {
@@ -58,6 +61,10 @@
   let code = $state('');
   let busy = $state(false);
   let otpError = $state('');
+  // A likely typo in the address ("Meintest du …?"), and the address the
+  // person kept anyway after being asked once
+  let emailSuggestion = $state<string | null>(null);
+  let keptEmail = $state<string | null>(null);
   let resendIn = $state(0);
   let codeInput: HTMLInputElement | undefined = $state();
   let resendTimer: ReturnType<typeof setInterval> | undefined;
@@ -83,7 +90,20 @@
     otpError = '';
     email = email.trim();
     if (!email) return;
+    // Supabase creates the account with the first code request, so a
+    // mistyped address would wait on the users page for ever.
+    const check = checkEmail(email, keptEmail);
+    emailSuggestion = check.result === 'ok' ? null : check.suggestion;
+    if (check.result === 'invalid' && !check.suggestion) {
+      otpError = $_('components.emailCheck.invalid');
+    }
+    if (check.result !== 'ok') return;
     busy = true;
+    if (!(await emailReachable(email))) {
+      busy = false;
+      otpError = $_('components.emailCheck.unreachable');
+      return;
+    }
     const { error: sendError } = await supabaseClient.auth.signInWithOtp({
       email,
       options: { emailRedirectTo: window.location.origin }
@@ -268,9 +288,27 @@
                   inputmode="email"
                   placeholder={$_('page.login.emailPlaceholder')}
                   bind:value={email}
+                  oninput={() => (emailSuggestion = null)}
                   required
                 />
               </label>
+              {#if emailSuggestion}
+                <EmailSuggestion
+                  suggestion={emailSuggestion}
+                  onaccept={() => {
+                    email = emailSuggestion!;
+                    emailSuggestion = null;
+                    sendCode();
+                  }}
+                  onkeep={isValidEmail(email)
+                    ? () => {
+                        keptEmail = email.trim();
+                        emailSuggestion = null;
+                        sendCode();
+                      }
+                    : undefined}
+                />
+              {/if}
               <button class="btn preset-filled-primary-500 w-full" type="submit" disabled={busy}>
                 {#if busy}
                   <Fa icon={faSpinner} spin />

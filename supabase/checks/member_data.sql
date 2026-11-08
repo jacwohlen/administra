@@ -356,7 +356,7 @@ SELECT pg_temp.eq('API functions bypassing RLS that anon may call',
    WHERE p.pronamespace = 'public'::regnamespace AND p.prosecdef
      AND p.prorettype <> 'trigger'::regtype
      AND has_function_privilege('anon', p.oid, 'EXECUTE')),
-  'api_event_participants,api_events,api_training_plan,calendar_feed,cancel_trial,complete_trial_email,get_trial_status,is_admin,is_approved_user,is_writer,register_trial');
+  'api_event_participants,api_events,api_training_plan,calendar_feed,cancel_trial,complete_trial_email,confirm_trial,get_trial_status,is_admin,is_approved_user,is_writer,register_trial');
 
 -- A trigger function is never an RPC (Postgres refuses to call it outside a
 -- trigger), but EXECUTE for the API roles shows up as advisor noise
@@ -402,6 +402,8 @@ INSERT INTO api_guard VALUES
   ('get_recent_achievements',    'is_staff\('),
   ('calendar_feed_token',        'is_staff\('),
   ('member_access_report',       'is_admin\('),
+  ('unconfirmed_user_ids',       'is_admin\('),
+  ('delete_user_account',        'is_admin\('),
   ('merge_members',              'is_admin\('),
   ('merge_members_preview',      'is_admin\('),
   ('refresh_all_member_badges',  'is_writer\('),
@@ -432,6 +434,7 @@ INSERT INTO api_guard VALUES
   -- public trial form: a secret token, or rate limits for new candidates
   ('get_trial_status',           'p_token'),
   ('cancel_trial',               'p_token'),
+  ('confirm_trial',              'p_token'),
   ('complete_trial_email',       'p_token'),
   ('register_trial',             'TRIAL_MAX_PER_EMAIL'),
   -- calendar feeds: the secret token of an approved staff account

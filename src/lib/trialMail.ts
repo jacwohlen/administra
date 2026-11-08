@@ -116,7 +116,7 @@ Wir freuen uns, dich im Probetraining begrüssen zu dürfen! Du kannst in folgen
 
 Bitte komm etwa 10 Minuten vor Beginn, damit wir dich in Ruhe empfangen können. Für die ersten Male reichen bequeme Sportkleidung und etwas zu trinken.
 
-Die Angaben zu deinem Training findest du jederzeit auch hier:
+Bitte bestätige uns kurz, dass du kommst: Öffne den folgenden Link und tippe auf «Ja, ich komme». So weiss das Trainerteam, dass es mit dir rechnen kann. Dort findest du auch jederzeit die Angaben zu deinem Training:
 {statusLink}
 
 Bei Fragen erreichst du uns unter {contactEmail}.
@@ -134,7 +134,7 @@ We look forward to welcoming you to a trial session! You are welcome to join the
 
 Please arrive about 10 minutes early so we can welcome you properly. For the first few times, comfortable sportswear and something to drink are all you need.
 
-You can find the details of your training at any time here:
+Please let us know that you are coming: open the following link and tap "Yes, I'm coming". That way the trainers know to expect you. You will also find the details of your training there at any time:
 {statusLink}
 
 If you have any questions, reach us at {contactEmail}.

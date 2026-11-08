@@ -235,8 +235,11 @@ export interface TrainerContact {
 /** A trial candidate's training, with the first session picked when it was assigned. */
 export type AssignedTraining = Training & { startDate: string | null };
 
-/** Where a trial candidate stands in the club's intake process (members."trialStatus"). */
-export type TrialStatus = 'new' | 'waitlist' | 'assigned' | 'cancelled';
+/**
+ * Where a trial candidate stands in the club's intake process (members."trialStatus").
+ * 'no_show': removed from a training's check-in list without another training left.
+ */
+export type TrialStatus = 'new' | 'waitlist' | 'assigned' | 'no_show' | 'cancelled';
 
 export interface TrialMember {
   id: number;
@@ -258,6 +261,8 @@ export interface TrialMember {
   trialToken?: string | null;
   /** Cancelled through the status page rather than by staff. */
   trialSelfCancelled?: boolean;
+  /** When the candidate confirmed on the status page that they come; cleared by a status change. */
+  trialConfirmedAt?: string | null;
   /** Date (YYYY-MM-DD) of the last attended session, null when never attended. */
   lastAttendedAt?: string | null;
   /** Set when the candidate was archived: hidden from member lists and searches. */

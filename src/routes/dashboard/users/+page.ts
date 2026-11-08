@@ -9,7 +9,7 @@ export const load: PageLoad = async ({ parent }) => {
     redirect(303, '/dashboard');
   }
 
-  const [profilesRes, membersRes, reportRes] = await Promise.all([
+  const [profilesRes, membersRes, reportRes, unconfirmedRes] = await Promise.all([
     supabaseClient
       .from('user_profiles')
       .select('*')
@@ -21,7 +21,10 @@ export const load: PageLoad = async ({ parent }) => {
       .is('archivedAt', null)
       .order('lastname'),
     // Member accounts none of whose member records counts (no access, or none once approved)
-    supabaseClient.rpc('member_access_report')
+    supabaseClient.rpc('member_access_report'),
+    // Accounts that asked for a sign-in code but never entered one: often a
+    // mistyped address, which the admin can delete
+    supabaseClient.rpc('unconfirmed_user_ids')
   ]);
 
   if (profilesRes.error) {
@@ -40,6 +43,8 @@ export const load: PageLoad = async ({ parent }) => {
       Member,
       'id' | 'firstname' | 'lastname' | 'membership_status'
     >[],
-    accessReport: (reportRes.data ?? []) as MemberAccessReportRow[]
+    accessReport: (reportRes.data ?? []) as MemberAccessReportRow[],
+    // Only a marker on the page: an error leaves it out instead of failing the page
+    unconfirmedUserIds: unconfirmedRes.error ? [] : ((unconfirmedRes.data ?? []) as string[])
   };
 };

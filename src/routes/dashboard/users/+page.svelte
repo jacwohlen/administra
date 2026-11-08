@@ -2,7 +2,7 @@
   import type { PageData } from './$types';
   import type { ExamRole, UserProfile, UserRole, UserStatus } from '#lib/models.ts';
   import Fa from 'svelte-fa';
-  import { faCheck, faBan, faRotateLeft } from '@fortawesome/free-solid-svg-icons';
+  import { faCheck, faBan, faRotateLeft, faTrash } from '@fortawesome/free-solid-svg-icons';
   import { _ } from 'svelte-i18n';
   import { supabaseClient } from '#lib/supabase.ts';
   import { toaster } from '#lib/toast.ts';
@@ -13,6 +13,8 @@
   let busyId = $state<string | null>(null);
   let searchTerm = $state('');
   let confirmDisable = $state<UserProfile | null>(null);
+  let confirmDelete = $state<UserProfile | null>(null);
+  let unconfirmed = $derived(new Set(data.unconfirmedUserIds));
 
   const STATUS_ORDER: UserStatus[] = ['pending', 'approved', 'disabled'];
 
@@ -59,6 +61,7 @@
     const msg = (e as Error)?.message ?? String(e);
     if (msg.includes('LAST_ADMIN')) return $_('page.users.error.lastAdmin');
     if (msg.includes('idx_user_profiles_member_id')) return $_('page.users.error.memberTaken');
+    if (msg.includes('ACCOUNT_APPROVED')) return $_('page.users.error.approved');
     return msg;
   }
 
@@ -89,6 +92,22 @@
       },
       'page.users.toast.approved'
     );
+  }
+
+  // Waiting and disabled accounts only (delete_user_account), such as one
+  // created by a code request to a mistyped address
+  async function deleteAccount(userId: string) {
+    busyId = userId;
+    try {
+      const { error } = await supabaseClient.rpc('delete_user_account', { p_user_id: userId });
+      if (error) throw error;
+      toaster.success({ title: $_('page.users.toast.deleted') });
+    } catch (e) {
+      toaster.error({ title: errorMessage(e) });
+    } finally {
+      busyId = null;
+      await refreshAll();
+    }
   }
 
   function disable(userId: string) {
@@ -155,6 +174,14 @@
               &middot; {memberName(p.member_id)}
             {/if}
           </dd>
+          {#if unconfirmed.has(p.user_id)}
+            <dd class="mt-1">
+              <span
+                class="chip preset-tonal-warning text-xs"
+                title={$_('page.users.unconfirmedHint')}>{$_('page.users.unconfirmed')}</span
+              >
+            </dd>
+          {/if}
           {#if reportByUser.get(p.user_id)}
             {@const report = reportByUser.get(p.user_id)!}
             <dd class="flex flex-wrap items-center gap-1 mt-1">
@@ -220,6 +247,17 @@
             </select>
           </dd>
         </span>
+        {#if p.status !== 'approved' && !isSelf(p.user_id)}
+          <button
+            class="btn preset-tonal-error flex-shrink-0"
+            disabled={busyId === p.user_id}
+            onclick={() => (confirmDelete = p)}
+            title={$_('page.users.action.delete')}
+            aria-label={$_('page.users.action.delete')}
+          >
+            <Fa icon={faTrash} />
+          </button>
+        {/if}
         {#if p.status === 'pending'}
           <button
             class="btn preset-filled-primary-500 flex-shrink-0"
@@ -299,6 +337,22 @@
       const userId = confirmDisable!.user_id;
       confirmDisable = null;
       disable(userId);
+    }}
+  />
+{/if}
+
+{#if confirmDelete}
+  <ConfirmDialog
+    title={$_('page.users.deleteConfirm.title')}
+    message={$_('page.users.deleteConfirm.message', {
+      values: { name: confirmDelete.full_name || confirmDelete.email }
+    })}
+    confirmLabel={$_('page.users.action.delete')}
+    oncancel={() => (confirmDelete = null)}
+    onconfirm={() => {
+      const userId = confirmDelete!.user_id;
+      confirmDelete = null;
+      deleteAccount(userId);
     }}
   />
 {/if}

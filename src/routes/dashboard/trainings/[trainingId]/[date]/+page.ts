@@ -1,11 +1,12 @@
 import type { PageLoad } from './$types';
-import type { MMember } from './types';
+import type { ChecklistTrial, MMember } from './types';
 import type {
   MedalCounts,
   MemberSectionGrade,
   MemberTopBadge,
   TrainingPlanBreak,
-  TrainingPlanSession
+  TrainingPlanSession,
+  TrialStatus
 } from '#lib/models.ts';
 import { supabaseClient } from '#lib/supabase.ts';
 import { error as err } from '@sveltejs/kit';
@@ -25,6 +26,7 @@ export const load = (async ({ params }) => {
     { data: grades },
     { data: medalCounts },
     { data: trialMembers },
+    { data: trialStarts },
     { data: planned },
     { data: planSession },
     { data: planBreaks }
@@ -46,7 +48,15 @@ export const load = (async ({ params }) => {
     supabaseClient.rpc('get_members_top_badges'),
     supabaseClient.rpc('get_members_current_grades'),
     supabaseClient.rpc('get_members_medal_counts'),
-    supabaseClient.from('view_trial_members').select('id, attendedCount'),
+    supabaseClient
+      .from('view_trial_members')
+      .select('id, attendedCount, trialStatus, trialConfirmedAt'),
+    // First trial session per candidate in this training, picked when assigned
+    supabaseClient
+      .from('participants')
+      .select('memberId, trialStartDate')
+      .eq('trainingId', params.trainingId)
+      .not('trialStartDate', 'is', null),
     // Trainingsplanung: what the TK planned for this date
     supabaseClient
       .from('training_plan_trainings')
@@ -97,10 +107,27 @@ export const load = (async ({ params }) => {
 
   // Attended-session count per trial member ("probetraining" label), so the
   // checklist can flag candidates who have reached the membership threshold.
+  // Their status tells the checklist who is still in the trial: removing one
+  // of them reports a no-show (remove_trial_participant()).
   const trialCountMap: Record<string, number> = {};
+  const trialMap: Record<string, ChecklistTrial> = {};
+  const startDates = new Map<number, string>();
+  for (const s of (trialStarts ?? []) as { memberId: number; trialStartDate: string }[]) {
+    startDates.set(s.memberId, s.trialStartDate);
+  }
   if (Array.isArray(trialMembers)) {
-    for (const t of trialMembers as { id: number; attendedCount: number }[]) {
+    for (const t of trialMembers as {
+      id: number;
+      attendedCount: number;
+      trialStatus: TrialStatus | null;
+      trialConfirmedAt: string | null;
+    }[]) {
       trialCountMap[t.id] = t.attendedCount;
+      trialMap[t.id] = {
+        status: t.trialStatus,
+        confirmedAt: t.trialConfirmedAt,
+        startDate: startDates.get(t.id) ?? null
+      };
     }
   }
 
@@ -115,6 +142,7 @@ export const load = (async ({ params }) => {
     gradeMap,
     medalMap,
     trialCountMap,
+    trialMap,
     plan: planned
       ? { session: planSession ?? null, break: breakOn(params.date, planBreaks ?? []) }
       : planSession

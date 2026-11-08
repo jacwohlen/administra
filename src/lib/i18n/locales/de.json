@@ -54,7 +54,8 @@
       "pendingCount": "{count} Benutzer warten auf Freigabe",
       "error": {
         "lastAdmin": "Der letzte Administrator kann nicht entfernt werden",
-        "memberTaken": "Dieses Mitglied ist bereits mit einem anderen Benutzer verknüpft"
+        "memberTaken": "Dieses Mitglied ist bereits mit einem anderen Benutzer verknüpft",
+        "approved": "Ein freigegebenes Konto zuerst sperren, dann löschen."
       },
       "status": {
         "pending": "Ausstehend",
@@ -75,14 +76,16 @@
       "action": {
         "approve": "Freigeben",
         "disable": "Deaktivieren",
-        "reEnable": "Wieder aktivieren"
+        "reEnable": "Wieder aktivieren",
+        "delete": "Löschen"
       },
       "toast": {
         "approved": "Benutzer freigegeben",
         "disabled": "Benutzer deaktiviert",
         "roleChanged": "Rolle aktualisiert",
         "memberLinked": "Mitgliedsverknüpfung aktualisiert",
-        "examRoleChanged": "Prüfungsrolle aktualisiert"
+        "examRoleChanged": "Prüfungsrolle aktualisiert",
+        "deleted": "Konto gelöscht"
       },
       "disableConfirm": {
         "title": "Benutzer deaktivieren?",
@@ -94,7 +97,13 @@
         "title": "Mitglieder-Konten ohne Zugang",
         "description": "Diese Konten sind als Mitglied freigegeben, aber keiner ihrer Mitglieder-Einträge ist eine aktive oder passive Mitgliedschaft (z. B. Nicht-Mitglieder, Ausgetretene, Probetraining oder archiviert). Sie sehen nichts und erfahren beim Anmelden, warum. Sobald ein Eintrag wieder aktiv oder passiv ist (Gruppe in Webling), haben sie automatisch wieder Zugang. Trainer und Vorstand bekommen ihren Zugang über die Rolle.",
         "noMember": "kein Mitglied-Eintrag"
-      }
+      },
+      "deleteConfirm": {
+        "title": "Konto löschen?",
+        "message": "Das Konto von {name} wird endgültig gelöscht. Meldet sich die Person wieder an, wartet sie erneut auf Freigabe."
+      },
+      "unconfirmed": "E-Mail nie bestätigt",
+      "unconfirmedHint": "Mit dieser Adresse wurde nie ein Code eingegeben, vielleicht ist sie vertippt."
     },
     "settings": {
       "title": "Einstellungen",
@@ -569,7 +578,11 @@
       "backToList": "Zurück zu den Trainings",
       "backToTraining": "Zurück zum Training",
       "empty": "Noch keine Trainings erfasst.",
-      "removeParticipantConfirm": "{name} aus diesem Training entfernen?"
+      "removeParticipantConfirm": "{name} aus diesem Training entfernen?",
+      "removeTrialConfirm": "{name} ist im Probetraining. Ist es das letzte Training, wird {name} als «nicht erschienen» gemeldet, damit jemand nachfragt. Trotzdem entfernen?",
+      "trialNoShowReported": "{name} wurde als «nicht erschienen» gemeldet.",
+      "removeParticipantError": "Teilnehmer konnte nicht entfernt werden",
+      "trialFrom": "Probetraining ab {date}"
     },
     "members": {
       "title": "Mitglieder",
@@ -930,7 +943,7 @@
       "submit": "Anmeldung absenden",
       "submitting": "Sende…",
       "successTitle": "Vielen Dank!",
-      "successMessage": "Deine Anmeldung ist bei uns eingegangen – du erhältst gleich eine Bestätigung per E-Mail. Wir melden uns in Kürze mit einem Termin für dein Probetraining.",
+      "successMessage": "Deine Anmeldung ist bei uns eingegangen – du erhältst gleich eine Bestätigung per E-Mail. Wir melden uns in Kürze mit einem Termin für dein Probetraining. Schau auch im Spam-Ordner nach, falls sie nicht ankommt.",
       "validation": {
         "required": "Bitte Vorname, Nachname, Geburtsdatum und E-Mail ausfüllen.",
         "invalid": "Bitte prüfe deine Angaben, vor allem E-Mail-Adresse und Geburtsdatum."
@@ -980,14 +993,16 @@
         "cancelled": "Abgesagt",
         "all": "Alle",
         "inactive": "Inaktiv",
-        "archived": "Archiv"
+        "archived": "Archiv",
+        "no_show": "Nicht erschienen"
       },
       "status": {
         "new": "Neu",
         "waitlist": "Warteliste",
         "assigned": "Zugewiesen",
         "cancelled": "Abgesagt",
-        "selfCancelled": "Selbst abgemeldet"
+        "selfCancelled": "Selbst abgemeldet",
+        "no_show": "Nicht erschienen"
       },
       "registeredAgo": "angemeldet {ago}",
       "ago": {
@@ -1014,7 +1029,8 @@
         "new": "Anmeldung wieder aufgenommen",
         "waitlist": "Auf die Warteliste gesetzt",
         "assigned": "Training zugewiesen",
-        "cancelled": "Als abgesagt markiert"
+        "cancelled": "Als abgesagt markiert",
+        "no_show": "Als nicht erschienen markiert"
       },
       "statusError": "Status konnte nicht geändert werden",
       "activeCount": "{count} aktiv",
@@ -1034,7 +1050,8 @@
         "cancelled": "Keine abgesagten Anmeldungen.",
         "all": "Keine Anmeldungen.",
         "inactive": "Niemand ist seit längerem ausgeblieben.",
-        "archived": "Noch nichts archiviert."
+        "archived": "Noch nichts archiviert.",
+        "no_show": "Niemand ist ausgeblieben."
       },
       "timeline": {
         "registered": "Angemeldet",
@@ -1043,7 +1060,9 @@
         "cancelled": "Abgesagt",
         "selfCancelled": "Selbst abgemeldet (über den Status-Link)",
         "lastAttended": "Zuletzt im Training",
-        "archived": "Archiviert"
+        "archived": "Archiviert",
+        "no_show": "Nicht erschienen (aus der Präsenzliste entfernt)",
+        "confirmed": "Teilnahme bestätigt"
       },
       "attendedCount": "{count, plural, =0 {noch nicht besucht} one {# Training besucht} other {# Trainings besucht}}",
       "mail": {
@@ -1090,6 +1109,13 @@
         "error": "Archivieren fehlgeschlagen",
         "chip": "archiviert",
         "summary": "{count, plural, one {# archivierte Person} other {# archivierte Personen}} mit zusammen {sessions, plural, one {# besuchten Probetraining} other {# besuchten Probetrainings}}. Archivierte erscheinen nicht in Mitgliederliste und Suche."
+      },
+      "noShowHint": "Das Trainerteam hat diese Person aus der Präsenzliste entfernt, weil sie nicht ins Training kam. Frag nach, ob die Mail angekommen ist (Spam?), und teile sie neu ein, setze sie auf die Warteliste oder sag ab.",
+      "confirmation": {
+        "confirmed": "Zugesagt",
+        "confirmedOn": "Hat am {date} über den Status-Link zugesagt",
+        "open": "Nicht bestätigt",
+        "openHint": "Hat über den Status-Link noch nicht zugesagt. Vielleicht ist die Mail im Spam gelandet: lieber kurz anrufen."
       }
     },
     "login": {
@@ -1205,6 +1231,10 @@
         "member": {
           "title": "Willkommen im Verein!",
           "text": "Du bist jetzt Mitglied beim {club}. Wir freuen uns auf viele gemeinsame Trainings."
+        },
+        "no_show": {
+          "title": "Wir haben dich vermisst",
+          "text": "Du warst im Training nicht dabei. Möchtest du trotzdem vorbeikommen? Melde dich einfach bei uns, dann finden wir einen neuen Termin."
         }
       },
       "step": {
@@ -1221,6 +1251,13 @@
         "keep": "Nein, angemeldet bleiben",
         "yes": "Ja, abmelden",
         "error": "Die Abmeldung hat nicht geklappt. Bitte versuche es später noch einmal oder schreib uns."
+      },
+      "confirm": {
+        "title": "Kommst du?",
+        "text": "Bitte bestätige kurz, dass du kommst. So weiss das Trainerteam, dass es mit dir rechnen kann.",
+        "button": "Ja, ich komme",
+        "done": "Danke! Du hast am {date} zugesagt. Wir freuen uns auf dich.",
+        "error": "Das hat nicht geklappt. Bitte versuche es später noch einmal oder schreib uns."
       }
     },
     "error": {
@@ -1766,6 +1803,14 @@
     },
     "ParticipantFrequency": {
       "sessions": "Trainings besucht"
+    },
+    "emailCheck": {
+      "invalid": "Diese E-Mail-Adresse ist nicht gültig. Bitte prüfe sie.",
+      "unreachable": "An diese E-Mail-Adresse kann keine E-Mail zugestellt werden. Bitte prüfe sie.",
+      "suggestion": "Meintest du {email}?",
+      "useSuggestion": "Ja, übernehmen",
+      "keep": "Nein, stimmt so",
+      "checkAbove": "Bitte prüfe deine E-Mail-Adresse beim Feld oben."
     }
   },
   "button": {

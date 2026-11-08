@@ -11,7 +11,9 @@
     faUserCheck,
     faLinkSlash,
     faSpinner,
-    faArrowUpRightFromSquare
+    faArrowUpRightFromSquare,
+    faUserSlash,
+    faCircleCheck
   } from '@fortawesome/free-solid-svg-icons';
   import dayjs from 'dayjs';
   import { invalidate } from '$app/navigation';
@@ -26,14 +28,19 @@
   let confirming = $state(false);
   let cancelling = $state(false);
   let cancelError = $state(false);
+  let confirmingTrial = $state(false);
+  let confirmError = $state(false);
 
   let status = $derived(data.status);
-  let active = $derived(status !== null && ['new', 'waitlist', 'assigned'].includes(status.status));
+  let active = $derived(
+    status !== null && ['new', 'waitlist', 'assigned', 'no_show'].includes(status.status)
+  );
 
   const ICON = {
     new: faInbox,
     waitlist: faHourglassHalf,
     assigned: faCalendarCheck,
+    no_show: faUserSlash,
     cancelled: faBan,
     member: faUserCheck
   } as const;
@@ -42,6 +49,7 @@
     new: 'bg-primary-500/15 text-primary-700-300',
     waitlist: 'bg-warning-500/20 text-warning-800-200',
     assigned: 'bg-success-500/20 text-success-800-200',
+    no_show: 'bg-warning-500/20 text-warning-800-200',
     cancelled: 'bg-surface-200-800 text-surface-600-400',
     member: 'bg-success-500/20 text-success-800-200'
   } as const;
@@ -50,7 +58,7 @@
   let steps = $derived.by(() => {
     if (!status) return [];
     const s = status.status;
-    const placed = s === 'assigned' || s === 'member';
+    const placed = s === 'assigned' || s === 'no_show' || s === 'member';
     return [
       { key: 'registered', done: true, current: false },
       {
@@ -58,7 +66,7 @@
         done: placed,
         current: s === 'new' || s === 'waitlist'
       },
-      { key: 'training', done: s === 'member', current: s === 'assigned' }
+      { key: 'training', done: s === 'member', current: s === 'assigned' || s === 'no_show' }
     ];
   });
 
@@ -74,6 +82,24 @@
           .map((line) => line.replace(/^- /, ''))
       : []
   );
+
+  /** The candidate says they come; a button, never a link in the mail (mail filters open links). */
+  async function confirmTrial() {
+    confirmingTrial = true;
+    confirmError = false;
+    try {
+      const { data: ok, error } = await supabaseClient.rpc('confirm_trial', {
+        p_token: data.token
+      });
+      if (error || !ok) throw error ?? new Error('not confirmed');
+      await invalidate('probetraining:status');
+    } catch (e) {
+      console.error('Confirming trial failed:', e);
+      confirmError = true;
+    } finally {
+      confirmingTrial = false;
+    }
+  }
 
   async function cancel() {
     cancelling = true;
@@ -198,6 +224,37 @@
               {/each}
             </ul>
             <p class="text-sm text-surface-600-400">{$_('page.trialStatus.assignedHint')}</p>
+
+            {#if status.confirmedAt}
+              <p
+                class="flex items-center gap-2 rounded-md bg-success-500/10 px-3 py-2 text-sm text-success-800-200"
+              >
+                <Fa icon={faCircleCheck} />
+                {$_('page.trialStatus.confirm.done', {
+                  values: { date: date(status.confirmedAt) }
+                })}
+              </p>
+            {:else}
+              <div class="rounded-md border border-primary-500/40 bg-primary-500/5 p-3 space-y-2">
+                <p class="font-semibold">{$_('page.trialStatus.confirm.title')}</p>
+                <p class="text-sm text-surface-700-300">{$_('page.trialStatus.confirm.text')}</p>
+                <button
+                  class="btn preset-filled-primary-500 w-full sm:w-auto"
+                  disabled={confirmingTrial}
+                  onclick={confirmTrial}
+                >
+                  {#if confirmingTrial}
+                    <Fa icon={faSpinner} spin />
+                  {:else}
+                    <Fa icon={faCircleCheck} />
+                  {/if}
+                  <span>{$_('page.trialStatus.confirm.button')}</span>
+                </button>
+                {#if confirmError}
+                  <p class="text-sm text-error-600-400">{$_('page.trialStatus.confirm.error')}</p>
+                {/if}
+              </div>
+            {/if}
           {/if}
 
           {#if status.status !== 'cancelled'}

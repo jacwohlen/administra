@@ -91,6 +91,32 @@ record already had a trial history or a status link of its own, it keeps
 its own and the merged registration's link stops working (the preview
 warns).
 
+## Confirmation and no-shows
+
+Mails can land in spam: in November 2026 eight candidates never saw their
+assignment, did not come, and the trainer removed them from the check-in
+list, which put them back to _neu_ as if they had just registered. Two
+things keep that from going unnoticed
+(`supabase/migrations/20261114120000_trial_no_show_and_confirmation.sql`):
+
+- **Confirmation.** While a training is assigned, the status page asks
+  "Kommst du?" with a button _Ja, ich komme_ (`confirm_trial(token)`, sets
+  `members."trialConfirmedAt"`). The built-in assignment mail asks for it.
+  It is a button on the page, never a link that confirms by itself: spam
+  filters open links in mails, which would confirm for everyone. The trial
+  overview and the check-in list show _Zugesagt_ or _Nicht bestätigt_ for an
+  assigned candidate who has not been to training yet, so staff can call
+  the ones who did not answer. Any status change clears the confirmation.
+- **No-show.** Removing a candidate (status _neu_ or _zugewiesen_) from a
+  training's check-in list asks first and goes through
+  `remove_trial_participant(training, member)`: when no other training is
+  left, the status becomes _nicht erschienen_ (`no_show`) instead of _neu_.
+  The trial overview lists them under their own tile; assigning a training
+  again makes them _zugewiesen_, and the status page tells them "Wir haben
+  dich vermisst". Unassigning in the trial overview still means _neu_.
+
+The behaviour is checked by `supabase/checks/trial_no_show.sql`.
+
 ## SMTP setup (Netlify)
 
 Set these environment variables for the **Production** and branch
