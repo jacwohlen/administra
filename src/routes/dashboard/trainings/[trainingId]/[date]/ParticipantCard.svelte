@@ -1,7 +1,13 @@
 <script lang="ts">
   import ConfirmDialog from '#lib/components/ConfirmDialog.svelte';
   import Fa from 'svelte-fa';
-  import { faEllipsisVertical, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
+  import {
+    faCircleCheck,
+    faCircleQuestion,
+    faEllipsisVertical,
+    faTriangleExclamation
+  } from '@fortawesome/free-solid-svg-icons';
+  import dayjs from 'dayjs';
   import Labels from './Labels.svelte';
   import ParticipantFrequency from './ParticipantFrequency.svelte';
   import BeltStrip from '#lib/components/BeltStrip.svelte';
@@ -12,7 +18,7 @@
   import { clubConfig } from '#lib/clubConfig.ts';
   import { _ } from 'svelte-i18n';
 
-  import type { MMember } from './types';
+  import type { ChecklistTrial, MMember } from './types';
   import type { MedalCounts, MemberSectionGrade, TrainerRole } from '#lib/models.ts';
 
   let {
@@ -21,6 +27,8 @@
     grade,
     medals,
     trialAttendedCount,
+    trial,
+    date,
     onchange,
     onremove,
     readonly = false
@@ -31,6 +39,10 @@
     medals?: MedalCounts;
     /** Attended trial sessions, only set for trial members ("probetraining" label) */
     trialAttendedCount?: number;
+    /** Set while the member is in the trial (status new or assigned) */
+    trial?: ChecklistTrial;
+    /** The checklist's date (YYYY-MM-DD) */
+    date?: string;
     onchange?: (data: { member: MMember; checked: boolean; trainerRole: TrainerRole }) => void;
     onremove?: (data: { member: MMember }) => void;
     /** Viewers see attendance but cannot change it */
@@ -43,6 +55,16 @@
   let needsMembership = $derived(
     trialAttendedCount !== undefined &&
       trialProgress(trialAttendedCount, clubConfig.trialSessionThreshold) === 'convert'
+  );
+  // A candidate yet to come for the first time: from when, and whether they confirmed
+  let firstTrial = $derived(
+    trial?.status === 'assigned' && !trialAttendedCount
+      ? {
+          later: !!(trial.startDate && date && trial.startDate > date),
+          startDate: trial.startDate,
+          confirmedAt: trial.confirmedAt
+        }
+      : null
   );
   let tally = $derived(
     medals
@@ -186,6 +208,33 @@
             {$_('page.probetraining.tab.convert')} · {trialAttendedCount}×
           </span>
         {/if}
+        {#if firstTrial}
+          {#if firstTrial.later && firstTrial.startDate}
+            <span class="chip preset-tonal-surface text-xs px-1.5 py-0.5">
+              {$_('page.trainings.trialFrom', {
+                values: { date: dayjs(firstTrial.startDate).format('DD.MM.') }
+              })}
+            </span>
+          {:else if firstTrial.confirmedAt}
+            <span
+              class="chip preset-tonal-success gap-1 text-xs px-1.5 py-0.5"
+              title={$_('page.probetraining.confirmation.confirmedOn', {
+                values: { date: dayjs(firstTrial.confirmedAt).format('DD.MM.YYYY') }
+              })}
+            >
+              <Fa icon={faCircleCheck} size="xs" />
+              {$_('page.probetraining.confirmation.confirmed')}
+            </span>
+          {:else}
+            <span
+              class="chip preset-tonal-warning gap-1 text-xs px-1.5 py-0.5"
+              title={$_('page.probetraining.confirmation.openHint')}
+            >
+              <Fa icon={faCircleQuestion} size="xs" />
+              {$_('page.probetraining.confirmation.open')}
+            </span>
+          {/if}
+        {/if}
         {#if status}
           <span class="chip preset-tonal-surface text-xs mr-1 px-1.5 py-0.5"
             >{$_(`page.members.status.${status}`)}</span
@@ -267,9 +316,10 @@
     {#if showRemoveConfirm}
       <ConfirmDialog
         title={$_('button.remove')}
-        message={$_('page.trainings.removeParticipantConfirm', {
-          values: { name: `${member.lastname} ${member.firstname}` }
-        })}
+        message={$_(
+          trial ? 'page.trainings.removeTrialConfirm' : 'page.trainings.removeParticipantConfirm',
+          { values: { name: `${member.lastname} ${member.firstname}` } }
+        )}
         confirmLabel={$_('button.remove')}
         oncancel={() => handleRemoveResponse(false)}
         onconfirm={() => handleRemoveResponse(true)}

@@ -123,6 +123,13 @@ describe('matchesTrialTab', () => {
     expect(matchesTrialTab(m, 'all', threshold, 60)).toBe(true);
   });
 
+  it('lists no-shows apart from new registrations', () => {
+    const m = candidate({ id: 1, trialStatus: 'no_show' });
+    expect(matchesTrialTab(m, 'no_show', threshold, 60)).toBe(true);
+    expect(matchesTrialTab(m, 'new', threshold, 60)).toBe(false);
+    expect(matchesTrialTab(m, 'inactive', threshold, 60)).toBe(false);
+  });
+
   it('lists candidates due to sign up unless they cancelled', () => {
     const due = candidate({ id: 1, trialStatus: 'assigned', attendedCount: 3 });
     const cancelled = candidate({ id: 2, trialStatus: 'cancelled', attendedCount: 5 });
