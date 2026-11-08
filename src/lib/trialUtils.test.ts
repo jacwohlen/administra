@@ -7,7 +7,9 @@ import {
   isTrialInactive,
   sortTrialMembers,
   elapsedSince,
-  upcomingTrainingDates
+  upcomingTrainingDates,
+  parseTrialView,
+  trialViewUrl
 } from './trialUtils';
 import type { Training, TrialMember } from './models';
 
@@ -289,5 +291,40 @@ describe('upcomingTrainingDates', () => {
 
   it('returns nothing for an unknown weekday', () => {
     expect(upcomingTrainingDates('Montag', '18:00', 3, now)).toEqual([]);
+  });
+});
+
+describe('parseTrialView', () => {
+  it('reads tab and search', () => {
+    expect(parseTrialView(new URLSearchParams('tab=waitlist&q=Muster'))).toEqual({
+      tab: 'waitlist',
+      search: 'Muster'
+    });
+  });
+
+  it('ignores an unknown or missing tab', () => {
+    expect(parseTrialView(new URLSearchParams('tab=bogus'))).toEqual({ tab: null, search: '' });
+    expect(parseTrialView(new URLSearchParams(''))).toEqual({ tab: null, search: '' });
+  });
+});
+
+describe('trialViewUrl', () => {
+  const base = new URL('https://example.org/dashboard/probetraining?x=1&q=old');
+
+  it('sets tab and search, keeping other parameters', () => {
+    const url = trialViewUrl(base, 'no_show', ' Anna ');
+    expect(url.pathname).toBe('/dashboard/probetraining');
+    expect(url.searchParams.get('x')).toBe('1');
+    expect(url.searchParams.get('tab')).toBe('no_show');
+    expect(url.searchParams.get('q')).toBe('Anna');
+  });
+
+  it('drops an empty search', () => {
+    expect(trialViewUrl(base, 'all', '  ').searchParams.has('q')).toBe(false);
+  });
+
+  it('round-trips through parseTrialView', () => {
+    const url = trialViewUrl(base, 'convert', 'Müller & Co');
+    expect(parseTrialView(url.searchParams)).toEqual({ tab: 'convert', search: 'Müller & Co' });
   });
 });

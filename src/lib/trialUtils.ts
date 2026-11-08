@@ -71,6 +71,47 @@ export function isTrialInactive(
  */
 export type TrialTab = 'all' | TrialStatus | 'convert' | 'inactive' | 'archived';
 
+/** Every tab, in the order the overview counts them. */
+export const TRIAL_TABS: readonly TrialTab[] = [
+  'new',
+  'waitlist',
+  'assigned',
+  'no_show',
+  'convert',
+  'inactive',
+  'cancelled',
+  'archived',
+  'all'
+];
+
+/** The overview's tab and search as they are shared in a link. */
+export interface TrialView {
+  tab: TrialTab | null;
+  search: string;
+}
+
+/** Reads `?tab=…&q=…`; an unknown tab is ignored, so the page picks its default. */
+export function parseTrialView(params: Pick<URLSearchParams, 'get'>): TrialView {
+  const tab = params.get('tab');
+  return {
+    tab: tab && (TRIAL_TABS as readonly string[]).includes(tab) ? (tab as TrialTab) : null,
+    search: params.get('q') ?? ''
+  };
+}
+
+/**
+ * The overview's URL for a tab and search, keeping any other query parameters.
+ * An empty search is left out.
+ */
+export function trialViewUrl(url: { href: string }, tab: TrialTab, search: string): URL {
+  const next = new URL(url.href);
+  next.searchParams.set('tab', tab);
+  const q = search.trim();
+  if (q) next.searchParams.set('q', q);
+  else next.searchParams.delete('q');
+  return next;
+}
+
 export function matchesTrialTab(
   member: TrialMember,
   tab: TrialTab,

@@ -39,12 +39,16 @@
     elapsedSince,
     isTrialInactive,
     lastTrialActivity,
+    parseTrialView,
+    trialViewUrl,
+    TRIAL_TABS,
     type TrialTab
   } from '#lib/trialUtils.ts';
   import { clubConfig } from '#lib/clubConfig.ts';
   import { supabaseClient } from '#lib/supabase.ts';
   import { toaster } from '#lib/toast.ts';
-  import { invalidate } from '$app/navigation';
+  import { goto, invalidate } from '$app/navigation';
+  import { page } from '$app/state';
   import AssignTrainingDialog from './AssignTrainingDialog.svelte';
   import MailDialog from './MailDialog.svelte';
   import { trialStatusUrl, type TrialMailKind } from '#lib/trialMail.ts';
@@ -58,17 +62,6 @@
   } from '#lib/models.ts';
   import dayjs from 'dayjs';
 
-  const TABS: TrialTab[] = [
-    'new',
-    'waitlist',
-    'assigned',
-    'no_show',
-    'convert',
-    'inactive',
-    'cancelled',
-    'archived',
-    'all'
-  ];
   /** Secondary filters next to the search: clean-up lists, the archive and everyone. */
   const FILTER_TABS = ['inactive', 'cancelled', 'archived', 'all'] as const;
   /** Tabs offering to archive everyone listed at once. */
@@ -122,16 +115,30 @@
   let confirmArchiveId = $state<number | null>(null);
   let confirmBulkArchive = $state(false);
   let busyId = $state<number | null>(null);
-  let searchTerm = $state('');
-  // Open on the work queue: new registrations, then no-shows to follow up,
-  // else everyone.
+  // A shared link (`?tab=…&q=…`) opens the same view.
+  const initialView = untrack(() => parseTrialView(page.url.searchParams));
+  let searchTerm = $state(initialView.search);
+  // Otherwise open on the work queue: new registrations, then no-shows to
+  // follow up, else everyone.
   let tab = $state<TrialTab>(
     untrack(() => {
+      if (initialView.tab) return initialView.tab;
       const open = (s: TrialStatus) =>
         data.trialMembers.some((m) => m.trialStatus === s && !m.archivedAt);
       return open('new') ? 'new' : open('no_show') ? 'no_show' : 'all';
     })
   );
+
+  /**
+   * Keeps the address bar on the current view, so the link can be shared.
+   * Called on the user's changes only (never while the page mounts), and
+   * replaced, not pushed: switching tiles adds no history entries.
+   */
+  function syncUrl() {
+    const next = trialViewUrl(page.url, tab, searchTerm);
+    if (next.search === page.url.search) return;
+    void goto(next, { replace: true, shallow: true, state: page.state });
+  }
 
   let trainingById = $derived.by(() => {
     const map = new Map<number, Training>();
@@ -208,7 +215,7 @@
 
   let tabCounts = $derived.by(() => {
     const counts = {} as Record<TrialTab, number>;
-    for (const t of TABS) {
+    for (const t of TRIAL_TABS) {
       counts[t] = data.trialMembers.filter((m) =>
         matchesTrialTab(m, t, clubConfig.trialSessionThreshold, clubConfig.trialInactiveDays)
       ).length;
@@ -295,6 +302,7 @@
   function selectTab(t: TrialTab) {
     tab = t;
     confirmBulkArchive = false;
+    syncUrl();
   }
 
   /**
@@ -461,6 +469,7 @@
       <input
         class="input pl-9"
         bind:value={searchTerm}
+        oninput={syncUrl}
         type="search"
         placeholder={$_('page.probetraining.searchPlaceholder')}
       />
