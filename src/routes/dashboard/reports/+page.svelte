@@ -116,13 +116,13 @@
     show(from, to);
   }}
 >
-  <label class="label">
+  <label class="label w-auto">
     <span class="text-sm">{$_('page.reports.from')}</span>
-    <input class="input" type="date" bind:value={from} required />
+    <input class="input w-44" type="date" bind:value={from} required />
   </label>
-  <label class="label">
+  <label class="label w-auto">
     <span class="text-sm">{$_('page.reports.to')}</span>
-    <input class="input" type="date" bind:value={to} required />
+    <input class="input w-44" type="date" bind:value={to} required />
   </label>
   <button type="submit" class="btn preset-filled-primary-500">{$_('page.reports.show')}</button>
   <div class="flex flex-wrap gap-1 w-full">
@@ -170,9 +170,9 @@
       <thead>
         <tr>
           <th>{$_('page.reports.person')}</th>
-          <th class="text-right">{$_('page.reports.mainTrainer')}</th>
-          <th class="text-right">{$_('page.reports.assistant')}</th>
-          <th class="text-right">{$_('page.reports.coachingDays')}</th>
+          <th class="text-right!">{$_('page.reports.mainTrainer')}</th>
+          <th class="text-right!">{$_('page.reports.assistant')}</th>
+          <th class="text-right!">{$_('page.reports.coachingDays')}</th>
         </tr>
       </thead>
       <tbody>
