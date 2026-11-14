@@ -296,6 +296,20 @@ describe('coaching days', () => {
     expect(counts).toEqual({ full: 4, half: 2, days: 5 });
   });
 
+  it('counts a day coached at two events once, as a full day if either was', () => {
+    const counts = coachingDayCounts(
+      [
+        { coachDay: 'half', event: { date: '2026-03-14' } },
+        { coachDay: 'full', event: { date: '2026-03-14' } },
+        { coachDay: 'half', event: { date: '2026-04-11' } },
+        { coachDay: 'half', event: { date: '2026-04-11' } }
+      ],
+      '2026-01-01',
+      '2026-12-31'
+    );
+    expect(counts).toEqual({ full: 1, half: 1, days: 1.5 });
+  });
+
   it('is nothing without coaching', () => {
     expect(coachingDayCounts([], '2026-01-01', '2026-12-31')).toEqual({
       full: 0,

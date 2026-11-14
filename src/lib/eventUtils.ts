@@ -67,19 +67,26 @@ export interface CoachingEntry {
 /**
  * Coached days between from and to (inclusive), full and half days counted
  * apart: every day of a multi-day event inside the range is one day of the
- * kind the coach's row says. days is the sum (a half day counts 0.5).
+ * kind the coach's row says. A day coached at two events counts once, as a
+ * full day if either was (as the trainer payout report counts). days is the
+ * sum (a half day counts 0.5).
  */
 export function coachingDayCounts(
   entries: CoachingEntry[],
   from: string,
   to: string
 ): { full: number; half: number; days: number } {
+  const byDay = new Map<string, number>();
+  for (const { coachDay, event } of entries) {
+    for (const day of eventDays(event, from, to)) {
+      byDay.set(day, Math.max(byDay.get(day) ?? 0, coachDayValue(coachDay)));
+    }
+  }
   let full = 0;
   let half = 0;
-  for (const { coachDay, event } of entries) {
-    const n = eventDays(event, from, to).length;
-    if (coachDay === 'half') half += n;
-    else full += n;
+  for (const value of byDay.values()) {
+    if (value === 1) full++;
+    else half++;
   }
   return { full, half, days: full + half / 2 };
 }
