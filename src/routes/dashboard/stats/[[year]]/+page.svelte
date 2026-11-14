@@ -1,11 +1,14 @@
 <script lang="ts">
   import Fa from 'svelte-fa';
-  import { faChevronLeft, faChevronRight } from '@fortawesome/free-solid-svg-icons';
+  import {
+    faChevronLeft,
+    faChevronRight,
+    faFileInvoiceDollar
+  } from '@fortawesome/free-solid-svg-icons';
   import { goto } from '$app/navigation';
   import type { PageData } from './$types';
   import { SegmentedControl } from '@skeletonlabs/skeleton-svelte';
   import { _ } from 'svelte-i18n';
-  import TrainerDownload from './TrainerDownload.svelte';
   import SummaryKPIs from './SummaryKPIs.svelte';
   import MonthlyTrend from './MonthlyTrend.svelte';
   import SectionDistribution from './SectionDistribution.svelte';
@@ -107,7 +110,19 @@
 
   <StatsSection title={$_('page.stats.trainerWorkload')}>
     {#snippet actions()}
-      <TrainerDownload {year} {yearmode} />
+      {#if data.userProfile?.role === 'admin'}
+        <!-- The payout report replaced the trainer download -->
+        <a
+          class="btn btn-sm preset-tonal-surface"
+          href={yearmode === 'ALL'
+            ? '/dashboard/reports'
+            : `/dashboard/reports?from=${year}-01-01&to=${year}-12-31`}
+          title={$_('page.reports.title')}
+        >
+          <Fa icon={faFileInvoiceDollar} />
+          <span class="hidden sm:inline">{$_('page.dashboard.reports')}</span>
+        </a>
+      {/if}
     {/snippet}
     <TrainerWorkload {yearmode} {year} />
   </StatsSection>

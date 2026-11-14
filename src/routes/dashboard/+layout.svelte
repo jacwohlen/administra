@@ -18,6 +18,7 @@
     faSun,
     faMoon,
     faPlug,
+    faFileInvoiceDollar,
     faWandMagicSparkles
   } from '@fortawesome/free-solid-svg-icons';
   import type { SubmitFunction } from '$app/forms';
@@ -62,6 +63,7 @@
     if (page.route.id?.startsWith('/dashboard/users')) return 'users';
     if (page.route.id?.startsWith('/dashboard/settings')) return 'settings';
     if (page.route.id?.startsWith('/dashboard/integrations')) return 'integrations';
+    if (page.route.id?.startsWith('/dashboard/reports')) return 'reports';
     return 'today';
   }
 
@@ -282,6 +284,14 @@
                 ></span>
               {/if}
             </button>
+            <a
+              href="/dashboard/reports"
+              class="btn preset-tonal-surface w-full mb-2"
+              onclick={() => (popoverOpen = false)}
+            >
+              <Fa icon={faFileInvoiceDollar} />
+              <span>{$_('page.dashboard.reports')}</span>
+            </a>
           {/if}
           {#if assistantConfigured && (data.canWrite || data.canPlanTrainings)}
             <a
