@@ -175,9 +175,10 @@ INSERT INTO public.event_participants ("eventId", "memberId", "attendanceStatus"
   (4, 5901, 'registered', 'Imported from Webling - Confirmed: confirmed', '2026-06-01 10:00+00'),
   (4, 10000901, 'attended', NULL, '2026-05-01 10:00+00'),
   (7, 10000901, 'registered', 'per Telefon', '2026-04-01 10:00+00');
-INSERT INTO public.event_logs ("eventId", "memberId", "isCoach", notes) VALUES
-  (4, 5901, false, NULL),
-  (4, 10000901, true, 'Betreuerin');
+-- W attended (not as coach: the default full day), T coached half a day
+INSERT INTO public.event_logs ("eventId", "memberId", "isCoach", "coachDay", notes) VALUES
+  (4, 5901, false, 'full', NULL),
+  (4, 10000901, true, 'half', 'Betreuerin');
 
 -- Grades: 5. Kyu under both, T's from a Q-Prüfung sheet (exam 1)
 INSERT INTO public.member_grades ("memberId", section, grade, "examDate", note) VALUES
@@ -397,8 +398,8 @@ BEGIN
     (SELECT "attendanceStatus" || ' ' || coalesce(notes, '-') || ' ' || "registeredAt"::date
      FROM public.event_participants WHERE "eventId" = 4 AND "memberId" = 5901), 'attended - 2026-05-01');
   PERFORM pg_temp.eq('event 7 moved', (SELECT notes FROM public.event_participants WHERE "eventId" = 7 AND "memberId" = 5901), 'per Telefon');
-  PERFORM pg_temp.eq('event attendance once, as coach', (SELECT count(*) || ' ' || bool_or("isCoach") || ' ' || string_agg(notes, '')
-    FROM public.event_logs WHERE "eventId" = 4 AND "memberId" = 5901), '1 true Betreuerin');
+  PERFORM pg_temp.eq('event attendance once, as coach for half a day', (SELECT count(*) || ' ' || bool_or("isCoach") || ' ' || min("coachDay") || ' ' || string_agg(notes, '')
+    FROM public.event_logs WHERE "eventId" = 4 AND "memberId" = 5901), '1 true half Betreuerin');
 
   PERFORM pg_temp.eq('5. Kyu: the exam''s row stays, still on its sheet',
     (SELECT id || ' ' || "examDate" || ' ' || note FROM public.member_grades WHERE "memberId" = 5901 AND grade = '5. Kyu'),

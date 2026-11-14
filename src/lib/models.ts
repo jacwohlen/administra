@@ -363,12 +363,17 @@ export interface EventParticipant {
   notes?: string;
 }
 
+/** How much of each event day a coach coached (event_logs."coachDay") */
+export type CoachDay = 'full' | 'half';
+
 export interface EventLog {
   id: number;
   eventId: string;
   memberId: string;
   attendedAt: string;
-  isOrganizer: boolean;
+  isCoach: boolean;
+  /** For a coach: a full day (default) or a half day, per day of the event */
+  coachDay: CoachDay;
   notes?: string;
 }
 

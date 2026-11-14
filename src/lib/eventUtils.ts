@@ -1,4 +1,5 @@
 import dayjs from 'dayjs';
+import type { CoachDay } from './models.ts';
 
 // ----- Days of an event -----
 
@@ -48,6 +49,39 @@ export function eventDays(event: EventSpan, from: string, to: string): string[] 
     d = d.add(1, 'day');
   }
   return days;
+}
+
+// ----- Coaching days -----
+
+/** What one coached event day counts: 1 for a full day, 0.5 for a half day. */
+export function coachDayValue(coachDay: CoachDay | null | undefined): number {
+  return coachDay === 'half' ? 0.5 : 1;
+}
+
+/** A coach's row of event_logs with its event's days */
+export interface CoachingEntry {
+  coachDay: CoachDay | null | undefined;
+  event: EventSpan;
+}
+
+/**
+ * Coached days between from and to (inclusive), full and half days counted
+ * apart: every day of a multi-day event inside the range is one day of the
+ * kind the coach's row says. days is the sum (a half day counts 0.5).
+ */
+export function coachingDayCounts(
+  entries: CoachingEntry[],
+  from: string,
+  to: string
+): { full: number; half: number; days: number } {
+  let full = 0;
+  let half = 0;
+  for (const { coachDay, event } of entries) {
+    const n = eventDays(event, from, to).length;
+    if (coachDay === 'half') half += n;
+    else full += n;
+  }
+  return { full, half, days: full + half / 2 };
 }
 
 /**

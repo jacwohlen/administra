@@ -32,7 +32,7 @@
     calculateAttendanceRate,
     formatEventDates
   } from '#lib/eventUtils.ts';
-  import type { Medal } from '#lib/models.ts';
+  import type { CoachDay, Medal } from '#lib/models.ts';
   import { MEDALS, medalEmoji } from '#lib/gradeUtils.ts';
   import { canDeleteEvent } from '#lib/eventLinks.ts';
   import { isManagedByProviderError, providerName } from '#lib/memberStatus.ts';
@@ -212,6 +212,28 @@
 
       if (error) {
         console.error('Error toggling coach status:', error);
+        toaster.error({ title: $_('page.events.coachError') });
+        return;
+      }
+
+      await refreshAll();
+    } finally {
+      loading = false;
+    }
+  }
+
+  /** A coach coached a full day or a half day (of every day of the event) */
+  async function setCoachDay(memberId: string, coachDay: CoachDay) {
+    loading = true;
+    try {
+      const { error } = await supabaseClient
+        .from('event_logs')
+        .update({ coachDay })
+        .eq('eventId', data.event.id)
+        .eq('memberId', memberId);
+
+      if (error) {
+        console.error('Error saving coaching day:', error);
         toaster.error({ title: $_('page.events.coachError') });
         return;
       }
@@ -510,6 +532,9 @@
                     {#if log && log.isCoach}
                       <span class="badge preset-tonal-primary text-xs ml-2">
                         {$_('page.events.coach')}
+                        {#if log.coachDay === 'half'}
+                          · {$_('page.events.coach_half_day')}
+                        {/if}
                       </span>
                     {/if}
                   </div>
@@ -563,6 +588,29 @@
                       >
                         <Fa icon={faChalkboardTeacher} />
                       </button>
+                    {/if}
+                    <!-- A coach coached a full day (default) or half a day -->
+                    {#if log && log.isCoach}
+                      <div
+                        class="flex rounded-lg overflow-hidden border border-surface-300-700"
+                        role="group"
+                        aria-label={$_('page.events.coach_day')}
+                        title={$_('page.events.coach_day')}
+                      >
+                        {#each ['full', 'half'] as const as day (day)}
+                          <button
+                            class="px-2 min-h-[44px] text-sm {log.coachDay === day
+                              ? 'preset-filled-primary-500'
+                              : 'preset-tonal-surface'}"
+                            onclick={() => setCoachDay(participant.memberId, day)}
+                            disabled={loading || log.coachDay === day}
+                            aria-pressed={log.coachDay === day}
+                            title={$_('page.events.coach_' + day + '_day')}
+                          >
+                            {day === 'full' ? '1' : '½'}
+                          </button>
+                        {/each}
+                      </div>
                     {/if}
                     <!-- Event day or past - show attendance buttons -->
                     <button
