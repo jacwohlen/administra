@@ -9,6 +9,8 @@ import {
   attendanceTimestamp,
   coachDayValue,
   coachingDayCounts,
+  compareCheckinPeople,
+  matchesCheckinSearch,
   endsOnOrAfter,
   eventCoversDay,
   eventDateInput,
@@ -316,5 +318,41 @@ describe('coaching days', () => {
       half: 0,
       days: 0
     });
+  });
+});
+
+describe('the check-in list', () => {
+  const person = (lastname: string, firstname: string, attended = false) => ({
+    lastname,
+    firstname,
+    attended
+  });
+
+  it('puts who attended first, then sorts by name', () => {
+    const list = [
+      person('Müller', 'Anna'),
+      person('Zürcher', 'Ben', true),
+      person('Meier', 'Lea'),
+      person('Abt', 'Tim', true),
+      person('Müller', 'Andrin')
+    ].sort(compareCheckinPeople);
+    expect(list.map((p) => `${p.lastname} ${p.firstname}`)).toEqual([
+      'Abt Tim',
+      'Zürcher Ben',
+      'Meier Lea',
+      'Müller Andrin',
+      'Müller Anna'
+    ]);
+  });
+
+  it('finds a person by the start of a last or first name', () => {
+    const anna = person('Müller', 'Anna Lena');
+    expect(matchesCheckinSearch(anna, '')).toBe(true);
+    expect(matchesCheckinSearch(anna, 'mü')).toBe(true);
+    expect(matchesCheckinSearch(anna, 'ANN')).toBe(true);
+    expect(matchesCheckinSearch(anna, 'lena')).toBe(true);
+    expect(matchesCheckinSearch(anna, 'mül an')).toBe(true);
+    expect(matchesCheckinSearch(anna, 'ller')).toBe(false);
+    expect(matchesCheckinSearch(anna, 'mül ben')).toBe(false);
   });
 });

@@ -21,7 +21,7 @@
   import dayjs from 'dayjs';
   import { onMount } from 'svelte';
   import { goto, refreshAll, preloadData } from '$app/navigation';
-  import AddParticipantInputBox from './AddParticipantInputBox.svelte';
+  import AddMemberInputBox from '#lib/components/AddMemberInputBox.svelte';
   import { supabaseClient } from '#lib/supabase.ts';
   import { toaster } from '#lib/toast.ts';
   import { _ } from 'svelte-i18n';
@@ -485,7 +485,7 @@
         <div
           class="flex items-center gap-4 p-4 rounded-lg preset-tonal-tertiary w-full justify-items-center"
         >
-          <AddParticipantInputBox onadd={addParticipant} />
+          <AddMemberInputBox onadd={addParticipant} />
         </div>
       </li>
     {/if}

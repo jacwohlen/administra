@@ -26,7 +26,12 @@
       return;
     }
     const rect = buttonEl.getBoundingClientRect();
-    style = `position:fixed;top:${rect.bottom + 4}px;left:${rect.right - 192}px;z-index:9999;`;
+    // Near the bottom of the screen (the last rows of a list) it opens upwards
+    const up = window.innerHeight - rect.bottom < 200;
+    const top = up
+      ? `top:${rect.top - 4}px;transform:translateY(-100%);`
+      : `top:${rect.bottom + 4}px;`;
+    style = `position:fixed;${top}left:${Math.max(8, rect.right - 192)}px;z-index:9999;`;
     open = true;
   }
 </script>

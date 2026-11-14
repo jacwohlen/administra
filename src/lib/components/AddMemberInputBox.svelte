@@ -1,4 +1,9 @@
 <script lang="ts">
+  /**
+   * The add box under a check-in list (trainings and events): search a member
+   * by name and add them, or create a new member (label "new") when the person
+   * is not in the app yet. The results open above the box.
+   */
   import { modalDialog } from '#lib/modalDialog.ts';
   import type { Member } from '#lib/models.ts';
   import Fa from 'svelte-fa';
@@ -6,9 +11,16 @@
   import { supabaseClient } from '#lib/supabase.ts';
   import { _ } from 'svelte-i18n';
   import { toaster } from '#lib/toast.ts';
-  import MemberForm from './MemberForm.svelte';
+  import NewMemberForm from './NewMemberForm.svelte';
 
-  let { onadd }: { onadd?: (data: { member: Member }) => void } = $props();
+  let {
+    onadd,
+    placeholder
+  }: {
+    onadd?: (data: { member: Member }) => void;
+    /** Defaults to "Mitglied hinzufügen…" */
+    placeholder?: string;
+  } = $props();
 
   let searchterm = $state('');
   let filteredData: Member[] = $state([]);
@@ -118,7 +130,7 @@
     <input
       class="input"
       type="text"
-      placeholder={$_('page.trainings.addMemberPlaceholder')}
+      placeholder={placeholder ?? $_('page.trainings.addMemberPlaceholder')}
       bind:value={searchterm}
       oninput={filterData}
       onkeydown={handleKeydown}
@@ -200,7 +212,7 @@
       onclick={(e) => e.stopPropagation()}
     >
       <h3>{$_('button.createNew')}</h3>
-      <MemberForm
+      <NewMemberForm
         lastname={newMemberLastname}
         firstname={newMemberFirstname}
         onclose={() => (showNewMemberForm = false)}
