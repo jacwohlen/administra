@@ -602,8 +602,9 @@
                             class="px-2 min-h-[44px] text-sm {log.coachDay === day
                               ? 'preset-filled-primary-500'
                               : 'preset-tonal-surface'}"
-                            onclick={() => setCoachDay(participant.memberId, day)}
-                            disabled={loading || log.coachDay === day}
+                            onclick={() =>
+                              log.coachDay !== day && setCoachDay(participant.memberId, day)}
+                            disabled={loading}
                             aria-pressed={log.coachDay === day}
                             title={$_('page.events.coach_' + day + '_day')}
                           >
