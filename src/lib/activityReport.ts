@@ -1,7 +1,7 @@
 /**
- * Abrechnungsreport (payout report): per person and period, how many
- * trainings they led as main trainer, how many as assistant, and how many
- * days they coached at events. The treasurer pays trainers from it.
+ * Einsätze (activity report): per person and period, how many trainings
+ * they led as main trainer, how many as assistant, and how many days they
+ * coached at events.
  *
  * Trainings count from the check-in (`logs."trainerRole"`): whoever was
  * checked in as main trainer or assistant on a date trained, so a
@@ -17,7 +17,6 @@
 import { buildPlan, type PlanTraining } from './trainingPlanUtils.ts';
 import { eventDays, eventEnd } from './eventUtils.ts';
 import type { TrainingPlanBreak, TrainingPlanSession } from './models.ts';
-import type { XlsxCell, XlsxSheet } from './xlsx.ts';
 import type { PdfDocument, PdfTable } from './pdf.ts';
 
 export interface ReportPerson {
@@ -84,7 +83,7 @@ export interface ReportInput {
   plan: ReportPlan;
 }
 
-export interface PayoutRow {
+export interface ActivityRow {
   memberId: number;
   name: string;
   mainTrainer: number;
@@ -122,10 +121,10 @@ export interface CheckRow {
   reason: CheckReason;
 }
 
-export interface PayoutReport {
+export interface ActivityReport {
   from: string;
   to: string;
-  rows: PayoutRow[];
+  rows: ActivityRow[];
   totals: { mainTrainer: number; assistant: number; coachingDays: number };
   trainings: TrainingDetailRow[];
   coaching: CoachingDetailRow[];
@@ -144,14 +143,14 @@ export function coachDayFactor(coachDay: string | null | undefined): number {
   return coachDay === 'half' ? 0.5 : 1;
 }
 
-export function buildPayoutReport(input: ReportInput): PayoutReport {
+export function buildActivityReport(input: ReportInput): ActivityReport {
   const { from, to } = input;
   const inRange = (d: string) => from <= d && d <= to;
   const members = new Map(input.members.map((m) => [m.id, m]));
   const trainings = new Map(input.trainings.map((t) => [t.id, t]));
   const name = (id: number) => personName(members.get(id), id);
 
-  const rows = new Map<number, PayoutRow>();
+  const rows = new Map<number, ActivityRow>();
   const row = (memberId: number) => {
     let r = rows.get(memberId);
     if (!r) {
@@ -213,7 +212,7 @@ export function buildPayoutReport(input: ReportInput): PayoutReport {
     row(memberId).coachingDays = [...perDay.values()].reduce((n, v) => n + v, 0);
   }
 
-  const payoutRows = [...rows.values()]
+  const activityRows = [...rows.values()]
     .filter((r) => r.mainTrainer + r.assistant + r.coachingDays > 0)
     .sort((a, b) => byName(a.name, b.name) || a.memberId - b.memberId);
 
@@ -250,11 +249,11 @@ export function buildPayoutReport(input: ReportInput): PayoutReport {
   return {
     from,
     to,
-    rows: payoutRows,
+    rows: activityRows,
     totals: {
-      mainTrainer: payoutRows.reduce((n, r) => n + r.mainTrainer, 0),
-      assistant: payoutRows.reduce((n, r) => n + r.assistant, 0),
-      coachingDays: payoutRows.reduce((n, r) => n + r.coachingDays, 0)
+      mainTrainer: activityRows.reduce((n, r) => n + r.mainTrainer, 0),
+      assistant: activityRows.reduce((n, r) => n + r.assistant, 0),
+      coachingDays: activityRows.reduce((n, r) => n + r.coachingDays, 0)
     },
     trainings: trainingRows,
     coaching: coachingRows,
@@ -307,10 +306,9 @@ function planChecks(input: ReportInput, name: (id: number) => string): CheckRow[
 
 // ----- Downloads -----
 
-export interface PayoutReportLabels {
+export interface ActivityReportLabels {
   title: string;
   period: string;
-  sheetName: string;
   summary: string;
   person: string;
   mainTrainer: string;
@@ -358,70 +356,10 @@ function dateSpan(from: string, to: string): string {
 const coachList = (c: CoachingDetailRow) =>
   c.coaches.map((x) => `${x.name} (${formatDays(x.days)})`).join(', ');
 
-/** The report as one worksheet: summary per person, then the details */
-export function payoutReportSheet(report: PayoutReport, labels: PayoutReportLabels): XlsxSheet {
-  const rows: XlsxCell[][] = [];
-  const boldRows: number[] = [];
-  const bold = (row: XlsxCell[]) => {
-    boldRows.push(rows.length);
-    rows.push(row);
-  };
-
-  bold([labels.title]);
-  rows.push([labels.period, periodLabel(report.from, report.to)]);
-  rows.push([]);
-
-  bold([labels.summary]);
-  bold([labels.person, labels.mainTrainer, labels.assistant, labels.coachingDays]);
-  for (const r of report.rows) rows.push([r.name, r.mainTrainer, r.assistant, r.coachingDays]);
-  bold([
-    labels.total,
-    report.totals.mainTrainer,
-    report.totals.assistant,
-    report.totals.coachingDays
-  ]);
-
-  if (report.checks.length) {
-    rows.push([]);
-    bold([labels.checks]);
-    rows.push([labels.checksHint]);
-    bold([labels.date, labels.training, labels.section, labels.plannedTrainer, labels.reason]);
-    for (const c of report.checks) {
-      rows.push([
-        swissDate(c.date),
-        c.training,
-        c.section,
-        c.plannedTrainer,
-        labels.reasons[c.reason]
-      ]);
-    }
-  }
-
-  rows.push([]);
-  bold([labels.trainingsDetail]);
-  bold([labels.date, labels.training, labels.section, labels.mainTrainers, labels.assistants]);
-  for (const t of report.trainings) {
-    rows.push([
-      swissDate(t.date),
-      t.training,
-      t.section,
-      t.mainTrainers.join(', '),
-      t.assistants.join(', ')
-    ]);
-  }
-
-  rows.push([]);
-  bold([labels.coachingDetail]);
-  bold([labels.date, labels.event, labels.coaches]);
-  for (const c of report.coaching) rows.push([dateSpan(c.date, c.dateTo), c.event, coachList(c)]);
-
-  return { name: labels.sheetName, rows, boldRows, columnWidths: [30, 30, 16, 30, 40] };
-}
-
 /** The report as a PDF: the summary first, then what to check and the details */
-export function payoutReportPdf(
-  report: PayoutReport,
-  labels: PayoutReportLabels,
+export function activityReportPdf(
+  report: ActivityReport,
+  labels: ActivityReportLabels,
   created: string
 ): PdfDocument {
   const tables: PdfTable[] = [

@@ -24,7 +24,7 @@
       "assistant": "Data assistant",
       "integrations": "Integrations",
       "integrationsAlert": "An integration needs your attention",
-      "reports": "Payouts"
+      "reports": "Activity"
     },
     "pending": {
       "title": "Access pending",
@@ -1775,7 +1775,7 @@
       }
     },
     "reports": {
-      "title": "Trainer and coach payouts",
+      "title": "Trainer and coach activity",
       "intro": "Per person: trainings as main trainer, as assistant trainer, and coaching days at events in the chosen period. Counted is whoever the check-in lists as trainer, so substitutes and swapped dates count for whoever actually trained.",
       "to": "To",
       "show": "Show",
@@ -1783,11 +1783,9 @@
       "lastYear": "Last year",
       "firstHalf": "1st half",
       "secondHalf": "2nd half",
-      "downloadExcel": "Excel",
-      "downloadPdf": "PDF",
+      "downloadPdf": "Download PDF",
       "downloadError": "The report could not be created",
       "empty": "Nobody trained or coached in this period.",
-      "sheetName": "Payouts",
       "period": "Period",
       "summary": "Summary per person",
       "person": "Person",

@@ -1,13 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import {
-  buildPayoutReport,
+  buildActivityReport,
   formatDays,
-  payoutReportPdf,
-  payoutReportSheet,
+  activityReportPdf,
   reportPeriod,
-  type PayoutReportLabels,
+  type ActivityReportLabels,
   type ReportInput
-} from './payoutReport';
+} from './activityReport';
 import { buildPdf } from './pdf';
 import type { TrainingPlanSession } from './models';
 
@@ -91,8 +90,8 @@ const base = (): ReportInput => ({
   }
 });
 
-describe('buildPayoutReport', () => {
-  const report = buildPayoutReport(base());
+describe('buildActivityReport', () => {
+  const report = buildActivityReport(base());
 
   it('counts trainings by the check-in role, so a substitute counts for who came', () => {
     expect(report.rows.map((r) => [r.name, r.mainTrainer, r.assistant])).toEqual([
@@ -153,7 +152,7 @@ describe('buildPayoutReport', () => {
     const input = base();
     input.from = '2026-05-01';
     input.to = '2026-05-31';
-    expect(buildPayoutReport(input).rows).toEqual([]);
+    expect(buildActivityReport(input).rows).toEqual([]);
   });
 });
 
@@ -167,10 +166,9 @@ describe('reportPeriod', () => {
   });
 });
 
-const labels: PayoutReportLabels = {
-  title: 'Abrechnung',
+const labels: ActivityReportLabels = {
+  title: 'Einsätze',
   period: 'Zeitraum',
-  sheetName: 'Abrechnung',
   summary: 'Übersicht',
   person: 'Person',
   mainTrainer: 'Trainer',
@@ -196,19 +194,10 @@ const labels: PayoutReportLabels = {
 };
 
 describe('downloads', () => {
-  const report = buildPayoutReport(base());
-
-  it('puts the summary with totals on top of the sheet', () => {
-    const sheet = payoutReportSheet(report, labels);
-    expect(sheet.rows[1]).toEqual(['Zeitraum', '01.03.2026 – 31.03.2026']);
-    expect(sheet.rows[4]).toEqual(['Person', 'Trainer', 'Hilfstrainer', 'Coaching-Tage']);
-    expect(sheet.rows[5]).toEqual(['Beispiel Ben', 1, 1, 0.5]);
-    expect(sheet.rows[8]).toEqual(['Total', 3, 1, 3.5]);
-    expect(sheet.rows.some((r) => r[4] === 'kein Check-in')).toBe(true);
-  });
+  const report = buildActivityReport(base());
 
   it('builds a PDF with the summary', () => {
-    const doc = payoutReportPdf(report, labels, '14.11.2026 21:00');
+    const doc = activityReportPdf(report, labels, '14.11.2026 21:00');
     expect(doc.tables[0].rows[0]).toEqual(['Beispiel Ben', '1', '1', '0.5']);
     expect(doc.tables[0].footer).toEqual(['Total', '3', '1', '3.5']);
     const text = new TextDecoder('latin1').decode(buildPdf(doc));

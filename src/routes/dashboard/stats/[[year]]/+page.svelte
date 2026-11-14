@@ -3,7 +3,7 @@
   import {
     faChevronLeft,
     faChevronRight,
-    faFileInvoiceDollar
+    faClipboardList
   } from '@fortawesome/free-solid-svg-icons';
   import { goto } from '$app/navigation';
   import type { PageData } from './$types';
@@ -111,7 +111,7 @@
   <StatsSection title={$_('page.stats.trainerWorkload')}>
     {#snippet actions()}
       {#if data.userProfile?.role === 'admin'}
-        <!-- The payout report replaced the trainer download -->
+        <!-- The activity report (Einsätze) replaced the trainer download -->
         <a
           class="btn btn-sm preset-tonal-surface"
           href={yearmode === 'ALL'
@@ -119,7 +119,7 @@
             : `/dashboard/reports?from=${year}-01-01&to=${year}-12-31`}
           title={$_('page.reports.title')}
         >
-          <Fa icon={faFileInvoiceDollar} />
+          <Fa icon={faClipboardList} />
           <span class="hidden sm:inline">{$_('page.dashboard.reports')}</span>
         </a>
       {/if}

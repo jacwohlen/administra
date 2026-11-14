@@ -1,6 +1,6 @@
-# Abrechnung (payout report)
+# Einsätze (activity report)
 
-Admins open _Abrechnung_ in the avatar menu (`/dashboard/reports`). For a
+Admins open _Einsätze_ in the avatar menu (`/dashboard/reports`). For a
 period (from / to, presets for this year, last year and the half years) it
 shows per person:
 
@@ -9,10 +9,12 @@ shows per person:
 - **Trainings als Hilfstrainer** – dates checked in as assistant
 - **Coaching-Tage** – days coached at events (`event_logs."isCoach"`)
 
-and downloads it as **Excel** (`src/lib/xlsx.ts`) or **PDF**
-(`src/lib/pdf.ts`, a small writer with the standard Helvetica fonts). The
-treasurer pays trainers from it. It replaced the trainer download of the
-statistics page, whose button now opens the report for the year shown.
+and downloads it as a **PDF** (`src/lib/pdf.ts`, a small writer with the
+standard Helvetica fonts): the summary, the dates to check, every training
+with its trainers and every coaching assignment. It replaced the trainer
+download of the statistics page, whose button now opens the report for the
+year shown. The wording stays neutral: what the club does with the numbers
+is not the app's business.
 
 ## What counts
 
@@ -32,5 +34,6 @@ statistics page, whose button now opens the report for the year shown.
   has (after substitutes and swaps) so an admin can add them in the
   check-in.
 
-Everything is computed in the browser under RLS (`src/lib/payoutReport.ts`,
-load in `src/routes/dashboard/reports/+page.ts`); there is no migration.
+Everything is computed in the browser under RLS
+(`src/lib/activityReport.ts`, load in
+`src/routes/dashboard/reports/+page.ts`); there is no migration.

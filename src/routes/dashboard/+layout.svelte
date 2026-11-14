@@ -18,7 +18,7 @@
     faSun,
     faMoon,
     faPlug,
-    faFileInvoiceDollar,
+    faClipboardList,
     faWandMagicSparkles
   } from '@fortawesome/free-solid-svg-icons';
   import type { SubmitFunction } from '$app/forms';
@@ -289,7 +289,7 @@
               class="btn preset-tonal-surface w-full mb-2"
               onclick={() => (popoverOpen = false)}
             >
-              <Fa icon={faFileInvoiceDollar} />
+              <Fa icon={faClipboardList} />
               <span>{$_('page.dashboard.reports')}</span>
             </a>
           {/if}

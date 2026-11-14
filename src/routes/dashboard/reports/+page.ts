@@ -7,7 +7,7 @@ import { endsOnOrAfter } from '#lib/eventUtils.ts';
 import type { TrainingPlanBreak, TrainingPlanSession } from '#lib/models.ts';
 import type { PlanTraining } from '#lib/trainingPlanUtils.ts';
 import {
-  buildPayoutReport,
+  buildActivityReport,
   reportPeriod,
   type ReportCoachLog,
   type ReportEvent,
@@ -15,7 +15,7 @@ import {
   type ReportPerson,
   type ReportTrainerLog,
   type ReportTraining
-} from '#lib/payoutReport.ts';
+} from '#lib/activityReport.ts';
 import type { PageLoad } from './$types';
 
 /** Ids per .in() filter, so the request URL stays short */
@@ -34,7 +34,7 @@ async function byIds<T>(
   return rows;
 }
 
-// Abrechnungsreport: admins only (the treasurer's payouts)
+// Einsätze (activity report): admins only
 export const load: PageLoad = async ({ parent, url }) => {
   const { userProfile } = await parent();
   if (!isAdmin(userProfile)) redirect(303, '/dashboard');
@@ -144,7 +144,7 @@ export const load: PageLoad = async ({ parent, url }) => {
         .returns<ReportPerson[]>()
     );
 
-    const report = buildPayoutReport({
+    const report = buildActivityReport({
       from,
       to,
       today,
@@ -158,7 +158,7 @@ export const load: PageLoad = async ({ parent, url }) => {
     });
     return { from, to, report };
   } catch (e) {
-    console.error('Error loading the payout report:', e);
+    console.error('Error loading the activity report:', e);
     error(500, (e as { message?: string }).message ?? 'Error loading the report');
   }
 };

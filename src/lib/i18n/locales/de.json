@@ -24,7 +24,7 @@
       "assistant": "Daten-Assistent",
       "integrations": "Integrationen",
       "integrationsAlert": "Eine Integration braucht deine Aufmerksamkeit",
-      "reports": "Abrechnung"
+      "reports": "Einsätze"
     },
     "pending": {
       "title": "Zugriff ausstehend",
@@ -1775,7 +1775,7 @@
       }
     },
     "reports": {
-      "title": "Abrechnung Trainer und Coaches",
+      "title": "Einsätze von Trainern und Coaches",
       "intro": "Pro Person: Trainings als Haupttrainer, als Hilfstrainer und Coaching-Tage an Anlässen im gewählten Zeitraum. Gezählt wird, wer beim Check-in als Trainer eingetragen ist, also auch Vertretungen und getauschte Daten.",
       "to": "Bis",
       "show": "Anzeigen",
@@ -1783,11 +1783,9 @@
       "lastYear": "Letztes Jahr",
       "firstHalf": "1. Halbjahr",
       "secondHalf": "2. Halbjahr",
-      "downloadExcel": "Excel",
-      "downloadPdf": "PDF",
+      "downloadPdf": "PDF herunterladen",
       "downloadError": "Der Report konnte nicht erstellt werden",
       "empty": "In diesem Zeitraum hat niemand trainiert oder gecoacht.",
-      "sheetName": "Abrechnung",
       "period": "Zeitraum",
       "summary": "Übersicht pro Person",
       "person": "Person",

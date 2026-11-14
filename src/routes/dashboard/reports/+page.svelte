@@ -1,20 +1,18 @@
 <script lang="ts">
   import type { PageData } from './$types';
   import Fa from 'svelte-fa';
-  import { faFileExcel, faFilePdf } from '@fortawesome/free-solid-svg-icons';
+  import { faFilePdf } from '@fortawesome/free-solid-svg-icons';
   import { _ } from 'svelte-i18n';
   import { goto } from '$app/navigation';
   import dayjs from 'dayjs';
-  import { buildXlsx, XLSX_MIME } from '#lib/xlsx.ts';
   import { buildPdf, PDF_MIME } from '#lib/pdf.ts';
   import {
     formatDays,
-    payoutReportPdf,
-    payoutReportSheet,
+    activityReportPdf,
     periodLabel,
     swissDate,
-    type PayoutReportLabels
-  } from '#lib/payoutReport.ts';
+    type ActivityReportLabels
+  } from '#lib/activityReport.ts';
   import { toaster } from '#lib/toast.ts';
 
   let { data }: { data: PageData } = $props();
@@ -42,13 +40,12 @@
     goto(`?from=${f}&to=${t}`);
   }
 
-  function labels(): PayoutReportLabels {
+  function labels(): ActivityReportLabels {
     const t = (key: string, values?: Record<string, string | number>) =>
       $_(`page.reports.${key}`, values ? { values } : undefined);
     return {
       title: t('title'),
       period: t('period'),
-      sheetName: t('sheetName'),
       summary: t('summary'),
       person: t('person'),
       mainTrainer: t('mainTrainer'),
@@ -78,24 +75,15 @@
     const url = URL.createObjectURL(new Blob([bytes], { type: mime }));
     const a = document.createElement('a');
     a.href = url;
-    a.download = `abrechnung_${report.from}_${report.to}.${ext}`;
+    a.download = `einsaetze_${report.from}_${report.to}.${ext}`;
     a.click();
     URL.revokeObjectURL(url);
-  }
-
-  function downloadExcel() {
-    try {
-      save(buildXlsx(payoutReportSheet(report, labels())), XLSX_MIME, 'xlsx');
-    } catch (e) {
-      console.error('Excel export failed:', e);
-      toaster.error({ title: $_('page.reports.downloadError') });
-    }
   }
 
   function downloadPdf() {
     try {
       const created = dayjs().format('DD.MM.YYYY HH:mm');
-      save(buildPdf(payoutReportPdf(report, labels(), created)), PDF_MIME, 'pdf');
+      save(buildPdf(activityReportPdf(report, labels(), created)), PDF_MIME, 'pdf');
     } catch (e) {
       console.error('PDF export failed:', e);
       toaster.error({ title: $_('page.reports.downloadError') });
@@ -143,14 +131,6 @@
 <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
   <h2 class="h4 mb-0!">{periodLabel(report.from, report.to)}</h2>
   <div class="flex gap-2">
-    <button
-      class="btn btn-sm preset-tonal-surface"
-      onclick={downloadExcel}
-      disabled={report.rows.length === 0}
-    >
-      <Fa icon={faFileExcel} />
-      <span>{$_('page.reports.downloadExcel')}</span>
-    </button>
     <button
       class="btn btn-sm preset-tonal-surface"
       onclick={downloadPdf}
