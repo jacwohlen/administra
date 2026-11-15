@@ -9,16 +9,33 @@
 import type { TrainingPlanBreak, TrainingPlanSession } from './models';
 import { addDays, parseTime, zurichToday } from './calendarFeed';
 import { buildPlan, type PlanTraining } from './trainingPlanUtils';
+import {
+  buildActivityReport,
+  type CheckReason,
+  type ReportEvent,
+  type ReportEventLog,
+  type ReportHeldSession,
+  type ReportPerson,
+  type ReportTrainerLog,
+  type ReportTraining
+} from './activityReport';
 
 /** What a key may read; the database knows the same list (api_keys.scopes) */
-export const API_SCOPES = ['training_plan:read', 'event_participants:read'] as const;
+export const API_SCOPES = [
+  'training_plan:read',
+  'event_participants:read',
+  'activity_report:read'
+] as const;
 export type ApiScope = (typeof API_SCOPES)[number];
 
 /**
  * Scopes that give personal data: a key with one of them is for servers
  * only and lists no websites (the database refuses origins for it)
  */
-export const SERVER_ONLY_SCOPES: readonly ApiScope[] = ['event_participants:read'];
+export const SERVER_ONLY_SCOPES: readonly ApiScope[] = [
+  'event_participants:read',
+  'activity_report:read'
+];
 
 /** Whether a key with these scopes may list websites (CORS) */
 export function scopesAllowOrigins(scopes: readonly string[]): boolean {
@@ -418,6 +435,221 @@ export function buildApiEventParticipants(
         registered: p.registered === true,
         attended: p.attended === true,
         coach: p.coach === true
+      }))
+  };
+}
+
+// ----- Einsätze (activity report) -----
+
+export type ActivityReportQuery = DateRange & { memberId: number | null };
+
+/**
+ * from, to and member of GET /api/v1/reports/activity: from defaults to
+ * 1 January of this year (Europe/Zurich), to to 31 December of from's year;
+ * member: one person's report
+ */
+export function parseActivityReportQuery(
+  params: URLSearchParams,
+  now: Date
+): { ok: true; query: ActivityReportQuery } | { ok: false; message: string } {
+  const from = params.get('from') ?? `${zurichToday(now).slice(0, 4)}-01-01`;
+  if (!validDate(from)) return { ok: false, message: 'from must be a date (YYYY-MM-DD)' };
+  const defaults = new URLSearchParams({
+    from,
+    to: params.get('to') ?? `${from.slice(0, 4)}-12-31`
+  });
+  const range = parseRange(defaults, from, MAX_RANGE_DAYS);
+  if (!range.ok) return range;
+
+  let memberId: number | null = null;
+  const member = params.get('member');
+  if (member != null) {
+    memberId = parseEventId(member);
+    if (memberId == null) return { ok: false, message: 'member must be a member id' };
+  }
+  return { ok: true, query: { ...range.range, memberId } };
+}
+
+/** What api_activity_report(p_key, p_from, p_to, p_member_id) returns for a valid key */
+export interface ApiActivityReportData {
+  allowed_origins: string[];
+  /** The member asked for; null without one, or when there is no such member */
+  member: ReportPerson | null;
+  members: ReportPerson[];
+  trainings: (ReportTraining & PlanTraining)[];
+  planned_ids: number[];
+  trainer_logs: ReportTrainerLog[];
+  held: ReportHeldSession[];
+  events: ReportEvent[];
+  event_logs: ReportEventLog[];
+  sessions: Omit<TrainingPlanSession, 'notes' | 'updated_at'>[];
+  breaks: TrainingPlanBreak[];
+}
+
+export interface ApiPerson {
+  /** The member's id in Alleda (the Webling id for members from Webling) */
+  memberId: number;
+  firstname: string;
+  lastname: string;
+}
+
+export interface ApiActivityPerson extends ApiPerson {
+  /** Trainings checked in as main trainer */
+  mainTrainer: number;
+  /** Trainings checked in as assistant */
+  assistant: number;
+  /** Days coached at events, a half day 0.5 */
+  coachingDays: number;
+}
+
+export interface ApiActivityTraining {
+  date: string;
+  trainingId: number;
+  title: string;
+  section: string | null;
+  mainTrainers: ApiPerson[];
+  assistants: ApiPerson[];
+  /** Checked in, without the trainers */
+  participants: number;
+  lessonPlan: boolean;
+}
+
+export interface ApiActivityCoaching {
+  eventId: number;
+  title: string;
+  /** First and last day within the period */
+  from: string;
+  to: string;
+  /** Checked in, without the coaches */
+  participants: number;
+  coaches: (ApiPerson & { days: number })[];
+}
+
+export interface ApiActivityCheck {
+  date: string;
+  trainingId: number;
+  title: string;
+  section: string | null;
+  /** The trainer the plan names (after substitutes and swaps); null when open */
+  plannedTrainer: ApiPerson | null;
+  reason: CheckReason;
+}
+
+/** The answer of GET /api/v1/reports/activity */
+export interface ApiActivityReport {
+  from: string;
+  to: string;
+  timezone: 'Europe/Zurich';
+  /** The person asked for (member=…); null: the whole club */
+  member: ApiPerson | null;
+  people: ApiActivityPerson[];
+  totals: { mainTrainer: number; assistant: number; coachingDays: number };
+  trainings: ApiActivityTraining[];
+  coaching: ApiActivityCoaching[];
+  checks: ApiActivityCheck[];
+}
+
+/**
+ * The Einsätze report as the admin page computes it (buildActivityReport()
+ * on the same data), so the numbers match the page and its PDF. With a
+ * member, only that person: their counts, the trainings they were a
+ * trainer at, the events they coached and the dates planned for them.
+ */
+export function buildApiActivityReport(
+  data: ApiActivityReportData,
+  query: ActivityReportQuery,
+  today: string
+): ApiActivityReport {
+  const planned = new Set(data.planned_ids ?? []);
+  const trainings = data.trainings ?? [];
+  const sessions = (data.sessions ?? []).map((s) => ({
+    ...s,
+    notes: null,
+    updated_at: ''
+  })) as TrainingPlanSession[];
+  const report = buildActivityReport({
+    from: query.from,
+    to: query.to,
+    today,
+    members: data.members ?? [],
+    trainings,
+    trainerLogs: data.trainer_logs ?? [],
+    held: data.held ?? [],
+    events: data.events ?? [],
+    eventLogs: data.event_logs ?? [],
+    plan: {
+      trainings: trainings.filter((t) => planned.has(t.id)),
+      sessions,
+      breaks: data.breaks ?? []
+    }
+  });
+
+  const members = new Map((data.members ?? []).map((m) => [m.id, m]));
+  if (data.member) members.set(data.member.id, data.member);
+  const person = (id: number): ApiPerson => {
+    const m = members.get(id);
+    return { memberId: id, firstname: m?.firstname ?? '', lastname: m?.lastname ?? '' };
+  };
+  const only = query.memberId;
+  const mine = (ids: number[]) => only == null || ids.includes(only);
+
+  const people: ApiActivityPerson[] = report.rows
+    .filter((r) => only == null || r.memberId === only)
+    .map((r) => ({
+      ...person(r.memberId),
+      mainTrainer: r.mainTrainer,
+      assistant: r.assistant,
+      coachingDays: r.coachingDays
+    }));
+  if (only != null && people.length === 0) {
+    people.push({ ...person(only), mainTrainer: 0, assistant: 0, coachingDays: 0 });
+  }
+
+  return {
+    from: query.from,
+    to: query.to,
+    timezone: 'Europe/Zurich',
+    member: only == null ? null : person(only),
+    people,
+    totals:
+      only == null
+        ? report.totals
+        : {
+            mainTrainer: people[0].mainTrainer,
+            assistant: people[0].assistant,
+            coachingDays: people[0].coachingDays
+          },
+    trainings: report.trainings
+      .filter((t) => mine([...t.mainTrainerIds, ...t.assistantIds]))
+      .map((t) => ({
+        date: t.date,
+        trainingId: t.trainingId,
+        title: t.training,
+        section: t.section || null,
+        mainTrainers: t.mainTrainerIds.map(person),
+        assistants: t.assistantIds.map(person),
+        participants: t.participants,
+        lessonPlan: t.lessonPlan
+      })),
+    coaching: report.coaching
+      .filter((c) => mine(c.coaches.map((x) => x.memberId)))
+      .map((c) => ({
+        eventId: c.eventId,
+        title: c.event,
+        from: c.date,
+        to: c.dateTo,
+        participants: c.participants,
+        coaches: c.coaches.map((x) => ({ ...person(x.memberId), days: x.days }))
+      })),
+    checks: report.checks
+      .filter((c) => only == null || c.plannedTrainerId === only)
+      .map((c) => ({
+        date: c.date,
+        trainingId: c.trainingId,
+        title: c.training,
+        section: c.section || null,
+        plannedTrainer: c.plannedTrainerId == null ? null : person(c.plannedTrainerId),
+        reason: c.reason
       }))
   };
 }

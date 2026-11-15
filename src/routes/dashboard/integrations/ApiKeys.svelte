@@ -37,11 +37,13 @@
   /** The endpoint each scope opens, for the list and the example */
   const SCOPE_PATHS: Record<ApiScope, string[]> = {
     'training_plan:read': ['/api/v1/training-plan'],
-    'event_participants:read': ['/api/v1/events', '/api/v1/events/{id}/participants']
+    'event_participants:read': ['/api/v1/events', '/api/v1/events/{id}/participants'],
+    'activity_report:read': ['/api/v1/reports/activity']
   };
   const SCOPE_LABELS: Record<ApiScope, string> = {
     'training_plan:read': 'scopeTrainingPlan',
-    'event_participants:read': 'scopeEventParticipants'
+    'event_participants:read': 'scopeEventParticipants',
+    'activity_report:read': 'scopeActivityReport'
   };
 
   let draft = $state<Draft | null>(null);

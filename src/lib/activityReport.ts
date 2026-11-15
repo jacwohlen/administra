@@ -98,10 +98,14 @@ export interface ActivityRow {
 
 export interface TrainingDetailRow {
   date: string;
+  trainingId: number;
   training: string;
   section: string;
   mainTrainers: string[];
   assistants: string[];
+  /** The member ids of mainTrainers / assistants, in the same order */
+  mainTrainerIds: number[];
+  assistantIds: number[];
   /** Checked in without the trainers */
   participants: number;
   lessonPlan: boolean;
@@ -112,11 +116,12 @@ export interface CoachingDetailRow {
   date: string;
   /** Last day within the period */
   dateTo: string;
+  eventId: number;
   event: string;
   /** Checked in without the coaches */
   participants: number;
   /** Each coach with the days counted for them */
-  coaches: { name: string; days: number }[];
+  coaches: { memberId: number; name: string; days: number }[];
 }
 
 export type CheckReason = 'no_main_trainer' | 'no_checkin';
@@ -124,10 +129,12 @@ export type CheckReason = 'no_main_trainer' | 'no_checkin';
 /** A date the plan expected a trainer for that the check-in does not show */
 export interface CheckRow {
   date: string;
+  trainingId: number;
   training: string;
   section: string;
   /** The trainer the plan names (after substitutes and swaps), '' when open */
   plannedTrainer: string;
+  plannedTrainerId: number | null;
   reason: CheckReason;
 }
 
@@ -147,6 +154,9 @@ export function personName(p: ReportPerson | undefined, id: number): string {
 }
 
 const byName = (a: string, b: string) => a.localeCompare(b, 'de');
+
+type Named = { id: number; name: string };
+const byPerson = (a: Named, b: Named) => byName(a.name, b.name) || a.id - b.id;
 
 /** A coach's share of one event day: 0.5 for a half day, else 1 */
 export function coachDayFactor(coachDay: string | null | undefined): number {
@@ -171,7 +181,11 @@ export function buildActivityReport(input: ReportInput): ActivityReport {
   };
 
   // Trainings: one count per person, training and date, by the check-in role
-  const sessions = new Map<string, TrainingDetailRow>();
+  type HeldRow = Omit<
+    TrainingDetailRow,
+    'mainTrainers' | 'assistants' | 'mainTrainerIds' | 'assistantIds'
+  > & { main: Named[]; assist: Named[] };
+  const sessions = new Map<string, HeldRow>();
   const session = (trainingId: number, date: string) => {
     const key = `${trainingId}|${date}`;
     let s = sessions.get(key);
@@ -179,10 +193,11 @@ export function buildActivityReport(input: ReportInput): ActivityReport {
       const t = trainings.get(trainingId);
       s = {
         date,
+        trainingId,
         training: t?.title ?? `#${trainingId}`,
         section: t?.section ?? '',
-        mainTrainers: [],
-        assistants: [],
+        main: [],
+        assist: [],
         participants: 0,
         lessonPlan: false
       };
@@ -209,7 +224,10 @@ export function buildActivityReport(input: ReportInput): ActivityReport {
     else r.assistant++;
 
     const s = session(l.trainingId, l.date);
-    (l.trainerRole === 'main_trainer' ? s.mainTrainers : s.assistants).push(name(l.memberId));
+    (l.trainerRole === 'main_trainer' ? s.main : s.assist).push({
+      id: l.memberId,
+      name: name(l.memberId)
+    });
   }
 
   // Coaching: every event day within the period, overlapping events on the
@@ -247,15 +265,22 @@ export function buildActivityReport(input: ReportInput): ActivityReport {
     .sort((a, b) => byName(a.name, b.name) || a.memberId - b.memberId);
 
   const trainingRows = [...sessions.values()]
-    .map((s): TrainingDetailRow => ({
-      date: s.date,
-      training: s.training,
-      section: s.section,
-      mainTrainers: s.mainTrainers.sort(byName),
-      assistants: s.assistants.sort(byName),
-      participants: s.participants,
-      lessonPlan: s.lessonPlan
-    }))
+    .map((s): TrainingDetailRow => {
+      const main = s.main.sort(byPerson);
+      const assist = s.assist.sort(byPerson);
+      return {
+        date: s.date,
+        trainingId: s.trainingId,
+        training: s.training,
+        section: s.section,
+        mainTrainers: main.map((p) => p.name),
+        assistants: assist.map((p) => p.name),
+        mainTrainerIds: main.map((p) => p.id),
+        assistantIds: assist.map((p) => p.id),
+        participants: s.participants,
+        lessonPlan: s.lessonPlan
+      };
+    })
     .sort(
       (a, b) =>
         a.date.localeCompare(b.date) ||
@@ -270,11 +295,12 @@ export function buildActivityReport(input: ReportInput): ActivityReport {
       return {
         date: e.date < from ? from : e.date,
         dateTo: end > to ? to : end,
+        eventId,
         event: e.title,
         participants: participantsByEvent.get(eventId)?.size ?? 0,
         coaches: [...coaches.entries()]
-          .map(([memberId, days]) => ({ name: name(memberId), days }))
-          .sort((a, b) => byName(a.name, b.name))
+          .map(([memberId, days]) => ({ memberId, name: name(memberId), days }))
+          .sort((a, b) => byName(a.name, b.name) || a.memberId - b.memberId)
       };
     })
     .sort((a, b) => a.date.localeCompare(b.date) || byName(a.event, b.event));
@@ -328,9 +354,11 @@ function planChecks(input: ReportInput, name: (id: number) => string): CheckRow[
     if (!checkedIn && r.trainerId == null) continue;
     checks.push({
       date: r.date,
+      trainingId: r.training.id,
       training: r.training.title,
       section: r.training.section ?? '',
       plannedTrainer: r.trainerId != null ? name(r.trainerId) : '',
+      plannedTrainerId: r.trainerId ?? null,
       reason: checkedIn ? 'no_main_trainer' : 'no_checkin'
     });
   }

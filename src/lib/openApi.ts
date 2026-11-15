@@ -22,7 +22,9 @@ const SCOPE_TEXT: Record<ApiScope, string> = {
   'training_plan:read':
     '`GET /api/v1/training-plan`: planned trainings, dates, who leads, topic, cancellations, holidays',
   'event_participants:read':
-    '`GET /api/v1/events`, `GET /api/v1/events/{eventId}/participants`: events with date, place and counts, and per event the names of who took part. Personal data: such a key is for servers only (it lists no websites)'
+    '`GET /api/v1/events`, `GET /api/v1/events/{eventId}/participants`: events with date, place and counts, and per event the names of who took part. Personal data: such a key is for servers only (it lists no websites)',
+  'activity_report:read':
+    '`GET /api/v1/reports/activity`: the Einsätze report, per person and period the trainings as main trainer and assistant and the coaching days, for the club or one person. Personal data: such a key is for servers only (it lists no websites)'
 };
 
 const DATE = { type: 'string', format: 'date', examples: ['2026-11-04'] };
@@ -120,14 +122,15 @@ not stored.
 its key (CORS); requests from other websites are refused with \`403\`.
 Servers and \`curl\` send no \`Origin\` and are not affected.
 
-**Personal data.** A key with \`event_participants:read\` lists no websites,
+**Personal data.** A key with \`event_participants:read\` or
+\`activity_report:read\` lists no websites,
 so every request from a browser is refused (\`403\`); keep it on the
 program's server like a password. Trying it on this page is possible all the
 same: it is Alleda's own page, not another website.
 
 **Caching.** Training plan answers may be kept for five minutes
 (\`Cache-Control: private, max-age=300\`), by browsers and the website's
-server, not by shared caches. Event answers are never kept
+server, not by shared caches. Event and report answers are never kept
 (\`Cache-Control: no-store\`).`;
 
 /** The OpenAPI document; origin: the instance's, so "Try it" calls it */
@@ -151,6 +154,11 @@ export function openApiDocument(origin: string): Record<string, unknown> {
         name: 'Events',
         description:
           'Events and who took part, e.g. for a program writing reports. Personal data: keys for servers only.'
+      },
+      {
+        name: 'Reports',
+        description:
+          'The Einsätze report as admins see it in Alleda, e.g. for the treasurer. Personal data: keys for servers only.'
       }
     ],
     paths: {
@@ -280,6 +288,62 @@ Scope: \`event_participants:read\`.`,
             },
             ...EVENT_ERRORS,
             '404': errorResponse('No event with this id', 'not_found', 'No event with this id.')
+          }
+        }
+      },
+      '/reports/activity': {
+        get: {
+          tags: ['Reports'],
+          operationId: 'getActivityReport',
+          summary: 'Einsätze report for a period',
+          description: `Per person: trainings checked in as main trainer, as assistant, and days coached at events (every event day in the period, a half day 0.5; two events on one day count once). Below, every training held with its trainers, every event with coaches, and planned dates whose check-in shows no main trainer (\`checks\`, not counted).
+Computed exactly like the report admins open in Alleda (*Einsätze*) and its PDF, so the numbers match.
+
+With \`member\`: only that person, their counts, the trainings they were a trainer at, the events they coached and the dates planned for them.
+
+Only ids and names: never e-mail, phone, address, birthday or notes.
+
+Scope: \`activity_report:read\`.`,
+          parameters: [
+            {
+              name: 'from',
+              in: 'query',
+              description:
+                'First date, `YYYY-MM-DD`. Default: 1 January of this year (Europe/Zurich).',
+              schema: PARAM_DATE
+            },
+            {
+              name: 'to',
+              in: 'query',
+              description: `Last date, inclusive. Default: 31 December of \`from\`'s year; at most ${MAX_RANGE_DAYS - 1} days after \`from\`.`,
+              schema: PARAM_DATE
+            },
+            {
+              name: 'member',
+              in: 'query',
+              description:
+                "One person's report: the member's id (`memberId` in the answer, the Webling id for members from Webling). Default: the whole club.",
+              schema: { type: 'integer', minimum: 1 }
+            }
+          ],
+          responses: {
+            '200': {
+              description: 'The report for the period',
+              headers: { 'Cache-Control': NO_STORE },
+              content: {
+                'application/json': {
+                  schema: { $ref: '#/components/schemas/ActivityReport' },
+                  example: ACTIVITY_REPORT_EXAMPLE
+                }
+              }
+            },
+            ...EVENT_ERRORS,
+            '503': errorResponse(
+              'The database did not answer; retry later',
+              'unavailable',
+              'The report is temporarily unavailable.'
+            ),
+            '404': errorResponse('No member with this id', 'not_found', 'No member with this id.')
           }
         }
       }
@@ -469,6 +533,165 @@ Scope: \`event_participants:read\`.`,
             coach: { type: 'boolean', description: 'Present as coach / leader' }
           }
         },
+        Person: {
+          type: 'object',
+          required: ['memberId', 'firstname', 'lastname'],
+          properties: {
+            memberId: {
+              type: 'integer',
+              description: "The member's id in Alleda (the Webling id for members from Webling)",
+              examples: [4711]
+            },
+            firstname: { type: 'string', examples: ['Anna'] },
+            lastname: { type: 'string', examples: ['Muster'] }
+          }
+        },
+        ActivityReport: {
+          type: 'object',
+          required: [
+            'from',
+            'to',
+            'timezone',
+            'member',
+            'people',
+            'totals',
+            'trainings',
+            'coaching',
+            'checks'
+          ],
+          properties: {
+            from: { ...DATE, description: 'First date of the period' },
+            to: { ...DATE, description: 'Last date of the period, inclusive' },
+            timezone: { type: 'string', const: 'Europe/Zurich' },
+            member: {
+              oneOf: [{ $ref: '#/components/schemas/Person' }, { type: 'null' }],
+              description: 'The person asked for (`member`); `null`: the whole club'
+            },
+            people: {
+              type: 'array',
+              description:
+                'Everyone with a training or coaching day in the period, by last and first name (with `member`: that person, with zeros when nothing)',
+              items: { $ref: '#/components/schemas/ActivityPerson' }
+            },
+            totals: {
+              type: 'object',
+              required: ['mainTrainer', 'assistant', 'coachingDays'],
+              properties: {
+                mainTrainer: { type: 'integer' },
+                assistant: { type: 'integer' },
+                coachingDays: { type: 'number' }
+              }
+            },
+            trainings: {
+              type: 'array',
+              description: 'Every training held in the period (with `member`: theirs), by date',
+              items: { $ref: '#/components/schemas/ActivityTraining' }
+            },
+            coaching: {
+              type: 'array',
+              description:
+                'Every event with coaches in the period (with `member`: theirs), by date',
+              items: { $ref: '#/components/schemas/ActivityCoaching' }
+            },
+            checks: {
+              type: 'array',
+              description:
+                'Planned dates up to today, not cancelled, whose check-in shows no main trainer; not counted (with `member`: those planned for them)',
+              items: { $ref: '#/components/schemas/ActivityCheck' }
+            }
+          }
+        },
+        ActivityPerson: {
+          allOf: [
+            { $ref: '#/components/schemas/Person' },
+            {
+              type: 'object',
+              required: ['mainTrainer', 'assistant', 'coachingDays'],
+              properties: {
+                mainTrainer: {
+                  type: 'integer',
+                  description:
+                    'Trainings checked in as main trainer (substitutes count for who came)'
+                },
+                assistant: { type: 'integer', description: 'Trainings checked in as assistant' },
+                coachingDays: {
+                  type: 'number',
+                  description: 'Days coached at events, a half day 0.5',
+                  examples: [2.5]
+                }
+              }
+            }
+          ]
+        },
+        ActivityTraining: {
+          type: 'object',
+          required: [
+            'date',
+            'trainingId',
+            'title',
+            'section',
+            'mainTrainers',
+            'assistants',
+            'participants',
+            'lessonPlan'
+          ],
+          properties: {
+            date: DATE,
+            trainingId: { type: 'integer', examples: [26] },
+            title: { type: 'string', examples: ['Judo Randori'] },
+            section: { type: ['string', 'null'], examples: ['Judo'] },
+            mainTrainers: { type: 'array', items: { $ref: '#/components/schemas/Person' } },
+            assistants: { type: 'array', items: { $ref: '#/components/schemas/Person' } },
+            participants: { type: 'integer', description: 'Checked in, without the trainers' },
+            lessonPlan: { type: 'boolean', description: 'A lesson plan was written for the date' }
+          }
+        },
+        ActivityCoaching: {
+          type: 'object',
+          required: ['eventId', 'title', 'from', 'to', 'participants', 'coaches'],
+          properties: {
+            eventId: { type: 'integer', examples: [10000005] },
+            title: { type: 'string', examples: ['Sommerlager'] },
+            from: { ...DATE, description: 'First day within the period' },
+            to: { ...DATE, description: 'Last day within the period' },
+            participants: { type: 'integer', description: 'Checked in, without the coaches' },
+            coaches: {
+              type: 'array',
+              items: {
+                allOf: [
+                  { $ref: '#/components/schemas/Person' },
+                  {
+                    type: 'object',
+                    required: ['days'],
+                    properties: {
+                      days: { type: 'number', description: 'Days counted at this event' }
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        ActivityCheck: {
+          type: 'object',
+          required: ['date', 'trainingId', 'title', 'section', 'plannedTrainer', 'reason'],
+          properties: {
+            date: DATE,
+            trainingId: { type: 'integer', examples: [26] },
+            title: { type: 'string', examples: ['Judo Randori'] },
+            section: { type: ['string', 'null'], examples: ['Judo'] },
+            plannedTrainer: {
+              oneOf: [{ $ref: '#/components/schemas/Person' }, { type: 'null' }],
+              description: 'Who the plan names (after substitutes and swaps); `null` when open'
+            },
+            reason: {
+              type: 'string',
+              enum: ['no_main_trainer', 'no_checkin'],
+              description:
+                '`no_main_trainer`: held, nobody checked in as main trainer; `no_checkin`: planned, nobody checked in'
+            }
+          }
+        },
         Error: {
           type: 'object',
           required: ['error'],
@@ -570,3 +793,50 @@ const PARTICIPANTS_EXAMPLE = [
     coach: false
   }
 ];
+
+const ANNA = { memberId: 4711, firstname: 'Anna', lastname: 'Muster' };
+const BENI = { memberId: 4712, firstname: 'Beni', lastname: 'Beispiel' };
+
+const ACTIVITY_REPORT_EXAMPLE = {
+  from: '2026-01-01',
+  to: '2026-12-31',
+  timezone: 'Europe/Zurich',
+  member: null,
+  people: [
+    { ...BENI, mainTrainer: 0, assistant: 31, coachingDays: 0.5 },
+    { ...ANNA, mainTrainer: 38, assistant: 2, coachingDays: 5 }
+  ],
+  totals: { mainTrainer: 38, assistant: 33, coachingDays: 5.5 },
+  trainings: [
+    {
+      date: '2026-01-07',
+      trainingId: 26,
+      title: 'Judo Randori',
+      section: 'Judo',
+      mainTrainers: [ANNA],
+      assistants: [BENI],
+      participants: 14,
+      lessonPlan: true
+    }
+  ],
+  coaching: [
+    {
+      eventId: 10000005,
+      title: 'Sommerlager',
+      from: '2026-07-06',
+      to: '2026-07-10',
+      participants: 22,
+      coaches: [{ ...ANNA, days: 5 }]
+    }
+  ],
+  checks: [
+    {
+      date: '2026-03-12',
+      trainingId: 26,
+      title: 'Judo Randori',
+      section: 'Judo',
+      plannedTrainer: ANNA,
+      reason: 'no_main_trainer'
+    }
+  ]
+};
