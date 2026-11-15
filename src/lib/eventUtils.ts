@@ -1,4 +1,5 @@
 import dayjs from 'dayjs';
+import type { CoachDay } from './models.ts';
 
 // ----- Days of an event -----
 
@@ -48,6 +49,46 @@ export function eventDays(event: EventSpan, from: string, to: string): string[] 
     d = d.add(1, 'day');
   }
   return days;
+}
+
+// ----- Coaching days -----
+
+/** What one coached event day counts: 1 for a full day, 0.5 for a half day. */
+export function coachDayValue(coachDay: CoachDay | null | undefined): number {
+  return coachDay === 'half' ? 0.5 : 1;
+}
+
+/** A coach's row of event_logs with its event's days */
+export interface CoachingEntry {
+  coachDay: CoachDay | null | undefined;
+  event: EventSpan;
+}
+
+/**
+ * Coached days between from and to (inclusive), full and half days counted
+ * apart: every day of a multi-day event inside the range is one day of the
+ * kind the coach's row says. A day coached at two events counts once, as a
+ * full day if either was (as the trainer payout report counts). days is the
+ * sum (a half day counts 0.5).
+ */
+export function coachingDayCounts(
+  entries: CoachingEntry[],
+  from: string,
+  to: string
+): { full: number; half: number; days: number } {
+  const byDay = new Map<string, number>();
+  for (const { coachDay, event } of entries) {
+    for (const day of eventDays(event, from, to)) {
+      byDay.set(day, Math.max(byDay.get(day) ?? 0, coachDayValue(coachDay)));
+    }
+  }
+  let full = 0;
+  let half = 0;
+  for (const value of byDay.values()) {
+    if (value === 1) full++;
+    else half++;
+  }
+  return { full, half, days: full + half / 2 };
 }
 
 /**
@@ -201,4 +242,32 @@ export function eventDateInput(
     timeFrom: allDay ? '' : (event.timeFrom ?? ''),
     timeTo: allDay ? '' : (event.timeTo ?? '')
   };
+}
+
+// ----- Check-in list on the event page -----
+
+/** What the check-in list needs of a participant */
+export interface CheckinPerson {
+  lastname: string;
+  firstname: string;
+  attended: boolean;
+}
+
+/**
+ * Order of the check-in list, as on the training check-in: who attended
+ * first, then by last and first name.
+ */
+export function compareCheckinPeople(a: CheckinPerson, b: CheckinPerson): number {
+  if (a.attended !== b.attended) return a.attended ? -1 : 1;
+  return a.lastname.localeCompare(b.lastname, 'de') || a.firstname.localeCompare(b.firstname, 'de');
+}
+
+/**
+ * The search over the list: every word must start a last or first name
+ * ("mül an" finds Anna Müller). An empty search keeps everyone.
+ */
+export function matchesCheckinSearch(person: CheckinPerson, search: string): boolean {
+  const words = search.toLocaleLowerCase('de').split(/\s+/).filter(Boolean);
+  const names = `${person.lastname} ${person.firstname}`.toLocaleLowerCase('de').split(/\s+/);
+  return words.every((w) => names.some((n) => n.startsWith(w)));
 }

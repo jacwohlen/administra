@@ -363,12 +363,22 @@ export interface EventParticipant {
   notes?: string;
 }
 
+/** A registration on the event page, with its member (the members:memberId join) */
+export interface EventParticipantRow extends EventParticipant {
+  members: Pick<Member, 'id' | 'firstname' | 'lastname' | 'labels' | 'img'> | null;
+}
+
+/** How much of each event day a coach coached (event_logs."coachDay") */
+export type CoachDay = 'full' | 'half';
+
 export interface EventLog {
   id: number;
   eventId: string;
   memberId: string;
   attendedAt: string;
-  isOrganizer: boolean;
+  isCoach: boolean;
+  /** For a coach: a full day (default) or a half day, per day of the event */
+  coachDay: CoachDay;
   notes?: string;
 }
 
@@ -612,18 +622,6 @@ export interface MedalCounts {
   gold: number;
   silver: number;
   bronze: number;
-}
-
-export interface TrainerTrackingRecord {
-  date: string;
-  trainingId: number;
-  trainingTitle: string;
-  section: string;
-  memberId: number;
-  lastname: string;
-  firstname: string;
-  trainerRole: TrainerRole;
-  attendeeCount: number;
 }
 
 /** Row of training_plan_sessions: the TK's plan for one training on one date */

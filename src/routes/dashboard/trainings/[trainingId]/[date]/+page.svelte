@@ -6,6 +6,7 @@
   import ParticipantCard from './ParticipantCard.svelte';
   import BadgeCelebration from '#lib/components/BadgeCelebration.svelte';
   import { compareChecklistMembers } from '#lib/trainingUtils.ts';
+  import { matchesCheckinSearch } from '#lib/eventUtils.ts';
   import Fa from 'svelte-fa';
   import {
     faArrowLeft,
@@ -21,7 +22,7 @@
   import dayjs from 'dayjs';
   import { onMount } from 'svelte';
   import { goto, refreshAll, preloadData } from '$app/navigation';
-  import AddParticipantInputBox from './AddParticipantInputBox.svelte';
+  import CheckinSearch from '#lib/components/CheckinSearch.svelte';
   import { supabaseClient } from '#lib/supabase.ts';
   import { toaster } from '#lib/toast.ts';
   import { _ } from 'svelte-i18n';
@@ -54,22 +55,15 @@
   );
   let hasMainTrainer = $derived(mainTrainers.length > 0);
 
-  let hiIndex = -1;
-
-  const filterData = async () => {
-    filteredData = data.participants.filter((p) => {
-      const s = searchterm.toLowerCase();
-      return p.lastname.toLowerCase().startsWith(s) || p.firstname.toLowerCase().startsWith(s);
-    });
-
-    hiIndex = filteredData.length > 0 && searchterm ? 0 : -1;
-
-    filteredData = filteredData.sort(compareChecklistMembers);
+  // Every word starts a last or first name, as on the event check-in
+  const filterData = () => {
+    filteredData = data.participants
+      .filter((p) => matchesCheckinSearch({ ...p, attended: p.isPresent }, searchterm))
+      .sort(compareChecklistMembers);
   };
 
   function clearSearch() {
     searchterm = '';
-    hiIndex = -1;
     filterData();
   }
 
@@ -144,8 +138,9 @@
   }
 
   async function addParticipant(detail: { member: Member | MMember }) {
-    const foundIndex = filteredData.findIndex((item) => item.id === detail.member.id);
-    if (foundIndex > -1) {
+    const listed = data.participants.find((p) => String(p.id) === String(detail.member.id));
+    if (listed) {
+      if (!listed.isPresent) _changePresence(listed, true, 'attendee');
       return;
     }
     const d = await supabaseClient
@@ -222,18 +217,13 @@
     filterData();
   }
 
-  const navigateList = (e: { key: string }) => {
-    if (e.key === 'ArrowDown' && hiIndex <= filteredData.length - 1) {
-      hiIndex = hiIndex === filteredData.length - 1 ? 0 : hiIndex + 1;
-    } else if (e.key === 'ArrowUp' && hiIndex !== -1) {
-      hiIndex = hiIndex === 0 ? filteredData.length - 1 : hiIndex - 1;
-    } else if (e.key === 'Enter' && data.canWrite) {
-      _changePresence(filteredData[hiIndex], !filteredData[hiIndex].isPresent, 'attendee');
-      clearSearch();
-    } else {
-      return;
-    }
-  };
+  // Enter in the search: the first match changes its presence
+  function toggleFirstMatch(): boolean {
+    const first = filteredData[0];
+    if (!first || !data.canWrite) return false;
+    _changePresence(first, !first.isPresent, 'attendee');
+    return true;
+  }
 
   let planCancelled = $derived(data.plan ? isCancelled(data.plan.session, data.plan.break) : false);
   let planTrainer = $derived(data.plan?.session?.trainer);
@@ -445,51 +435,39 @@
     </div>
   {/if}
 
-  <!-- Search -->
-  <div class="sticky top-0 z-30 bg-surface-50-950 pb-3 -mx-3 px-3 sm:-mx-4 sm:px-4 pt-1">
-    <input
-      class="input"
-      onkeydown={navigateList}
-      type="text"
-      placeholder={$_('page.trainings.searchMembersPlaceholder')}
-      bind:value={searchterm}
-      oninput={filterData}
-      onfocus={() => (animateList = false)}
-      onblur={() => (animateList = true)}
-    />
-  </div>
-
-  <!-- Participant list -->
-  <ul class="flex flex-col gap-2">
-    {#each filteredData as p (p.id)}
-      <div
-        class="item"
-        animate:flip={{ delay: 0, duration: animateList ? 400 : 0, easing: quintInOut }}
-      >
-        <ParticipantCard
-          member={p}
-          badgeEmoji={data.badgeMap[p.id]}
-          grade={data.gradeMap[p.id]?.find((g) => g.section === data.section)}
-          medals={data.medalMap[p.id]}
-          trialAttendedCount={data.trialCountMap[p.id]}
-          trial={inTrial(p.id) ? data.trialMap[p.id] : undefined}
-          date={data.date}
-          onchange={changePresence}
-          onremove={removeParticipant}
-          readonly={!data.canWrite}
-        />
-      </div>
-    {/each}
-    {#if data.canWrite}
-      <li>
+  <!-- Search over the list, which also adds whoever is not on it -->
+  <CheckinSearch
+    bind:value={searchterm}
+    listed={data.participants.map((p) => p.id)}
+    canAdd={data.canWrite}
+    oninput={filterData}
+    onenter={toggleFirstMatch}
+    onadd={addParticipant}
+    onfocuschange={(focused) => (animateList = !focused)}
+  >
+    <!-- Participant list -->
+    <ul class="flex flex-col gap-2">
+      {#each filteredData as p (p.id)}
         <div
-          class="flex items-center gap-4 p-4 rounded-lg preset-tonal-tertiary w-full justify-items-center"
+          class="item"
+          animate:flip={{ delay: 0, duration: animateList ? 400 : 0, easing: quintInOut }}
         >
-          <AddParticipantInputBox onadd={addParticipant} />
+          <ParticipantCard
+            member={p}
+            badgeEmoji={data.badgeMap[p.id]}
+            grade={data.gradeMap[p.id]?.find((g) => g.section === data.section)}
+            medals={data.medalMap[p.id]}
+            trialAttendedCount={data.trialCountMap[p.id]}
+            trial={inTrial(p.id) ? data.trialMap[p.id] : undefined}
+            date={data.date}
+            onchange={changePresence}
+            onremove={removeParticipant}
+            readonly={!data.canWrite}
+          />
         </div>
-      </li>
-    {/if}
-  </ul>
+      {/each}
+    </ul>
+  </CheckinSearch>
 {:else}
   <LessonPlan
     trainingId={data.trainingId}

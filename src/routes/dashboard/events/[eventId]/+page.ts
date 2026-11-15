@@ -1,6 +1,6 @@
 import { supabaseClient } from '#lib/supabase.ts';
 import { error as err } from '@sveltejs/kit';
-import type { Member, MemberMedal } from '#lib/models.ts';
+import type { EventLog, EventParticipantRow, MemberMedal } from '#lib/models.ts';
 
 export async function load({ params, parent }) {
   // None of these needs the event: asked while the layouts still load
@@ -8,8 +8,7 @@ export async function load({ params, parent }) {
     { event },
     { error: participantsError, data: participantsData },
     { error: logsError, data: logsData },
-    { data: medalsData },
-    { error: membersError, data: membersData }
+    { data: medalsData }
   ] = await Promise.all([
     parent(),
     // Event participants with member details
@@ -43,13 +42,7 @@ export async function load({ params, parent }) {
       )
       .eq('eventId', params.eventId),
     // Medals recorded for this event (tournament placements)
-    supabaseClient.from('member_medals').select('*').eq('eventId', params.eventId),
-    // All members for adding new participants
-    supabaseClient
-      .from('members')
-      .select('*')
-      .is('archivedAt', null)
-      .order('lastname', { ascending: true })
+    supabaseClient.from('member_medals').select('*').eq('eventId', params.eventId)
   ]);
 
   if (participantsError) {
@@ -58,15 +51,13 @@ export async function load({ params, parent }) {
   if (logsError) {
     throw err(404, logsError.message);
   }
-  if (membersError) {
-    throw err(404, membersError.message);
-  }
 
   return {
     event,
-    participants: participantsData || [],
-    logs: logsData || [],
-    medals: (medalsData as MemberMedal[]) || [],
-    allMembers: (membersData as Member[]) || []
+    // Each registration carries its member (name, photo): the add box searches
+    // the members itself, so the page loads no member list
+    participants: (participantsData as unknown as EventParticipantRow[]) || [],
+    logs: (logsData as EventLog[]) || [],
+    medals: (medalsData as MemberMedal[]) || []
   };
 }

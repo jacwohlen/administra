@@ -22,6 +22,7 @@ import { load as users } from './users/+page';
 import { load as settings } from './settings/+page';
 import { load as integrations } from './integrations/+page';
 import { load as duplicates } from './members/duplicates/+page';
+import { load as reports } from './reports/+page';
 
 // Admin pages: user management, settings, integrations, merging duplicates.
 // The dashboard layout already let staff in; these send everybody else back.
@@ -32,6 +33,7 @@ async function redirectTarget(load: Load, userProfile: object | null) {
     await load({
       parent: async () => ({ session: {}, userProfile }),
       params: {},
+      url: new URL('http://localhost/dashboard'),
       depends: () => {}
     } as never);
     return null;
@@ -50,7 +52,8 @@ describe('admin-only dashboard pages', () => {
     ['users', users as Load, '/dashboard'],
     ['settings', settings as Load, '/dashboard'],
     ['integrations', integrations as Load, '/dashboard'],
-    ['duplicates', duplicates as Load, '/dashboard/members']
+    ['duplicates', duplicates as Load, '/dashboard/members'],
+    ['reports', reports as Load, '/dashboard']
   ];
 
   for (const [name, load, target] of cases) {
