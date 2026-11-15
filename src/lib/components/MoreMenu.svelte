@@ -31,7 +31,8 @@
     const top = up
       ? `top:${rect.top - 4}px;transform:translateY(-100%);`
       : `top:${rect.bottom + 4}px;`;
-    style = `position:fixed;${top}left:${Math.max(8, rect.right - 192)}px;z-index:9999;`;
+    // Right-aligned with the button, so a wider menu grows to the left
+    style = `position:fixed;${top}right:${Math.max(8, window.innerWidth - rect.right)}px;z-index:9999;`;
     open = true;
   }
 </script>

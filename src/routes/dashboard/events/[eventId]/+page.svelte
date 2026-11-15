@@ -14,7 +14,6 @@
     faArrowLeft,
     faEdit,
     faTrash,
-    faChalkboardTeacher,
     faArrowsRotate,
     faArrowUpRightFromSquare,
     faUser,
@@ -300,14 +299,12 @@
     });
   }
 
-  function toggleCoach(row: Row) {
-    if (!row.log) return; // Must be attending to be a coach
-    return updateLog(row.participant.memberId, { isCoach: !row.log.isCoach });
-  }
-
-  /** A coach coached a full day or a half day (of every day of the event) */
-  function setCoachDay(memberId: string, coachDay: CoachDay) {
-    return updateLog(memberId, { coachDay });
+  /** Not a coach, or a coach for a full or half day (of every day of the event) */
+  function setCoach(memberId: string, choice: 'none' | CoachDay) {
+    return updateLog(
+      memberId,
+      choice === 'none' ? { isCoach: false } : { isCoach: true, coachDay: choice }
+    );
   }
 
   /** Record, change, or clear a participant's placement at this event. */
@@ -668,55 +665,6 @@
               {/if}
             </div>
           </div>
-          {#if data.canWrite && log}
-            <!-- On a phone the placement and coaching day go on a line of their own -->
-            <div
-              class="order-last flex w-full items-center justify-end gap-2 sm:order-none sm:w-auto"
-            >
-              <!-- Placement: a medal for this event, once the participant has attended -->
-              <div
-                class="flex rounded-lg overflow-hidden border border-surface-300-700"
-                title={$_('medals.placement')}
-              >
-                {#each MEDALS as m (m)}
-                  <button
-                    class="px-2 min-h-[44px] {row.placement?.medal === m
-                      ? 'preset-filled-primary-500'
-                      : 'preset-tonal-surface'}"
-                    onclick={() => setMedal(memberId, row.placement?.medal === m ? null : m)}
-                    disabled={saving}
-                    title={$_('medals.' + m)}
-                    aria-pressed={row.placement?.medal === m}
-                  >
-                    {medalEmoji(m)}
-                  </button>
-                {/each}
-              </div>
-              <!-- A coach coached a full day (default) or half a day -->
-              {#if log.isCoach}
-                <div
-                  class="flex rounded-lg overflow-hidden border border-surface-300-700"
-                  role="group"
-                  aria-label={$_('page.events.coach_day')}
-                  title={$_('page.events.coach_day')}
-                >
-                  {#each ['full', 'half'] as const as day (day)}
-                    <button
-                      class="px-2 min-h-[44px] text-sm {log.coachDay === day
-                        ? 'preset-filled-primary-500'
-                        : 'preset-tonal-surface'}"
-                      onclick={() => log.coachDay !== day && setCoachDay(memberId, day)}
-                      disabled={saving}
-                      aria-pressed={log.coachDay === day}
-                      title={$_('page.events.coach_' + day + '_day')}
-                    >
-                      {day === 'full' ? '1' : '½'}
-                    </button>
-                  {/each}
-                </div>
-              {/if}
-            </div>
-          {/if}
           <div class="flex-shrink-0">
             <MoreMenu>
               {#snippet items(close)}
@@ -728,26 +676,67 @@
                   <Fa icon={faUser} />
                   <span>{$_('components.ParticipantCard.View')}</span>
                 </a>
-                {#if data.canWrite}
-                  {#if log}
-                    <button
-                      class="btn w-full justify-start"
-                      onclick={() => {
-                        close();
-                        toggleCoach(row);
-                      }}
-                      disabled={saving}
+                {#if data.canWrite && log}
+                  <!-- Placement and coaching: few people need them, so they live
+                       here and show in the row as badges -->
+                  <div class="w-56 border-t border-surface-300-700 mt-1 pt-2 px-2 pb-1">
+                    <div class="text-xs text-surface-600-400 mb-1">
+                      {$_('medals.placement')}
+                    </div>
+                    <div
+                      class="grid grid-cols-4 rounded-lg overflow-hidden border border-surface-300-700"
                     >
-                      <Fa icon={faChalkboardTeacher} />
-                      <span>
-                        {log.isCoach
-                          ? $_('page.events.remove_coach')
-                          : $_('page.events.make_coach')}
-                      </span>
-                    </button>
-                  {/if}
+                      {#each [null, ...MEDALS] as m (m ?? 'none')}
+                        {@const selected = (row.placement?.medal ?? null) === m}
+                        <button
+                          class="min-h-[44px] text-sm {selected
+                            ? 'preset-filled-primary-500'
+                            : 'preset-tonal-surface'}"
+                          onclick={() => {
+                            close();
+                            if (!selected) setMedal(memberId, m);
+                          }}
+                          disabled={saving}
+                          title={m ? $_('medals.' + m) : $_('medals.none')}
+                          aria-pressed={selected}
+                        >
+                          {m ? medalEmoji(m) : '–'}
+                        </button>
+                      {/each}
+                    </div>
+                  </div>
+                  <div class="px-2 pt-1 pb-2">
+                    <div class="text-xs text-surface-600-400 mb-1">{$_('page.events.coach')}</div>
+                    <div
+                      class="grid grid-cols-3 rounded-lg overflow-hidden border border-surface-300-700"
+                    >
+                      {#each ['none', 'full', 'half'] as const as choice (choice)}
+                        {@const selected =
+                          choice === 'none' ? !log.isCoach : log.isCoach && log.coachDay === choice}
+                        <button
+                          class="min-h-[44px] px-1 text-sm {selected
+                            ? 'preset-filled-primary-500'
+                            : 'preset-tonal-surface'}"
+                          onclick={() => {
+                            close();
+                            if (!selected) setCoach(memberId, choice);
+                          }}
+                          disabled={saving}
+                          aria-pressed={selected}
+                        >
+                          {choice === 'none'
+                            ? $_('page.events.coach_none')
+                            : choice === 'full'
+                              ? '1 ' + $_('page.events.coach_day_short')
+                              : '½ ' + $_('page.events.coach_day_short')}
+                        </button>
+                      {/each}
+                    </div>
+                  </div>
+                {/if}
+                {#if data.canWrite}
                   <button
-                    class="btn w-full justify-start text-error-600-400"
+                    class="btn w-full justify-start text-error-600-400 border-t border-surface-300-700 rounded-none"
                     onclick={() => {
                       close();
                       confirmRemoveId = memberId;
