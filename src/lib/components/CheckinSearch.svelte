@@ -18,6 +18,7 @@
   import { _ } from 'svelte-i18n';
   import { toaster } from '#lib/toast.ts';
   import { addCandidates, newMemberName, searchesToAdd, searchWords } from '#lib/checkinSearch.ts';
+  import { calculateAge } from '#lib/utils.ts';
   import NewMemberForm from './NewMemberForm.svelte';
 
   let {
@@ -77,7 +78,7 @@
     timer = setTimeout(async () => {
       let query = supabaseClient
         .from('view_search_members')
-        .select('id, fullname, lastname, firstname');
+        .select('id, fullname, lastname, firstname, birthday');
       for (const word of searchWords(term)) query = query.ilike('fullname', `%${word}%`);
       const { data, error } = await query.limit(30).returns<Member[]>();
       // A slower answer to an earlier term must not replace a newer one
@@ -191,41 +192,59 @@
 {@render children?.()}
 
 {#if adding}
-  <!-- Whoever is not on the list yet: under the list's matches, so these
-       stay in view -->
-  <div class="mt-2 p-3 rounded-lg preset-tonal-tertiary" aria-live="polite">
-    <div class="text-xs font-semibold mb-1">{$_('components.CheckinSearch.notOnList')}</div>
+  <!-- Whoever is not on the list yet: under the list's matches, so these stay
+       in view. Styled as a continuation of the list, the action in primary -->
+  <section class="mt-4 pt-3 border-t border-surface-200-800" aria-live="polite">
+    <div class="text-xs uppercase tracking-wide text-surface-600-400 mb-1">
+      {$_('components.CheckinSearch.notOnList')}
+    </div>
     {#if candidates.length > 0}
-      <ul class="max-h-72 overflow-y-auto -mx-1">
+      <ul class="max-h-80 overflow-y-auto">
         {#each candidates as p, index (p.id)}
+          {@const age = calculateAge(p.birthday ?? undefined)}
           <li>
             <button
-              class="flex w-full items-center gap-3 rounded px-2 py-1.5 min-h-[44px] text-left {index ===
-              selectedIndex
-                ? 'bg-primary-200-800'
-                : 'hover:bg-surface-50-950/40'}"
+              class="list-item list-item-link w-full text-left {index === selectedIndex
+                ? 'bg-surface-100-900'
+                : ''}"
               onclick={() => add(p)}
             >
-              <span class="flex-1 min-w-0 truncate">{p.lastname} {p.firstname}</span>
-              <span class="flex items-center gap-1.5 text-sm font-medium text-primary-700-300">
+              <div class="avatar-initials opacity-60" aria-hidden="true">
+                {p.lastname.charAt(0)}{p.firstname.charAt(0)}
+              </div>
+              <div class="list-item-content">
+                <div class="truncate">
+                  {p.lastname}
+                  {p.firstname}
+                  {#if age !== null}
+                    <span class="text-sm text-surface-600-400">
+                      · {$_('components.CheckinSearch.age', { values: { age } })}
+                    </span>
+                  {/if}
+                </div>
+              </div>
+              <span class="btn btn-sm preset-tonal-primary flex-shrink-0">
                 <Fa icon={faUserPlus} />
-                {$_('button.add')}
+                <span class="hidden sm:inline">{$_('button.add')}</span>
               </span>
             </button>
           </li>
         {/each}
       </ul>
     {:else if searchDone}
-      <p class="text-sm py-1">{$_('page.trainings.memberNotFound')}</p>
+      <p class="text-sm text-surface-600-400 py-2">{$_('page.trainings.memberNotFound')}</p>
     {/if}
-    <button class="btn btn-sm preset-tonal-primary w-full mt-2" onclick={createNewMember}>
+    <button
+      class="btn preset-tonal-surface border border-dashed border-surface-300-700 w-full mt-2"
+      onclick={createNewMember}
+    >
       <Fa icon={faUserPlus} />
-      <span class="truncate">{$_('button.createNew')}: "{value.trim()}"</span>
+      <span class="truncate">{$_('button.createNew')}: «{value.trim()}»</span>
     </button>
     {#if hint}
-      <p class="text-xs mt-2">{hint}</p>
+      <p class="text-xs text-surface-600-400 mt-2">{hint}</p>
     {/if}
-  </div>
+  </section>
 {/if}
 
 {#if showNewMemberForm}

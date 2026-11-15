@@ -1825,7 +1825,8 @@
   "components": {
     "CheckinSearch": {
       "placeholder": "Suchen oder hinzufügen…",
-      "notOnList": "Nicht auf der Liste"
+      "notOnList": "Nicht auf der Liste",
+      "age": "{age} Jahre"
     },
     "ParticipantCard": {
       "View": "Anzeigen",
