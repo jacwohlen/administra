@@ -363,6 +363,11 @@ export interface EventParticipant {
   notes?: string;
 }
 
+/** A registration on the event page, with its member (the members:memberId join) */
+export interface EventParticipantRow extends EventParticipant {
+  members: Pick<Member, 'id' | 'firstname' | 'lastname' | 'labels' | 'img'> | null;
+}
+
 /** How much of each event day a coach coached (event_logs."coachDay") */
 export type CoachDay = 'full' | 'half';
 

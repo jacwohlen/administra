@@ -36,7 +36,7 @@ vi.mock('@sveltejs/kit', () => ({
 import { load } from './[eventId]/+page';
 import { load as layoutLoad } from './[eventId]/+layout';
 
-// The loader queries, in order: event_participants, event_logs, member_medals, members
+// The loader queries, in order: event_participants, event_logs, member_medals
 function mockQueries(...results: { data: unknown; error: unknown }[]) {
   for (const r of results) {
     mockSupabase.from.mockReturnValueOnce(createChainFromResult(r));
@@ -61,7 +61,7 @@ describe('event detail load', () => {
   });
 
   it('returns event data from parent', async () => {
-    mockQueries(ok(), ok(), ok(), ok());
+    mockQueries(ok(), ok(), ok());
 
     const result = await load({
       params: { eventId: 'evt-1' },
@@ -72,7 +72,7 @@ describe('event detail load', () => {
   });
 
   it('queries correct tables', async () => {
-    mockQueries(ok(), ok(), ok(), ok());
+    mockQueries(ok(), ok(), ok());
 
     await load({
       params: { eventId: 'evt-1' },
@@ -82,16 +82,16 @@ describe('event detail load', () => {
     expect(mockSupabase.from).toHaveBeenCalledWith('event_participants');
     expect(mockSupabase.from).toHaveBeenCalledWith('event_logs');
     expect(mockSupabase.from).toHaveBeenCalledWith('member_medals');
-    expect(mockSupabase.from).toHaveBeenCalledWith('members');
+    // The add box searches the members itself: no member list
+    expect(mockSupabase.from).not.toHaveBeenCalledWith('members');
   });
 
-  it('returns participants, logs, medals, and allMembers', async () => {
+  it('returns participants, logs and medals', async () => {
     const participants = [{ id: 'p1', memberId: '1', eventId: 'evt-1' }];
     const logs = [{ id: 1, memberId: '1', eventId: 'evt-1' }];
     const medals = [{ id: 7, memberId: 1, eventId: 1, medal: 'gold' }];
-    const members = [{ id: '1', firstname: 'Alice', lastname: 'Smith' }];
 
-    mockQueries(ok(participants), ok(logs), ok(medals), ok(members));
+    mockQueries(ok(participants), ok(logs), ok(medals));
 
     const result = await load({
       params: { eventId: 'evt-1' },
@@ -101,11 +101,10 @@ describe('event detail load', () => {
     expect(result.participants).toEqual(participants);
     expect(result.logs).toEqual(logs);
     expect(result.medals).toEqual(medals);
-    expect(result.allMembers).toEqual(members);
   });
 
   it('defaults to empty arrays when data is null', async () => {
-    mockQueries(ok(null), ok(null), ok(null), ok(null));
+    mockQueries(ok(null), ok(null), ok(null));
 
     const result = await load({
       params: { eventId: 'evt-1' },
@@ -115,7 +114,6 @@ describe('event detail load', () => {
     expect(result.participants).toEqual([]);
     expect(result.logs).toEqual([]);
     expect(result.medals).toEqual([]);
-    expect(result.allMembers).toEqual([]);
   });
 
   it('throws when participants query fails', async () => {
@@ -128,14 +126,6 @@ describe('event detail load', () => {
 
   it('throws when logs query fails', async () => {
     mockQueries(ok(), { data: null, error: { message: 'logs fail' } });
-
-    await expect(
-      load({ params: { eventId: 'evt-1' }, parent: mockParent } as never)
-    ).rejects.toThrow();
-  });
-
-  it('throws when members query fails', async () => {
-    mockQueries(ok(), ok(), ok(), { data: null, error: { message: 'members fail' } });
 
     await expect(
       load({ params: { eventId: 'evt-1' }, parent: mockParent } as never)

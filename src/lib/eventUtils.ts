@@ -243,3 +243,31 @@ export function eventDateInput(
     timeTo: allDay ? '' : (event.timeTo ?? '')
   };
 }
+
+// ----- Check-in list on the event page -----
+
+/** What the check-in list needs of a participant */
+export interface CheckinPerson {
+  lastname: string;
+  firstname: string;
+  attended: boolean;
+}
+
+/**
+ * Order of the check-in list, as on the training check-in: who attended
+ * first, then by last and first name.
+ */
+export function compareCheckinPeople(a: CheckinPerson, b: CheckinPerson): number {
+  if (a.attended !== b.attended) return a.attended ? -1 : 1;
+  return a.lastname.localeCompare(b.lastname, 'de') || a.firstname.localeCompare(b.firstname, 'de');
+}
+
+/**
+ * The search over the list: every word must start a last or first name
+ * ("mül an" finds Anna Müller). An empty search keeps everyone.
+ */
+export function matchesCheckinSearch(person: CheckinPerson, search: string): boolean {
+  const words = search.toLocaleLowerCase('de').split(/\s+/).filter(Boolean);
+  const names = `${person.lastname} ${person.firstname}`.toLocaleLowerCase('de').split(/\s+/);
+  return words.every((w) => names.some((n) => n.startsWith(w)));
+}

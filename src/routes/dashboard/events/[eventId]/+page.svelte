@@ -10,19 +10,21 @@
     faLocationDot,
     faClock,
     faUsers,
-    faUserPlus,
-    faCheck,
-    faTimes,
+    faUserCheck,
     faArrowLeft,
     faEdit,
     faTrash,
-    faChalkboardTeacher,
     faArrowsRotate,
-    faArrowUpRightFromSquare
+    faArrowUpRightFromSquare,
+    faUser,
+    faUserMinus
   } from '@fortawesome/free-solid-svg-icons';
   import dayjs from 'dayjs';
-  import { refreshAll, goto } from '$app/navigation';
-  import AddEventParticipant from './AddEventParticipant.svelte';
+  import { goto } from '$app/navigation';
+  import { flip } from 'svelte/animate';
+  import { quintInOut } from 'svelte/easing';
+  import { SvelteSet } from 'svelte/reactivity';
+  import AddMemberInputBox from '#lib/components/AddMemberInputBox.svelte';
   import ConfirmDialog from '#lib/components/ConfirmDialog.svelte';
   import {
     canTrackAttendance as _canTrackAttendance,
@@ -30,17 +32,24 @@
     canAddParticipants,
     attendanceTimestamp,
     calculateAttendanceRate,
-    formatEventDates
+    compareCheckinPeople,
+    formatEventDates,
+    matchesCheckinSearch
   } from '#lib/eventUtils.ts';
-  import type { CoachDay, Medal } from '#lib/models.ts';
+  import type {
+    CoachDay,
+    EventLog,
+    EventParticipantRow,
+    Medal,
+    Member,
+    MemberMedal
+  } from '#lib/models.ts';
   import { MEDALS, medalEmoji } from '#lib/gradeUtils.ts';
   import { canDeleteEvent } from '#lib/eventLinks.ts';
   import { isManagedByProviderError, providerName } from '#lib/memberStatus.ts';
 
   let { data }: { data: PageData } = $props();
 
-  let showAddParticipant = $state(false);
-  let loading = $state(false);
   let isDeleting = $state(false);
   let showDeleteConfirm = $state(false);
   let confirmRemoveId = $state<string | null>(null);
@@ -50,17 +59,25 @@
   let provider = $derived(data.eventLink ? providerName(data.eventLink.connection) : null);
   let canDelete = $derived(canDeleteEvent(data.canWrite, data.eventLink));
 
+  // The check-in list changes right away, like on the training check-in; the
+  // database follows in the background, and a failed write is undone. Only
+  // the row being saved waits, the rest of the list stays usable.
+  let participants = $derived(data.participants);
+  let logs = $derived(data.logs);
+  let medals = $derived(data.medals);
+  const busy = new SvelteSet<string>();
+
+  let search = $state('');
+  let animateList = $state(true);
+
+  const sameMember = (a: string | number, b: string | number) => String(a) === String(b);
+
   function formatEventDate(date: string) {
     return dayjs(date).format('DD.MM.YYYY');
   }
 
   function formatTime(time: string | undefined) {
     return time || '';
-  }
-
-  // From the first day on (every day of a multi-day event)
-  function canTrackAttendance() {
-    return _canTrackAttendance(data.event.date);
   }
 
   function attendedAt() {
@@ -71,176 +88,277 @@
     return _isRegistrationOpen(data.event.registrationDeadline);
   }
 
-  function getMemberById(id: string) {
-    return data.allMembers.find((m) => m.id === id);
+  function memberName(memberId: string) {
+    const member = participants.find((p) => sameMember(p.memberId, memberId))?.members;
+    return member ? `${member.lastname} ${member.firstname}` : '';
   }
 
-  function getLogByMemberId(memberId: string) {
-    return data.logs.find((l) => l.memberId === memberId);
+  // From the first day on (every day of a multi-day event)
+  let tracking = $derived(_canTrackAttendance(data.event.date));
+
+  interface Row {
+    participant: EventParticipantRow;
+    member: NonNullable<EventParticipantRow['members']>;
+    log: EventLog | undefined;
+    placement: MemberMedal | undefined;
+    lastname: string;
+    firstname: string;
+    attended: boolean;
   }
 
-  function getMedalByMemberId(memberId: string) {
-    return data.medals.find((m) => String(m.memberId) === String(memberId));
-  }
+  let rows: Row[] = $derived(
+    participants
+      .filter((p) => p.members)
+      .map((p) => {
+        const log = logs.find((l) => sameMember(l.memberId, p.memberId));
+        return {
+          participant: p,
+          member: p.members!,
+          log,
+          placement: medals.find((m) => sameMember(m.memberId, p.memberId)),
+          lastname: p.members!.lastname,
+          firstname: p.members!.firstname,
+          attended: !!log
+        };
+      })
+      .sort(compareCheckinPeople)
+  );
+  let shownRows = $derived(rows.filter((r) => matchesCheckinSearch(r, search)));
 
-  /** Record, change, or clear a participant's placement at this event. */
-  async function setMedal(memberId: string, medal: Medal | null) {
-    loading = true;
+  async function withBusy(memberId: string, work: () => Promise<void>) {
+    const key = String(memberId);
+    if (busy.has(key)) return;
+    busy.add(key);
     try {
-      const existing = getMedalByMemberId(memberId);
-      let error;
-      if (existing && medal === null) {
-        ({ error } = await supabaseClient.from('member_medals').delete().eq('id', existing.id));
-      } else if (existing && medal) {
-        ({ error } = await supabaseClient
-          .from('member_medals')
-          .update({ medal })
-          .eq('id', existing.id));
-      } else if (medal) {
-        ({ error } = await supabaseClient.from('member_medals').insert({
-          memberId,
-          eventId: data.event.id,
-          competition: data.event.title,
-          date: data.event.date,
-          section: data.event.section,
-          medal
-        }));
-      } else {
-        return;
-      }
-      if (error) {
-        console.error('Error saving placement:', error);
-        toaster.error({ title: $_('medals.saveError') });
-        return;
-      }
-      await refreshAll();
+      await work();
     } finally {
-      loading = false;
+      busy.delete(key);
     }
   }
 
-  async function onParticipantAdded() {
-    await refreshAll();
-    // Keep the search area open so the user can add more participants
+  function setParticipantStatus(memberId: string, attendanceStatus: 'attended' | 'registered') {
+    participants = participants.map((p) =>
+      sameMember(p.memberId, memberId) ? { ...p, attendanceStatus } : p
+    );
   }
 
-  async function removeParticipant(memberId: string) {
-    loading = true;
-    try {
-      const { error } = await supabaseClient
-        .from('event_participants')
-        .delete()
-        .eq('eventId', data.event.id)
-        .eq('memberId', memberId);
-
-      if (error) {
-        console.error('Error removing participant:', error);
-        toaster.error({ title: $_('page.events.removeParticipantError') });
-        return;
-      }
-
-      await refreshAll();
-    } finally {
-      loading = false;
-    }
-  }
-
-  async function markAttendance(memberId: string, attended: boolean, isCoach = false) {
-    loading = true;
-    try {
-      if (attended) {
-        // Add to event_logs
-        const { error } = await supabaseClient.from('event_logs').insert({
-          eventId: data.event.id,
-          memberId: memberId,
-          isCoach: isCoach,
-          attendedAt: attendedAt()
-        });
-
-        if (error) {
-          console.error('Error marking attendance:', error);
-          toaster.error({ title: $_('page.events.attendanceError') });
-          return;
+  /** Check a participant in or out: the attendance row, and the registration's status */
+  function setAttendance(memberId: string, attended: boolean) {
+    return withBusy(memberId, async () => {
+      const before = { logs, participants };
+      try {
+        if (attended) {
+          const pending: EventLog = {
+            id: -1,
+            eventId: data.event.id,
+            memberId,
+            attendedAt: attendedAt(),
+            isCoach: false,
+            coachDay: 'full'
+          };
+          logs = [...logs, pending];
+          const { data: saved, error } = await supabaseClient
+            .from('event_logs')
+            .insert({ eventId: data.event.id, memberId, attendedAt: pending.attendedAt })
+            .select()
+            .single();
+          if (error) throw error;
+          logs = logs.map((l) => (l === pending ? (saved as EventLog) : l));
+        } else {
+          logs = logs.filter((l) => !sameMember(l.memberId, memberId));
+          const { error } = await supabaseClient
+            .from('event_logs')
+            .delete()
+            .eq('eventId', data.event.id)
+            .eq('memberId', memberId);
+          if (error) throw error;
         }
-
-        // Update participant status
-        await supabaseClient
+        const status = attended ? 'attended' : 'registered';
+        setParticipantStatus(memberId, status);
+        // The attendance row is what counts; the status only labels the registration
+        const { error: statusError } = await supabaseClient
           .from('event_participants')
-          .update({ attendanceStatus: 'attended' })
+          .update({ attendanceStatus: status })
           .eq('eventId', data.event.id)
           .eq('memberId', memberId);
+        if (statusError) console.error('Error saving the registration status:', statusError);
+      } catch (error) {
+        console.error('Error saving attendance:', error);
+        logs = before.logs;
+        participants = before.participants;
+        toaster.error({ title: $_('page.events.attendanceError') });
+      }
+    });
+  }
+
+  /** Add from the box: a new participant, or check in someone already registered */
+  async function addMember({ member }: { member: Member }) {
+    search = '';
+    const existing = rows.find((r) => sameMember(r.participant.memberId, member.id));
+    const name = `${member.lastname} ${member.firstname}`;
+    if (existing) {
+      if (tracking && !existing.attended && data.canWrite) {
+        await setAttendance(existing.participant.memberId, true);
       } else {
-        // Remove from event_logs
+        toaster.info({
+          title: $_(
+            existing.attended ? 'page.events.already_attended' : 'page.events.already_on_list',
+            {
+              values: { name }
+            }
+          )
+        });
+      }
+      return;
+    }
+
+    await withBusy(member.id, async () => {
+      const { data: added, error } = await supabaseClient
+        .from('event_participants')
+        .insert({
+          eventId: data.event.id,
+          memberId: member.id,
+          attendanceStatus: tracking ? 'attended' : 'registered'
+        })
+        .select('*, members:memberId (id, firstname, lastname, labels, img)')
+        .single();
+      if (error || !added) {
+        console.error('Error adding participant:', error);
+        toaster.error({ title: $_('page.events.addParticipantError') });
+        return;
+      }
+      participants = [...participants, added as unknown as EventParticipantRow];
+      if (!tracking) return;
+
+      // From the event day on, whoever is added was there
+      const { data: log, error: logError } = await supabaseClient
+        .from('event_logs')
+        .insert({ eventId: data.event.id, memberId: member.id, attendedAt: attendedAt() })
+        .select()
+        .single();
+      if (logError || !log) {
+        console.error('Error marking attendance:', logError);
+        toaster.error({ title: $_('page.events.attendanceError') });
+        setParticipantStatus(String(member.id), 'registered');
+        await supabaseClient
+          .from('event_participants')
+          .update({ attendanceStatus: 'registered' })
+          .eq('eventId', data.event.id)
+          .eq('memberId', member.id);
+        return;
+      }
+      logs = [...logs, log as EventLog];
+    });
+  }
+
+  /** Take someone off the list, with their attendance (a mistaken check-in) */
+  function removeParticipant(memberId: string) {
+    return withBusy(memberId, async () => {
+      if (logs.some((l) => sameMember(l.memberId, memberId))) {
         const { error } = await supabaseClient
           .from('event_logs')
           .delete()
           .eq('eventId', data.event.id)
           .eq('memberId', memberId);
-
         if (error) {
           console.error('Error removing attendance:', error);
-          toaster.error({ title: $_('page.events.attendanceError') });
+          toaster.error({ title: $_('page.events.removeParticipantError') });
           return;
         }
-
-        // Update participant status
-        await supabaseClient
-          .from('event_participants')
-          .update({ attendanceStatus: 'registered' })
-          .eq('eventId', data.event.id)
-          .eq('memberId', memberId);
+        logs = logs.filter((l) => !sameMember(l.memberId, memberId));
       }
-
-      await refreshAll();
-    } finally {
-      loading = false;
-    }
-  }
-
-  async function toggleCoach(memberId: string) {
-    loading = true;
-    try {
-      const log = getLogByMemberId(memberId);
-      if (!log) return; // Must be attending to be a coach
-
-      // Toggle coach status
       const { error } = await supabaseClient
-        .from('event_logs')
-        .update({ isCoach: !log.isCoach })
+        .from('event_participants')
+        .delete()
         .eq('eventId', data.event.id)
         .eq('memberId', memberId);
-
       if (error) {
-        console.error('Error toggling coach status:', error);
-        toaster.error({ title: $_('page.events.coachError') });
+        console.error('Error removing participant:', error);
+        toaster.error({ title: $_('page.events.removeParticipantError') });
         return;
       }
-
-      await refreshAll();
-    } finally {
-      loading = false;
-    }
+      participants = participants.filter((p) => !sameMember(p.memberId, memberId));
+    });
   }
 
-  /** A coach coached a full day or a half day (of every day of the event) */
-  async function setCoachDay(memberId: string, coachDay: CoachDay) {
-    loading = true;
-    try {
+  /** Change an attendance row in place (coach, coaching day) */
+  function updateLog(memberId: string, change: Partial<Pick<EventLog, 'isCoach' | 'coachDay'>>) {
+    return withBusy(memberId, async () => {
+      const before = logs;
+      logs = logs.map((l) => (sameMember(l.memberId, memberId) ? { ...l, ...change } : l));
       const { error } = await supabaseClient
         .from('event_logs')
-        .update({ coachDay })
+        .update(change)
         .eq('eventId', data.event.id)
         .eq('memberId', memberId);
-
       if (error) {
-        console.error('Error saving coaching day:', error);
+        console.error('Error saving coach status:', error);
+        logs = before;
         toaster.error({ title: $_('page.events.coachError') });
-        return;
       }
+    });
+  }
 
-      await refreshAll();
-    } finally {
-      loading = false;
+  /** Not a coach, or a coach for a full or half day (of every day of the event) */
+  function setCoach(memberId: string, choice: 'none' | CoachDay) {
+    return updateLog(
+      memberId,
+      choice === 'none' ? { isCoach: false } : { isCoach: true, coachDay: choice }
+    );
+  }
+
+  /** Record, change, or clear a participant's placement at this event. */
+  function setMedal(memberId: string, medal: Medal | null) {
+    return withBusy(memberId, async () => {
+      const existing = medals.find((m) => sameMember(m.memberId, memberId));
+      if (existing && medal === null) {
+        const { error } = await supabaseClient.from('member_medals').delete().eq('id', existing.id);
+        if (error) return medalError(error);
+        medals = medals.filter((m) => m !== existing);
+      } else if (existing && medal) {
+        const { error } = await supabaseClient
+          .from('member_medals')
+          .update({ medal })
+          .eq('id', existing.id);
+        if (error) return medalError(error);
+        medals = medals.map((m) => (m === existing ? { ...m, medal } : m));
+      } else if (medal) {
+        const { data: saved, error } = await supabaseClient
+          .from('member_medals')
+          .insert({
+            memberId,
+            eventId: data.event.id,
+            competition: data.event.title,
+            date: data.event.date,
+            section: data.event.section,
+            medal
+          })
+          .select()
+          .single();
+        if (error) return medalError(error);
+        medals = [...medals, saved as MemberMedal];
+      }
+    });
+  }
+
+  function medalError(error: unknown) {
+    console.error('Error saving placement:', error);
+    toaster.error({ title: $_('medals.saveError') });
+  }
+
+  // The search over the list: Enter checks the first match in and empties the
+  // search for the next name (never out: that would drop a coach's status),
+  // Escape empties it
+  function searchKeydown(e: KeyboardEvent) {
+    if (e.key === 'Escape') {
+      search = '';
+    } else if (e.key === 'Enter' && search.trim()) {
+      e.preventDefault();
+      const first = shownRows[0];
+      if (first && !first.attended && tracking && data.canWrite) {
+        setAttendance(first.participant.memberId, true);
+        search = '';
+      }
     }
   }
 
@@ -280,15 +398,11 @@
     }
   }
 
-  // Get existing participant member IDs for the search component
-  let existingParticipantIds = $derived(data.participants.map((p) => p.memberId));
-
-  let registeredCount = $derived(data.participants.length);
-  let attendedCount = $derived(data.logs.length);
+  let registeredCount = $derived(participants.length);
+  let attendedCount = $derived(logs.length);
+  let coachCount = $derived(logs.filter((l) => l.isCoach).length);
   let attendanceRate = $derived(calculateAttendanceRate(registeredCount, attendedCount));
-  let showAddButton = $derived(canAddParticipants(data.event, registeredCount, data.canWrite));
-  // Participants added on or after the event day are directly recorded as attended
-  let addAsAttended = $derived(canTrackAttendance());
+  let showAddBox = $derived(canAddParticipants(data.event, registeredCount, data.canWrite));
 </script>
 
 <div>
@@ -445,215 +559,221 @@
     </div>
   {/if}
 
-  <!-- Participants Section -->
+  <!-- Participants: the check-in list, as on the training check-in -->
   <div>
-    <div class="flex justify-between items-center mb-3">
-      <h3>{$_('page.events.participants')}</h3>
-      {#if showAddButton}
-        <button
-          class="btn preset-filled-primary-500"
-          onclick={() => (showAddParticipant = !showAddParticipant)}
-          disabled={loading}
+    <div class="flex flex-wrap items-center gap-2 mb-3">
+      <h3 class="mr-auto">{$_('page.events.participants')}</h3>
+      {#if tracking && registeredCount > 0}
+        <span
+          class="chip bg-surface-100-900 text-surface-900-50"
+          title={$_('page.events.stats.attended')}
         >
-          <Fa icon={faUserPlus} />
-          <span>{$_('page.events.add_participant')}</span>
-        </button>
+          <Fa icon={faUserCheck} size="sm" />
+          <span>{attendedCount} / {registeredCount}</span>
+        </span>
+        {#if coachCount > 0}
+          <span class="chip bg-surface-100-900 text-surface-900-50" title={$_('page.events.coach')}>
+            <img class="inline-block w-3.5" src="/judo-icon.svg" alt={$_('page.events.coach')} />
+            <span>{coachCount}</span>
+          </span>
+        {/if}
       {/if}
     </div>
 
-    <!-- Add Participant Search -->
-    {#if showAddParticipant}
-      <div class="bg-surface-100-900 p-4 rounded-lg mb-4">
-        <div class="flex gap-4 items-center">
-          <div class="flex-grow">
-            <AddEventParticipant
-              eventId={data.event.id}
-              existingParticipants={existingParticipantIds}
-              attendedAt={addAsAttended ? attendedAt : undefined}
-              onadded={onParticipantAdded}
-            />
-          </div>
-          <button class="btn preset-tonal-surface" onclick={() => (showAddParticipant = false)}>
-            {$_('button.cancel')}
-          </button>
-        </div>
-        {#if addAsAttended}
-          <p class="text-xs text-surface-600-400 mt-2">
-            {$_('page.events.add_as_attended_hint')}
-          </p>
-        {/if}
+    {#if registeredCount > 0}
+      <!-- Search over the list -->
+      <div class="sticky top-0 z-30 bg-surface-50-950 pb-3 -mx-3 px-3 sm:-mx-4 sm:px-4 pt-1">
+        <input
+          class="input"
+          type="search"
+          placeholder={$_('page.trainings.searchMembersPlaceholder')}
+          bind:value={search}
+          onkeydown={searchKeydown}
+          onfocus={() => (animateList = false)}
+          onblur={() => (animateList = true)}
+        />
       </div>
+    {:else}
+      <p class="empty-state">{$_('page.events.no_participants')}</p>
     {/if}
 
-    <!-- Participants List -->
-    {#if data.participants.length === 0}
-      <p class="empty-state">{$_('page.events.no_participants')}</p>
-    {:else}
-      <div class="space-y-2">
-        {#each data.participants as participant}
-          {@const member = getMemberById(participant.memberId)}
-          {@const log = getLogByMemberId(participant.memberId)}
-          {@const hasAttended = !!log}
-          {@const placement = getMedalByMemberId(participant.memberId)}
-          {#if member}
-            <div
-              class="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 py-2 {hasAttended
-                ? 'opacity-100'
-                : 'opacity-70'}"
-            >
-              <div class="flex items-center gap-3 min-w-0">
-                <div class="relative">
-                  {#if member.img}
-                    <img
-                      src={member.img}
-                      alt="{member.lastname} {member.firstname}"
-                      class="size-10 rounded-full object-cover"
-                    />
-                  {:else}
-                    <div class="avatar-initials">
-                      {member.lastname[0]}{member.firstname[0]}
-                    </div>
-                  {/if}
-                  {#if log && log.isCoach}
-                    <span class="badge-icon absolute -bottom-0 -right-0 z-10">
-                      <img src="/judo-icon.svg" alt={$_('page.events.coach')} class="w-4 h-4" />
-                    </span>
-                  {/if}
-                </div>
-                <div>
-                  <div class="font-medium">
-                    {member.lastname}
-                    {member.firstname}
-                    {#if placement}
-                      <span class="ml-1" title={$_('medals.' + placement.medal)}>
-                        {medalEmoji(placement.medal)}
-                      </span>
-                    {/if}
-                    {#if log && log.isCoach}
-                      <span class="badge preset-tonal-primary text-xs ml-2">
-                        {$_('page.events.coach')}
-                        {#if log.coachDay === 'half'}
-                          · {$_('page.events.coach_half_day')}
-                        {/if}
-                      </span>
-                    {/if}
-                  </div>
-                  <div class="text-sm text-surface-600-400">
-                    {#if log}
-                      {$_('page.events.attended_at')} {dayjs(log.attendedAt).format('HH:mm')}
-                    {:else}
-                      {$_('page.events.status.' + participant.attendanceStatus)}
-                    {/if}
-                  </div>
-                </div>
+    <ul class="flex flex-col gap-2">
+      {#each shownRows as row (row.participant.memberId)}
+        {@const memberId = row.participant.memberId}
+        {@const log = row.log}
+        {@const saving = busy.has(String(memberId))}
+        <li
+          class="list-item flex-wrap gap-y-2"
+          animate:flip={{ duration: animateList ? 400 : 0, easing: quintInOut }}
+        >
+          {#if tracking}
+            <input
+              class="checkbox"
+              type="checkbox"
+              checked={row.attended}
+              onchange={() => setAttendance(memberId, !row.attended)}
+              disabled={!data.canWrite || saving}
+              aria-label={$_('page.events.mark_attended')}
+            />
+          {/if}
+          <div class="relative flex-shrink-0">
+            {#if row.member.img}
+              <img
+                src={row.member.img}
+                alt="{row.member.lastname} {row.member.firstname}"
+                class="size-10 rounded-full object-cover"
+              />
+            {:else}
+              <div class="avatar-initials">
+                {row.member.lastname.charAt(0)}{row.member.firstname.charAt(0)}
               </div>
-              {#if data.canWrite}
-                <div class="flex items-center gap-2 ml-auto">
-                  {#if canTrackAttendance()}
-                    <!-- Placement: record a medal for this event, once the participant has attended -->
-                    {#if hasAttended}
-                      <div
-                        class="flex rounded-lg overflow-hidden border border-surface-300-700"
-                        title={$_('medals.placement')}
-                      >
-                        {#each MEDALS as m (m)}
-                          <button
-                            class="px-2 min-h-[44px] {placement?.medal === m
-                              ? 'preset-filled-primary-500'
-                              : 'preset-tonal-surface'}"
-                            onclick={() =>
-                              setMedal(participant.memberId, placement?.medal === m ? null : m)}
-                            disabled={loading}
-                            title={$_('medals.' + m)}
-                          >
-                            {medalEmoji(m)}
-                          </button>
-                        {/each}
-                      </div>
-                    {/if}
-                    <!-- Coach toggle button - only show if participant has attended -->
-                    {#if hasAttended}
-                      <button
-                        class="btn {log && log.isCoach
-                          ? 'preset-filled-primary-500'
-                          : 'preset-tonal-primary'}"
-                        onclick={() => toggleCoach(participant.memberId)}
-                        disabled={loading}
-                        title={log && log.isCoach
-                          ? $_('page.events.remove_coach')
-                          : $_('page.events.make_coach')}
-                        aria-label={log && log.isCoach
-                          ? $_('page.events.remove_coach')
-                          : $_('page.events.make_coach')}
-                      >
-                        <Fa icon={faChalkboardTeacher} />
-                      </button>
-                    {/if}
-                    <!-- A coach coached a full day (default) or half a day -->
-                    {#if log && log.isCoach}
-                      <div
-                        class="flex rounded-lg overflow-hidden border border-surface-300-700"
-                        role="group"
-                        aria-label={$_('page.events.coach_day')}
-                        title={$_('page.events.coach_day')}
-                      >
-                        {#each ['full', 'half'] as const as day (day)}
-                          <button
-                            class="px-2 min-h-[44px] text-sm {log.coachDay === day
-                              ? 'preset-filled-primary-500'
-                              : 'preset-tonal-surface'}"
-                            onclick={() =>
-                              log.coachDay !== day && setCoachDay(participant.memberId, day)}
-                            disabled={loading}
-                            aria-pressed={log.coachDay === day}
-                            title={$_('page.events.coach_' + day + '_day')}
-                          >
-                            {day === 'full' ? '1' : '½'}
-                          </button>
-                        {/each}
-                      </div>
-                    {/if}
-                    <!-- Event day or past - show attendance buttons -->
-                    <button
-                      class="btn {hasAttended
-                        ? 'preset-filled-success-500'
-                        : 'preset-tonal-success'}"
-                      onclick={() => markAttendance(participant.memberId, !hasAttended)}
-                      disabled={loading}
-                      title={$_('page.events.mark_attended')}
-                      aria-label={$_('page.events.mark_attended')}
-                      aria-pressed={hasAttended}
-                    >
-                      <Fa icon={faCheck} />
-                    </button>
-                  {:else}
-                    <!-- Future event - show remove button -->
-                    <button
-                      class="btn preset-tonal-error"
-                      onclick={() => (confirmRemoveId = participant.memberId)}
-                      disabled={loading}
-                      title={$_('page.events.removeParticipant')}
-                      aria-label={$_('page.events.removeParticipant')}
-                    >
-                      <Fa icon={faTimes} />
-                    </button>
-                  {/if}
-                </div>
+            {/if}
+            {#if log?.isCoach}
+              <span
+                class="absolute -bottom-0 -right-0 z-10 bg-primary-600-400 rounded-full w-4 h-4 flex items-center justify-center"
+              >
+                <img class="w-2.5" src="/judo-icon.svg" alt={$_('page.events.coach')} />
+              </span>
+            {/if}
+          </div>
+          <div class="list-item-content">
+            <div class="font-medium truncate">
+              {row.member.lastname}
+              {row.member.firstname}
+              {#if row.placement}
+                <span class="ml-1" title={$_('medals.' + row.placement.medal)}>
+                  {medalEmoji(row.placement.medal)}
+                </span>
               {/if}
             </div>
-          {/if}
-        {/each}
-      </div>
-    {/if}
+            <div class="flex flex-wrap items-center gap-x-2 text-sm text-surface-600-400">
+              {#if log}
+                <span>
+                  {$_('page.events.attended_at')}
+                  {dayjs(log.attendedAt).format('HH:mm')}
+                </span>
+              {:else}
+                <span>{$_('page.events.status.' + row.participant.attendanceStatus)}</span>
+              {/if}
+              {#if log?.isCoach}
+                <span class="badge preset-tonal-primary text-xs">
+                  {$_('page.events.coach')}
+                  {#if log.coachDay === 'half'}
+                    · {$_('page.events.coach_half_day')}
+                  {/if}
+                </span>
+              {/if}
+            </div>
+          </div>
+          <div class="flex-shrink-0">
+            <MoreMenu>
+              {#snippet items(close)}
+                <a
+                  href="/dashboard/members/{memberId}"
+                  class="btn w-full justify-start"
+                  onclick={close}
+                >
+                  <Fa icon={faUser} />
+                  <span>{$_('components.ParticipantCard.View')}</span>
+                </a>
+                {#if data.canWrite && log}
+                  <!-- Placement and coaching: few people need them, so they live
+                       here and show in the row as badges -->
+                  <div class="w-56 border-t border-surface-300-700 mt-1 pt-2 px-2 pb-1">
+                    <div class="text-xs text-surface-600-400 mb-1">
+                      {$_('medals.placement')}
+                    </div>
+                    <div
+                      class="grid grid-cols-4 rounded-lg overflow-hidden border border-surface-300-700"
+                    >
+                      {#each [null, ...MEDALS] as m (m ?? 'none')}
+                        {@const selected = (row.placement?.medal ?? null) === m}
+                        <button
+                          class="min-h-[44px] text-sm {selected
+                            ? 'preset-filled-primary-500'
+                            : 'preset-tonal-surface'}"
+                          onclick={() => {
+                            close();
+                            if (!selected) setMedal(memberId, m);
+                          }}
+                          disabled={saving}
+                          title={m ? $_('medals.' + m) : $_('medals.none')}
+                          aria-pressed={selected}
+                        >
+                          {m ? medalEmoji(m) : '–'}
+                        </button>
+                      {/each}
+                    </div>
+                  </div>
+                  <div class="px-2 pt-1 pb-2">
+                    <div class="text-xs text-surface-600-400 mb-1">{$_('page.events.coach')}</div>
+                    <div
+                      class="grid grid-cols-3 rounded-lg overflow-hidden border border-surface-300-700"
+                    >
+                      {#each ['none', 'full', 'half'] as const as choice (choice)}
+                        {@const selected =
+                          choice === 'none' ? !log.isCoach : log.isCoach && log.coachDay === choice}
+                        <button
+                          class="min-h-[44px] px-1 text-sm {selected
+                            ? 'preset-filled-primary-500'
+                            : 'preset-tonal-surface'}"
+                          onclick={() => {
+                            close();
+                            if (!selected) setCoach(memberId, choice);
+                          }}
+                          disabled={saving}
+                          aria-pressed={selected}
+                        >
+                          {choice === 'none'
+                            ? $_('page.events.coach_none')
+                            : choice === 'full'
+                              ? '1 ' + $_('page.events.coach_day_short')
+                              : '½ ' + $_('page.events.coach_day_short')}
+                        </button>
+                      {/each}
+                    </div>
+                  </div>
+                {/if}
+                {#if data.canWrite}
+                  <button
+                    class="btn w-full justify-start text-error-600-400 border-t border-surface-300-700 rounded-none"
+                    onclick={() => {
+                      close();
+                      confirmRemoveId = memberId;
+                    }}
+                    disabled={saving}
+                  >
+                    <Fa icon={faUserMinus} />
+                    <span>{$_('page.events.removeParticipant')}</span>
+                  </button>
+                {/if}
+              {/snippet}
+            </MoreMenu>
+          </div>
+        </li>
+      {/each}
+      {#if showAddBox}
+        <li>
+          <div class="flex flex-col gap-2 p-4 rounded-lg preset-tonal-tertiary w-full">
+            <AddMemberInputBox
+              onadd={addMember}
+              placeholder={$_('page.events.add_participant_placeholder')}
+            />
+            {#if tracking}
+              <p class="text-xs">{$_('page.events.add_as_attended_hint')}</p>
+            {/if}
+          </div>
+        </li>
+      {/if}
+    </ul>
   </div>
 </div>
 
 {#if confirmRemoveId}
-  {@const member = getMemberById(confirmRemoveId)}
   <ConfirmDialog
     title={$_('page.events.removeParticipant')}
     message={$_('page.events.removeParticipantConfirm', {
-      values: { name: member ? `${member.lastname} ${member.firstname}` : '' }
+      values: { name: memberName(confirmRemoveId) }
     })}
     confirmLabel={$_('button.remove')}
     oncancel={() => (confirmRemoveId = null)}
