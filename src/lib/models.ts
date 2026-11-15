@@ -624,18 +624,6 @@ export interface MedalCounts {
   bronze: number;
 }
 
-export interface TrainerTrackingRecord {
-  date: string;
-  trainingId: number;
-  trainingTitle: string;
-  section: string;
-  memberId: number;
-  lastname: string;
-  firstname: string;
-  trainerRole: TrainerRole;
-  attendeeCount: number;
-}
-
 /** Row of training_plan_sessions: the TK's plan for one training on one date */
 export interface TrainingPlanSession {
   id: number;
