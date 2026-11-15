@@ -11,7 +11,9 @@ shows per person:
 
 and downloads it as a **PDF** (`src/lib/pdf.ts`, a small writer with the
 standard Helvetica fonts): the summary, the dates to check, every training
-with its trainers and every coaching assignment. It replaced the trainer
+held with its trainers, its participants (checked in, without the trainers;
+`view_logs_summary`) and whether it had a lesson plan, and every event with
+coaches with its participants (without the coaches) and the coaches' days. It replaced the trainer
 download of the statistics page, whose button now opens the report for the
 year shown. The wording stays neutral: what the club does with the numbers
 is not the app's business.
