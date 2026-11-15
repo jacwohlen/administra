@@ -492,7 +492,6 @@
       "logs": "Logs",
       "searchMembersPlaceholder": "Search Member…",
       "memberNotFound": "Member not found",
-      "addMemberPlaceholder": "Add Member…",
       "attendanceSaveError": "Could not save the attendance of {name}. Please try again.",
       "noMainTrainerWarning": {
         "title": "Main trainer missing:",
@@ -843,7 +842,6 @@
       "create_event": "Create Event",
       "create_first_event": "Create First Event",
       "edit_event": "Edit Event",
-      "add_participant_placeholder": "Add participant…",
       "already_on_list": "{name} is already on the list",
       "already_attended": "{name} is already checked in",
       "add_as_attended_hint": "Added participants are recorded as attended right away.",
@@ -1825,6 +1823,10 @@
     }
   },
   "components": {
+    "CheckinSearch": {
+      "placeholder": "Search or add…",
+      "notOnList": "Not on the list"
+    },
     "ParticipantCard": {
       "View": "View",
       "SetAsAttendee": "Set as Attendee",
