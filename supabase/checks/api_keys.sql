@@ -16,6 +16,9 @@
 --   V  events and their participants (event_participants:read,
 --      20261111120000_api_event_participants.sql): servers only, the events
 --      of a period, per event who registered or attended, names only
+--   R  the Einsätze report (activity_report:read,
+--      20261115120000_api_activity_report.sql): servers only, admins make
+--      the key, the report's data of a period, names only
 
 \set ON_ERROR_STOP 1
 \o /dev/null
@@ -470,6 +473,91 @@ BEGIN
   RESET ROLE;
   PERFORM pg_temp.ok('V6 the use is noted',
     (SELECT last_used_at = now() FROM public.api_keys WHERE name = 'Berichte'));
+END $$;
+ROLLBACK TO SAVEPOINT s;
+
+-----------------
+-- R The Einsätze report (activity_report:read,
+--   20261115120000_api_activity_report.sql): servers only, what the
+--   report page loads, names only
+-----------------
+
+SAVEPOINT s;
+INSERT INTO public.members (id, firstname, lastname, labels, email, birthday) VALUES
+  (971, 'Rita', 'Report', '[]', 'rita@test.ch', '2011-04-04'),
+  (972, 'Theo', 'Teilnehmer', '[]', NULL, NULL);
+INSERT INTO public.logs (date, "trainingId", "memberId", "trainerRole") VALUES
+  (pg_temp.d(-14), 961, 961, 'main_trainer'),
+  (pg_temp.d(-14), 961, 962, 'assistant'),
+  (pg_temp.d(-14), 961, 972, 'attendee'),
+  (pg_temp.d(-500), 961, 961, 'main_trainer');
+INSERT INTO public.events (id, title, description, date, date_to, section) VALUES
+  (971, 'API Report Lager', 'intern: Budget', pg_temp.d(-12), pg_temp.d(-11), 'Judo');
+INSERT INTO public.event_logs ("eventId", "memberId", "isCoach", "coachDay") VALUES
+  (971, 971, true, 'half'),
+  (971, 972, false, 'full');
+
+DO $$
+DECLARE
+  k text := pg_temp.new_key('Kassier', ARRAY['activity_report:read']);
+  k_events text := pg_temp.new_key('Berichte', ARRAY['event_participants:read']);
+  r jsonb;
+BEGIN
+  PERFORM pg_temp.act_as('30000000-0000-4000-8000-000000000003');
+  PERFORM pg_temp.eq('R1 a report key with a website is refused',
+    pg_temp.state($q$SELECT public.api_key_create('x', ARRAY['activity_report:read'], ARRAY['https://www.jtc.ch'])$q$),
+    '23514');
+  RESET ROLE;
+  PERFORM pg_temp.act_as('30000000-0000-4000-8000-000000000001');
+  PERFORM pg_temp.eq('R1 a trainer cannot make a report key',
+    pg_temp.state($q$SELECT public.api_key_create('x', ARRAY['activity_report:read'])$q$),
+    '42501');
+  RESET ROLE;
+
+  PERFORM pg_temp.as_anon();
+  r := public.api_activity_report(k, current_date - 30, current_date);
+  RESET ROLE;
+  PERFORM pg_temp.eq('R2 the answer''s parts', pg_temp.keys(r),
+    'allowed_origins,breaks,event_logs,events,held,member,members,planned_ids,sessions,trainer_logs,trainings');
+  PERFORM pg_temp.eq('R2 a server key lists no websites', r->>'allowed_origins', '[]');
+  PERFORM pg_temp.eq('R2 trainers of the period only, not attendees',
+    (SELECT string_agg(x->>'memberId' || ':' || (x->>'trainerRole'), ',' ORDER BY x->>'memberId')
+     FROM jsonb_array_elements(r->'trainer_logs') x),
+    '961:main_trainer,962:assistant');
+  PERFORM pg_temp.eq('R2 the training held, with everyone checked in',
+    (SELECT x->>'count' || '/' || (x->>'totalTrainerCount') FROM jsonb_array_elements(r->'held') x
+     WHERE x->>'date' = pg_temp.d(-14)),
+    '3/2');
+  PERFORM pg_temp.eq('R2 the event and its check-ins with the half day',
+    (SELECT string_agg(x->>'memberId' || ':' || (x->>'isCoach') || ':' || (x->>'coachDay'), ',' ORDER BY x->>'memberId')
+     FROM jsonb_array_elements(r->'event_logs') x WHERE x->>'eventId' = '971'),
+    '971:true:half,972:false:full');
+  PERFORM pg_temp.ok('R2 the planned trainings', r->'planned_ids' = '[961]'::jsonb);
+  PERFORM pg_temp.ok('R2 trainers and coaches named, participants not',
+    r->'members' @> '[{"id": 961}, {"id": 962}, {"id": 971}]'::jsonb
+    AND NOT r->'members' @> '[{"id": 972}]'::jsonb);
+  PERFORM pg_temp.eq('R2 a member: id and name only', pg_temp.keys(r->'members'->0), 'firstname,id,lastname');
+  PERFORM pg_temp.ok('R2 no e-mail, birthday, notes or description',
+    r::text NOT LIKE '%@%' AND r::text NOT LIKE '%2011-04%' AND r::text NOT LIKE '%intern:%'
+    AND r::text NOT LIKE '%Budget%');
+  PERFORM pg_temp.ok('R2 no member asked: member null', r->'member' = 'null'::jsonb);
+
+  PERFORM pg_temp.as_anon();
+  r := public.api_activity_report(k, current_date - 30, current_date, 972);
+  PERFORM pg_temp.eq('R3 the member asked for', r->'member'->>'lastname', 'Teilnehmer');
+  PERFORM pg_temp.ok('R3 an unknown member: member null',
+    public.api_activity_report(k, current_date - 30, current_date, 999999)->'member' = 'null'::jsonb);
+  PERFORM pg_temp.eq('R4 a bad period is refused',
+    pg_temp.state(format('SELECT public.api_activity_report(%L, current_date, current_date + 401)', k)),
+    '22023');
+  PERFORM pg_temp.ok('R5 other keys get nothing',
+    public.api_activity_report(k_events, current_date - 30, current_date) IS NULL
+    AND public.api_activity_report('alleda_' || repeat('0', 48), current_date - 30, current_date) IS NULL
+    AND public.api_activity_report(NULL, current_date - 30, current_date) IS NULL);
+  PERFORM pg_temp.ok('R5 nor does the report key get events or the plan',
+    public.api_events(k, current_date - 30, current_date) IS NULL
+    AND public.api_training_plan(k, current_date, current_date) IS NULL);
+  RESET ROLE;
 END $$;
 ROLLBACK TO SAVEPOINT s;
 

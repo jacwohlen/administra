@@ -443,9 +443,11 @@
         "scopes": "May read",
         "scopeTrainingPlan": "Training plan: trainings with time, who leads, topic and cancellations, holidays",
         "scopeEventParticipants": "Event participants: events with date and place, per event the names of those registered and present (personal data, servers only)",
+        "scopeActivityReport": "Activity report: per person and period trainings as main trainer and assistant and coaching days, for the club or one person (personal data, servers only)",
         "scopeShort": {
           "training_plan:read": "Training plan",
-          "event_participants:read": "Event participants"
+          "event_participants:read": "Event participants",
+          "activity_report:read": "Activity report"
         },
         "noScopes": "may read nothing",
         "serverOnlyHint": "Personal data: this key is for servers only (e.g. a program writing reports). Browsers are refused, so no websites can be listed. Keep it secret.",
