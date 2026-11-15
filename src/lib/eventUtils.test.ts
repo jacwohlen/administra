@@ -7,6 +7,8 @@ import {
   calculateAttendanceRate,
   canAddParticipants,
   attendanceTimestamp,
+  coachDayValue,
+  coachingDayCounts,
   endsOnOrAfter,
   eventCoversDay,
   eventDateInput,
@@ -267,6 +269,52 @@ describe('the event form', () => {
       allDay: false,
       timeFrom: '18:00',
       timeTo: '20:00'
+    });
+  });
+});
+
+describe('coaching days', () => {
+  it('counts a full day as 1 and a half day as 0.5', () => {
+    expect(coachDayValue('full')).toBe(1);
+    expect(coachDayValue('half')).toBe(0.5);
+    expect(coachDayValue(undefined)).toBe(1);
+  });
+
+  it('counts full and half days apart, every event day inside the range', () => {
+    const counts = coachingDayCounts(
+      [
+        { coachDay: 'half', event: { date: '2026-03-14' } },
+        { coachDay: 'half', event: { date: '2026-06-20' } },
+        { coachDay: 'full', event: { date: '2026-05-01', date_to: '2026-05-03' } },
+        // Only its first day falls into the year
+        { coachDay: 'full', event: { date: '2026-12-31', date_to: '2027-01-02' } },
+        { coachDay: 'full', event: { date: '2025-11-01' } }
+      ],
+      '2026-01-01',
+      '2026-12-31'
+    );
+    expect(counts).toEqual({ full: 4, half: 2, days: 5 });
+  });
+
+  it('counts a day coached at two events once, as a full day if either was', () => {
+    const counts = coachingDayCounts(
+      [
+        { coachDay: 'half', event: { date: '2026-03-14' } },
+        { coachDay: 'full', event: { date: '2026-03-14' } },
+        { coachDay: 'half', event: { date: '2026-04-11' } },
+        { coachDay: 'half', event: { date: '2026-04-11' } }
+      ],
+      '2026-01-01',
+      '2026-12-31'
+    );
+    expect(counts).toEqual({ full: 1, half: 1, days: 1.5 });
+  });
+
+  it('is nothing without coaching', () => {
+    expect(coachingDayCounts([], '2026-01-01', '2026-12-31')).toEqual({
+      full: 0,
+      half: 0,
+      days: 0
     });
   });
 });
