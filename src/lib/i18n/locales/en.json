@@ -1811,7 +1811,13 @@
       "page": "Page {page} of {pages}",
       "created": "Created on",
       "coachingNote": "Coaching days: every day of an event in the period at which the person is checked in as coach; a half day counts 0.5.",
-      "from": "From"
+      "from": "From",
+      "participants": "Part.",
+      "lessonPlan": "Lesson plan",
+      "yes": "yes",
+      "no": "–",
+      "trainingsNote": "Every training with a check-in in the period. Part.: participants checked in, without trainers and assistants.",
+      "coachingNoteDetail": "Part.: participants checked in, without coaches; the coaching days per coach in brackets."
     }
   },
   "components": {

@@ -1811,7 +1811,13 @@
       "page": "Seite {page} von {pages}",
       "created": "Erstellt am",
       "coachingNote": "Coaching-Tage: jeder Tag eines Anlasses im Zeitraum, an dem die Person als Coach eingetragen ist; ein halber Tag zählt 0.5.",
-      "from": "Von"
+      "from": "Von",
+      "participants": "Teiln.",
+      "lessonPlan": "Lektionsplan",
+      "yes": "ja",
+      "no": "–",
+      "trainingsNote": "Alle Trainings mit Check-in im Zeitraum. Teiln.: eingecheckte Teilnehmende ohne Trainer und Hilfstrainer.",
+      "coachingNoteDetail": "Teiln.: eingecheckte Teilnehmende ohne Coaches; in Klammern die Coaching-Tage pro Coach."
     }
   },
   "components": {

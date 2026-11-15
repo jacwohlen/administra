@@ -51,22 +51,31 @@ const base = (): ReportInput => ({
     { date: '2026-04-02', trainingId: 2, memberId: 2, trainerRole: 'main_trainer' }
   ],
   held: [
-    { date: '2026-03-03', trainingId: 1, count: 12, mainTrainerCount: 1 },
+    {
+      date: '2026-03-03',
+      trainingId: 1,
+      count: 12,
+      mainTrainerCount: 1,
+      totalTrainerCount: 2,
+      hasLessonPlan: true
+    },
     { date: '2026-03-10', trainingId: 1, count: 9, mainTrainerCount: 1 },
     { date: '2026-03-05', trainingId: 2, count: 8, mainTrainerCount: 1 },
-    { date: '2026-03-12', trainingId: 2, count: 7, mainTrainerCount: 0 }
+    { date: '2026-03-12', trainingId: 2, count: 7, mainTrainerCount: 0, totalTrainerCount: 0 }
   ],
   events: [
     { id: 10, title: 'Lager', date: '2026-02-27', date_to: '2026-03-02' },
     { id: 11, title: 'Q-Prüfung', date: '2026-03-14' },
     { id: 12, title: 'Turnier', date: '2026-03-14' }
   ],
-  coachLogs: [
-    { eventId: 10, memberId: 1 },
-    { eventId: 11, memberId: 2, coachDay: 'half' },
-    { eventId: 11, memberId: 1, coachDay: 'half' },
+  eventLogs: [
+    { eventId: 11, memberId: 7, isCoach: false },
+    { eventId: 11, memberId: 8, isCoach: false },
+    { eventId: 10, memberId: 1, isCoach: true },
+    { eventId: 11, memberId: 2, isCoach: true, coachDay: 'half' },
+    { eventId: 11, memberId: 1, isCoach: true, coachDay: 'half' },
     // Two events on one day: the day counts once, the larger share
-    { eventId: 12, memberId: 1, coachDay: 'full' }
+    { eventId: 12, memberId: 1, isCoach: true, coachDay: 'full' }
   ],
   plan: {
     trainings: [
@@ -117,14 +126,29 @@ describe('buildActivityReport', () => {
     ]);
   });
 
-  it('lists the trainings held with their trainers', () => {
-    expect(report.trainings.map((t) => [t.date, t.training, t.mainTrainers, t.assistants])).toEqual(
-      [
-        ['2026-03-03', 'Kinder', ['Muster Anna'], ['Beispiel Ben']],
-        ['2026-03-05', 'Erwachsene', ['Beispiel Ben'], []],
-        ['2026-03-10', 'Kinder', ['Zeller Cleo'], []]
-      ]
-    );
+  it('lists every training held with trainers, participants and lesson plan', () => {
+    expect(
+      report.trainings.map((t) => [
+        t.date,
+        t.training,
+        t.mainTrainers,
+        t.assistants,
+        t.participants,
+        t.lessonPlan
+      ])
+    ).toEqual([
+      ['2026-03-03', 'Kinder', ['Muster Anna'], ['Beispiel Ben'], 10, true],
+      ['2026-03-05', 'Erwachsene', ['Beispiel Ben'], [], 8, false],
+      ['2026-03-10', 'Kinder', ['Zeller Cleo'], [], 9, false],
+      // Held without a trainer marked: listed too
+      ['2026-03-12', 'Erwachsene', [], [], 7, false]
+    ]);
+  });
+
+  it('counts event participants without the coaches', () => {
+    const q = report.coaching.find((c) => c.event === 'Q-Prüfung')!;
+    expect(q.participants).toBe(2);
+    expect(report.coaching.find((c) => c.event === 'Lager')!.participants).toBe(0);
   });
 
   it('lists planned dates up to today the check-in shows no main trainer for', () => {
@@ -182,6 +206,12 @@ const labels: ActivityReportLabels = {
   mainTrainers: 'Trainer',
   assistants: 'Hilfstrainer',
   coachingDetail: 'Coaching',
+  participants: 'Teiln.',
+  lessonPlan: 'Lektionsplan',
+  yes: 'ja',
+  no: '–',
+  trainingsNote: 'Hinweis',
+  coachingNote: 'Hinweis',
   event: 'Anlass',
   coaches: 'Coaches',
   checks: 'Zu prüfen',

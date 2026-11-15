@@ -43,8 +43,12 @@ export interface ReportTrainerLog {
 export interface ReportHeldSession {
   date: string;
   trainingId: number;
+  /** Everyone checked in, trainers included */
   count: number;
   mainTrainerCount: number;
+  /** Main trainers and assistants */
+  totalTrainerCount?: number;
+  hasLessonPlan?: boolean;
 }
 
 export interface ReportEvent {
@@ -55,10 +59,11 @@ export interface ReportEvent {
   section?: string | null;
 }
 
-/** A coach's check-in at an event */
-export interface ReportCoachLog {
+/** A check-in at an event: a participant, or a coach */
+export interface ReportEventLog {
   eventId: number;
   memberId: number;
+  isCoach: boolean;
   /** 'half' for half a day per event day; missing or 'full' for a full day */
   coachDay?: string | null;
 }
@@ -79,7 +84,7 @@ export interface ReportInput {
   trainerLogs: ReportTrainerLog[];
   held: ReportHeldSession[];
   events: ReportEvent[];
-  coachLogs: ReportCoachLog[];
+  eventLogs: ReportEventLog[];
   plan: ReportPlan;
 }
 
@@ -97,6 +102,9 @@ export interface TrainingDetailRow {
   section: string;
   mainTrainers: string[];
   assistants: string[];
+  /** Checked in without the trainers */
+  participants: number;
+  lessonPlan: boolean;
 }
 
 export interface CoachingDetailRow {
@@ -105,6 +113,8 @@ export interface CoachingDetailRow {
   /** Last day within the period */
   dateTo: string;
   event: string;
+  /** Checked in without the coaches */
+  participants: number;
   /** Each coach with the days counted for them */
   coaches: { name: string; days: number }[];
 }
@@ -161,7 +171,32 @@ export function buildActivityReport(input: ReportInput): ActivityReport {
   };
 
   // Trainings: one count per person, training and date, by the check-in role
-  const sessions = new Map<string, TrainingDetailRow & { trainingId: number }>();
+  const sessions = new Map<string, TrainingDetailRow>();
+  const session = (trainingId: number, date: string) => {
+    const key = `${trainingId}|${date}`;
+    let s = sessions.get(key);
+    if (!s) {
+      const t = trainings.get(trainingId);
+      s = {
+        date,
+        training: t?.title ?? `#${trainingId}`,
+        section: t?.section ?? '',
+        mainTrainers: [],
+        assistants: [],
+        participants: 0,
+        lessonPlan: false
+      };
+      sessions.set(key, s);
+    }
+    return s;
+  };
+  // Every training held: participants without the trainers, lesson plan
+  for (const h of input.held) {
+    if (!inRange(h.date)) continue;
+    const s = session(h.trainingId, h.date);
+    s.participants = Math.max(0, Number(h.count) - Number(h.totalTrainerCount ?? 0));
+    s.lessonPlan = !!h.hasLessonPlan;
+  }
   const seen = new Set<string>();
   for (const l of input.trainerLogs) {
     if (!inRange(l.date)) continue;
@@ -173,20 +208,7 @@ export function buildActivityReport(input: ReportInput): ActivityReport {
     if (l.trainerRole === 'main_trainer') r.mainTrainer++;
     else r.assistant++;
 
-    const key = `${l.trainingId}|${l.date}`;
-    let s = sessions.get(key);
-    if (!s) {
-      const t = trainings.get(l.trainingId);
-      s = {
-        date: l.date,
-        trainingId: l.trainingId,
-        training: t?.title ?? `#${l.trainingId}`,
-        section: t?.section ?? '',
-        mainTrainers: [],
-        assistants: []
-      };
-      sessions.set(key, s);
-    }
+    const s = session(l.trainingId, l.date);
     (l.trainerRole === 'main_trainer' ? s.mainTrainers : s.assistants).push(name(l.memberId));
   }
 
@@ -195,7 +217,15 @@ export function buildActivityReport(input: ReportInput): ActivityReport {
   const events = new Map(input.events.map((e) => [e.id, e]));
   const coachDays = new Map<number, Map<string, number>>();
   const coachingByEvent = new Map<number, Map<number, number>>();
-  for (const c of input.coachLogs) {
+  const participantsByEvent = new Map<number, Set<number>>();
+  for (const l of input.eventLogs) {
+    if (l.isCoach) continue;
+    const set = participantsByEvent.get(l.eventId) ?? new Set<number>();
+    set.add(l.memberId);
+    participantsByEvent.set(l.eventId, set);
+  }
+  for (const c of input.eventLogs) {
+    if (!c.isCoach) continue;
     const e = events.get(c.eventId);
     if (!e) continue;
     const factor = coachDayFactor(c.coachDay);
@@ -222,7 +252,9 @@ export function buildActivityReport(input: ReportInput): ActivityReport {
       training: s.training,
       section: s.section,
       mainTrainers: s.mainTrainers.sort(byName),
-      assistants: s.assistants.sort(byName)
+      assistants: s.assistants.sort(byName),
+      participants: s.participants,
+      lessonPlan: s.lessonPlan
     }))
     .sort(
       (a, b) =>
@@ -239,6 +271,7 @@ export function buildActivityReport(input: ReportInput): ActivityReport {
         date: e.date < from ? from : e.date,
         dateTo: end > to ? to : end,
         event: e.title,
+        participants: participantsByEvent.get(eventId)?.size ?? 0,
         coaches: [...coaches.entries()]
           .map(([memberId, days]) => ({ name: name(memberId), days }))
           .sort((a, b) => byName(a.name, b.name))
@@ -322,6 +355,12 @@ export interface ActivityReportLabels {
   mainTrainers: string;
   assistants: string;
   coachingDetail: string;
+  participants: string;
+  lessonPlan: string;
+  yes: string;
+  no: string;
+  trainingsNote: string;
+  coachingNote: string;
   event: string;
   coaches: string;
   checks: string;
@@ -408,29 +447,41 @@ export function activityReportPdf(
   tables.push(
     {
       heading: labels.trainingsDetail,
+      note: labels.trainingsNote,
       columns: [
-        { label: labels.date, width: 62 },
-        { label: labels.training, width: 125 },
-        { label: labels.section, width: 68 },
-        { label: labels.mainTrainers, width: 120 },
-        { label: labels.assistants, width: 140 }
+        { label: labels.date, width: 56 },
+        { label: labels.training, width: 100 },
+        { label: labels.section, width: 55 },
+        { label: labels.mainTrainers, width: 95 },
+        { label: labels.assistants, width: 95 },
+        { label: labels.participants, width: 50, align: 'right' },
+        { label: labels.lessonPlan, width: 64 }
       ],
       rows: report.trainings.map((t) => [
         swissDate(t.date),
         t.training,
         t.section,
         t.mainTrainers.join(', '),
-        t.assistants.join(', ')
+        t.assistants.join(', '),
+        String(t.participants),
+        t.lessonPlan ? labels.yes : labels.no
       ])
     },
     {
       heading: labels.coachingDetail,
+      note: labels.coachingNote,
       columns: [
-        { label: labels.date, width: 115 },
-        { label: labels.event, width: 160 },
-        { label: labels.coaches, width: 240 }
+        { label: labels.date, width: 100 },
+        { label: labels.event, width: 145 },
+        { label: labels.participants, width: 50, align: 'right' },
+        { label: labels.coaches, width: 220 }
       ],
-      rows: report.coaching.map((c) => [dateSpan(c.date, c.dateTo), c.event, coachList(c)])
+      rows: report.coaching.map((c) => [
+        dateSpan(c.date, c.dateTo),
+        c.event,
+        String(c.participants),
+        coachList(c)
+      ])
     }
   );
   return {

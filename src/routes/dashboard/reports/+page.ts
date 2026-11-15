@@ -9,7 +9,7 @@ import type { PlanTraining } from '#lib/trainingPlanUtils.ts';
 import {
   buildActivityReport,
   reportPeriod,
-  type ReportCoachLog,
+  type ReportEventLog,
   type ReportEvent,
   type ReportHeldSession,
   type ReportPerson,
@@ -61,7 +61,7 @@ export const load: PageLoad = async ({ parent, url }) => {
       fetchAllRows<ReportHeldSession>((a, b) =>
         supabaseClient
           .from('view_logs_summary')
-          .select('date, trainingId, count, mainTrainerCount')
+          .select('date, trainingId, count, mainTrainerCount, totalTrainerCount, hasLessonPlan')
           .gte('date', from)
           .lte('date', to)
           .order('date')
@@ -113,18 +113,26 @@ export const load: PageLoad = async ({ parent, url }) => {
     if (planned.error) throw planned.error;
     if (breaks.error) throw breaks.error;
 
-    // Coaches: '*' so the half-day column ("coachDay") comes along where the
-    // database has it, and nothing breaks where it does not yet
-    const coachLogs = await byIds<ReportCoachLog>(
-      events.map((e) => e.id),
-      (chunk) =>
-        supabaseClient
-          .from('event_logs')
-          .select('*')
-          .eq('isCoach', true)
-          .in('eventId', chunk)
-          .returns<ReportCoachLog[]>()
-    );
+    // Check-ins at the events (participants and coaches): '*' so the
+    // half-day column ("coachDay") comes along where the database has it,
+    // and nothing breaks where it does not yet
+    const eventIds = events.map((e) => e.id);
+    const eventLogs: ReportEventLog[] = [];
+    for (let i = 0; i < eventIds.length; i += ID_CHUNK) {
+      const chunk = eventIds.slice(i, i + ID_CHUNK);
+      eventLogs.push(
+        ...(await fetchAllRows<ReportEventLog>((a, b) =>
+          supabaseClient
+            .from('event_logs')
+            .select('*')
+            .in('eventId', chunk)
+            .order('id')
+            .range(a, b)
+            .returns<ReportEventLog[]>()
+        ))
+      );
+    }
+    const coachLogs = eventLogs.filter((l) => l.isCoach);
 
     const plannedIds = new Set((planned.data ?? []).map((p) => p.training_id));
     const planTrainings = trainings.filter((t) => plannedIds.has(t.id));
@@ -153,7 +161,7 @@ export const load: PageLoad = async ({ parent, url }) => {
       trainerLogs,
       held,
       events,
-      coachLogs,
+      eventLogs,
       plan: { trainings: planTrainings, sessions, breaks: breaks.data ?? [] }
     });
     return { from, to, report };
