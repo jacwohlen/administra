@@ -492,7 +492,6 @@
       "logs": "Protokolle",
       "searchMembersPlaceholder": "Mitglied suchen…",
       "memberNotFound": "Mitglied nicht gefunden",
-      "addMemberPlaceholder": "Mitglied hinzufügen…",
       "attendanceSaveError": "Die Anwesenheit von {name} konnte nicht gespeichert werden. Bitte nochmals versuchen.",
       "noMainTrainerWarning": {
         "title": "Haupttrainer fehlt:",
@@ -843,7 +842,6 @@
       "create_event": "Event erstellen",
       "create_first_event": "Erstes Event erstellen",
       "edit_event": "Event bearbeiten",
-      "add_participant_placeholder": "Teilnehmer hinzufügen…",
       "already_on_list": "{name} ist schon auf der Liste",
       "already_attended": "{name} ist schon als anwesend erfasst",
       "add_as_attended_hint": "Hinzugefügte Teilnehmer werden direkt als anwesend erfasst.",
@@ -1825,6 +1823,11 @@
     }
   },
   "components": {
+    "CheckinSearch": {
+      "placeholder": "Suchen oder hinzufügen…",
+      "notOnList": "Nicht auf der Liste",
+      "age": "{age} Jahre"
+    },
     "ParticipantCard": {
       "View": "Anzeigen",
       "SetAsAttendee": "Als Teilnehmer markieren",

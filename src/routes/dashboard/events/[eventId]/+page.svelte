@@ -24,7 +24,7 @@
   import { flip } from 'svelte/animate';
   import { quintInOut } from 'svelte/easing';
   import { SvelteSet } from 'svelte/reactivity';
-  import AddMemberInputBox from '#lib/components/AddMemberInputBox.svelte';
+  import CheckinSearch from '#lib/components/CheckinSearch.svelte';
   import ConfirmDialog from '#lib/components/ConfirmDialog.svelte';
   import {
     canTrackAttendance as _canTrackAttendance,
@@ -347,19 +347,14 @@
   }
 
   // The search over the list: Enter checks the first match in and empties the
-  // search for the next name (never out: that would drop a coach's status),
-  // Escape empties it
-  function searchKeydown(e: KeyboardEvent) {
-    if (e.key === 'Escape') {
-      search = '';
-    } else if (e.key === 'Enter' && search.trim()) {
-      e.preventDefault();
-      const first = shownRows[0];
-      if (first && !first.attended && tracking && data.canWrite) {
-        setAttendance(first.participant.memberId, true);
-        search = '';
-      }
+  // search for the next name (never out: that would drop a coach's status)
+  function checkInFirstMatch(): boolean {
+    const first = shownRows[0];
+    if (!first) return false;
+    if (!first.attended && tracking && data.canWrite) {
+      setAttendance(first.participant.memberId, true);
     }
+    return true;
   }
 
   function confirmDelete() {
@@ -580,194 +575,185 @@
       {/if}
     </div>
 
-    {#if registeredCount > 0}
-      <!-- Search over the list -->
-      <div class="sticky top-0 z-30 bg-surface-50-950 pb-3 -mx-3 px-3 sm:-mx-4 sm:px-4 pt-1">
-        <input
-          class="input"
-          type="search"
-          placeholder={$_('page.trainings.searchMembersPlaceholder')}
-          bind:value={search}
-          onkeydown={searchKeydown}
-          onfocus={() => (animateList = false)}
-          onblur={() => (animateList = true)}
-        />
-      </div>
-    {:else}
+    {#if registeredCount === 0}
       <p class="empty-state">{$_('page.events.no_participants')}</p>
     {/if}
 
-    <ul class="flex flex-col gap-2">
-      {#each shownRows as row (row.participant.memberId)}
-        {@const memberId = row.participant.memberId}
-        {@const log = row.log}
-        {@const saving = busy.has(String(memberId))}
-        <li
-          class="list-item flex-wrap gap-y-2"
-          animate:flip={{ duration: animateList ? 400 : 0, easing: quintInOut }}
-        >
-          {#if tracking}
-            <input
-              class="checkbox"
-              type="checkbox"
-              checked={row.attended}
-              onchange={() => setAttendance(memberId, !row.attended)}
-              disabled={!data.canWrite || saving}
-              aria-label={$_('page.events.mark_attended')}
+    <!-- Search over the list, which also adds whoever is not on it -->
+    {#if registeredCount > 0 || showAddBox}
+      <CheckinSearch
+        bind:value={search}
+        listed={participants.map((p) => p.memberId)}
+        canAdd={showAddBox}
+        hint={tracking ? $_('page.events.add_as_attended_hint') : undefined}
+        onenter={checkInFirstMatch}
+        onadd={addMember}
+        onfocuschange={(focused) => (animateList = !focused)}
+      >
+        {@render list()}
+      </CheckinSearch>
+    {/if}
+  </div>
+</div>
+
+{#snippet list()}
+  <ul class="flex flex-col gap-2">
+    {#each shownRows as row (row.participant.memberId)}
+      {@const memberId = row.participant.memberId}
+      {@const log = row.log}
+      {@const saving = busy.has(String(memberId))}
+      <li
+        class="list-item flex-wrap gap-y-2"
+        animate:flip={{ duration: animateList ? 400 : 0, easing: quintInOut }}
+      >
+        {#if tracking}
+          <input
+            class="checkbox"
+            type="checkbox"
+            checked={row.attended}
+            onchange={() => setAttendance(memberId, !row.attended)}
+            disabled={!data.canWrite || saving}
+            aria-label={$_('page.events.mark_attended')}
+          />
+        {/if}
+        <div class="relative flex-shrink-0">
+          {#if row.member.img}
+            <img
+              src={row.member.img}
+              alt="{row.member.lastname} {row.member.firstname}"
+              class="size-10 rounded-full object-cover"
             />
+          {:else}
+            <div class="avatar-initials">
+              {row.member.lastname.charAt(0)}{row.member.firstname.charAt(0)}
+            </div>
           {/if}
-          <div class="relative flex-shrink-0">
-            {#if row.member.img}
-              <img
-                src={row.member.img}
-                alt="{row.member.lastname} {row.member.firstname}"
-                class="size-10 rounded-full object-cover"
-              />
-            {:else}
-              <div class="avatar-initials">
-                {row.member.lastname.charAt(0)}{row.member.firstname.charAt(0)}
-              </div>
-            {/if}
-            {#if log?.isCoach}
-              <span
-                class="absolute -bottom-0 -right-0 z-10 bg-primary-600-400 rounded-full w-4 h-4 flex items-center justify-center"
-              >
-                <img class="w-2.5" src="/judo-icon.svg" alt={$_('page.events.coach')} />
+          {#if log?.isCoach}
+            <span
+              class="absolute -bottom-0 -right-0 z-10 bg-primary-600-400 rounded-full w-4 h-4 flex items-center justify-center"
+            >
+              <img class="w-2.5" src="/judo-icon.svg" alt={$_('page.events.coach')} />
+            </span>
+          {/if}
+        </div>
+        <div class="list-item-content">
+          <div class="font-medium truncate">
+            {row.member.lastname}
+            {row.member.firstname}
+            {#if row.placement}
+              <span class="ml-1" title={$_('medals.' + row.placement.medal)}>
+                {medalEmoji(row.placement.medal)}
               </span>
             {/if}
           </div>
-          <div class="list-item-content">
-            <div class="font-medium truncate">
-              {row.member.lastname}
-              {row.member.firstname}
-              {#if row.placement}
-                <span class="ml-1" title={$_('medals.' + row.placement.medal)}>
-                  {medalEmoji(row.placement.medal)}
-                </span>
-              {/if}
-            </div>
-            <div class="flex flex-wrap items-center gap-x-2 text-sm text-surface-600-400">
-              {#if log}
-                <span>
-                  {$_('page.events.attended_at')}
-                  {dayjs(log.attendedAt).format('HH:mm')}
-                </span>
-              {:else}
-                <span>{$_('page.events.status.' + row.participant.attendanceStatus)}</span>
-              {/if}
-              {#if log?.isCoach}
-                <span class="badge preset-tonal-primary text-xs">
-                  {$_('page.events.coach')}
-                  {#if log.coachDay === 'half'}
-                    · {$_('page.events.coach_half_day')}
-                  {/if}
-                </span>
-              {/if}
-            </div>
-          </div>
-          <div class="flex-shrink-0">
-            <MoreMenu>
-              {#snippet items(close)}
-                <a
-                  href="/dashboard/members/{memberId}"
-                  class="btn w-full justify-start"
-                  onclick={close}
-                >
-                  <Fa icon={faUser} />
-                  <span>{$_('components.ParticipantCard.View')}</span>
-                </a>
-                {#if data.canWrite && log}
-                  <!-- Placement and coaching: few people need them, so they live
-                       here and show in the row as badges -->
-                  <div class="w-56 border-t border-surface-300-700 mt-1 pt-2 px-2 pb-1">
-                    <div class="text-xs text-surface-600-400 mb-1">
-                      {$_('medals.placement')}
-                    </div>
-                    <div
-                      class="grid grid-cols-4 rounded-lg overflow-hidden border border-surface-300-700"
-                    >
-                      {#each [null, ...MEDALS] as m (m ?? 'none')}
-                        {@const selected = (row.placement?.medal ?? null) === m}
-                        <button
-                          class="min-h-[44px] text-sm {selected
-                            ? 'preset-filled-primary-500'
-                            : 'preset-tonal-surface'}"
-                          onclick={() => {
-                            close();
-                            if (!selected) setMedal(memberId, m);
-                          }}
-                          disabled={saving}
-                          title={m ? $_('medals.' + m) : $_('medals.none')}
-                          aria-pressed={selected}
-                        >
-                          {m ? medalEmoji(m) : '–'}
-                        </button>
-                      {/each}
-                    </div>
-                  </div>
-                  <div class="px-2 pt-1 pb-2">
-                    <div class="text-xs text-surface-600-400 mb-1">{$_('page.events.coach')}</div>
-                    <div
-                      class="grid grid-cols-3 rounded-lg overflow-hidden border border-surface-300-700"
-                    >
-                      {#each ['none', 'full', 'half'] as const as choice (choice)}
-                        {@const selected =
-                          choice === 'none' ? !log.isCoach : log.isCoach && log.coachDay === choice}
-                        <button
-                          class="min-h-[44px] px-1 text-sm {selected
-                            ? 'preset-filled-primary-500'
-                            : 'preset-tonal-surface'}"
-                          onclick={() => {
-                            close();
-                            if (!selected) setCoach(memberId, choice);
-                          }}
-                          disabled={saving}
-                          aria-pressed={selected}
-                        >
-                          {choice === 'none'
-                            ? $_('page.events.coach_none')
-                            : choice === 'full'
-                              ? '1 ' + $_('page.events.coach_day_short')
-                              : '½ ' + $_('page.events.coach_day_short')}
-                        </button>
-                      {/each}
-                    </div>
-                  </div>
+          <div class="flex flex-wrap items-center gap-x-2 text-sm text-surface-600-400">
+            {#if log}
+              <span>
+                {$_('page.events.attended_at')}
+                {dayjs(log.attendedAt).format('HH:mm')}
+              </span>
+            {:else}
+              <span>{$_('page.events.status.' + row.participant.attendanceStatus)}</span>
+            {/if}
+            {#if log?.isCoach}
+              <span class="badge preset-tonal-primary text-xs">
+                {$_('page.events.coach')}
+                {#if log.coachDay === 'half'}
+                  · {$_('page.events.coach_half_day')}
                 {/if}
-                {#if data.canWrite}
-                  <button
-                    class="btn w-full justify-start text-error-600-400 border-t border-surface-300-700 rounded-none"
-                    onclick={() => {
-                      close();
-                      confirmRemoveId = memberId;
-                    }}
-                    disabled={saving}
-                  >
-                    <Fa icon={faUserMinus} />
-                    <span>{$_('page.events.removeParticipant')}</span>
-                  </button>
-                {/if}
-              {/snippet}
-            </MoreMenu>
-          </div>
-        </li>
-      {/each}
-      {#if showAddBox}
-        <li>
-          <div class="flex flex-col gap-2 p-4 rounded-lg preset-tonal-tertiary w-full">
-            <AddMemberInputBox
-              onadd={addMember}
-              placeholder={$_('page.events.add_participant_placeholder')}
-            />
-            {#if tracking}
-              <p class="text-xs">{$_('page.events.add_as_attended_hint')}</p>
+              </span>
             {/if}
           </div>
-        </li>
-      {/if}
-    </ul>
-  </div>
-</div>
+        </div>
+        <div class="flex-shrink-0">
+          <MoreMenu>
+            {#snippet items(close)}
+              <a
+                href="/dashboard/members/{memberId}"
+                class="btn w-full justify-start"
+                onclick={close}
+              >
+                <Fa icon={faUser} />
+                <span>{$_('components.ParticipantCard.View')}</span>
+              </a>
+              {#if data.canWrite && log}
+                <!-- Placement and coaching: few people need them, so they live
+                       here and show in the row as badges -->
+                <div class="w-56 border-t border-surface-300-700 mt-1 pt-2 px-2 pb-1">
+                  <div class="text-xs text-surface-600-400 mb-1">
+                    {$_('medals.placement')}
+                  </div>
+                  <div
+                    class="grid grid-cols-4 rounded-lg overflow-hidden border border-surface-300-700"
+                  >
+                    {#each [null, ...MEDALS] as m (m ?? 'none')}
+                      {@const selected = (row.placement?.medal ?? null) === m}
+                      <button
+                        class="min-h-[44px] text-sm {selected
+                          ? 'preset-filled-primary-500'
+                          : 'preset-tonal-surface'}"
+                        onclick={() => {
+                          close();
+                          if (!selected) setMedal(memberId, m);
+                        }}
+                        disabled={saving}
+                        title={m ? $_('medals.' + m) : $_('medals.none')}
+                        aria-pressed={selected}
+                      >
+                        {m ? medalEmoji(m) : '–'}
+                      </button>
+                    {/each}
+                  </div>
+                </div>
+                <div class="px-2 pt-1 pb-2">
+                  <div class="text-xs text-surface-600-400 mb-1">{$_('page.events.coach')}</div>
+                  <div
+                    class="grid grid-cols-3 rounded-lg overflow-hidden border border-surface-300-700"
+                  >
+                    {#each ['none', 'full', 'half'] as const as choice (choice)}
+                      {@const selected =
+                        choice === 'none' ? !log.isCoach : log.isCoach && log.coachDay === choice}
+                      <button
+                        class="min-h-[44px] px-1 text-sm {selected
+                          ? 'preset-filled-primary-500'
+                          : 'preset-tonal-surface'}"
+                        onclick={() => {
+                          close();
+                          if (!selected) setCoach(memberId, choice);
+                        }}
+                        disabled={saving}
+                        aria-pressed={selected}
+                      >
+                        {choice === 'none'
+                          ? $_('page.events.coach_none')
+                          : choice === 'full'
+                            ? '1 ' + $_('page.events.coach_day_short')
+                            : '½ ' + $_('page.events.coach_day_short')}
+                      </button>
+                    {/each}
+                  </div>
+                </div>
+              {/if}
+              {#if data.canWrite}
+                <button
+                  class="btn w-full justify-start text-error-600-400 border-t border-surface-300-700 rounded-none"
+                  onclick={() => {
+                    close();
+                    confirmRemoveId = memberId;
+                  }}
+                  disabled={saving}
+                >
+                  <Fa icon={faUserMinus} />
+                  <span>{$_('page.events.removeParticipant')}</span>
+                </button>
+              {/if}
+            {/snippet}
+          </MoreMenu>
+        </div>
+      </li>
+    {/each}
+  </ul>
+{/snippet}
 
 {#if confirmRemoveId}
   <ConfirmDialog
