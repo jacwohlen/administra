@@ -38,4 +38,14 @@ is not the app's business.
 
 Everything is computed in the browser under RLS
 (`src/lib/activityReport.ts`, load in
-`src/routes/dashboard/reports/+page.ts`); there is no migration.
+`src/routes/dashboard/reports/+page.ts`).
+
+## For other systems
+
+The same report, for the club or one person, as JSON:
+`GET /api/v1/reports/activity?from=…&to=…&member=…` with an API key with
+`activity_report:read` (only admins create it, servers only; see
+`docs/API.md`). `api_activity_report()` returns the data the page loads and
+the endpoint runs the same `buildActivityReport()`, so the numbers match the
+page and the PDF. A change to what the page loads belongs in that function
+too.

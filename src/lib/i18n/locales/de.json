@@ -443,9 +443,11 @@
         "scopes": "Darf lesen",
         "scopeTrainingPlan": "Trainingsplan: Trainings mit Zeit, Leitung, Thema und Ausfällen, Ferien",
         "scopeEventParticipants": "Event-Teilnehmende: Events mit Datum und Ort, pro Event Name und Vorname der Angemeldeten und Anwesenden (Personendaten, nur für Server)",
+        "scopeActivityReport": "Einsätze: pro Person und Zeitraum Trainings als Trainer und Hilfstrainer und Coaching-Tage, für den Verein oder eine Person (Personendaten, nur für Server)",
         "scopeShort": {
           "training_plan:read": "Trainingsplan",
-          "event_participants:read": "Event-Teilnehmende"
+          "event_participants:read": "Event-Teilnehmende",
+          "activity_report:read": "Einsätze"
         },
         "noScopes": "darf nichts lesen",
         "serverOnlyHint": "Personendaten: Dieser Schlüssel ist nur für Server (z. B. ein Programm für Berichte). Im Browser wird er abgelehnt, darum lassen sich keine Webseiten eintragen. Bewahre ihn geheim auf.",

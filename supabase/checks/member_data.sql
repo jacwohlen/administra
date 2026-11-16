@@ -153,7 +153,10 @@ LANGUAGE sql AS $$
     AND (has_function_privilege('authenticated', p.oid, 'EXECUTE')
          OR has_function_privilege('anon', p.oid, 'EXECUTE'))
     AND pg_get_function_identity_arguments(p.oid) ~* 'member'
-    AND p.prosrc !~ '(can_see_member|my_member_ids|is_staff|is_writer|is_admin|is_exam_manager|is_examiner)\(';
+    AND p.prosrc !~ '(can_see_member|my_member_ids|is_staff|is_writer|is_admin|is_exam_manager|is_examiner)\('
+    -- The Einsätze report for one person: an API key with a scope only
+    -- admins grant, for servers only (20261115120000_api_activity_report.sql)
+    AND p.prosrc !~ 'api_key_use\(p_key, ''activity_report:read''\)';
 $$;
 
 -----------------
@@ -356,7 +359,7 @@ SELECT pg_temp.eq('API functions bypassing RLS that anon may call',
    WHERE p.pronamespace = 'public'::regnamespace AND p.prosecdef
      AND p.prorettype <> 'trigger'::regtype
      AND has_function_privilege('anon', p.oid, 'EXECUTE')),
-  'api_event_participants,api_events,api_training_plan,calendar_feed,cancel_trial,complete_trial_email,confirm_trial,get_trial_status,is_admin,is_approved_user,is_writer,register_trial');
+  'api_activity_report,api_event_participants,api_events,api_training_plan,calendar_feed,cancel_trial,complete_trial_email,confirm_trial,get_trial_status,is_admin,is_approved_user,is_writer,register_trial');
 
 -- A trigger function is never an RPC (Postgres refuses to call it outside a
 -- trigger), but EXECUTE for the API roles shows up as advisor noise
@@ -455,7 +458,8 @@ INSERT INTO api_guard VALUES
   ('api_key_create',             'is_admin\('),
   ('api_training_plan',          'api_key_use\(p_key, ''training_plan:read''\)'),
   ('api_events',                 'api_key_use\(p_key, ''event_participants:read''\)'),
-  ('api_event_participants',     'api_key_use\(p_key, ''event_participants:read''\)');
+  ('api_event_participants',     'api_key_use\(p_key, ''event_participants:read''\)'),
+  ('api_activity_report',        'api_key_use\(p_key, ''activity_report:read''\)');
 
 SELECT pg_temp.eq('API functions bypassing RLS without their guard',
   (SELECT string_agg(coalesce(p.proname, g.proname)

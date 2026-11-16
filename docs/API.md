@@ -5,7 +5,9 @@ Alleda answers other systems under `/api/v1/` of each instance (JAC Wohlen:
 The first endpoint is the training plan, for the club's website: who leads
 which training on which date, the topic, and what is dropped. The second
 gives the participants of an event, for a program writing reports about
-events. More endpoints follow the same rules: versioned path, API key with
+events. The third is the _Einsätze_ report admins see in the app
+(`docs/ACTIVITY_REPORT.md`), for the club or one person, e.g. for the
+treasurer's program. More endpoints follow the same rules: versioned path, API key with
 scopes, JSON, only what the key's scope names.
 
 ## Browsing and trying the API
@@ -68,9 +70,10 @@ Authorization: Bearer alleda_…
 | ------------------------- | ------------------------------------------------------------ | ---------------------------------------------------------------------------- |
 | `training_plan:read`      | `GET /api/v1/training-plan`                                  | Planned trainings, every date with time, who leads, topic, dropped, holidays |
 | `event_participants:read` | `GET /api/v1/events`, `GET /api/v1/events/{id}/participants` | Events with date, place and counts; per event the names of who took part     |
+| `activity_report:read`    | `GET /api/v1/reports/activity`                               | The Einsätze report: per person trainings as trainer, assistant, coach days  |
 
-`event_participants:read` gives personal data, so such a key is **for
-servers only**: the database refuses websites for it
+`event_participants:read` and `activity_report:read` give personal data, so
+such a key is **for servers only**: the database refuses websites for it
 (`api_keys_personal_data_server_only`), and with no website listed every
 request from a browser is refused (`403 origin_not_allowed`, below). The
 key stays on the program's server, like a password.
@@ -304,6 +307,95 @@ Authorization: Bearer alleda_…
 - `404 not_found`: no event with this id. Both endpoints answer
   `Cache-Control: no-store`.
 
+## GET /api/v1/reports/activity
+
+The _Einsätze_ report (`docs/ACTIVITY_REPORT.md`) as admins open it in the
+app and download it as PDF, for another system, e.g. the treasurer's
+program. In the app only admins see it; through the API a key with
+`activity_report:read`, which only admins create (_Integrationen_), which
+is for servers only and whose answers are never cached.
+
+```
+GET /api/v1/reports/activity?from=2026-01-01&to=2026-06-30&member=4711
+Authorization: Bearer alleda_…
+```
+
+| Parameter | Default                      | Meaning                                                      |
+| --------- | ---------------------------- | ------------------------------------------------------------ |
+| `from`    | 1 January this year (Zurich) | First date, `YYYY-MM-DD`                                     |
+| `to`      | 31 December of `from`'s year | Last date, inclusive; at most 365 days after `from`          |
+| `member`  | the whole club               | One person's report: the member's id (`memberId`, Webling's) |
+
+```json
+{
+  "from": "2026-01-01",
+  "to": "2026-12-31",
+  "timezone": "Europe/Zurich",
+  "member": null,
+  "people": [
+    {
+      "memberId": 4711,
+      "firstname": "Anna",
+      "lastname": "Muster",
+      "mainTrainer": 38,
+      "assistant": 2,
+      "coachingDays": 5
+    }
+  ],
+  "totals": { "mainTrainer": 38, "assistant": 2, "coachingDays": 5 },
+  "trainings": [
+    {
+      "date": "2026-01-07",
+      "trainingId": 26,
+      "title": "Judo Randori",
+      "section": "Judo",
+      "mainTrainers": [{ "memberId": 4711, "firstname": "Anna", "lastname": "Muster" }],
+      "assistants": [],
+      "participants": 14,
+      "lessonPlan": true
+    }
+  ],
+  "coaching": [
+    {
+      "eventId": 10000005,
+      "title": "Sommerlager",
+      "from": "2026-07-06",
+      "to": "2026-07-10",
+      "participants": 22,
+      "coaches": [{ "memberId": 4711, "firstname": "Anna", "lastname": "Muster", "days": 5 }]
+    }
+  ],
+  "checks": [
+    {
+      "date": "2026-03-12",
+      "trainingId": 26,
+      "title": "Judo Randori",
+      "section": "Judo",
+      "plannedTrainer": { "memberId": 4711, "firstname": "Anna", "lastname": "Muster" },
+      "reason": "no_main_trainer"
+    }
+  ]
+}
+```
+
+- Computed by `buildActivityReport()`, the code of the report page and its
+  PDF, on the same data, so the numbers match (what counts:
+  `docs/ACTIVITY_REPORT.md`): `people` are the summary (by last and first
+  name, only who has something), `trainings` every training held with its
+  trainers and participants (without the trainers), `coaching` every event
+  with coaches with the days counted per coach (clipped to the period),
+  `checks` the planned dates whose check-in shows no main trainer
+  (`no_main_trainer`, `no_checkin`; not counted).
+- `member`: only that person. `people` is them alone (with zeros when they
+  did nothing in the period), `totals` theirs, `trainings` the ones they
+  were main trainer or assistant at, `coaching` the events they coached,
+  `checks` the dates planned for them. The other trainers or coaches of the
+  same training or event are still listed in it. `404 not_found`: no member
+  with this id.
+- Only ids and names: never e-mail, phone, address, birthday, notes.
+- A period of a whole year takes a few seconds on a big club; the endpoint
+  waits up to 20 seconds for the database.
+
 ## Examples
 
 Server (PHP, e.g. in a WordPress plugin), the key in the configuration:
@@ -367,6 +459,14 @@ for (const s of sessions) {
   plan; `NULL` for any other key. They read `events`, `event_participants`
   (registrations) and `event_logs` (attendance) and return members' id and
   name only.
+- `supabase/migrations/20261115120000_api_activity_report.sql`: the scope
+  `activity_report:read` (no websites with it) and
+  `api_activity_report(p_key, p_from, p_to, p_member_id)`, granted to `anon`;
+  `NULL` for any other key. It returns what the report page loads under RLS
+  for an admin (trainer check-ins, `view_logs_summary`, events and their
+  check-ins, the plan without notes, the names of trainers and coaches) and
+  the member asked for; `src/routes/api/v1/reports/activity/+server.ts`
+  computes the report with `buildApiActivityReport()`.
 - `src/routes/api/v1/training-plan/+server.ts`: reads the key and the
   query, calls the function with the anon key (no session), checks the
   origin, builds the answer with `buildApiTrainingPlan()`
@@ -383,7 +483,8 @@ for (const s of sessions) {
 - `src/routes/dashboard/integrations/ApiKeys.svelte`: the admin section.
 - Checks: `supabase/checks/api_keys.sql` (keys per role, the hash
   unreadable, the plan per key, refused keys and periods, events and
-  participants: servers only, names only) and the list of
+  participants: servers only, names only; the report: servers only, admins
+  make the key, names only) and the list of
   anon functions in `supabase/checks/member_data.sql`.
 
 ### Limits

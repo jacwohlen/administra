@@ -122,7 +122,7 @@ describe('buildActivityReport', () => {
     expect([lager.date, lager.dateTo, lager.coaches]).toEqual([
       '2026-03-01',
       '2026-03-02',
-      [{ name: 'Muster Anna', days: 2 }]
+      [{ memberId: 1, name: 'Muster Anna', days: 2 }]
     ]);
   });
 
@@ -156,17 +156,21 @@ describe('buildActivityReport', () => {
       // Held, nobody marked: the plan falls back to the main trainer
       {
         date: '2026-03-12',
+        trainingId: 2,
         training: 'Erwachsene',
         section: 'Judo',
         plannedTrainer: 'Beispiel Ben',
+        plannedTrainerId: 2,
         reason: 'no_main_trainer'
       },
       // Planned, no check-in at all; the 24th is after today, the 19th cancelled
       {
         date: '2026-03-17',
+        trainingId: 1,
         training: 'Kinder',
         section: 'Judo',
         plannedTrainer: 'Muster Anna',
+        plannedTrainerId: 1,
         reason: 'no_checkin'
       }
     ]);
