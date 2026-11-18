@@ -71,7 +71,7 @@
       checksHint: t('checksHint'),
       plannedTrainer: t('plannedTrainer'),
       reason: t('reason'),
-      reasons: { no_main_trainer: t('reasonNoMain'), no_checkin: t('reasonNoCheckin') },
+      reasons: { no_main_trainer: t('reasonNoMain') },
       page: (page, pages) => t('page', { page, pages }),
       created: t('created')
     };
@@ -196,11 +196,7 @@
           {swissDate(c.date)} · {c.training}
           {#if c.plannedTrainer}· {$_('page.reports.plannedTrainer')}: {c.plannedTrainer}{/if}
           ·
-          <span class="opacity-75"
-            >{c.reason === 'no_checkin'
-              ? $_('page.reports.reasonNoCheckin')
-              : $_('page.reports.reasonNoMain')}</span
-          >
+          <span class="opacity-75">{$_('page.reports.reasonNoMain')}</span>
         </li>
       {/each}
     </ul>
