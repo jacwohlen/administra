@@ -124,9 +124,9 @@ export interface CoachingDetailRow {
   coaches: { memberId: number; name: string; days: number }[];
 }
 
-export type CheckReason = 'no_main_trainer' | 'no_checkin';
+export type CheckReason = 'no_main_trainer';
 
-/** A date the plan expected a trainer for that the check-in does not show */
+/** A planned date that was checked in, but without a main trainer */
 export interface CheckRow {
   date: string;
   trainingId: number;
@@ -348,10 +348,11 @@ function planChecks(input: ReportInput, name: (id: number) => string): CheckRow[
     if (r.cancelled) continue;
     const key = `${r.training.id}|${r.date}`;
     if (withMain.has(key)) continue;
+    // Only a training that took place (someone checked in) without a main
+    // trainer is reported: a date with no check-in at all did not happen
+    // or was a free training, so there is nothing to pay or fix.
     const h = held.get(key);
-    const checkedIn = !!h && Number(h.count) > 0;
-    if (!checkedIn && !r.session) continue;
-    if (!checkedIn && r.trainerId == null) continue;
+    if (!h || Number(h.count) <= 0) continue;
     checks.push({
       date: r.date,
       trainingId: r.training.id,
@@ -359,7 +360,7 @@ function planChecks(input: ReportInput, name: (id: number) => string): CheckRow[
       section: r.training.section ?? '',
       plannedTrainer: r.trainerId != null ? name(r.trainerId) : '',
       plannedTrainerId: r.trainerId ?? null,
-      reason: checkedIn ? 'no_main_trainer' : 'no_checkin'
+      reason: 'no_main_trainer'
     });
   }
   return checks;

@@ -30,9 +30,10 @@ is not the app's business.
 'half'`) counts 0.5 per day; without that column every day is full. Two
   events on the same day count once (the larger share).
 - **Zu prüfen**: planned dates (`buildPlan()`, trainings in
-  `training_plan_trainings`) up to today, not cancelled, whose check-in has
-  no main trainer: held without one marked, or with a plan entry but no
-  check-in at all. They do not count; the list names the trainer the plan
+  `training_plan_trainings`) up to today, not cancelled, that were checked
+  in (someone came) but have no main trainer marked. A date without any
+  check-in is not listed: it did not take place or was a free training.
+  They do not count; the list names the trainer the plan
   has (after substitutes and swaps) so an admin can add them in the
   check-in.
 
