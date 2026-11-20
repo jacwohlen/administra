@@ -8,6 +8,7 @@ import {
 import { createServerClient } from '@supabase/ssr';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { sequence, type Handle } from '@sveltejs/kit/hooks';
+import { brandForHost, withBrand } from '#lib/brand.ts';
 import { clubConfig } from '#lib/clubConfig.ts';
 import { isReportedError, sentryOptions } from '#lib/sentry.ts';
 import { supabasePreconnectTags } from '#lib/server/preconnect.ts';
@@ -83,9 +84,16 @@ const setup: Handle = async ({ event, resolve }) => {
     ? clubConfig.defaultLocale
     : (lang?.split('-')[0] ?? 'en');
 
+  // The product's name by host (#lib/brand.ts): the messages on the server
+  // say "Alleda" for every request, the rendered page the host's name
+  const brand = brandForHost(event.url.hostname);
+
   const response = await resolve(event, {
     transformPageChunk: ({ html }) =>
-      html.replace('%lang%', documentLang).replace('%supabase.preconnect%', preconnect),
+      withBrand(
+        html.replace('%lang%', documentLang).replace('%supabase.preconnect%', preconnect),
+        brand
+      ),
     filterSerializedResponseHeaders(name) {
       return name === 'content-range' || name === 'x-supabase-api-version';
     }
