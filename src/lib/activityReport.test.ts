@@ -151,7 +151,7 @@ describe('buildActivityReport', () => {
     expect(report.coaching.find((c) => c.event === 'Lager')!.participants).toBe(0);
   });
 
-  it('lists planned dates up to today the check-in shows no main trainer for', () => {
+  it('lists the planned dates up to today checked in without a main trainer', () => {
     expect(report.checks).toEqual([
       // Held, nobody marked: the plan falls back to the main trainer
       {
@@ -162,17 +162,8 @@ describe('buildActivityReport', () => {
         plannedTrainer: 'Beispiel Ben',
         plannedTrainerId: 2,
         reason: 'no_main_trainer'
-      },
-      // Planned, no check-in at all; the 24th is after today, the 19th cancelled
-      {
-        date: '2026-03-17',
-        trainingId: 1,
-        training: 'Kinder',
-        section: 'Judo',
-        plannedTrainer: 'Muster Anna',
-        plannedTrainerId: 1,
-        reason: 'no_checkin'
       }
+      // The 17th was planned without any check-in: not listed
     ]);
   });
 
@@ -222,7 +213,7 @@ const labels: ActivityReportLabels = {
   checksHint: 'Hinweis',
   plannedTrainer: 'Laut Plan',
   reason: 'Grund',
-  reasons: { no_main_trainer: 'ohne Haupttrainer', no_checkin: 'kein Check-in' },
+  reasons: { no_main_trainer: 'ohne Haupttrainer' },
   page: (page, pages) => `Seite ${page} von ${pages}`,
   created: 'Erstellt am'
 };

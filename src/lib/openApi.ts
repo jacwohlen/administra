@@ -686,9 +686,9 @@ Scope: \`activity_report:read\`.`,
             },
             reason: {
               type: 'string',
-              enum: ['no_main_trainer', 'no_checkin'],
+              enum: ['no_main_trainer'],
               description:
-                '`no_main_trainer`: held, nobody checked in as main trainer; `no_checkin`: planned, nobody checked in'
+                '`no_main_trainer`: held (someone checked in), nobody checked in as main trainer. Dates without any check-in are not listed.'
             }
           }
         },

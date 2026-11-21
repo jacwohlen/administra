@@ -384,8 +384,9 @@ Authorization: Bearer alleda_…
   name, only who has something), `trainings` every training held with its
   trainers and participants (without the trainers), `coaching` every event
   with coaches with the days counted per coach (clipped to the period),
-  `checks` the planned dates whose check-in shows no main trainer
-  (`no_main_trainer`, `no_checkin`; not counted).
+  `checks` the planned dates checked in without a main trainer
+  (`no_main_trainer`; not counted; a date without any check-in is not
+  listed).
 - `member`: only that person. `people` is them alone (with zeros when they
   did nothing in the period), `totals` theirs, `trainings` the ones they
   were main trainer or assistant at, `coaching` the events they coached,
