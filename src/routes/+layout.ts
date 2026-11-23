@@ -19,9 +19,12 @@ export const load: LayoutLoad = async ({ data }) => {
   // dates in $derived values that the layout's $effect would only reach
   // after they were computed (a reloaded page showed "26. October 2026").
   if (browser) applyDayjsLocale(get(locale));
+  // `data` is null when SvelteKit renders the root error page after the
+  // server data could not be loaded (e.g. the request failed on a bad
+  // connection): show that error page signed out instead of throwing here.
   return {
-    session: data.session,
-    userProfile: data.userProfile,
-    access: data.access
+    session: data?.session ?? null,
+    userProfile: data?.userProfile ?? null,
+    access: data?.access ?? null
   };
 };
